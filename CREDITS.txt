@@ -4,4 +4,4 @@ this project:
 (students, add your name here)
 
  - Nat Tuck [nathaniel.tuck@plymouth.edu]
-
+ - Ty Mittleider [tlm1032@usnh.edu]
