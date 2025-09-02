@@ -5,4 +5,5 @@ this project:
 
  - Nat Tuck [nathaniel.tuck@plymouth.edu]
  - Aksh Patel [agp1054@usnh.edu]
+ - Erica Guenther [erg1125@usnh.edu]
 
