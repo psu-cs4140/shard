@@ -7,7 +7,8 @@ To start your Phoenix server (assumes Debian-family Linux):
 * Install the deb packages: `postgresql postgresql-client libpq-dev 
   build-essential autoconf m4 libncurses5-dev libpng-dev libssh-dev 
   unixodbc-dev xsltproc fop libxml2-utils libncurses-dev default-jdk`
-* Install Erlang, Elixir, and NodeJS using [asdf](https://asdf-vm.com/).
+* Install Erlang, Elixir, and NodeJS using [asdf](https://asdf-vm.com/); see
+  `scripts/setup-asdf.sh` for hints.
 * Run `sudo scripts/setup-dev-postgres.sh` to setup the dev DB. This script
 probably installs a RAT, so read it first.
 * Run `mix setup` to install and setup dependencies
