@@ -3,7 +3,7 @@
 # Script to configure PostgreSQL for local development
 # Sets up password authentication for local connections and creates shard user
 
-set -e  # Exit on any error
+set -e # Exit on any error
 
 # Configuration
 PG_HBA_FILE="/etc/postgresql/16/main/pg_hba.conf"
@@ -15,12 +15,12 @@ echo "Setting up PostgreSQL for development..."
 
 # Check if running as root (required for editing config and restarting service)
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root" 
-   exit 1
+    echo "This script must be run as root"
+    exit 1
 fi
 
 # Check if PostgreSQL is installed
-if ! command -v psql &> /dev/null; then
+if ! command -v psql &>/dev/null; then
     echo "PostgreSQL is not installed. Please install it first."
     exit 1
 fi
@@ -34,20 +34,20 @@ if grep -q "host.*all.*all.*127.0.0.1/32.*md5" "$PG_HBA_FILE"; then
     echo "Local network connections with password auth already enabled"
 else
     echo "Enabling local network connections with password authentication..."
-    
+
     # Add or modify the line for local connections to use md5 (password) authentication
     # First, comment out any existing conflicting lines
     sed -i 's/^\(host.*all.*all.*127.0.0.1\/32\)/#\1/' "$PG_HBA_FILE"
-    
+
     # Add the new line for password authentication
-    echo "host    all             all             127.0.0.1/32            md5" >> "$PG_HBA_FILE"
-    
+    echo "host    all             all             127.0.0.1/32            md5" >>"$PG_HBA_FILE"
+
     # Also handle IPv6 localhost
     if grep -q "host.*all.*all.*::1/128.*md5" "$PG_HBA_FILE"; then
         echo "IPv6 local connections already configured"
     else
         sed -i 's/^\(host.*all.*all.*::1\/128\)/#\1/' "$PG_HBA_FILE"
-        echo "host    all             all             ::1/128                 md5" >> "$PG_HBA_FILE"
+        echo "host    all             all             ::1/128                 md5" >>"$PG_HBA_FILE"
     fi
 fi
 
