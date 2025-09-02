@@ -5,4 +5,4 @@ this project:
 
  - Nat Tuck [nathaniel.tuck@plymouth.edu]
  - Aksh Patel [agp1054@usnh.edu]
-
+ - Hunter Harris [hah1049@usnh.edu]
