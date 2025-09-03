@@ -7,4 +7,5 @@ this project:
  - Aksh Patel [agp1054@usnh.edu]
  - Erica Guenther [erg1125@usnh.edu]
  - Hunter Harris [hah1049@usnh.edu]
+ - Ty Mittleider [tlm1032@usnh.edu]
  - Rider McCallum [rsm1055@usnh.edu]
