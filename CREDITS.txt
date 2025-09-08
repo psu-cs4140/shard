@@ -10,3 +10,4 @@ this project:
  - Ty Mittleider [tlm1032@usnh.edu]
  - Rider McCallum [rsm1055@usnh.edu]
  - Cameron Hanna [cjh1178@usnh.edu]
+ - Tyler Smallidge [tjs1143@usnh.edu]
