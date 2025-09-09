@@ -1,0 +1,230 @@
+Characters
+-Generic tutorial, borderline irritable NPC
+-Some sort of governing body
+-Adventurers
+-Cave dwellers
+-Underground society
+-Goblins
+-Ancient tribe(s)
+-Seafolk (Like fish people, but also maybe seafarers)
+-Fishing village
+-Forest village
+-Elves
+-Dwarves
+-Druids
+-Mages (Witches, Wizards, Sorcerers, Sorceresses, etc)
+-Animalfolk
+-Lizardfolk
+-Pet companions
+-Prisoners
+-Cannibals
+-Pacifists
+-Warmongers
+-Tavernkeeps
+-Shopkeeps
+-Fortune tellers
+-Theives
+-Random gag character
+-Dryads
+-Shroomfolk
+-Plantfolk in general
+-Kobolds
+-Wandering trader
+-Banker
+-Pirates
+-Cultists
+-Aliens
+-Nymphs
+-Fairies
+-Lunatics
+-Robots
+-Androids
+-Cyborgs
+-Soldiers
+-Vampires
+-Demons
+-Angels
+-Deities
+-Bards/Musicians
+*Any monsters can also apply here
+
+
+Items
+-Weapons:
+	-Shortswords
+	-Broadswords
+	-Elemental swords
+	-Scimitar
+	-Maces
+	-Axes
+	-Battle Axes
+	-Throwing axes
+	-Spears
+	-War hammers
+	-Tridents
+	-Halberds
+	-Ball and chain (Like a morning star)
+	-Rapiers
+	-Claws
+	-Knives
+	-Daggers
+	-Kunai
+	-Shurikens
+	-Darts
+	-Staffs (Elemental or not)
+	-Tomes
+	-Crossbow
+	-Shortbows
+	-Longbows
+	-Arrows
+	-Tipped arrows
+	-Firearms
+	-Energy weapons (If sci-fi environment is desired)
+	-Smokebombs
+	-Explosives in general
+	-Polearms
+	-Familiars
+	-Summons
+
+-Apparel, Armor, and Attire:
+	-Helmets
+	-Chestplates
+	-Leggings
+	-Shin gaurds
+	-Shoulder pads
+	-Bracers
+	-Gloves
+	-Gauntlets
+	-Robes
+	-Cloaks
+	-Bracelets
+	-Necklaces
+	-Eyewear
+	-Belts
+	-Rings
+	-Shoes
+	-Pants
+	-Shorts
+	-Skirts
+	-Tunics
+	-Dresses
+	-Backpacks
+	-Bags
+	-Purses
+	-Satchels
+	
+-Currency:
+	-NEW FICTIONAL HOTTNESS
+	-Coins
+	-Paper
+	-Gold
+	-Silver
+	-Copper
+	-Gems
+	-No currency? (Bartering only, chumps)
+	
+-Consumables:
+	-Meat
+	-Plants
+	-Foraged ingredients
+	-Prepared food
+	-Potions
+
+-Musical Instruments:
+	-Lyre
+	-Harp
+	-Drum
+	-Lute
+	-Ocarina
+	-Flute
+
+-Misc:
+	-Shields
+	-Scrolls
+	-Crystal ball (gaze upon thy orb)
+	-Journal (Quests, players, etc)
+	-Keys
+	-Chests
+	-Vaults
+
+
+Monsters
+-Common critters (squirrels, rabbits, rats, bats, etc)
+-Feral animals
+-Possessed objects
+-Ghosts/spirits
+-Aquatic life
+-Sentient plants
+-Minotaur
+-Candy monsters
+-Harpies
+-Trolls
+-Rock monsters
+-Gaurdians
+-Slimes
+-Orcs
+*Any NPCs can also be applied here realistically
+
+
+Effects 
+-Status Conditions:
+	-Poisoned
+	-Hungry/Starved
+	-Thirsty/Dehydrated
+	-Exhausted
+	-Encumbered
+	-Burned (Physically burned with fire)
+	-Overheated (Temperature)
+	-Frozen (Frozen solid)
+	-Freezing (Temperature)
+	-Drowzy
+	-Inebriated
+	-Confused
+	-Blinded
+	-Blazed/High
+	-Stunned/Paralyzed
+	-Silenced
+	-Weakened
+	-Slowed
+	-Revitalized
+	-Enamored
+	-Possessed
+	-Deafened
+	-Enraged
+	-Frightened
+	-Saddened
+	-Ecstatic
+	-Cautious
+	-Hesitant
+	-Wounded
+	-Drenched
+
+-Spells:
+	-Weightlessness
+	-Flight
+	-Silent steps
+	-Invisibility
+	-Haste
+	-Camouflage
+	-Fireball
+	-Ice storm
+	-Telepathy
+	-Stunning glare
+	-Deafening sound
+	-Healing (Using herbs, medicine, future tech, magic, depends on setting)
+	-Speak with animals/other tongues
+	-Hypnotize
+	-Blinding light
+	-Capture/Contain/Imprison
+	-Force push
+	-Tailwind (something that would increase speed)
+	-Electrocute
+	-Intoxicate
+	-Manipulate
+	-Expand
+	-Shrink
+	-Grow
+	-Freeze
+	-Harden/Reinforce
+	-Teleport
+	-Derange
