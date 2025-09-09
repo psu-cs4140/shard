@@ -25,11 +25,42 @@ import {LiveSocket} from "phoenix_live_view"
 import {hooks as colocatedHooks} from "phoenix-colocated/shard"
 import topbar from "../vendor/topbar"
 
+// MUD-specific hooks for enhanced gameplay
+const mudHooks = {
+  // Terminal-style command input
+  CommandInput: {
+    mounted() {
+      this.el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          const command = this.el.value.trim()
+          if (command) {
+            this.pushEvent("execute_command", {command: command})
+            this.el.value = ""
+          }
+        }
+      })
+    }
+  },
+  
+  // Auto-scroll game output
+  GameOutput: {
+    mounted() {
+      this.scrollToBottom()
+    },
+    updated() {
+      this.scrollToBottom()
+    },
+    scrollToBottom() {
+      this.el.scrollTop = this.el.scrollHeight
+    }
+  }
+}
+
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks},
+  hooks: {...colocatedHooks, ...mudHooks},
 })
 
 // Show progress bar on live navigation and form submits

@@ -102,4 +102,120 @@
 /* Make LiveView wrapper divs transparent for layout */
 [data-phx-session], [data-phx-teleported-src] { display: contents }
 
-/* This file is for your main application CSS */
+/* MUD-specific styling */
+
+/* Terminal-style game output */
+.mud-terminal {
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  background: oklch(var(--color-base-200));
+  border: 2px solid oklch(var(--color-primary) / 0.3);
+  border-radius: var(--radius-box);
+  padding: 1rem;
+  height: 400px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.mud-terminal::-webkit-scrollbar {
+  width: 8px;
+}
+
+.mud-terminal::-webkit-scrollbar-track {
+  background: oklch(var(--color-base-300));
+}
+
+.mud-terminal::-webkit-scrollbar-thumb {
+  background: oklch(var(--color-primary) / 0.5);
+  border-radius: 4px;
+}
+
+/* Command input styling */
+.mud-command-input {
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  background: oklch(var(--color-base-200));
+  border: 2px solid oklch(var(--color-primary) / 0.5);
+  color: oklch(var(--color-primary));
+  padding: 0.75rem;
+  border-radius: var(--radius-field);
+  transition: all 0.2s ease;
+}
+
+.mud-command-input:focus {
+  border-color: oklch(var(--color-primary));
+  box-shadow: 0 0 0 3px oklch(var(--color-primary) / 0.2);
+  outline: none;
+}
+
+/* Player status indicators */
+.player-online {
+  color: oklch(var(--color-success));
+}
+
+.player-offline {
+  color: oklch(var(--color-base-content) / 0.5);
+}
+
+.player-typing {
+  color: oklch(var(--color-warning));
+  animation: pulse 1.5s infinite;
+}
+
+/* Realm connection status */
+.realm-connected {
+  background: oklch(var(--color-success) / 0.1);
+  border-left: 4px solid oklch(var(--color-success));
+}
+
+.realm-disconnected {
+  background: oklch(var(--color-error) / 0.1);
+  border-left: 4px solid oklch(var(--color-error));
+}
+
+/* Welcome screen animations */
+.welcome-fade-in {
+  animation: fadeIn 2s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.welcome-glow {
+  text-shadow: 0 0 10px oklch(var(--color-primary) / 0.5);
+}
+
+/* ASCII art styling */
+.ascii-art {
+  font-family: 'Courier New', 'Monaco', 'Menlo', monospace;
+  white-space: pre;
+  line-height: 1;
+  color: oklch(var(--color-primary));
+  text-align: center;
+}
+
+/* Federation status indicators */
+.federation-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-selector);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.federation-active {
+  background: oklch(var(--color-success) / 0.2);
+  color: oklch(var(--color-success));
+}
+
+.federation-syncing {
+  background: oklch(var(--color-warning) / 0.2);
+  color: oklch(var(--color-warning));
+}
+
+.federation-error {
+  background: oklch(var(--color-error) / 0.2);
+  color: oklch(var(--color-error));
+}
