@@ -73,7 +73,7 @@
         </h2>
         
         <!-- Terminal Output -->
-        <div class="mud-terminal" phx-hook="GameOutput">
+        <div id="game-terminal" class="mud-terminal" phx-hook="GameOutput">
           <div class="text-success">Welcome to the Federated Multi-User Dungeon!</div>
           <div class="text-base-content/70">Type 'help' for a list of commands.</div>
           <br/>
@@ -98,6 +98,7 @@
           <div class="input-group">
             <span class="text-primary font-mono">></span>
             <input 
+              id="command-input"
               type="text" 
               placeholder="Enter your command..." 
               class="input input-bordered flex-1 mud-command-input"
