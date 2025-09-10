@@ -1,0 +1,41 @@
+World Structure Design 
+
+Tree Structure 
+
+Map navigation 
+  - Rooms without doors  
+  - paths
+  - buildings
+  - flag for indoors vs outdoors
+  - flag for current weather
+
+Zones
+hosted on unique servers 
+different themes ? 
+
+Connections
+  - Description of the connection so the player doesn't walk down a staircase then turn around and climb up a ladder to the room they just came from 
+  - Connected to north, east, south, west rooms 
+  - Up Down 
+  - Portals between Zones(servers) 
+  - Conditions 
+  - Pay life, mana, gold 
+  - Requires a key 
+  - Puzzle in room must be solved 
+
+Room 
+  - loot? 
+	- pre generated text description 
+	- pre generated art 
+	- interactable objects 
+	- flags  
+		- safe zone 
+		- no magic 
+		- dark 
+		- magical darkness 
+
+enemy generation 
+  - Hard coded to each room? 
+  - Chance one enemy from a list spawning? 
+
+ 
