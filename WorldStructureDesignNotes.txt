@@ -1,41 +1,79 @@
-World Structure Design 
+World Structure Design for MUD
 
-Tree Structure 
+Tree Structure
 
-Map navigation 
-  - Rooms without doors  
-  - paths
-  - buildings
-  - flag for indoors vs outdoors
-  - flag for current weather
+Map navigation
+  - Rooms without doors
+  - Paths connecting locations
+  - Buildings with multiple rooms
+  - Flag for indoors vs outdoors
+  - Flag for current weather conditions
+  - Elevation levels (up/down)
+  - Region boundaries
 
 Zones
-hosted on unique servers 
-different themes ? 
+  - Hosted on unique servers for scalability
+  - Different themes (forest, desert, dungeon, city, etc.)
+  - Unique monster families per zone
+  - Zone-level quests and storylines
+  - Difficulty scaling based on player level
+  - Resource nodes specific to each zone
+  - Zone bosses and rare mob spawns
 
 Connections
-  - Description of the connection so the player doesn't walk down a staircase then turn around and climb up a ladder to the room they just came from 
-  - Connected to north, east, south, west rooms 
-  - Up Down 
-  - Portals between Zones(servers) 
-  - Conditions 
-  - Pay life, mana, gold 
-  - Requires a key 
-  - Puzzle in room must be solved 
+  - Description of the connection so the player doesn't walk down a staircase then turn around and climb up a ladder to the room they just came from
+  - Connected to north, east, south, west rooms with directional descriptions
+  - Up/Down connections with elevation descriptions
+  - Portals between Zones (servers) with loading transitions
+  - Conditions for traversal:
+    - Pay life, mana, gold, or currency
+    - Requires a key or specific item
+    - Puzzle in room must be solved
+    - Time-based restrictions (day/night gates)
+    - Guild or faction requirements
+    - Level or skill prerequisites
+    - Quest completion requirements
 
-Room 
-  - loot? 
-	- pre generated text description 
-	- pre generated art 
-	- interactable objects 
-	- flags  
-		- safe zone 
-		- no magic 
-		- dark 
-		- magical darkness 
+Rooms
+  - Loot system:
+    - Pre-generated text descriptions for room features
+    - Pre-generated art assets or ASCII art descriptions
+    - Interactable objects (chests, levers, containers)
+    - Environmental storytelling elements
+  - Flags for special properties:
+    - Safe zone (no PvP, no monster spawns)
+    - No magic zone (spell casting disabled)
+    - Dark area (reduced visibility, light source required)
+    - Magical darkness (normal light sources don't work)
+    - No recall zone (teleportation spells disabled)
+    - Water breathing required
+    - Gravity effects (slow fall, reverse gravity)
+    - Time distortion fields
+  - Room types:
+    - Standard exploration rooms
+    - Battle rooms for instanced combat
+    - Puzzle rooms requiring solutions
+    - Treasure rooms with valuable rewards
+    - Trap rooms with hidden dangers
+    - Rest areas with healing properties
 
-enemy generation 
-  - Hard coded to each room? 
-  - Chance one enemy from a list spawning? 
+Enemy Generation
+  - Hard coded enemies to each room for consistency
+  - Chance-based system for one enemy from a weighted list spawning
+  - Time-based enemy respawns
+  - Environmental triggers for enemy appearances
+  - Dynamic difficulty scaling based on player count
+  - Elite variants with special abilities
+  - Rare mob spawns with unique loot tables
+  - Territory behavior (enemies aggro in specific areas)
+  - Day/night cycle affected spawns
+  - Weather condition influenced enemy types
 
- 
+World Persistence
+  - Persistent world state tracking
+  - Dynamic events affecting multiple rooms/zones
+  - Player-built structures and bases
+  - Economy systems with trade routes
+  - Faction influence on territory control
+  - Seasonal changes affecting world layout
+  - Server-wide events and celebrations
