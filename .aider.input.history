@@ -1,0 +1,12 @@
+
+# 2025-09-02 13:23:07.780981
++no
+
+# 2025-09-02 13:23:26.971722
++/add scripts/setup-dev-postgres.sh
+
+# 2025-09-02 13:23:37.326537
++/read-only config/dev.exs
+
+# 2025-09-02 13:26:42.012383
++Create a bash script that will check the postgres config file in /etc/postgresql/16/main/pg_hba.conf to see if it allows local network connedtions with password auth and if not enable them and then restart the postgres service. Then it should create a postgres user called shard that can login with the password in the dev config. Once the script has been run, we should be able to run "mix ecto.create" and create the project database in dev mode.
