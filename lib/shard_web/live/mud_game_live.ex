@@ -115,7 +115,7 @@ defmodule ShardWeb.MudGameLive do
         <% end %>
       </div>
       <div class="mt-4 text-center text-sm text-gray-300">
-        <p>Player Position: {@player_position}</p>
+        <p>Player Position: <%= format_position(@player_position) %></p>
       </div>
     </div>
     """
@@ -153,6 +153,11 @@ defmodule ShardWeb.MudGameLive do
       <span><%= @text %></span>
     </button>
     """
+  end
+
+  # Helper function to format position tuple as string
+  defp format_position({x, y}) do
+    "{#{x}, #{y}}"
   end
 
   # Helper function to generate sample map data
