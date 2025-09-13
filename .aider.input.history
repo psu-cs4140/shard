@@ -10,3 +10,27 @@
 
 # 2025-09-02 13:26:42.012383
 +Create a bash script that will check the postgres config file in /etc/postgresql/16/main/pg_hba.conf to see if it allows local network connedtions with password auth and if not enable them and then restart the postgres service. Then it should create a postgres user called shard that can login with the password in the dev config. Once the script has been run, we should be able to run "mix ecto.create" and create the project database in dev mode.
+
+# 2025-09-13 10:44:31.058509
++generate a phoenix framework liveview that will serve as the main ui for this MUD game. The only thing I am concerned with is having a mini-map and control buttons to access inventory, character sheets, etc. For now, just generate the basic liveview and tailwind CSS components for the minimap and the control buttons for inventory and character sheet.
+
+# 2025-09-13 10:45:59.678982
++yes
+
+# 2025-09-13 10:49:28.420245
++add a route for the mud_game_live.ex
+
+# 2025-09-13 10:49:50.160118
++y
+
+# 2025-09-13 10:51:44.073612
++opening the localhost game route gives this error: 
++Protocol.UndefinedError at GET /game
++
++protocol Phoenix.HTML.Safe not implemented for type Tuple. This protocol is implemented for the following type(s): Atom, BitString, Date, DateTime, Decimal, Float, Integer, List, NaiveDateTime, Phoenix.LiveComponent.CID, Phoenix.LiveView.Component, Phoenix.LiveView.Comprehension, Phoenix.LiveView.JS, Phoenix.LiveView.Rendered, Time, Tuple, URI
++
++Got value:
++
++    {5, 5}
++
++

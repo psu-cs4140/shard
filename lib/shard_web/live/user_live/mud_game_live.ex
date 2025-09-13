@@ -5,8 +5,8 @@ defmodule ShardWeb.MudGameLive do
   def mount(_params, _session, socket) do
     # Initialize game state
     game_state = %{
-      player_position: {5, 5},
-      map_data: generate_sample_map(),
+      player_position: {5, 5}, # In future, we most likely want to grab this from the database.
+      map_data: generate_sample_map(), #Also want to pull map data from database
       active_panel: nil
     }
 
@@ -16,7 +16,7 @@ defmodule ShardWeb.MudGameLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col h-screen bg-gray-900 text-white">
+    <div class="flex flex-col h-screen bg-gray-900 text-white">  <!-- "phx-window-keydown="keypress" -->
       <!-- Header -->
       <header class="bg-gray-800 p-4 shadow-lg">
         <h1 class="text-2xl font-bold">MUD Game</h1>
@@ -26,43 +26,43 @@ defmodule ShardWeb.MudGameLive do
       <div class="flex flex-1 overflow-hidden">
         <!-- Left Panel - Mini-map -->
         <div class="w-3/4 p-4 overflow-auto">
-          <.minimap 
-            map_data={@game_state.map_data} 
-            player_position={@game_state.player_position} 
+          <.minimap
+            map_data={@game_state.map_data}
+            player_position={@game_state.player_position}
           />
         </div>
 
         <!-- Right Panel - Controls -->
         <div class="w-1/4 bg-gray-800 p-4 flex flex-col space-y-4">
           <h2 class="text-xl font-semibold mb-4">Game Controls</h2>
-          
-          <.control_button 
-            text="Character Sheet" 
-            icon="hero-user" 
+
+          <.control_button
+            text="Character Sheet"
+            icon="hero-user"
             click="open_character_sheet"
           />
-          
-          <.control_button 
-            text="Inventory" 
-            icon="hero-backpack" 
+
+          <.control_button
+            text="Inventory"
+            icon="hero-shopping-bag"
             click="open_inventory"
           />
-          
-          <.control_button 
-            text="Quests" 
-            icon="hero-document-text" 
+
+          <.control_button
+            text="Quests"
+            icon="hero-document-text"
             click="open_quests"
           />
-          
-          <.control_button 
-            text="Map" 
-            icon="hero-map" 
+
+          <.control_button
+            text="Map"
+            icon="hero-map"
             click="open_map"
           />
-          
-          <.control_button 
-            text="Settings" 
-            icon="hero-cog" 
+
+          <.control_button
+            text="Settings"
+            icon="hero-cog"
             click="open_settings"
           />
         </div>
@@ -97,6 +97,13 @@ defmodule ShardWeb.MudGameLive do
     {:noreply, put_flash(socket, :info, "Opening settings...")}
   end
 
+  # Handle keypresses for navigation, inventory, etc.
+
+  # def handle_event("keypress", %{"key" => key}, socket) do
+  #   IO.inspect(key, "Key pressed")
+  #   {:noreply, assign(socket, :info, "Handling keypress")}
+  # end
+
   # Component for the minimap
   def minimap(assigns) do
     ~H"""
@@ -105,11 +112,11 @@ defmodule ShardWeb.MudGameLive do
       <div class="grid grid-cols-11 gap-0.5 mx-auto w-fit">
         <%= for {row, y} <- Enum.with_index(@map_data) do %>
           <%= for {cell, x} <- Enum.with_index(row) do %>
-            <.map_cell 
-              cell={cell} 
-              is_player={@player_position == {x, y}} 
-              x={x} 
-              y={y} 
+            <.map_cell
+              cell={cell}
+              is_player={@player_position == {x, y}}
+              x={x}
+              y={y}
             />
           <% end %>
         <% end %>
@@ -145,7 +152,7 @@ defmodule ShardWeb.MudGameLive do
   # Component for control buttons
   def control_button(assigns) do
     ~H"""
-    <button 
+    <button
       phx-click={@click}
       class="w-full flex items-center justify-start gap-3 p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
     >
