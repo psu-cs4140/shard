@@ -10,7 +10,7 @@ defmodule ShardWeb.MudGameLive do
       active_panel: nil
     }
 
-    {:ok, assign(socket, game_state: game_state)}
+    {:ok, assign(socket, game_state: game_state, show_modal: false)}
   end
 
   @impl true
@@ -25,15 +25,17 @@ defmodule ShardWeb.MudGameLive do
       <!-- Main Content -->
       <div class="flex flex-1 overflow-hidden">
         <!-- Left Panel - Mini-map -->
-        <div class="w-3/4 p-4 overflow-auto">
+        <div class="w-auto p-4 overflow-auto grow-1">
+
+        </div>
+
+        <!-- Right Panel - Controls -->
+        <div class="w-100 bg-gray-800 px-4 flex flex-col space-y-4" >
           <.minimap
             map_data={@game_state.map_data}
             player_position={@game_state.player_position}
           />
-        </div>
 
-        <!-- Right Panel - Controls -->
-        <div class="w-1/4 bg-gray-800 p-4 flex flex-col space-y-4">
           <h2 class="text-xl font-semibold mb-4">Game Controls</h2>
 
           <.control_button
@@ -65,6 +67,11 @@ defmodule ShardWeb.MudGameLive do
             icon="hero-cog"
             click="open_settings"
           />
+
+          <!-- Testing modals -->
+          <%!-- <button phx-click="show_modal">Open Modal</button>
+          <.my_modal :if={@show_modal} /> --%>
+
         </div>
       </div>
 
@@ -76,8 +83,42 @@ defmodule ShardWeb.MudGameLive do
     """
   end
 
+  # Testing modals
+  # defp my_modal(assigns) do
+  #   ~H"""
+  #   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" phx-click="hide_modal">
+  #     <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6" phx-click-away="hide_modal">
+  #       <h3 class="text-lg font-semibold mb-4">Modal Title</h3>
+  #       <p class="mb-4">Your content here</p>
+  #       <div class="flex justify-end">
+  #         <button phx-click="hide_modal" class="px-4 py-2 bg-gray-200 rounded mr-2">Cancel</button>
+  #         <button class="px-4 py-2 bg-blue-500 text-white rounded">Save</button>
+  #       </div>
+  #     </div>
+  #   </div>
+  #   """
+  # end
+
+  defp my_modal(assigns) do
+    ~H"""
+    <div class="fixed inset-0 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
+      <div class="bg-gray-800 rounded-lg max-w-4xl">
+        <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6" phx-click-away="hide_modal">
+  #       <h3 class="text-lg font-semibold mb-4">Modal Title</h3>
+  #       <p class="mb-4">Your content here</p>
+  #       <div class="flex justify-end">
+  #         <button phx-click="hide_modal" class="px-4 py-2 bg-gray-200 rounded mr-2">Cancel</button>
+  #         <button class="px-4 py-2 bg-blue-500 text-white rounded">Save</button>
+  #       </div>
+  #     </div>
+      </div>
+    </div>
+    """
+  end
+
   @impl true
   def handle_event("open_character_sheet", _params, socket) do
+
     {:noreply, put_flash(socket, :info, "Opening character sheet...")}
   end
 
@@ -108,6 +149,14 @@ defmodule ShardWeb.MudGameLive do
       active_panel: nil
     }
     {:noreply, assign(socket, :game_state, game_state)}
+  end
+
+  def handle_event("show_modal", _params, socket) do
+    {:noreply, assign(socket, show_modal: true)}
+  end
+
+  def handle_event("hide_modal", _params, socket) do
+    {:noreply, assign(socket, show_modal: false)}
   end
 
   #To calculate new player position on map
