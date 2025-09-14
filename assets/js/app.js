@@ -81,3 +81,12 @@ if (process.env.NODE_ENV === "development") {
   })
 }
 
+// To prevent scrollbar control with arrow keys when moving between rooms
+window.addEventListener("keydown", function(e) {
+  if (
+    ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)
+  ) {
+    e.preventDefault();
+  }
+});
+

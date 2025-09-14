@@ -16,7 +16,7 @@ defmodule ShardWeb.MudGameLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col h-screen bg-gray-900 text-white">  <!-- "phx-window-keydown="keypress" -->
+    <div class="flex flex-col h-screen bg-gray-900 text-white" phx-window-keydown="keypress">  <!-- "phx-window-keydown="keypress" -->
       <!-- Header -->
       <header class="bg-gray-800 p-4 shadow-lg">
         <h1 class="text-2xl font-bold">MUD Game</h1>
@@ -98,11 +98,33 @@ defmodule ShardWeb.MudGameLive do
   end
 
   # Handle keypresses for navigation, inventory, etc.
+  def handle_event("keypress", %{"key" => key}, socket) do
+    IO.inspect(key, pretty: true)
+    player_position = socket.assigns.game_state.player_position
+    new_position = calc_position(player_position, key)
+    game_state = %{
+      player_position: new_position,
+      map_data: socket.assigns.game_state.map_data,
+      active_panel: nil
+    }
+    {:noreply, assign(socket, :game_state, game_state)}
+  end
 
-  # def handle_event("keypress", %{"key" => key}, socket) do
-  #   IO.inspect(key, "Key pressed")
-  #   {:noreply, assign(socket, :info, "Handling keypress")}
-  # end
+  #To calculate new player position on map
+  def calc_position(curr_position, key) do
+    case key do
+      "ArrowUp" ->
+        {elem(curr_position, 0), elem(curr_position, 1) - 1}
+      "ArrowDown" ->
+        {elem(curr_position, 0), elem(curr_position, 1) + 1}
+      "ArrowRight" ->
+        {elem(curr_position, 0) + 1, elem(curr_position, 1)}
+      "ArrowLeft" ->
+        {elem(curr_position, 0) - 1, elem(curr_position, 1)}
+      _other  ->
+        curr_position
+    end
+  end
 
   # Component for the minimap
   def minimap(assigns) do
