@@ -27,7 +27,7 @@ defmodule ShardWeb.MudGameLive do
 
     terminal_state = %{
       output: [
-        "Welcome to the MUD Game!",
+        "Welcome to Shard!",
         "You find yourself in a mysterious dungeon.",
         "Type 'help' for available commands.",
         ""
@@ -36,7 +36,13 @@ defmodule ShardWeb.MudGameLive do
       current_command: ""
     }
 
-    {:ok, assign(socket, game_state: game_state, terminal_state: terminal_state, show_modal: false)}
+    # Controls what modal popup we are showing
+    modal_state = %{
+      show: false,
+      type: 0
+    }
+
+    {:ok, assign(socket, game_state: game_state, terminal_state: terminal_state, modal_state: modal_state)}
   end
 
   @impl true
@@ -74,37 +80,48 @@ defmodule ShardWeb.MudGameLive do
           <.control_button
             text="Character Sheet"
             icon="hero-user"
-            click="open_character_sheet"
+            click="open_modal"
+            value="character_sheet"
           />
 
           <.control_button
             text="Inventory"
             icon="hero-shopping-bag"
-            click="open_inventory"
+            click="open_modal"
+            value="inventory"
           />
 
           <.control_button
             text="Quests"
             icon="hero-document-text"
-            click="open_quests"
+            click="open_modal"
+            value="quests"
           />
 
           <.control_button
             text="Map"
             icon="hero-map"
-            click="open_map"
+            click="open_modal"
+            value="map"
           />
 
           <.control_button
             text="Settings"
             icon="hero-cog"
-            click="open_settings"
+            click="open_modal"
+            value="settings"
           />
 
-          <!-- Testing modals -->
-          <%!-- <button phx-click="show_modal">Open Modal</button>
-          <.my_modal :if={@show_modal} /> --%>
+          <%!-- This is used to show char sheet, inventory, etc --%>
+          <.character_sheet :if={@modal_state.show && @modal_state.type == "character_sheet"} />
 
+          <.inventory :if={@modal_state.show && @modal_state.type == "inventory"} />
+
+          <.quests :if={@modal_state.show && @modal_state.type == "quests"} />
+
+          <.map :if={@modal_state.show && @modal_state.type == "map"} />
+
+          <.settings :if={@modal_state.show && @modal_state.type == "settings"} />
         </div>
       </div>
 
@@ -116,11 +133,11 @@ defmodule ShardWeb.MudGameLive do
     """
   end
 
-  # Testing modals
-  # defp my_modal(assigns) do
-  #   ~H"""
-  #   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" phx-click="hide_modal">
-  #     <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6" phx-click-away="hide_modal">
+  defp character_sheet(assigns) do
+    ~H"""
+    <div class="fixed inset-0 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
+      <div class="bg-gray-800 rounded-lg max-w-4xl">
+        <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6" phx-click-away="hide_modal">
   #       <h3 class="text-lg font-semibold mb-4">Modal Title</h3>
   #       <p class="mb-4">Your content here</p>
   #       <div class="flex justify-end">
@@ -128,11 +145,63 @@ defmodule ShardWeb.MudGameLive do
   #         <button class="px-4 py-2 bg-blue-500 text-white rounded">Save</button>
   #       </div>
   #     </div>
-  #   </div>
-  #   """
-  # end
+      </div>
+    </div>
+    """
+  end
 
-  defp my_modal(assigns) do
+  defp inventory(assigns) do
+    ~H"""
+    <div class="fixed inset-0 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
+      <div class="bg-gray-800 rounded-lg max-w-4xl">
+        <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6" phx-click-away="hide_modal">
+  #       <h3 class="text-lg font-semibold mb-4">Modal Title</h3>
+  #       <p class="mb-4">Your content here</p>
+  #       <div class="flex justify-end">
+  #         <button phx-click="hide_modal" class="px-4 py-2 bg-gray-200 rounded mr-2">Cancel</button>
+  #         <button class="px-4 py-2 bg-blue-500 text-white rounded">Save</button>
+  #       </div>
+  #     </div>
+      </div>
+    </div>
+    """
+  end
+
+  defp quests(assigns) do
+    ~H"""
+    <div class="fixed inset-0 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
+      <div class="bg-gray-800 rounded-lg max-w-4xl">
+        <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6" phx-click-away="hide_modal">
+  #       <h3 class="text-lg font-semibold mb-4">Modal Title</h3>
+  #       <p class="mb-4">Your content here</p>
+  #       <div class="flex justify-end">
+  #         <button phx-click="hide_modal" class="px-4 py-2 bg-gray-200 rounded mr-2">Cancel</button>
+  #         <button class="px-4 py-2 bg-blue-500 text-white rounded">Save</button>
+  #       </div>
+  #     </div>
+      </div>
+    </div>
+    """
+  end
+
+  defp map(assigns) do
+    ~H"""
+    <div class="fixed inset-0 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
+      <div class="bg-gray-800 rounded-lg max-w-4xl">
+        <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6" phx-click-away="hide_modal">
+  #       <h3 class="text-lg font-semibold mb-4">Modal Title</h3>
+  #       <p class="mb-4">Your content here</p>
+  #       <div class="flex justify-end">
+  #         <button phx-click="hide_modal" class="px-4 py-2 bg-gray-200 rounded mr-2">Cancel</button>
+  #         <button class="px-4 py-2 bg-blue-500 text-white rounded">Save</button>
+  #       </div>
+  #     </div>
+      </div>
+    </div>
+    """
+  end
+
+  defp settings(assigns) do
     ~H"""
     <div class="fixed inset-0 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
       <div class="bg-gray-800 rounded-lg max-w-4xl">
@@ -155,7 +224,7 @@ defmodule ShardWeb.MudGameLive do
     <div class="w-12 h-12 bg-gray-600 border-2 border-gray-500 rounded-lg flex items-center justify-center relative hover:border-gray-400 transition-colors">
       <!-- Slot number -->
       <span class="absolute top-0 left-1 text-xs text-gray-400"><%= @slot_number %></span>
-      
+
       <!-- Item content -->
       <%= if @slot_data do %>
         <div class="text-center">
@@ -183,25 +252,12 @@ defmodule ShardWeb.MudGameLive do
   end
 
   @impl true
-  def handle_event("open_character_sheet", _params, socket) do
-
-    {:noreply, put_flash(socket, :info, "Opening character sheet...")}
+  def handle_event("open_modal", %{"modal" => modal_type}, socket) do
+    {:noreply, assign(socket, modal_state: %{show: true, type: modal_type})}
   end
 
-  def handle_event("open_inventory", _params, socket) do
-    {:noreply, put_flash(socket, :info, "Opening inventory...")}
-  end
-
-  def handle_event("open_quests", _params, socket) do
-    {:noreply, put_flash(socket, :info, "Opening quests...")}
-  end
-
-  def handle_event("open_map", _params, socket) do
-    {:noreply, put_flash(socket, :info, "Opening full map...")}
-  end
-
-  def handle_event("open_settings", _params, socket) do
-    {:noreply, put_flash(socket, :info, "Opening settings...")}
+  def handle_event("hide_modal", _params, socket) do
+    {:noreply, assign(socket, modal_state: %{show: false, type: ""})}
   end
 
   # Handle keypresses for navigation, inventory, etc.
@@ -210,7 +266,7 @@ defmodule ShardWeb.MudGameLive do
     player_position = socket.assigns.game_state.player_position
     map_data = socket.assigns.game_state.map_data
     new_position = calc_position(player_position, key, map_data)
-    
+
     # Add movement message to terminal if position changed
     terminal_state = if new_position != player_position do
       direction_name = case key do
@@ -220,9 +276,9 @@ defmodule ShardWeb.MudGameLive do
         "ArrowLeft" -> "west"
         _ -> nil
       end
-      
+
       if direction_name do
-        new_output = socket.assigns.terminal_state.output ++ 
+        new_output = socket.assigns.terminal_state.output ++
                      ["You traversed #{direction_name}.", ""]
         Map.put(socket.assigns.terminal_state, :output, new_output)
       else
@@ -231,7 +287,7 @@ defmodule ShardWeb.MudGameLive do
     else
       socket.assigns.terminal_state
     end
-    
+
     game_state = %{
       player_position: new_position,
       map_data: map_data,
@@ -242,36 +298,28 @@ defmodule ShardWeb.MudGameLive do
     {:noreply, assign(socket, game_state: game_state, terminal_state: terminal_state)}
   end
 
-  def handle_event("show_modal", _params, socket) do
-    {:noreply, assign(socket, show_modal: true)}
-  end
-
-  def handle_event("hide_modal", _params, socket) do
-    {:noreply, assign(socket, show_modal: false)}
-  end
-
   def handle_event("submit_command", %{"command" => %{"text" => command_text}}, socket) do
     trimmed_command = String.trim(command_text)
-    
+
     if trimmed_command != "" do
       # Add command to history
       new_history = [trimmed_command | socket.assigns.terminal_state.command_history]
-      
+
       # Process the command and get response and updated game state
       {response, updated_game_state} = process_command(trimmed_command, socket.assigns.game_state)
-      
+
       # Add command and response to output
-      new_output = socket.assigns.terminal_state.output ++ 
-                   ["> #{trimmed_command}"] ++ 
-                   response ++ 
+      new_output = socket.assigns.terminal_state.output ++
+                   ["> #{trimmed_command}"] ++
+                   response ++
                    [""]
-      
+
       terminal_state = %{
         output: new_output,
         command_history: new_history,
         current_command: ""
       }
-      
+
       {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
     else
       {:noreply, socket}
@@ -323,7 +371,7 @@ defmodule ShardWeb.MudGameLive do
     ~H"""
     <div class="bg-gray-700 rounded-lg p-4 shadow-xl">
       <h2 class="text-xl font-semibold mb-4 text-center">Player Stats</h2>
-      
+
       <!-- Health Bar -->
       <div class="mb-3">
         <div class="flex justify-between text-sm mb-1">
@@ -331,8 +379,8 @@ defmodule ShardWeb.MudGameLive do
           <span class="text-gray-300"><%= @stats.health %>/<%= @stats.max_health %></span>
         </div>
         <div class="w-full bg-gray-600 rounded-full h-3">
-          <div 
-            class="bg-red-500 h-3 rounded-full transition-all duration-300" 
+          <div
+            class="bg-red-500 h-3 rounded-full transition-all duration-300"
             style={"width: #{(@stats.health / @stats.max_health * 100)}%"}
           >
           </div>
@@ -346,8 +394,8 @@ defmodule ShardWeb.MudGameLive do
           <span class="text-gray-300"><%= @stats.stamina %>/<%= @stats.max_stamina %></span>
         </div>
         <div class="w-full bg-gray-600 rounded-full h-3">
-          <div 
-            class="bg-yellow-500 h-3 rounded-full transition-all duration-300" 
+          <div
+            class="bg-yellow-500 h-3 rounded-full transition-all duration-300"
             style={"width: #{(@stats.stamina / @stats.max_stamina * 100)}%"}
           >
           </div>
@@ -361,8 +409,8 @@ defmodule ShardWeb.MudGameLive do
           <span class="text-gray-300"><%= @stats.mana %>/<%= @stats.max_mana %></span>
         </div>
         <div class="w-full bg-gray-600 rounded-full h-3">
-          <div 
-            class="bg-blue-500 h-3 rounded-full transition-all duration-300" 
+          <div
+            class="bg-blue-500 h-3 rounded-full transition-all duration-300"
             style={"width: #{(@stats.mana / @stats.max_mana * 100)}%"}
           >
           </div>
@@ -438,14 +486,14 @@ defmodule ShardWeb.MudGameLive do
       <div class="bg-gray-800 px-4 py-2 rounded-t-lg border-b border-gray-600">
         <h2 class="text-green-400 font-mono text-sm">MUD Terminal</h2>
       </div>
-      
+
       <!-- Terminal Output -->
       <div class="flex-1 p-4 overflow-y-auto font-mono text-sm text-green-400 bg-black" id="terminal-output" phx-hook="TerminalScroll">
         <%= for line <- @terminal_state.output do %>
           <div class="whitespace-pre-wrap"><%= line %></div>
         <% end %>
       </div>
-      
+
       <!-- Command Input -->
       <div class="p-4 border-t border-gray-600 bg-gray-900 rounded-b-lg">
         <.form for={%{}} as={:command} phx-submit="submit_command" phx-change="update_command" class="flex">
@@ -479,7 +527,7 @@ defmodule ShardWeb.MudGameLive do
           "  help - Show this help message"
         ]
         {response, game_state}
-      
+
       "look" ->
         {x, y} = game_state.player_position
         tile = game_state.map_data |> Enum.at(y) |> Enum.at(x)
@@ -491,7 +539,7 @@ defmodule ShardWeb.MudGameLive do
           _ -> "You see something strange and unidentifiable."
         end
         {[description], game_state}
-      
+
       "stats" ->
         stats = game_state.player_stats
         response = [
@@ -501,26 +549,26 @@ defmodule ShardWeb.MudGameLive do
           "  Mana: #{stats.mana}/#{stats.max_mana}"
         ]
         {response, game_state}
-      
+
       "position" ->
         {x, y} = game_state.player_position
         {["You are at position (#{x}, #{y})."], game_state}
-      
+
       "inventory" ->
         {["Your inventory is empty. (Feature coming soon!)"], game_state}
-      
+
       cmd when cmd in ["north", "n"] ->
         execute_movement(game_state, "ArrowUp")
-      
+
       cmd when cmd in ["south", "s"] ->
         execute_movement(game_state, "ArrowDown")
-      
+
       cmd when cmd in ["east", "e"] ->
         execute_movement(game_state, "ArrowRight")
-      
+
       cmd when cmd in ["west", "w"] ->
         execute_movement(game_state, "ArrowLeft")
-      
+
       _ ->
         {["Unknown command: '#{command}'. Type 'help' for available commands."], game_state}
     end
@@ -530,7 +578,7 @@ defmodule ShardWeb.MudGameLive do
   defp execute_movement(game_state, direction) do
     current_pos = game_state.player_position
     new_pos = calc_position(current_pos, direction, game_state.map_data)
-    
+
     if new_pos == current_pos do
       response = ["You cannot move in that direction. There's a wall blocking your way."]
       {response, game_state}
@@ -541,11 +589,11 @@ defmodule ShardWeb.MudGameLive do
         "ArrowRight" -> "east"
         "ArrowLeft" -> "west"
       end
-      
+
       # Update game state with new position
       updated_game_state = %{game_state | player_position: new_pos}
       response = ["You traversed #{direction_name}."]
-      
+
       {response, updated_game_state}
     end
   end
@@ -555,6 +603,7 @@ defmodule ShardWeb.MudGameLive do
     ~H"""
     <button
       phx-click={@click}
+      phx-value-modal={@value}
       class="w-full flex items-center justify-start gap-3 p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
     >
       <.icon name={@icon} class="w-5 h-5" />
