@@ -776,4 +776,149 @@ defmodule ShardWeb.MudGameLive do
         <h2 class="text-green-400 font-mono text-sm">MUD Terminal</h2>
       </div>
 
-      <!-- Terminal
+      <!-- Terminal Output -->
+      <div class="flex-1 p-4 overflow-y-auto font-mono text-sm text-green-400 bg-black" id="terminal-output" phx-hook="TerminalScroll">
+        <%= for line <- @terminal_state.output do %>
+          <div class="whitespace-pre-wrap"><%= line %></div>
+        <% end %>
+      </div>
+
+      <!-- Command Input -->
+      <div class="p-4 border-t border-gray-600 bg-gray-900 rounded-b-lg">
+        <.form for={%{}} as={:command} phx-submit="submit_command" phx-change="update_command" class="flex">
+          <span class="text-green-400 font-mono mr-2">></span>
+          <.input
+            type="text"
+            field={:text}
+            name="command[text]"
+            value={@terminal_state.current_command}
+            placeholder="Enter command..."
+            class="flex-1 bg-transparent border-none text-green-400 font-mono focus:ring-0 focus:outline-none p-0"
+            autocomplete="off"
+          />
+        </.form>
+      </div>
+    </div>
+    """
+  end
+
+  # Process terminal commands
+  defp process_command(command, game_state) do
+    case String.downcase(command) do
+      "help" ->
+        response = [
+          "Available commands:",
+          "  look - Examine your surroundings",
+          "  stats - Show your character stats",
+          "  position - Show your current position",
+          "  inventory - Show your inventory (coming soon)",
+          "  north/south/east/west - Move in that direction",
+          "  help - Show this help message"
+        ]
+        {response, game_state}
+
+      "look" ->
+        {x, y} = game_state.player_position
+        tile = game_state.map_data |> Enum.at(y) |> Enum.at(x)
+        description = case tile do
+          0 -> "You see a solid stone wall."
+          1 -> "You are standing on a stone floor. The air is cool and damp."
+          2 -> "You see clear blue water. It looks deep."
+          3 -> "A glittering treasure chest sits here, beckoning you closer."
+          _ -> "You see something strange and unidentifiable."
+        end
+        {[description], game_state}
+
+      "stats" ->
+        stats = game_state.player_stats
+        response = [
+          "Character Stats:",
+          "  Health: #{stats.health}/#{stats.max_health}",
+          "  Stamina: #{stats.stamina}/#{stats.max_stamina}",
+          "  Mana: #{stats.mana}/#{stats.max_mana}"
+        ]
+        {response, game_state}
+
+      "position" ->
+        {x, y} = game_state.player_position
+        {["You are at position (#{x}, #{y})."], game_state}
+
+      "inventory" ->
+        {["Your inventory is empty. (Feature coming soon!)"], game_state}
+
+      cmd when cmd in ["north", "n"] ->
+        execute_movement(game_state, "ArrowUp")
+
+      cmd when cmd in ["south", "s"] ->
+        execute_movement(game_state, "ArrowDown")
+
+      cmd when cmd in ["east", "e"] ->
+        execute_movement(game_state, "ArrowRight")
+
+      cmd when cmd in ["west", "w"] ->
+        execute_movement(game_state, "ArrowLeft")
+
+      _ ->
+        {["Unknown command: '#{command}'. Type 'help' for available commands."], game_state}
+    end
+  end
+
+  # Execute movement command and update game state
+  defp execute_movement(game_state, direction) do
+    current_pos = game_state.player_position
+    new_pos = calc_position(current_pos, direction, game_state.map_data)
+
+    if new_pos == current_pos do
+      response = ["You cannot move in that direction. There's a wall blocking your way."]
+      {response, game_state}
+    else
+      direction_name = case direction do
+        "ArrowUp" -> "north"
+        "ArrowDown" -> "south"
+        "ArrowRight" -> "east"
+        "ArrowLeft" -> "west"
+      end
+
+      # Update game state with new position
+      updated_game_state = %{game_state | player_position: new_pos}
+      response = ["You traversed #{direction_name}."]
+
+      {response, updated_game_state}
+    end
+  end
+
+  # Component for control buttons
+  def control_button(assigns) do
+    ~H"""
+    <button
+      phx-click={@click}
+      phx-value-modal={@value}
+      class="w-full flex items-center justify-start gap-3 p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+      <.icon name={@icon} class="w-5 h-5" />
+      <span><%= @text %></span>
+    </button>
+    """
+  end
+
+  # Helper function to format position tuple as string
+  defp format_position({x, y}) do
+    "{#{x}, #{y}}"
+  end
+
+  # Helper function to generate sample map data
+  defp generate_sample_map() do
+    # Generate an 11x11 map for display
+    for y <- 0..10 do
+      for x <- 0..10 do
+        cond do
+          x == 0 or y == 0 or x == 10 or y == 10 -> 0  # Walls around the edges
+          x == 5 and y == 5 -> 3  # Treasure in the center
+          x > 3 and x < 7 and y > 3 and y < 7 -> 1  # Central room floor
+          rem(x, 3) == 0 and rem(y, 3) == 0 -> 2  # Water at intervals
+          true -> 1  # Default floor
+        end
+      end
+    end
+  end
+end
