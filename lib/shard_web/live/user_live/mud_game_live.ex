@@ -162,7 +162,7 @@ defmodule ShardWeb.MudGameLive do
               <.icon name="hero-x-mark" class="w-6 h-6" />
             </button>
           </div>
-          
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-gray-800 rounded-lg p-4">
               <h4 class="text-lg font-semibold mb-3 text-center">Attributes</h4>
@@ -185,7 +185,7 @@ defmodule ShardWeb.MudGameLive do
                 </div>
               </div>
             </div>
-            
+
             <div class="bg-gray-800 rounded-lg p-4">
               <h4 class="text-lg font-semibold mb-3 text-center">Experience</h4>
               <div class="mb-2">
@@ -202,7 +202,7 @@ defmodule ShardWeb.MudGameLive do
                 </div>
               </div>
             </div>
-            
+
             <div class="bg-gray-800 rounded-lg p-4 md:col-span-2">
               <h4 class="text-lg font-semibold mb-3 text-center">Combat Stats</h4>
               <div class="grid grid-cols-3 gap-4">
@@ -259,7 +259,7 @@ defmodule ShardWeb.MudGameLive do
               <.icon name="hero-x-mark" class="w-6 h-6" />
             </button>
           </div>
-          
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <%= for item <- @game_state.inventory_items do %>
               <div class="bg-gray-800 rounded-lg p-4 flex items-center">
@@ -312,7 +312,7 @@ defmodule ShardWeb.MudGameLive do
               <.icon name="hero-x-mark" class="w-6 h-6" />
             </button>
           </div>
-          
+
           <div class="space-y-4">
             <%= for quest <- @game_state.quests do %>
               <div class="bg-gray-800 rounded-lg p-4">
@@ -367,7 +367,7 @@ defmodule ShardWeb.MudGameLive do
               <.icon name="hero-x-mark" class="w-6 h-6" />
             </button>
           </div>
-          
+
           <div class="bg-gray-800 rounded-lg p-4">
             <div class="grid grid-cols-11 gap-0.5 mx-auto w-fit">
               <%= for {row, y} <- Enum.with_index(@game_state.map_data) do %>
@@ -381,7 +381,7 @@ defmodule ShardWeb.MudGameLive do
                 <% end %>
               <% end %>
             </div>
-            
+
             <div class="mt-6">
               <h4 class="text-lg font-semibold mb-2">Map Legend</h4>
               <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
@@ -407,7 +407,7 @@ defmodule ShardWeb.MudGameLive do
                 </div>
               </div>
             </div>
-            
+
             <div class="mt-4 text-center">
               <p class="text-lg">Current Position: <%= format_position(@game_state.player_position) %></p>
             </div>
@@ -429,7 +429,7 @@ defmodule ShardWeb.MudGameLive do
               <.icon name="hero-x-mark" class="w-6 h-6" />
             </button>
           </div>
-          
+
           <div class="space-y-6">
             <div class="bg-gray-800 rounded-lg p-4">
               <h4 class="text-lg font-semibold mb-3">Display Settings</h4>
@@ -451,7 +451,7 @@ defmodule ShardWeb.MudGameLive do
                 </div>
               </div>
             </div>
-            
+
             <div class="bg-gray-800 rounded-lg p-4">
               <h4 class="text-lg font-semibold mb-3">Audio Settings</h4>
               <div class="space-y-3">
@@ -469,7 +469,7 @@ defmodule ShardWeb.MudGameLive do
                 </div>
               </div>
             </div>
-            
+
             <div class="bg-gray-800 rounded-lg p-4">
               <h4 class="text-lg font-semibold mb-3">Gameplay</h4>
               <div class="space-y-3">
@@ -489,7 +489,7 @@ defmodule ShardWeb.MudGameLive do
                 </div>
               </div>
             </div>
-            
+
             <div class="flex justify-end">
               <button phx-click="hide_modal" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg mr-2">
                 Save Settings
