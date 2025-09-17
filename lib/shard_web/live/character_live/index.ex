@@ -8,7 +8,10 @@ defmodule ShardWeb.CharacterLive.Index do
     user = socket.assigns.current_scope.user
     characters = Characters.get_characters_by_user(user.id)
     
-    {:ok, assign(socket, :characters, characters)}
+    {:ok, 
+     socket
+     |> assign(:characters, characters)
+     |> assign(:current_scope, socket.assigns.current_scope)}
   end
 
   @impl true
