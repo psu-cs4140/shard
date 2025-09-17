@@ -40,7 +40,7 @@ defmodule ShardWeb.AdminLive.Characters do
   end
 
   @impl true
-  def handle_info({ShardWeb.AdminLive.Characters, {:saved, character}}, socket) do
+  def handle_info({ShardWeb.AdminLive.CharacterFormComponent, {:saved, character}}, socket) do
     {:noreply, stream_insert(socket, :characters, character)}
   end
 
