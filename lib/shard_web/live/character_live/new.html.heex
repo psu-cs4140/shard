@@ -1,0 +1,56 @@
+<div class="mx-auto max-w-sm">
+  <.header class="text-center">
+    Create New Character
+    <:subtitle>Build your character for the realm</:subtitle>
+  </.header>
+
+  <.simple_form
+    for={@form}
+    id="character-form"
+    phx-change="validate"
+    phx-submit="save"
+  >
+    <.input field={@form[:name]} type="text" label="Character Name" required />
+    <.input
+      field={@form[:class]}
+      type="select"
+      label="Class"
+      prompt="Choose a class"
+      options={[
+        {"Warrior", "warrior"},
+        {"Mage", "mage"},
+        {"Rogue", "rogue"},
+        {"Cleric", "cleric"},
+        {"Ranger", "ranger"}
+      ]}
+      required
+    />
+    <.input
+      field={@form[:race]}
+      type="select"
+      label="Race"
+      prompt="Choose a race"
+      options={[
+        {"Human", "human"},
+        {"Elf", "elf"},
+        {"Dwarf", "dwarf"},
+        {"Halfling", "halfling"},
+        {"Orc", "orc"}
+      ]}
+      required
+    />
+    <.input field={@form[:description]} type="textarea" label="Description" />
+
+    <:actions>
+      <.button phx-disable-with="Creating..." class="w-full">
+        Create Character
+      </.button>
+    </:actions>
+  </.simple_form>
+
+  <div class="text-center">
+    <.link navigate={~p"/"} class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700">
+      Back to Home
+    </.link>
+  </div>
+</div>
