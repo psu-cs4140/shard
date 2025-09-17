@@ -39,82 +39,104 @@
   </:action>
 </.table>
 
-<.modal :if={@live_action in [:new, :edit]} id="character-modal" show on_cancel={JS.patch(~p"/admin/characters")}>
-  <.live_component
-    module={ShardWeb.AdminLive.CharacterFormComponent}
-    id={@character.id || :new}
-    title={@page_title}
-    action={@live_action}
-    character={@character}
-    patch={~p"/admin/characters"}
-  />
-</.modal>
-
-<.modal :if={@live_action == :show} id="character-show-modal" show on_cancel={JS.patch(~p"/admin/characters")}>
-  <div class="space-y-4">
-    <.header>
-      <%= @character.name %>
-      <:subtitle>Character Details</:subtitle>
-      <:actions>
-        <.link patch={~p"/admin/characters/#{@character}/edit"} phx-click={JS.push_focus()}>
-          <.button>Edit character</.button>
-        </.link>
-      </:actions>
-    </.header>
-
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <strong>Level:</strong> <%= @character.level %>
+<div :if={@live_action in [:new, :edit]} class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+  <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold"><%= @page_title %></h2>
+        <button phx-click={JS.patch(~p"/admin/characters")} class="text-gray-500 hover:text-gray-700">
+          <span class="sr-only">Close</span>
+          ✕
+        </button>
       </div>
-      <div>
-        <strong>Class:</strong> <%= @character.class %>
-      </div>
-      <div>
-        <strong>Race:</strong> <%= @character.race %>
-      </div>
-      <div>
-        <strong>Health:</strong> <%= @character.health %>
-      </div>
-      <div>
-        <strong>Mana:</strong> <%= @character.mana %>
-      </div>
-      <div>
-        <strong>Strength:</strong> <%= @character.strength %>
-      </div>
-      <div>
-        <strong>Dexterity:</strong> <%= @character.dexterity %>
-      </div>
-      <div>
-        <strong>Intelligence:</strong> <%= @character.intelligence %>
-      </div>
-      <div>
-        <strong>Constitution:</strong> <%= @character.constitution %>
-      </div>
-      <div>
-        <strong>Experience:</strong> <%= @character.experience %>
-      </div>
-      <div>
-        <strong>Gold:</strong> <%= @character.gold %>
-      </div>
-      <div>
-        <strong>Location:</strong> <%= @character.location %>
-      </div>
-    </div>
-
-    <div :if={@character.description}>
-      <strong>Description:</strong>
-      <p class="mt-2"><%= @character.description %></p>
-    </div>
-
-    <div>
-      <strong>User:</strong> <%= if @character.user, do: @character.user.email, else: "No User" %>
-    </div>
-
-    <div>
-      <strong>Status:</strong>
-      <span class={["badge", if(@character.is_active, do: "badge-success", else: "badge-error")]}>
-        <%= if @character.is_active, do: "Active", else: "Inactive" %>
-      </span>
+      <.live_component
+        module={ShardWeb.AdminLive.CharacterFormComponent}
+        id={@character.id || :new}
+        title={@page_title}
+        action={@live_action}
+        character={@character}
+        patch={~p"/admin/characters"}
+      />
     </div>
   </div>
-</.modal>
+</div>
+
+<div :if={@live_action == :show} class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+  <div class="bg-white rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-screen overflow-y-auto">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Character Details</h2>
+        <button phx-click={JS.patch(~p"/admin/characters")} class="text-gray-500 hover:text-gray-700">
+          <span class="sr-only">Close</span>
+          ✕
+        </button>
+      </div>
+      <div class="space-y-4">
+        <.header>
+          <%= @character.name %>
+          <:subtitle>Character Details</:subtitle>
+          <:actions>
+            <.link patch={~p"/admin/characters/#{@character}/edit"} phx-click={JS.push_focus()}>
+              <.button>Edit character</.button>
+            </.link>
+          </:actions>
+        </.header>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <strong>Level:</strong> <%= @character.level %>
+          </div>
+          <div>
+            <strong>Class:</strong> <%= @character.class %>
+          </div>
+          <div>
+            <strong>Race:</strong> <%= @character.race %>
+          </div>
+          <div>
+            <strong>Health:</strong> <%= @character.health %>
+          </div>
+          <div>
+            <strong>Mana:</strong> <%= @character.mana %>
+          </div>
+          <div>
+            <strong>Strength:</strong> <%= @character.strength %>
+          </div>
+          <div>
+            <strong>Dexterity:</strong> <%= @character.dexterity %>
+          </div>
+          <div>
+            <strong>Intelligence:</strong> <%= @character.intelligence %>
+          </div>
+          <div>
+            <strong>Constitution:</strong> <%= @character.constitution %>
+          </div>
+          <div>
+            <strong>Experience:</strong> <%= @character.experience %>
+          </div>
+          <div>
+            <strong>Gold:</strong> <%= @character.gold %>
+          </div>
+          <div>
+            <strong>Location:</strong> <%= @character.location %>
+          </div>
+        </div>
+
+        <div :if={@character.description}>
+          <strong>Description:</strong>
+          <p class="mt-2"><%= @character.description %></p>
+        </div>
+
+        <div>
+          <strong>User:</strong> <%= if @character.user, do: @character.user.email, else: "No User" %>
+        </div>
+
+        <div>
+          <strong>Status:</strong>
+          <span class={["badge", if(@character.is_active, do: "badge-success", else: "badge-error")]}>
+            <%= if @character.is_active, do: "Active", else: "Inactive" %>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
