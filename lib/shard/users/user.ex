@@ -8,6 +8,7 @@ defmodule Shard.Users.User do
     field :hashed_password, :string, redact: true
     field :confirmed_at, :utc_datetime
     field :authenticated_at, :utc_datetime, virtual: true
+    field :admin, :boolean, default: false
 
     timestamps(type: :utc_datetime)
   end
@@ -27,6 +28,37 @@ defmodule Shard.Users.User do
     user
     |> cast(attrs, [:email])
     |> validate_email(opts)
+  end
+
+  @doc """
+  A user changeset for changing the password.
+
+  It is important to validate the length of the password, as long passwords may
+  be very expensive to hash for certain algorithms.
+
+  ## Options
+
+    * `:hash_password` - Hashes the password so it can be stored securely
+      in the database and ensures the password field is cleared to prevent
+      leaks in the logs. If password hashing is not needed and clearing the
+      password field is not desired (like when using this changeset for
+      validations on a LiveView form), this option can be set to `false`.
+      Defaults to `true`.
+  """
+  def password_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:password])
+    |> validate_confirmation(:password, message: "does not match password")
+    |> validate_password(opts)
+  end
+
+  @doc """
+  A user changeset for granting admin privileges.
+  """
+  def admin_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:admin])
+    |> validate_required([:admin])
   end
 
   defp validate_email(changeset, opts) do
@@ -54,28 +86,6 @@ defmodule Shard.Users.User do
     else
       changeset
     end
-  end
-
-  @doc """
-  A user changeset for changing the password.
-
-  It is important to validate the length of the password, as long passwords may
-  be very expensive to hash for certain algorithms.
-
-  ## Options
-
-    * `:hash_password` - Hashes the password so it can be stored securely
-      in the database and ensures the password field is cleared to prevent
-      leaks in the logs. If password hashing is not needed and clearing the
-      password field is not desired (like when using this changeset for
-      validations on a LiveView form), this option can be set to `false`.
-      Defaults to `true`.
-  """
-  def password_changeset(user, attrs, opts \\ []) do
-    user
-    |> cast(attrs, [:password])
-    |> validate_confirmation(:password, message: "does not match password")
-    |> validate_password(opts)
   end
 
   defp validate_password(changeset, opts) do

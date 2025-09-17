@@ -167,6 +167,17 @@ defmodule Shard.Users do
     |> update_user_and_delete_all_tokens()
   end
 
+  ## Admin functionality
+
+  @doc """
+  Grants admin privileges to a user.
+  """
+  def grant_admin(user) do
+    user
+    |> User.admin_changeset(%{admin: true})
+    |> Repo.update()
+  end
+
   ## Session
 
   @doc """

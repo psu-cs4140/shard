@@ -1,0 +1,70 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="mx-auto max-w-4xl">
+    <.header>
+      Admin Dashboard
+      <:subtitle>Manage your application settings and users</:subtitle>
+    </.header>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title">User Management</h2>
+          <p>View and manage all registered users</p>
+          <div class="card-actions justify-end">
+            <.link href="#" class="btn btn-primary">Manage Users</.link>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title">Content Management</h2>
+          <p>Manage site content and pages</p>
+          <div class="card-actions justify-end">
+            <.link href="#" class="btn btn-primary">Manage Content</.link>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title">System Settings</h2>
+          <p>Configure application settings</p>
+          <div class="card-actions justify-end">
+            <.link href="#" class="btn btn-primary">System Settings</.link>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title">Reports</h2>
+          <p>View system reports and analytics</p>
+          <div class="card-actions justify-end">
+            <.link href="#" class="btn btn-primary">View Reports</.link>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title">Logs</h2>
+          <p>Access system logs and error reports</p>
+          <div class="card-actions justify-end">
+            <.link href="#" class="btn btn-primary">View Logs</.link>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title">Permissions</h2>
+          <p>Manage user roles and permissions</p>
+          <div class="card-actions justify-end">
+            <.link href="#" class="btn btn-primary">Manage Permissions</.link>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layouts.app>

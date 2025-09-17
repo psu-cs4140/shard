@@ -50,6 +50,9 @@ defmodule ShardWeb.Layouts do
           <li>
             <a href="https://github.com/phoenixframework/phoenix" class="btn btn-ghost">GitHub</a>
           </li>
+          <li :if={@current_scope && @current_scope.user && @current_scope.user.admin}>
+            <.link href={~p"/admin"} class="btn btn-ghost">Admin</.link>
+          </li>
           <li>
             <.theme_toggle />
           </li>

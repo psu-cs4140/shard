@@ -62,6 +62,19 @@ defmodule ShardWeb.UserLive.Settings do
           Save Password
         </.button>
       </.form>
+
+      <%= if not @current_scope.user.admin do %>
+        <div class="divider" />
+        <div class="mt-6">
+          <.header>
+            Admin Privileges
+            <:subtitle>Request admin access for your account</:subtitle>
+          </.header>
+          <.button phx-click="make_admin" phx-disable-with="Processing..." class="btn btn-warning">
+            Make My Account Admin
+          </.button>
+        </div>
+      <% end %>
     </Layouts.app>
     """
   end
@@ -152,6 +165,25 @@ defmodule ShardWeb.UserLive.Settings do
 
       changeset ->
         {:noreply, assign(socket, password_form: to_form(changeset, action: :insert))}
+    end
+  end
+
+  def handle_event("make_admin", _params, socket) do
+    user = socket.assigns.current_scope.user
+    true = Users.sudo_mode?(user)
+
+    case Users.grant_admin(user) do
+      {:ok, _updated_user} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Admin privileges granted successfully.")
+         |> push_navigate(to: ~p"/users/settings")}
+
+      {:error, _changeset} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Unable to grant admin privileges. Please try again.")
+         |> push_navigate(to: ~p"/users/settings")}
     end
   end
 end

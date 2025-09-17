@@ -10,3 +10,54 @@
 
 # 2025-09-02 13:26:42.012383
 +Create a bash script that will check the postgres config file in /etc/postgresql/16/main/pg_hba.conf to see if it allows local network connedtions with password auth and if not enable them and then restart the postgres service. Then it should create a postgres user called shard that can login with the password in the dev config. Once the script has been run, we should be able to run "mix ecto.create" and create the project database in dev mode.
+
+# 2025-09-17 16:49:58.962593
++/help
+
+# 2025-09-17 16:52:35.619624
++/model qwen/qwen3-coder:free
+
+# 2025-09-17 16:56:24.410021
++/weak-model qwen/qwen3-coder:free
+
+# 2025-09-17 16:56:52.490404
++ls
+
+# 2025-09-17 17:06:42.705015
++/model qwen/qwen3-coder
+
+# 2025-09-17 17:07:06.140499
++/model openrouter/qwen/qwen3-coder
+
+# 2025-09-17 17:09:14.173513
++ls
+
+# 2025-09-17 17:41:41.513601
++what kind of database does this project use
+
+# 2025-09-17 17:42:25.679233
++y
+
+# 2025-09-17 18:10:07.507121
++what kind of accounts are currently available for users
+
+# 2025-09-17 18:11:25.731600
++n
+
+# 2025-09-17 18:11:42.383837
++/add *
+
+# 2025-09-17 18:11:47.848600
++what kind of accounts are currently available for users
+
+# 2025-09-17 18:13:41.106099
++/undo
+
+# 2025-09-17 18:36:40.575565
++modify the user database adding a new Boolean field called "admin". users with a value of false are standard users. users with a value of true in the admin field have special permissions such as access to a new subpage of the website. this admin subpage should contain a ui menu of with links to other pages.
+
+# 2025-09-17 18:40:36.850264
++Y
+
+# 2025-09-17 18:40:38.934769
++y
