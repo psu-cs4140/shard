@@ -54,9 +54,22 @@ defmodule ShardWeb.Router do
       on_mount: [{ShardWeb.UserAuth, :require_authenticated}] do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
+      live "/characters/new", CharacterLive.New, :new
     end
 
     post "/users/update-password", UserSessionController, :update_password
+  end
+
+  scope "/admin", ShardWeb do
+    pipe_through [:browser, :require_authenticated_user]
+
+    live_session :require_admin,
+      on_mount: [{ShardWeb.UserAuth, :require_authenticated}] do
+      live "/characters", AdminLive.Characters, :index
+      live "/characters/new", AdminLive.Characters, :new
+      live "/characters/:id", AdminLive.Characters, :show
+      live "/characters/:id/edit", AdminLive.Characters, :edit
+    end
   end
 
   scope "/", ShardWeb do
