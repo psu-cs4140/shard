@@ -1,3 +1,30 @@
 <Layouts.flash_group flash={@flash} />
 
-<h1>Welcome to Shard</h1>
+<div class="hero min-h-screen bg-base-200">
+  <div class="hero-content text-center">
+    <div class="max-w-md">
+      <h1 class="text-5xl font-bold">Welcome to Shard</h1>
+      <p class="py-6">Create and manage your characters for epic adventures in the realm.</p>
+      
+      <%= if assigns[:current_scope] && @current_scope.user do %>
+        <div class="space-y-4">
+          <.button navigate={~p"/characters"} class="btn-lg">
+            View My Characters
+          </.button>
+          <.button navigate={~p"/characters/new"} variant="primary" class="btn-lg">
+            Create New Character
+          </.button>
+        </div>
+      <% else %>
+        <div class="space-y-4">
+          <.button navigate={~p"/users/register"} variant="primary" class="btn-lg">
+            Get Started
+          </.button>
+          <.button navigate={~p"/users/log-in"} class="btn-lg">
+            Log In
+          </.button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
