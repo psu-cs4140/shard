@@ -23,6 +23,13 @@ defmodule ShardWeb.Router do
     get "/", PageController, :home
   end
 
+  # Admin routes
+  scope "/admin", ShardWeb do
+    pipe_through [:browser, :require_authenticated_user]
+
+    get "/", AdminController, :index
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", ShardWeb do
   #   pipe_through :api
