@@ -21,7 +21,7 @@ defmodule ShardWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-    live "/game", MudGameLive
+    live "/play", MudGameLive
   end
 
   # Other scopes may use custom stacks.
