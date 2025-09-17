@@ -1,0 +1,19 @@
+# User Service
+#  - loginctl enable-linger
+#  - This goes in ~/.config/systemd/user/shard.service
+#  - systemctl --user enable shard
+#  - systemctl --user start shard
+
+[Unit]
+Description=Shard
+
+[Service]
+Type=simple
+Restart=on-failure
+Environment=LANG=en_US.UTF-8
+
+WorkingDirectory=/home/shard/shard
+ExecStart=bash /home/shard/shard/scripts/start.sh
+
+[Install]
+WantedBy=default.target
