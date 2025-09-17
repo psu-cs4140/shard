@@ -61,6 +61,7 @@ defmodule ShardWeb.Router do
       on_mount: [{ShardWeb.UserAuth, :require_authenticated}] do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
+      live "/characters", CharacterLive.Index, :index
       live "/characters/new", CharacterLive.New, :new
     end
 

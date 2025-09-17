@@ -1,0 +1,40 @@
+<.header>
+  My Characters
+  <:actions>
+    <.link patch={~p"/characters/new"}>
+      <.button>New Character</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<div class="mt-8">
+  <%= if @characters == [] do %>
+    <div class="text-center py-12">
+      <p class="text-gray-500 text-lg">You don't have any characters yet.</p>
+      <.link patch={~p"/characters/new"} class="mt-4 inline-block">
+        <.button>Create Your First Character</.button>
+      </.link>
+    </div>
+  <% else %>
+    <.list>
+      <:item :for={character <- @characters} title={character.name}>
+        <div class="text-sm text-gray-600">
+          <p><strong>Level:</strong> <%= character.level || "N/A" %></p>
+          <p><strong>Class:</strong> <%= character.class || "N/A" %></p>
+          <p><strong>Race:</strong> <%= character.race || "N/A" %></p>
+          <%= if character.description do %>
+            <p class="mt-2"><strong>Description:</strong> <%= character.description %></p>
+          <% end %>
+        </div>
+        <div class="mt-2 flex gap-2">
+          <.link navigate={~p"/characters/#{character.id}"} class="text-blue-600 hover:text-blue-800">
+            View
+          </.link>
+          <.link navigate={~p"/characters/#{character.id}/edit"} class="text-green-600 hover:text-green-800">
+            Edit
+          </.link>
+        </div>
+      </:item>
+    </.list>
+  <% end %>
+</div>
