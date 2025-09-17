@@ -5,7 +5,7 @@ defmodule ShardWeb.CharacterLive.Index do
 
   @impl true
   def mount(_params, _session, socket) do
-    user = socket.assigns.current_user
+    user = socket.assigns.current_scope.user
     characters = Characters.get_characters_by_user(user.id)
     
     {:ok, assign(socket, :characters, characters)}
