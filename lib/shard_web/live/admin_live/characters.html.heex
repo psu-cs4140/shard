@@ -1,6 +1,5 @@
 <.header>
-  Characters
-  <:subtitle>Manage MUD game characters</:subtitle>
+  <%= @page_title %>
   <:actions>
     <.link patch={~p"/admin/characters/new"}>
       <.button>New Character</.button>
@@ -8,135 +7,141 @@
   </:actions>
 </.header>
 
-<.table
-  id="characters"
-  rows={@streams.characters}
-  row_click={fn {_id, character} -> JS.navigate(~p"/admin/characters/#{character}") end}
->
-  <:col :let={{_id, character}} label="Name"><%= character.name %></:col>
-  <:col :let={{_id, character}} label="Level"><%= character.level %></:col>
-  <:col :let={{_id, character}} label="Class"><%= character.class %></:col>
-  <:col :let={{_id, character}} label="Race"><%= character.race %></:col>
-  <:col :let={{_id, character}} label="User"><%= if character.user, do: character.user.email, else: "No User" %></:col>
-  <:col :let={{_id, character}} label="Active">
-    <span class={["badge", if(character.is_active, do: "badge-success", else: "badge-error")]}>
-      <%= if character.is_active, do: "Active", else: "Inactive" %>
-    </span>
-  </:col>
-  <:action :let={{_id, character}}>
-    <div class="sr-only">
-      <.link navigate={~p"/admin/characters/#{character}"}>Show</.link>
+<div class="mt-8">
+  <%= if @live_action in [:new, :edit] do %>
+    <div class="mb-8 p-6 bg-gray-50 rounded-lg">
+      <.simple_form
+        for={@form}
+        id="character-form"
+        phx-change="validate"
+        phx-submit="save"
+      >
+        <.input field={@form[:name]} type="text" label="Character Name" required />
+        <.input field={@form[:user_id]} type="number" label="User ID" required />
+        <.input field={@form[:level]} type="number" label="Level" />
+        <.input
+          field={@form[:class]}
+          type="select"
+          label="Class"
+          prompt="Choose a class"
+          options={[
+            {"Warrior", "warrior"},
+            {"Mage", "mage"},
+            {"Rogue", "rogue"},
+            {"Cleric", "cleric"},
+            {"Ranger", "ranger"}
+          ]}
+          required
+        />
+        <.input
+          field={@form[:race]}
+          type="select"
+          label="Race"
+          prompt="Choose a race"
+          options={[
+            {"Human", "human"},
+            {"Elf", "elf"},
+            {"Dwarf", "dwarf"},
+            {"Halfling", "halfling"},
+            {"Orc", "orc"}
+          ]}
+          required
+        />
+        <.input field={@form[:health]} type="number" label="Health" />
+        <.input field={@form[:mana]} type="number" label="Mana" />
+        <.input field={@form[:strength]} type="number" label="Strength" />
+        <.input field={@form[:dexterity]} type="number" label="Dexterity" />
+        <.input field={@form[:intelligence]} type="number" label="Intelligence" />
+        <.input field={@form[:constitution]} type="number" label="Constitution" />
+        <.input field={@form[:experience]} type="number" label="Experience" />
+        <.input field={@form[:gold]} type="number" label="Gold" />
+        <.input field={@form[:location]} type="text" label="Location" />
+        <.input field={@form[:description]} type="textarea" label="Description" />
+        <.input field={@form[:is_active]} type="checkbox" label="Active" />
+
+        <:actions>
+          <.button phx-disable-with="Saving..." class="w-full">
+            <%= if @live_action == :edit, do: "Update Character", else: "Create Character" %>
+          </.button>
+          <.link patch={~p"/admin/characters"} class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700">
+            Cancel
+          </.link>
+        </:actions>
+      </.simple_form>
     </div>
-    <.link patch={~p"/admin/characters/#{character}/edit"}>Edit</.link>
-  </:action>
-  <:action :let={{id, character}}>
-    <.link
-      phx-click={JS.push("delete", value: %{id: character.id}) |> hide("##{id}")}
-      data-confirm="Are you sure?"
-    >
-      Delete
-    </.link>
-  </:action>
-</.table>
+  <% end %>
 
-<div :if={@live_action in [:new, :edit]} class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-  <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
-    <div class="p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold"><%= @page_title %></h2>
-        <button phx-click={JS.patch(~p"/admin/characters")} class="text-gray-500 hover:text-gray-700">
-          <span class="sr-only">Close</span>
-          ✕
-        </button>
+  <%= if @live_action == :show do %>
+    <div class="mb-8 p-6 bg-gray-50 rounded-lg">
+      <h3 class="text-lg font-semibold mb-4"><%= @character.name %></h3>
+      <div class="grid grid-cols-2 gap-4 text-sm">
+        <div><strong>Owner:</strong> <%= @character.user.email %></div>
+        <div><strong>Level:</strong> <%= @character.level %></div>
+        <div><strong>Class:</strong> <%= @character.class %></div>
+        <div><strong>Race:</strong> <%= @character.race %></div>
+        <div><strong>Health:</strong> <%= @character.health %></div>
+        <div><strong>Mana:</strong> <%= @character.mana %></div>
+        <div><strong>Strength:</strong> <%= @character.strength %></div>
+        <div><strong>Dexterity:</strong> <%= @character.dexterity %></div>
+        <div><strong>Intelligence:</strong> <%= @character.intelligence %></div>
+        <div><strong>Constitution:</strong> <%= @character.constitution %></div>
+        <div><strong>Experience:</strong> <%= @character.experience %></div>
+        <div><strong>Gold:</strong> <%= @character.gold %></div>
+        <div><strong>Location:</strong> <%= @character.location %></div>
+        <div><strong>Active:</strong> <%= if @character.is_active, do: "Yes", else: "No" %></div>
       </div>
-      <.live_component
-        module={ShardWeb.AdminLive.CharacterFormComponent}
-        id={@character.id || :new}
-        title={@page_title}
-        action={@live_action}
-        character={@character}
-        patch={~p"/admin/characters"}
-      />
-    </div>
-  </div>
-</div>
-
-<div :if={@live_action == :show} class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-  <div class="bg-white rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-screen overflow-y-auto">
-    <div class="p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Character Details</h2>
-        <button phx-click={JS.patch(~p"/admin/characters")} class="text-gray-500 hover:text-gray-700">
-          <span class="sr-only">Close</span>
-          ✕
-        </button>
-      </div>
-      <div class="space-y-4">
-        <.header>
-          <%= @character.name %>
-          <:subtitle>Character Details</:subtitle>
-          <:actions>
-            <.link patch={~p"/admin/characters/#{@character}/edit"} phx-click={JS.push_focus()}>
-              <.button>Edit character</.button>
-            </.link>
-          </:actions>
-        </.header>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <strong>Level:</strong> <%= @character.level %>
-          </div>
-          <div>
-            <strong>Class:</strong> <%= @character.class %>
-          </div>
-          <div>
-            <strong>Race:</strong> <%= @character.race %>
-          </div>
-          <div>
-            <strong>Health:</strong> <%= @character.health %>
-          </div>
-          <div>
-            <strong>Mana:</strong> <%= @character.mana %>
-          </div>
-          <div>
-            <strong>Strength:</strong> <%= @character.strength %>
-          </div>
-          <div>
-            <strong>Dexterity:</strong> <%= @character.dexterity %>
-          </div>
-          <div>
-            <strong>Intelligence:</strong> <%= @character.intelligence %>
-          </div>
-          <div>
-            <strong>Constitution:</strong> <%= @character.constitution %>
-          </div>
-          <div>
-            <strong>Experience:</strong> <%= @character.experience %>
-          </div>
-          <div>
-            <strong>Gold:</strong> <%= @character.gold %>
-          </div>
-          <div>
-            <strong>Location:</strong> <%= @character.location %>
-          </div>
-        </div>
-
-        <div :if={@character.description}>
+      <%= if @character.description do %>
+        <div class="mt-4">
           <strong>Description:</strong>
-          <p class="mt-2"><%= @character.description %></p>
+          <p class="mt-1"><%= @character.description %></p>
         </div>
-
-        <div>
-          <strong>User:</strong> <%= if @character.user, do: @character.user.email, else: "No User" %>
-        </div>
-
-        <div>
-          <strong>Status:</strong>
-          <span class={["badge", if(@character.is_active, do: "badge-success", else: "badge-error")]}>
-            <%= if @character.is_active, do: "Active", else: "Inactive" %>
-          </span>
-        </div>
+      <% end %>
+      <div class="mt-4 flex gap-2">
+        <.link patch={~p"/admin/characters/#{@character.id}/edit"}>
+          <.button>Edit</.button>
+        </.link>
+        <.link patch={~p"/admin/characters"} class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700">
+          Back to List
+        </.link>
       </div>
     </div>
-  </div>
+  <% end %>
+
+  <%= if @characters == [] do %>
+    <div class="text-center py-12">
+      <p class="text-gray-500 text-lg">No characters found.</p>
+    </div>
+  <% else %>
+    <.table id="characters" rows={@characters}>
+      <:col :let={character} label="Name"><%= character.name %></:col>
+      <:col :let={character} label="Owner"><%= character.user.email %></:col>
+      <:col :let={character} label="Level"><%= character.level %></:col>
+      <:col :let={character} label="Class"><%= character.class %></:col>
+      <:col :let={character} label="Race"><%= character.race %></:col>
+      <:col :let={character} label="Active">
+        <%= if character.is_active, do: "Yes", else: "No" %>
+      </:col>
+      <:col :let={character} label="Created">
+        <%= Calendar.strftime(character.inserted_at, "%Y-%m-%d") %>
+      </:col>
+      <:action :let={character}>
+        <div class="sr-only">
+          <.link navigate={~p"/admin/characters/#{character.id}"}>Show</.link>
+        </div>
+        <.link patch={~p"/admin/characters/#{character.id}"}>View</.link>
+      </:action>
+      <:action :let={character}>
+        <.link patch={~p"/admin/characters/#{character.id}/edit"}>Edit</.link>
+      </:action>
+      <:action :let={character}>
+        <.link
+          phx-click="delete"
+          phx-value-id={character.id}
+          data-confirm="Are you sure you want to delete this character?"
+        >
+          Delete
+        </.link>
+      </:action>
+    </.table>
+  <% end %>
 </div>
