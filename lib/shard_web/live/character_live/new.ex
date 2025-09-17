@@ -4,6 +4,8 @@ defmodule ShardWeb.CharacterLive.New do
   alias Shard.Characters
   alias Shard.Characters.Character
 
+  import ShardWeb.CoreComponents
+
   @impl true
   def mount(_params, _session, socket) do
     changeset = Characters.change_character(%Character{})
