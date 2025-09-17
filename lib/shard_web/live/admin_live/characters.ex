@@ -1,5 +1,6 @@
 defmodule ShardWeb.AdminLive.Characters do
   use ShardWeb, :live_view
+  import Ecto.Query
 
   alias Shard.Characters
   alias Shard.Characters.Character
@@ -84,7 +85,7 @@ defmodule ShardWeb.AdminLive.Characters do
 
   defp save_character(socket, :edit, character_params) do
     case Characters.update_character(socket.assigns.character, character_params) do
-      {:ok, character} ->
+      {:ok, _character} ->
         characters = list_all_characters()
         
         {:noreply,
@@ -100,7 +101,7 @@ defmodule ShardWeb.AdminLive.Characters do
 
   defp save_character(socket, :new, character_params) do
     case Characters.create_character(character_params) do
-      {:ok, character} ->
+      {:ok, _character} ->
         characters = list_all_characters()
         
         {:noreply,
@@ -115,7 +116,7 @@ defmodule ShardWeb.AdminLive.Characters do
   end
 
   defp list_all_characters do
-    from(c in Character, 
+    from(c in Character,
          join: u in assoc(c, :user),
          select: %{c | user: u},
          order_by: [desc: c.inserted_at])
