@@ -13,7 +13,7 @@ defmodule ShardWeb.AdminLive.CharacterFormComponent do
         <:subtitle>Use this form to manage character records in your database.</:subtitle>
       </.header>
 
-      <.simple_form
+      <.form
         for={@form}
         id="character-form"
         phx-target={@myself}
@@ -69,7 +69,7 @@ defmodule ShardWeb.AdminLive.CharacterFormComponent do
         <:actions>
           <.button phx-disable-with="Saving...">Save Character</.button>
         </:actions>
-      </.simple_form>
+      </.form>
     </div>
     """
   end
