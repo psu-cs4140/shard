@@ -1,0 +1,29 @@
+upstream shard {
+	server localhost:4242;
+}
+
+server {
+
+	server_name shard.homework.quest;
+
+	location / {
+		proxy_pass http://shard;
+	}
+
+	location /socket {
+		proxy_pass http://nembot;
+		proxy_http_version 1.1;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection "upgrade";
+	}
+
+	location /live {
+		proxy_pass http://nembot;
+		proxy_http_version 1.1;
+		proxy_set_header Upgrade $http_upgrade;
+		proxy_set_header Connection "upgrade";
+	}
+
+    listen [::]:80;
+    listen 80;
+}
