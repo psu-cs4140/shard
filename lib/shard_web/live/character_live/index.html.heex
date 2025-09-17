@@ -1,6 +1,11 @@
 <.header>
   My Characters
   <:actions>
+    <%= if @current_scope.user.admin do %>
+      <.link navigate={~p"/admin/characters"}>
+        <.button>View All Characters</.button>
+      </.link>
+    <% end %>
     <.link patch={~p"/characters/new"}>
       <.button>New Character</.button>
     </.link>
