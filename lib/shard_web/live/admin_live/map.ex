@@ -594,7 +594,7 @@ defmodule ShardWeb.AdminLive.Map do
         </div>
       <% else %>
         <div 
-          class="relative overflow-hidden border border-base-300 rounded bg-white cursor-move"
+          class="relative overflow-hidden border border-base-300 rounded bg-base-100 cursor-move"
           style={"height: 600px; transform: scale(#{@zoom}); transform-origin: 0 0;"}
           id="map-container"
           phx-hook="MapDrag"
@@ -628,7 +628,7 @@ defmodule ShardWeb.AdminLive.Map do
           </div>
         </div>
         
-        <div class="mt-4 text-sm text-gray-600">
+        <div class="mt-4 text-sm text-base-content">
           <p>Zoom: <%= Float.round(@zoom, 2) %>x | Pan: (<%= @pan_x %>, <%= @pan_y %>)</p>
           <p class="mt-2">Rooms: <%= Enum.count(@rooms) %> | Doors: <%= Enum.count(@doors) %></p>
         </div>
@@ -754,9 +754,10 @@ defmodule ShardWeb.AdminLive.Map do
         y1={@from_y} 
         x2={@to_x} 
         y2={@to_y} 
-        stroke="#4b5563" 
+        stroke="currentColor" 
         stroke-width="2" 
-        stroke-dasharray="5,5" />
+        stroke-dasharray="5,5"
+        class="text-base-content/30" />
     </svg>
     """
   end
@@ -765,14 +766,16 @@ defmodule ShardWeb.AdminLive.Map do
     base_classes = "flex flex-col items-center justify-center text-xs"
     
     type_classes = case room.room_type do
-      "safe_zone" -> "bg-green-200 border-green-600"
-      "shop" -> "bg-blue-200 border-blue-600"
-      "dungeon" -> "bg-red-200 border-red-600"
-      "treasure_room" -> "bg-yellow-200 border-yellow-600"
-      "trap_room" -> "bg-pink-200 border-pink-600"
-      _ -> "bg-gray-200 border-gray-600"
+      "safe_zone" -> "bg-green-200 border-green-600 dark:bg-green-900/30 dark:border-green-500"
+      "shop" -> "bg-blue-200 border-blue-600 dark:bg-blue-900/30 dark:border-blue-500"
+      "dungeon" -> "bg-red-200 border-red-600 dark:bg-red-900/30 dark:border-red-500"
+      "treasure_room" -> "bg-yellow-200 border-yellow-600 dark:bg-yellow-900/30 dark:border-yellow-500"
+      "trap_room" -> "bg-pink-200 border-pink-600 dark:bg-pink-900/30 dark:border-pink-500"
+      _ -> "bg-gray-200 border-gray-600 dark:bg-gray-700/30 dark:border-gray-500"
     end
     
-    "#{base_classes} #{type_classes}"
+    text_classes = "text-gray-800 dark:text-gray-200"
+    
+    "#{base_classes} #{type_classes} #{text_classes}"
   end
 end
