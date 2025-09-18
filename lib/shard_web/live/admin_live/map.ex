@@ -17,6 +17,7 @@ defmodule ShardWeb.AdminLive.Map do
      |> assign(:tab, "rooms")
      |> assign(:changeset, nil)
      |> assign(:editing, nil)
+     |> assign(:viewing, nil)
      |> assign(:zoom, 1.0)
      |> assign(:pan_x, 0)
      |> assign(:pan_y, 0)
@@ -48,6 +49,19 @@ defmodule ShardWeb.AdminLive.Map do
     room = Map.get_room!(id)
     changeset = Map.change_room(room)
     {:noreply, assign(socket, :changeset, changeset) |> assign(:editing, :room)}
+  end
+
+  def handle_event("view_room", %{"id" => id}, socket) do
+    room = Map.get_room!(id)
+    doors_from = Map.get_doors_from_room(room.id)
+    doors_to = Map.get_doors_to_room(room.id)
+    
+    {:noreply, 
+     socket
+     |> assign(:viewing, room)
+     |> assign(:doors_from, doors_from)
+     |> assign(:doors_to, doors_to)
+     |> assign(:tab, "room_details")}
   end
 
   def handle_event("delete_room", %{"id" => id}, socket) do
@@ -83,8 +97,26 @@ defmodule ShardWeb.AdminLive.Map do
     end
   end
 
+  def handle_event("apply_and_save", %{"room" => room_params}, socket) do
+    case Map.update_room(socket.assigns.viewing, room_params) do
+      {:ok, updated_room} ->
+        rooms = Map.list_rooms()
+        {:noreply, 
+         socket
+         |> assign(:rooms, rooms)
+         |> assign(:viewing, updated_room)
+         |> put_flash(:info, "Room updated successfully")}
+      {:error, changeset} ->
+        {:noreply, assign(socket, :changeset, changeset)}
+    end
+  end
+
   def handle_event("cancel_room", _params, socket) do
     {:noreply, assign(socket, :editing, nil) |> assign(:changeset, nil)}
+  end
+
+  def handle_event("back_to_rooms", _params, socket) do
+    {:noreply, assign(socket, :tab, "rooms")}
   end
 
   # Door events
@@ -330,6 +362,13 @@ defmodule ShardWeb.AdminLive.Map do
           >
             Map Visualization
           </button>
+          <button 
+            type="button" 
+            class={["tab", @tab == "room_details" && "tab-active"]}
+            :if={@tab == "room_details"}
+          >
+            Room Details
+          </button>
         </div>
         
         <button 
@@ -355,6 +394,8 @@ defmodule ShardWeb.AdminLive.Map do
               pan_x={@pan_x} 
               pan_y={@pan_y} 
             />
+          <% "room_details" -> %>
+            <.room_details_tab room={@viewing} doors_from={@doors_from} doors_to={@doors_to} />
         <% end %>
       </div>
     </div>
@@ -476,6 +517,7 @@ defmodule ShardWeb.AdminLive.Map do
                 <td><%= room.room_type %></td>
                 <td><%= if room.is_public, do: "Yes", else: "No" %></td>
                 <td class="flex space-x-2">
+                  <.button phx-click="view_room" phx-value-id={room.id} class="btn btn-sm btn-info">View</.button>
                   <.button phx-click="edit_room" phx-value-id={room.id} class="btn btn-sm btn-primary">Edit</.button>
                   <.button phx-click="delete_room" phx-value-id={room.id} class="btn btn-sm btn-error" data-confirm="Are you sure?">Delete</.button>
                 </td>
@@ -591,6 +633,100 @@ defmodule ShardWeb.AdminLive.Map do
           <p class="mt-2">Rooms: <%= Enum.count(@rooms) %> | Doors: <%= Enum.count(@doors) %></p>
         </div>
       <% end %>
+    </div>
+    """
+  end
+
+  defp room_details_tab(assigns) do
+    ~H"""
+    <div class="bg-base-200 p-6 rounded-lg">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold">Room Details: <%= @room.name %></h3>
+        <.button phx-click="back_to_rooms" class="btn btn-secondary">Back to Rooms</.button>
+      </div>
+      
+      <.simple_form
+        for={Map.change_room(@room)}
+        id="room-details-form"
+        phx-submit="apply_and_save"
+      >
+        <.input field={Map.change_room(@room)[:name]} type="text" label="Name" required />
+        <.input field={Map.change_room(@room)[:description]} type="textarea" label="Description" />
+        <div class="grid grid-cols-3 gap-4">
+          <.input field={Map.change_room(@room)[:x_coordinate]} type="number" label="X Coordinate" />
+          <.input field={Map.change_room(@room)[:y_coordinate]} type="number" label="Y Coordinate" />
+          <.input field={Map.change_room(@room)[:z_coordinate]} type="number" label="Z Coordinate" />
+        </div>
+        <.input field={Map.change_room(@room)[:room_type]} type="select" label="Type" prompt="Choose a type" options={[
+          {"Standard", "standard"},
+          {"Safe Zone", "safe_zone"},
+          {"Shop", "shop"},
+          {"Dungeon", "dungeon"},
+          {"Treasure Room", "treasure_room"},
+          {"Trap Room", "trap_room"}
+        ]} />
+        <.input field={Map.change_room(@room)[:is_public]} type="checkbox" label="Public Room" />
+        
+        <div class="mt-6">
+          <h4 class="text-lg font-bold mb-2">Doors Leading From This Room</h4>
+          <%= if Enum.empty?(@doors_from) do %>
+            <p class="text-gray-500">No doors lead from this room.</p>
+          <% else %>
+            <table class="table table-zebra">
+              <thead>
+                <tr>
+                  <th>To Room</th>
+                  <th>Direction</th>
+                  <th>Type</th>
+                  <th>Locked</th>
+                </tr>
+              </thead>
+              <tbody>
+                <%= for door <- @doors_from do %>
+                  <tr>
+                    <td><%= door.to_room.name %></td>
+                    <td><%= door.direction %></td>
+                    <td><%= door.door_type %></td>
+                    <td><%= if door.is_locked, do: "Yes", else: "No" %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% end %>
+        </div>
+        
+        <div class="mt-6">
+          <h4 class="text-lg font-bold mb-2">Doors Leading To This Room</h4>
+          <%= if Enum.empty?(@doors_to) do %>
+            <p class="text-gray-500">No doors lead to this room.</p>
+          <% else %>
+            <table class="table table-zebra">
+              <thead>
+                <tr>
+                  <th>From Room</th>
+                  <th>Direction</th>
+                  <th>Type</th>
+                  <th>Locked</th>
+                </tr>
+              </thead>
+              <tbody>
+                <%= for door <- @doors_to do %>
+                  <tr>
+                    <td><%= door.from_room.name %></td>
+                    <td><%= door.direction %></td>
+                    <td><%= door.door_type %></td>
+                    <td><%= if door.is_locked, do: "Yes", else: "No" %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% end %>
+        </div>
+        
+        <:actions>
+          <.button phx-disable-with="Saving..." class="btn btn-primary">Apply and Save</.button>
+        </:actions>
+      </.simple_form>
     </div>
     """
   end
