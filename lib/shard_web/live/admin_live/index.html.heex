@@ -1,0 +1,40 @@
+<.header>
+  Admin Dashboard
+  <:subtitle>Administrative tools and management</:subtitle>
+</.header>
+
+<div class="mt-8">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title">Character Management</h2>
+        <p>View, edit, and manage all characters across the system.</p>
+        <div class="card-actions justify-end">
+          <.link navigate={~p"/admin/characters"}>
+            <.button>View All Characters</.button>
+          </.link>
+        </div>
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title">User Management</h2>
+        <p>Manage user accounts and permissions.</p>
+        <div class="card-actions justify-end">
+          <.button disabled>Coming Soon</.button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title">System Settings</h2>
+        <p>Configure system-wide settings and preferences.</p>
+        <div class="card-actions justify-end">
+          <.button disabled>Coming Soon</.button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
