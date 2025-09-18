@@ -36,6 +36,7 @@ defmodule ShardWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    live "/play", MudGameLive
   end
 
   # Admin routes
