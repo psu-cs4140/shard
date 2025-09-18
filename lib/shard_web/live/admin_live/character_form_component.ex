@@ -13,7 +13,7 @@ defmodule ShardWeb.AdminLive.CharacterFormComponent do
         <:subtitle>Use this form to manage character records in your database.</:subtitle>
       </.header>
 
-      <.form
+      <.simple_form
         for={@form}
         id="character-form"
         phx-target={@myself}
@@ -69,7 +69,7 @@ defmodule ShardWeb.AdminLive.CharacterFormComponent do
         <:actions>
           <.button phx-disable-with="Saving...">Save Character</.button>
         </:actions>
-      </.form>
+      </.simple_form>
     </div>
     """
   end
@@ -137,7 +137,7 @@ defmodule ShardWeb.AdminLive.CharacterFormComponent do
   defp notify_parent(msg), do: send(self(), {__MODULE__, msg})
 
   defp get_user_options do
-    Users.list_users()
+    Users.list()
     |> Enum.map(&{&1.email, &1.id})
   end
 end
