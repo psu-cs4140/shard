@@ -562,6 +562,15 @@ defmodule ShardWeb.AdminLive.Map do
             style={"transform: translate(#{@pan_x}px, #{@pan_y}px);"}
             id="map-content"
           >
+            <!-- Render connections between rooms (doors) -->
+            <%= for door <- @doors do %>
+              <% from_room = Enum.find(@rooms, &(&1.id == door.from_room_id)) %>
+              <% to_room = Enum.find(@rooms, &(&1.id == door.to_room_id)) %>
+              <%= if from_room && to_room do %>
+                <.door_connection from={from_room} to={to_room} />
+              <% end %>
+            <% end %>
+            
             <!-- Render rooms as squares -->
             <%= for room <- @rooms do %>
               <div 
@@ -573,15 +582,6 @@ defmodule ShardWeb.AdminLive.Map do
                   <div class="text-xs mt-1">(<%= room.x_coordinate %>, <%= room.y_coordinate %>)</div>
                 </div>
               </div>
-            <% end %>
-            
-            <!-- Render connections between rooms (doors) -->
-            <%= for door <- @doors do %>
-              <% from_room = Enum.find(@rooms, &(&1.id == door.from_room_id)) %>
-              <% to_room = Enum.find(@rooms, &(&1.id == door.to_room_id)) %>
-              <%= if from_room && to_room do %>
-                <.door_connection from={from_room} to={to_room} direction={door.direction} />
-              <% end %>
             <% end %>
           </div>
         </div>
@@ -596,9 +596,24 @@ defmodule ShardWeb.AdminLive.Map do
   end
 
   defp door_connection(assigns) do
-    # This is a simplified representation of door connections
-    # In a real implementation, you might want to draw lines between rooms
-    ~H""
+    # Calculate center positions of rooms
+    from_x = assigns.from.x_coordinate * 100 + 40
+    from_y = assigns.from.y_coordinate * 100 + 40
+    to_x = assigns.to.x_coordinate * 100 + 40
+    to_y = assigns.to.y_coordinate * 100 + 40
+    
+    ~H"""
+    <svg class="absolute inset-0 w-full h-full pointer-events-none">
+      <line 
+        x1={from_x} 
+        y1={from_y} 
+        x2={to_x} 
+        y2={to_y} 
+        stroke="#4b5563" 
+        stroke-width="2" 
+        stroke-dasharray="5,5" />
+    </svg>
+    """
   end
 
   defp room_classes(room) do
