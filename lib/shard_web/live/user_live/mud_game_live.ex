@@ -392,26 +392,46 @@ defmodule ShardWeb.MudGameLive do
 
             <div class="mt-6">
               <h4 class="text-lg font-semibold mb-2">Map Legend</h4>
-              <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <!-- Room Types -->
                 <div class="flex items-center">
-                  <div class="w-4 h-4 bg-green-700 mr-2"></div>
-                  <span class="text-sm">Floor</span>
+                  <div class="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
+                  <span class="text-sm">Rooms</span>
                 </div>
                 <div class="flex items-center">
-                  <div class="w-4 h-4 bg-gray-900 mr-2"></div>
-                  <span class="text-sm">Wall</span>
-                </div>
-                <div class="flex items-center">
-                  <div class="w-4 h-4 bg-blue-600 mr-2"></div>
-                  <span class="text-sm">Water</span>
-                </div>
-                <div class="flex items-center">
-                  <div class="w-4 h-4 bg-yellow-600 mr-2"></div>
-                  <span class="text-sm">Treasure</span>
-                </div>
-                <div class="flex items-center">
-                  <div class="w-4 h-4 bg-red-500 ring-2 ring-red-300 mr-2"></div>
+                  <div class="w-4 h-4 bg-red-500 ring-2 ring-red-300 rounded-full mr-2"></div>
                   <span class="text-sm">Player</span>
+                </div>
+                
+                <!-- Door Types -->
+                <div class="col-span-2 md:col-span-3 mt-2">
+                  <h5 class="text-sm font-semibold mb-1">Door Types:</h5>
+                  <div class="grid grid-cols-2 md:grid-cols-3 gap-1 text-xs">
+                    <div class="flex items-center">
+                      <div class="w-3 h-0.5 bg-green-500 mr-1"></div>
+                      <span>Standard</span>
+                    </div>
+                    <div class="flex items-center">
+                      <div class="w-3 h-0.5 bg-orange-500 mr-1"></div>
+                      <span>Gate</span>
+                    </div>
+                    <div class="flex items-center">
+                      <div class="w-3 h-0.5 bg-purple-500 mr-1"></div>
+                      <span>Portal</span>
+                    </div>
+                    <div class="flex items-center">
+                      <div class="w-3 h-0.5 bg-gray-500 mr-1"></div>
+                      <span>Secret</span>
+                    </div>
+                    <div class="flex items-center">
+                      <div class="w-3 h-0.5 bg-red-600 mr-1"></div>
+                      <span>Locked</span>
+                    </div>
+                    <div class="flex items-center">
+                      <div class="w-3 h-0.5 bg-yellow-500 mr-1"></div>
+                      <span>Key Req.</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -698,10 +718,25 @@ defmodule ShardWeb.MudGameLive do
             nil -> 
               # No door, check if target position has a room
               is_valid_position?(new_pos, nil)
-            _door -> 
-              # Door exists, check if it leads to the target position
-              target_room = GameMap.get_room!(door.to_room_id)
-              target_room.x_coordinate == new_x and target_room.y_coordinate == new_y
+            door -> 
+              # Check door accessibility based on type and status
+              cond do
+                door.is_locked -> 
+                  IO.puts("Movement blocked: The #{door.door_type} is locked")
+                  false
+                door.door_type == "secret" ->
+                  IO.puts("Movement blocked: Secret passage not discovered")
+                  false
+                true ->
+                  # Door exists and is accessible, check if it leads to target position
+                  target_room = GameMap.get_room!(door.to_room_id)
+                  if target_room.x_coordinate == new_x and target_room.y_coordinate == new_y do
+                    IO.puts("Moving through #{door.door_type} door")
+                    true
+                  else
+                    false
+                  end
+              end
           end
         else
           false
@@ -885,11 +920,15 @@ defmodule ShardWeb.MudGameLive do
         assigns.scale_factor
       )
       
-      # Green color scheme for doors to distinguish from rooms
+      # Color scheme based on door type and status
       stroke_color = cond do
         assigns.door.is_locked -> "#dc2626"  # Red for locked doors
-        assigns.door.key_required -> "#f59e0b"  # Orange for key required doors
-        true -> "#22c55e"  # Green for normal doors (distinctive from blue rooms)
+        assigns.door.door_type == "portal" -> "#8b5cf6"  # Purple for portals
+        assigns.door.door_type == "gate" -> "#d97706"  # Orange for gates
+        assigns.door.door_type == "locked_gate" -> "#991b1b"  # Dark red for locked gates
+        assigns.door.door_type == "secret" -> "#6b7280"  # Gray for secret doors
+        assigns.door.key_required -> "#f59e0b"  # Orange for doors requiring keys
+        true -> "#22c55e"  # Green for standard doors
       end
       
       assign(assigns, 

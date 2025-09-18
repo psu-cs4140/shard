@@ -2,6 +2,7 @@ defmodule ShardWeb.CharacterLive.Index do
   use ShardWeb, :live_view
 
   alias Shard.Characters
+  alias Shard.Map, as: GameMap
 
   @impl true
   def mount(_params, _session, socket) do
@@ -102,19 +103,62 @@ defmodule ShardWeb.CharacterLive.Index do
   end
 
   defp validate_movement(character, direction) do
-    current_location = character.location || "starting_room"
+    # Get current room based on character location
+    current_room = case character.location do
+      nil -> GameMap.get_room_by_coordinates(0, 0)  # Default starting position
+      location_string -> 
+        # Try to parse coordinates from location string or find by name
+        case parse_location_coordinates(location_string) do
+          {x, y} -> GameMap.get_room_by_coordinates(x, y)
+          nil -> GameMap.get_room_by_coordinates(0, 0)  # Fallback
+        end
+    end
     
-    # Mock room/door validation - replace with actual map logic
-    case {current_location, direction} do
-      {"starting_room", "north"} -> {:ok, "forest_entrance"}
-      {"starting_room", "east"} -> {:ok, "village_square"}
-      {"starting_room", "south"} -> {:error, "A large boulder blocks your path"}
-      {"starting_room", "west"} -> {:error, "The door is locked and requires a key"}
-      {"forest_entrance", "south"} -> {:ok, "starting_room"}
-      {"forest_entrance", _} -> {:error, "Dense trees block your way"}
-      {"village_square", "west"} -> {:ok, "starting_room"}
-      {"village_square", _} -> {:error, "You cannot go that way"}
-      {_, _} -> {:error, "Unknown location or invalid direction"}
+    case current_room do
+      nil -> {:error, "You are in an unknown location"}
+      room ->
+        # Check if there's a door in the specified direction
+        door = GameMap.get_door_in_direction(room.id, direction)
+        
+        case door do
+          nil -> {:error, "There is no passage in that direction"}
+          door -> validate_door_passage(door, room)
+        end
+    end
+  end
+  
+  defp parse_location_coordinates(location_string) do
+    # Try to extract coordinates from location string like "{1,2}" or "room_1_2"
+    case Regex.run(~r/\{(\d+),(\d+)\}/, location_string) do
+      [_, x_str, y_str] -> 
+        {String.to_integer(x_str), String.to_integer(y_str)}
+      nil ->
+        case Regex.run(~r/room_(\d+)_(\d+)/, location_string) do
+          [_, x_str, y_str] -> 
+            {String.to_integer(x_str), String.to_integer(y_str)}
+          nil -> nil
+        end
+    end
+  end
+  
+  defp validate_door_passage(door, _current_room) do
+    cond do
+      door.is_locked and door.key_required ->
+        {:error, "The #{door.door_type} is locked and requires a #{door.key_required}"}
+      
+      door.is_locked ->
+        {:error, "The #{door.door_type} is locked"}
+      
+      door.door_type == "secret" ->
+        {:error, "You don't notice any passage here"}  # Secret doors need to be discovered
+      
+      true ->
+        # Get destination room
+        case GameMap.get_room!(door.to_room_id) do
+          target_room -> 
+            location_name = target_room.name || "{#{target_room.x_coordinate},#{target_room.y_coordinate}}"
+            {:ok, location_name}
+        end
     end
   end
 end
