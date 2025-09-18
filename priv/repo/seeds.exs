@@ -9,3 +9,83 @@
 #
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
+
+# Add a 3x3 grid of rooms to the map
+alias Shard.Repo
+alias Shard.Map.{Room, Door}
+
+# Check if rooms already exist to avoid duplication
+room_count = Repo.aggregate(Room, :count, :id)
+
+if room_count == 0 do
+  # Create a 3x3 grid of rooms (9 total)
+  rooms = 
+    for x <- 0..2, y <- 0..2 do
+      %{
+        name: "Room (#{x},#{y})",
+        description: "A room in the grid at coordinates (#{x},#{y})",
+        x_coordinate: x,
+        y_coordinate: y,
+        is_public: true,
+        room_type: "standard"
+      }
+    end
+    |> Enum.map(&Repo.insert!(%Room{} |> Room.changeset(&1)))
+
+  # Create doors between adjacent rooms
+  # Connect horizontally (east-west)
+  for x <- 0..1, y <- 0..2 do
+    from_room = Enum.find(rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
+    to_room = Enum.find(rooms, &(&1.x_coordinate == x + 1 && &1.y_coordinate == y))
+    
+    # Door from left room to right room (east)
+    Repo.insert!(%Door{} |> Door.changeset(%{
+      from_room_id: from_room.id,
+      to_room_id: to_room.id,
+      direction: "east",
+      door_type: "standard",
+      is_locked: false,
+      properties: %{"state" => "open"}
+    }))
+    
+    # Door from right room to left room (west)
+    Repo.insert!(%Door{} |> Door.changeset(%{
+      from_room_id: to_room.id,
+      to_room_id: from_room.id,
+      direction: "west",
+      door_type: "standard",
+      is_locked: false,
+      properties: %{"state" => "open"}
+    }))
+  end
+
+  # Connect vertically (north-south)
+  for x <- 0..2, y <- 0..1 do
+    from_room = Enum.find(rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
+    to_room = Enum.find(rooms, &(&1.x_coordinate == x && &1.y_coordinate == y + 1))
+    
+    # Door from bottom room to top room (north)
+    Repo.insert!(%Door{} |> Door.changeset(%{
+      from_room_id: from_room.id,
+      to_room_id: to_room.id,
+      direction: "north",
+      door_type: "standard",
+      is_locked: false,
+      properties: %{"state" => "open"}
+    }))
+    
+    # Door from top room to bottom room (south)
+    Repo.insert!(%Door{} |> Door.changeset(%{
+      from_room_id: to_room.id,
+      to_room_id: from_room.id,
+      direction: "south",
+      door_type: "standard",
+      is_locked: false,
+      properties: %{"state" => "open"}
+    }))
+  end
+
+  IO.puts("Created 3x3 grid of rooms with connecting doors")
+else
+  IO.puts("Rooms already exist in the database, skipping grid creation")
+end
