@@ -1,0 +1,8 @@
+<Layouts.app flash={@flash}>
+  <.header>
+    New Monster
+    <:subtitle>Use this form to manage monster records in your database.</:subtitle>
+  </.header>
+
+  <.monster_form changeset={@changeset} action={~p"/admin/monsters"} return_to={~p"/admin/monsters"} />
+</Layouts.app>

@@ -1,0 +1,19 @@
+<.form :let={f} for={@changeset} action={@action}>
+  <.input field={f[:name]} type="text" label="Name" />
+  <.input field={f[:slug]} type="text" label="Slug" />
+  <.input field={f[:species]} type="text" label="Species" />
+  <.input field={f[:description]} type="textarea" label="Description" />
+  <.input field={f[:level]} type="number" label="Level" />
+  <.input field={f[:hp]} type="number" label="Hp" />
+  <.input field={f[:attack]} type="number" label="Attack" />
+  <.input field={f[:defense]} type="number" label="Defense" />
+  <.input field={f[:speed]} type="number" label="Speed" />
+  <.input field={f[:xp_drop]} type="number" label="Xp drop" />
+  <.input field={f[:element]} type="text" label="Element" />
+  <.input field={f[:ai]} type="text" label="Ai" />
+  <.input field={f[:spawn_rate]} type="number" label="Spawn rate" />
+  <footer>
+    <.button variant="primary">Save Monster</.button>
+    <.button :if={@return_to} href={@return_to}>Cancel</.button>
+  </footer>
+</.form>

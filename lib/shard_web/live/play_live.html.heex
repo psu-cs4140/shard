@@ -1,0 +1,21 @@
+<div
+  id="play"
+  phx-window-keydown="key"
+  class="p-4 space-y-3"
+>
+  <h2 class="text-xl font-semibold">{@room.name}</h2>
+  <p>{@room.description}</p>
+
+  <%= if @flash_info do %>
+    <div role="alert" class="rounded bg-yellow-100 text-yellow-900 px-3 py-2">
+      {@flash_info}
+    </div>
+  <% end %>
+
+  <div class="space-x-2">
+    <button phx-click="go" phx-value-dir="n">Go North</button>
+    <button phx-click="go" phx-value-dir="s">Go South</button>
+    <button phx-click="go" phx-value-dir="w">Go West</button>
+    <button phx-click="go" phx-value-dir="e">Go East</button>
+  </div>
+</div>

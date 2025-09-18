@@ -1,0 +1,30 @@
+<h1 class="text-2xl font-bold mb-4">Rooms</h1>
+<div class="mb-4">
+  <.link navigate={~p"/admin/rooms/new"} class="px-3 py-1 rounded border">New room</.link>
+</div>
+<table class="min-w-full text-sm">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Slug</th>
+      <th>Pos</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <%= for r <- @rooms do %>
+      <tr>
+        <td>{r.name}</td>
+        <td>{r.slug}</td>
+        <td>({r.x}, {r.y})</td>
+        <td class="space-x-2">
+          <.link navigate={~p"/admin/rooms/#{r}"}>Show</.link>
+          <.link navigate={~p"/admin/rooms/#{r}/edit"}>Edit</.link>
+          <.link href={~p"/admin/rooms/#{r}"} method="delete" data-confirm="Delete?">
+            Delete
+          </.link>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

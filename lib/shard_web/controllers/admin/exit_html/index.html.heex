@@ -1,0 +1,30 @@
+<h1 class="text-2xl font-bold mb-4">Exits</h1>
+<div class="mb-4">
+  <.link navigate={~p"/admin/exits/new"} class="px-3 py-1 rounded border">New exit</.link>
+</div>
+<table class="min-w-full text-sm">
+  <thead>
+    <tr>
+      <th>From</th>
+      <th>Dir</th>
+      <th>To</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <%= for e <- @exits do %>
+      <tr>
+        <td>{e.from_room_id}</td>
+        <td>{e.dir}</td>
+        <td>{e.to_room_id}</td>
+        <td class="space-x-2">
+          <.link navigate={~p"/admin/exits/#{e}"}>Show</.link>
+          <.link navigate={~p"/admin/exits/#{e}/edit"}>Edit</.link>
+          <.link href={~p"/admin/exits/#{e}"} method="delete" data-confirm="Delete?">
+            Delete
+          </.link>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

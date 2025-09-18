@@ -1,0 +1,8 @@
+<h1 class="text-2xl font-bold mb-4">Exit</h1>
+<p>From: {@exit.from_room_id}</p>
+<p>Dir: {@exit.dir}</p>
+<p>To: {@exit.to_room_id}</p>
+<div class="space-x-2 mt-4">
+  <.link navigate={~p"/admin/exits"}>Back</.link>
+  <.link navigate={~p"/admin/exits/#{@exit}/edit"}>Edit</.link>
+</div>

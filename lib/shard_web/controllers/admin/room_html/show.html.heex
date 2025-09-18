@@ -1,0 +1,8 @@
+<h1 class="text-2xl font-bold mb-4">{@room.name}</h1>
+<p class="opacity-80 mb-2">Slug: {@room.slug}</p>
+<p class="opacity-80 mb-2">Pos: ({@room.x}, {@room.y})</p>
+<p class="mb-4">{@room.description}</p>
+<div class="space-x-2">
+  <.link navigate={~p"/admin/rooms"}>Back</.link>
+  <.link navigate={~p"/admin/rooms/#{@room}/edit"}>Edit</.link>
+</div>

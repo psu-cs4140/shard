@@ -1,26 +1,81 @@
 defmodule Shard.Game do
-  import Ecto.Query
-  import Ecto.Changeset, only: [change: 2]
+  import Ecto.Query, only: [from: 2]
   alias Shard.Repo
-  alias Shard.Game.Character
-  alias Shard.World
-  alias Shard.World.Room
+  alias Shard.World.{Room, Exit}
 
-  def get_or_create_demo_character() do
-    Repo.get_by(Character, name: "Demo") ||
-      %Character{}
-      |> Character.changeset(%{name: "Demo", current_room_id: first_room_id()})
-      |> Repo.insert!()
-  end
+  @exit_fields Exit.__schema__(:fields)
 
-  def move(%Character{} = ch, dir) when is_binary(dir) do
-    case World.find_exit(ch.current_room_id, dir) do
-      nil -> {:error, :no_exit}
-      exit -> ch |> change(%{current_room_id: exit.to_room_id}) |> Repo.update()
+  @from_field (cond do
+                 :from_id in @exit_fields ->
+                   :from_id
+
+                 :from_room_id in @exit_fields ->
+                   :from_room_id
+
+                 :source_id in @exit_fields ->
+                   :source_id
+
+                 :src_id in @exit_fields ->
+                   :src_id
+
+                 :from in @exit_fields ->
+                   :from
+
+                 true ->
+                   raise "Exit schema missing origin foreign key (from_*). Fields: #{inspect(@exit_fields)}"
+               end)
+
+  @to_field (cond do
+               :to_id in @exit_fields ->
+                 :to_id
+
+               :to_room_id in @exit_fields ->
+                 :to_room_id
+
+               :dest_id in @exit_fields ->
+                 :dest_id
+
+               :destination_id in @exit_fields ->
+                 :destination_id
+
+               :to in @exit_fields ->
+                 :to
+
+               true ->
+                 raise "Exit schema missing destination foreign key (to_*). Fields: #{inspect(@exit_fields)}"
+             end)
+
+  @dir_field (cond do
+                :dir in @exit_fields ->
+                  :dir
+
+                :direction in @exit_fields ->
+                  :direction
+
+                true ->
+                  raise "Exit schema missing direction field (:dir or :direction). Fields: #{inspect(@exit_fields)}"
+              end)
+
+  @spec move(Room.id(), String.t()) :: {:ok, Room.t()} | {:error, :no_exit}
+  def move(room_id, dir) do
+    ex =
+      Repo.one(
+        from e in Exit,
+          where: field(e, ^@from_field) == ^room_id and field(e, ^@dir_field) == ^dir,
+          limit: 1
+      )
+
+    case ex do
+      %Exit{} = e ->
+        to_id = Map.get(e, @to_field)
+
+        case Repo.get(Room, to_id) do
+          %Room{} = room -> {:ok, room}
+          _ -> {:error, :no_exit}
+        end
+
+      _ ->
+        {:error, :no_exit}
     end
-  end
-
-  defp first_room_id do
-    Repo.one!(from r in Room, select: r.id, limit: 1)
   end
 end

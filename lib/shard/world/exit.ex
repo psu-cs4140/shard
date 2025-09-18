@@ -1,6 +1,5 @@
 defmodule Shard.World.Exit do
   use Ecto.Schema
-  import Ecto.Changeset
 
   schema "exits" do
     field :dir, :string
@@ -11,7 +10,11 @@ defmodule Shard.World.Exit do
 
   def changeset(exit, attrs) do
     exit
-    |> cast(attrs, ~w[dir from_room_id to_room_id]a)
-    |> validate_required([:dir, :from_room_id, :to_room_id])
+    |> Ecto.Changeset.cast(attrs, [:dir, :from_room_id, :to_room_id])
+    |> Ecto.Changeset.validate_required([:dir, :from_room_id, :to_room_id])
+    |> Ecto.Changeset.validate_inclusion(:dir, ~w(n s e w up down))
+    |> Ecto.Changeset.foreign_key_constraint(:from_room_id)
+    |> Ecto.Changeset.foreign_key_constraint(:to_room_id)
+    |> Ecto.Changeset.unique_constraint(:dir, name: :exits_from_room_id_dir_index)
   end
 end
