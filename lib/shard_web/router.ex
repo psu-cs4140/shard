@@ -3,6 +3,17 @@ defmodule ShardWeb.Router do
 
   import ShardWeb.UserAuth
 
+  defp ensure_admin(conn, _opts) do
+    case conn.assigns[:current_scope] do
+      %{user: %{admin: true}} -> conn
+      _ ->
+        conn
+        |> Phoenix.Controller.put_flash(:error, "You must be an admin to access this page.")
+        |> Phoenix.Controller.redirect(to: "/")
+        |> Plug.Conn.halt()
+    end
+  end
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -17,6 +28,10 @@ defmodule ShardWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :require_admin do
+    plug :ensure_admin
+  end
+
   scope "/", ShardWeb do
     pipe_through :browser
 
@@ -25,9 +40,9 @@ defmodule ShardWeb.Router do
 
   # Admin routes
   scope "/admin", ShardWeb do
-    pipe_through [:browser, :require_authenticated_user]
+    pipe_through [:browser, :require_authenticated_user, :require_admin]
 
-    get "/", AdminController, :index
+    live "/", AdminLive.Index, :index
   end
 
   # Other scopes may use custom stacks.
@@ -61,6 +76,7 @@ defmodule ShardWeb.Router do
       on_mount: [{ShardWeb.UserAuth, :require_authenticated}] do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
+      live "/characters", CharacterLive.Index, :index
       live "/characters/new", CharacterLive.New, :new
     end
 
@@ -68,7 +84,7 @@ defmodule ShardWeb.Router do
   end
 
   scope "/admin", ShardWeb do
-    pipe_through [:browser, :require_authenticated_user]
+    pipe_through [:browser, :require_authenticated_user, :require_admin]
 
     live_session :require_admin,
       on_mount: [{ShardWeb.UserAuth, :require_authenticated}] do

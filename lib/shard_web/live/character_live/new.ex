@@ -33,14 +33,14 @@ defmodule ShardWeb.CharacterLive.New do
 
   defp save_character(socket, character_params) do
     # Add the current user's ID to the character params
-    character_params = Map.put(character_params, "user_id", socket.assigns.current_user.id)
+    character_params = Map.put(character_params, "user_id", socket.assigns.current_scope.user.id)
 
     case Characters.create_character(character_params) do
       {:ok, character} ->
         {:noreply,
          socket
          |> put_flash(:info, "Character created successfully")
-         |> push_navigate(to: ~p"/")}
+         |> push_navigate(to: ~p"/characters")}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
