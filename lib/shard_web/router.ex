@@ -29,6 +29,8 @@ defmodule ShardWeb.Router do
 
     get "/", AdminController, :index
     get "/mud", AdminController, :mud
+    get "/mud/manage", AdminController, :manage_mud
+    get "/map/manage", AdminController, :manage_map
   end
 
   # Other scopes may use custom stacks.
