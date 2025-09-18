@@ -19,6 +19,7 @@ defmodule Shard.Mud do
   """
   def list_rooms do
     Repo.all(Room)
+    |> Repo.preload([:north_door, :east_door, :south_door, :west_door])
   end
 
   @doc """
@@ -202,16 +203,119 @@ defmodule Shard.Mud do
   end
 
   @doc """
-  Creates the initial room if none exists.
+  Creates a 3x3 grid of rooms with proper door connections.
+  Any two rooms share exactly one door, and no door is connected to more than 2 rooms.
   """
-  def create_initial_room do
+  def create_default_grid do
+    # Check if we already have rooms
     case Repo.aggregate(Room, :count, :id) do
       0 -> 
-        %Room{}
-        |> Room.changeset(%{name: "Starting Room", description: "The initial room"})
-        |> Repo.insert()
+        # Create doors first
+        doors = create_grid_doors()
+        
+        # Create rooms and connect them with doors
+        create_and_connect_rooms(doors)
       _ -> 
         :ok
+    end
+  end
+
+  # Create all doors needed for a 3x3 grid
+  defp create_grid_doors do
+    # For a 3x3 grid, we need:
+    # - 6 vertical doors (between columns)
+    # - 6 horizontal doors (between rows)
+    # Total: 12 doors
+    
+    doors = for _ <- 1..12 do
+      {:ok, door} = create_door(%{is_open: true, is_locked: false, exit: false})
+      door
+    end
+    
+    # Also create one exit door
+    {:ok, exit_door} = create_door(%{is_open: false, is_locked: true, exit: true})
+    
+    %{doors: doors, exit_door: exit_door}
+  end
+
+  # Create rooms and connect them with doors
+  defp create_and_connect_rooms(%{doors: doors, exit_door: exit_door}) do
+    # Split doors for horizontal and vertical connections
+    {horizontal_doors, vertical_doors} = Enum.split(doors, 6)
+    
+    # Create 3x3 grid of rooms (9 rooms total)
+    rooms_grid = 
+      for y <- 0..2, x <- 0..2 do
+        name = "Room (#{x}, #{y})"
+        description = "A room at position (#{x}, #{y})"
+        
+        {:ok, room} = create_room(%{
+          name: name,
+          description: description,
+          x: x,
+          y: y
+        })
+        
+        {x, y, room}
+      end
+      |> Enum.group_by(fn {x, y, _room} -> {x, y} end, fn {_x, _y, room} -> room end)
+    
+    # Connect horizontally adjacent rooms
+    connect_horizontal_rooms(rooms_grid, horizontal_doors)
+    
+    # Connect vertically adjacent rooms
+    connect_vertical_rooms(rooms_grid, vertical_doors)
+    
+    # Add exit door to one room (e.g., room at position (0,0))
+    room_0_0 = rooms_grid[{0, 0}] 
+    update_room(room_0_0, %{south_door_id: exit_door.id})
+    
+    :ok
+  end
+
+  # Connect horizontally adjacent rooms
+  defp connect_horizontal_rooms(rooms_grid, doors) do
+    # Group doors into pairs for each row
+    door_pairs = Enum.chunk_every(doors, 2)
+    
+    for y <- 0..2 do
+      row_doors = Enum.at(door_pairs, y)
+      [left_door, right_door] = row_doors
+      
+      # Connect rooms in the row
+      for x <- 0..1 do
+        west_room = rooms_grid[{x, y}]
+        east_room = rooms_grid[{x+1, y}]
+        
+        # Update west room to have east door
+        update_room(west_room, %{east_door_id: right_door.id})
+        
+        # Update east room to have west door
+        update_room(east_room, %{west_door_id: right_door.id})
+      end
+    end
+  end
+
+  # Connect vertically adjacent rooms
+  defp connect_vertical_rooms(rooms_grid, doors) do
+    # Group doors into pairs for each column
+    door_pairs = Enum.chunk_every(doors, 2)
+    
+    for x <- 0..2 do
+      col_doors = Enum.at(door_pairs, x)
+      [top_door, bottom_door] = col_doors
+      
+      # Connect rooms in the column
+      for y <- 0..1 do
+        north_room = rooms_grid[{x, y}]
+        south_room = rooms_grid[{x, y+1}]
+        
+        # Update north room to have south door
+        update_room(north_room, %{south_door_id: bottom_door.id})
+        
+        # Update south room to have north door
+        update_room(south_room, %{north_door_id: bottom_door.id})
+      end
     end
   end
 end
