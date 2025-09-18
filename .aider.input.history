@@ -320,3 +320,322 @@
 
 # 2025-09-18 13:53:00.639467
 +y
+
+# 2025-09-18 16:50:54.128251
++change the map and minimap display so that instead of being hardcoded like it initially was in mud_game_live, it updates to now accurately portray the rooms and doors created in the rooms database and doors database found elsewhere in the shard repository
+
+# 2025-09-18 16:52:16.835322
++change the map and minimap display so that instead of being hardcoded like it initially was in mud_game_live.ex, it updates to now accurately portray the rooms and doors created in the rooms database and doors database found elsewhere in the shard repository
+
+# 2025-09-18 16:52:21.044376
++yes
+
+# 2025-09-18 16:54:39.143807
++no
+
+# 2025-09-18 16:56:37.311997
++fix these issues:
+
+# 2025-09-18 16:56:46.992121
++     warning: attribute "field" in component ShardWeb.CoreComponents.input/1 must be a Phoenix.HTML.FormField struct, got: :text
++     │
++ 792 │             field={:text}
++     │             ~~~~~~~~~~~~~
++     │
++     └─ lib/shard_web/live/user_live/mud_game_live.ex:792: (file)
++
++    warning: no route path for ShardWeb.Router matches "/characters/#{character.id}"
++    │
++ 30 │           <.link navigate={~p"/characters/#{character.id}"} class="text-blue-600 hover:text-blue-800">
++    │           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++    │
++    └─ lib/shard_web/live/character_live/index.html.heex:30: ShardWeb.CharacterLive.Index.render/1
++
++     warning: Shard.Users.list_users/0 is undefined or private
++     │
++ 140 │     Users.list_users()
++     │           ~
++     │
++     └─ lib/shard_web/live/admin_live/character_form_component.ex:140:11: ShardWeb.AdminLive.CharacterFormComponent.get_user_options/0
++fix these issues
+
+# 2025-09-18 16:57:00.407638
++yes
+
+# 2025-09-18 17:02:32.487484
++the map and minimap do not properly portray what's in the rooms database and doors database from shard/lib/shard/map/room.ex and shard/lib/shard/map/door.ex respectively, can you fix the map generation code in mud_game_live.ex so that it creates a map based on the rooms found in those two directories
+
+# 2025-09-18 17:02:38.542039
++y
+
+# 2025-09-18 17:04:12.124177
++[error] ** (UndefinedFunctionError) function Shard.Map.get/2 is undefined or private
++fix this error
+
+# 2025-09-18 17:05:45.567566
++that didn't fix the issue, the error is still present
+
+# 2025-09-18 17:07:06.574806
++fix the player position so that they don't start out of bounds
+
+# 2025-09-18 17:08:12.116373
++remove the wall limitation, and make it so that if neither a room nor door exists, employ the restriction of not being able to go that direction
+
+# 2025-09-18 17:09:45.789130
++error: undefined function is_valid_movement?/3 (expected ShardWeb.MudGameLive to define such a function or for it to be imported, but none are available)
++  lib/shard_web/live/user_live/mud_game_live.ex:647:8   <- fix this error
+
+# 2025-09-18 17:10:16.809497
++yes
+
+# 2025-09-18 17:14:21.688083
++add commands to the terminal that allow for northeast, southeast, northwest, and southwest to be traversed if available
+
+# 2025-09-18 17:16:08.474757
++make it so the minimap is able to properly portray the rooms and doors by removing the restriction that it has to be in a grid pattern
+
+# 2025-09-18 17:16:49.285694
++make it so the minimap is able to properly portray the rooms and doors by removing the restriction that it has to be in a grid pattern, allowing for diagonal movement and so on
+
+# 2025-09-18 17:18:11.753196
++warning: ShardWeb.CharacterLive.Show.__live__/0 is undefined (module ShardWeb.CharacterLive.Show is not available or is yet to be defined)
++  lib/shard_web/router.ex:83
++
++warning: variable "map_data" is unused (if the variable is not meant to be used, prefix it with an underscore)
++  lib/shard_web/live/user_live/mud_game_live.ex:632:41
++
++warning: variable "assigns" is unused (there is a variable with the same name in the context, use the pin operator (^) to match on it or prefix this variable with underscore if it is not meant to be used)
++  lib/shard_web/live/user_live/mud_game_live.ex:845:7
++
++warning: variable "assigns" is unused (there is a variable with the same name in the context, use the pin operator (^) to match on it or prefix this variable with underscore if it is not meant to be used)
++  lib/shard_web/live/user_live/mud_game_live.ex:824:7
++
++warning: variable "assigns" is unused (there is a variable with the same name in the context, use the pin operator (^) to match on it or prefix this variable with underscore if it is not meant to be used)
++  lib/shard_web/live/user_live/mud_game_live.ex:901:7
++
++warning: variable "assigns" is unused (there is a variable with the same name in the context, use the pin operator (^) to match on it or prefix this variable with underscore if it is not meant to be used)
++  lib/shard_web/live/user_live/mud_game_live.ex:881:7
++
++error: undefined function map_cell/1 (expected ShardWeb.MudGameLive to define such a function or for it to be imported, but none are available)
++  lib/shard_web/live/user_live/mud_game_live.ex:383:19 fix these errors
+
+# 2025-09-18 17:19:40.985586
++key :skip_render not found in: %{
++  bounds: {-1, -1, 3, 3},
++  __changed__: nil,
++  rooms: [
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 1,
++      name: "Room (0,0)",
++      description: "A room in the grid at coordinates (0,0)",
++      x_coordinate: 0,
++      y_coordinate: 0,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    },
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 2,
++      name: "Room (0,1)",
++      description: "A room in the grid at coordinates (0,1)",
++      x_coordinate: 0,
++      y_coordinate: 1,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    },
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 3,
++      name: "Room (0,2)",
++      description: "A room in the grid at coordinates (0,2)",
++      x_coordinate: 0,
++      y_coordinate: 2,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    },
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 4,
++      name: "Room (1,0)",
++      description: "A room in the grid at coordinates (1,0)",
++      x_coordinate: 1,
++      y_coordinate: 0,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    },
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 5,
++      name: "Room (1,1)",
++      description: "A room in the grid at coordinates (1,1)",
++      x_coordinate: 1,
++      y_coordinate: 1,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    },
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 6,
++      name: "Room (1,2)",
++      description: "A room in the grid at coordinates (1,2)",
++      x_coordinate: 1,
++      y_coordinate: 2,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    },
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 7,
++      name: "Room (2,0)",
++      description: "A room in the grid at coordinates (2,0)",
++      x_coordinate: 2,
++      y_coordinate: 0,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    },
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 8,
++      name: "Room (2,1)",
++      description: "A room in the grid at coordinates (2,1)",
++      x_coordinate: 2,
++      y_coordinate: 1,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    },
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 9,
++      name: "Room (2,2)",
++      description: "A room in the grid at coordinates (2,2)",
++      x_coordinate: 2,
++      y_coordinate: 2,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    }
++  ],
++  door: %Shard.Map.Door{
++    __meta__: #Ecto.Schema.Metadata<:loaded, "doors">,
++    id: 1,
++    name: nil,
++    description: nil,
++    direction: "east",
++    is_locked: false,
++    key_required: nil,
++    door_type: "standard",
++    properties: %{"state" => "open"},
++    from_room_id: 1,
++    from_room: #Ecto.Association.NotLoaded<association :from_room is not loaded>,
++    to_room_id: 4,
++    to_room: #Ecto.Association.NotLoaded<association :to_room is not loaded>,
++    inserted_at: ~U[2025-09-18 20:38:11Z],
++    updated_at: ~U[2025-09-18 20:38:11Z]
++  },
++  scale_factor: 40.0
++} fix this
+
+# 2025-09-18 17:21:49.309258
++can you change the labeling of map circles so that rooms and doors are distinctively color-coded, and remove all prior color coings that existed for things like treasure
+
+# 2025-09-18 17:30:03.432722
++can you make it so pressing the arrow buttons to move position doesn't also scroll the page
+
+# 2025-09-18 17:30:14.252763
++yes
+
+# 2025-09-18 17:30:39.898183
++undo
+
+# 2025-09-18 17:31:28.650885
++can you make it so pressing the arrow buttons to move position of player in the game doesn't also mess with the page scrolling
+
+# 2025-09-18 17:32:53.148277
++add that capability in the assets/js/app.js file
+
+# 2025-09-18 17:34:29.841069
++can you add a feature that outputs to terminal if user is unable to move to a certain room and specify the reason why
+
+# 2025-09-18 17:35:01.160205
++undo
+
+# 2025-09-18 17:36:01.048138
++why can't the player go north or south
+
+# 2025-09-18 17:39:04.197584
++can you implement the door types from shard/lib/shard/map/room.ex and color code the doors according to those labels
+
+# 2025-09-18 17:39:13.237466
++yes
+
+# 2025-09-18 17:41:38.911892
++now do the same for lib/shard/map/room.ex
+
+# 2025-09-18 17:44:09.561148
++the minimap still doesn't seem to be accurately displaying the rooms and doors
+
+# 2025-09-18 17:46:04.864331
++can you create a special color code that indictes one way doors
+
+# 2025-09-18 17:48:26.428403
++can you also include diagonal doors if any are present in the minimap
+
+# 2025-09-18 17:50:05.541411
++undo
+
+# 2025-09-18 17:53:27.336302
++north and south don't seem to properly be working, only allowing for vertical movement through the use of northeast, northwest, southeast, and southwest from the middle row, but not north or south by themselves, but in other rows, these work fine to go back to the middle
