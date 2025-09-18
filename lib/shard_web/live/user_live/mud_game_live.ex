@@ -787,9 +787,8 @@ defmodule ShardWeb.MudGameLive do
       <div class="p-4 border-t border-gray-600 bg-gray-900 rounded-b-lg">
         <.form for={%{}} as={:command} phx-submit="submit_command" phx-change="update_command" class="flex">
           <span class="text-green-400 font-mono mr-2">></span>
-          <.input
+          <input
             type="text"
-            field={:text}
             name="command[text]"
             value={@terminal_state.current_command}
             placeholder="Enter command..."
