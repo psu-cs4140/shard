@@ -6,7 +6,8 @@ defmodule ShardWeb.AdminLive.Map do
   @impl true
   def mount(_params, _session, socket) do
     rooms = Map.list_rooms()
-    doors = Map.list_doors()
+    # Preload door associations to avoid N+1 queries
+    doors = Map.list_doors() |> Enum.map(&Map.Repo.preload(&1, [:from_room, :to_room]))
     
     {:ok,
      socket
@@ -143,8 +144,8 @@ defmodule ShardWeb.AdminLive.Map do
               <tr>
                 <td><%= door.id %></td>
                 <td><%= if door.name, do: door.name, else: "Unnamed" %></td>
-                <td><%= if door.from_room, do: door.from_room.name, else: "Unknown" %></td>
-                <td><%= if door.to_room, do: door.to_room.name, else: "Unknown" %></td>
+                <td><%= if door.from_room, do: door.from_room.name, else: "Unknown (ID: #{door.from_room_id})" %></td>
+                <td><%= if door.to_room, do: door.to_room.name, else: "Unknown (ID: #{door.to_room_id})" %></td>
                 <td><%= door.direction %></td>
                 <td><%= if door.is_locked, do: "Yes", else: "No" %></td>
                 <td><%= door.door_type %></td>
@@ -162,7 +163,7 @@ defmodule ShardWeb.AdminLive.Map do
     <div class="bg-base-200 p-6 rounded-box">
       <div class="text-center mb-4">
         <h3 class="text-lg font-bold">Map Visualization</h3>
-        <p class="text-sm text-base-content/70">This is a simplified visualization of the game map</p>
+        <p class="text-sm text-base-content/70">Interactive visualization of rooms and connections</p>
       </div>
       
       <%= if Enum.empty?(@rooms) do %>
@@ -170,32 +171,75 @@ defmodule ShardWeb.AdminLive.Map do
           <p class="text-gray-500">No rooms available to display.</p>
         </div>
       <% else %>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <%= for room <- Enum.take(@rooms, 9) do %>
-            <div class="card bg-base-100 shadow">
-              <div class="card-body p-4">
-                <h4 class="card-title text-sm"><%= room.name %></h4>
-                <div class="text-xs">
-                  <p>Type: <%= room.room_type %></p>
-                  <p>Coords: (<%= room.x_coordinate %>, <%= room.y_coordinate %>)</p>
-                  <%= if room.description do %>
-                    <p class="mt-1 text-xs"><%= String.slice(room.description || "", 0, 50) <> if String.length(room.description || "") > 50, do: "..." %></p>
-                  <% end %>
-                </div>
-                <div class="card-actions justify-end mt-2">
-                  <button class="btn btn-xs" disabled>View</button>
-                </div>
+        <div class="relative overflow-auto border border-base-300 rounded-box bg-white min-h-[500px]">
+          <!-- Simple grid-based map visualization -->
+          <div class="relative p-4 min-h-full">
+            <%= for room <- @rooms do %>
+              <div 
+                class="absolute w-24 h-24 bg-primary text-primary-content rounded-lg shadow-md flex flex-col items-center justify-center text-xs font-medium border-2 border-primary-content/30"
+                style={"left: #{rem(room.x_coordinate, 10) * 120 + 20}px; top: #{div(room.x_coordinate, 10) * 120 + 20}px;"}
+              >
+                <div class="font-bold truncate w-full px-1 text-center"><%= room.name %></div>
+                <div class="text-xs mt-1">(<%= room.x_coordinate %>, <%= room.y_coordinate %>)</div>
               </div>
-            </div>
-          <% end %>
+            <% end %>
+            
+            <!-- Draw connections between rooms -->
+            <%= for door <- @doors do %>
+              <%= if door.from_room && door.to_room do %>
+                <.connection_line from_room={door.from_room} to_room={door.to_room} direction={door.direction} />
+              <% end %>
+            <% end %>
+          </div>
         </div>
         
-        <div class="mt-6 text-center">
-          <p class="text-sm">Showing <%= min(9, length(@rooms)) %> of <%= length(@rooms) %> rooms</p>
-          <p class="text-xs text-base-content/70 mt-2">In a full implementation, this would show connections between rooms</p>
+        <div class="mt-6">
+          <h4 class="font-bold mb-2">Map Legend</h4>
+          <div class="flex flex-wrap gap-4">
+            <div class="flex items-center">
+              <div class="w-4 h-4 bg-primary mr-2"></div>
+              <span class="text-sm">Room</span>
+            </div>
+            <div class="flex items-center">
+              <div class="w-8 h-1 bg-secondary mr-2"></div>
+              <span class="text-sm">Connection</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-4 text-center">
+          <p class="text-sm">Showing <%= length(@rooms) %> rooms and <%= length(@doors) %> connections</p>
         </div>
       <% end %>
     </div>
+    """
+  end
+
+  defp connection_line(assigns) do
+    # Simple line drawing between rooms
+    from_x = rem(assigns.from_room.x_coordinate, 10) * 120 + 20 + 12
+    from_y = div(assigns.from_room.x_coordinate, 10) * 120 + 20 + 12
+    to_x = rem(assigns.to_room.x_coordinate, 10) * 120 + 20 + 12
+    to_y = div(assigns.to_room.x_coordinate, 10) * 120 + 20 + 12
+    
+    assigns = assign(assigns, :from_x, from_x)
+    assigns = assign(assigns, :from_y, from_y)
+    assigns = assign(assigns, :to_x, to_x)
+    assigns = assign(assigns, :to_y, to_y)
+    
+    ~H"""
+    <svg class="absolute top-0 left-0 w-full h-full pointer-events-none">
+      <line 
+        x1={@from_x} 
+        y1={@from_y} 
+        x2={@to_x} 
+        y2={@to_y} 
+        stroke="currentColor" 
+        stroke-width="2" 
+        class="text-secondary"
+        marker-end="url(#arrowhead)"
+      />
+    </svg>
     """
   end
 end
