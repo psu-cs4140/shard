@@ -830,14 +830,8 @@ defmodule ShardWeb.MudGameLive do
         assigns.scale_factor
       )
       
-      # Define colors based on room type
-      {fill_color, stroke_color} = case assigns.room.room_type do
-        "treasure" -> {"#eab308", "#facc15"}  # Yellow for treasure
-        "water" -> {"#2563eb", "#3b82f6"}     # Blue for water
-        "dungeon" -> {"#7c2d12", "#a3a3a3"}   # Brown for dungeon
-        "town" -> {"#16a34a", "#22c55e"}      # Green for town
-        _ -> {"#374151", "#6b7280"}           # Gray for default
-      end
+      # Define colors for rooms - simple blue scheme for all rooms
+      {fill_color, stroke_color} = {"#3b82f6", "#60a5fa"}  # Blue for all rooms
       
       player_stroke = if assigns.is_player, do: "#ef4444", else: stroke_color
       player_width = if assigns.is_player, do: "3", else: "1"
@@ -891,11 +885,11 @@ defmodule ShardWeb.MudGameLive do
         assigns.scale_factor
       )
       
-      # Different colors for different door states
+      # Green color scheme for doors to distinguish from rooms
       stroke_color = cond do
-        assigns.door.is_locked -> "#dc2626"  # Red for locked
-        assigns.door.key_required -> "#f59e0b"  # Orange for key required
-        true -> "#9ca3af"  # Gray for normal
+        assigns.door.is_locked -> "#dc2626"  # Red for locked doors
+        assigns.door.key_required -> "#f59e0b"  # Orange for key required doors
+        true -> "#22c55e"  # Green for normal doors (distinctive from blue rooms)
       end
       
       assign(assigns, 
