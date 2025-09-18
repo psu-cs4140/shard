@@ -253,11 +253,11 @@ defmodule ShardWeb.Admin.MudLive do
 
   def handle_event("save_room", %{"room" => room_params}, socket) do
     case save_room(socket, room_params) do
-      {:ok, room} ->
+      {:ok, _room} ->
         rooms = Mud.list_rooms()
         {:noreply,
          socket
-         |> put_flash(:info, "Room #{room.name} saved successfully")
+         |> put_flash(:info, "Room saved successfully")
          |> assign(:rooms, rooms)
          |> assign(:room_changeset, nil)}
 
@@ -305,7 +305,7 @@ defmodule ShardWeb.Admin.MudLive do
 
   def handle_event("save_door", %{"door" => door_params}, socket) do
     case save_door(socket, door_params) do
-      {:ok, door} ->
+      {:ok, _door} ->
         doors = Mud.list_doors()
         {:noreply,
          socket
