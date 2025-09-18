@@ -45,7 +45,7 @@ if room_count == 0 do
       direction: "east",
       door_type: "standard",
       is_locked: false,
-      properties: %{"state" => "closed"}
+      properties: %{"state" => "open"}
     }))
     
     # Door from right room to left room (west)
@@ -55,7 +55,7 @@ if room_count == 0 do
       direction: "west",
       door_type: "standard",
       is_locked: false,
-      properties: %{"state" => "closed"}
+      properties: %{"state" => "open"}
     }))
   end
 
@@ -71,7 +71,7 @@ if room_count == 0 do
       direction: "north",
       door_type: "standard",
       is_locked: false,
-      properties: %{"state" => "closed"}
+      properties: %{"state" => "open"}
     }))
     
     # Door from top room to bottom room (south)
@@ -81,7 +81,7 @@ if room_count == 0 do
       direction: "south",
       door_type: "standard",
       is_locked: false,
-      properties: %{"state" => "closed"}
+      properties: %{"state" => "open"}
     }))
   end
 
