@@ -38,29 +38,29 @@
         </.link>
       </div>
       <ul class="menu menu-horizontal flex items-center gap-4">
-      <%= if @current_scope do %>
-        <li>
-          {@current_scope.user.email}
-        </li>
-        <%= if @current_scope.user.admin do %>
+        <%= if @current_scope do %>
           <li>
-            <.link href={~p"/admin"}>Admin</.link>
+            {@current_scope.user.email}
+          </li>
+          <%= if @current_scope.user.admin do %>
+            <li>
+              <.link href={~p"/admin"}>Admin</.link>
+            </li>
+          <% end %>
+          <li>
+            <.link href={~p"/users/settings"}>Settings</.link>
+          </li>
+          <li>
+            <.link href={~p"/users/log-out"} method="delete">Log out</.link>
+          </li>
+        <% else %>
+          <li>
+            <.link href={~p"/users/register"}>Register</.link>
+          </li>
+          <li>
+            <.link href={~p"/users/log-in"}>Log in</.link>
           </li>
         <% end %>
-        <li>
-          <.link href={~p"/users/settings"}>Settings</.link>
-        </li>
-        <li>
-          <.link href={~p"/users/log-out"} method="delete">Log out</.link>
-        </li>
-      <% else %>
-        <li>
-          <.link href={~p"/users/register"}>Register</.link>
-        </li>
-        <li>
-          <.link href={~p"/users/log-in"}>Log in</.link>
-        </li>
-      <% end %>
       </ul>
     </div>
     {@inner_content}
