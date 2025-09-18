@@ -660,6 +660,43 @@ defmodule ShardWeb.MudGameLive do
     end
   end
 
+  # Helper function to check if movement is valid via door connection
+  defp is_valid_movement?(current_pos, new_pos, direction) do
+    {curr_x, curr_y} = current_pos
+    {new_x, new_y} = new_pos
+    
+    # First check if there's a room at the current position
+    current_room = GameMap.get_room_by_coordinates(curr_x, curr_y)
+    
+    case current_room do
+      nil -> false  # No current room, can't move
+      room ->
+        # Check if there's a door in the specified direction from current room
+        direction_str = case direction do
+          "ArrowUp" -> "north"
+          "ArrowDown" -> "south"
+          "ArrowRight" -> "east"
+          "ArrowLeft" -> "west"
+          _ -> nil
+        end
+        
+        if direction_str do
+          door = GameMap.get_door_in_direction(room.id, direction_str)
+          case door do
+            nil -> 
+              # No door, check if target position has a room
+              is_valid_position?(new_pos, nil)
+            _door -> 
+              # Door exists, check if it leads to the target position
+              target_room = GameMap.get_room!(door.to_room_id)
+              target_room.x_coordinate == new_x and target_room.y_coordinate == new_y
+          end
+        else
+          false
+        end
+    end
+  end
+
   # Component for player stats
   def player_stats(assigns) do
     ~H"""
