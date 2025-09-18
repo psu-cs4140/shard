@@ -16,7 +16,11 @@ defmodule ShardWeb.AdminLive.Map do
      |> assign(:page_title, "Map Management")
      |> assign(:tab, "rooms")
      |> assign(:changeset, nil)
-     |> assign(:editing, nil)}
+     |> assign(:editing, nil)
+     |> assign(:zoom, 1.0)
+     |> assign(:pan_x, 0)
+     |> assign(:pan_y, 0)
+     |> assign(:drag_start, nil)}
   end
 
   @impl true
@@ -130,6 +134,49 @@ defmodule ShardWeb.AdminLive.Map do
 
   def handle_event("cancel_door", _params, socket) do
     {:noreply, assign(socket, :editing, nil) |> assign(:changeset, nil)}
+  end
+
+  # Map interaction events
+  def handle_event("zoom_in", _params, socket) do
+    {:noreply, assign(socket, :zoom, min(socket.assigns.zoom * 1.2, 5.0))}
+  end
+
+  def handle_event("zoom_out", _params, socket) do
+    {:noreply, assign(socket, :zoom, max(socket.assigns.zoom / 1.2, 0.2))}
+  end
+
+  def handle_event("reset_view", _params, socket) do
+    {:noreply, 
+     socket
+     |> assign(:zoom, 1.0)
+     |> assign(:pan_x, 0)
+     |> assign(:pan_y, 0)}
+  end
+
+  def handle_event("mousedown", %{"clientX" => x, "clientY" => y}, socket) do
+    {:noreply, assign(socket, :drag_start, %{x: x, y: y})}
+  end
+
+  def handle_event("mousemove", %{"clientX" => x, "clientY" => y}, socket) do
+    case socket.assigns.drag_start do
+      nil -> {:noreply, socket}
+      start ->
+        delta_x = x - start.x
+        delta_y = y - start.y
+        {:noreply, 
+         socket
+         |> assign(:pan_x, socket.assigns.pan_x + delta_x)
+         |> assign(:pan_y, socket.assigns.pan_y + delta_y)
+         |> assign(:drag_start, %{x: x, y: y})}
+    end
+  end
+
+  def handle_event("mouseup", _params, socket) do
+    {:noreply, assign(socket, :drag_start, nil)}
+  end
+
+  def handle_event("mouseleave", _params, socket) do
+    {:noreply, assign(socket, :drag_start, nil)}
   end
 
   # Generate default map
@@ -301,7 +348,13 @@ defmodule ShardWeb.AdminLive.Map do
           <% "doors" -> %>
             <.doors_tab doors={@doors} rooms={@rooms} />
           <% "map" -> %>
-            <.map_visualization rooms={@rooms} doors={@doors} />
+            <.map_visualization 
+              rooms={@rooms} 
+              doors={@doors} 
+              zoom={@zoom} 
+              pan_x={@pan_x} 
+              pan_y={@pan_y} 
+            />
         <% end %>
       </div>
     </div>
@@ -484,10 +537,94 @@ defmodule ShardWeb.AdminLive.Map do
   defp map_visualization(assigns) do
     ~H"""
     <div class="bg-base-200 p-6 rounded-lg">
-      <h3 class="text-xl font-bold mb-4">Map Visualization</h3>
-      <p class="text-gray-600">This is a placeholder for the map visualization feature.</p>
-      <p class="mt-2">Rooms: <%= Enum.count(@rooms) %> | Doors: <%= Enum.count(@doors) %></p>
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold">Map Visualization</h3>
+        <div class="flex space-x-2">
+          <.button phx-click="zoom_in" class="btn btn-sm">Zoom In</.button>
+          <.button phx-click="zoom_out" class="btn btn-sm">Zoom Out</.button>
+          <.button phx-click="reset_view" class="btn btn-sm">Reset View</.button>
+        </div>
+      </div>
+      
+      <%= if Enum.empty?(@rooms) do %>
+        <div class="text-center py-8">
+          <p class="text-gray-500">No rooms available to display.</p>
+        </div>
+      <% else %>
+        <div 
+          class="relative overflow-hidden border border-base-300 rounded bg-white"
+          style="height: 600px;"
+          phx-hook="MapVisualization"
+          id="map-container"
+          phx-click="mousedown"
+          phx-window-keyup={JS.dispatch("mouseup", to: "#map-container")}
+          phx-window-mousemove={JS.dispatch("mousemove", to: "#map-container")}
+          phx-mouseup="mouseup"
+          phx-mouseleave="mouseleave"
+        >
+          <svg 
+            class="absolute top-0 left-0 w-full h-full"
+            style={"transform: scale(#{@zoom}) translate(#{@pan_x}px, #{@pan_y}px); transform-origin: 0 0;"}
+          >
+            <!-- Render connections between rooms (doors) -->
+            <%= for door <- @doors do %>
+              <% from_room = Enum.find(@rooms, &(&1.id == door.from_room_id)) %>
+              <% to_room = Enum.find(@rooms, &(&1.id == door.to_room_id)) %>
+              <%= if from_room && to_room do %>
+                <line 
+                  x1={50 + from_room.x_coordinate * 100} 
+                  y1={50 + from_room.y_coordinate * 100} 
+                  x2={50 + to_room.x_coordinate * 100} 
+                  y2={50 + to_room.y_coordinate * 100} 
+                  stroke="#94a3b8" 
+                  stroke-width="2" 
+                />
+              <% end %>
+            <% end %>
+            
+            <!-- Render rooms as squares -->
+            <%= for room <- @rooms do %>
+              <rect 
+                x={25 + room.x_coordinate * 100} 
+                y={25 + room.y_coordinate * 100} 
+                width="50" 
+                height="50" 
+                fill={room_color(room)} 
+                stroke="#1e293b" 
+                stroke-width="2" 
+                rx="5"
+              />
+              <text 
+                x={50 + room.x_coordinate * 100} 
+                y={55 + room.y_coordinate * 100} 
+                text-anchor="middle" 
+                font-size="10" 
+                fill="#1e293b"
+                pointer-events="none"
+              >
+                <%= room.name %>
+              </text>
+            <% end %>
+          </svg>
+        </div>
+        
+        <div class="mt-4 text-sm text-gray-600">
+          <p>Zoom: <%= Float.round(@zoom, 2) %>x | Pan: (<%= @pan_x %>, <%= @pan_y %>)</p>
+          <p class="mt-2">Rooms: <%= Enum.count(@rooms) %> | Doors: <%= Enum.count(@doors) %></p>
+        </div>
+      <% end %>
     </div>
     """
+  end
+
+  defp room_color(room) do
+    case room.room_type do
+      "safe_zone" -> "#bbf7d0"  # green
+      "shop" -> "#bfdbfe"       # blue
+      "dungeon" -> "#fecaca"    # red
+      "treasure_room" -> "#fde68a" # yellow
+      "trap_room" -> "#fda4af"  # pink
+      _ -> "#e2e8f0"            # gray (default)
+    end
   end
 end
