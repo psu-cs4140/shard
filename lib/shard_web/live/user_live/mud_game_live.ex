@@ -639,6 +639,14 @@ defmodule ShardWeb.MudGameLive do
         {elem(curr_position, 0) + 1, elem(curr_position, 1)}
       "ArrowLeft" ->
         {elem(curr_position, 0) - 1, elem(curr_position, 1)}
+      "northeast" ->
+        {elem(curr_position, 0) + 1, elem(curr_position, 1) - 1}
+      "southeast" ->
+        {elem(curr_position, 0) + 1, elem(curr_position, 1) + 1}
+      "northwest" ->
+        {elem(curr_position, 0) - 1, elem(curr_position, 1) - 1}
+      "southwest" ->
+        {elem(curr_position, 0) - 1, elem(curr_position, 1) + 1}
       _other  ->
         curr_position
     end
@@ -677,6 +685,10 @@ defmodule ShardWeb.MudGameLive do
           "ArrowDown" -> "south"
           "ArrowRight" -> "east"
           "ArrowLeft" -> "west"
+          "northeast" -> "northeast"
+          "southeast" -> "southeast"
+          "northwest" -> "northwest"
+          "southwest" -> "southwest"
           _ -> nil
         end
         
@@ -853,7 +865,9 @@ defmodule ShardWeb.MudGameLive do
           "  stats - Show your character stats",
           "  position - Show your current position",
           "  inventory - Show your inventory (coming soon)",
-          "  north/south/east/west - Move in that direction",
+          "  north/south/east/west - Move in cardinal directions",
+          "  northeast/southeast/northwest/southwest - Move diagonally",
+          "  Shortcuts: n/s/e/w/ne/se/nw/sw",
           "  help - Show this help message"
         ]
         {response, game_state}
@@ -899,6 +913,18 @@ defmodule ShardWeb.MudGameLive do
       cmd when cmd in ["west", "w"] ->
         execute_movement(game_state, "ArrowLeft")
 
+      cmd when cmd in ["northeast", "ne"] ->
+        execute_movement(game_state, "northeast")
+
+      cmd when cmd in ["southeast", "se"] ->
+        execute_movement(game_state, "southeast")
+
+      cmd when cmd in ["northwest", "nw"] ->
+        execute_movement(game_state, "northwest")
+
+      cmd when cmd in ["southwest", "sw"] ->
+        execute_movement(game_state, "southwest")
+
       _ ->
         {["Unknown command: '#{command}'. Type 'help' for available commands."], game_state}
     end
@@ -918,6 +944,10 @@ defmodule ShardWeb.MudGameLive do
         "ArrowDown" -> "south"
         "ArrowRight" -> "east"
         "ArrowLeft" -> "west"
+        "northeast" -> "northeast"
+        "southeast" -> "southeast"
+        "northwest" -> "northwest"
+        "southwest" -> "southwest"
       end
 
       # Update game state with new position
