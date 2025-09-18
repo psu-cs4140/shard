@@ -28,6 +28,8 @@ defmodule ShardWeb.Router do
     pipe_through [:browser, :require_authenticated_user]
 
     get "/", AdminController, :index
+    get "/mud", AdminController, :mud
+    live "/mud/manage", Admin.MudLive
   end
 
   # Other scopes may use custom stacks.

@@ -7,6 +7,10 @@ defmodule ShardWeb.AdminController do
     render(conn, :index)
   end
 
+  def mud(conn, _params) do
+    render(conn, :mud)
+  end
+
   defp require_admin(conn, _params) do
     case conn.assigns.current_scope.user.admin do
       true -> conn
