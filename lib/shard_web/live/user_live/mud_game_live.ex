@@ -834,22 +834,41 @@ defmodule ShardWeb.MudGameLive do
   # Component for the minimap
   def minimap(assigns) do
     # Get rooms and doors from database for dynamic rendering
-    rooms = Repo.all(GameMap.Room)
-    doors = Repo.all(GameMap.Door)
+    rooms = Repo.all(GameMap.Room) |> Repo.preload([:doors_from, :doors_to])
+    doors = Repo.all(GameMap.Door) |> Repo.preload([:from_room, :to_room])
+    
+    # Filter out rooms without coordinates
+    valid_rooms = Enum.filter(rooms, fn room -> 
+      room.x_coordinate != nil and room.y_coordinate != nil 
+    end)
+    
+    # Filter out doors without valid room connections
+    valid_doors = Enum.filter(doors, fn door ->
+      door.from_room && door.to_room &&
+      door.from_room.x_coordinate != nil && door.from_room.y_coordinate != nil &&
+      door.to_room.x_coordinate != nil && door.to_room.y_coordinate != nil
+    end)
     
     # Calculate bounds and scaling for the minimap
-    {bounds, scale_factor} = calculate_minimap_bounds(rooms)
+    {bounds, scale_factor} = calculate_minimap_bounds(valid_rooms)
     
-    assigns = assign(assigns, rooms: rooms, doors: doors, bounds: bounds, scale_factor: scale_factor)
+    assigns = assign(assigns, 
+      rooms: valid_rooms, 
+      doors: valid_doors, 
+      bounds: bounds, 
+      scale_factor: scale_factor,
+      all_rooms_count: length(rooms),
+      all_doors_count: length(doors)
+    )
     
     ~H"""
     <div class="bg-gray-700 rounded-lg p-4 shadow-xl">
       <h2 class="text-xl font-semibold mb-4 text-center">Minimap</h2>
       <div class="relative mx-auto" style="width: 300px; height: 200px;">
         <svg viewBox="0 0 300 200" class="w-full h-full border border-gray-600 bg-gray-800">
-          <!-- Render doors as lines -->
+          <!-- Render doors as lines first (so they appear behind rooms) -->
           <%= for door <- @doors do %>
-            <.door_line door={door} rooms={@rooms} bounds={@bounds} scale_factor={@scale_factor} />
+            <.door_line door={door} bounds={@bounds} scale_factor={@scale_factor} />
           <% end %>
           
           <!-- Render rooms as circles -->
@@ -861,11 +880,26 @@ defmodule ShardWeb.MudGameLive do
               scale_factor={@scale_factor}
             />
           <% end %>
+          
+          <!-- Show player position even if no room exists there -->
+          <%= if @player_position not in Enum.map(@rooms, &{&1.x_coordinate, &1.y_coordinate}) do %>
+            <.player_marker 
+              position={@player_position}
+              bounds={@bounds}
+              scale_factor={@scale_factor}
+            />
+          <% end %>
         </svg>
       </div>
       <div class="mt-4 text-center text-sm text-gray-300">
         <p>Player Position: <%= format_position(@player_position) %></p>
-        <p class="text-xs mt-1">Rooms: <%= length(@rooms) %> | Doors: <%= length(@doors) %></p>
+        <p class="text-xs mt-1">
+          Showing: <%= length(@rooms) %>/<%= @all_rooms_count %> rooms | 
+          <%= length(@doors) %>/<%= @all_doors_count %> doors
+        </p>
+        <%= if length(@rooms) == 0 do %>
+          <p class="text-xs text-yellow-400 mt-1">No rooms with coordinates found in database</p>
+        <% end %>
       </div>
     </div>
     """
@@ -926,8 +960,9 @@ defmodule ShardWeb.MudGameLive do
 
   # Component for door lines in the minimap
   def door_line(assigns) do
-    from_room = Enum.find(assigns.rooms, &(&1.id == assigns.door.from_room_id))
-    to_room = Enum.find(assigns.rooms, &(&1.id == assigns.door.to_room_id))
+    # Use preloaded associations
+    from_room = assigns.door.from_room
+    to_room = assigns.door.to_room
     
     return_early = from_room == nil or to_room == nil or 
                    from_room.x_coordinate == nil or from_room.y_coordinate == nil or
@@ -954,13 +989,16 @@ defmodule ShardWeb.MudGameLive do
         assigns.door.door_type == "gate" -> "#d97706"  # Orange for gates
         assigns.door.door_type == "locked_gate" -> "#991b1b"  # Dark red for locked gates
         assigns.door.door_type == "secret" -> "#6b7280"  # Gray for secret doors
-        assigns.door.key_required -> "#f59e0b"  # Orange for doors requiring keys
+        assigns.door.key_required && assigns.door.key_required != "" -> "#f59e0b"  # Orange for doors requiring keys
         true -> "#22c55e"  # Green for standard doors
       end
+      
+      door_name = assigns.door.name || "#{String.capitalize(assigns.door.door_type || "standard")} Door"
       
       assign(assigns, 
         x1: x1, y1: y1, x2: x2, y2: y2, 
         stroke_color: stroke_color,
+        door_name: door_name,
         skip_render: false
       )
     end
@@ -974,9 +1012,9 @@ defmodule ShardWeb.MudGameLive do
         y2={@y2} 
         stroke={@stroke_color} 
         stroke-width="2"
-        opacity="0.7"
+        opacity="0.8"
       >
-        <title><%= @door.name || "Door" %> (<%= @door.direction %>)</title>
+        <title><%= @door_name %> (<%= @door.direction %>) - <%= String.capitalize(@door.door_type || "standard") %></title>
       </line>
     <% end %>
     """
@@ -1226,29 +1264,39 @@ defmodule ShardWeb.MudGameLive do
 
   # Calculate bounds and scale factor for minimap rendering
   defp calculate_minimap_bounds(rooms) do
-    rooms_with_coords = Enum.filter(rooms, fn room -> 
-      room.x_coordinate != nil and room.y_coordinate != nil 
-    end)
-    
-    if Enum.empty?(rooms_with_coords) do
-      # Default bounds if no rooms
-      {{0, 0, 10, 10}, 1.0}
+    if Enum.empty?(rooms) do
+      # Default bounds if no rooms - center around origin
+      {{-5, -5, 5, 5}, 15.0}
     else
-      x_coords = Enum.map(rooms_with_coords, & &1.x_coordinate)
-      y_coords = Enum.map(rooms_with_coords, & &1.y_coordinate)
+      x_coords = Enum.map(rooms, & &1.x_coordinate)
+      y_coords = Enum.map(rooms, & &1.y_coordinate)
       
-      min_x = Enum.min(x_coords) - 1
-      max_x = Enum.max(x_coords) + 1
-      min_y = Enum.min(y_coords) - 1
-      max_y = Enum.max(y_coords) + 1
+      min_x = Enum.min(x_coords)
+      max_x = Enum.max(x_coords)
+      min_y = Enum.min(y_coords)
+      max_y = Enum.max(y_coords)
+      
+      # Add padding around the bounds
+      padding = 2
+      min_x = min_x - padding
+      max_x = max_x + padding
+      min_y = min_y - padding
+      max_y = max_y + padding
       
       # Calculate scale to fit in 300x200 minimap with padding
       width = max_x - min_x
       height = max_y - min_y
       
-      scale_x = 260 / max(width, 1)  # 260 to leave 20px padding on each side
-      scale_y = 160 / max(height, 1)  # 160 to leave 20px padding top/bottom
+      # Ensure minimum size to prevent division by zero
+      width = max(width, 1)
+      height = max(height, 1)
+      
+      scale_x = 260 / width  # 260 to leave 20px padding on each side
+      scale_y = 160 / height  # 160 to leave 20px padding top/bottom
       scale_factor = min(scale_x, scale_y)
+      
+      # Ensure minimum scale factor for visibility
+      scale_factor = max(scale_factor, 5.0)
       
       {{min_x, min_y, max_x, max_y}, scale_factor}
     end
@@ -1260,7 +1308,36 @@ defmodule ShardWeb.MudGameLive do
     scaled_x = (x - min_x) * scale_factor + 20  # 20px padding
     scaled_y = (y - min_y) * scale_factor + 20  # 20px padding
     
+    # Ensure coordinates are within bounds
+    scaled_x = max(10, min(scaled_x, 290))
+    scaled_y = max(10, min(scaled_y, 190))
+    
     {scaled_x, scaled_y}
+  end
+
+  # Component for player marker when no room exists at player position
+  def player_marker(assigns) do
+    {x_pos, y_pos} = calculate_minimap_position(
+      assigns.position, 
+      assigns.bounds, 
+      assigns.scale_factor
+    )
+    
+    assigns = assign(assigns, x_pos: x_pos, y_pos: y_pos)
+    
+    ~H"""
+    <circle 
+      cx={@x_pos} 
+      cy={@y_pos} 
+      r="8" 
+      fill="#ef4444" 
+      stroke="#ffffff" 
+      stroke-width="2"
+      opacity="0.9"
+    >
+      <title>Player at <%= format_position(@position) %> (no room)</title>
+    </circle>
+    """
   end
 
   # Component for individual map cells (legacy grid-based map)
