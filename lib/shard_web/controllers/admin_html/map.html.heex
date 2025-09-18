@@ -1,0 +1,14 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="mx-auto max-w-4xl">
+    <.header>
+      Map Manager
+      <:subtitle>Manage rooms and doors for the game map</:subtitle>
+    </.header>
+
+    <div class="mt-8">
+      <.link href={~p"/admin/map/manage"} class="btn btn-primary">
+        Manage Rooms and Doors
+      </.link>
+    </div>
+  </div>
+</Layouts.app>

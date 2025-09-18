@@ -7,8 +7,8 @@ defmodule ShardWeb.AdminController do
     render(conn, :index)
   end
 
-  def mud(conn, _params) do
-    render(conn, :mud)
+  def map(conn, _params) do
+    render(conn, :map)
   end
 
   defp require_admin(conn, _params) do
