@@ -5,10 +5,16 @@ defmodule ShardWeb.MudGameLive do
 
   @impl true
   def mount(_params, _session, socket) do
+    # Generate map data first
+    map_data = generate_map_from_database()
+    
+    # Find a valid starting position (first floor tile found)
+    starting_position = find_valid_starting_position(map_data)
+    
     # Initialize game state
     game_state = %{
-      player_position: {5, 5}, # In future, we want to grab this from the database.
-      map_data: generate_map_from_database(), # Pull map data from database
+      player_position: starting_position,
+      map_data: map_data,
       active_panel: nil,
       player_stats: %{
         health: 100,
@@ -974,6 +980,22 @@ defmodule ShardWeb.MudGameLive do
           true -> 1  # Default floor
         end
       end
+    end
+  end
+  
+  # Find a valid starting position on the map (first non-wall tile)
+  defp find_valid_starting_position(map_data) do
+    # Search for the first floor tile (value 1, 2, or 3 - anything but 0 which is wall)
+    Enum.with_index(map_data)
+    |> Enum.find_value(fn {row, y} ->
+      Enum.with_index(row)
+      |> Enum.find_value(fn {cell, x} ->
+        if cell != 0, do: {x, y}, else: nil
+      end)
+    end)
+    |> case do
+      nil -> {0, 0}  # Fallback if no valid position found (shouldn't happen)
+      position -> position
     end
   end
 end
