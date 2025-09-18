@@ -2,19 +2,21 @@ defmodule ShardWeb.AdminLive.Map do
   use ShardWeb, :live_view
 
   alias Shard.Map
+  alias Shard.Map.{Room, Door}
 
   @impl true
   def mount(_params, _session, socket) do
     rooms = Map.list_rooms()
-    # Preload door associations to avoid N+1 queries
-    doors = Map.list_doors() |> Enum.map(&Map.Repo.preload(&1, [:from_room, :to_room]))
+    doors = Map.list_doors()
     
     {:ok,
      socket
      |> assign(:rooms, rooms)
      |> assign(:doors, doors)
      |> assign(:page_title, "Map Management")
-     |> assign(:tab, "rooms")}
+     |> assign(:tab, "rooms")
+     |> assign(:changeset, nil)
+     |> assign(:editing, nil)}
   end
 
   @impl true
@@ -32,21 +34,151 @@ defmodule ShardWeb.AdminLive.Map do
     {:noreply, assign(socket, :tab, tab)}
   end
 
-  @impl true
-  def handle_event("generate_default_map", _, socket) do
-    case Map.generate_default_map() do
-      {:ok, _message} ->
-        # Refresh the rooms and doors lists
-        rooms = Map.list_rooms()
-        doors = Map.list_doors() |> Enum.map(&Map.Repo.preload(&1, [:from_room, :to_room]))
-        
-        {:noreply, 
-         socket
-         |> assign(:rooms, rooms)
-         |> assign(:doors, doors)
-         |> put_flash(:info, "Default map generated successfully!")}
-      {:error, message} ->
-        {:noreply, put_flash(socket, :error, "Error generating map: #{message}")}
+  # Room events
+  def handle_event("new_room", _params, socket) do
+    changeset = Map.change_room(%Room{})
+    {:noreply, assign(socket, :changeset, changeset, :editing, :room)}
+  end
+
+  def handle_event("edit_room", %{"id" => id}, socket) do
+    room = Map.get_room!(id)
+    changeset = Map.change_room(room)
+    {:noreply, assign(socket, :changeset, changeset, :editing, :room)}
+  end
+
+  def handle_event("delete_room", %{"id" => id}, socket) do
+    room = Map.get_room!(id)
+    {:ok, _} = Map.delete_room(room)
+    
+    rooms = Map.list_rooms()
+    doors = Map.list_doors()
+    
+    {:noreply,
+     socket
+     |> assign(:rooms, rooms)
+     |> assign(:doors, doors)
+     |> put_flash(:info, "Room deleted successfully")}
+  end
+
+  def handle_event("validate_room", %{"room" => room_params}, socket) do
+    changeset = 
+      if socket.assigns.editing == :room && socket.assigns.changeset.data.id do
+        Map.change_room(socket.assigns.changeset.data, room_params)
+      else
+        Map.change_room(%Room{}, room_params)
+      end
+      |> Map.put(:action, :validate)
+    
+    {:noreply, assign(socket, :changeset, changeset)}
+  end
+
+  def handle_event("save_room", %{"room" => room_params}, socket) do
+    case save_room(socket, room_params) do
+      {:ok, socket} -> {:noreply, socket}
+      {:error, socket} -> {:noreply, socket}
+    end
+  end
+
+  def handle_event("cancel_room", _params, socket) do
+    {:noreply, assign(socket, :editing, nil, :changeset, nil)}
+  end
+
+  # Door events
+  def handle_event("new_door", _params, socket) do
+    changeset = Map.change_door(%Door{})
+    {:noreply, assign(socket, :changeset, changeset, :editing, :door)}
+  end
+
+  def handle_event("edit_door", %{"id" => id}, socket) do
+    door = Map.get_door!(id)
+    changeset = Map.change_door(door)
+    {:noreply, assign(socket, :changeset, changeset, :editing, :door)}
+  end
+
+  def handle_event("delete_door", %{"id" => id}, socket) do
+    door = Map.get_door!(id)
+    {:ok, _} = Map.delete_door(door)
+    
+    rooms = Map.list_rooms()
+    doors = Map.list_doors()
+    
+    {:noreply,
+     socket
+     |> assign(:rooms, rooms)
+     |> assign(:doors, doors)
+     |> put_flash(:info, "Door deleted successfully")}
+  end
+
+  def handle_event("validate_door", %{"door" => door_params}, socket) do
+    changeset = 
+      if socket.assigns.editing == :door && socket.assigns.changeset.data.id do
+        Map.change_door(socket.assigns.changeset.data, door_params)
+      else
+        Map.change_door(%Door{}, door_params)
+      end
+      |> Map.put(:action, :validate)
+    
+    {:noreply, assign(socket, :changeset, changeset)}
+  end
+
+  def handle_event("save_door", %{"door" => door_params}, socket) do
+    case save_door(socket, door_params) do
+      {:ok, socket} -> {:noreply, socket}
+      {:error, socket} -> {:noreply, socket}
+    end
+  end
+
+  def handle_event("cancel_door", _params, socket) do
+    {:noreply, assign(socket, :editing, nil, :changeset, nil)}
+  end
+
+  defp save_room(socket, room_params) do
+    case socket.assigns.editing do
+      :room when not is_nil(socket.assigns.changeset) and not is_nil(socket.assigns.changeset.data.id) ->
+        # Update existing room
+        case Map.update_room(socket.assigns.changeset.data, room_params) do
+          {:ok, _room} ->
+            rooms = Map.list_rooms()
+            {:ok, assign(socket, :rooms, rooms, :editing, nil, :changeset, nil)
+                  |> put_flash(:info, "Room updated successfully")}
+          {:error, changeset} ->
+            {:error, assign(socket, :changeset, changeset)}
+        end
+      _ ->
+        # Create new room
+        case Map.create_room(room_params) do
+          {:ok, _room} ->
+            rooms = Map.list_rooms()
+            {:ok, assign(socket, :rooms, rooms, :editing, nil, :changeset, nil)
+                  |> put_flash(:info, "Room created successfully")}
+          {:error, changeset} ->
+            {:error, assign(socket, :changeset, changeset)}
+        end
+    end
+  end
+
+  defp save_door(socket, door_params) do
+    case socket.assigns.editing do
+      :door when not is_nil(socket.assigns.changeset) and not is_nil(socket.assigns.changeset.data.id) ->
+        # Update existing door
+        case Map.update_door(socket.assigns.changeset.data, door_params) do
+          {:ok, _door} ->
+            doors = Map.list_doors()
+            {:ok, assign(socket, :doors, doors, :editing, nil, :changeset, nil)
+                  |> put_flash(:info, "Door updated successfully")}
+          {:error, changeset} ->
+            {:error, assign(socket, :changeset, changeset)}
+        end
+      _ ->
+        # Create new door
+        case Map.create_door(door_params) do
+          {:ok, _door} ->
+            doors = Map.list_doors()
+            {:ok, assign(socket, :doors, doors, :editing, nil, :changeset, nil)
+                  |> put_flash(:info, "Door created successfully")}
+          {:error, changeset} ->
+            {:error, assign(socket, :changeset, changeset)}
+        end
     end
   end
 
@@ -85,14 +217,6 @@ defmodule ShardWeb.AdminLive.Map do
           >
             Map Visualization
           </button>
-          <button 
-            type="button" 
-            class={["tab", @tab == "editor" && "tab-active"]}
-            phx-click="change_tab" 
-            phx-value-tab="editor"
-          >
-            Map Editor
-          </button>
         </div>
         
         <button 
@@ -112,17 +236,104 @@ defmodule ShardWeb.AdminLive.Map do
             <.doors_tab doors={@doors} />
           <% "map" -> %>
             <.map_visualization rooms={@rooms} doors={@doors} />
-          <% "editor" -> %>
-            <.map_editor rooms={@rooms} doors={@doors} />
         <% end %>
       </div>
     </div>
+
+    <!-- Room Form Modal -->
+    <.modal :if={@editing == :room} id="room-modal" show>
+      <.header>
+        <%= if @changeset.data.id, do: "Edit Room", else: "New Room" %>
+        <:subtitle>Manage room details</:subtitle>
+      </.header>
+      
+      <.simple_form
+        for={@changeset}
+        id="room-form"
+        phx-change="validate_room"
+        phx-submit="save_room"
+      >
+        <.input field={@changeset[:name]} type="text" label="Name" required />
+        <.input field={@changeset[:description]} type="textarea" label="Description" />
+        <div class="grid grid-cols-3 gap-4">
+          <.input field={@changeset[:x_coordinate]} type="number" label="X" />
+          <.input field={@changeset[:y_coordinate]} type="number" label="Y" />
+          <.input field={@changeset[:z_coordinate]} type="number" label="Z" />
+        </div>
+        <.input field={@changeset[:room_type]} type="select" label="Type" prompt="Choose a type" options={[
+          {"Standard", "standard"},
+          {"Safe Zone", "safe_zone"},
+          {"Shop", "shop"},
+          {"Dungeon", "dungeon"},
+          {"Treasure Room", "treasure_room"},
+          {"Trap Room", "trap_room"}
+        ]} />
+        <.input field={@changeset[:is_public]} type="checkbox" label="Public Room" />
+        
+        <:actions>
+          <.button phx-click="cancel_room" kind="secondary">Cancel</.button>
+          <.button phx-disable-with="Saving...">Save Room</.button>
+        </:actions>
+      </.simple_form>
+    </.modal>
+
+    <!-- Door Form Modal -->
+    <.modal :if={@editing == :door} id="door-modal" show>
+      <.header>
+        <%= if @changeset.data.id, do: "Edit Door", else: "New Door" %>
+        <:subtitle>Manage door details</:subtitle>
+      </.header>
+      
+      <.simple_form
+        for={@changeset}
+        id="door-form"
+        phx-change="validate_door"
+        phx-submit="save_door"
+      >
+        <.input field={@changeset[:from_room_id]} type="select" label="From Room" prompt="Select room" options={
+          Enum.map(@rooms, &{&1.name, &1.id})
+        } required />
+        <.input field={@changeset[:to_room_id]} type="select" label="To Room" prompt="Select room" options={
+          Enum.map(@rooms, &{&1.name, &1.id})
+        } required />
+        <.input field={@changeset[:direction]} type="select" label="Direction" prompt="Select direction" options={[
+          {"North", "north"},
+          {"South", "south"},
+          {"East", "east"},
+          {"West", "west"},
+          {"Up", "up"},
+          {"Down", "down"},
+          {"Northeast", "northeast"},
+          {"Northwest", "northwest"},
+          {"Southeast", "southeast"},
+          {"Southwest", "southwest"}
+        ]} required />
+        <.input field={@changeset[:door_type]} type="select" label="Type" prompt="Choose a type" options={[
+          {"Standard", "standard"},
+          {"Gate", "gate"},
+          {"Portal", "portal"},
+          {"Secret", "secret"},
+          {"Locked Gate", "locked_gate"}
+        ]} />
+        <.input field={@changeset[:is_locked]} type="checkbox" label="Locked" />
+        <.input field={@changeset[:key_required]} type="text" label="Key Required" />
+        
+        <:actions>
+          <.button phx-click="cancel_door" kind="secondary">Cancel</.button>
+          <.button phx-disable-with="Saving...">Save Door</.button>
+        </:actions>
+      </.simple_form>
+    </.modal>
     """
   end
 
   defp rooms_tab(assigns) do
     ~H"""
     <div class="overflow-x-auto">
+      <div class="mb-4">
+        <.button phx-click="new_room" class="btn btn-primary">New Room</.button>
+      </div>
+      
       <%= if Enum.empty?(@rooms) do %>
         <div class="text-center py-8">
           <p class="text-gray-500">No rooms found in the database.</p>
@@ -137,6 +348,7 @@ defmodule ShardWeb.AdminLive.Map do
               <th>Coordinates</th>
               <th>Type</th>
               <th>Public</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -148,6 +360,17 @@ defmodule ShardWeb.AdminLive.Map do
                 <td>(<%= room.x_coordinate %>, <%= room.y_coordinate %>, <%= room.z_coordinate %>)</td>
                 <td><%= room.room_type %></td>
                 <td><%= if room.is_public, do: "Yes", else: "No" %></td>
+                <td class="flex gap-2">
+                  <.button phx-click="edit_room" phx-value-id={room.id} class="btn btn-sm">Edit</.button>
+                  <.link
+                    phx-click="delete_room"
+                    phx-value-id={room.id}
+                    data-confirm="Are you sure you want to delete this room?"
+                    class="btn btn-sm btn-error"
+                  >
+                    Delete
+                  </.link>
+                </td>
               </tr>
             <% end %>
           </tbody>
@@ -160,6 +383,10 @@ defmodule ShardWeb.AdminLive.Map do
   defp doors_tab(assigns) do
     ~H"""
     <div class="overflow-x-auto">
+      <div class="mb-4">
+        <.button phx-click="new_door" class="btn btn-primary">New Door</.button>
+      </div>
+      
       <%= if Enum.empty?(@doors) do %>
         <div class="text-center py-8">
           <p class="text-gray-500">No doors found in the database.</p>
@@ -175,6 +402,7 @@ defmodule ShardWeb.AdminLive.Map do
               <th>Direction</th>
               <th>Locked</th>
               <th>Type</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -187,6 +415,17 @@ defmodule ShardWeb.AdminLive.Map do
                 <td><%= door.direction %></td>
                 <td><%= if door.is_locked, do: "Yes", else: "No" %></td>
                 <td><%= door.door_type %></td>
+                <td class="flex gap-2">
+                  <.button phx-click="edit_door" phx-value-id={door.id} class="btn btn-sm">Edit</.button>
+                  <.link
+                    phx-click="delete_door"
+                    phx-value-id={door.id}
+                    data-confirm="Are you sure you want to delete this door?"
+                    class="btn btn-sm btn-error"
+                  >
+                    Delete
+                  </.link>
+                </td>
               </tr>
             <% end %>
           </tbody>
@@ -210,7 +449,6 @@ defmodule ShardWeb.AdminLive.Map do
         </div>
       <% else %>
         <div class="relative overflow-auto border border-base-300 rounded-box bg-white min-h-[500px]">
-          <!-- Simple grid-based map visualization -->
           <div class="relative p-4 min-h-full">
             <%= for room <- @rooms do %>
               <div 
@@ -250,204 +488,6 @@ defmodule ShardWeb.AdminLive.Map do
           <p class="text-xs text-base-content/70 mt-2">In a full implementation, this would show connections between rooms</p>
         </div>
       <% end %>
-    </div>
-    """
-  end
-
-  defp map_editor(assigns) do
-    ~H"""
-    <div class="bg-base-200 p-6 rounded-box">
-      <div class="text-center mb-4">
-        <h3 class="text-lg font-bold">Map Editor</h3>
-        <p class="text-sm text-base-content/70">Create and edit rooms and connections</p>
-      </div>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="card bg-base-100 shadow">
-          <div class="card-body">
-            <h4 class="card-title">Create New Room</h4>
-            <form phx-submit="create-room" class="space-y-4">
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">Room Name</span>
-                </label>
-                <input type="text" name="room[name]" placeholder="Room Name" class="input input-bordered" required />
-              </div>
-              
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">Description</span>
-                </label>
-                <textarea name="room[description]" placeholder="Room Description" class="textarea textarea-bordered"></textarea>
-              </div>
-              
-              <div class="grid grid-cols-2 gap-4">
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text">X Coordinate</span>
-                  </label>
-                  <input type="number" name="room[x_coordinate]" value="0" class="input input-bordered" />
-                </div>
-                
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text">Y Coordinate</span>
-                  </label>
-                  <input type="number" name="room[y_coordinate]" value="0" class="input input-bordered" />
-                </div>
-              </div>
-              
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">Room Type</span>
-                </label>
-                <select name="room[room_type]" class="select select-bordered">
-                  <option value="standard">Standard</option>
-                  <option value="safe_zone">Safe Zone</option>
-                  <option value="shop">Shop</option>
-                  <option value="dungeon">Dungeon</option>
-                  <option value="treasure_room">Treasure Room</option>
-                  <option value="trap_room">Trap Room</option>
-                </select>
-              </div>
-              
-              <div class="form-control">
-                <label class="label cursor-pointer">
-                  <span class="label-text">Public Room</span>
-                  <input type="checkbox" name="room[is_public]" class="checkbox" checked />
-                </label>
-              </div>
-              
-              <div class="card-actions justify-end">
-                <button type="submit" class="btn btn-primary">Create Room</button>
-              </div>
-            </form>
-          </div>
-        </div>
-        
-        <div class="card bg-base-100 shadow">
-          <div class="card-body">
-            <h4 class="card-title">Create New Door</h4>
-            <form phx-submit="create-door" class="space-y-4">
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">From Room</span>
-                </label>
-                <select name="door[from_room_id]" class="select select-bordered" required>
-                  <option disabled selected>Select a room</option>
-                  <%= for room <- @rooms do %>
-                    <option value={room.id}><%= room.name %></option>
-                  <% end %>
-                </select>
-              </div>
-              
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">To Room</span>
-                </label>
-                <select name="door[to_room_id]" class="select select-bordered" required>
-                  <option disabled selected>Select a room</option>
-                  <%= for room <- @rooms do %>
-                    <option value={room.id}><%= room.name %></option>
-                  <% end %>
-                </select>
-              </div>
-              
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">Direction</span>
-                </label>
-                <select name="door[direction]" class="select select-bordered" required>
-                  <option value="north">North</option>
-                  <option value="south">South</option>
-                  <option value="east">East</option>
-                  <option value="west">West</option>
-                  <option value="up">Up</option>
-                  <option value="down">Down</option>
-                  <option value="northeast">Northeast</option>
-                  <option value="northwest">Northwest</option>
-                  <option value="southeast">Southeast</option>
-                  <option value="southwest">Southwest</option>
-                </select>
-              </div>
-              
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text">Door Type</span>
-                </label>
-                <select name="door[door_type]" class="select select-bordered">
-                  <option value="standard">Standard</option>
-                  <option value="gate">Gate</option>
-                  <option value="portal">Portal</option>
-                  <option value="secret">Secret</option>
-                  <option value="locked_gate">Locked Gate</option>
-                </select>
-              </div>
-              
-              <div class="form-control">
-                <label class="label cursor-pointer">
-                  <span class="label-text">Locked</span>
-                  <input type="checkbox" name="door[is_locked]" class="checkbox" />
-                </label>
-              </div>
-              
-              <div class="card-actions justify-end">
-                <button type="submit" class="btn btn-primary">Create Door</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      
-      <div class="mt-8">
-        <h4 class="font-bold mb-4">Existing Map Elements</h4>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="card bg-base-100 shadow">
-            <div class="card-body">
-              <h5 class="card-title">Rooms (<%= length(@rooms) %>)</h5>
-              <div class="max-h-60 overflow-y-auto">
-                <%= if Enum.empty?(@rooms) do %>
-                  <p class="text-gray-500 text-sm">No rooms available</p>
-                <% else %>
-                  <ul class="space-y-2">
-                    <%= for room <- @rooms do %>
-                      <li class="flex justify-between items-center p-2 hover:bg-base-200 rounded">
-                        <span><%= room.name %></span>
-                        <span class="text-xs text-gray-500">(<%= room.x_coordinate %>, <%= room.y_coordinate %>)</span>
-                      </li>
-                    <% end %>
-                  </ul>
-                <% end %>
-              </div>
-            </div>
-          </div>
-          
-          <div class="card bg-base-100 shadow">
-            <div class="card-body">
-              <h5 class="card-title">Doors (<%= length(@doors) %>)</h5>
-              <div class="max-h-60 overflow-y-auto">
-                <%= if Enum.empty?(@doors) do %>
-                  <p class="text-gray-500 text-sm">No doors available</p>
-                <% else %>
-                  <ul class="space-y-2">
-                    <%= for door <- @doors do %>
-                      <li class="flex justify-between items-center p-2 hover:bg-base-200 rounded">
-                        <span>
-                          <%= if door.from_room, do: door.from_room.name, else: "Room #{door.from_room_id}" %> 
-                          → 
-                          <%= if door.to_room, do: door.to_room.name, else: "Room #{door.to_room_id}" %>
-                        </span>
-                        <span class="text-xs text-gray-500"><%= door.direction %></span>
-                      </li>
-                    <% end %>
-                  </ul>
-                <% end %>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
     """
   end
