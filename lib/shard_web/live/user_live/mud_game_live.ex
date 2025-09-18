@@ -380,7 +380,7 @@ defmodule ShardWeb.MudGameLive do
             <div class="grid grid-cols-11 gap-0.5 mx-auto w-fit">
               <%= for {row, y} <- Enum.with_index(@game_state.map_data) do %>
                 <%= for {cell, x} <- Enum.with_index(row) do %>
-                  <.map_cell
+                  <.map_cell_legacy
                     cell={cell}
                     is_player={@game_state.player_position == {x, y}}
                     x={x}
@@ -629,7 +629,7 @@ defmodule ShardWeb.MudGameLive do
   end
 
   #To calculate new player position on map
-  def calc_position(curr_position, key, map_data) do
+  def calc_position(curr_position, key, _map_data) do
     new_position = case key do
       "ArrowUp" ->
         {elem(curr_position, 0), elem(curr_position, 1) - 1}
@@ -821,7 +821,7 @@ defmodule ShardWeb.MudGameLive do
     return_early = assigns.room.x_coordinate == nil or assigns.room.y_coordinate == nil
     
     if return_early do
-      assigns = assign(assigns, :skip_render, true)
+      _assigns = assign(assigns, :skip_render, true)
     else
       # Calculate position within the minimap bounds
       {x_pos, y_pos} = calculate_minimap_position(
@@ -842,7 +842,7 @@ defmodule ShardWeb.MudGameLive do
       player_stroke = if assigns.is_player, do: "#ef4444", else: stroke_color
       player_width = if assigns.is_player, do: "3", else: "1"
       
-      assigns = assign(assigns, 
+      _assigns = assign(assigns, 
         x_pos: x_pos, 
         y_pos: y_pos, 
         fill_color: fill_color, 
@@ -878,7 +878,7 @@ defmodule ShardWeb.MudGameLive do
                    to_room.x_coordinate == nil or to_room.y_coordinate == nil
     
     if return_early do
-      assigns = assign(assigns, :skip_render, true)
+      _assigns = assign(assigns, :skip_render, true)
     else
       {x1, y1} = calculate_minimap_position(
         {from_room.x_coordinate, from_room.y_coordinate}, 
@@ -898,7 +898,7 @@ defmodule ShardWeb.MudGameLive do
         true -> "#9ca3af"  # Gray for normal
       end
       
-      assigns = assign(assigns, 
+      _assigns = assign(assigns, 
         x1: x1, y1: y1, x2: x2, y2: y2, 
         stroke_color: stroke_color,
         skip_render: false
@@ -1201,5 +1201,26 @@ defmodule ShardWeb.MudGameLive do
     scaled_y = (y - min_y) * scale_factor + 20  # 20px padding
     
     {scaled_x, scaled_y}
+  end
+
+  # Component for individual map cells (legacy grid-based map)
+  def map_cell_legacy(assigns) do
+    # Define colors based on cell type
+    color_class = case assigns.cell do
+      0 -> "bg-gray-900"  # Wall
+      1 -> "bg-green-700" # Floor
+      2 -> "bg-blue-600"  # Water
+      3 -> "bg-yellow-600" # Treasure
+      _ -> "bg-purple-600" # Unknown
+    end
+
+    player_class = if assigns.is_player, do: "ring-2 ring-red-500", else: ""
+
+    assigns = assign(assigns, color_class: color_class, player_class: player_class)
+
+    ~H"""
+    <div class={"w-6 h-6 #{@color_class} #{@player_class} border border-gray-800"}>
+    </div>
+    """
   end
 end
