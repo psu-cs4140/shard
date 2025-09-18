@@ -137,7 +137,7 @@ defmodule ShardWeb.AdminLive.CharacterFormComponent do
   defp notify_parent(msg), do: send(self(), {__MODULE__, msg})
 
   defp get_user_options do
-    Users.list()
+    Users.list_users()
     |> Enum.map(&{&1.email, &1.id})
   end
 end
