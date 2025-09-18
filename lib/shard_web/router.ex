@@ -5,7 +5,7 @@ defmodule ShardWeb.Router do
   import Phoenix.Controller
   import Phoenix.LiveView.Router
 
-pipeline :browser do
+  pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
     plug :fetch_live_flash
@@ -14,19 +14,10 @@ pipeline :browser do
     plug :put_secure_browser_headers
     plug ShardWeb.Plugs.FetchCurrentUser
   end
-<<<<<<< HEAD
-    
+
   pipeline :admin do
     plug ShardWeb.Plugs.RequireAdmin
   end
-plug ShardWeb.Plugs.FetchCurrentUser
-  end
-=======
-pipeline :admin do
-    plug ShardWeb.Plugs.RequireAdmin
-  end
-
->>>>>>> 874b518 (feat(admin): Monsters CRUD + enums; seeds; tests green (22/22); admin guard for dev)
 
   pipeline :api do
     plug :accepts, ["json"]
@@ -41,20 +32,11 @@ pipeline :admin do
   end
 
   # ---- Admin CRUD (Rooms, Exits) ----
-scope "/admin", ShardWeb.Admin do
+  scope "/admin", ShardWeb.Admin do
     pipe_through [:browser, :admin]
 
     resources "/rooms", RoomController
     resources "/exits", ExitController
     resources "/monsters", MonsterController
   end
-<<<<<<< HEAD
 end
-
-  scope "/admin", ShardWeb.Admin do
-    pipe_through [:browser, :admin]
-    resources "/monsters", MonsterController
-  end
-=======
-end
->>>>>>> 874b518 (feat(admin): Monsters CRUD + enums; seeds; tests green (22/22); admin guard for dev)

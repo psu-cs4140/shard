@@ -1,14 +1,53 @@
 defmodule Shard.WorldTest do
   use Shard.DataCase
-  @valid_attrs %{name: "some name", slug: "some-slug", species: "some species", description: "some description",
-                level: 42, hp: 42, attack: 42, defense: 42, speed: 42, xp_drop: 42,
-                element: "fire", ai: "aggressive", spawn_rate: 42}
 
-  @update_attrs %{name: "some updated name", slug: "some-updated-slug", species: "some updated species", description: "some updated description",
-                 level: 43, hp: 43, attack: 43, defense: 43, speed: 43, xp_drop: 43,
-                 element: "fire", ai: "aggressive", spawn_rate: 43}
+  @valid_attrs %{
+    name: "some name",
+    slug: "some-slug",
+    species: "some species",
+    description: "some description",
+    level: 42,
+    hp: 42,
+    attack: 42,
+    defense: 42,
+    speed: 42,
+    xp_drop: 42,
+    element: "fire",
+    ai: "aggressive",
+    spawn_rate: 42
+  }
 
-  @invalid_attrs %{name: nil, slug: nil, species: nil, description: nil, level: nil, hp: nil, attack: nil, defense: nil, speed: nil, xp_drop: nil, element: nil, ai: nil, spawn_rate: nil}
+  @update_attrs %{
+    name: "some updated name",
+    slug: "some-updated-slug",
+    species: "some updated species",
+    description: "some updated description",
+    level: 43,
+    hp: 43,
+    attack: 43,
+    defense: 43,
+    speed: 43,
+    xp_drop: 43,
+    element: "fire",
+    ai: "aggressive",
+    spawn_rate: 43
+  }
+
+  @invalid_attrs %{
+    name: nil,
+    slug: nil,
+    species: nil,
+    description: nil,
+    level: nil,
+    hp: nil,
+    attack: nil,
+    defense: nil,
+    speed: nil,
+    xp_drop: nil,
+    element: nil,
+    ai: nil,
+    spawn_rate: nil
+  }
 
   alias Shard.World
 
@@ -16,7 +55,6 @@ defmodule Shard.WorldTest do
     alias Shard.World.Monster
 
     import Shard.WorldFixtures
-
 
     test "list_monsters/0 returns all monsters" do
       monster = monster_fixture()
@@ -29,7 +67,21 @@ defmodule Shard.WorldTest do
     end
 
     test "create_monster/1 with valid data creates a monster" do
-      valid_attrs = %{name: "some name", element: "fire", level: 42, description: "some description", speed: 42, slug: "some slug", species: "some species", hp: 42, attack: 42, defense: 42, xp_drop: 42, ai: "aggressive", spawn_rate: 42}
+      valid_attrs = %{
+        name: "some name",
+        element: "fire",
+        level: 42,
+        description: "some description",
+        speed: 42,
+        slug: "some slug",
+        species: "some species",
+        hp: 42,
+        attack: 42,
+        defense: 42,
+        xp_drop: 42,
+        ai: "aggressive",
+        spawn_rate: 42
+      }
 
       assert {:ok, %Monster{} = monster} = World.create_monster(valid_attrs)
       assert monster.name == "some name"
@@ -53,7 +105,22 @@ defmodule Shard.WorldTest do
 
     test "update_monster/2 with valid data updates the monster" do
       monster = monster_fixture()
-      update_attrs = %{name: "some updated name", element: "fire", level: 43, description: "some updated description", speed: 43, slug: "some updated slug", species: "some updated species", hp: 43, attack: 43, defense: 43, xp_drop: 43, ai: "aggressive", spawn_rate: 43}
+
+      update_attrs = %{
+        name: "some updated name",
+        element: "fire",
+        level: 43,
+        description: "some updated description",
+        speed: 43,
+        slug: "some updated slug",
+        species: "some updated species",
+        hp: 43,
+        attack: 43,
+        defense: 43,
+        xp_drop: 43,
+        ai: "aggressive",
+        spawn_rate: 43
+      }
 
       assert {:ok, %Monster{} = monster} = World.update_monster(monster, update_attrs)
       assert monster.name == "some updated name"

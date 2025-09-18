@@ -4,5 +4,9 @@
     <:subtitle>Use this form to manage monster records in your database.</:subtitle>
   </.header>
 
-  <.monster_form changeset={@changeset} action={~p"/admin/monsters/#{@monster}"} return_to={~p"/admin/monsters"} />
+  <.monster_form
+    changeset={@changeset}
+    action={~p"/admin/monsters/#{@monster}"}
+    return_to={~p"/admin/monsters"}
+  />
 </Layouts.app>

@@ -66,7 +66,6 @@ get_or_create_exit.(north.id, "s", start.id)
 get_or_create_exit.(start.id, "e", east.id)
 get_or_create_exit.(east.id, "w", start.id)
 
-
 alias Shard.Repo
 alias Shard.World.{Monster, Room}
 
@@ -80,14 +79,41 @@ end
 
 start_room = get_or_create_room.("start")
 
-mk.(%{name: "Slime", slug: "slime", species: "ooze", description: "Basic blob.",
-      level: 1, hp: 12, attack: 2, defense: 0, speed: 1, xp_drop: 3,
-      element: :neutral, ai: :passive, spawn_rate: 30, room_id: start_room && start_room.id})
+mk.(%{
+  name: "Slime",
+  slug: "slime",
+  species: "ooze",
+  description: "Basic blob.",
+  level: 1,
+  hp: 12,
+  attack: 2,
+  defense: 0,
+  speed: 1,
+  xp_drop: 3,
+  element: :neutral,
+  ai: :passive,
+  spawn_rate: 30,
+  room_id: start_room && start_room.id
+})
 
-mk.(%{name: "Fire Imp", slug: "fire-imp", species: "imp", description: "Loves sparks.",
-      level: 3, hp: 18, attack: 4, defense: 1, speed: 2, xp_drop: 7,
-      element: :fire, ai: :aggressive, spawn_rate: 15, room_id: start_room && start_room.id})
+mk.(%{
+  name: "Fire Imp",
+  slug: "fire-imp",
+  species: "imp",
+  description: "Loves sparks.",
+  level: 3,
+  hp: 18,
+  attack: 4,
+  defense: 1,
+  speed: 2,
+  xp_drop: 7,
+  element: :fire,
+  ai: :aggressive,
+  spawn_rate: 15,
+  room_id: start_room && start_room.id
+})
 
+<<<<<<< HEAD
 mk.(%{name: "Stone Turtle", slug: "stone-turtle", species: "turtle", description: "Tanky but slow.",
       level: 5, hp: 40, attack: 3, defense: 6, speed: 1, xp_drop: 12,
       element: :earth, ai: :defensive, spawn_rate: 10})
@@ -124,10 +150,25 @@ mk_monster.(%{
 })
 
 mk_monster.(%{
+=======
+mk.(%{
+>>>>>>> 2a37033 (chore: format)
   name: "Stone Turtle",
   slug: "stone-turtle",
   species: "turtle",
   description: "Tanky but slow.",
+<<<<<<< HEAD
   level: 5, hp: 40, attack: 3, defense: 6, speed: 1, xp_drop: 12,
   element: :earth, ai: :defensive, spawn_rate: 10
+=======
+  level: 5,
+  hp: 40,
+  attack: 3,
+  defense: 6,
+  speed: 1,
+  xp_drop: 12,
+  element: :earth,
+  ai: :defensive,
+  spawn_rate: 10
+>>>>>>> 2a37033 (chore: format)
 })

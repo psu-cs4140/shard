@@ -6,12 +6,53 @@ defmodule ShardWeb.Admin.MonsterControllerTest do
     {:ok, conn: conn}
   end
 
-
   import Shard.WorldFixtures
 
-  @create_attrs %{name: "some name", element: "fire", level: 42, description: "some description", speed: 42, slug: "some slug", species: "some species", hp: 42, attack: 42, defense: 42, xp_drop: 42, ai: "aggressive", spawn_rate: 42}
-  @update_attrs %{name: "some updated name", element: "fire", level: 43, description: "some updated description", speed: 43, slug: "some updated slug", species: "some updated species", hp: 43, attack: 43, defense: 43, xp_drop: 43, ai: "aggressive", spawn_rate: 43}
-  @invalid_attrs %{name: nil, element: nil, level: nil, description: nil, speed: nil, slug: nil, species: nil, hp: nil, attack: nil, defense: nil, xp_drop: nil, ai: nil, spawn_rate: nil}
+  @create_attrs %{
+    name: "some name",
+    element: "fire",
+    level: 42,
+    description: "some description",
+    speed: 42,
+    slug: "some slug",
+    species: "some species",
+    hp: 42,
+    attack: 42,
+    defense: 42,
+    xp_drop: 42,
+    ai: "aggressive",
+    spawn_rate: 42
+  }
+  @update_attrs %{
+    name: "some updated name",
+    element: "fire",
+    level: 43,
+    description: "some updated description",
+    speed: 43,
+    slug: "some updated slug",
+    species: "some updated species",
+    hp: 43,
+    attack: 43,
+    defense: 43,
+    xp_drop: 43,
+    ai: "aggressive",
+    spawn_rate: 43
+  }
+  @invalid_attrs %{
+    name: nil,
+    element: nil,
+    level: nil,
+    description: nil,
+    speed: nil,
+    slug: nil,
+    species: nil,
+    hp: nil,
+    attack: nil,
+    defense: nil,
+    xp_drop: nil,
+    ai: nil,
+    spawn_rate: nil
+  }
 
   describe "index" do
     test "lists all monsters", %{conn: conn} do

@@ -16,8 +16,15 @@ defmodule Shard.World.Monster do
     field :defense, :integer
     field :speed, :integer
     field :xp_drop, :integer
-    field :element, Ecto.Enum, values: [:neutral, :fire, :water, :earth, :air, :lightning, :poison], default: :neutral
-    field :ai, Ecto.Enum, values: [:passive, :aggressive, :defensive, :cowardly], default: :passive
+
+    field :element, Ecto.Enum,
+      values: [:neutral, :fire, :water, :earth, :air, :lightning, :poison],
+      default: :neutral
+
+    field :ai, Ecto.Enum,
+      values: [:passive, :aggressive, :defensive, :cowardly],
+      default: :passive
+
     field :spawn_rate, :integer
     field :room_id, :id
 
@@ -27,11 +34,40 @@ defmodule Shard.World.Monster do
   @doc false
   def changeset(monster, attrs) do
     monster
-    |> cast(attrs, [:name, :slug, :species, :description, :level, :hp, :attack, :defense, :speed, :xp_drop, :element, :ai, :spawn_rate, :room_id])
-    |> validate_required([:name, :level, :hp, :attack, :defense, :speed, :xp_drop, :element, :ai, :spawn_rate])
+    |> cast(attrs, [
+      :name,
+      :slug,
+      :species,
+      :description,
+      :level,
+      :hp,
+      :attack,
+      :defense,
+      :speed,
+      :xp_drop,
+      :element,
+      :ai,
+      :spawn_rate,
+      :room_id
+    ])
+    |> validate_required([
+      :name,
+      :level,
+      :hp,
+      :attack,
+      :defense,
+      :speed,
+      :xp_drop,
+      :element,
+      :ai,
+      :spawn_rate
+    ])
     |> update_change(:name, &String.trim/1)
     |> put_slug_if_missing()
-    |> validate_number(:level, greater_than_or_equal_to: @level_min, less_than_or_equal_to: @level_max)
+    |> validate_number(:level,
+      greater_than_or_equal_to: @level_min,
+      less_than_or_equal_to: @level_max
+    )
     |> validate_number(:hp, greater_than_or_equal_to: 1)
     |> validate_number(:attack, greater_than_or_equal_to: 1)
     |> validate_number(:defense, greater_than_or_equal_to: 0)
@@ -46,12 +82,13 @@ defmodule Shard.World.Monster do
   defp put_slug_if_missing(changeset) do
     case {get_field(changeset, :slug), get_field(changeset, :name)} do
       {nil, name} when is_binary(name) -> put_change(changeset, :slug, slugify(name))
-      {<< >>, name} when is_binary(name) -> put_change(changeset, :slug, slugify(name))
+      {<<>>, name} when is_binary(name) -> put_change(changeset, :slug, slugify(name))
       _ -> changeset
     end
   end
 
   defp slugify(nil), do: nil
+
   defp slugify(name) do
     name
     |> String.downcase()
