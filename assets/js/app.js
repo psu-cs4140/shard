@@ -54,7 +54,7 @@ document.addEventListener("keydown", function(event) {
     event.preventDefault()
     
     // Send the key event to the LiveView for game movement handling
-    liveSocket.execJS(document.body, `phx:keydown`, {key: event.key})
+    window.liveSocket.pushEventTo("#character-index", "keydown", {key: event.key})
   }
 })
 
