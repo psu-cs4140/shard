@@ -132,6 +132,72 @@ defmodule ShardWeb.AdminLive.Map do
     {:noreply, assign(socket, :editing, nil, :changeset, nil)}
   end
 
+  # Generate default map
+  def handle_event("generate_default_map", _params, socket) do
+    # Clear existing rooms and doors first
+    Repo.delete_all(Door)
+    Repo.delete_all(Room)
+    
+    # Create a 3x3 grid of rooms
+    rooms = 
+      for x <- 0..2, y <- 0..2 do
+        name = "Room #{x},#{y}"
+        description = "A room in the default map at coordinates (#{x}, #{y})"
+        room_type = if x == 1 and y == 1, do: "safe_zone", else: "standard"
+        
+        {:ok, room} = Map.create_room(%{
+          name: name,
+          description: description,
+          x_coordinate: x,
+          y_coordinate: y,
+          z_coordinate: 0,
+          room_type: room_type,
+          is_public: true
+        })
+        
+        room
+      end
+    
+    # Create doors between adjacent rooms
+    for x <- 0..2, y <- 0..2 do
+      current_room = Enum.find(rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
+      
+      # Connect to room to the east
+      if x < 2 do
+        east_room = Enum.find(rooms, &(&1.x_coordinate == x + 1 && &1.y_coordinate == y))
+        Map.create_door(%{
+          from_room_id: current_room.id,
+          to_room_id: east_room.id,
+          direction: "east",
+          door_type: "standard",
+          is_locked: false
+        })
+      end
+      
+      # Connect to room to the south
+      if y < 2 do
+        south_room = Enum.find(rooms, &(&1.x_coordinate == x && &1.y_coordinate == y + 1))
+        Map.create_door(%{
+          from_room_id: current_room.id,
+          to_room_id: south_room.id,
+          direction: "south",
+          door_type: "standard",
+          is_locked: false
+        })
+      end
+    end
+
+    # Refresh the rooms and doors lists
+    rooms = Map.list_rooms()
+    doors = Map.list_doors()
+    
+    {:noreply,
+     socket
+     |> assign(:rooms, rooms)
+     |> assign(:doors, doors)
+     |> put_flash(:info, "Default 3x3 map generated successfully!")}
+  end
+
   defp save_room(socket, room_params) do
     case socket.assigns.editing do
       :room when not is_nil(socket.assigns.changeset) and not is_nil(socket.assigns.changeset.data.id) ->
