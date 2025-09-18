@@ -455,6 +455,10 @@ defmodule ShardWeb.MudGameLive do
                       <div class="w-3 h-0.5 bg-pink-500 mr-1"></div>
                       <span>One-way</span>
                     </div>
+                    <div class="flex items-center">
+                      <div class="w-3 h-0.5 bg-green-500 border-dashed border-t mr-1" style="border-top: 1.5px dashed #22c55e;"></div>
+                      <span>Diagonal</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -989,6 +993,9 @@ defmodule ShardWeb.MudGameLive do
       # Check if this is a one-way door (no return door in opposite direction)
       is_one_way = is_one_way_door?(assigns.door)
       
+      # Determine if this is a diagonal door
+      is_diagonal = assigns.door.direction in ["northeast", "northwest", "southeast", "southwest"]
+      
       # Color scheme based on door type and status
       stroke_color = cond do
         assigns.door.is_locked -> "#dc2626"  # Red for locked doors
@@ -1001,12 +1008,19 @@ defmodule ShardWeb.MudGameLive do
         true -> "#22c55e"  # Green for standard doors
       end
       
+      # Adjust stroke width and style for diagonal doors
+      stroke_width = if is_diagonal, do: "1.5", else: "2"
+      stroke_dasharray = if is_diagonal, do: "3,2", else: nil
+      
       door_name = assigns.door.name || "#{String.capitalize(assigns.door.door_type || "standard")} Door"
       
       assign(assigns, 
         x1: x1, y1: y1, x2: x2, y2: y2, 
         stroke_color: stroke_color,
+        stroke_width: stroke_width,
+        stroke_dasharray: stroke_dasharray,
         door_name: door_name,
+        is_diagonal: is_diagonal,
         skip_render: false
       )
     end
@@ -1019,10 +1033,11 @@ defmodule ShardWeb.MudGameLive do
         x2={@x2} 
         y2={@y2} 
         stroke={@stroke_color} 
-        stroke-width="2"
+        stroke-width={@stroke_width}
+        stroke-dasharray={@stroke_dasharray}
         opacity="0.8"
       >
-        <title><%= @door_name %> (<%= @door.direction %>) - <%= String.capitalize(@door.door_type || "standard") %></title>
+        <title><%= @door_name %> (<%= @door.direction %>) - <%= String.capitalize(@door.door_type || "standard") %><%= if @is_diagonal, do: " (diagonal)", else: "" %></title>
       </line>
     <% end %>
     """

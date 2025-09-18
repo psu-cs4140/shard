@@ -34,6 +34,19 @@ defmodule ShardWeb.CharacterLive.Index do
       "ArrowDown" -> attempt_move(socket, "south")
       "ArrowLeft" -> attempt_move(socket, "west")
       "ArrowRight" -> attempt_move(socket, "east")
+      # Add support for diagonal movement via keyboard combinations
+      # These would need to be handled by JavaScript for key combinations
+      _ -> {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("diagonal_move", %{"direction" => direction}, socket) do
+    case direction do
+      "northeast" -> attempt_move(socket, "northeast")
+      "northwest" -> attempt_move(socket, "northwest")
+      "southeast" -> attempt_move(socket, "southeast")
+      "southwest" -> attempt_move(socket, "southwest")
       _ -> {:noreply, socket}
     end
   end

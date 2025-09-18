@@ -47,15 +47,34 @@ liveSocket.connect()
 window.liveSocket = liveSocket
 
 // Prevent arrow keys from scrolling the page during game movement
+let keysPressed = new Set()
+
 document.addEventListener("keydown", function(event) {
+  keysPressed.add(event.key)
+  
   // Check if the pressed key is an arrow key
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) {
     // Prevent the default scrolling behavior
     event.preventDefault()
     
-    // Send the key event to the LiveView for game movement handling
-    window.liveSocket.pushEventTo("#character-index", "keydown", {key: event.key})
+    // Check for diagonal movement combinations
+    if (keysPressed.has("ArrowUp") && keysPressed.has("ArrowRight")) {
+      window.liveSocket.pushEventTo("#character-index", "diagonal_move", {direction: "northeast"})
+    } else if (keysPressed.has("ArrowUp") && keysPressed.has("ArrowLeft")) {
+      window.liveSocket.pushEventTo("#character-index", "diagonal_move", {direction: "northwest"})
+    } else if (keysPressed.has("ArrowDown") && keysPressed.has("ArrowRight")) {
+      window.liveSocket.pushEventTo("#character-index", "diagonal_move", {direction: "southeast"})
+    } else if (keysPressed.has("ArrowDown") && keysPressed.has("ArrowLeft")) {
+      window.liveSocket.pushEventTo("#character-index", "diagonal_move", {direction: "southwest"})
+    } else {
+      // Send single arrow key event to the LiveView for game movement handling
+      window.liveSocket.pushEventTo("#character-index", "keydown", {key: event.key})
+    }
   }
+})
+
+document.addEventListener("keyup", function(event) {
+  keysPressed.delete(event.key)
 })
 
 // The lines below enable quality of life phoenix_live_reload
