@@ -1,6 +1,10 @@
 defmodule ShardWeb.Router do
   use ShardWeb, :router
 
+  import Plug.Conn
+  import Phoenix.Controller
+  import Phoenix.LiveView.Router
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -20,23 +24,19 @@ plug ShardWeb.Plugs.FetchCurrentUser
     plug :accepts, ["json"]
   end
 
+  # ---- Public / player routes ----
   scope "/", ShardWeb do
     pipe_through :browser
-    get "/map", MapController, :index
-
     get "/", PageController, :home
-    # NEW
-    live "/play", PlayLive
+    get "/map", MapController, :index
+    live "/play", PlayLive, :index
   end
 
-  if Application.compile_env(:shard, :dev_routes) do
-    import Phoenix.LiveDashboard.Router
-
-    scope "/dev" do
-      pipe_through :browser
-      live_dashboard "/dashboard", metrics: ShardWeb.Telemetry
-      forward "/mailbox", Plug.Swoosh.MailboxPreview
-    end
+  # ---- Admin CRUD (Rooms, Exits) ----
+  scope "/admin", ShardWeb.Admin do
+    pipe_through :browser
+    resources "/rooms", RoomController
+    resources "/exits", ExitController
   end
 end
 
