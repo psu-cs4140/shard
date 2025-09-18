@@ -43,7 +43,9 @@ if room_count == 0 do
       from_room_id: from_room.id,
       to_room_id: to_room.id,
       direction: "east",
-      door_type: "standard"
+      door_type: "standard",
+      is_locked: false,
+      properties: %{"state" => "closed"}
     }))
     
     # Door from right room to left room (west)
@@ -51,7 +53,9 @@ if room_count == 0 do
       from_room_id: to_room.id,
       to_room_id: from_room.id,
       direction: "west",
-      door_type: "standard"
+      door_type: "standard",
+      is_locked: false,
+      properties: %{"state" => "closed"}
     }))
   end
 
@@ -65,7 +69,9 @@ if room_count == 0 do
       from_room_id: from_room.id,
       to_room_id: to_room.id,
       direction: "north",
-      door_type: "standard"
+      door_type: "standard",
+      is_locked: false,
+      properties: %{"state" => "closed"}
     }))
     
     # Door from top room to bottom room (south)
@@ -73,7 +79,9 @@ if room_count == 0 do
       from_room_id: to_room.id,
       to_room_id: from_room.id,
       direction: "south",
-      door_type: "standard"
+      door_type: "standard",
+      is_locked: false,
+      properties: %{"state" => "closed"}
     }))
   end
 
