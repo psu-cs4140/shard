@@ -778,46 +778,147 @@ defmodule ShardWeb.MudGameLive do
 
   # Component for the minimap
   def minimap(assigns) do
+    # Get rooms and doors from database for dynamic rendering
+    rooms = Repo.all(GameMap.Room)
+    doors = Repo.all(GameMap.Door)
+    
+    # Calculate bounds and scaling for the minimap
+    {bounds, scale_factor} = calculate_minimap_bounds(rooms)
+    
+    assigns = assign(assigns, rooms: rooms, doors: doors, bounds: bounds, scale_factor: scale_factor)
+    
     ~H"""
     <div class="bg-gray-700 rounded-lg p-4 shadow-xl">
       <h2 class="text-xl font-semibold mb-4 text-center">Minimap</h2>
-      <div class="grid grid-cols-11 gap-0.5 mx-auto w-fit">
-        <%= for {row, y} <- Enum.with_index(@map_data) do %>
-          <%= for {cell, x} <- Enum.with_index(row) do %>
-            <.map_cell
-              cell={cell}
-              is_player={@player_position == {x, y}}
-              x={x}
-              y={y}
+      <div class="relative mx-auto" style="width: 300px; height: 200px;">
+        <svg viewBox="0 0 300 200" class="w-full h-full border border-gray-600 bg-gray-800">
+          <!-- Render doors as lines -->
+          <%= for door <- @doors do %>
+            <.door_line door={door} rooms={@rooms} bounds={@bounds} scale_factor={@scale_factor} />
+          <% end %>
+          
+          <!-- Render rooms as circles -->
+          <%= for room <- @rooms do %>
+            <.room_circle 
+              room={room} 
+              is_player={@player_position == {room.x_coordinate, room.y_coordinate}}
+              bounds={@bounds}
+              scale_factor={@scale_factor}
             />
           <% end %>
-        <% end %>
+        </svg>
       </div>
       <div class="mt-4 text-center text-sm text-gray-300">
         <p>Player Position: <%= format_position(@player_position) %></p>
+        <p class="text-xs mt-1">Rooms: <%= length(@rooms) %> | Doors: <%= length(@doors) %></p>
       </div>
     </div>
     """
   end
 
-  # Component for individual map cells
-  def map_cell(assigns) do
-    # Define colors based on cell type
-    color_class = case assigns.cell do
-      0 -> "bg-gray-900"  # Wall
-      1 -> "bg-green-700" # Floor
-      2 -> "bg-blue-600"  # Water
-      3 -> "bg-yellow-600" # Treasure
-      _ -> "bg-purple-600" # Unknown
+  # Component for individual room circles in the minimap
+  def room_circle(assigns) do
+    return_early = assigns.room.x_coordinate == nil or assigns.room.y_coordinate == nil
+    
+    if return_early do
+      assigns = assign(assigns, :skip_render, true)
+    else
+      # Calculate position within the minimap bounds
+      {x_pos, y_pos} = calculate_minimap_position(
+        {assigns.room.x_coordinate, assigns.room.y_coordinate}, 
+        assigns.bounds, 
+        assigns.scale_factor
+      )
+      
+      # Define colors based on room type
+      {fill_color, stroke_color} = case assigns.room.room_type do
+        "treasure" -> {"#eab308", "#facc15"}  # Yellow for treasure
+        "water" -> {"#2563eb", "#3b82f6"}     # Blue for water
+        "dungeon" -> {"#7c2d12", "#a3a3a3"}   # Brown for dungeon
+        "town" -> {"#16a34a", "#22c55e"}      # Green for town
+        _ -> {"#374151", "#6b7280"}           # Gray for default
+      end
+      
+      player_stroke = if assigns.is_player, do: "#ef4444", else: stroke_color
+      player_width = if assigns.is_player, do: "3", else: "1"
+      
+      assigns = assign(assigns, 
+        x_pos: x_pos, 
+        y_pos: y_pos, 
+        fill_color: fill_color, 
+        stroke_color: player_stroke,
+        stroke_width: player_width,
+        skip_render: false
+      )
     end
 
-    player_class = if assigns.is_player, do: "ring-2 ring-red-500", else: ""
+    ~H"""
+    <%= unless @skip_render do %>
+      <circle 
+        cx={@x_pos} 
+        cy={@y_pos} 
+        r="6" 
+        fill={@fill_color} 
+        stroke={@stroke_color} 
+        stroke-width={@stroke_width}
+      >
+        <title><%= @room.name || "Room #{@room.id}" %> (<%= @room.x_coordinate %>, <%= @room.y_coordinate %>)</title>
+      </circle>
+    <% end %>
+    """
+  end
 
-    assigns = assign(assigns, color_class: color_class, player_class: player_class)
+  # Component for door lines in the minimap
+  def door_line(assigns) do
+    from_room = Enum.find(assigns.rooms, &(&1.id == assigns.door.from_room_id))
+    to_room = Enum.find(assigns.rooms, &(&1.id == assigns.door.to_room_id))
+    
+    return_early = from_room == nil or to_room == nil or 
+                   from_room.x_coordinate == nil or from_room.y_coordinate == nil or
+                   to_room.x_coordinate == nil or to_room.y_coordinate == nil
+    
+    if return_early do
+      assigns = assign(assigns, :skip_render, true)
+    else
+      {x1, y1} = calculate_minimap_position(
+        {from_room.x_coordinate, from_room.y_coordinate}, 
+        assigns.bounds, 
+        assigns.scale_factor
+      )
+      {x2, y2} = calculate_minimap_position(
+        {to_room.x_coordinate, to_room.y_coordinate}, 
+        assigns.bounds, 
+        assigns.scale_factor
+      )
+      
+      # Different colors for different door states
+      stroke_color = cond do
+        assigns.door.is_locked -> "#dc2626"  # Red for locked
+        assigns.door.key_required -> "#f59e0b"  # Orange for key required
+        true -> "#9ca3af"  # Gray for normal
+      end
+      
+      assigns = assign(assigns, 
+        x1: x1, y1: y1, x2: x2, y2: y2, 
+        stroke_color: stroke_color,
+        skip_render: false
+      )
+    end
 
     ~H"""
-    <div class={"w-6 h-6 #{assigns.color_class} #{assigns.player_class} border border-gray-800"}>
-    </div>
+    <%= unless @skip_render do %>
+      <line 
+        x1={@x1} 
+        y1={@y1} 
+        x2={@x2} 
+        y2={@y2} 
+        stroke={@stroke_color} 
+        stroke-width="2"
+        opacity="0.7"
+      >
+        <title><%= @door.name || "Door" %> (<%= @door.direction %>)</title>
+      </line>
+    <% end %>
     """
   end
 
@@ -1061,5 +1162,44 @@ defmodule ShardWeb.MudGameLive do
       nil -> {0, 0}  # Fallback if no valid position found (shouldn't happen)
       position -> position
     end
+  end
+
+  # Calculate bounds and scale factor for minimap rendering
+  defp calculate_minimap_bounds(rooms) do
+    rooms_with_coords = Enum.filter(rooms, fn room -> 
+      room.x_coordinate != nil and room.y_coordinate != nil 
+    end)
+    
+    if Enum.empty?(rooms_with_coords) do
+      # Default bounds if no rooms
+      {{0, 0, 10, 10}, 1.0}
+    else
+      x_coords = Enum.map(rooms_with_coords, & &1.x_coordinate)
+      y_coords = Enum.map(rooms_with_coords, & &1.y_coordinate)
+      
+      min_x = Enum.min(x_coords) - 1
+      max_x = Enum.max(x_coords) + 1
+      min_y = Enum.min(y_coords) - 1
+      max_y = Enum.max(y_coords) + 1
+      
+      # Calculate scale to fit in 300x200 minimap with padding
+      width = max_x - min_x
+      height = max_y - min_y
+      
+      scale_x = 260 / max(width, 1)  # 260 to leave 20px padding on each side
+      scale_y = 160 / max(height, 1)  # 160 to leave 20px padding top/bottom
+      scale_factor = min(scale_x, scale_y)
+      
+      {{min_x, min_y, max_x, max_y}, scale_factor}
+    end
+  end
+
+  # Calculate position within minimap coordinates
+  defp calculate_minimap_position({x, y}, {min_x, min_y, _max_x, _max_y}, scale_factor) do
+    # Translate to origin and scale, then center in minimap
+    scaled_x = (x - min_x) * scale_factor + 20  # 20px padding
+    scaled_y = (y - min_y) * scale_factor + 20  # 20px padding
+    
+    {scaled_x, scaled_y}
   end
 end
