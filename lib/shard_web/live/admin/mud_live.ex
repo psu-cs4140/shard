@@ -43,7 +43,7 @@ defmodule ShardWeb.Admin.MudLive do
 
         <div class="mt-6">
           <%= if @active_tab == :grid do %>
-            <.grid_tab rooms={@rooms} selected_room={@selected_room} />
+            <.grid_tab rooms={@rooms} selected_room={@selected_room} doors={@doors} />
           <% end %>
 
           <%= if @active_tab == :rooms do %>
@@ -80,6 +80,10 @@ defmodule ShardWeb.Admin.MudLive do
             <div class="w-4 h-4 bg-green-500"></div>
             <span>Selected</span>
           </div>
+          <div class="flex items-center gap-2">
+            <div class="w-4 h-1 bg-yellow-500"></div>
+            <span>Door</span>
+          </div>
         </div>
         <.button phx-click="refresh_grid" class="btn btn-sm">Refresh</.button>
       </div>
@@ -102,25 +106,29 @@ defmodule ShardWeb.Admin.MudLive do
             
             <!-- Door connections -->
             <%= if room.north_door_id do %>
-              <div class="absolute bg-yellow-600" 
+              <% door = Enum.find(@doors, fn d -> d.id == room.north_door_id end) %>
+              <div class={"absolute #{if door && door.is_open, do: "bg-yellow-500", else: "bg-gray-500"}"} 
                    style={"top: #{300 - (room.y * 64) - 32 - 16}px; left: #{400 + (room.x * 64) - 2}px; width: 4px; height: 16px;"}>
               </div>
             <% end %>
             
             <%= if room.east_door_id do %>
-              <div class="absolute bg-yellow-600" 
+              <% door = Enum.find(@doors, fn d -> d.id == room.east_door_id end) %>
+              <div class={"absolute #{if door && door.is_open, do: "bg-yellow-500", else: "bg-gray-500"}"} 
                    style={"top: #{300 - (room.y * 64) - 2}px; left: #{400 + (room.x * 64) + 32}px; width: 16px; height: 4px;"}>
               </div>
             <% end %>
             
             <%= if room.south_door_id do %>
-              <div class="absolute bg-yellow-600" 
+              <% door = Enum.find(@doors, fn d -> d.id == room.south_door_id end) %>
+              <div class={"absolute #{if door && door.is_open, do: "bg-yellow-500", else: "bg-gray-500"}"} 
                    style={"top: #{300 - (room.y * 64) + 32}px; left: #{400 + (room.x * 64) - 2}px; width: 4px; height: 16px;"}>
               </div>
             <% end %>
             
             <%= if room.west_door_id do %>
-              <div class="absolute bg-yellow-600" 
+              <% door = Enum.find(@doors, fn d -> d.id == room.west_door_id end) %>
+              <div class={"absolute #{if door && door.is_open, do: "bg-yellow-500", else: "bg-gray-500"}"} 
                    style={"top: #{300 - (room.y * 64) - 2}px; left: #{400 + (room.x * 64) - 32 - 16}px; width: 16px; height: 4px;"}>
               </div>
             <% end %>
@@ -149,10 +157,10 @@ defmodule ShardWeb.Admin.MudLive do
             <div class="mt-2">
               <span class="font-semibold">Doors:</span>
               <ul class="list-disc pl-5 mt-1">
-                <li>North: <%= if @selected_room.north_door_id, do: "Connected", else: "None" %></li>
-                <li>East: <%= if @selected_room.east_door_id, do: "Connected", else: "None" %></li>
-                <li>South: <%= if @selected_room.south_door_id, do: "Connected", else: "None" %></li>
-                <li>West: <%= if @selected_room.west_door_id, do: "Connected", else: "None" %></li>
+                <li>North: <%= door_status(@selected_room.north_door_id, @doors) %></li>
+                <li>East: <%= door_status(@selected_room.east_door_id, @doors) %></li>
+                <li>South: <%= door_status(@selected_room.south_door_id, @doors) %></li>
+                <li>West: <%= door_status(@selected_room.west_door_id, @doors) %></li>
               </ul>
             </div>
           </div>
@@ -193,10 +201,10 @@ defmodule ShardWeb.Admin.MudLive do
               <td>{room.name}</td>
               <td>{room.description}</td>
               <td>({room.x}, {room.y})</td>
-              <td>{room.north_door_id}</td>
-              <td>{room.east_door_id}</td>
-              <td>{room.south_door_id}</td>
-              <td>{room.west_door_id}</td>
+              <td>{door_status(room.north_door_id, @doors)}</td>
+              <td>{door_status(room.east_door_id, @doors)}</td>
+              <td>{door_status(room.south_door_id, @doors)}</td>
+              <td>{door_status(room.west_door_id, @doors)}</td>
               <td class="flex gap-2">
                 <.button phx-click="edit_room" phx-value-id={room.id} class="btn-sm">Edit</.button>
                 <.button phx-click="delete_room" phx-value-id={room.id} class="btn-sm btn-error">Delete</.button>
@@ -268,6 +276,8 @@ defmodule ShardWeb.Admin.MudLive do
               <th>ID</th>
               <th>Open</th>
               <th>Locked</th>
+              <th>Exit</th>
+              <th>Connected Rooms</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -276,6 +286,8 @@ defmodule ShardWeb.Admin.MudLive do
               <td>{door.id}</td>
               <td>{if door.is_open, do: "Yes", else: "No"}</td>
               <td>{if door.is_locked, do: "Yes", else: "No"}</td>
+              <td>{if door.exit, do: "Yes", else: "No"}</td>
+              <td>{connected_rooms_count(door.id, @rooms)}</td>
               <td class="flex gap-2">
                 <.button phx-click="edit_door" phx-value-id={door.id} class="btn-sm">Edit</.button>
                 <.button phx-click="delete_door" phx-value-id={door.id} class="btn-sm btn-error">Delete</.button>
@@ -302,6 +314,7 @@ defmodule ShardWeb.Admin.MudLive do
         >
           <.input field={@door_changeset[:is_open]} type="checkbox" label="Open" />
           <.input field={@door_changeset[:is_locked]} type="checkbox" label="Locked" />
+          <.input field={@door_changeset[:exit]} type="checkbox" label="Exit" />
 
           <div class="mt-4 flex gap-4">
             <.button phx-disable-with="Saving..." class="btn-primary">
@@ -321,6 +334,33 @@ defmodule ShardWeb.Admin.MudLive do
 
   defp door_options(doors) do
     [{"None", nil} | Enum.map(doors, &{&1.id, &1.id})]
+  end
+
+  defp door_status(door_id, doors) do
+    if door_id do
+      door = Enum.find(doors, &(&1.id == door_id))
+      if door do
+        if door.is_open, do: "Open", else: "Closed"
+      else
+        "Unknown"
+      end
+    else
+      "None"
+    end
+  end
+
+  defp connected_rooms_count(door_id, rooms) do
+    count = 
+      rooms
+      |> Enum.filter(fn room ->
+        room.north_door_id == door_id ||
+        room.east_door_id == door_id ||
+        room.south_door_id == door_id ||
+        room.west_door_id == door_id
+      end)
+      |> length()
+    
+    "#{count} room(s)"
   end
 
   @impl true
@@ -352,7 +392,8 @@ defmodule ShardWeb.Admin.MudLive do
 
   def handle_event("refresh_grid", _, socket) do
     rooms = Mud.list_rooms()
-    {:noreply, assign(socket, :rooms, rooms)}
+    doors = Mud.list_doors()
+    {:noreply, assign(socket, rooms: rooms, doors: doors)}
   end
 
   def handle_event("select_room", %{"id" => id}, socket) do
@@ -366,7 +407,7 @@ defmodule ShardWeb.Admin.MudLive do
     room_count = length(socket.assigns.rooms)
     default_name = "Room #{room_count}"
     
-    {:noreply, assign(socket, :room_changeset, Mud.change_room(%Room{}, %{name: default_name}))}
+    {:noreply, assign(socket, :room_changeset, Mud.change_room(%Room{}, %{name: default_name, x: 0, y: 0}))}
   end
 
   def handle_event("edit_room", %{"id" => id}, socket) do
@@ -394,10 +435,12 @@ defmodule ShardWeb.Admin.MudLive do
     case save_room(socket, room_params) do
       {:ok, _room} ->
         rooms = Mud.list_rooms()
+        doors = Mud.list_doors()
         {:noreply,
          socket
          |> put_flash(:info, "Room saved successfully")
          |> assign(:rooms, rooms)
+         |> assign(:doors, doors)
          |> assign(:room_changeset, nil)
          |> assign(:selected_room, nil)}
 
@@ -411,10 +454,12 @@ defmodule ShardWeb.Admin.MudLive do
     {:ok, _} = Mud.delete_room(room)
 
     rooms = Mud.list_rooms()
+    doors = Mud.list_doors()
     {:noreply,
      socket
      |> put_flash(:info, "Room deleted successfully")
      |> assign(:rooms, rooms)
+     |> assign(:doors, doors)
      |> assign(:selected_room, nil)}
   end
 
@@ -447,10 +492,12 @@ defmodule ShardWeb.Admin.MudLive do
   def handle_event("save_door", %{"door" => door_params}, socket) do
     case save_door(socket, door_params) do
       {:ok, _door} ->
+        rooms = Mud.list_rooms()
         doors = Mud.list_doors()
         {:noreply,
          socket
          |> put_flash(:info, "Door saved successfully")
+         |> assign(:rooms, rooms)
          |> assign(:doors, doors)
          |> assign(:door_changeset, nil)}
 
@@ -463,10 +510,12 @@ defmodule ShardWeb.Admin.MudLive do
     door = Mud.get_door!(id)
     {:ok, _} = Mud.delete_door(door)
 
+    rooms = Mud.list_rooms()
     doors = Mud.list_doors()
     {:noreply,
      socket
      |> put_flash(:info, "Door deleted successfully")
+     |> assign(:rooms, rooms)
      |> assign(:doors, doors)}
   end
 
