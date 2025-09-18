@@ -1,63 +1,176 @@
 
-# 2025-09-02 13:23:07.780981
-+no
-
-# 2025-09-02 13:23:26.971722
-+/add scripts/setup-dev-postgres.sh
-
-# 2025-09-02 13:23:37.326537
-+/read-only config/dev.exs
-
-# 2025-09-02 13:26:42.012383
-+Create a bash script that will check the postgres config file in /etc/postgresql/16/main/pg_hba.conf to see if it allows local network connedtions with password auth and if not enable them and then restart the postgres service. Then it should create a postgres user called shard that can login with the password in the dev config. Once the script has been run, we should be able to run "mix ecto.create" and create the project database in dev mode.
-
-# 2025-09-17 16:49:58.962593
-+/help
-
-# 2025-09-17 16:52:35.619624
-+/model qwen/qwen3-coder:free
-
-# 2025-09-17 16:56:24.410021
-+/weak-model qwen/qwen3-coder:free
-
-# 2025-09-17 16:56:52.490404
-+ls
-
-# 2025-09-17 17:06:42.705015
-+/model qwen/qwen3-coder
-
-# 2025-09-17 17:07:06.140499
-+/model openrouter/qwen/qwen3-coder
-
-# 2025-09-17 17:09:14.173513
-+ls
-
-# 2025-09-17 17:41:41.513601
-+what kind of database does this project use
-
-# 2025-09-17 17:42:25.679233
-+y
-
-# 2025-09-17 18:10:07.507121
-+what kind of accounts are currently available for users
-
-# 2025-09-17 18:11:25.731600
-+n
-
-# 2025-09-17 18:11:42.383837
+# 2025-09-17 22:25:24.256895
 +/add *
 
-# 2025-09-17 18:11:47.848600
-+what kind of accounts are currently available for users
+# 2025-09-17 22:28:32.297468
++update the admin dashboard with a interactive phoneix framwork liveview that functions as a interactive map editor. an admin should be able to create rooms and doors. admins should also be able to modify rooms and doors
 
-# 2025-09-17 18:13:41.106099
-+/undo
+# 2025-09-17 22:29:06.291803
++update the admin dashboard with a interactive phoneix framwork liveview that functions as a interactive map editor. an admin should be able to create rooms and doors. admins should also be able to modify rooms and doors.
 
-# 2025-09-17 18:36:40.575565
-+modify the user database adding a new Boolean field called "admin". users with a value of false are standard users. users with a value of true in the admin field have special permissions such as access to a new subpage of the website. this admin subpage should contain a ui menu of with links to other pages.
+# 2025-09-17 22:33:07.838348
++/add *
 
-# 2025-09-17 18:40:36.850264
-+Y
+# 2025-09-17 22:35:20.460459
++fix this error. Compiling 2 files (.ex)
++
++== Compilation error in file lib/shard_web/live/admin/mud_live.ex ==
++** (Phoenix.LiveView.Tokenizer.ParseError) lib/shard_web/live/admin/mud_live.ex:269:9: missing opening tag for </actions>
++    (phoenix_live_view 1.1.8) lib/phoenix_live_view/tag_engine.ex:1666: Phoenix.LiveView.TagEngine.raise_syntax_error!/3
++    (phoenix_live_view 1.1.8) lib/phoenix_live_view/tag_engine.ex:750: Phoenix.LiveView.TagEngine.handle_token/2
++    (phoenix_live_view 1.1.8) lib/phoenix_live_view/tag_engine.ex:222: Phoenix.LiveView.TagEngine.handle_body/1
++    (phoenix_live_view 1.1.8) expanding macro: Phoenix.Component.sigil_H/2
++    lib/shard_web/live/admin/mud_live.ex:263: ShardWeb.Admin.MudLive.doors_tab/1
++
 
-# 2025-09-17 18:40:38.934769
+# 2025-09-17 22:37:12.940021
++y
+
+# 2025-09-17 22:40:41.447942
++/add *
+
+# 2025-09-17 22:40:57.008316
++Compiling 2 files (.ex)
++
++== Compilation error in file lib/shard_web/live/admin/mud_live.ex ==
++** (TokenMissingError) token missing on lib/shard_web/live/admin/mud_live.ex:468:69:
++     error: missing terminator: )
++     │
++ 468 │     {:noreply, assign(socket, :door_changeset, Mud.change_door(%Door
++     │                                                               │     └ missing closing delimiter (expected ")")
++     │                                                               └ unclosed delimiter
++     │
++     └─ lib/shard_web/live/admin/mud_live.ex:468:69
++    (elixir 1.18.4) lib/kernel/parallel_compiler.ex:423: anonymous fn/5 in Kernel.ParallelCompiler.spawn_workers/8
++fix this error
+
+# 2025-09-17 22:46:19.065486
++/add *
+
+# 2025-09-17 22:47:06.431209
++add 2 integer fields to the rooms database called X and Y
+
+# 2025-09-17 22:51:25.212205
++update the 3x3 room generator to use the new x and y fields
+
+# 2025-09-17 22:53:51.470164
++update the admin room mangement site to utilize the new X and Y values in the rooms database
+
+# 2025-09-17 22:58:27.579709
++/add *
+
+# 2025-09-17 22:59:33.749120
++fix this error with the admin map manager/editor. Postgrex.Error at GET /admin/mud/manage
++ERROR 42703 (undefined_column) column "x" of relation "rooms" does not exist
++
++    query: INSERT INTO "rooms" ("name","x","y","description","inserted_at","updated_at") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "id"
+
+# 2025-09-17 23:01:42.021129
++y
+
+# 2025-09-17 23:02:58.675881
++/ask
+
+# 2025-09-17 23:03:54.394279
++list all databases
+
+# 2025-09-17 23:04:14.542017
++/clear
+
+# 2025-09-17 23:05:16.838924
++/code
+
+# 2025-09-17 23:06:48.632180
++/clear
+
+# 2025-09-17 23:06:58.564454
++/add *
+
+# 2025-09-17 23:07:59.073091
++fix this error. Postgrex.Error at GET /admin/mud/manage
++ERROR 42703 (undefined_column) column "exit" of relation "doors" does not exist
++
++    query: INSERT INTO "doors" ("exit","is_open","is_locked","inserted_at","updated_at") VALUES ($1,$2,$3,$4,$5) RETURNING "id"
+
+# 2025-09-17 23:08:58.803956
++y
+
+# 2025-09-17 23:11:45.624110
++/add *
+
+# 2025-09-17 23:12:50.294261
++the admin room manager is broken check the code and update it to match the current database
+
+# 2025-09-17 23:14:00.839953
++y
+
+# 2025-09-17 23:17:59.949300
++/add *
+
+# 2025-09-17 23:18:19.812811
++fix the errors causing this message
+
+# 2025-09-17 23:18:30.641554
++fix the errors causing this message. shard 0.1.0) lib/shard_web/live/admin/mud_live.ex:10: anonymous fn/2 in ShardWeb.Admin.MudLive.render/1
++    (phoenix_live_view 1.1.8) lib/phoenix_live_view/diff.ex:420: Phoenix.LiveView.Diff.traverse/6
++    (phoenix_live_view 1.1.8) lib/phoenix_live_view/diff.ex:146: Phoenix.LiveView.Diff.render/4
++    (phoenix_live_view 1.1.8) lib/phoenix_live_view/static.ex:291: Phoenix.LiveView.Static.to_rendered_content_tag/4
++    (phoenix_live_view 1.1.8) lib/phoenix_live_view/static.ex:171: Phoenix.LiveView.Static.do_render/4
++    (phoenix_live_view 1.1.8) lib/phoenix_live_view/controller.ex:39: Phoenix.LiveView.Controller.live_render/3
++    (phoenix 1.8.1) lib/phoenix/router.ex:416: Phoenix.Router.__call__/5
++    (shard 0.1.0) lib/shard_web/endpoint.ex:1: ShardWeb.Endpoint.plug_builder_call/2
++    (shard 0.1.0) deps/plug/lib/plug/debugger.ex:155: ShardWeb.Endpoint."call (overridable 3)"/2
++    (shard 0.1.0) lib/shard_web/endpoint.ex:1: ShardWeb.Endpoint.call/2
++    (phoenix 1.8.1) lib/phoenix/endpoint/sync_code_reload_plug.ex:22: Phoenix.Endpoint.SyncCodeReloadPlug.do_call/4
++    (bandit 1.8.0) lib/bandit/pipeline.ex:131: Bandit.Pipeline.call_plug!/2
++    (bandit 1.8.0) lib/bandit/pipeline.ex:42: Bandit.Pipeline.run/5
++    (bandit 1.8.0) lib/bandit/http1/handler.ex:13: Bandit.HTTP1.Handler.handle_data/3
++    (bandit 1.8.0) lib/bandit/delegating_handler.ex:18: Bandit.DelegatingHandler.handle_data/3
++    (bandit 1.8.0) lib/bandit/delegating_handler.ex:8: Bandit.DelegatingHandler.handle_info/2
++    (stdlib 7.1) gen_server.erl:2434: :gen_server.try_handle_info/3
++    (stdlib 7.1) gen_server.erl:2420: :gen_server.handle_msg/3
++    (stdlib 7.1) proc_lib.erl:333: :proc_lib.init_p_do_apply/3
++
+
+# 2025-09-17 23:20:16.152029
++n
+
+# 2025-09-17 23:20:20.565053
++/clear
+
+# 2025-09-17 23:20:27.906626
++fix the errors causing this message. shard 0.1.0) lib/shard_web/live/admin/mud_live.ex:10: anonymous fn/2 in ShardWeb.Admin.MudLive.render/1
++    (phoenix_live_view 1.1.8) lib/phoenix_live_view/diff.ex:420: Phoenix.LiveView.Diff.traverse/6
++    (phoenix_live_view 1.1.8) lib/phoenix_live_view/diff.ex:146: Phoenix.LiveView.Diff.render/4
++    (phoenix_live_view 1.1.8) lib/phoenix_live_view/static.ex:291: Phoenix.LiveView.Static.to_rendered_content_tag/4
++    (phoenix_live_view 1.1.8) lib/phoenix_live_view/static.ex:171: Phoenix.LiveView.Static.do_render/4
++    (phoenix_live_view 1.1.8) lib/phoenix_live_view/controller.ex:39: Phoenix.LiveView.Controller.live_render/3
++    (phoenix 1.8.1) lib/phoenix/router.ex:416: Phoenix.Router.__call__/5
++    (shard 0.1.0) lib/shard_web/endpoint.ex:1: ShardWeb.Endpoint.plug_builder_call/2
++    (shard 0.1.0) deps/plug/lib/plug/debugger.ex:155: ShardWeb.Endpoint."call (overridable 3)"/2
++    (shard 0.1.0) lib/shard_web/endpoint.ex:1: ShardWeb.Endpoint.call/2
++    (phoenix 1.8.1) lib/phoenix/endpoint/sync_code_reload_plug.ex:22: Phoenix.Endpoint.SyncCodeReloadPlug.do_call/4
++    (bandit 1.8.0) lib/bandit/pipeline.ex:131: Bandit.Pipeline.call_plug!/2
++    (bandit 1.8.0) lib/bandit/pipeline.ex:42: Bandit.Pipeline.run/5
++    (bandit 1.8.0) lib/bandit/http1/handler.ex:13: Bandit.HTTP1.Handler.handle_data/3
++    (bandit 1.8.0) lib/bandit/delegating_handler.ex:18: Bandit.DelegatingHandler.handle_data/3
++    (bandit 1.8.0) lib/bandit/delegating_handler.ex:8: Bandit.DelegatingHandler.handle_info/2
++    (stdlib 7.1) gen_server.erl:2434: :gen_server.try_handle_info/3
++    (stdlib 7.1) gen_server.erl:2420: :gen_server.handle_msg/3
++    (stdlib 7.1) proc_lib.erl:333: :proc_lib.init_p_do_apply/3
++
+
+# 2025-09-17 23:24:37.374590
++/add *
+
+# 2025-09-17 23:26:17.920715
++remove the admin room management page
+
+# 2025-09-17 23:28:09.103893
++/clear
+
+# 2025-09-17 23:28:11.718737
++/lint
+
+# 2025-09-17 23:28:15.215889
 +y
