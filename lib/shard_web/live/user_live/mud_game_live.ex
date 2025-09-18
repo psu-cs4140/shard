@@ -1,6 +1,6 @@
 defmodule ShardWeb.MudGameLive do
   use ShardWeb, :live_view
-  alias Shard.Map
+  alias Shard.Map, as: GameMap
   alias Shard.Repo
 
   @impl true
@@ -910,7 +910,7 @@ defmodule ShardWeb.MudGameLive do
   # Helper function to generate map data from database
   defp generate_map_from_database() do
     # Get all rooms from database
-    rooms = Repo.all(Shard.Map.Room)
+    rooms = Repo.all(GameMap.Room)
     
     # If no rooms exist, return a simple default map
     if Enum.empty?(rooms) do
