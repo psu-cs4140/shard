@@ -43,6 +43,7 @@ defmodule ShardWeb.Router do
     pipe_through [:browser, :require_authenticated_user, :require_admin]
 
     live "/", AdminLive.Index, :index
+    live "/map", AdminLive.Map, :index  # Added this line for the map page
   end
 
   # Other scopes may use custom stacks.
