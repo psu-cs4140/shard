@@ -71,7 +71,7 @@ defmodule ShardWeb.AdminLive.Map do
       else
         Map.change_room(%Room{}, room_params)
       end
-      |> Map.put(:action, :validate)
+      |> Map.put_action(:validate)
     
     {:noreply, assign(socket, :changeset, changeset)}
   end
@@ -120,7 +120,7 @@ defmodule ShardWeb.AdminLive.Map do
       else
         Map.change_door(%Door{}, door_params)
       end
-      |> Map.put(:action, :validate)
+      |> Map.put_action(:validate)
     
     {:noreply, assign(socket, :changeset, changeset)}
   end
@@ -390,7 +390,7 @@ defmodule ShardWeb.AdminLive.Map do
         <.input field={@changeset[:is_public]} type="checkbox" label="Public Room" />
         
         <:actions>
-          <.button phx-click="cancel_room" kind="secondary">Cancel</.button>
+          <.button phx-click="cancel_room" variant="secondary">Cancel</.button>
           <.button phx-disable-with="Saving...">Save Room</.button>
         </:actions>
       </.simple_form>
@@ -438,7 +438,7 @@ defmodule ShardWeb.AdminLive.Map do
         <.input field={@changeset[:key_required]} type="text" label="Key Required" />
         
         <:actions>
-          <.button phx-click="cancel_door" kind="secondary">Cancel</.button>
+          <.button phx-click="cancel_door" variant="secondary">Cancel</.button>
           <.button phx-disable-with="Saving...">Save Door</.button>
         </:actions>
       </.simple_form>
