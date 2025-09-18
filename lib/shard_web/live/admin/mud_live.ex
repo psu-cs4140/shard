@@ -10,8 +10,8 @@ defmodule ShardWeb.Admin.MudLive do
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <div class="mx-auto max-w-6xl">
         <.header>
-          MUD Management
-          <:subtitle>Manage rooms and doors for the MUD game</:subtitle>
+          MUD Map Editor
+          <:subtitle>Create and manage rooms and doors for the MUD game</:subtitle>
         </.header>
 
         <div class="tabs tabs-lifted mt-6">
@@ -266,7 +266,7 @@ defmodule ShardWeb.Admin.MudLive do
         Doors
         <:actions>
           <.button phx-click="new_door">New Door</.button>
-        </:actions>
+        </.actions>
       </.header>
 
       <div class="overflow-x-auto">
@@ -366,7 +366,7 @@ defmodule ShardWeb.Admin.MudLive do
   @impl true
   def mount(_params, _session, socket) do
     # Create initial room if none exists
-    Mud.create_initial_room()
+    Mud.create_default_grid()
     
     rooms = Mud.list_rooms()
     doors = Mud.list_doors()
