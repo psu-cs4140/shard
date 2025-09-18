@@ -1,12 +1,14 @@
 defmodule ShardWeb.MudGameLive do
   use ShardWeb, :live_view
+  alias Shard.Map
+  alias Shard.Repo
 
   @impl true
   def mount(_params, _session, socket) do
     # Initialize game state
     game_state = %{
       player_position: {5, 5}, # In future, we want to grab this from the database.
-      map_data: generate_sample_map(), #Also want to pull map data from database
+      map_data: generate_map_from_database(), # Pull map data from database
       active_panel: nil,
       player_stats: %{
         health: 100,
@@ -905,8 +907,62 @@ defmodule ShardWeb.MudGameLive do
     "{#{x}, #{y}}"
   end
 
-  # Helper function to generate sample map data
-  defp generate_sample_map() do
+  # Helper function to generate map data from database
+  defp generate_map_from_database() do
+    # Get all rooms from database
+    rooms = Repo.all(Shard.Map.Room)
+    
+    # If no rooms exist, return a simple default map
+    if Enum.empty?(rooms) do
+      generate_default_map()
+    else
+      # Find the bounds of all rooms
+      {min_x, max_x} = rooms 
+        |> Enum.map(& &1.x_coordinate) 
+        |> Enum.filter(& &1 != nil)
+        |> case do
+          [] -> {0, 10}
+          coords -> Enum.min_max(coords)
+        end
+      
+      {min_y, max_y} = rooms 
+        |> Enum.map(& &1.y_coordinate) 
+        |> Enum.filter(& &1 != nil)
+        |> case do
+          [] -> {0, 10}
+          coords -> Enum.min_max(coords)
+        end
+      
+      # Add padding around the map
+      min_x = min_x - 1
+      max_x = max_x + 1
+      min_y = min_y - 1
+      max_y = max_y + 1
+      
+      # Create a map of room coordinates for quick lookup
+      room_map = rooms
+        |> Enum.filter(fn room -> room.x_coordinate != nil and room.y_coordinate != nil end)
+        |> Enum.into(%{}, fn room -> {{room.x_coordinate, room.y_coordinate}, room} end)
+      
+      # Generate the grid
+      for y <- min_y..max_y do
+        for x <- min_x..max_x do
+          case Map.get(room_map, {x, y}) do
+            nil -> 0  # Wall/empty space
+            room -> 
+              case room.room_type do
+                "treasure" -> 3  # Treasure room
+                "water" -> 2     # Water room
+                _ -> 1           # Regular floor
+              end
+          end
+        end
+      end
+    end
+  end
+  
+  # Fallback function for when no rooms exist in database
+  defp generate_default_map() do
     # Generate an 11x11 map for display
     for y <- 0..10 do
       for x <- 0..10 do
