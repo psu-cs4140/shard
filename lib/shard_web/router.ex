@@ -42,7 +42,6 @@ defmodule ShardWeb.Router do
   scope "/admin", ShardWeb do
     pipe_through [:browser, :require_authenticated_user, :require_admin]
 
-    get "/", AdminController, :index
     live "/", AdminLive.Index, :index
   end
 
