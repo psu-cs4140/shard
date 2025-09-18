@@ -947,7 +947,7 @@ defmodule ShardWeb.MudGameLive do
       # Generate the grid
       for y <- min_y..max_y do
         for x <- min_x..max_x do
-          case Map.get(room_map, {x, y}) do
+          case room_map[{x, y}] do
             nil -> 0  # Wall/empty space
             room -> 
               case room.room_type do
