@@ -5,11 +5,7 @@ defmodule Shard.Mud.Room do
   schema "rooms" do
     field :name, :string
     field :description, :string
-    field :north_door_id, :id
-    field :east_door_id, :id
-    field :south_door_id, :id
-    field :west_door_id, :id
-
+    
     belongs_to :north_door, Shard.Mud.Door, foreign_key: :north_door_id
     belongs_to :east_door, Shard.Mud.Door, foreign_key: :east_door_id
     belongs_to :south_door, Shard.Mud.Door, foreign_key: :south_door_id
