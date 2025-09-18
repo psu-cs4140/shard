@@ -3,7 +3,6 @@ defmodule ShardWeb.AdminLive.Map do
 
   alias Shard.Map
   alias Shard.Map.{Room, Door}
-  alias Shard.Repo
 
   @impl true
   def mount(_params, _session, socket) do
@@ -136,8 +135,8 @@ defmodule ShardWeb.AdminLive.Map do
   # Generate default map
   def handle_event("generate_default_map", _params, socket) do
     # Clear existing rooms and doors first
-    Repo.delete_all(Door)
-    Repo.delete_all(Room)
+    Shard.Repo.delete_all(Door)
+    Shard.Repo.delete_all(Room)
     
     # Create a 3x3 grid of rooms
     rooms = 
@@ -300,7 +299,7 @@ defmodule ShardWeb.AdminLive.Map do
           <% "rooms" -> %>
             <.rooms_tab rooms={@rooms} />
           <% "doors" -> %>
-            <.doors_tab doors={@doors} />
+            <.doors_tab doors={@doors} rooms={@rooms} />
           <% "map" -> %>
             <.map_visualization rooms={@rooms} doors={@doors} />
         <% end %>

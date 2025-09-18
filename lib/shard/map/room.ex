@@ -43,5 +43,6 @@ defmodule Shard.Map.Room do
       "trap_room"
     ])
     |> unique_constraint(:name)
+    |> unique_constraint([:x_coordinate, :y_coordinate, :z_coordinate])
   end
 end
