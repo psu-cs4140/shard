@@ -35,11 +35,11 @@ defmodule ShardWeb.Admin.MudLive do
 
         <div class="mt-6">
           <%= if @active_tab == :rooms do %>
-            <.rooms_tab rooms={@rooms} room_changeset={@room_changeset} />
+            <.rooms_tab rooms={@rooms} room_changeset={@room_changeset} doors={@doors} />
           <% end %>
 
           <%= if @active_tab == :doors do %>
-            <.doors_tab doors={@doors} door_changeset={@door_changeset} rooms={@rooms} />
+            <.doors_tab doors={@doors} door_changeset={@door_changeset} />
           <% end %>
         </div>
       </div>
