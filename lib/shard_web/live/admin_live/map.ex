@@ -602,13 +602,22 @@ defmodule ShardWeb.AdminLive.Map do
     to_x = assigns.to.x_coordinate * 100 + 40
     to_y = assigns.to.y_coordinate * 100 + 40
     
+    assigns
+    |> assign(:from_x, from_x)
+    |> assign(:from_y, from_y)
+    |> assign(:to_x, to_x)
+    |> assign(:to_y, to_y)
+    |> render_door_connection()
+  end
+
+  defp render_door_connection(assigns) do
     ~H"""
     <svg class="absolute inset-0 w-full h-full pointer-events-none">
       <line 
-        x1={from_x} 
-        y1={from_y} 
-        x2={to_x} 
-        y2={to_y} 
+        x1={@from_x} 
+        y1={@from_y} 
+        x2={@to_x} 
+        y2={@to_y} 
         stroke="#4b5563" 
         stroke-width="2" 
         stroke-dasharray="5,5" />
