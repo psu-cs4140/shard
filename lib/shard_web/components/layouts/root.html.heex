@@ -31,7 +31,13 @@
     </script>
   </head>
   <body>
-    <ul class="menu menu-horizontal w-full relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end">
+    <div class="w-full relative z-10 flex items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div class="flex-shrink-0">
+        <.link href={~p"/"} class="btn btn-ghost text-lg font-semibold">
+          Home
+        </.link>
+      </div>
+      <ul class="menu menu-horizontal flex items-center gap-4">
       <%= if @current_scope do %>
         <li>
           {@current_scope.user.email}
@@ -55,7 +61,8 @@
           <.link href={~p"/users/log-in"}>Log in</.link>
         </li>
       <% end %>
-    </ul>
+      </ul>
+    </div>
     {@inner_content}
   </body>
 </html>
