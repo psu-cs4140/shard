@@ -13,7 +13,6 @@ defmodule Shard.Map do
   """
   def list_rooms do
     Repo.all(Room)
-    |> Repo.preload([:doors_from, :doors_to])
   end
 
   @doc """
@@ -21,7 +20,6 @@ defmodule Shard.Map do
   """
   def get_room!(id) do
     Repo.get!(Room, id)
-    |> Repo.preload([:doors_from, :doors_to])
   end
 
   @doc """
@@ -29,7 +27,6 @@ defmodule Shard.Map do
   """
   def get_room_by_coordinates(x, y, z \\ 0) do
     Repo.get_by(Room, x_coordinate: x, y_coordinate: y, z_coordinate: z)
-    |> Repo.preload([:doors_from, :doors_to])
   end
 
   @doc """
@@ -69,7 +66,6 @@ defmodule Shard.Map do
   """
   def list_doors do
     Repo.all(Door)
-    |> Repo.preload([:from_room, :to_room])
   end
 
   @doc """
@@ -77,7 +73,6 @@ defmodule Shard.Map do
   """
   def get_door!(id) do
     Repo.get!(Door, id)
-    |> Repo.preload([:from_room, :to_room])
   end
 
   @doc """
@@ -117,7 +112,6 @@ defmodule Shard.Map do
   """
   def get_doors_from_room(room_id) do
     Repo.all(from d in Door, where: d.from_room_id == ^room_id)
-    |> Repo.preload([:to_room])
   end
 
   @doc """
@@ -125,7 +119,6 @@ defmodule Shard.Map do
   """
   def get_doors_to_room(room_id) do
     Repo.all(from d in Door, where: d.to_room_id == ^room_id)
-    |> Repo.preload([:from_room])
   end
 
   @doc """
@@ -136,7 +129,6 @@ defmodule Shard.Map do
       from d in Door,
         where: d.from_room_id == ^from_room_id and d.direction == ^direction
     )
-    |> Repo.preload([:to_room])
   end
 
   @doc """
