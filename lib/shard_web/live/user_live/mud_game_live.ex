@@ -820,8 +820,8 @@ defmodule ShardWeb.MudGameLive do
   def room_circle(assigns) do
     return_early = assigns.room.x_coordinate == nil or assigns.room.y_coordinate == nil
     
-    if return_early do
-      _assigns = assign(assigns, :skip_render, true)
+    assigns = if return_early do
+      assign(assigns, :skip_render, true)
     else
       # Calculate position within the minimap bounds
       {x_pos, y_pos} = calculate_minimap_position(
@@ -842,7 +842,7 @@ defmodule ShardWeb.MudGameLive do
       player_stroke = if assigns.is_player, do: "#ef4444", else: stroke_color
       player_width = if assigns.is_player, do: "3", else: "1"
       
-      _assigns = assign(assigns, 
+      assign(assigns, 
         x_pos: x_pos, 
         y_pos: y_pos, 
         fill_color: fill_color, 
@@ -877,8 +877,8 @@ defmodule ShardWeb.MudGameLive do
                    from_room.x_coordinate == nil or from_room.y_coordinate == nil or
                    to_room.x_coordinate == nil or to_room.y_coordinate == nil
     
-    if return_early do
-      _assigns = assign(assigns, :skip_render, true)
+    assigns = if return_early do
+      assign(assigns, :skip_render, true)
     else
       {x1, y1} = calculate_minimap_position(
         {from_room.x_coordinate, from_room.y_coordinate}, 
@@ -898,7 +898,7 @@ defmodule ShardWeb.MudGameLive do
         true -> "#9ca3af"  # Gray for normal
       end
       
-      _assigns = assign(assigns, 
+      assign(assigns, 
         x1: x1, y1: y1, x2: x2, y2: y2, 
         stroke_color: stroke_color,
         skip_render: false
