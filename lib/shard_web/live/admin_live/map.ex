@@ -66,6 +66,14 @@ defmodule ShardWeb.AdminLive.Map do
         >
           Map Visualization
         </button>
+        <button 
+          type="button" 
+          class={["tab", @tab == "editor" && "tab-active"]}
+          phx-click="change_tab" 
+          phx-value-tab="editor"
+        >
+          Map Editor
+        </button>
       </div>
 
       <div class="mt-6">
@@ -76,6 +84,8 @@ defmodule ShardWeb.AdminLive.Map do
             <.doors_tab doors={@doors} />
           <% "map" -> %>
             <.map_visualization rooms={@rooms} doors={@doors} />
+          <% "editor" -> %>
+            <.map_editor rooms={@rooms} doors={@doors} />
         <% end %>
       </div>
     </div>
@@ -163,7 +173,7 @@ defmodule ShardWeb.AdminLive.Map do
     <div class="bg-base-200 p-6 rounded-box">
       <div class="text-center mb-4">
         <h3 class="text-lg font-bold">Map Visualization</h3>
-        <p class="text-sm text-base-content/70">Interactive visualization of rooms and connections</p>
+        <p class="text-sm text-base-content/70">This is a simplified visualization of the game map</p>
       </div>
       
       <%= if Enum.empty?(@rooms) do %>
@@ -208,9 +218,208 @@ defmodule ShardWeb.AdminLive.Map do
         </div>
         
         <div class="mt-4 text-center">
-          <p class="text-sm">Showing <%= length(@rooms) %> rooms and <%= length(@doors) %> connections</p>
+          <p class="text-sm">Showing <%= min(9, length(@rooms)) %> of <%= length(@rooms) %> rooms</p>
+          <p class="text-xs text-base-content/70 mt-2">In a full implementation, this would show connections between rooms</p>
         </div>
       <% end %>
+    </div>
+    """
+  end
+
+  defp map_editor(assigns) do
+    ~H"""
+    <div class="bg-base-200 p-6 rounded-box">
+      <div class="text-center mb-4">
+        <h3 class="text-lg font-bold">Map Editor</h3>
+        <p class="text-sm text-base-content/70">Create and edit rooms and connections</p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="card bg-base-100 shadow">
+          <div class="card-body">
+            <h4 class="card-title">Create New Room</h4>
+            <form phx-submit="create-room" class="space-y-4">
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text">Room Name</span>
+                </label>
+                <input type="text" name="room[name]" placeholder="Room Name" class="input input-bordered" required />
+              </div>
+              
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text">Description</span>
+                </label>
+                <textarea name="room[description]" placeholder="Room Description" class="textarea textarea-bordered"></textarea>
+              </div>
+              
+              <div class="grid grid-cols-2 gap-4">
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text">X Coordinate</span>
+                  </label>
+                  <input type="number" name="room[x_coordinate]" value="0" class="input input-bordered" />
+                </div>
+                
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text">Y Coordinate</span>
+                  </label>
+                  <input type="number" name="room[y_coordinate]" value="0" class="input input-bordered" />
+                </div>
+              </div>
+              
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text">Room Type</span>
+                </label>
+                <select name="room[room_type]" class="select select-bordered">
+                  <option value="standard">Standard</option>
+                  <option value="safe_zone">Safe Zone</option>
+                  <option value="shop">Shop</option>
+                  <option value="dungeon">Dungeon</option>
+                  <option value="treasure_room">Treasure Room</option>
+                  <option value="trap_room">Trap Room</option>
+                </select>
+              </div>
+              
+              <div class="form-control">
+                <label class="label cursor-pointer">
+                  <span class="label-text">Public Room</span>
+                  <input type="checkbox" name="room[is_public]" class="checkbox" checked />
+                </label>
+              </div>
+              
+              <div class="card-actions justify-end">
+                <button type="submit" class="btn btn-primary">Create Room</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <div class="card bg-base-100 shadow">
+          <div class="card-body">
+            <h4 class="card-title">Create New Door</h4>
+            <form phx-submit="create-door" class="space-y-4">
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text">From Room</span>
+                </label>
+                <select name="door[from_room_id]" class="select select-bordered" required>
+                  <option disabled selected>Select a room</option>
+                  <%= for room <- @rooms do %>
+                    <option value={room.id}><%= room.name %></option>
+                  <% end %>
+                </select>
+              </div>
+              
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text">To Room</span>
+                </label>
+                <select name="door[to_room_id]" class="select select-bordered" required>
+                  <option disabled selected>Select a room</option>
+                  <%= for room <- @rooms do %>
+                    <option value={room.id}><%= room.name %></option>
+                  <% end %>
+                </select>
+              </div>
+              
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text">Direction</span>
+                </label>
+                <select name="door[direction]" class="select select-bordered" required>
+                  <option value="north">North</option>
+                  <option value="south">South</option>
+                  <option value="east">East</option>
+                  <option value="west">West</option>
+                  <option value="up">Up</option>
+                  <option value="down">Down</option>
+                  <option value="northeast">Northeast</option>
+                  <option value="northwest">Northwest</option>
+                  <option value="southeast">Southeast</option>
+                  <option value="southwest">Southwest</option>
+                </select>
+              </div>
+              
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text">Door Type</span>
+                </label>
+                <select name="door[door_type]" class="select select-bordered">
+                  <option value="standard">Standard</option>
+                  <option value="gate">Gate</option>
+                  <option value="portal">Portal</option>
+                  <option value="secret">Secret</option>
+                  <option value="locked_gate">Locked Gate</option>
+                </select>
+              </div>
+              
+              <div class="form-control">
+                <label class="label cursor-pointer">
+                  <span class="label-text">Locked</span>
+                  <input type="checkbox" name="door[is_locked]" class="checkbox" />
+                </label>
+              </div>
+              
+              <div class="card-actions justify-end">
+                <button type="submit" class="btn btn-primary">Create Door</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      
+      <div class="mt-8">
+        <h4 class="font-bold mb-4">Existing Map Elements</h4>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="card bg-base-100 shadow">
+            <div class="card-body">
+              <h5 class="card-title">Rooms (<%= length(@rooms) %>)</h5>
+              <div class="max-h-60 overflow-y-auto">
+                <%= if Enum.empty?(@rooms) do %>
+                  <p class="text-gray-500 text-sm">No rooms available</p>
+                <% else %>
+                  <ul class="space-y-2">
+                    <%= for room <- @rooms do %>
+                      <li class="flex justify-between items-center p-2 hover:bg-base-200 rounded">
+                        <span><%= room.name %></span>
+                        <span class="text-xs text-gray-500">(<%= room.x_coordinate %>, <%= room.y_coordinate %>)</span>
+                      </li>
+                    <% end %>
+                  </ul>
+                <% end %>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card bg-base-100 shadow">
+            <div class="card-body">
+              <h5 class="card-title">Doors (<%= length(@doors) %>)</h5>
+              <div class="max-h-60 overflow-y-auto">
+                <%= if Enum.empty?(@doors) do %>
+                  <p class="text-gray-500 text-sm">No doors available</p>
+                <% else %>
+                  <ul class="space-y-2">
+                    <%= for door <- @doors do %>
+                      <li class="flex justify-between items-center p-2 hover:bg-base-200 rounded">
+                        <span>
+                          <%= if door.from_room, do: door.from_room.name, else: "Room #{door.from_room_id}" %> 
+                          → 
+                          <%= if door.to_room, do: door.to_room.name, else: "Room #{door.to_room_id}" %>
+                        </span>
+                        <span class="text-xs text-gray-500"><%= door.direction %></span>
+                      </li>
+                    <% end %>
+                  </ul>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     """
   end
