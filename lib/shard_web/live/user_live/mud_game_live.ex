@@ -643,23 +643,20 @@ defmodule ShardWeb.MudGameLive do
         curr_position
     end
 
-    # Check if the new position is valid (not a wall)
-    if is_valid_position?(new_position, map_data) do
+    # Check if the movement is valid (room exists or door connection exists)
+    if is_valid_movement?(curr_position, new_position, key) do
       new_position
     else
       curr_position
     end
   end
 
-  # Helper function to check if a position is valid (not a wall and within bounds)
-  defp is_valid_position?({x, y}, map_data) do
-    # Check bounds
-    if x < 0 or y < 0 or y >= length(map_data) or x >= length(Enum.at(map_data, 0)) do
-      false
-    else
-      # Check if the tile is not a wall (0 represents walls)
-      tile = map_data |> Enum.at(y) |> Enum.at(x)
-      tile != 0
+  # Helper function to check if a position is valid (has a room or door connection)
+  defp is_valid_position?({x, y}, _map_data) do
+    # Check if there's a room at this position
+    case GameMap.get_room_by_coordinates(x, y) do
+      nil -> false  # No room exists at this position
+      _room -> true  # Room exists, movement is valid
     end
   end
 
@@ -876,7 +873,7 @@ defmodule ShardWeb.MudGameLive do
     new_pos = calc_position(current_pos, direction, game_state.map_data)
 
     if new_pos == current_pos do
-      response = ["You cannot move in that direction. There's a wall blocking your way."]
+      response = ["You cannot move in that direction. There's no room or passage that way."]
       {response, game_state}
     else
       direction_name = case direction do
