@@ -266,7 +266,7 @@ defmodule ShardWeb.Admin.MudLive do
         Doors
         <:actions>
           <.button phx-click="new_door">New Door</.button>
-        </.actions>
+        </:actions>
       </.header>
 
       <div class="overflow-x-auto">
@@ -465,85 +465,4 @@ defmodule ShardWeb.Admin.MudLive do
 
   # Door events
   def handle_event("new_door", _, socket) do
-    {:noreply, assign(socket, :door_changeset, Mud.change_door(%Door{}))}
-  end
-
-  def handle_event("edit_door", %{"id" => id}, socket) do
-    door = Mud.get_door!(id)
-    changeset = Mud.change_door(door)
-    {:noreply, assign(socket, :door_changeset, changeset)}
-  end
-
-  def handle_event("cancel_door", _, socket) do
-    {:noreply, assign(socket, :door_changeset, nil)}
-  end
-
-  def handle_event("validate_door", %{"door" => door_params}, socket) do
-    changeset =
-      case socket.assigns.door_changeset do
-        nil -> Mud.change_door(%Door{}, door_params)
-        changeset -> Mud.change_door(changeset.data, door_params)
-      end
-      |> Map.put(:action, :validate)
-
-    {:noreply, assign(socket, :door_changeset, changeset)}
-  end
-
-  def handle_event("save_door", %{"door" => door_params}, socket) do
-    case save_door(socket, door_params) do
-      {:ok, _door} ->
-        rooms = Mud.list_rooms()
-        doors = Mud.list_doors()
-        {:noreply,
-         socket
-         |> put_flash(:info, "Door saved successfully")
-         |> assign(:rooms, rooms)
-         |> assign(:doors, doors)
-         |> assign(:door_changeset, nil)}
-
-      {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign(socket, :door_changeset, changeset)}
-    end
-  end
-
-  def handle_event("delete_door", %{"id" => id}, socket) do
-    door = Mud.get_door!(id)
-    {:ok, _} = Mud.delete_door(door)
-
-    rooms = Mud.list_rooms()
-    doors = Mud.list_doors()
-    {:noreply,
-     socket
-     |> put_flash(:info, "Door deleted successfully")
-     |> assign(:rooms, rooms)
-     |> assign(:doors, doors)}
-  end
-
-  defp save_room(socket, room_params) do
-    case socket.assigns.room_changeset do
-      nil ->
-        Mud.create_room(room_params)
-
-      changeset ->
-        if changeset.data.id do
-          Mud.update_room(changeset.data, room_params)
-        else
-          Mud.create_room(room_params)
-        end
-    end
-  end
-
-  defp save_door(socket, door_params) do
-    case socket.assigns.door_changeset do
-      nil ->
-        Mud.create_door(door_params)
-
-      changeset ->
-        if changeset.data.id do
-          Mud.update_door(changeset.data, door_params)
-        else
-          Mud.create_door(door_params)
-        end
-    end
-  end
-end
+    {:noreply, assign(socket, :door_changeset, Mud.change_door(%Door
