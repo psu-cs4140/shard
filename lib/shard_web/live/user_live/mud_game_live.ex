@@ -451,6 +451,10 @@ defmodule ShardWeb.MudGameLive do
                       <div class="w-3 h-0.5 bg-yellow-500 mr-1"></div>
                       <span>Key Req.</span>
                     </div>
+                    <div class="flex items-center">
+                      <div class="w-3 h-0.5 bg-pink-500 mr-1"></div>
+                      <span>One-way</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -982,9 +986,13 @@ defmodule ShardWeb.MudGameLive do
         assigns.scale_factor
       )
       
+      # Check if this is a one-way door (no return door in opposite direction)
+      is_one_way = is_one_way_door?(assigns.door)
+      
       # Color scheme based on door type and status
       stroke_color = cond do
         assigns.door.is_locked -> "#dc2626"  # Red for locked doors
+        is_one_way -> "#ec4899"  # Pink for one-way doors
         assigns.door.door_type == "portal" -> "#8b5cf6"  # Purple for portals
         assigns.door.door_type == "gate" -> "#d97706"  # Orange for gates
         assigns.door.door_type == "locked_gate" -> "#991b1b"  # Dark red for locked gates
@@ -1313,6 +1321,40 @@ defmodule ShardWeb.MudGameLive do
     scaled_y = max(10, min(scaled_y, 190))
     
     {scaled_x, scaled_y}
+  end
+
+  # Check if a door is one-way (no return door in opposite direction)
+  defp is_one_way_door?(door) do
+    opposite_direction = get_opposite_direction(door.direction)
+    
+    if opposite_direction do
+      # Check if there's a door going back from the destination room
+      return_door = GameMap.get_door_in_direction(door.to_room_id, opposite_direction)
+      
+      case return_door do
+        nil -> true  # No return door found, this is one-way
+        return_door -> return_door.to_room_id != door.from_room_id  # Return door doesn't lead back
+      end
+    else
+      false  # Can't determine opposite direction, assume two-way
+    end
+  end
+
+  # Get the opposite direction for checking return doors
+  defp get_opposite_direction(direction) do
+    case direction do
+      "north" -> "south"
+      "south" -> "north"
+      "east" -> "west"
+      "west" -> "east"
+      "northeast" -> "southwest"
+      "southwest" -> "northeast"
+      "northwest" -> "southeast"
+      "southeast" -> "northwest"
+      "up" -> "down"
+      "down" -> "up"
+      _ -> nil
+    end
   end
 
   # Component for player marker when no room exists at player position
