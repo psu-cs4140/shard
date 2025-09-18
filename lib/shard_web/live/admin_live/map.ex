@@ -403,7 +403,7 @@ defmodule ShardWeb.AdminLive.Map do
     <!-- Room Form Modal -->
     <.modal :if={@editing == :room} id="room-modal" show>
       <.header>
-        <%= if @changeset.data.id, do: "Edit Room", else: "New Room" %>
+        <%= if @changeset && @changeset.data.id, do: "Edit Room", else: "New Room" %>
         <:subtitle>Manage room details</:subtitle>
       </.header>
       
@@ -440,7 +440,7 @@ defmodule ShardWeb.AdminLive.Map do
     <!-- Door Form Modal -->
     <.modal :if={@editing == :door} id="door-modal" show>
       <.header>
-        <%= if @changeset.data.id, do: "Edit Door", else: "New Door" %>
+        <%= if @changeset && @changeset.data.id, do: "Edit Door", else: "New Door" %>
         <:subtitle>Manage door details</:subtitle>
       </.header>
       
