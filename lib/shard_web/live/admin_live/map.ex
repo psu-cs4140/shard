@@ -3,6 +3,7 @@ defmodule ShardWeb.AdminLive.Map do
 
   alias Shard.Map
   alias Shard.Map.{Room, Door}
+  alias Shard.Repo
 
   @impl true
   def mount(_params, _session, socket) do
@@ -401,4 +402,93 @@ defmodule ShardWeb.AdminLive.Map do
       </div>
       
       <%= if Enum.empty?(@rooms) do %>
-        <div
+        <div class="text-center py-8">
+          <p class="text-gray-500">No rooms found.</p>
+        </div>
+      <% else %>
+        <table class="table table-zebra">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Coordinates</th>
+              <th>Type</th>
+              <th>Public</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <%= for room <- @rooms do %>
+              <tr>
+                <td><%= room.name %></td>
+                <td>(<%= room.x_coordinate %>, <%= room.y_coordinate %>, <%= room.z_coordinate %>)</td>
+                <td><%= room.room_type %></td>
+                <td><%= if room.is_public, do: "Yes", else: "No" %></td>
+                <td class="flex space-x-2">
+                  <.button phx-click="edit_room" phx-value-id={room.id} class="btn btn-sm btn-primary">Edit</.button>
+                  <.button phx-click="delete_room" phx-value-id={room.id} class="btn btn-sm btn-error" data-confirm="Are you sure?">Delete</.button>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    </div>
+    """
+  end
+
+  defp doors_tab(assigns) do
+    ~H"""
+    <div class="overflow-x-auto">
+      <div class="mb-4">
+        <.button phx-click="new_door" class="btn btn-primary">New Door</.button>
+      </div>
+      
+      <%= if Enum.empty?(@doors) do %>
+        <div class="text-center py-8">
+          <p class="text-gray-500">No doors found.</p>
+        </div>
+      <% else %>
+        <table class="table table-zebra">
+          <thead>
+            <tr>
+              <th>From Room</th>
+              <th>To Room</th>
+              <th>Direction</th>
+              <th>Type</th>
+              <th>Locked</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <%= for door <- @doors do %>
+              <% from_room = Enum.find(@rooms, &(&1.id == door.from_room_id)) %>
+              <% to_room = Enum.find(@rooms, &(&1.id == door.to_room_id)) %>
+              <tr>
+                <td><%= if from_room, do: from_room.name, else: "Unknown" %></td>
+                <td><%= if to_room, do: to_room.name, else: "Unknown" %></td>
+                <td><%= door.direction %></td>
+                <td><%= door.door_type %></td>
+                <td><%= if door.is_locked, do: "Yes", else: "No" %></td>
+                <td class="flex space-x-2">
+                  <.button phx-click="edit_door" phx-value-id={door.id} class="btn btn-sm btn-primary">Edit</.button>
+                  <.button phx-click="delete_door" phx-value-id={door.id} class="btn btn-sm btn-error" data-confirm="Are you sure?">Delete</.button>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    </div>
+    """
+  end
+
+  defp map_visualization(assigns) do
+    ~H"""
+    <div class="bg-base-200 p-6 rounded-lg">
+      <h3 class="text-xl font-bold mb-4">Map Visualization</h3>
+      <p class="text-gray-600">This is a placeholder for the map visualization feature.</p>
+      <p class="mt-2">Rooms: <%= Enum.count(@rooms) %> | Doors: <%= Enum.count(@doors) %></p>
+    </div>
+    """
+  end
+end
