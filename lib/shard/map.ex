@@ -164,4 +164,11 @@ defmodule Shard.Map do
 
     Repo.all(combined_query)
   end
+
+  @doc """
+  Puts an action on a changeset for form handling.
+  """
+  def put_action(changeset, action) do
+    Map.put(changeset, :action, action)
+  end
 end
