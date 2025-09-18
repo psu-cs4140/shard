@@ -5,6 +5,8 @@ defmodule Shard.Mud.Room do
   schema "rooms" do
     field :name, :string
     field :description, :string
+    field :x, :integer, default: 0
+    field :y, :integer, default: 0
     
     belongs_to :north_door, Shard.Mud.Door, foreign_key: :north_door_id
     belongs_to :east_door, Shard.Mud.Door, foreign_key: :east_door_id
@@ -17,7 +19,7 @@ defmodule Shard.Mud.Room do
   @doc false
   def changeset(room, attrs) do
     room
-    |> cast(attrs, [:name, :description, :north_door_id, :east_door_id, :south_door_id, :west_door_id])
+    |> cast(attrs, [:name, :description, :x, :y, :north_door_id, :east_door_id, :south_door_id, :west_door_id])
     |> validate_required([:name])
   end
 end

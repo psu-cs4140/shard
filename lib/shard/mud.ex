@@ -200,4 +200,18 @@ defmodule Shard.Mud do
   def change_door(%Door{} = door, attrs \\ %{}) do
     Door.changeset(door, attrs)
   end
+
+  @doc """
+  Creates the initial room if none exists.
+  """
+  def create_initial_room do
+    case Repo.aggregate(Room, :count, :id) do
+      0 -> 
+        %Room{}
+        |> Room.changeset(%{name: "Starting Room", description: "The initial room"})
+        |> Repo.insert()
+      _ -> 
+        :ok
+    end
+  end
 end

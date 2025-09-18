@@ -8,7 +8,7 @@ defmodule ShardWeb.Admin.MudLive do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div class="mx-auto max-w-4xl">
+      <div class="mx-auto max-w-6xl">
         <.header>
           MUD Management
           <:subtitle>Manage rooms and doors for the MUD game</:subtitle>
@@ -17,11 +17,19 @@ defmodule ShardWeb.Admin.MudLive do
         <div class="tabs tabs-lifted mt-6">
           <button
             type="button"
+            class={["tab", @active_tab == :grid && "tab-active"]}
+            phx-click="set_tab"
+            phx-value-tab="grid"
+          >
+            Grid View
+          </button>
+          <button
+            type="button"
             class={["tab", @active_tab == :rooms && "tab-active"]}
             phx-click="set_tab"
             phx-value-tab="rooms"
           >
-            Rooms
+            Rooms List
           </button>
           <button
             type="button"
@@ -29,11 +37,15 @@ defmodule ShardWeb.Admin.MudLive do
             phx-click="set_tab"
             phx-value-tab="doors"
           >
-            Doors
+            Doors List
           </button>
         </div>
 
         <div class="mt-6">
+          <%= if @active_tab == :grid do %>
+            <.grid_tab rooms={@rooms} selected_room={@selected_room} />
+          <% end %>
+
           <%= if @active_tab == :rooms do %>
             <.rooms_tab rooms={@rooms} room_changeset={@room_changeset} doors={@doors} />
           <% end %>
@@ -44,6 +56,109 @@ defmodule ShardWeb.Admin.MudLive do
         </div>
       </div>
     </Layouts.app>
+    """
+  end
+
+  defp grid_tab(assigns) do
+    ~H"""
+    <div>
+      <.header>
+        Room Grid
+        <:actions>
+          <.button phx-click="new_room">New Room</.button>
+        </:actions>
+      </.header>
+
+      <div class="flex justify-between items-center mb-4">
+        <div class="flex items-center gap-2">
+          <span class="font-medium">Legend:</span>
+          <div class="flex items-center gap-2">
+            <div class="w-4 h-4 bg-blue-500 border border-gray-300"></div>
+            <span>Room</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-4 h-4 bg-green-500"></div>
+            <span>Selected</span>
+          </div>
+        </div>
+        <.button phx-click="refresh_grid" class="btn btn-sm">Refresh</.button>
+      </div>
+
+      <div class="overflow-auto border rounded-lg bg-gray-100 p-4" style="max-height: 70vh;">
+        <div class="relative" style="min-width: 800px; min-height: 600px;">
+          <!-- Grid lines -->
+          <div class="absolute inset-0 bg-grid-pattern opacity-20"></div>
+          
+          <!-- Rooms -->
+          <%= for room <- @rooms do %>
+            <div 
+              class={"absolute w-16 h-16 flex items-center justify-center border rounded cursor-pointer #{if @selected_room && @selected_room.id == room.id, do: "bg-green-500 border-green-700", else: "bg-blue-500 border-blue-700"}"}
+              style={"top: #{300 - (room.y * 64) - 32}px; left: #{400 + (room.x * 64) - 32}px;"}
+              phx-click="select_room"
+              phx-value-id={room.id}
+            >
+              <span class="text-xs font-bold text-white text-center break-words" style="max-width: 60px;"><%= room.name %></span>
+            </div>
+            
+            <!-- Door connections -->
+            <%= if room.north_door_id do %>
+              <div class="absolute bg-yellow-600" 
+                   style={"top: #{300 - (room.y * 64) - 32 - 16}px; left: #{400 + (room.x * 64) - 2}px; width: 4px; height: 16px;"}>
+              </div>
+            <% end %>
+            
+            <%= if room.east_door_id do %>
+              <div class="absolute bg-yellow-600" 
+                   style={"top: #{300 - (room.y * 64) - 2}px; left: #{400 + (room.x * 64) + 32}px; width: 16px; height: 4px;"}>
+              </div>
+            <% end %>
+            
+            <%= if room.south_door_id do %>
+              <div class="absolute bg-yellow-600" 
+                   style={"top: #{300 - (room.y * 64) + 32}px; left: #{400 + (room.x * 64) - 2}px; width: 4px; height: 16px;"}>
+              </div>
+            <% end %>
+            
+            <%= if room.west_door_id do %>
+              <div class="absolute bg-yellow-600" 
+                   style={"top: #{300 - (room.y * 64) - 2}px; left: #{400 + (room.x * 64) - 32 - 16}px; width: 16px; height: 4px;"}>
+              </div>
+            <% end %>
+          <% end %>
+          
+          <!-- Compass directions -->
+          <div class="absolute top-0 left-1/2 transform -translate-x-1/2 text-lg font-bold">N</div>
+          <div class="absolute right-0 top-1/2 transform -translate-y-1/2 text-lg font-bold">E</div>
+          <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 text-lg font-bold">S</div>
+          <div class="absolute left-0 top-1/2 transform -translate-y-1/2 text-lg font-bold">W</div>
+        </div>
+      </div>
+
+      <%= if @selected_room do %>
+        <div class="mt-6 p-4 border rounded-lg bg-base-100">
+          <.header>
+            <%= @selected_room.name %>
+            <:actions>
+              <.button phx-click="edit_room" phx-value-id={@selected_room.id} class="btn-sm">Edit</.button>
+              <.button phx-click="delete_room" phx-value-id={@selected_room.id} class="btn-sm btn-error">Delete</.button>
+            </:actions>
+          </.header>
+          <div class="mt-2">
+            <p><span class="font-semibold">Description:</span> <%= @selected_room.description || "No description" %></p>
+            <p><span class="font-semibold">Position:</span> (<%= @selected_room.x %>, <%= @selected_room.y %>)</p>
+            <div class="mt-2">
+              <span class="font-semibold">Doors:</span>
+              <ul class="list-disc pl-5 mt-1">
+                <li>North: <%= if @selected_room.north_door_id, do: "Connected", else: "None" %></li>
+                <li>East: <%= if @selected_room.east_door_id, do: "Connected", else: "None" %></li>
+                <li>South: <%= if @selected_room.south_door_id, do: "Connected", else: "None" %></li>
+                <li>West: <%= if @selected_room.west_door_id, do: "Connected", else: "None" %></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
     """
   end
 
@@ -64,6 +179,7 @@ defmodule ShardWeb.Admin.MudLive do
               <th>ID</th>
               <th>Name</th>
               <th>Description</th>
+              <th>Position (X, Y)</th>
               <th>North Door</th>
               <th>East Door</th>
               <th>South Door</th>
@@ -76,6 +192,7 @@ defmodule ShardWeb.Admin.MudLive do
               <td>{room.id}</td>
               <td>{room.name}</td>
               <td>{room.description}</td>
+              <td>({room.x}, {room.y})</td>
               <td>{room.north_door_id}</td>
               <td>{room.east_door_id}</td>
               <td>{room.south_door_id}</td>
@@ -106,6 +223,10 @@ defmodule ShardWeb.Admin.MudLive do
         >
           <.input field={@room_changeset[:name]} type="text" label="Name" required />
           <.input field={@room_changeset[:description]} type="textarea" label="Description" />
+          <div class="grid grid-cols-2 gap-4">
+            <.input field={@room_changeset[:x]} type="number" label="X Position" />
+            <.input field={@room_changeset[:y]} type="number" label="Y Position" />
+          </div>
           
           <div class="grid grid-cols-2 gap-4">
             <.input field={@room_changeset[:north_door_id]} type="select" label="North Door" options={door_options(@doors)} />
@@ -204,17 +325,21 @@ defmodule ShardWeb.Admin.MudLive do
 
   @impl true
   def mount(_params, _session, socket) do
+    # Create initial room if none exists
+    Mud.create_initial_room()
+    
     rooms = Mud.list_rooms()
     doors = Mud.list_doors()
 
     socket =
       socket
       |> assign(
-        active_tab: :rooms,
+        active_tab: :grid,
         rooms: rooms,
         doors: doors,
         room_changeset: nil,
-        door_changeset: nil
+        door_changeset: nil,
+        selected_room: nil
       )
 
     {:ok, socket}
@@ -225,9 +350,23 @@ defmodule ShardWeb.Admin.MudLive do
     {:noreply, assign(socket, :active_tab, String.to_atom(tab))}
   end
 
+  def handle_event("refresh_grid", _, socket) do
+    rooms = Mud.list_rooms()
+    {:noreply, assign(socket, :rooms, rooms)}
+  end
+
+  def handle_event("select_room", %{"id" => id}, socket) do
+    room = Mud.get_room!(id)
+    {:noreply, assign(socket, :selected_room, room)}
+  end
+
   # Room events
   def handle_event("new_room", _, socket) do
-    {:noreply, assign(socket, :room_changeset, Mud.change_room(%Room{}))}
+    # Find the next available room number for default name
+    room_count = length(socket.assigns.rooms)
+    default_name = "Room #{room_count}"
+    
+    {:noreply, assign(socket, :room_changeset, Mud.change_room(%Room{}, %{name: default_name}))}
   end
 
   def handle_event("edit_room", %{"id" => id}, socket) do
@@ -259,7 +398,8 @@ defmodule ShardWeb.Admin.MudLive do
          socket
          |> put_flash(:info, "Room saved successfully")
          |> assign(:rooms, rooms)
-         |> assign(:room_changeset, nil)}
+         |> assign(:room_changeset, nil)
+         |> assign(:selected_room, nil)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, :room_changeset, changeset)}
@@ -274,7 +414,8 @@ defmodule ShardWeb.Admin.MudLive do
     {:noreply,
      socket
      |> put_flash(:info, "Room deleted successfully")
-     |> assign(:rooms, rooms)}
+     |> assign(:rooms, rooms)
+     |> assign(:selected_room, nil)}
   end
 
   # Door events
