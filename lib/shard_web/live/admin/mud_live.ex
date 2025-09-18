@@ -54,7 +54,7 @@ defmodule ShardWeb.Admin.MudLive do
         Rooms
         <:actions>
           <.button phx-click="new_room">New Room</.button>
-        </.actions>
+        </:actions>
       </.header>
 
       <div class="overflow-x-auto">
@@ -137,7 +137,7 @@ defmodule ShardWeb.Admin.MudLive do
         Doors
         <:actions>
           <.button phx-click="new_door">New Door</.button>
-        </.actions>
+        </:actions>
       </.header>
 
       <div class="overflow-x-auto">
