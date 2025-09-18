@@ -20,7 +20,8 @@ defmodule ShardWeb.AdminController do
   end
 
   def manage_map(conn, _params) do
-    render(conn, :manage_map)
+    map_data = Shard.Mud.get_map_data()
+    render(conn, :manage_map, map_data: map_data)
   end
 
   defp require_admin(conn, _params) do

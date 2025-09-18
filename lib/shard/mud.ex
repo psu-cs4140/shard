@@ -288,4 +288,48 @@ defmodule Shard.Mud do
     
     :ok
   end
+
+  @doc """
+  Gets map data for visualization.
+  Returns a list of rooms with their positions and door connections.
+  """
+  def get_map_data do
+    rooms = list_rooms()
+    
+    # Convert rooms to map-friendly format
+    Enum.map(rooms, fn room ->
+      %{
+        id: room.id,
+        name: room.name,
+        x: room.x,
+        y: room.y,
+        doors: %{
+          north: room.north_door_id && %{
+            id: room.north_door_id,
+            is_open: room.north_door && room.north_door.is_open,
+            is_locked: room.north_door && room.north_door.is_locked,
+            exit: room.north_door && room.north_door.exit
+          },
+          east: room.east_door_id && %{
+            id: room.east_door_id,
+            is_open: room.east_door && room.east_door.is_open,
+            is_locked: room.east_door && room.east_door.is_locked,
+            exit: room.east_door && room.east_door.exit
+          },
+          south: room.south_door_id && %{
+            id: room.south_door_id,
+            is_open: room.south_door && room.south_door.is_open,
+            is_locked: room.south_door && room.south_door.is_locked,
+            exit: room.south_door && room.south_door.exit
+          },
+          west: room.west_door_id && %{
+            id: room.west_door_id,
+            is_open: room.west_door && room.west_door.is_open,
+            is_locked: room.west_door && room.west_door.is_locked,
+            exit: room.west_door && room.west_door.exit
+          }
+        }
+      }
+    end)
+  end
 end
