@@ -396,7 +396,27 @@ defmodule ShardWeb.MudGameLive do
                 <!-- Room Types -->
                 <div class="flex items-center">
                   <div class="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
-                  <span class="text-sm">Rooms</span>
+                  <span class="text-sm">Standard</span>
+                </div>
+                <div class="flex items-center">
+                  <div class="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
+                  <span class="text-sm">Safe Zone</span>
+                </div>
+                <div class="flex items-center">
+                  <div class="w-4 h-4 bg-orange-500 rounded-full mr-2"></div>
+                  <span class="text-sm">Shop</span>
+                </div>
+                <div class="flex items-center">
+                  <div class="w-4 h-4 bg-red-800 rounded-full mr-2"></div>
+                  <span class="text-sm">Dungeon</span>
+                </div>
+                <div class="flex items-center">
+                  <div class="w-4 h-4 bg-yellow-500 rounded-full mr-2"></div>
+                  <span class="text-sm">Treasure</span>
+                </div>
+                <div class="flex items-center">
+                  <div class="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
+                  <span class="text-sm">Trap</span>
                 </div>
                 <div class="flex items-center">
                   <div class="w-4 h-4 bg-red-500 ring-2 ring-red-300 rounded-full mr-2"></div>
@@ -865,8 +885,15 @@ defmodule ShardWeb.MudGameLive do
         assigns.scale_factor
       )
       
-      # Define colors for rooms - simple blue scheme for all rooms
-      {fill_color, stroke_color} = {"#3b82f6", "#60a5fa"}  # Blue for all rooms
+      # Define colors for rooms based on room type
+      {fill_color, stroke_color} = case assigns.room.room_type do
+        "safe_zone" -> {"#10b981", "#34d399"}      # Green for safe zones
+        "shop" -> {"#f59e0b", "#fbbf24"}           # Orange for shops
+        "dungeon" -> {"#7c2d12", "#dc2626"}        # Dark red for dungeons
+        "treasure_room" -> {"#eab308", "#facc15"}  # Gold for treasure rooms
+        "trap_room" -> {"#991b1b", "#ef4444"}      # Red for trap rooms
+        _ -> {"#3b82f6", "#60a5fa"}                # Blue for standard rooms
+      end
       
       player_stroke = if assigns.is_player, do: "#ef4444", else: stroke_color
       player_width = if assigns.is_player, do: "3", else: "1"
@@ -891,7 +918,7 @@ defmodule ShardWeb.MudGameLive do
         stroke={@stroke_color} 
         stroke-width={@stroke_width}
       >
-        <title><%= @room.name || "Room #{@room.id}" %> (<%= @room.x_coordinate %>, <%= @room.y_coordinate %>)</title>
+        <title><%= @room.name || "Room #{@room.id}" %> (<%= @room.x_coordinate %>, <%= @room.y_coordinate %>) - <%= String.capitalize(@room.room_type || "standard") %></title>
       </circle>
     <% end %>
     """
