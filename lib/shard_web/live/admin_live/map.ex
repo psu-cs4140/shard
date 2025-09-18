@@ -553,59 +553,38 @@ defmodule ShardWeb.AdminLive.Map do
       <% else %>
         <div 
           class="relative overflow-hidden border border-base-300 rounded bg-white"
-          style="height: 600px;"
-          phx-hook="MapVisualization"
+          style={"height: 600px; transform: scale(#{@zoom}) translate(#{@pan_x}px, #{@pan_y}px); transform-origin: 0 0;"}
           id="map-container"
           phx-click="mousedown"
-          phx-window-keyup={JS.dispatch("mouseup", to: "#map-container")}
-          phx-window-mousemove={JS.dispatch("mousemove", to: "#map-container")}
+          phx-window-keyup="mouseup"
+          phx-window-mousemove="mousemove"
           phx-mouseup="mouseup"
           phx-mouseleave="mouseleave"
         >
-          <svg 
-            class="absolute top-0 left-0 w-full h-full"
-            style={"transform: scale(#{@zoom}) translate(#{@pan_x}px, #{@pan_y}px); transform-origin: 0 0;"}
-          >
+          <!-- Create a grid container -->
+          <div class="absolute inset-0 grid grid-cols-10 grid-rows-10 gap-1 p-4">
+            <!-- Render rooms as grid items -->
+            <%= for room <- @rooms do %>
+              <div 
+                class={"col-start-#{room.x_coordinate + 1} row-start-#{room.y_coordinate + 1} rounded-lg border-2 border-gray-800 flex items-center justify-center text-center p-1 #{room_classes(room)}"}
+                style="min-width: 80px; min-height: 80px;"
+              >
+                <div>
+                  <div class="font-bold text-xs"><%= room.name %></div>
+                  <div class="text-xs mt-1">(<%= room.x_coordinate %>, <%= room.y_coordinate %>)</div>
+                </div>
+              </div>
+            <% end %>
+            
             <!-- Render connections between rooms (doors) -->
             <%= for door <- @doors do %>
               <% from_room = Enum.find(@rooms, &(&1.id == door.from_room_id)) %>
               <% to_room = Enum.find(@rooms, &(&1.id == door.to_room_id)) %>
               <%= if from_room && to_room do %>
-                <line 
-                  x1={50 + from_room.x_coordinate * 100} 
-                  y1={50 + from_room.y_coordinate * 100} 
-                  x2={50 + to_room.x_coordinate * 100} 
-                  y2={50 + to_room.y_coordinate * 100} 
-                  stroke="#94a3b8" 
-                  stroke-width="2" 
-                />
+                <.door_connection from={from_room} to={to_room} direction={door.direction} />
               <% end %>
             <% end %>
-            
-            <!-- Render rooms as squares -->
-            <%= for room <- @rooms do %>
-              <rect 
-                x={25 + room.x_coordinate * 100} 
-                y={25 + room.y_coordinate * 100} 
-                width="50" 
-                height="50" 
-                fill={room_color(room)} 
-                stroke="#1e293b" 
-                stroke-width="2" 
-                rx="5"
-              />
-              <text 
-                x={50 + room.x_coordinate * 100} 
-                y={55 + room.y_coordinate * 100} 
-                text-anchor="middle" 
-                font-size="10" 
-                fill="#1e293b"
-                pointer-events="none"
-              >
-                <%= room.name %>
-              </text>
-            <% end %>
-          </svg>
+          </div>
         </div>
         
         <div class="mt-4 text-sm text-gray-600">
@@ -617,14 +596,24 @@ defmodule ShardWeb.AdminLive.Map do
     """
   end
 
-  defp room_color(room) do
-    case room.room_type do
-      "safe_zone" -> "#bbf7d0"  # green
-      "shop" -> "#bfdbfe"       # blue
-      "dungeon" -> "#fecaca"    # red
-      "treasure_room" -> "#fde68a" # yellow
-      "trap_room" -> "#fda4af"  # pink
-      _ -> "#e2e8f0"            # gray (default)
+  defp door_connection(assigns) do
+    # This is a simplified representation of door connections
+    # In a real implementation, you might want to draw lines between rooms
+    ~H""
+  end
+
+  defp room_classes(room) do
+    base_classes = "flex flex-col items-center justify-center text-xs"
+    
+    type_classes = case room.room_type do
+      "safe_zone" -> "bg-green-200 border-green-600"
+      "shop" -> "bg-blue-200 border-blue-600"
+      "dungeon" -> "bg-red-200 border-red-600"
+      "treasure_room" -> "bg-yellow-200 border-yellow-600"
+      "trap_room" -> "bg-pink-200 border-pink-600"
+      _ -> "bg-gray-200 border-gray-600"
     end
+    
+    "#{base_classes} #{type_classes}"
   end
 end
