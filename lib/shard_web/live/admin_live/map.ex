@@ -33,6 +33,24 @@ defmodule ShardWeb.AdminLive.Map do
   end
 
   @impl true
+  def handle_event("generate_default_map", _, socket) do
+    case Map.generate_default_map() do
+      {:ok, _message} ->
+        # Refresh the rooms and doors lists
+        rooms = Map.list_rooms()
+        doors = Map.list_doors() |> Enum.map(&Map.Repo.preload(&1, [:from_room, :to_room]))
+        
+        {:noreply, 
+         socket
+         |> assign(:rooms, rooms)
+         |> assign(:doors, doors)
+         |> put_flash(:info, "Default map generated successfully!")}
+      {:error, message} ->
+        {:noreply, put_flash(socket, :error, "Error generating map: #{message}")}
+    end
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <.header>
@@ -41,38 +59,48 @@ defmodule ShardWeb.AdminLive.Map do
     </.header>
 
     <div class="mt-8">
-      <div class="tabs tabs-lifted">
+      <div class="flex justify-between items-center mb-4">
+        <div class="tabs tabs-lifted">
+          <button 
+            type="button" 
+            class={["tab", @tab == "rooms" && "tab-active"]}
+            phx-click="change_tab" 
+            phx-value-tab="rooms"
+          >
+            Rooms
+          </button>
+          <button 
+            type="button" 
+            class={["tab", @tab == "doors" && "tab-active"]}
+            phx-click="change_tab" 
+            phx-value-tab="doors"
+          >
+            Doors
+          </button>
+          <button 
+            type="button" 
+            class={["tab", @tab == "map" && "tab-active"]}
+            phx-click="change_tab" 
+            phx-value-tab="map"
+          >
+            Map Visualization
+          </button>
+          <button 
+            type="button" 
+            class={["tab", @tab == "editor" && "tab-active"]}
+            phx-click="change_tab" 
+            phx-value-tab="editor"
+          >
+            Map Editor
+          </button>
+        </div>
+        
         <button 
           type="button" 
-          class={["tab", @tab == "rooms" && "tab-active"]}
-          phx-click="change_tab" 
-          phx-value-tab="rooms"
+          class="btn btn-secondary"
+          phx-click="generate_default_map"
         >
-          Rooms
-        </button>
-        <button 
-          type="button" 
-          class={["tab", @tab == "doors" && "tab-active"]}
-          phx-click="change_tab" 
-          phx-value-tab="doors"
-        >
-          Doors
-        </button>
-        <button 
-          type="button" 
-          class={["tab", @tab == "map" && "tab-active"]}
-          phx-click="change_tab" 
-          phx-value-tab="map"
-        >
-          Map Visualization
-        </button>
-        <button 
-          type="button" 
-          class={["tab", @tab == "editor" && "tab-active"]}
-          phx-click="change_tab" 
-          phx-value-tab="editor"
-        >
-          Map Editor
+          Generate Default Map
         </button>
       </div>
 
