@@ -552,25 +552,24 @@ defmodule ShardWeb.AdminLive.Map do
         </div>
       <% else %>
         <div 
-          class="relative overflow-hidden border border-base-300 rounded bg-white"
-          style={"height: 600px; transform: scale(#{@zoom}) translate(#{@pan_x}px, #{@pan_y}px); transform-origin: 0 0;"}
+          class="relative overflow-hidden border border-base-300 rounded bg-white cursor-move"
+          style={"height: 600px; transform: scale(#{@zoom}); transform-origin: 0 0;"}
           id="map-container"
-          phx-click="mousedown"
-          phx-window-keyup="mouseup"
-          phx-window-mousemove="mousemove"
-          phx-mouseup="mouseup"
-          phx-mouseleave="mouseleave"
+          phx-hook="MapDrag"
         >
-          <!-- Create a grid container -->
-          <div class="absolute inset-0 grid grid-cols-10 grid-rows-10 gap-1 p-4">
-            <!-- Render rooms as grid items -->
+          <div 
+            class="absolute inset-0"
+            style={"transform: translate(#{@pan_x}px, #{@pan_y}px);"}
+            id="map-content"
+          >
+            <!-- Render rooms as squares -->
             <%= for room <- @rooms do %>
               <div 
-                class={"col-start-#{room.x_coordinate + 1} row-start-#{room.y_coordinate + 1} rounded-lg border-2 border-gray-800 flex items-center justify-center text-center p-1 #{room_classes(room)}"}
-                style="min-width: 80px; min-height: 80px;"
+                class={"absolute rounded border-2 flex items-center justify-center text-center p-1 #{room_classes(room)}"}
+                style={"left: #{room.x_coordinate * 100}px; top: #{room.y_coordinate * 100}px; width: 80px; height: 80px;"}
               >
                 <div>
-                  <div class="font-bold text-xs"><%= room.name %></div>
+                  <div class="font-bold text-xs truncate w-full"><%= room.name %></div>
                   <div class="text-xs mt-1">(<%= room.x_coordinate %>, <%= room.y_coordinate %>)</div>
                 </div>
               </div>
