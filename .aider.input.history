@@ -1,63 +1,641 @@
 
-# 2025-09-02 13:23:07.780981
-+no
-
-# 2025-09-02 13:23:26.971722
-+/add scripts/setup-dev-postgres.sh
-
-# 2025-09-02 13:23:37.326537
-+/read-only config/dev.exs
-
-# 2025-09-02 13:26:42.012383
-+Create a bash script that will check the postgres config file in /etc/postgresql/16/main/pg_hba.conf to see if it allows local network connedtions with password auth and if not enable them and then restart the postgres service. Then it should create a postgres user called shard that can login with the password in the dev config. Once the script has been run, we should be able to run "mix ecto.create" and create the project database in dev mode.
-
-# 2025-09-17 16:49:58.962593
-+/help
-
-# 2025-09-17 16:52:35.619624
-+/model qwen/qwen3-coder:free
-
-# 2025-09-17 16:56:24.410021
-+/weak-model qwen/qwen3-coder:free
-
-# 2025-09-17 16:56:52.490404
-+ls
-
-# 2025-09-17 17:06:42.705015
-+/model qwen/qwen3-coder
-
-# 2025-09-17 17:07:06.140499
-+/model openrouter/qwen/qwen3-coder
-
-# 2025-09-17 17:09:14.173513
-+ls
-
-# 2025-09-17 17:41:41.513601
-+what kind of database does this project use
-
-# 2025-09-17 17:42:25.679233
-+y
-
-# 2025-09-17 18:10:07.507121
-+what kind of accounts are currently available for users
-
-# 2025-09-17 18:11:25.731600
-+n
-
-# 2025-09-17 18:11:42.383837
+# 2025-09-18 09:54:38.081809
 +/add *
 
-# 2025-09-17 18:11:47.848600
-+what kind of accounts are currently available for users
+# 2025-09-18 12:07:33.006457
++create a relational database that contains doors and rooms to be used as a map in a mud style game. the database should be able to be edited and updated
 
-# 2025-09-17 18:13:41.106099
+# 2025-09-18 12:12:40.304067
++/add *
+
+# 2025-09-18 12:12:53.266231
++create a relational database that contains doors and rooms to be used as a map in a mud style game. the database should be able to be edited and updated.
+
+# 2025-09-18 12:14:57.216357
++y
+
+# 2025-09-18 12:18:38.794848
++/add *
+
+# 2025-09-18 12:18:55.104964
++resolve these errors. ** (Postgrex.Error) ERROR 42P07 (duplicate_table) relation "rooms" already exists
++    (ecto_sql 3.13.2) lib/ecto/adapters/sql.ex:1098: Ecto.Adapters.SQL.raise_sql_call_error/1
++    (elixir 1.18.4) lib/enum.ex:1714: Enum."-map/2-lists^map/1-1-"/2
++    (ecto_sql 3.13.2) lib/ecto/adapters/sql.ex:1219: Ecto.Adapters.SQL.execute_ddl/4
++    (ecto_sql 3.13.2) lib/ecto/migration/runner.ex:348: Ecto.Migration.Runner.log_and_execute_ddl/3
++    (elixir 1.18.4) lib/enum.ex:1714: Enum."-map/2-lists^map/1-1-"/2
++    (ecto_sql 3.13.2) lib/ecto/migration/runner.ex:311: Ecto.Migration.Runner.perform_operation/3
++    (stdlib 7.1) timer.erl:599: :timer.tc/2
++    (ecto_sql 3.13.2) lib/ecto/migration/runner.ex:25: Ecto.Migration.Runner.run/8
++
+
+# 2025-09-18 12:25:53.197681
++/ask
+
+# 2025-09-18 12:26:11.264537
++is there currently any room or doors databases in this project
+
+# 2025-09-18 12:26:26.517070
++a
+
+# 2025-09-18 12:26:38.243812
++/code
+
+# 2025-09-18 12:28:30.862281
++arning: no route path for ShardWeb.Router matches "/characters/#{character.id}"
++    │
++ 30 │           <.link navigate={~p"/characters/#{character.id}"} class="text-blue-600 hover:text-blue-800">
++    │           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++    │
++    └─ lib/shard_web/live/character_live/index.html.heex:30: ShardWeb.CharacterLive.Index.render/1
++
++     warning: Shard.Users.list_users/0 is undefined or private
++     │
++ 140 │     Users.list_users()
++     │           ~
++     │
++     └─ lib/shard_web/live/admin_live/character_form_component.ex:140:11: ShardWeb.AdminLive.CharacterFormComponent.get_user_options/0
++
++    warning: undefined slot "actions" for component Phoenix.Component.form/1
++    │
++ 69 │         <:actions>
++    │         ~~~~~~~~~~
++    │
++    └─ lib/shard_web/live/admin_live/character_form_component.ex:69: (file)
++
++    warning: variable "character" is unused (if the variable is not meant to be used, prefix it with an underscore)
++    │
++ 39 │       {:ok, character} ->
++    │             ~
++    │
++    └─ lib/shard_web/live/character_live/new.ex:39:13: ShardWeb.CharacterLive.New.save_character/2
++
++    warning: undefined attribute "class" for component ShardWeb.CoreComponents.header/1
++    │
++  2 │   <.header class="text-center">
++    │   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++    │
++    └─ lib/shard_web/live/character_live/new.html.heex:2: (file)
++fix the errors.
+
+# 2025-09-18 12:28:40.079294
++a
+
+# 2025-09-18 12:30:08.382068
++/add *
+
+# 2025-09-18 12:30:22.055193
++arning: no route path for ShardWeb.Router matches "/characters/#{character.id}"
++    │
++ 30 │           <.link navigate={~p"/characters/#{character.id}"} class="text-blue-600 hover:text-blue-800">
++    │           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++    │
++    └─ lib/shard_web/live/character_live/index.html.heex:30: ShardWeb.CharacterLive.Index.render/1
++
++     warning: Shard.Users.list_users/0 is undefined or private
++     │
++ 140 │     Users.list_users()
++     │           ~
++     │
++     └─ lib/shard_web/live/admin_live/character_form_component.ex:140:11: ShardWeb.AdminLive.CharacterFormComponent.get_user_options/0
++
++    warning: undefined slot "actions" for component Phoenix.Component.form/1
++    │
++ 69 │         <:actions>
++    │         ~~~~~~~~~~
++    │
++    └─ lib/shard_web/live/admin_live/character_form_component.ex:69: (file)
++
++    warning: variable "character" is unused (if the variable is not meant to be used, prefix it with an underscore)
++    │
++ 39 │       {:ok, character} ->
++    │             ~
++    │
++    └─ lib/shard_web/live/character_live/new.ex:39:13: ShardWeb.CharacterLive.New.save_character/2
++
++    warning: undefined attribute "class" for component ShardWeb.CoreComponents.header/1
++    │
++  2 │   <.header class="text-center">
++    │   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++    │
++    └─ lib/shard_web/live/character_live/new.html.heex:2: (file)
++fix the errors.
+
+# 2025-09-18 12:32:15.646356
 +/undo
 
-# 2025-09-17 18:36:40.575565
-+modify the user database adding a new Boolean field called "admin". users with a value of false are standard users. users with a value of true in the admin field have special permissions such as access to a new subpage of the website. this admin subpage should contain a ui menu of with links to other pages.
+# 2025-09-18 12:33:27.567560
++** (Postgrex.Error) ERROR 42P07 (duplicate_table) relation "rooms" already exists
++    (ecto_sql 3.13.2) lib/ecto/adapters/sql.ex:1098: Ecto.Adapters.SQL.raise_sql_call_error/1
++    (elixir 1.18.4) lib/enum.ex:1714: Enum."-map/2-lists^map/1-1-"/2
++    (ecto_sql 3.13.2) lib/ecto/adapters/sql.ex:1219: Ecto.Adapters.SQL.execute_ddl/4
++    (ecto_sql 3.13.2) lib/ecto/migration/runner.ex:348: Ecto.Migration.Runner.log_and_execute_ddl/3
++    (elixir 1.18.4) lib/enum.ex:1714: Enum."-map/2-lists^map/1-1-"/2
++    (ecto_sql 3.13.2) lib/ecto/migration/runner.ex:311: Ecto.Migration.Runner.perform_operation/3
++    (stdlib 7.1) timer.erl:599: :timer.tc/2
++    (ecto_sql 3.13.2) lib/ecto/migration/runner.ex:25: Ecto.Migration.Runner.run/8
++fix these errors in this phoniex framework project.
 
-# 2025-09-17 18:40:36.850264
-+Y
-
-# 2025-09-17 18:40:38.934769
+# 2025-09-18 12:33:35.127239
 +y
+
+# 2025-09-18 12:34:00.051348
++/add *
+
+# 2025-09-18 12:34:03.319652
++** (Postgrex.Error) ERROR 42P07 (duplicate_table) relation "rooms" already exists
++    (ecto_sql 3.13.2) lib/ecto/adapters/sql.ex:1098: Ecto.Adapters.SQL.raise_sql_call_error/1
++    (elixir 1.18.4) lib/enum.ex:1714: Enum."-map/2-lists^map/1-1-"/2
++    (ecto_sql 3.13.2) lib/ecto/adapters/sql.ex:1219: Ecto.Adapters.SQL.execute_ddl/4
++    (ecto_sql 3.13.2) lib/ecto/migration/runner.ex:348: Ecto.Migration.Runner.log_and_execute_ddl/3
++    (elixir 1.18.4) lib/enum.ex:1714: Enum."-map/2-lists^map/1-1-"/2
++    (ecto_sql 3.13.2) lib/ecto/migration/runner.ex:311: Ecto.Migration.Runner.perform_operation/3
++    (stdlib 7.1) timer.erl:599: :timer.tc/2
++    (ecto_sql 3.13.2) lib/ecto/migration/runner.ex:25: Ecto.Migration.Runner.run/8
++fix these errors in this phoniex framework project.
+
+# 2025-09-18 12:37:32.020007
++/add *
+
+# 2025-09-18 12:38:02.411247
++create a new sub page under the admin dashboard that lets an admin view the map of the game
+
+# 2025-09-18 12:39:31.900913
++y
+
+# 2025-09-18 12:40:25.238330
++/add *
+
+# 2025-09-18 12:41:55.004865
++make sure the map viewer page is compatable with the existing databases and protocols
+
+# 2025-09-18 12:43:45.945926
++make sure the map viewer page is compatable with the existing databases and protocols.
+
+# 2025-09-18 12:49:05.497413
++after the databases are initilized add a 3x3 grid of rooms to the map. rooms should be correctly linked with doors to the rooms ajacent to them
+
+# 2025-09-18 12:49:24.595280
++/add *
+
+# 2025-09-18 12:49:27.853408
++after the databases are initilized add a 3x3 grid of rooms to the map. rooms should be correctly linked with doors to the rooms ajacent to them
+
+# 2025-09-18 12:52:07.104065
++/add *
+
+# 2025-09-18 12:52:59.817200
++fix the map viewer to propererly access the database.
+
+# 2025-09-18 12:57:16.200839
++/add *
+
+# 2025-09-18 12:59:39.948189
++fix this error with the map viewer. ERROR 42703 (undefined_column) column r0.x_coordinate does not exist
++
++    query: SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0
+
+# 2025-09-18 13:01:36.426669
++n
+
+# 2025-09-18 13:02:40.407647
++/clear
+
+# 2025-09-18 13:02:43.184028
++fix this error with the map viewer. ERROR 42703 (undefined_column) column r0.x_coordinate does not exist
++
++    query: SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0
+
+# 2025-09-18 13:06:48.469958
++modify the map viewer to use a phoenix framework liveviewto display the map currently in the database
++
+
+# 2025-09-18 13:07:15.990765
++a
+
+# 2025-09-18 13:09:28.950874
++/add *
+
+# 2025-09-18 13:09:31.503089
++/ask
+
+# 2025-09-18 13:09:44.639132
++what is causing this error.ERROR 42703 (undefined_column) column r0.x_coordinate does not exist
++
++    query: SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0
+
+# 2025-09-18 13:10:07.080784
++what is causing this error. ERROR 42703 (undefined_column) column r0.x_coordinate does not exist
++
++    query: SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0
+
+# 2025-09-18 13:11:56.313151
++/code
+
+# 2025-09-18 13:14:51.034050
++/add *
+
+# 2025-09-18 13:15:48.860759
++when the databases are first initilized create 9 rooms in a 3 by 3 grid connected by unlocked closed doors.
+
+# 2025-09-18 13:22:12.133614
++add a new tab in map managment called map editor.
+
+# 2025-09-18 13:22:20.341872
++/add *
+
+# 2025-09-18 13:22:37.848387
++add a new tab on the map managment page called map editor.
+
+# 2025-09-18 13:29:15.375928
++/add *
+
+# 2025-09-18 13:30:24.397543
++update the script that generates a default 3x3 grid of rooms to properly use the x, y coodinates. make sure the doors are open and unlocked
+
+# 2025-09-18 13:35:22.385817
++change the code that currently generates a 3x3 grid of rooms after the databases are initlized so that it runs when a new button on the map managment screen called "generate Default map" is pressed
+
+# 2025-09-18 13:35:27.652184
++A
+
+# 2025-09-18 13:38:58.477968
++/add *
+
+# 2025-09-18 13:40:42.450166
++make sure the map, room and door data bases can be edited and modifyed by an admin
+
+# 2025-09-18 13:40:55.897090
++make sure the map, room and door data bases can be edited and modifyed by an admin.
+
+# 2025-09-18 13:45:30.846939
++insure compatablility bewtween the map editor in the admin dashboard and the current databases
+
+# 2025-09-18 13:45:41.110258
++A
+
+# 2025-09-18 13:45:49.502761
++/add *
+
+# 2025-09-18 13:45:52.252422
++insure compatablility bewtween the map editor in the admin dashboard and the current databases
+
+# 2025-09-18 13:47:30.731254
++n
+
+# 2025-09-18 13:47:32.989825
++/clear
+
+# 2025-09-18 13:47:35.932614
++insure compatablility bewtween the map editor in the admin dashboard and the current databases
+
+# 2025-09-18 13:51:34.357865
++/add *
+
+# 2025-09-18 13:52:32.712242
++ error: undefined function assign/5 (expected ShardWeb.AdminLive.Map to define such a function or for it to be imported, but none are available)
++     │
++ 132 │     {:noreply, assign(socket, :editing, nil, :changeset, nil)}
++     │                ^^^^^^
++     │
++     └─ lib/shard_web/live/admin_live/map.ex:132:16: ShardWeb.AdminLive.Map.handle_event/3
++
++fix this error
+
+# 2025-09-18 13:52:45.591598
++/clear
+
+# 2025-09-18 13:52:48.009483
++ error: undefined function assign/5 (expected ShardWeb.AdminLive.Map to define such a function or for it to be imported, but none are available)
++     │
++ 132 │     {:noreply, assign(socket, :editing, nil, :changeset, nil)}
++     │                ^^^^^^
++     │
++     └─ lib/shard_web/live/admin_live/map.ex:132:16: ShardWeb.AdminLive.Map.handle_event/3
++
++fix this error
+
+# 2025-09-18 13:52:56.691281
++/lint
+
+# 2025-09-18 13:53:00.639467
++y
+
+# 2025-09-18 16:50:54.128251
++change the map and minimap display so that instead of being hardcoded like it initially was in mud_game_live, it updates to now accurately portray the rooms and doors created in the rooms database and doors database found elsewhere in the shard repository
+
+# 2025-09-18 16:52:16.835322
++change the map and minimap display so that instead of being hardcoded like it initially was in mud_game_live.ex, it updates to now accurately portray the rooms and doors created in the rooms database and doors database found elsewhere in the shard repository
+
+# 2025-09-18 16:52:21.044376
++yes
+
+# 2025-09-18 16:54:39.143807
++no
+
+# 2025-09-18 16:56:37.311997
++fix these issues:
+
+# 2025-09-18 16:56:46.992121
++     warning: attribute "field" in component ShardWeb.CoreComponents.input/1 must be a Phoenix.HTML.FormField struct, got: :text
++     │
++ 792 │             field={:text}
++     │             ~~~~~~~~~~~~~
++     │
++     └─ lib/shard_web/live/user_live/mud_game_live.ex:792: (file)
++
++    warning: no route path for ShardWeb.Router matches "/characters/#{character.id}"
++    │
++ 30 │           <.link navigate={~p"/characters/#{character.id}"} class="text-blue-600 hover:text-blue-800">
++    │           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++    │
++    └─ lib/shard_web/live/character_live/index.html.heex:30: ShardWeb.CharacterLive.Index.render/1
++
++     warning: Shard.Users.list_users/0 is undefined or private
++     │
++ 140 │     Users.list_users()
++     │           ~
++     │
++     └─ lib/shard_web/live/admin_live/character_form_component.ex:140:11: ShardWeb.AdminLive.CharacterFormComponent.get_user_options/0
++fix these issues
+
+# 2025-09-18 16:57:00.407638
++yes
+
+# 2025-09-18 17:02:32.487484
++the map and minimap do not properly portray what's in the rooms database and doors database from shard/lib/shard/map/room.ex and shard/lib/shard/map/door.ex respectively, can you fix the map generation code in mud_game_live.ex so that it creates a map based on the rooms found in those two directories
+
+# 2025-09-18 17:02:38.542039
++y
+
+# 2025-09-18 17:04:12.124177
++[error] ** (UndefinedFunctionError) function Shard.Map.get/2 is undefined or private
++fix this error
+
+# 2025-09-18 17:05:45.567566
++that didn't fix the issue, the error is still present
+
+# 2025-09-18 17:07:06.574806
++fix the player position so that they don't start out of bounds
+
+# 2025-09-18 17:08:12.116373
++remove the wall limitation, and make it so that if neither a room nor door exists, employ the restriction of not being able to go that direction
+
+# 2025-09-18 17:09:45.789130
++error: undefined function is_valid_movement?/3 (expected ShardWeb.MudGameLive to define such a function or for it to be imported, but none are available)
++  lib/shard_web/live/user_live/mud_game_live.ex:647:8   <- fix this error
+
+# 2025-09-18 17:10:16.809497
++yes
+
+# 2025-09-18 17:14:21.688083
++add commands to the terminal that allow for northeast, southeast, northwest, and southwest to be traversed if available
+
+# 2025-09-18 17:16:08.474757
++make it so the minimap is able to properly portray the rooms and doors by removing the restriction that it has to be in a grid pattern
+
+# 2025-09-18 17:16:49.285694
++make it so the minimap is able to properly portray the rooms and doors by removing the restriction that it has to be in a grid pattern, allowing for diagonal movement and so on
+
+# 2025-09-18 17:18:11.753196
++warning: ShardWeb.CharacterLive.Show.__live__/0 is undefined (module ShardWeb.CharacterLive.Show is not available or is yet to be defined)
++  lib/shard_web/router.ex:83
++
++warning: variable "map_data" is unused (if the variable is not meant to be used, prefix it with an underscore)
++  lib/shard_web/live/user_live/mud_game_live.ex:632:41
++
++warning: variable "assigns" is unused (there is a variable with the same name in the context, use the pin operator (^) to match on it or prefix this variable with underscore if it is not meant to be used)
++  lib/shard_web/live/user_live/mud_game_live.ex:845:7
++
++warning: variable "assigns" is unused (there is a variable with the same name in the context, use the pin operator (^) to match on it or prefix this variable with underscore if it is not meant to be used)
++  lib/shard_web/live/user_live/mud_game_live.ex:824:7
++
++warning: variable "assigns" is unused (there is a variable with the same name in the context, use the pin operator (^) to match on it or prefix this variable with underscore if it is not meant to be used)
++  lib/shard_web/live/user_live/mud_game_live.ex:901:7
++
++warning: variable "assigns" is unused (there is a variable with the same name in the context, use the pin operator (^) to match on it or prefix this variable with underscore if it is not meant to be used)
++  lib/shard_web/live/user_live/mud_game_live.ex:881:7
++
++error: undefined function map_cell/1 (expected ShardWeb.MudGameLive to define such a function or for it to be imported, but none are available)
++  lib/shard_web/live/user_live/mud_game_live.ex:383:19 fix these errors
+
+# 2025-09-18 17:19:40.985586
++key :skip_render not found in: %{
++  bounds: {-1, -1, 3, 3},
++  __changed__: nil,
++  rooms: [
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 1,
++      name: "Room (0,0)",
++      description: "A room in the grid at coordinates (0,0)",
++      x_coordinate: 0,
++      y_coordinate: 0,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    },
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 2,
++      name: "Room (0,1)",
++      description: "A room in the grid at coordinates (0,1)",
++      x_coordinate: 0,
++      y_coordinate: 1,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    },
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 3,
++      name: "Room (0,2)",
++      description: "A room in the grid at coordinates (0,2)",
++      x_coordinate: 0,
++      y_coordinate: 2,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    },
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 4,
++      name: "Room (1,0)",
++      description: "A room in the grid at coordinates (1,0)",
++      x_coordinate: 1,
++      y_coordinate: 0,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    },
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 5,
++      name: "Room (1,1)",
++      description: "A room in the grid at coordinates (1,1)",
++      x_coordinate: 1,
++      y_coordinate: 1,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    },
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 6,
++      name: "Room (1,2)",
++      description: "A room in the grid at coordinates (1,2)",
++      x_coordinate: 1,
++      y_coordinate: 2,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    },
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 7,
++      name: "Room (2,0)",
++      description: "A room in the grid at coordinates (2,0)",
++      x_coordinate: 2,
++      y_coordinate: 0,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    },
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 8,
++      name: "Room (2,1)",
++      description: "A room in the grid at coordinates (2,1)",
++      x_coordinate: 2,
++      y_coordinate: 1,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    },
++    %Shard.Map.Room{
++      __meta__: #Ecto.Schema.Metadata<:loaded, "rooms">,
++      id: 9,
++      name: "Room (2,2)",
++      description: "A room in the grid at coordinates (2,2)",
++      x_coordinate: 2,
++      y_coordinate: 2,
++      z_coordinate: 0,
++      is_public: true,
++      room_type: "standard",
++      properties: %{},
++      doors_from: #Ecto.Association.NotLoaded<association :doors_from is not loaded>,
++      doors_to: #Ecto.Association.NotLoaded<association :doors_to is not loaded>,
++      inserted_at: ~U[2025-09-18 20:38:11Z],
++      updated_at: ~U[2025-09-18 20:38:11Z]
++    }
++  ],
++  door: %Shard.Map.Door{
++    __meta__: #Ecto.Schema.Metadata<:loaded, "doors">,
++    id: 1,
++    name: nil,
++    description: nil,
++    direction: "east",
++    is_locked: false,
++    key_required: nil,
++    door_type: "standard",
++    properties: %{"state" => "open"},
++    from_room_id: 1,
++    from_room: #Ecto.Association.NotLoaded<association :from_room is not loaded>,
++    to_room_id: 4,
++    to_room: #Ecto.Association.NotLoaded<association :to_room is not loaded>,
++    inserted_at: ~U[2025-09-18 20:38:11Z],
++    updated_at: ~U[2025-09-18 20:38:11Z]
++  },
++  scale_factor: 40.0
++} fix this
+
+# 2025-09-18 17:21:49.309258
++can you change the labeling of map circles so that rooms and doors are distinctively color-coded, and remove all prior color coings that existed for things like treasure
+
+# 2025-09-18 17:30:03.432722
++can you make it so pressing the arrow buttons to move position doesn't also scroll the page
+
+# 2025-09-18 17:30:14.252763
++yes
+
+# 2025-09-18 17:30:39.898183
++undo
+
+# 2025-09-18 17:31:28.650885
++can you make it so pressing the arrow buttons to move position of player in the game doesn't also mess with the page scrolling
+
+# 2025-09-18 17:32:53.148277
++add that capability in the assets/js/app.js file
+
+# 2025-09-18 17:34:29.841069
++can you add a feature that outputs to terminal if user is unable to move to a certain room and specify the reason why
+
+# 2025-09-18 17:35:01.160205
++undo
+
+# 2025-09-18 17:36:01.048138
++why can't the player go north or south
+
+# 2025-09-18 17:39:04.197584
++can you implement the door types from shard/lib/shard/map/room.ex and color code the doors according to those labels
+
+# 2025-09-18 17:39:13.237466
++yes
+
+# 2025-09-18 17:41:38.911892
++now do the same for lib/shard/map/room.ex
+
+# 2025-09-18 17:44:09.561148
++the minimap still doesn't seem to be accurately displaying the rooms and doors
+
+# 2025-09-18 17:46:04.864331
++can you create a special color code that indictes one way doors
+
+# 2025-09-18 17:48:26.428403
++can you also include diagonal doors if any are present in the minimap
+
+# 2025-09-18 17:50:05.541411
++undo
+
+# 2025-09-18 17:53:27.336302
++north and south don't seem to properly be working, only allowing for vertical movement through the use of northeast, northwest, southeast, and southwest from the middle row, but not north or south by themselves, but in other rows, these work fine to go back to the middle

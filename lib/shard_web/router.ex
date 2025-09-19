@@ -36,6 +36,7 @@ defmodule ShardWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    live "/play", MudGameLive
   end
 
   # Admin routes
@@ -43,6 +44,7 @@ defmodule ShardWeb.Router do
     pipe_through [:browser, :require_authenticated_user, :require_admin]
 
     live "/", AdminLive.Index, :index
+    live "/map", AdminLive.Map, :index  # Added this line for the map page
   end
 
   # Other scopes may use custom stacks.
@@ -78,6 +80,7 @@ defmodule ShardWeb.Router do
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
       live "/characters", CharacterLive.Index, :index
       live "/characters/new", CharacterLive.New, :new
+      live "/characters/:id", CharacterLive.Show, :show
     end
 
     post "/users/update-password", UserSessionController, :update_password

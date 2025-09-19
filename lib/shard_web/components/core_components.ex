@@ -90,11 +90,15 @@ defmodule ShardWeb.CoreComponents do
   """
   attr :rest, :global, include: ~w(href navigate patch method download name value disabled)
   attr :class, :string
-  attr :variant, :string, values: ~w(primary)
+  attr :variant, :string, values: ~w(primary secondary)
   slot :inner_block, required: true
 
   def button(%{rest: rest} = assigns) do
-    variants = %{"primary" => "btn-primary", nil => "btn-primary btn-soft"}
+    variants = %{
+      "primary" => "btn-primary",
+      "secondary" => "btn-secondary",
+      nil => "btn-primary btn-soft"
+    }
 
     assigns =
       assign_new(assigns, :class, fn ->
@@ -455,6 +459,76 @@ defmodule ShardWeb.CoreComponents do
     """
   end
 
+  @doc """
+  Renders a modal.
+
+  ## Examples
+
+      <.modal show>
+        <.header>
+          Title
+          <:subtitle>Optional subtitle</:subtitle>
+        </.header>
+        Content
+      </.modal>
+  """
+  attr :id, :string, default: nil
+  attr :show, :boolean, default: false
+  attr :class, :string, default: nil
+  attr :rest, :global, include: ~w(on_cancel)
+
+  slot :inner_block, required: true
+
+  def modal(assigns) do
+    assigns = assign_new(assigns, :id, fn -> "modal-#{:rand.uniform(999_999_999)}" end)
+
+    ~H"""
+    <div
+      id={@id}
+      phx-mounted={@show && show_modal(@id)}
+      phx-remove={hide_modal(@id)}
+      class="hidden"
+      {@rest}
+    >
+      <div
+        id={"#{@id}-bg"}
+        class="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
+        aria-hidden="true"
+      />
+      <div
+        class={[
+          "fixed inset-0 z-50 overflow-y-auto",
+          @show && "block",
+          !@show && "hidden"
+        ]}
+      >
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+          <div
+            class={[
+              "relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg",
+              @class
+            ]}
+          >
+            <div class="absolute top-0 right-0 pt-4 pr-4">
+              <button
+                type="button"
+                class="text-gray-400 hover:text-gray-500 focus:outline-none"
+                phx-click={hide_modal(@id)}
+                aria-label={gettext("close")}
+              >
+                <.icon name="hero-x-mark" class="size-6" />
+              </button>
+            </div>
+            <div class="px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+              {render_slot(@inner_block)}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
   ## JS Commands
 
   def show(js \\ %JS{}, selector) do
@@ -476,6 +550,22 @@ defmodule ShardWeb.CoreComponents do
         {"transition-all ease-in duration-200", "opacity-100 translate-y-0 sm:scale-100",
          "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"}
     )
+  end
+
+  def show_modal(js \\ %JS{}, id) when is_binary(id) do
+    js
+    |> JS.show(to: "##{id}")
+    |> JS.show(to: "##{id}-bg")
+    |> JS.add_class("overflow-hidden", to: "body")
+    |> JS.focus_first(to: "##{id}")
+  end
+
+  def hide_modal(js \\ %JS{}, id) when is_binary(id) do
+    js
+    |> JS.hide(to: "##{id}")
+    |> JS.hide(to: "##{id}-bg")
+    |> JS.remove_class("overflow-hidden", to: "body")
+    |> JS.pop_focus()
   end
 
   @doc """

@@ -36,7 +36,7 @@ defmodule ShardWeb.CharacterLive.New do
     character_params = Map.put(character_params, "user_id", socket.assigns.current_scope.user.id)
 
     case Characters.create_character(character_params) do
-      {:ok, character} ->
+      {:ok, _character} ->
         {:noreply,
          socket
          |> put_flash(:info, "Character created successfully")
