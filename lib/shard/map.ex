@@ -16,6 +16,13 @@ defmodule Shard.Map do
   end
 
   @doc """
+  Returns all rooms with preloaded associations.
+  """
+  def get_all_rooms do
+    Repo.all(Room)
+  end
+
+  @doc """
   Gets a single room by ID.
   """
   def get_room!(id) do
