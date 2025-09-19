@@ -1,7 +1,4 @@
 defmodule ShardWeb.PageController do
   use ShardWeb, :controller
-
-  def home(conn, _params) do
-    render(conn, :home, current_scope: conn.assigns[:current_scope])
-  end
+  def home(conn, _params), do: html(conn, "<h1>Welcome to Phoenix Framework</h1>")
 end

@@ -1,0 +1,13 @@
+<% form = Phoenix.Component.to_form(@changeset) %>
+
+<h2 class="text-xl font-semibold mb-4">Edit Exit</h2>
+
+<.form for={form} action={~p"/admin/exits/#{@exit}"} method="put" id="exit-form">
+  <.input field={form[:dir]} type="select" options={~w(n s e w up down)} label="Direction" />
+  <.input field={form[:from_room_id]} type="select" options={@rooms} label="From room" />
+  <.input field={form[:to_room_id]} type="select" options={@rooms} label="To room" />
+  <div class="mt-6">
+    <button class="btn btn-primary">Update Exit</button>
+    <a href={~p"/admin/exits"} class="btn btn-ghost ml-2">Cancel</a>
+  </div>
+</.form>

@@ -5,7 +5,7 @@
     <div class="max-w-md">
       <h1 class="text-5xl font-bold">Welcome to Shard</h1>
       <p class="py-6">Create and manage your characters for epic adventures in the realm.</p>
-      
+
       <%= if assigns[:current_scope] && @current_scope.user do %>
         <div class="space-y-4">
           <.button navigate={~p"/characters"} class="btn-lg">

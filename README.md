@@ -25,3 +25,8 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
 * Docs: https://hexdocs.pm/phoenix
 * Forum: https://elixirforum.com/c/phoenix-forum
 * Source: https://github.com/phoenixframework/phoenix
+
+## Quick start (dev)
+    mix deps.get
+    mix ecto.setup   # creates, migrates, seeds
+    mix phx.server   # visit /map for a JSON demo of rooms/exits

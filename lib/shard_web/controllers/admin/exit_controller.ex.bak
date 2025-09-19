@@ -1,0 +1,49 @@
+defmodule ShardWeb.Admin.ExitController do
+  use ShardWeb, :controller
+  alias Shard.World
+  alias Shard.World.Exit
+
+  defp rooms_opts(), do: for r <- World.list_rooms(), do: {r.name, r.id}
+
+  def index(conn, _params) do
+    exits = World.list_exits()
+    render(conn, :index, exits: exits)
+  end
+
+  def new(conn, _params) do
+    changeset = World.change_exit(%Exit{})
+    render(conn, :new, changeset: changeset, rooms: rooms_opts())
+  end
+
+  def create(conn, %{"exit" => params}) do
+    case World.create_exit(params) do
+      {:ok, exit} -> redirect(conn, to: ~p"/admin/exits/#{exit}")
+      {:error, %Ecto.Changeset{} = cs} -> render(conn, :new, changeset: cs, rooms: rooms_opts())
+    end
+  end
+
+  def show(conn, %{"id" => id}) do
+    ex = World.get_exit!(id)
+    render(conn, :show, exit: ex)
+  end
+
+  def edit(conn, %{"id" => id}) do
+    ex = World.get_exit!(id)
+    cs = World.change_exit(ex)
+    render(conn, :edit, exit: ex, changeset: cs, rooms: rooms_opts())
+  end
+
+  def update(conn, %{"id" => id, "exit" => params}) do
+    ex = World.get_exit!(id)
+    case World.update_exit(ex, params) do
+      {:ok, ex} -> redirect(conn, to: ~p"/admin/exits/#{ex}")
+      {:error, %Ecto.Changeset{} = cs} -> render(conn, :edit, exit: ex, changeset: cs, rooms: rooms_opts())
+    end
+  end
+
+  def delete(conn, %{"id" => id}) do
+    ex = World.get_exit!(id)
+    {:ok, _} = World.delete_exit(ex)
+    redirect(conn, to: ~p"/admin/exits")
+  end
+end

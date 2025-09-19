@@ -1,5 +1,5 @@
 <.header>
-  <%= @page_title %>
+  {@page_title}
   <:actions>
     <.link patch={~p"/admin/characters/new"}>
       <.button>New Character</.button>
@@ -61,9 +61,12 @@
 
         <:actions>
           <.button phx-disable-with="Saving..." class="w-full">
-            <%= if @live_action == :edit, do: "Update Character", else: "Create Character" %>
+            {if @live_action == :edit, do: "Update Character", else: "Create Character"}
           </.button>
-          <.link patch={~p"/admin/characters"} class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700">
+          <.link
+            patch={~p"/admin/characters"}
+            class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
+          >
             Cancel
           </.link>
         </:actions>
@@ -73,34 +76,37 @@
 
   <%= if @live_action == :show do %>
     <div class="mb-8 p-6 bg-gray-50 rounded-lg">
-      <h3 class="text-lg font-semibold mb-4"><%= @character.name %></h3>
+      <h3 class="text-lg font-semibold mb-4">{@character.name}</h3>
       <div class="grid grid-cols-2 gap-4 text-sm">
-        <div><strong>Owner:</strong> <%= @character.user.email %></div>
-        <div><strong>Level:</strong> <%= @character.level %></div>
-        <div><strong>Class:</strong> <%= @character.class %></div>
-        <div><strong>Race:</strong> <%= @character.race %></div>
-        <div><strong>Health:</strong> <%= @character.health %></div>
-        <div><strong>Mana:</strong> <%= @character.mana %></div>
-        <div><strong>Strength:</strong> <%= @character.strength %></div>
-        <div><strong>Dexterity:</strong> <%= @character.dexterity %></div>
-        <div><strong>Intelligence:</strong> <%= @character.intelligence %></div>
-        <div><strong>Constitution:</strong> <%= @character.constitution %></div>
-        <div><strong>Experience:</strong> <%= @character.experience %></div>
-        <div><strong>Gold:</strong> <%= @character.gold %></div>
-        <div><strong>Location:</strong> <%= @character.location %></div>
-        <div><strong>Active:</strong> <%= if @character.is_active, do: "Yes", else: "No" %></div>
+        <div><strong>Owner:</strong> {@character.user.email}</div>
+        <div><strong>Level:</strong> {@character.level}</div>
+        <div><strong>Class:</strong> {@character.class}</div>
+        <div><strong>Race:</strong> {@character.race}</div>
+        <div><strong>Health:</strong> {@character.health}</div>
+        <div><strong>Mana:</strong> {@character.mana}</div>
+        <div><strong>Strength:</strong> {@character.strength}</div>
+        <div><strong>Dexterity:</strong> {@character.dexterity}</div>
+        <div><strong>Intelligence:</strong> {@character.intelligence}</div>
+        <div><strong>Constitution:</strong> {@character.constitution}</div>
+        <div><strong>Experience:</strong> {@character.experience}</div>
+        <div><strong>Gold:</strong> {@character.gold}</div>
+        <div><strong>Location:</strong> {@character.location}</div>
+        <div><strong>Active:</strong> {if @character.is_active, do: "Yes", else: "No"}</div>
       </div>
       <%= if @character.description do %>
         <div class="mt-4">
           <strong>Description:</strong>
-          <p class="mt-1"><%= @character.description %></p>
+          <p class="mt-1">{@character.description}</p>
         </div>
       <% end %>
       <div class="mt-4 flex gap-2">
         <.link patch={~p"/admin/characters/#{@character.id}/edit"}>
           <.button>Edit</.button>
         </.link>
-        <.link patch={~p"/admin/characters"} class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700">
+        <.link
+          patch={~p"/admin/characters"}
+          class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
+        >
           Back to List
         </.link>
       </div>
@@ -113,16 +119,16 @@
     </div>
   <% else %>
     <.table id="characters" rows={@characters}>
-      <:col :let={character} label="Name"><%= character.name %></:col>
-      <:col :let={character} label="Owner"><%= character.user.email %></:col>
-      <:col :let={character} label="Level"><%= character.level %></:col>
-      <:col :let={character} label="Class"><%= character.class %></:col>
-      <:col :let={character} label="Race"><%= character.race %></:col>
+      <:col :let={character} label="Name">{character.name}</:col>
+      <:col :let={character} label="Owner">{character.user.email}</:col>
+      <:col :let={character} label="Level">{character.level}</:col>
+      <:col :let={character} label="Class">{character.class}</:col>
+      <:col :let={character} label="Race">{character.race}</:col>
       <:col :let={character} label="Active">
-        <%= if character.is_active, do: "Yes", else: "No" %>
+        {if character.is_active, do: "Yes", else: "No"}
       </:col>
       <:col :let={character} label="Created">
-        <%= Calendar.strftime(character.inserted_at, "%Y-%m-%d") %>
+        {Calendar.strftime(character.inserted_at, "%Y-%m-%d")}
       </:col>
       <:action :let={character}>
         <div class="sr-only">

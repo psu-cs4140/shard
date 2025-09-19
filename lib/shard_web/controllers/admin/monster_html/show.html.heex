@@ -1,0 +1,30 @@
+<Layouts.app flash={@flash}>
+  <.header>
+    Monster {@monster.id}
+    <:subtitle>This is a monster record from your database.</:subtitle>
+    <:actions>
+      <.button navigate={~p"/admin/monsters"}>
+        <.icon name="hero-arrow-left" />
+      </.button>
+      <.button variant="primary" navigate={~p"/admin/monsters/#{@monster}/edit?return_to=show"}>
+        <.icon name="hero-pencil-square" /> Edit monster
+      </.button>
+    </:actions>
+  </.header>
+
+  <.list>
+    <:item title="Name">{@monster.name}</:item>
+    <:item title="Slug">{@monster.slug}</:item>
+    <:item title="Species">{@monster.species}</:item>
+    <:item title="Description">{@monster.description}</:item>
+    <:item title="Level">{@monster.level}</:item>
+    <:item title="Hp">{@monster.hp}</:item>
+    <:item title="Attack">{@monster.attack}</:item>
+    <:item title="Defense">{@monster.defense}</:item>
+    <:item title="Speed">{@monster.speed}</:item>
+    <:item title="Xp drop">{@monster.xp_drop}</:item>
+    <:item title="Element">{@monster.element}</:item>
+    <:item title="Ai">{@monster.ai}</:item>
+    <:item title="Spawn rate">{@monster.spawn_rate}</:item>
+  </.list>
+</Layouts.app>
