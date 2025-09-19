@@ -1,7 +1,4 @@
-defmodule Shard.Repo.Migrations.UniqueExitsPerFromAndDir do
+defmodule Shard.Repo.Migrations.ObsoleteFromRoomIdArtifacts do
   use Ecto.Migration
-
-  def change do
-    create unique_index(:exits, [:from_room_id, :dir])
-  end
+  def change, do: :ok
 end
