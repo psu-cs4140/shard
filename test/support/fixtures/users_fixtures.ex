@@ -127,4 +127,23 @@ defmodule Shard.UsersFixtures do
       confirmed_user_with_password_fixture(attrs)
     end
   end
+
+  @doc """
+  Generate a login token for a user that can be used for direct login.
+  This is useful for development when email delivery is not configured.
+  """
+  def generate_login_token(user) do
+    {encoded_token, _user_token} = generate_user_magic_link_token(user)
+    encoded_token
+  end
+
+  @doc """
+  Log in a user directly by creating and using a login token.
+  This bypasses the email delivery system and is useful for development.
+  """
+  def login_user_directly(user) do
+    token = generate_login_token(user)
+    {:ok, {user, _expired_tokens}} = Users.login_user_by_magic_link(token)
+    user
+  end
 end
