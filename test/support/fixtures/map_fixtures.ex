@@ -20,6 +20,22 @@ defmodule Shard.MapFixtures do
   end
 
   @doc """
+  Generate a room with specific attributes.
+  """
+  def room_fixture(name, description) do
+    room_fixture(%{name: name, description: description})
+  end
+
+  @doc """
+  Generate multiple rooms.
+  """
+  def rooms_fixture(count) do
+    for i <- 1..count do
+      room_fixture(%{name: "Room #{i}", description: "Description for room #{i}"})
+    end
+  end
+
+  @doc """
   Generate a door.
   """
   def door_fixture(attrs \\ %{}) do
@@ -36,5 +52,47 @@ defmodule Shard.MapFixtures do
       |> Shard.Map.create_door()
 
     door
+  end
+
+  @doc """
+  Generate a door between specific rooms.
+  """
+  def door_fixture(from_room, to_room, direction) do
+    door_fixture(%{
+      from_room_id: from_room.id,
+      to_room_id: to_room.id,
+      direction: direction
+    })
+  end
+
+  @doc """
+  Generate multiple doors connecting a list of rooms.
+  """
+  def doors_fixture(rooms, directions) do
+    rooms
+    |> Enum.chunk_every(2, 1, :discard)
+    |> Enum.with_index()
+    |> Enum.map(fn {[from_room, to_room], index} ->
+      direction = Enum.at(directions, index, "north")
+      door_fixture(from_room, to_room, direction)
+    end)
+  end
+
+  @doc """
+  Generate a simple linear map with connected rooms.
+  """
+  def linear_map_fixture(room_count) do
+    directions = ["north", "east", "south", "west", "up", "down"]
+    
+    rooms = rooms_fixture(room_count)
+    
+    doors = 
+      if room_count > 1 do
+        doors_fixture(rooms, Enum.take(directions, room_count - 1))
+      else
+        []
+      end
+    
+    %{rooms: rooms, doors: doors}
   end
 end

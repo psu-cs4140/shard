@@ -86,4 +86,45 @@ defmodule Shard.UsersFixtures do
       set: [inserted_at: dt, authenticated_at: dt]
     )
   end
+
+  @doc """
+  Generate multiple users.
+  """
+  def users_fixture(count, attrs \\ %{}) do
+    for _ <- 1..count do
+      user_fixture(attrs)
+    end
+  end
+
+  @doc """
+  Generate an admin user.
+  """
+  def admin_user_fixture(attrs \\ %{}) do
+    user = user_fixture(attrs)
+    
+    {:ok, user} = 
+      user
+      |> Users.change_user()
+      |> Users.User.admin_changeset(%{admin: true})
+      |> Shard.Repo.update()
+    
+    user
+  end
+
+  @doc """
+  Generate a confirmed user with password set.
+  """
+  def confirmed_user_with_password_fixture(attrs \\ %{}) do
+    user = user_fixture(attrs)
+    set_password(user)
+  end
+
+  @doc """
+  Generate multiple confirmed users with passwords.
+  """
+  def confirmed_users_with_passwords_fixture(count, attrs \\ %{}) do
+    for _ <- 1..count do
+      confirmed_user_with_password_fixture(attrs)
+    end
+  end
 end
