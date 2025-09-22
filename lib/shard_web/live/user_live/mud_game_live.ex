@@ -7,10 +7,10 @@ defmodule ShardWeb.MudGameLive do
   def mount(_params, _session, socket) do
     # Generate map data first
     map_data = generate_map_from_database()
-    
+
     # Find a valid starting position (first floor tile found)
     starting_position = find_valid_starting_position(map_data)
-    
+
     # Initialize game state
     game_state = %{
       player_position: starting_position,
@@ -48,6 +48,28 @@ defmodule ShardWeb.MudGameLive do
         %{title: "The Lost Artifact", status: "In Progress", progress: "2/5 artifacts found"},
         %{title: "Clear the Dungeon", status: "Available", progress: "0/10 enemies slain"},
         %{title: "Merchant's Request", status: "Completed", progress: "Done"}
+      ],
+
+      # Will pull from db once that is created.
+      monsters: [
+        %{
+          monster_id: 1,
+          damage: 10,
+          health: 30,
+          position: find_valid_monster_position(map_data, starting_position)
+        },
+        %{
+          monster_id: 1,
+          damage: 10,
+          health: 30,
+          position: find_valid_monster_position(map_data, starting_position)
+        },
+        %{
+          monster_id: 1,
+          damage: 10,
+          health: 30,
+          position: find_valid_monster_position(map_data, starting_position)
+        },
       ]
     }
 
@@ -422,7 +444,7 @@ defmodule ShardWeb.MudGameLive do
                   <div class="w-4 h-4 bg-red-500 ring-2 ring-red-300 rounded-full mr-2"></div>
                   <span class="text-sm">Player</span>
                 </div>
-                
+
                 <!-- Door Types -->
                 <div class="col-span-2 md:col-span-3 mt-2">
                   <h5 class="text-sm font-semibold mb-1">Door Types:</h5>
@@ -608,6 +630,7 @@ defmodule ShardWeb.MudGameLive do
     IO.inspect(key, pretty: true)
     player_position = socket.assigns.game_state.player_position
     map_data = socket.assigns.game_state.map_data
+    monsters = socket.assigns.game_state.monsters
     new_position = calc_position(player_position, key, map_data)
 
     # Add movement message to terminal if position changed
@@ -638,7 +661,8 @@ defmodule ShardWeb.MudGameLive do
       player_stats: socket.assigns.game_state.player_stats,
       hotbar: socket.assigns.game_state.hotbar,
       inventory_items: socket.assigns.game_state.inventory_items,
-      quests: socket.assigns.game_state.quests
+      quests: socket.assigns.game_state.quests,
+      monsters: monsters
     }
     {:noreply, assign(socket, game_state: game_state, terminal_state: terminal_state)}
   end
@@ -720,10 +744,10 @@ defmodule ShardWeb.MudGameLive do
   defp is_valid_movement?(current_pos, new_pos, direction) do
     {curr_x, curr_y} = current_pos
     {new_x, new_y} = new_pos
-    
+
     # First check if there's a room at the current position
     current_room = GameMap.get_room_by_coordinates(curr_x, curr_y)
-    
+
     case current_room do
       nil -> false  # No current room, can't move
       room ->
@@ -739,17 +763,17 @@ defmodule ShardWeb.MudGameLive do
           "southwest" -> "southwest"
           _ -> nil
         end
-        
+
         if direction_str do
           door = GameMap.get_door_in_direction(room.id, direction_str)
           case door do
-            nil -> 
+            nil ->
               # No door, check if target position has a room
               is_valid_position?(new_pos, nil)
-            door -> 
+            door ->
               # Check door accessibility based on type and status
               cond do
-                door.is_locked -> 
+                door.is_locked ->
                   IO.puts("Movement blocked: The #{door.door_type} is locked")
                   false
                 door.door_type == "secret" ->
@@ -844,31 +868,31 @@ defmodule ShardWeb.MudGameLive do
     # Get rooms and doors from database for dynamic rendering
     rooms = Repo.all(GameMap.Room) |> Repo.preload([:doors_from, :doors_to])
     doors = Repo.all(GameMap.Door) |> Repo.preload([:from_room, :to_room])
-    
+
     # Filter out rooms without coordinates
-    valid_rooms = Enum.filter(rooms, fn room -> 
-      room.x_coordinate != nil and room.y_coordinate != nil 
+    valid_rooms = Enum.filter(rooms, fn room ->
+      room.x_coordinate != nil and room.y_coordinate != nil
     end)
-    
+
     # Filter out doors without valid room connections
     valid_doors = Enum.filter(doors, fn door ->
       door.from_room && door.to_room &&
       door.from_room.x_coordinate != nil && door.from_room.y_coordinate != nil &&
       door.to_room.x_coordinate != nil && door.to_room.y_coordinate != nil
     end)
-    
+
     # Calculate bounds and scaling for the minimap
     {bounds, scale_factor} = calculate_minimap_bounds(valid_rooms)
-    
-    assigns = assign(assigns, 
-      rooms: valid_rooms, 
-      doors: valid_doors, 
-      bounds: bounds, 
+
+    assigns = assign(assigns,
+      rooms: valid_rooms,
+      doors: valid_doors,
+      bounds: bounds,
       scale_factor: scale_factor,
       all_rooms_count: length(rooms),
       all_doors_count: length(doors)
     )
-    
+
     ~H"""
     <div class="bg-gray-700 rounded-lg p-4 shadow-xl">
       <h2 class="text-xl font-semibold mb-4 text-center">Minimap</h2>
@@ -878,20 +902,20 @@ defmodule ShardWeb.MudGameLive do
           <%= for door <- @doors do %>
             <.door_line door={door} bounds={@bounds} scale_factor={@scale_factor} />
           <% end %>
-          
+
           <!-- Render rooms as circles -->
           <%= for room <- @rooms do %>
-            <.room_circle 
-              room={room} 
+            <.room_circle
+              room={room}
               is_player={@player_position == {room.x_coordinate, room.y_coordinate}}
               bounds={@bounds}
               scale_factor={@scale_factor}
             />
           <% end %>
-          
+
           <!-- Show player position even if no room exists there -->
           <%= if @player_position not in Enum.map(@rooms, &{&1.x_coordinate, &1.y_coordinate}) do %>
-            <.player_marker 
+            <.player_marker
               position={@player_position}
               bounds={@bounds}
               scale_factor={@scale_factor}
@@ -902,7 +926,7 @@ defmodule ShardWeb.MudGameLive do
       <div class="mt-4 text-center text-sm text-gray-300">
         <p>Player Position: <%= format_position(@player_position) %></p>
         <p class="text-xs mt-1">
-          Showing: <%= length(@rooms) %>/<%= @all_rooms_count %> rooms | 
+          Showing: <%= length(@rooms) %>/<%= @all_rooms_count %> rooms |
           <%= length(@doors) %>/<%= @all_doors_count %> doors
         </p>
         <%= if length(@rooms) == 0 do %>
@@ -916,17 +940,17 @@ defmodule ShardWeb.MudGameLive do
   # Component for individual room circles in the minimap
   def room_circle(assigns) do
     return_early = assigns.room.x_coordinate == nil or assigns.room.y_coordinate == nil
-    
+
     assigns = if return_early do
       assign(assigns, :skip_render, true)
     else
       # Calculate position within the minimap bounds
       {x_pos, y_pos} = calculate_minimap_position(
-        {assigns.room.x_coordinate, assigns.room.y_coordinate}, 
-        assigns.bounds, 
+        {assigns.room.x_coordinate, assigns.room.y_coordinate},
+        assigns.bounds,
         assigns.scale_factor
       )
-      
+
       # Define colors for rooms based on room type
       {fill_color, stroke_color} = case assigns.room.room_type do
         "safe_zone" -> {"#10b981", "#34d399"}      # Green for safe zones
@@ -936,14 +960,14 @@ defmodule ShardWeb.MudGameLive do
         "trap_room" -> {"#991b1b", "#ef4444"}      # Red for trap rooms
         _ -> {"#3b82f6", "#60a5fa"}                # Blue for standard rooms
       end
-      
+
       player_stroke = if assigns.is_player, do: "#ef4444", else: stroke_color
       player_width = if assigns.is_player, do: "3", else: "1"
-      
-      assign(assigns, 
-        x_pos: x_pos, 
-        y_pos: y_pos, 
-        fill_color: fill_color, 
+
+      assign(assigns,
+        x_pos: x_pos,
+        y_pos: y_pos,
+        fill_color: fill_color,
         stroke_color: player_stroke,
         stroke_width: player_width,
         skip_render: false
@@ -952,12 +976,12 @@ defmodule ShardWeb.MudGameLive do
 
     ~H"""
     <%= unless @skip_render do %>
-      <circle 
-        cx={@x_pos} 
-        cy={@y_pos} 
-        r="6" 
-        fill={@fill_color} 
-        stroke={@stroke_color} 
+      <circle
+        cx={@x_pos}
+        cy={@y_pos}
+        r="6"
+        fill={@fill_color}
+        stroke={@stroke_color}
         stroke-width={@stroke_width}
       >
         <title><%= @room.name || "Room #{@room.id}" %> (<%= @room.x_coordinate %>, <%= @room.y_coordinate %>) - <%= String.capitalize(@room.room_type || "standard") %></title>
@@ -971,31 +995,31 @@ defmodule ShardWeb.MudGameLive do
     # Use preloaded associations
     from_room = assigns.door.from_room
     to_room = assigns.door.to_room
-    
-    return_early = from_room == nil or to_room == nil or 
+
+    return_early = from_room == nil or to_room == nil or
                    from_room.x_coordinate == nil or from_room.y_coordinate == nil or
                    to_room.x_coordinate == nil or to_room.y_coordinate == nil
-    
+
     assigns = if return_early do
       assign(assigns, :skip_render, true)
     else
       {x1, y1} = calculate_minimap_position(
-        {from_room.x_coordinate, from_room.y_coordinate}, 
-        assigns.bounds, 
+        {from_room.x_coordinate, from_room.y_coordinate},
+        assigns.bounds,
         assigns.scale_factor
       )
       {x2, y2} = calculate_minimap_position(
-        {to_room.x_coordinate, to_room.y_coordinate}, 
-        assigns.bounds, 
+        {to_room.x_coordinate, to_room.y_coordinate},
+        assigns.bounds,
         assigns.scale_factor
       )
-      
+
       # Check if this is a one-way door (no return door in opposite direction)
       is_one_way = is_one_way_door?(assigns.door)
-      
+
       # Determine if this is a diagonal door
       is_diagonal = assigns.door.direction in ["northeast", "northwest", "southeast", "southwest"]
-      
+
       # Color scheme based on door type and status
       stroke_color = cond do
         assigns.door.is_locked -> "#dc2626"  # Red for locked doors
@@ -1007,15 +1031,15 @@ defmodule ShardWeb.MudGameLive do
         assigns.door.key_required && assigns.door.key_required != "" -> "#f59e0b"  # Orange for doors requiring keys
         true -> "#22c55e"  # Green for standard doors
       end
-      
+
       # Adjust stroke width and style for diagonal doors
       stroke_width = if is_diagonal, do: "1.5", else: "2"
       stroke_dasharray = if is_diagonal, do: "3,2", else: nil
-      
+
       door_name = assigns.door.name || "#{String.capitalize(assigns.door.door_type || "standard")} Door"
-      
-      assign(assigns, 
-        x1: x1, y1: y1, x2: x2, y2: y2, 
+
+      assign(assigns,
+        x1: x1, y1: y1, x2: x2, y2: y2,
         stroke_color: stroke_color,
         stroke_width: stroke_width,
         stroke_dasharray: stroke_dasharray,
@@ -1027,12 +1051,12 @@ defmodule ShardWeb.MudGameLive do
 
     ~H"""
     <%= unless @skip_render do %>
-      <line 
-        x1={@x1} 
-        y1={@y1} 
-        x2={@x2} 
-        y2={@y2} 
-        stroke={@stroke_color} 
+      <line
+        x1={@x1}
+        y1={@y1}
+        x2={@x2}
+        y2={@y2}
+        stroke={@stroke_color}
         stroke-width={@stroke_width}
         stroke-dasharray={@stroke_dasharray}
         opacity="0.8"
@@ -1097,13 +1121,20 @@ defmodule ShardWeb.MudGameLive do
       "look" ->
         {x, y} = game_state.player_position
         tile = game_state.map_data |> Enum.at(y) |> Enum.at(x)
-        description = case tile do
-          0 -> "You see a solid stone wall."
-          1 -> "You are standing on a stone floor. The air is cool and damp."
-          2 -> "You see clear blue water. It looks deep."
-          3 -> "A glittering treasure chest sits here, beckoning you closer."
-          _ -> "You see something strange and unidentifiable."
+        monsters = Enum.filter(game_state.monsters, fn value -> value[:position] == game_state.player_position end)
+        monster_count = Enum.count(monsters)
+        description = case monster_count do
+          0 -> case tile do
+            0 -> "You see a solid stone wall."
+            1 -> "You are standing on a stone floor. The air is cool and damp."
+            2 -> "You see clear blue water. It looks deep."
+            3 -> "A glittering treasure chest sits here, beckoning you closer."
+            _ -> "You see something strange and unidentifiable."
+          end
+          1 -> "A hostile monster attacks!"
+          _ -> to_string(monster_count) <> " hostile monsters attack!"
         end
+
         {[description], game_state}
 
       "stats" ->
@@ -1203,45 +1234,45 @@ defmodule ShardWeb.MudGameLive do
   defp generate_map_from_database() do
     # Get all rooms from database
     rooms = Repo.all(GameMap.Room)
-    
+
     # If no rooms exist, return a simple default map
     if Enum.empty?(rooms) do
       generate_default_map()
     else
       # Find the bounds of all rooms
-      {min_x, max_x} = rooms 
-        |> Enum.map(& &1.x_coordinate) 
+      {min_x, max_x} = rooms
+        |> Enum.map(& &1.x_coordinate)
         |> Enum.filter(& &1 != nil)
         |> case do
           [] -> {0, 10}
           coords -> Enum.min_max(coords)
         end
-      
-      {min_y, max_y} = rooms 
-        |> Enum.map(& &1.y_coordinate) 
+
+      {min_y, max_y} = rooms
+        |> Enum.map(& &1.y_coordinate)
         |> Enum.filter(& &1 != nil)
         |> case do
           [] -> {0, 10}
           coords -> Enum.min_max(coords)
         end
-      
+
       # Add padding around the map
       min_x = min_x - 1
       max_x = max_x + 1
       min_y = min_y - 1
       max_y = max_y + 1
-      
+
       # Create a map of room coordinates for quick lookup
       room_map = rooms
         |> Enum.filter(fn room -> room.x_coordinate != nil and room.y_coordinate != nil end)
         |> Enum.into(%{}, fn room -> {{room.x_coordinate, room.y_coordinate}, room} end)
-      
+
       # Generate the grid
       for y <- min_y..max_y do
         for x <- min_x..max_x do
           case room_map[{x, y}] do
             nil -> 0  # Wall/empty space
-            room -> 
+            room ->
               case room.room_type do
                 "treasure" -> 3  # Treasure room
                 "water" -> 2     # Water room
@@ -1252,7 +1283,7 @@ defmodule ShardWeb.MudGameLive do
       end
     end
   end
-  
+
   # Fallback function for when no rooms exist in database
   defp generate_default_map() do
     # Generate an 11x11 map for display
@@ -1268,7 +1299,7 @@ defmodule ShardWeb.MudGameLive do
       end
     end
   end
-  
+
   # Find a valid starting position on the map (first non-wall tile)
   defp find_valid_starting_position(map_data) do
     # Search for the first floor tile (value 1, 2, or 3 - anything but 0 which is wall)
@@ -1285,6 +1316,20 @@ defmodule ShardWeb.MudGameLive do
     end
   end
 
+  # Generate a position that is not where the player started
+  # Claude helped write this one
+  defp find_valid_monster_position(map_data, starting_position) do
+    map_data
+    |> Enum.with_index()
+    |> Enum.flat_map(fn {row, row_index} -> row
+      |> Enum.with_index()
+      |> Enum.filter(fn {value, _} -> value == 1 end)
+      |> Enum.map(fn {_, col_index} -> {row_index, col_index} end)
+      |> Enum.filter(fn {row_index, col_index} -> {row_index, col_index} != starting_position end)
+      end)
+    |> Enum.random()
+  end
+
   # Calculate bounds and scale factor for minimap rendering
   defp calculate_minimap_bounds(rooms) do
     if Enum.empty?(rooms) do
@@ -1293,34 +1338,34 @@ defmodule ShardWeb.MudGameLive do
     else
       x_coords = Enum.map(rooms, & &1.x_coordinate)
       y_coords = Enum.map(rooms, & &1.y_coordinate)
-      
+
       min_x = Enum.min(x_coords)
       max_x = Enum.max(x_coords)
       min_y = Enum.min(y_coords)
       max_y = Enum.max(y_coords)
-      
+
       # Add padding around the bounds
       padding = 2
       min_x = min_x - padding
       max_x = max_x + padding
       min_y = min_y - padding
       max_y = max_y + padding
-      
+
       # Calculate scale to fit in 300x200 minimap with padding
       width = max_x - min_x
       height = max_y - min_y
-      
+
       # Ensure minimum size to prevent division by zero
       width = max(width, 1)
       height = max(height, 1)
-      
+
       scale_x = 260 / width  # 260 to leave 20px padding on each side
       scale_y = 160 / height  # 160 to leave 20px padding top/bottom
       scale_factor = min(scale_x, scale_y)
-      
+
       # Ensure minimum scale factor for visibility
       scale_factor = max(scale_factor, 5.0)
-      
+
       {{min_x, min_y, max_x, max_y}, scale_factor}
     end
   end
@@ -1330,22 +1375,22 @@ defmodule ShardWeb.MudGameLive do
     # Translate to origin and scale, then center in minimap
     scaled_x = (x - min_x) * scale_factor + 20  # 20px padding
     scaled_y = (y - min_y) * scale_factor + 20  # 20px padding
-    
+
     # Ensure coordinates are within bounds
     scaled_x = max(10, min(scaled_x, 290))
     scaled_y = max(10, min(scaled_y, 190))
-    
+
     {scaled_x, scaled_y}
   end
 
   # Check if a door is one-way (no return door in opposite direction)
   defp is_one_way_door?(door) do
     opposite_direction = get_opposite_direction(door.direction)
-    
+
     if opposite_direction do
       # Check if there's a door going back from the destination room
       return_door = GameMap.get_door_in_direction(door.to_room_id, opposite_direction)
-      
+
       case return_door do
         nil -> true  # No return door found, this is one-way
         return_door -> return_door.to_room_id != door.from_room_id  # Return door doesn't lead back
@@ -1375,20 +1420,20 @@ defmodule ShardWeb.MudGameLive do
   # Component for player marker when no room exists at player position
   def player_marker(assigns) do
     {x_pos, y_pos} = calculate_minimap_position(
-      assigns.position, 
-      assigns.bounds, 
+      assigns.position,
+      assigns.bounds,
       assigns.scale_factor
     )
-    
+
     assigns = assign(assigns, x_pos: x_pos, y_pos: y_pos)
-    
+
     ~H"""
-    <circle 
-      cx={@x_pos} 
-      cy={@y_pos} 
-      r="8" 
-      fill="#ef4444" 
-      stroke="#ffffff" 
+    <circle
+      cx={@x_pos}
+      cy={@y_pos}
+      r="8"
+      fill="#ef4444"
+      stroke="#ffffff"
       stroke-width="2"
       opacity="0.9"
     >
