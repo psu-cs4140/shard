@@ -639,3 +639,45 @@
 
 # 2025-09-18 17:53:27.336302
 +north and south don't seem to properly be working, only allowing for vertical movement through the use of northeast, northwest, southeast, and southwest from the middle row, but not north or south by themselves, but in other rows, these work fine to go back to the middle
+
+# 2025-09-20 15:58:38.226329
++n
+
+# 2025-09-20 16:00:34.902161
++Generate some test data for my database. 
+
+# 2025-09-20 16:01:42.052377
++n
+
+# 2025-09-20 16:01:45.621152
++s
+
+# 2025-09-20 16:12:35.234211
++Are you capable of accessing my local database and generating inserts for test data?
+
+# 2025-09-20 16:13:40.919259
++OK, I would like to generate test data.
+
+# 2025-09-20 16:13:45.186125
++y
+
+# 2025-09-20 16:14:39.547045
++Generate test data
+
+# 2025-09-20 16:19:18.141291
++How can i log in if the email feature doesnt work in localhost
+
+# 2025-09-21 22:10:50.353841
++I have a basic outline for monsters in this game. I am trying to determine a good method for making monsters attack the player. For example, I could make monsters attack when players use the "look" terminal command in a room, or I could make monsters attack when players enter a room with monsters present. Or something else. Suggest solutions
+
+# 2025-09-21 22:11:56.633026
++add lib/shard_web/live/user_live/mud_game_live.ex to chat
+
+# 2025-09-21 22:11:59.444105
++yes
+
+# 2025-09-21 22:19:01.133251
++n
+
+# 2025-09-21 22:19:08.121849
++/undo

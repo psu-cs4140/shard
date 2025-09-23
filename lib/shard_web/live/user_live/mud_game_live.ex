@@ -54,22 +54,45 @@ defmodule ShardWeb.MudGameLive do
       monsters: [
         %{
           monster_id: 1,
-          damage: 10,
-          health: 30,
+          name: "Goblin",
+          level: 1,
+          attack: 10,
+          defense: 0,
+          speed: 5,
+          xp_reward: 5,
+          gold_reward: 2,
+          boss: false,
+          hp: 30,
+          hp_max: 30,
           position: find_valid_monster_position(map_data, starting_position)
         },
         %{
           monster_id: 1,
-          damage: 10,
-          health: 30,
+          name: "Goblin",
+          level: 1,
+          attack: 10,
+          defense: 0,
+          speed: 5,
+          xp_reward: 5,
+          gold_reward: 2,
+          boss: false,
+          hp: 30,
+          hp_max: 30,
           position: find_valid_monster_position(map_data, starting_position)
-        },
-        %{
+        },%{
           monster_id: 1,
-          damage: 10,
-          health: 30,
+          name: "Goblin",
+          level: 1,
+          attack: 10,
+          defense: 0,
+          speed: 5,
+          xp_reward: 5,
+          gold_reward: 2,
+          boss: false,
+          hp: 30,
+          hp_max: 30,
           position: find_valid_monster_position(map_data, starting_position)
-        },
+        }
       ]
     }
 
@@ -1131,11 +1154,41 @@ defmodule ShardWeb.MudGameLive do
             3 -> "A glittering treasure chest sits here, beckoning you closer."
             _ -> "You see something strange and unidentifiable."
           end
-          1 -> "A hostile monster attacks!"
-          _ -> to_string(monster_count) <> " hostile monsters attack!"
+          1 -> "There is a " <> Enum.at(monsters, 0)[:name] <>"! It attacks you for " <> to_string(Enum.at(monsters, 0)[:attack]) <> " damage."
+          _ -> "There are " <> to_string(monster_count) <> " monsters! The monsters include " <> Enum.map_join(monsters, ", ", fn monster -> "a " <> to_string(monster[:name]) end)
         end
 
-        {[description], game_state}
+        new_game_state = if monster_count > 0 do
+          stats = game_state.player_stats
+          new_hp = stats.health - Enum.at(monsters, 0)[:attack]
+          %{
+            player_position: game_state.player_position,
+            map_data: game_state.map_data,
+            active_panel: game_state.active_panel,
+            player_stats: %{
+              health: new_hp,
+              max_health: game_state.player_stats.max_health,
+              stamina: game_state.player_stats.stamina,
+              max_stamina: game_state.player_stats.max_stamina,
+              mana: game_state.player_stats.mana,
+              max_mana: game_state.player_stats.max_mana,
+              level: game_state.player_stats.level,
+              experience: game_state.player_stats.experience,
+              next_level_exp: game_state.player_stats.next_level_exp,
+              strength: game_state.player_stats.strength,
+              dexterity: game_state.player_stats.dexterity,
+              intelligence: game_state.player_stats.intelligence
+            },
+            inventory_items: game_state.inventory_items,
+            hotbar: game_state.hotbar,
+            quests: game_state.quests,
+            monsters: game_state.monsters,
+          }
+        else
+          game_state
+        end
+
+        {[description], new_game_state}
 
       "stats" ->
         stats = game_state.player_stats
