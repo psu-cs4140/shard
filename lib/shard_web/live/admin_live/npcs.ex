@@ -11,7 +11,7 @@ defmodule ShardWeb.AdminLive.Npcs do
     ensure_goldie_exists()
     
     npcs = Npcs.list_npcs_with_preloads()
-    rooms = Map.list_rooms()
+    rooms = Npcs.list_rooms()
     
     {:ok, assign(socket, 
       npcs: npcs, 
@@ -55,19 +55,6 @@ defmodule ShardWeb.AdminLive.Npcs do
     |> assign(:changeset, changeset)
   end
 
-  @impl true
-  def handle_event("new_npc", _params, socket) do
-    changeset = Npcs.change_npc(%Npc{})
-    
-    {:noreply, 
-      socket
-      |> assign(:show_form, true)
-      |> assign(:form_npc, %Npc{})
-      |> assign(:form_title, "Create NPC")
-      |> assign(:changeset, changeset)
-    }
-  end
-
   def handle_event("edit_npc", %{"id" => id}, socket) do
     npc = Npcs.get_npc_with_preloads!(id)
     changeset = Npcs.change_npc(npc)
@@ -95,7 +82,11 @@ defmodule ShardWeb.AdminLive.Npcs do
   end
 
   def handle_event("cancel_form", _params, socket) do
-    {:noreply, assign(socket, :show_form, false)}
+    {:noreply, 
+      socket
+      |> assign(:show_form, false)
+      |> push_patch(to: ~p"/admin/npcs")
+    }
   end
 
   def handle_event("save_npc", %{"npc" => npc_params}, socket) do
@@ -126,6 +117,7 @@ defmodule ShardWeb.AdminLive.Npcs do
           |> assign(:npcs, npcs)
           |> assign(:show_form, false)
           |> put_flash(:info, "NPC created successfully")
+          |> push_patch(to: ~p"/admin/npcs")
         }
 
       {:error, %Ecto.Changeset{} = changeset} ->
@@ -143,6 +135,7 @@ defmodule ShardWeb.AdminLive.Npcs do
           |> assign(:npcs, npcs)
           |> assign(:show_form, false)
           |> put_flash(:info, "NPC updated successfully")
+          |> push_patch(to: ~p"/admin/npcs")
         }
 
       {:error, %Ecto.Changeset{} = changeset} ->
@@ -156,12 +149,12 @@ defmodule ShardWeb.AdminLive.Npcs do
     <div class="p-6">
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">NPCs Administration</h1>
-        <button 
-          phx-click="new_npc"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+        <.link 
+          patch={~p"/admin/npcs/new"}
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg inline-block"
         >
           + New NPC
-        </button>
+        </.link>
       </div>
 
       <%= if @show_form do %>
@@ -302,13 +295,12 @@ defmodule ShardWeb.AdminLive.Npcs do
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button 
-                    phx-click="edit_npc" 
-                    phx-value-id={npc.id}
+                  <.link 
+                    patch={~p"/admin/npcs/#{npc.id}/edit"}
                     class="text-indigo-600 hover:text-indigo-900 mr-3"
                   >
                     Edit
-                  </button>
+                  </.link>
                   <button 
                     phx-click="delete_npc" 
                     phx-value-id={npc.id}
