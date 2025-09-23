@@ -3,7 +3,6 @@ defmodule ShardWeb.AdminLive.Npcs do
 
   alias Shard.Npcs
   alias Shard.Npcs.Npc
-  alias Shard.Map
 
   @impl true
   def mount(_params, _session, socket) do
@@ -26,6 +25,8 @@ defmodule ShardWeb.AdminLive.Npcs do
   def handle_params(params, _url, socket) do
     {:noreply, apply_action(socket, socket.assigns.live_action, params)}
   end
+
+  @impl true
 
   defp apply_action(socket, :index, _params) do
     socket
@@ -55,6 +56,7 @@ defmodule ShardWeb.AdminLive.Npcs do
     |> assign(:changeset, changeset)
   end
 
+  @impl true
   def handle_event("edit_npc", %{"id" => id}, socket) do
     npc = Npcs.get_npc_with_preloads!(id)
     changeset = Npcs.change_npc(npc)
@@ -68,6 +70,7 @@ defmodule ShardWeb.AdminLive.Npcs do
     }
   end
 
+  @impl true
   def handle_event("delete_npc", %{"id" => id}, socket) do
     npc = Npcs.get_npc!(id)
     {:ok, _} = Npcs.delete_npc(npc)
@@ -81,6 +84,7 @@ defmodule ShardWeb.AdminLive.Npcs do
     }
   end
 
+  @impl true
   def handle_event("cancel_form", _params, socket) do
     {:noreply, 
       socket
@@ -89,6 +93,7 @@ defmodule ShardWeb.AdminLive.Npcs do
     }
   end
 
+  @impl true
   def handle_event("save_npc", %{"npc" => npc_params}, socket) do
     # Clean up empty string values that should be nil
     cleaned_params = 
@@ -169,80 +174,86 @@ defmodule ShardWeb.AdminLive.Npcs do
             </button>
           </div>
           
-          <.simple_form 
-            for={@changeset}
-            phx-submit="save_npc"
-            id="npc-form"
-          >
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <.input field={@changeset[:name]} label="Name" required />
-              <.input field={@changeset[:npc_type]} type="select" label="Type" 
-                options={[
-                  {"Neutral", "neutral"},
-                  {"Friendly", "friendly"}, 
-                  {"Hostile", "hostile"},
-                  {"Merchant", "merchant"},
-                  {"Quest Giver", "quest_giver"}
-                ]} />
+          <%= if assigns[:changeset] do %>
+            <.simple_form 
+              for={@changeset}
+              phx-submit="save_npc"
+              id="npc-form"
+            >
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <.input field={@changeset[:name]} label="Name" required />
+                <.input field={@changeset[:npc_type]} type="select" label="Type" 
+                  options={[
+                    {"Neutral", "neutral"},
+                    {"Friendly", "friendly"}, 
+                    {"Hostile", "hostile"},
+                    {"Merchant", "merchant"},
+                    {"Quest Giver", "quest_giver"}
+                  ]} />
+                
+                <.input field={@changeset[:level]} type="number" label="Level" />
+                <.input field={@changeset[:faction]} label="Faction" />
+                
+                <.input field={@changeset[:health]} type="number" label="Health" />
+                <.input field={@changeset[:max_health]} type="number" label="Max Health" />
+                
+                <.input field={@changeset[:mana]} type="number" label="Mana" />
+                <.input field={@changeset[:max_mana]} type="number" label="Max Mana" />
+                
+                <.input field={@changeset[:strength]} type="number" label="Strength" />
+                <.input field={@changeset[:dexterity]} type="number" label="Dexterity" />
+                
+                <.input field={@changeset[:intelligence]} type="number" label="Intelligence" />
+                <.input field={@changeset[:constitution]} type="number" label="Constitution" />
+                
+                <.input field={@changeset[:experience_reward]} type="number" label="Experience Reward" />
+                <.input field={@changeset[:gold_reward]} type="number" label="Gold Reward" />
+                
+                <.input field={@changeset[:location_x]} type="number" label="Location X" />
+                <.input field={@changeset[:location_y]} type="number" label="Location Y" />
+                
+                <.input field={@changeset[:room_id]} type="select" label="Room" 
+                  options={[{"None", nil} | Enum.map(@rooms, &{&1.name || "Room #{&1.id}", &1.id})]} />
+                
+                <.input field={@changeset[:movement_pattern]} type="select" label="Movement Pattern"
+                  options={[
+                    {"Stationary", "stationary"},
+                    {"Patrol", "patrol"},
+                    {"Random", "random"},
+                    {"Follow", "follow"}
+                  ]} />
+                
+                <.input field={@changeset[:aggression_level]} type="number" label="Aggression Level (0-10)" />
+                <.input field={@changeset[:respawn_time]} type="number" label="Respawn Time (seconds)" />
+              </div>
               
-              <.input field={@changeset[:level]} type="number" label="Level" />
-              <.input field={@changeset[:faction]} label="Faction" />
+              <.input field={@changeset[:description]} type="textarea" label="Description" />
+              <.input field={@changeset[:dialogue]} type="textarea" label="Dialogue" />
               
-              <.input field={@changeset[:health]} type="number" label="Health" />
-              <.input field={@changeset[:max_health]} type="number" label="Max Health" />
+              <div class="flex items-center space-x-4">
+                <.input field={@changeset[:is_active]} type="checkbox" label="Active" />
+              </div>
               
-              <.input field={@changeset[:mana]} type="number" label="Mana" />
-              <.input field={@changeset[:max_mana]} type="number" label="Max Mana" />
-              
-              <.input field={@changeset[:strength]} type="number" label="Strength" />
-              <.input field={@changeset[:dexterity]} type="number" label="Dexterity" />
-              
-              <.input field={@changeset[:intelligence]} type="number" label="Intelligence" />
-              <.input field={@changeset[:constitution]} type="number" label="Constitution" />
-              
-              <.input field={@changeset[:experience_reward]} type="number" label="Experience Reward" />
-              <.input field={@changeset[:gold_reward]} type="number" label="Gold Reward" />
-              
-              <.input field={@changeset[:location_x]} type="number" label="Location X" />
-              <.input field={@changeset[:location_y]} type="number" label="Location Y" />
-              
-              <.input field={@changeset[:room_id]} type="select" label="Room" 
-                options={[{"None", nil} | Enum.map(@rooms, &{&1.name || "Room #{&1.id}", &1.id})]} />
-              
-              <.input field={@changeset[:movement_pattern]} type="select" label="Movement Pattern"
-                options={[
-                  {"Stationary", "stationary"},
-                  {"Patrol", "patrol"},
-                  {"Random", "random"},
-                  {"Follow", "follow"}
-                ]} />
-              
-              <.input field={@changeset[:aggression_level]} type="number" label="Aggression Level (0-10)" />
-              <.input field={@changeset[:respawn_time]} type="number" label="Respawn Time (seconds)" />
+              <div class="flex justify-end space-x-2">
+                <.link 
+                  patch={~p"/admin/npcs"}
+                  class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 inline-block"
+                >
+                  Cancel
+                </.link>
+                <button 
+                  type="submit"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Save NPC
+                </button>
+              </div>
+            </.simple_form>
+          <% else %>
+            <div class="text-center py-8">
+              <p class="text-gray-500">Loading form...</p>
             </div>
-            
-            <.input field={@changeset[:description]} type="textarea" label="Description" />
-            <.input field={@changeset[:dialogue]} type="textarea" label="Dialogue" />
-            
-            <div class="flex items-center space-x-4">
-              <.input field={@changeset[:is_active]} type="checkbox" label="Active" />
-            </div>
-            
-            <div class="flex justify-end space-x-2">
-              <.link 
-                patch={~p"/admin/npcs"}
-                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 inline-block"
-              >
-                Cancel
-              </.link>
-              <button 
-                type="submit"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Save NPC
-              </button>
-            </div>
-          </.simple_form>
+          <% end %>
         </div>
       <% end %>
 

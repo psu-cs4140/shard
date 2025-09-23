@@ -157,12 +157,4 @@ defmodule Shard.Npcs do
     alias Shard.Map.Room
     Repo.all(Room)
   end
-
-  @doc """
-  Returns the list of rooms.
-  """
-  def list_rooms do
-    alias Shard.Map.Room
-    Repo.all(Room)
-  end
 end
