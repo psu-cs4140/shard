@@ -97,6 +97,12 @@ defmodule ShardWeb.Router do
       live "/characters/:id", AdminLive.Characters, :show
       live "/characters/:id/edit", AdminLive.Characters, :edit
       live "/user_management", AdminLive.UserManagement, :index
+      live "/npcs", AdminLive.Npcs, :index
+      live "/npcs/new", AdminLive.Npcs, :new
+      live "/npcs/:id/edit", AdminLive.Npcs, :edit
+      live "/quests", AdminLive.Quests, :index
+      live "/quests/new", AdminLive.Quests, :new
+      live "/quests/:id/edit", AdminLive.Quests, :edit
     end
   end
 
