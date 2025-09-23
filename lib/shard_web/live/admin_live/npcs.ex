@@ -182,8 +182,8 @@ defmodule ShardWeb.AdminLive.Npcs do
             id="npc-form"
           >
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <.input field={{:npc, :name}} label="Name" required />
-              <.input field={{:npc, :npc_type}} type="select" label="Type" 
+              <.input field={@changeset[:name]} label="Name" required />
+              <.input field={@changeset[:npc_type]} type="select" label="Type" 
                 options={[
                   {"Neutral", "neutral"},
                   {"Friendly", "friendly"}, 
@@ -192,31 +192,31 @@ defmodule ShardWeb.AdminLive.Npcs do
                   {"Quest Giver", "quest_giver"}
                 ]} />
               
-              <.input field={{:npc, :level}} type="number" label="Level" />
-              <.input field={{:npc, :faction}} label="Faction" />
+              <.input field={@changeset[:level]} type="number" label="Level" />
+              <.input field={@changeset[:faction]} label="Faction" />
               
-              <.input field={{:npc, :health}} type="number" label="Health" />
-              <.input field={{:npc, :max_health}} type="number" label="Max Health" />
+              <.input field={@changeset[:health]} type="number" label="Health" />
+              <.input field={@changeset[:max_health]} type="number" label="Max Health" />
               
-              <.input field={{:npc, :mana}} type="number" label="Mana" />
-              <.input field={{:npc, :max_mana}} type="number" label="Max Mana" />
+              <.input field={@changeset[:mana]} type="number" label="Mana" />
+              <.input field={@changeset[:max_mana]} type="number" label="Max Mana" />
               
-              <.input field={{:npc, :strength}} type="number" label="Strength" />
-              <.input field={{:npc, :dexterity}} type="number" label="Dexterity" />
+              <.input field={@changeset[:strength]} type="number" label="Strength" />
+              <.input field={@changeset[:dexterity]} type="number" label="Dexterity" />
               
-              <.input field={{:npc, :intelligence}} type="number" label="Intelligence" />
-              <.input field={{:npc, :constitution}} type="number" label="Constitution" />
+              <.input field={@changeset[:intelligence]} type="number" label="Intelligence" />
+              <.input field={@changeset[:constitution]} type="number" label="Constitution" />
               
-              <.input field={{:npc, :experience_reward}} type="number" label="Experience Reward" />
-              <.input field={{:npc, :gold_reward}} type="number" label="Gold Reward" />
+              <.input field={@changeset[:experience_reward]} type="number" label="Experience Reward" />
+              <.input field={@changeset[:gold_reward]} type="number" label="Gold Reward" />
               
-              <.input field={{:npc, :location_x}} type="number" label="Location X" />
-              <.input field={{:npc, :location_y}} type="number" label="Location Y" />
+              <.input field={@changeset[:location_x]} type="number" label="Location X" />
+              <.input field={@changeset[:location_y]} type="number" label="Location Y" />
               
-              <.input field={{:npc, :room_id}} type="select" label="Room" 
+              <.input field={@changeset[:room_id]} type="select" label="Room" 
                 options={[{"None", nil} | Enum.map(@rooms, &{&1.name || "Room #{&1.id}", &1.id})]} />
               
-              <.input field={{:npc, :movement_pattern}} type="select" label="Movement Pattern"
+              <.input field={@changeset[:movement_pattern]} type="select" label="Movement Pattern"
                 options={[
                   {"Stationary", "stationary"},
                   {"Patrol", "patrol"},
@@ -224,15 +224,15 @@ defmodule ShardWeb.AdminLive.Npcs do
                   {"Follow", "follow"}
                 ]} />
               
-              <.input field={{:npc, :aggression_level}} type="number" label="Aggression Level (0-10)" />
-              <.input field={{:npc, :respawn_time}} type="number" label="Respawn Time (seconds)" />
+              <.input field={@changeset[:aggression_level]} type="number" label="Aggression Level (0-10)" />
+              <.input field={@changeset[:respawn_time]} type="number" label="Respawn Time (seconds)" />
             </div>
             
-            <.input field={{:npc, :description}} type="textarea" label="Description" />
-            <.input field={{:npc, :dialogue}} type="textarea" label="Dialogue" />
+            <.input field={@changeset[:description]} type="textarea" label="Description" />
+            <.input field={@changeset[:dialogue]} type="textarea" label="Dialogue" />
             
             <div class="flex items-center space-x-4">
-              <.input field={{:npc, :is_active}} type="checkbox" label="Active" />
+              <.input field={@changeset[:is_active]} type="checkbox" label="Active" />
             </div>
             
             <div class="flex justify-end space-x-2">
