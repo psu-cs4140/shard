@@ -229,13 +229,12 @@ defmodule ShardWeb.AdminLive.Npcs do
             </div>
             
             <div class="flex justify-end space-x-2">
-              <button 
-                type="button"
-                phx-click="cancel_form"
-                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              <.link 
+                patch={~p"/admin/npcs"}
+                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 inline-block"
               >
                 Cancel
-              </button>
+              </.link>
               <button 
                 type="submit"
                 class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
