@@ -11,10 +11,14 @@ defmodule ShardWeb.MudGameLive do
     # Find a valid starting position (first floor tile found)
     starting_position = find_valid_starting_position(map_data)
     
+    # Store the map_id for later use
+    map_id = map_id
+    
     # Initialize game state
     game_state = %{
       player_position: starting_position,
       map_data: map_data,
+      map_id: map_id,
       active_panel: nil,
       player_stats: %{
         health: 100,
@@ -634,6 +638,7 @@ defmodule ShardWeb.MudGameLive do
     game_state = %{
       player_position: new_position,
       map_data: map_data,
+      map_id: socket.assigns.game_state.map_id,
       active_panel: nil,
       player_stats: socket.assigns.game_state.player_stats,
       hotbar: socket.assigns.game_state.hotbar,
@@ -1097,14 +1102,29 @@ defmodule ShardWeb.MudGameLive do
       "look" ->
         {x, y} = game_state.player_position
         tile = game_state.map_data |> Enum.at(y) |> Enum.at(x)
-        description = case tile do
+        base_description = case tile do
           0 -> "You see a solid stone wall."
           1 -> "You are standing on a stone floor. The air is cool and damp."
           2 -> "You see clear blue water. It looks deep."
           3 -> "A glittering treasure chest sits here, beckoning you closer."
           _ -> "You see something strange and unidentifiable."
         end
-        {[description], game_state}
+        
+        # Check for NPCs at current location
+        npcs_here = get_npcs_at_location(x, y, game_state.map_id)
+        
+        description_lines = [base_description]
+        
+        # Add NPC descriptions if any are present
+        if length(npcs_here) > 0 do
+          description_lines = description_lines ++ [""]  # Empty line for spacing
+          npc_descriptions = Enum.map(npcs_here, fn npc ->
+            "#{npc.name} is here. #{npc.description}"
+          end)
+          description_lines = description_lines ++ npc_descriptions
+        end
+        
+        {description_lines, game_state}
 
       "stats" ->
         stats = game_state.player_stats
@@ -1174,7 +1194,18 @@ defmodule ShardWeb.MudGameLive do
 
       # Update game state with new position
       updated_game_state = %{game_state | player_position: new_pos}
+      
+      # Check for NPCs at the new location
+      {new_x, new_y} = new_pos
+      npcs_here = get_npcs_at_location(new_x, new_y, game_state.map_id)
+      
       response = ["You traversed #{direction_name}."]
+      
+      # Add NPC presence notification if any NPCs are at the new location
+      if length(npcs_here) > 0 do
+        npc_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+        response = response ++ ["You see #{npc_names} here."]
+      end
 
       {response, updated_game_state}
     end
@@ -1197,6 +1228,25 @@ defmodule ShardWeb.MudGameLive do
   # Helper function to format position tuple as string
   defp format_position({x, y}) do
     "{#{x}, #{y}}"
+  end
+
+  # Helper function to get NPCs at a specific location
+  defp get_npcs_at_location(x, y, map_id) do
+    alias Shard.Npcs.Npc
+    import Ecto.Query
+    
+    # For tutorial terrain, ensure Goldie is at (0,0)
+    if map_id == "tutorial_terrain" and x == 0 and y == 0 do
+      case Repo.get_by(Npc, name: "Goldie") do
+        nil -> []
+        goldie -> [goldie]
+      end
+    else
+      # For other maps, get NPCs by coordinates
+      from(n in Npc,
+        where: n.location_x == ^x and n.location_y == ^y and n.is_active == true)
+      |> Repo.all()
+    end
   end
 
   # Helper function to generate map data from database
