@@ -1113,6 +1113,13 @@ defmodule ShardWeb.MudGameLive do
         # Check for NPCs at current location
         npcs_here = get_npcs_at_location(x, y, game_state.map_id)
         
+        # Debug output
+        IO.puts("Looking at position (#{x}, #{y}) in map #{game_state.map_id}")
+        IO.puts("Found #{length(npcs_here)} NPCs")
+        if length(npcs_here) > 0 do
+          IO.puts("NPCs: #{Enum.map(npcs_here, & &1.name) |> Enum.join(", ")}")
+        end
+        
         description_lines = [base_description]
         
         # Add NPC descriptions if any are present
@@ -1239,7 +1246,16 @@ defmodule ShardWeb.MudGameLive do
     if map_id == "tutorial_terrain" and x == 0 and y == 0 do
       case Repo.get_by(Npc, name: "Goldie") do
         nil -> []
-        goldie -> [goldie]
+        goldie -> 
+          # Update Goldie's location to (0,0) if it's not already set
+          if goldie.location_x != 0 or goldie.location_y != 0 do
+            {:ok, updated_goldie} = goldie
+            |> Ecto.Changeset.change(%{location_x: 0, location_y: 0, location_z: 0})
+            |> Repo.update()
+            [updated_goldie]
+          else
+            [goldie]
+          end
       end
     else
       # For other maps, get NPCs by coordinates

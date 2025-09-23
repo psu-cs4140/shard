@@ -362,7 +362,10 @@ defmodule ShardWeb.AdminLive.Npcs do
           aggression_level: 0,
           movement_pattern: "random",
           is_active: true,
-          dialogue: "Woof! *wags tail enthusiastically*"
+          dialogue: "Woof! *wags tail enthusiastically*",
+          location_x: 0,
+          location_y: 0,
+          location_z: 0
         }
         
         case Npcs.create_npc(goldie_params) do
@@ -370,7 +373,14 @@ defmodule ShardWeb.AdminLive.Npcs do
           {:error, _changeset} -> :error
         end
       
-      _existing_goldie -> :ok
+      existing_goldie -> 
+        # Ensure Goldie is at (0,0) for tutorial
+        if existing_goldie.location_x != 0 or existing_goldie.location_y != 0 do
+          existing_goldie
+          |> Ecto.Changeset.change(%{location_x: 0, location_y: 0, location_z: 0})
+          |> Repo.update()
+        end
+        :ok
     end
   end
 end
