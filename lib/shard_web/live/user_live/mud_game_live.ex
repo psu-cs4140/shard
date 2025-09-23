@@ -1101,25 +1101,33 @@ defmodule ShardWeb.MudGameLive do
 
       "look" ->
         {x, y} = game_state.player_position
-        tile = game_state.map_data |> Enum.at(y) |> Enum.at(x)
-        base_description = case tile do
-          0 -> "You see a solid stone wall."
-          1 -> "You are standing on a stone floor. The air is cool and damp."
-          2 -> "You see clear blue water. It looks deep."
-          3 -> "A glittering treasure chest sits here, beckoning you closer."
-          _ -> "You see something strange and unidentifiable."
+        
+        # Get room description from database if available
+        room_description = case GameMap.get_room_by_coordinates(x, y) do
+          nil -> 
+            # Fallback to tile-based description for tutorial terrain
+            tile = game_state.map_data |> Enum.at(y) |> Enum.at(x)
+            case tile do
+              0 -> "You see a solid stone wall."
+              1 -> "You are standing on a stone floor. The air is cool and damp."
+              2 -> "You see clear blue water. It looks deep."
+              3 -> "A glittering treasure chest sits here, beckoning you closer."
+              _ -> "You see something strange and unidentifiable."
+            end
+          room -> 
+            room.description || "You are in #{room.name || "an unnamed room"}. The air is cool and damp."
         end
         
         # Check for NPCs at current location
         npcs_here = get_npcs_at_location(x, y, game_state.map_id)
         
-        description_lines = [base_description]
+        description_lines = [room_description]
         
         # Add NPC descriptions if any are present
         if length(npcs_here) > 0 do
           description_lines = description_lines ++ [""]  # Empty line for spacing
           npc_descriptions = Enum.map(npcs_here, fn npc ->
-            "#{npc.name} is here. #{npc.description}"
+            "#{npc.name} is here. #{npc.description || "They look at you curiously."}"
           end)
           description_lines = description_lines ++ npc_descriptions
         end
@@ -1238,7 +1246,30 @@ defmodule ShardWeb.MudGameLive do
     # For tutorial terrain, ensure Goldie is at (0,0)
     if map_id == "tutorial_terrain" and x == 0 and y == 0 do
       case Repo.get_by(Npc, name: "Goldie") do
-        nil -> []
+        nil -> 
+          # Create Goldie if she doesn't exist
+          goldie_attrs = %{
+            name: "Goldie",
+            description: "A friendly golden retriever with bright eyes and a wagging tail. She seems eager to help you learn the basics of this world.",
+            location_x: 0,
+            location_y: 0,
+            location_z: 0,
+            health: 100,
+            max_health: 100,
+            mana: 50,
+            max_mana: 50,
+            level: 1,
+            experience: 0,
+            is_active: true,
+            is_hostile: false
+          }
+          
+          case %Npc{}
+               |> Npc.changeset(goldie_attrs)
+               |> Repo.insert() do
+            {:ok, goldie} -> [goldie]
+            {:error, _changeset} -> []
+          end
         goldie -> 
           # Update Goldie's location to (0,0) if it's not already set
           updated_goldie = if goldie.location_x != 0 or goldie.location_y != 0 do
