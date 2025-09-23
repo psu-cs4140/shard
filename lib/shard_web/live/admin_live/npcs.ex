@@ -75,9 +75,20 @@ defmodule ShardWeb.AdminLive.Npcs do
   end
 
   def handle_event("save_npc", %{"npc" => npc_params}, socket) do
+    # Clean up empty string values that should be nil
+    cleaned_params = 
+      npc_params
+      |> Enum.map(fn {k, v} -> 
+        case v do
+          "" -> {k, nil}
+          v -> {k, v}
+        end
+      end)
+      |> Enum.into(%{})
+    
     case socket.assigns.form_npc.id do
-      nil -> create_npc(socket, npc_params)
-      _id -> update_npc(socket, npc_params)
+      nil -> create_npc(socket, cleaned_params)
+      _id -> update_npc(socket, cleaned_params)
     end
   end
 
@@ -144,6 +155,7 @@ defmodule ShardWeb.AdminLive.Npcs do
           <.simple_form 
             for={Npcs.change_npc(@form_npc)}
             phx-submit="save_npc"
+            id="npc-form"
           >
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <.input field={{:npc, :name}} label="Name" required />
