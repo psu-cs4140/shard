@@ -1353,52 +1353,28 @@ defmodule ShardWeb.MudGameLive do
 
   # Helper function to get NPCs at a specific location
   defp get_npcs_at_location(x, y, map_id) do
-    alias Shard.Npcs.Npc
-    import Ecto.Query
-    
     # For tutorial terrain, ensure Goldie is at (0,0)
     if map_id == "tutorial_terrain" and x == 0 and y == 0 do
-      case Repo.get_by(Npc, name: "Goldie") do
-        nil -> 
-          # Create Goldie if she doesn't exist
-          goldie_attrs = %{
-            name: "Goldie",
-            description: "A friendly golden retriever with bright eyes and a wagging tail. She seems eager to help you learn the basics of this world.",
-            location_x: 0,
-            location_y: 0,
-            location_z: 0,
-            health: 100,
-            max_health: 100,
-            mana: 50,
-            max_mana: 50,
-            level: 1,
-            experience_reward: 0,
-            is_active: true,
-            npc_type: "friendly"
-          }
-          
-          case %Npc{}
-               |> Npc.changeset(goldie_attrs)
-               |> Repo.insert() do
-            {:ok, goldie} -> [goldie]
-            {:error, _changeset} -> []
-          end
-        goldie -> 
-          # Update Goldie's location to (0,0) if it's not already set
-          updated_goldie = if goldie.location_x != 0 or goldie.location_y != 0 do
-            case goldie
-                 |> Ecto.Changeset.change(%{location_x: 0, location_y: 0, location_z: 0})
-                 |> Repo.update() do
-              {:ok, updated} -> updated
-              {:error, _} -> goldie
-            end
-          else
-            goldie
-          end
-          [updated_goldie]
-      end
+      # Always return Goldie at (0,0) for tutorial terrain
+      goldie = %{
+        name: "Goldie",
+        description: "A friendly golden retriever with bright eyes and a wagging tail. She seems eager to help you learn the basics of this world.",
+        location_x: 0,
+        location_y: 0,
+        location_z: 0,
+        health: 100,
+        max_health: 100,
+        mana: 50,
+        max_mana: 50,
+        level: 1,
+        experience_reward: 0,
+        is_active: true,
+        npc_type: "friendly"
+      }
+      [goldie]
     else
-      # For other maps, get NPCs by coordinates
+      # For other locations and maps, check database
+      import Ecto.Query
       from(n in Npc,
         where: n.location_x == ^x and n.location_y == ^y and n.is_active == true)
       |> Repo.all()
