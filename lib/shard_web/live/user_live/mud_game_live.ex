@@ -1342,18 +1342,8 @@ defmodule ShardWeb.MudGameLive do
   
   # Find a valid starting position on the map (first non-wall tile)
   defp find_valid_starting_position(map_data) do
-    # Search for the first floor tile (value 1, 2, or 3 - anything but 0 which is wall)
-    Enum.with_index(map_data)
-    |> Enum.find_value(fn {row, y} ->
-      Enum.with_index(row)
-      |> Enum.find_value(fn {cell, x} ->
-        if cell != 0, do: {x, y}, else: nil
-      end)
-    end)
-    |> case do
-      nil -> {0, 0}  # Fallback if no valid position found (shouldn't happen)
-      position -> position
-    end
+    # For tutorial terrain, always start at {0,0} where Goldie is
+    {0, 0}
   end
 
   # Calculate bounds and scale factor for minimap rendering
