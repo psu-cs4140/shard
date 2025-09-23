@@ -1316,7 +1316,8 @@ defmodule ShardWeb.MudGameLive do
         for y <- 0..10 do
           for x <- 0..10 do
             cond do
-              x == 0 or y == 0 or x == 10 or y == 10 -> 0  # Walls around the edges
+              x == 0 and y == 0 -> 1  # Starting position where Goldie is - must be floor
+              x == 0 or y == 0 or x == 10 or y == 10 -> 0  # Walls around the edges (except starting position)
               x == 5 and y == 5 -> 3  # Treasure in the center
               x > 3 and x < 7 and y > 3 and y < 7 -> 1  # Central room floor
               rem(x + y, 4) == 0 -> 1  # Scattered floor tiles for tutorial
