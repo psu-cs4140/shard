@@ -31,28 +31,28 @@ defmodule ShardWeb.AdminLive.Quests do
   end
 
   defp apply_action(socket, :new, _params) do
+    changeset = Quests.change_quest(%Quest{})
     socket
     |> assign(:page_title, "New Quest")
     |> assign(:show_form, true)
     |> assign(:form_quest, %Quest{})
     |> assign(:form_title, "Create Quest")
+    |> assign(:changeset, changeset)
   end
 
   defp apply_action(socket, :edit, %{"id" => id}) do
     quest = Quests.get_quest_with_preloads!(id)
+    changeset = Quests.change_quest(quest)
     
     socket
     |> assign(:page_title, "Edit Quest")
     |> assign(:show_form, true)
     |> assign(:form_quest, quest)
     |> assign(:form_title, "Edit Quest")
+    |> assign(:changeset, changeset)
   end
 
   @impl true
-  def handle_event("new_quest", _params, socket) do
-    {:noreply, push_patch(socket, to: ~p"/admin/quests/new")}
-  end
-
   def handle_event("edit_quest", %{"id" => id}, socket) do
     {:noreply, push_patch(socket, to: ~p"/admin/quests/#{id}/edit")}
   end
@@ -71,7 +71,11 @@ defmodule ShardWeb.AdminLive.Quests do
   end
 
   def handle_event("cancel_form", _params, socket) do
-    {:noreply, push_patch(socket, to: ~p"/admin/quests")}
+    {:noreply, 
+      socket
+      |> assign(:show_form, false)
+      |> push_patch(to: ~p"/admin/quests")
+    }
   end
 
   def handle_event("save_quest", %{"quest" => quest_params}, socket) do
@@ -89,6 +93,7 @@ defmodule ShardWeb.AdminLive.Quests do
         {:noreply,
           socket
           |> assign(:quests, quests)
+          |> assign(:show_form, false)
           |> put_flash(:info, "Quest created successfully")
           |> push_patch(to: ~p"/admin/quests")
         }
@@ -106,6 +111,7 @@ defmodule ShardWeb.AdminLive.Quests do
         {:noreply,
           socket
           |> assign(:quests, quests)
+          |> assign(:show_form, false)
           |> put_flash(:info, "Quest updated successfully")
           |> push_patch(to: ~p"/admin/quests")
         }
@@ -121,12 +127,12 @@ defmodule ShardWeb.AdminLive.Quests do
     <div class="p-6">
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Quests Administration</h1>
-        <button 
-          phx-click="new_quest"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+        <.link 
+          patch={~p"/admin/quests/new"}
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg inline-block"
         >
           + New Quest
-        </button>
+        </.link>
       </div>
 
       <%= if @show_form do %>
@@ -141,83 +147,90 @@ defmodule ShardWeb.AdminLive.Quests do
             </button>
           </div>
           
-          <.simple_form 
-            for={Quests.change_quest(@form_quest)}
-            phx-submit="save_quest"
-          >
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <.input field={{:quest, :title}} label="Title" required />
-              <.input field={{:quest, :quest_type}} type="select" label="Type" 
-                options={[
-                  {"Main", "main"},
-                  {"Side", "side"}, 
-                  {"Daily", "daily"},
-                  {"Repeatable", "repeatable"}
-                ]} />
+          <%= if assigns[:changeset] do %>
+            <.simple_form 
+              for={to_form(@changeset)}
+              phx-submit="save_quest"
+              id="quest-form"
+            >
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <% form = to_form(@changeset) %>
+                <.input field={form[:title]} label="Title" required />
+                <.input field={form[:quest_type]} type="select" label="Type" 
+                  options={[
+                    {"Main", "main"},
+                    {"Side", "side"}, 
+                    {"Daily", "daily"},
+                    {"Repeatable", "repeatable"}
+                  ]} />
+                
+                <.input field={form[:difficulty]} type="select" label="Difficulty"
+                  options={[
+                    {"Easy", "easy"},
+                    {"Normal", "normal"},
+                    {"Hard", "hard"},
+                    {"Epic", "epic"},
+                    {"Legendary", "legendary"}
+                  ]} />
+                
+                <.input field={form[:status]} type="select" label="Status"
+                  options={[
+                    {"Available", "available"},
+                    {"In Progress", "in_progress"},
+                    {"Completed", "completed"},
+                    {"Failed", "failed"},
+                    {"Locked", "locked"}
+                  ]} />
+                
+                <.input field={form[:min_level]} type="number" label="Min Level" />
+                <.input field={form[:max_level]} type="number" label="Max Level" />
+                
+                <.input field={form[:experience_reward]} type="number" label="Experience Reward" />
+                <.input field={form[:gold_reward]} type="number" label="Gold Reward" />
+                
+                <.input field={form[:giver_npc_id]} type="select" label="Quest Giver NPC" 
+                  options={[{"None", nil} | Enum.map(@npcs, &{&1.name, &1.id})]} />
+                
+                <.input field={form[:turn_in_npc_id]} type="select" label="Turn In NPC" 
+                  options={[{"None", nil} | Enum.map(@npcs, &{&1.name, &1.id})]} />
+                
+                <.input field={form[:time_limit]} type="number" label="Time Limit (hours)" />
+                <.input field={form[:cooldown_hours]} type="number" label="Cooldown Hours" />
+                
+                <.input field={form[:faction_requirement]} label="Faction Requirement" />
+                <.input field={form[:location_hint]} label="Location Hint" />
+                
+                <.input field={form[:sort_order]} type="number" label="Sort Order" />
+              </div>
               
-              <.input field={{:quest, :difficulty}} type="select" label="Difficulty"
-                options={[
-                  {"Easy", "easy"},
-                  {"Normal", "normal"},
-                  {"Hard", "hard"},
-                  {"Epic", "epic"},
-                  {"Legendary", "legendary"}
-                ]} />
+              <.input field={form[:description]} type="textarea" label="Description" required />
+              <.input field={form[:short_description]} label="Short Description" />
               
-              <.input field={{:quest, :status}} type="select" label="Status"
-                options={[
-                  {"Available", "available"},
-                  {"In Progress", "in_progress"},
-                  {"Completed", "completed"},
-                  {"Failed", "failed"},
-                  {"Locked", "locked"}
-                ]} />
+              <div class="flex items-center space-x-4">
+                <.input field={form[:is_repeatable]} type="checkbox" label="Repeatable" />
+                <.input field={form[:is_active]} type="checkbox" label="Active" />
+              </div>
               
-              <.input field={{:quest, :min_level}} type="number" label="Min Level" />
-              <.input field={{:quest, :max_level}} type="number" label="Max Level" />
-              
-              <.input field={{:quest, :experience_reward}} type="number" label="Experience Reward" />
-              <.input field={{:quest, :gold_reward}} type="number" label="Gold Reward" />
-              
-              <.input field={{:quest, :giver_npc_id}} type="select" label="Quest Giver NPC" 
-                options={[{"None", nil} | Enum.map(@npcs, &{&1.name, &1.id})]} />
-              
-              <.input field={{:quest, :turn_in_npc_id}} type="select" label="Turn In NPC" 
-                options={[{"None", nil} | Enum.map(@npcs, &{&1.name, &1.id})]} />
-              
-              <.input field={{:quest, :time_limit}} type="number" label="Time Limit (hours)" />
-              <.input field={{:quest, :cooldown_hours}} type="number" label="Cooldown Hours" />
-              
-              <.input field={{:quest, :faction_requirement}} label="Faction Requirement" />
-              <.input field={{:quest, :location_hint}} label="Location Hint" />
-              
-              <.input field={{:quest, :sort_order}} type="number" label="Sort Order" />
+              <div class="flex justify-end space-x-2">
+                <.link 
+                  patch={~p"/admin/quests"}
+                  class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 inline-block"
+                >
+                  Cancel
+                </.link>
+                <button 
+                  type="submit"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Save Quest
+                </button>
+              </div>
+            </.simple_form>
+          <% else %>
+            <div class="text-center py-8">
+              <p class="text-gray-500">Loading form...</p>
             </div>
-            
-            <.input field={{:quest, :description}} type="textarea" label="Description" required />
-            <.input field={{:quest, :short_description}} label="Short Description" />
-            
-            <div class="flex items-center space-x-4">
-              <.input field={{:quest, :is_repeatable}} type="checkbox" label="Repeatable" />
-              <.input field={{:quest, :is_active}} type="checkbox" label="Active" />
-            </div>
-            
-            <div class="flex justify-end space-x-2">
-              <button 
-                type="button"
-                phx-click="cancel_form"
-                class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button 
-                type="submit"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Save Quest
-              </button>
-            </div>
-          </.simple_form>
+          <% end %>
         </div>
       <% end %>
 
@@ -264,13 +277,12 @@ defmodule ShardWeb.AdminLive.Quests do
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button 
-                    phx-click="edit_quest" 
-                    phx-value-id={quest.id}
+                  <.link 
+                    patch={~p"/admin/quests/#{quest.id}/edit"}
                     class="text-indigo-600 hover:text-indigo-900 mr-3"
                   >
                     Edit
-                  </button>
+                  </.link>
                   <button 
                     phx-click="delete_quest" 
                     phx-value-id={quest.id}
