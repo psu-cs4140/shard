@@ -4,9 +4,9 @@ defmodule ShardWeb.MudGameLive do
   alias Shard.Repo
 
   @impl true
-  def mount(_params, _session, socket) do
-    # Generate map data first
-    map_data = generate_map_from_database()
+  def mount(%{"map_id" => map_id}, _session, socket) do
+    # Generate map data based on selected map
+    map_data = generate_map_from_database(map_id)
     
     # Find a valid starting position (first floor tile found)
     starting_position = find_valid_starting_position(map_data)
@@ -1200,13 +1200,13 @@ defmodule ShardWeb.MudGameLive do
   end
 
   # Helper function to generate map data from database
-  defp generate_map_from_database() do
+  defp generate_map_from_database(map_id \\ "tutorial_terrain") do
     # Get all rooms from database
     rooms = Repo.all(GameMap.Room)
     
-    # If no rooms exist, return a simple default map
+    # If no rooms exist, return a map based on the selected map_id
     if Enum.empty?(rooms) do
-      generate_default_map()
+      generate_default_map(map_id)
     else
       # Find the bounds of all rooms
       {min_x, max_x} = rooms 
@@ -1254,18 +1254,34 @@ defmodule ShardWeb.MudGameLive do
   end
   
   # Fallback function for when no rooms exist in database
-  defp generate_default_map() do
-    # Generate an 11x11 map for display
-    for y <- 0..10 do
-      for x <- 0..10 do
-        cond do
-          x == 0 or y == 0 or x == 10 or y == 10 -> 0  # Walls around the edges
-          x == 5 and y == 5 -> 3  # Treasure in the center
-          x > 3 and x < 7 and y > 3 and y < 7 -> 1  # Central room floor
-          rem(x, 3) == 0 and rem(y, 3) == 0 -> 2  # Water at intervals
-          true -> 1  # Default floor
+  defp generate_default_map(map_id \\ "tutorial_terrain") do
+    case map_id do
+      "tutorial_terrain" ->
+        # Generate a simple tutorial map
+        for y <- 0..10 do
+          for x <- 0..10 do
+            cond do
+              x == 0 or y == 0 or x == 10 or y == 10 -> 0  # Walls around the edges
+              x == 5 and y == 5 -> 3  # Treasure in the center
+              x > 3 and x < 7 and y > 3 and y < 7 -> 1  # Central room floor
+              rem(x + y, 4) == 0 -> 1  # Scattered floor tiles for tutorial
+              true -> 0  # Walls for tutorial simplicity
+            end
+          end
         end
-      end
+      _ ->
+        # Default fallback map for any other map_id
+        for y <- 0..10 do
+          for x <- 0..10 do
+            cond do
+              x == 0 or y == 0 or x == 10 or y == 10 -> 0  # Walls around the edges
+              x == 5 and y == 5 -> 3  # Treasure in the center
+              x > 3 and x < 7 and y > 3 and y < 7 -> 1  # Central room floor
+              rem(x, 3) == 0 and rem(y, 3) == 0 -> 2  # Water at intervals
+              true -> 1  # Default floor
+            end
+          end
+        end
     end
   end
   
