@@ -54,6 +54,13 @@ defmodule Shard.Npcs do
   end
 
   @doc """
+  Gets a single npc by name.
+  """
+  def get_npc_by_name(name) do
+    Repo.get_by(Npc, name: name)
+  end
+
+  @doc """
   Gets NPCs by room.
   """
   def get_npcs_by_room(room_id) do

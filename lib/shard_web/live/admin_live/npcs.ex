@@ -7,6 +7,9 @@ defmodule ShardWeb.AdminLive.Npcs do
 
   @impl true
   def mount(_params, _session, socket) do
+    # Ensure Goldie exists
+    ensure_goldie_exists()
+    
     npcs = Npcs.list_npcs_with_preloads()
     rooms = Map.list_rooms()
     
@@ -310,6 +313,40 @@ defmodule ShardWeb.AdminLive.Npcs do
       "merchant" -> "bg-yellow-100 text-yellow-800"
       "quest_giver" -> "bg-purple-100 text-purple-800"
       _ -> "bg-gray-100 text-gray-800"
+    end
+  end
+
+  defp ensure_goldie_exists do
+    case Npcs.get_npc_by_name("Goldie") do
+      nil ->
+        goldie_params = %{
+          name: "Goldie",
+          description: "A friendly golden retriever with a wagging tail and bright, intelligent eyes. Goldie loves to greet adventurers and seems to understand more than most dogs.",
+          npc_type: "friendly",
+          level: 1,
+          health: 50,
+          max_health: 50,
+          mana: 0,
+          max_mana: 0,
+          strength: 5,
+          dexterity: 8,
+          intelligence: 6,
+          constitution: 7,
+          experience_reward: 0,
+          gold_reward: 0,
+          faction: "neutral",
+          aggression_level: 0,
+          movement_pattern: "random",
+          is_active: true,
+          dialogue: "Woof! *wags tail enthusiastically*"
+        }
+        
+        case Npcs.create_npc(goldie_params) do
+          {:ok, _npc} -> :ok
+          {:error, _changeset} -> :error
+        end
+      
+      _existing_goldie -> :ok
     end
   end
 end
