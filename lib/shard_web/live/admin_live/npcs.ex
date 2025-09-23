@@ -57,11 +57,28 @@ defmodule ShardWeb.AdminLive.Npcs do
 
   @impl true
   def handle_event("new_npc", _params, socket) do
-    {:noreply, push_patch(socket, to: ~p"/admin/npcs/new")}
+    changeset = Npcs.change_npc(%Npc{})
+    
+    {:noreply, 
+      socket
+      |> assign(:show_form, true)
+      |> assign(:form_npc, %Npc{})
+      |> assign(:form_title, "Create NPC")
+      |> assign(:changeset, changeset)
+    }
   end
 
   def handle_event("edit_npc", %{"id" => id}, socket) do
-    {:noreply, push_patch(socket, to: ~p"/admin/npcs/#{id}/edit")}
+    npc = Npcs.get_npc_with_preloads!(id)
+    changeset = Npcs.change_npc(npc)
+    
+    {:noreply,
+      socket
+      |> assign(:show_form, true)
+      |> assign(:form_npc, npc)
+      |> assign(:form_title, "Edit NPC")
+      |> assign(:changeset, changeset)
+    }
   end
 
   def handle_event("delete_npc", %{"id" => id}, socket) do
@@ -78,7 +95,7 @@ defmodule ShardWeb.AdminLive.Npcs do
   end
 
   def handle_event("cancel_form", _params, socket) do
-    {:noreply, push_patch(socket, to: ~p"/admin/npcs")}
+    {:noreply, assign(socket, :show_form, false)}
   end
 
   def handle_event("save_npc", %{"npc" => npc_params}, socket) do
@@ -107,8 +124,8 @@ defmodule ShardWeb.AdminLive.Npcs do
         {:noreply,
           socket
           |> assign(:npcs, npcs)
+          |> assign(:show_form, false)
           |> put_flash(:info, "NPC created successfully")
-          |> push_patch(to: ~p"/admin/npcs")
         }
 
       {:error, %Ecto.Changeset{} = changeset} ->
@@ -124,8 +141,8 @@ defmodule ShardWeb.AdminLive.Npcs do
         {:noreply,
           socket
           |> assign(:npcs, npcs)
+          |> assign(:show_form, false)
           |> put_flash(:info, "NPC updated successfully")
-          |> push_patch(to: ~p"/admin/npcs")
         }
 
       {:error, %Ecto.Changeset{} = changeset} ->
