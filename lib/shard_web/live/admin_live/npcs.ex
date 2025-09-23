@@ -34,21 +34,25 @@ defmodule ShardWeb.AdminLive.Npcs do
   end
 
   defp apply_action(socket, :new, _params) do
+    changeset = Npcs.change_npc(%Npc{})
     socket
     |> assign(:page_title, "New NPC")
     |> assign(:show_form, true)
     |> assign(:form_npc, %Npc{})
     |> assign(:form_title, "Create NPC")
+    |> assign(:changeset, changeset)
   end
 
   defp apply_action(socket, :edit, %{"id" => id}) do
     npc = Npcs.get_npc_with_preloads!(id)
+    changeset = Npcs.change_npc(npc)
     
     socket
     |> assign(:page_title, "Edit NPC")
     |> assign(:show_form, true)
     |> assign(:form_npc, npc)
     |> assign(:form_title, "Edit NPC")
+    |> assign(:changeset, changeset)
   end
 
   @impl true
@@ -156,7 +160,7 @@ defmodule ShardWeb.AdminLive.Npcs do
           </div>
           
           <.simple_form 
-            for={Npcs.change_npc(@form_npc)}
+            for={@changeset}
             phx-submit="save_npc"
             id="npc-form"
           >
