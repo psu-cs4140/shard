@@ -2,6 +2,7 @@ defmodule ShardWeb.MudGameLive do
   use ShardWeb, :live_view
   alias Shard.Map, as: GameMap
   alias Shard.Repo
+  import Ecto.Query
 
   @impl true
   def mount(%{"map_id" => map_id}, _session, socket) do
@@ -1102,30 +1103,46 @@ defmodule ShardWeb.MudGameLive do
       "look" ->
         {x, y} = game_state.player_position
         
-        # Get room description from database if available
-        room_description = case GameMap.get_room_by_coordinates(x, y) do
+        # Get room from database
+        room = GameMap.get_room_by_coordinates(x, y)
+        
+        # Build room description
+        room_description = case room do
           nil -> 
-            # Fallback to tile-based description for tutorial terrain
-            # Ensure coordinates are within bounds before accessing map data
-            if y >= 0 and y < length(game_state.map_data) do
-              row = Enum.at(game_state.map_data, y)
-              if x >= 0 and x < length(row) do
-                tile = Enum.at(row, x)
-                case tile do
-                  0 -> "You see a solid stone wall."
-                  1 -> "You are standing on a stone floor. The air is cool and damp."
-                  2 -> "You see clear blue water. It looks deep."
-                  3 -> "A glittering treasure chest sits here, beckoning you closer."
-                  _ -> "You see something strange and unidentifiable."
-                end
-              else
-                "You are in an undefined area beyond the known world."
+            # No room in database, check if we're in tutorial terrain
+            if game_state.map_id == "tutorial_terrain" do
+              # Provide tutorial-specific descriptions
+              case {x, y} do
+                {0, 0} -> "Tutorial Starting Area\nYou are in a small stone chamber with rough-hewn walls. This appears to be the beginning of your adventure. Torchlight flickers on the walls, casting dancing shadows."
+                {5, 5} -> "Treasure Chamber\nYou stand in a circular chamber with a high vaulted ceiling. In the center sits an ornate treasure chest, gleaming with gold and precious gems."
+                _ -> 
+                  # Check tile type for generic descriptions
+                  if y >= 0 and y < length(game_state.map_data) do
+                    row = Enum.at(game_state.map_data, y)
+                    if x >= 0 and x < length(row) do
+                      tile = Enum.at(row, x)
+                      case tile do
+                        0 -> "You face a solid stone wall. There's no passage here."
+                        1 -> "Stone Corridor\nYou are in a narrow stone corridor. The air is cool and damp, and you can hear the distant echo of dripping water."
+                        2 -> "Underground Pool\nYou stand at the edge of a clear underground pool. The water is deep and still, reflecting the torchlight above."
+                        3 -> "Treasure Alcove\nA small alcove carved into the stone wall. Something valuable might be hidden here."
+                        _ -> "Strange Area\nYou are in an area that defies description. The very air seems to shimmer with unknown magic."
+                      end
+                    else
+                      "The Void\nYou are in an undefined area beyond the known world. Reality seems unstable here."
+                    end
+                  else
+                    "The Void\nYou are in an undefined area beyond the known world. Reality seems unstable here."
+                  end
               end
             else
-              "You are in an undefined area beyond the known world."
+              "Empty Space\nYou are in an empty area with no defined room. The ground beneath your feet feels uncertain."
             end
           room -> 
-            room.description || "You are in #{room.name || "an unnamed room"}. The air is cool and damp."
+            # Use room data from database
+            room_title = room.name || "Unnamed Room"
+            room_desc = room.description || "A mysterious room with no particular features."
+            "#{room_title}\n#{room_desc}"
         end
         
         # Check for NPCs at current location
@@ -1136,10 +1153,23 @@ defmodule ShardWeb.MudGameLive do
         # Add NPC descriptions if any are present
         if length(npcs_here) > 0 do
           description_lines = description_lines ++ [""]  # Empty line for spacing
+          
+          # Add each NPC with their description
           npc_descriptions = Enum.map(npcs_here, fn npc ->
-            "#{npc.name} is here. #{npc.description || "They look at you curiously."}"
+            npc_desc = npc.description || "They look at you with interest."
+            "#{npc.name} is here. #{npc_desc}"
           end)
           description_lines = description_lines ++ npc_descriptions
+        end
+        
+        # Add available exits information
+        exits = get_available_exits(x, y, room)
+        if length(exits) > 0 do
+          description_lines = description_lines ++ [""]
+          exit_text = "Exits: " <> Enum.join(exits, ", ")
+          description_lines = description_lines ++ [exit_text]
+        else
+          description_lines = description_lines ++ ["", "There are no obvious exits."]
         end
         
         {description_lines, game_state}
@@ -1246,6 +1276,58 @@ defmodule ShardWeb.MudGameLive do
   # Helper function to format position tuple as string
   defp format_position({x, y}) do
     "{#{x}, #{y}}"
+  end
+
+  # Helper function to get available exits from current position
+  defp get_available_exits(x, y, room) do
+    exits = []
+    
+    # If we have a room, check for doors
+    exits = if room do
+      # Get doors from this room using Ecto query since the function might not exist
+      doors = from(d in GameMap.Door, where: d.from_room_id == ^room.id)
+              |> Repo.all()
+      door_exits = Enum.map(doors, fn door ->
+        cond do
+          door.door_type == "secret" and door.is_locked -> nil  # Hidden secret doors
+          door.is_locked -> "#{door.direction} (locked)"
+          door.key_required && door.key_required != "" -> "#{door.direction} (key required)"
+          true -> door.direction
+        end
+      end)
+      |> Enum.filter(& &1 != nil)
+      
+      exits ++ door_exits
+    else
+      exits
+    end
+    
+    # For tutorial terrain, also check basic movement possibilities
+    basic_directions = ["north", "south", "east", "west", "northeast", "southeast", "northwest", "southwest"]
+    
+    tutorial_exits = Enum.filter(basic_directions, fn direction ->
+      test_pos = calc_position({x, y}, direction_to_key(direction), nil)
+      test_pos != {x, y} and is_valid_movement?({x, y}, test_pos, direction_to_key(direction))
+    end)
+    
+    (exits ++ tutorial_exits)
+    |> Enum.uniq()
+    |> Enum.sort()
+  end
+  
+  # Helper function to convert direction string to key for calc_position
+  defp direction_to_key(direction) do
+    case direction do
+      "north" -> "ArrowUp"
+      "south" -> "ArrowDown"
+      "east" -> "ArrowRight"
+      "west" -> "ArrowLeft"
+      "northeast" -> "northeast"
+      "southeast" -> "southeast"
+      "northwest" -> "northwest"
+      "southwest" -> "southwest"
+      _ -> direction
+    end
   end
 
   # Helper function to get NPCs at a specific location
