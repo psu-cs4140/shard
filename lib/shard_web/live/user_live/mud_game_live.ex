@@ -1,6 +1,7 @@
 defmodule ShardWeb.MudGameLive do
   use ShardWeb, :live_view
   alias Shard.Map, as: GameMap
+  alias Shard.Npcs.Npc
   alias Shard.Repo
   import Ecto.Query
 
@@ -1371,9 +1372,9 @@ defmodule ShardWeb.MudGameLive do
             mana: 50,
             max_mana: 50,
             level: 1,
-            experience: 0,
+            experience_reward: 0,
             is_active: true,
-            is_hostile: false
+            npc_type: "friendly"
           }
           
           case %Npc{}
