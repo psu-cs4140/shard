@@ -24,8 +24,11 @@ defmodule ShardWeb.TutorialLive.Terrain do
   end
 
   defp load_tutorial_npcs do
+    # Ensure Goldie is positioned at (0,0) for the tutorial
+    ensure_goldie_in_tutorial()
+    
     from(n in Npc,
-      where: n.name in ["Elder Sage Theron", "Captain Marcus", "Merchant Elara", "Forest Guardian Lyra"],
+      where: n.name in ["Goldie", "Elder Sage Theron", "Captain Marcus", "Merchant Elara", "Forest Guardian Lyra"],
       where: n.is_active == true
     )
     |> Repo.all()
@@ -159,5 +162,19 @@ defmodule ShardWeb.TutorialLive.Terrain do
   defp npc_icon("trainer"), do: "⚔️"
   defp npc_icon("merchant"), do: "🛒"
   defp npc_icon("guardian"), do: "🛡️"
+  defp npc_icon("friendly"), do: "🐕"
   defp npc_icon(_), do: "👤"
+
+  defp ensure_goldie_in_tutorial do
+    case Repo.get_by(Npc, name: "Goldie") do
+      nil -> :ok  # Goldie doesn't exist, will be created by admin page
+      goldie ->
+        # Update Goldie's position to be at (0,0) for the tutorial
+        if goldie.location_x != 0 || goldie.location_y != 0 do
+          goldie
+          |> Ecto.Changeset.change(%{location_x: 0, location_y: 0, location_z: 0})
+          |> Repo.update()
+        end
+    end
+  end
 end
