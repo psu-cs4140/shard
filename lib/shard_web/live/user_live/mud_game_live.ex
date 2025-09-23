@@ -1177,8 +1177,8 @@ defmodule ShardWeb.MudGameLive do
           
           # Add each NPC with their description
           npc_descriptions = Enum.map(npcs_here, fn npc ->
-            npc_desc = npc.description || "They look at you with interest."
-            "#{npc.name} is here. #{npc_desc}"
+            npc_desc = Map.get(npc, :description) || "They look at you with interest."
+            "#{Map.get(npc, :name)} is here. #{npc_desc}"
           end)
           description_lines = description_lines ++ npc_descriptions
         end
@@ -1371,13 +1371,16 @@ defmodule ShardWeb.MudGameLive do
         is_active: true,
         npc_type: "friendly"
       }
+      IO.puts("DEBUG: Returning Goldie at (#{x}, #{y}) for map #{map_id}")
       [goldie]
     else
       # For other locations and maps, check database
       import Ecto.Query
-      from(n in Npc,
+      npcs = from(n in Npc,
         where: n.location_x == ^x and n.location_y == ^y and n.is_active == true)
       |> Repo.all()
+      IO.puts("DEBUG: Found #{length(npcs)} NPCs at (#{x}, #{y}) for map #{map_id}")
+      npcs
     end
   end
 
