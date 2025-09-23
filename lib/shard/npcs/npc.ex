@@ -3,7 +3,6 @@ defmodule Shard.Npcs.Npc do
   import Ecto.Changeset
 
   alias Shard.Map.Room
-  alias Shard.Quests.Quest
 
   schema "npcs" do
     field :name, :string
@@ -34,8 +33,6 @@ defmodule Shard.Npcs.Npc do
     field :properties, :map, default: %{}
 
     belongs_to :room, Room
-    has_many :given_quests, Quest, foreign_key: :giver_npc_id
-    has_many :turn_in_quests, Quest, foreign_key: :turn_in_npc_id
 
     timestamps(type: :utc_datetime)
   end

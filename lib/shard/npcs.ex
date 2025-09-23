@@ -26,7 +26,7 @@ defmodule Shard.Npcs do
   """
   def list_npcs_with_preloads do
     Repo.all(Npc)
-    |> Repo.preload([:room, :given_quests, :turn_in_quests])
+    |> Repo.preload([:room])
   end
 
   @doc """
@@ -50,7 +50,7 @@ defmodule Shard.Npcs do
   """
   def get_npc_with_preloads!(id) do
     Repo.get!(Npc, id)
-    |> Repo.preload([:room, :given_quests, :turn_in_quests])
+    |> Repo.preload([:room])
   end
 
   @doc """
