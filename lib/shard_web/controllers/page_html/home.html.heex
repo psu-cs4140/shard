@@ -8,16 +8,22 @@
       
       <%= if assigns[:current_scope] && @current_scope.user do %>
         <div class="space-y-4">
+          <.button navigate={~p"/play"} variant="primary" class="btn-lg">
+            Play Now
+          </.button>
           <.button navigate={~p"/characters"} class="btn-lg">
             View My Characters
           </.button>
-          <.button navigate={~p"/characters/new"} variant="primary" class="btn-lg">
+          <.button navigate={~p"/characters/new"} class="btn-lg">
             Create New Character
           </.button>
         </div>
       <% else %>
         <div class="space-y-4">
-          <.button navigate={~p"/users/register"} variant="primary" class="btn-lg">
+          <.button navigate={~p"/play"} variant="primary" class="btn-lg">
+            Play Now
+          </.button>
+          <.button navigate={~p"/users/register"} class="btn-lg">
             Get Started
           </.button>
           <.button navigate={~p"/users/log-in"} class="btn-lg">
