@@ -1182,11 +1182,6 @@ defmodule ShardWeb.MudGameLive do
             "#{npc_name} is here. #{npc_desc}"
           end)
           description_lines = description_lines ++ npc_descriptions
-        else
-          # Debug: Add a line to show when no NPCs are found
-          if game_state.map_id == "tutorial_terrain" and x == 0 and y == 0 do
-            description_lines = description_lines ++ ["", "[DEBUG: No NPCs found at (0,0) in tutorial_terrain]"]
-          end
         end
         
         # Add available exits information
@@ -1359,8 +1354,6 @@ defmodule ShardWeb.MudGameLive do
 
   # Helper function to get NPCs at a specific location
   defp get_npcs_at_location(x, y, map_id) do
-    IO.puts("DEBUG: get_npcs_at_location called with x=#{x}, y=#{y}, map_id=#{map_id}")
-    
     # For tutorial terrain, ensure Goldie is at (0,0)
     if map_id == "tutorial_terrain" and x == 0 and y == 0 do
       # Always return Goldie at (0,0) for tutorial terrain
@@ -1379,8 +1372,6 @@ defmodule ShardWeb.MudGameLive do
         is_active: true,
         npc_type: "friendly"
       }
-      IO.puts("DEBUG: Returning Goldie at (#{x}, #{y}) for map #{map_id}")
-      IO.inspect(goldie, label: "DEBUG: Goldie data")
       [goldie]
     else
       # For other locations and maps, check database
@@ -1388,7 +1379,6 @@ defmodule ShardWeb.MudGameLive do
       npcs = from(n in Npc,
         where: n.location_x == ^x and n.location_y == ^y and n.is_active == true)
       |> Repo.all()
-      IO.puts("DEBUG: Found #{length(npcs)} NPCs at (#{x}, #{y}) for map #{map_id}")
       npcs
     end
   end
