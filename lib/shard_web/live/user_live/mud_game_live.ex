@@ -1109,39 +1109,61 @@ defmodule ShardWeb.MudGameLive do
         # Build room description
         room_description = case room do
           nil -> 
-            # No room in database, check if we're in tutorial terrain
+            # No room in database, provide descriptions based on map data and coordinates
             if game_state.map_id == "tutorial_terrain" do
-              # Provide tutorial-specific descriptions
+              # Provide tutorial-specific descriptions based on coordinates
               case {x, y} do
-                {0, 0} -> "Tutorial Starting Area\nYou are in a small stone chamber with rough-hewn walls. This appears to be the beginning of your adventure. Torchlight flickers on the walls, casting dancing shadows."
-                {5, 5} -> "Treasure Chamber\nYou stand in a circular chamber with a high vaulted ceiling. In the center sits an ornate treasure chest, gleaming with gold and precious gems."
+                {0, 0} -> "Tutorial Starting Chamber\nYou are in a small stone chamber with rough-hewn walls. Ancient torches mounted on iron brackets cast flickering light across the weathered stones. This appears to be the beginning of your adventure. You can see worn footprints in the dust, suggesting others have passed this way before."
+                
+                {1, 0} -> "Eastern Alcove\nA narrow alcove extends eastward from the starting chamber. The walls here are carved with simple symbols that seem to glow faintly in the torchlight. The air carries a hint of something ancient and mysterious."
+                
+                {0, 1} -> "Southern Passage\nA short passage leads south from the starting chamber. The stone floor is worn smooth by countless footsteps. Moisture drips steadily from somewhere in the darkness ahead."
+                
+                {1, 1} -> "Corner Junction\nYou stand at a junction where two passages meet. The walls here show signs of careful construction, with fitted stones and mortar still holding strong after unknown years. A cool breeze flows through the intersection."
+                
+                {5, 5} -> "Central Treasure Chamber\nYou stand in a magnificent circular chamber with a high vaulted ceiling. Ornate pillars support graceful arches, and in the center sits an elaborate treasure chest made of dark wood bound with brass. The chest gleams with an inner light, and precious gems are scattered around its base."
+                
+                {2, 2} -> "Training Grounds\nThis rectangular chamber appears to have been used for combat training. Wooden practice dummies stand against the walls, and the floor is marked with scuff marks from countless sparring sessions. Weapon racks line the eastern wall."
+                
+                {3, 3} -> "Meditation Garden\nA peaceful underground garden with carefully tended moss growing in geometric patterns on the floor. A small fountain in the center provides the gentle sound of flowing water. The air here feels calm and restorative."
+                
+                {4, 4} -> "Library Ruins\nThe remains of what was once a grand library. Broken shelves line the walls, and scattered parchments lie across the floor. A few intact books rest on a reading table, their pages yellowed with age but still legible."
+                
+                {6, 6} -> "Armory\nA well-organized armory with weapons and armor displayed on stands and hanging from hooks. Most of the equipment shows signs of age, but some pieces still gleam with careful maintenance. A forge in the corner appears recently used."
+                
+                {7, 7} -> "Crystal Cavern\nA natural cavern where the walls are embedded with glowing crystals that provide a soft, blue-white light. The crystals hum with a barely audible resonance, and the air shimmers with magical energy."
+                
+                {8, 8} -> "Underground Lake\nYou stand on the shore of a vast underground lake. The water is crystal clear and so still it perfectly reflects the cavern ceiling above. Strange fish with luminescent scales can be seen swimming in the depths."
+                
+                {9, 9} -> "Ancient Shrine\nA small shrine dedicated to forgotten deities. Stone statues stand in alcoves around the room, their faces worn smooth by time. An altar in the center holds offerings left by previous visitors - coins, flowers, and small trinkets."
+                
                 _ -> 
-                  # Check tile type for generic descriptions
+                  # Check tile type for other positions
                   if y >= 0 and y < length(game_state.map_data) do
                     row = Enum.at(game_state.map_data, y)
                     if x >= 0 and x < length(row) do
                       tile = Enum.at(row, x)
                       case tile do
-                        0 -> "You face a solid stone wall. There's no passage here."
-                        1 -> "Stone Corridor\nYou are in a narrow stone corridor. The air is cool and damp, and you can hear the distant echo of dripping water."
-                        2 -> "Underground Pool\nYou stand at the edge of a clear underground pool. The water is deep and still, reflecting the torchlight above."
-                        3 -> "Treasure Alcove\nA small alcove carved into the stone wall. Something valuable might be hidden here."
-                        _ -> "Strange Area\nYou are in an area that defies description. The very air seems to shimmer with unknown magic."
+                        0 -> "Solid Stone Wall\nYou face an impenetrable wall of fitted stone blocks. The craftsmanship is excellent, with no gaps or weaknesses visible. There's no passage here."
+                        1 -> "Stone Corridor\nYou are in a well-constructed stone corridor. The walls are made of carefully fitted blocks, and the floor is worn smooth by the passage of many feet over the years. Torch brackets line the walls, though most are empty. The air is cool and carries the faint scent of old stone and distant moisture."
+                        2 -> "Underground Pool\nYou stand beside a clear underground pool fed by a natural spring. The water is deep and perfectly still, reflecting the ceiling above like a mirror. Small ripples occasionally disturb the surface as drops fall from stalactites overhead. The air here is humid and fresh."
+                        3 -> "Treasure Alcove\nA small alcove has been carved into the stone wall here. The niche shows signs of having once held something valuable - there are mounting brackets and a small pedestal. Scratches on the floor suggest heavy objects were once moved in and out of this space."
+                        _ -> "Mystical Chamber\nYou are in a chamber that defies easy description. The very air seems to shimmer with arcane energy, and the walls appear to shift slightly when you're not looking directly at them. Strange symbols carved into the stone pulse with a faint, otherworldly light."
                       end
                     else
-                      "The Void\nYou are in an undefined area beyond the known world. Reality seems unstable here."
+                      "The Void\nYou have somehow moved beyond the boundaries of the known world. Reality becomes uncertain here, and the very ground beneath your feet feels insubstantial. Wisps of strange energy drift through the air, and distant sounds echo from nowhere."
                     end
                   else
-                    "The Void\nYou are in an undefined area beyond the known world. Reality seems unstable here."
+                    "The Void\nYou have somehow moved beyond the boundaries of the known world. Reality becomes uncertain here, and the very ground beneath your feet feels insubstantial. Wisps of strange energy drift through the air, and distant sounds echo from nowhere."
                   end
               end
             else
-              "Empty Space\nYou are in an empty area with no defined room. The ground beneath your feet feels uncertain."
+              "Empty Space\nYou are in an empty area with no defined room. The ground beneath your feet feels uncertain, as if this space exists between the cracks of reality."
             end
           room -> 
             # Use room data from database
             room_title = room.name || "Unnamed Room"
-            room_desc = room.description || "A mysterious room with no particular features."
+            room_desc = room.description || "A mysterious room with no particular features. The walls are bare stone, and the air is still and quiet."
             "#{room_title}\n#{room_desc}"
         end
         
