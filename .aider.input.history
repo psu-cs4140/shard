@@ -639,3 +639,15 @@
 
 # 2025-09-18 17:53:27.336302
 +north and south don't seem to properly be working, only allowing for vertical movement through the use of northeast, northwest, southeast, and southwest from the middle row, but not north or south by themselves, but in other rows, these work fine to go back to the middle
+
+# 2025-09-23 15:25:23.396086
++Implement the user management feature that's listed in index.html.heex, with the appended route of /user_management and all code related to it be put in a file called user_management.ex. It should allow admins to manage users' priveledges, such as admin status, while creating the restriction that the admin managing it at the time cannot de-admin themself, and that the first user ever added is an admin. 
+
+# 2025-09-23 15:25:45.725515
++y
+
+# 2025-09-23 15:26:25.824792
++yy
+
+# 2025-09-23 15:26:29.459218
++y
