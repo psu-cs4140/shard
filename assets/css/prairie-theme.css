@@ -1,0 +1,208 @@
+/* Prairie Theme Styles - Custom CSS for animated prairie background */
+.prairie-hero {
+  background: linear-gradient(to bottom, 
+    #87CEEB 0%,     /* Sky blue */
+    #98D8E8 30%,    /* Light blue */
+    #F0E68C 70%,    /* Khaki */
+    #DAA520 100%    /* Goldenrod */
+  );
+}
+
+.prairie-sky {
+  background: linear-gradient(to bottom,
+    #87CEEB 0%,
+    #B0E0E6 50%,
+    #F0E68C 100%
+  );
+  animation: sky-shift 20s ease-in-out infinite;
+}
+
+.prairie-grass-back {
+  background: linear-gradient(to top,
+    #228B22 0%,
+    #32CD32 50%,
+    #9ACD32 100%
+  );
+  opacity: 0.6;
+  animation: grass-sway-slow 8s ease-in-out infinite;
+}
+
+.prairie-grass-mid {
+  background: linear-gradient(to top,
+    #228B22 0%,
+    #32CD32 70%,
+    #ADFF2F 100%
+  );
+  opacity: 0.8;
+  animation: grass-sway-medium 6s ease-in-out infinite;
+}
+
+.prairie-grass-front {
+  background: linear-gradient(to top,
+    #006400 0%,
+    #228B22 60%,
+    #32CD32 100%
+  );
+  animation: grass-sway-fast 4s ease-in-out infinite;
+}
+
+.prairie-clouds {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20'%3E%3Cpath d='M20,10 Q25,5 30,10 Q35,5 40,10 Q45,15 50,10 Q55,5 60,10 Q65,15 70,10 Q75,5 80,10' fill='none' stroke='%23ffffff' stroke-width='0.5' opacity='0.3'/%3E%3C/svg%3E") repeat-x;
+  animation: clouds-drift 30s linear infinite;
+}
+
+.cloud {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 50px;
+  animation: cloud-float 15s ease-in-out infinite;
+}
+
+.cloud::before,
+.cloud::after {
+  content: '';
+  position: absolute;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 50px;
+}
+
+.cloud-1 {
+  width: 80px;
+  height: 30px;
+  top: 20%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.cloud-1::before {
+  width: 50px;
+  height: 50px;
+  top: -25px;
+  left: 10px;
+}
+
+.cloud-1::after {
+  width: 60px;
+  height: 40px;
+  top: -15px;
+  right: 10px;
+}
+
+.cloud-2 {
+  width: 60px;
+  height: 25px;
+  top: 15%;
+  right: 20%;
+  animation-delay: -5s;
+}
+
+.cloud-2::before {
+  width: 40px;
+  height: 40px;
+  top: -20px;
+  left: 5px;
+}
+
+.cloud-2::after {
+  width: 50px;
+  height: 35px;
+  top: -10px;
+  right: 5px;
+}
+
+.cloud-3 {
+  width: 70px;
+  height: 28px;
+  top: 25%;
+  left: 60%;
+  animation-delay: -10s;
+}
+
+.cloud-3::before {
+  width: 45px;
+  height: 45px;
+  top: -22px;
+  left: 8px;
+}
+
+.cloud-3::after {
+  width: 55px;
+  height: 38px;
+  top: -12px;
+  right: 8px;
+}
+
+.prairie-wind {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M10,50 Q30,30 50,50 Q70,70 90,50' fill='none' stroke='%23ffffff' stroke-width='0.2' opacity='0.1'/%3E%3Cpath d='M5,60 Q25,40 45,60 Q65,80 85,60' fill='none' stroke='%23ffffff' stroke-width='0.2' opacity='0.1'/%3E%3C/svg%3E") repeat;
+  animation: wind-flow 12s ease-in-out infinite;
+}
+
+/* Prairie-themed buttons */
+.prairie-btn-primary {
+  background: linear-gradient(135deg, #DAA520, #B8860B);
+  border: 2px solid #8B7355;
+  color: #FFFFFF;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 8px rgba(218, 165, 32, 0.3);
+  transition: all 0.3s ease;
+}
+
+.prairie-btn-primary:hover {
+  background: linear-gradient(135deg, #FFD700, #DAA520);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(218, 165, 32, 0.4);
+}
+
+.prairie-btn {
+  background: linear-gradient(135deg, #F0E68C, #DDD06A);
+  border: 2px solid #B8860B;
+  color: #8B4513;
+  text-shadow: 1px 1px 1px rgba(255,255,255,0.5);
+  box-shadow: 0 3px 6px rgba(240, 230, 140, 0.3);
+  transition: all 0.3s ease;
+}
+
+.prairie-btn:hover {
+  background: linear-gradient(135deg, #FFFFE0, #F0E68C);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 10px rgba(240, 230, 140, 0.4);
+  color: #654321;
+}
+
+/* Keyframe animations for prairie theme */
+@keyframes sky-shift {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes grass-sway-slow {
+  0%, 100% { transform: translateX(0px) scaleX(1); }
+  50% { transform: translateX(2px) scaleX(1.01); }
+}
+
+@keyframes grass-sway-medium {
+  0%, 100% { transform: translateX(0px) scaleX(1); }
+  50% { transform: translateX(-1px) scaleX(0.99); }
+}
+
+@keyframes grass-sway-fast {
+  0%, 100% { transform: translateX(0px) scaleX(1); }
+  50% { transform: translateX(1px) scaleX(1.005); }
+}
+
+@keyframes clouds-drift {
+  0% { background-position-x: 0%; }
+  100% { background-position-x: 100%; }
+}
+
+@keyframes cloud-float {
+  0%, 100% { transform: translateX(0px) translateY(0px); }
+  25% { transform: translateX(10px) translateY(-5px); }
+  50% { transform: translateX(0px) translateY(-10px); }
+  75% { transform: translateX(-10px) translateY(-5px); }
+}
+
+@keyframes wind-flow {
+  0%, 100% { background-position: 0% 0%; opacity: 0.1; }
+  50% { background-position: 100% 100%; opacity: 0.2; }
+}
