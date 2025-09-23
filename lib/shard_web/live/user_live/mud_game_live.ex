@@ -1106,13 +1106,23 @@ defmodule ShardWeb.MudGameLive do
         room_description = case GameMap.get_room_by_coordinates(x, y) do
           nil -> 
             # Fallback to tile-based description for tutorial terrain
-            tile = game_state.map_data |> Enum.at(y) |> Enum.at(x)
-            case tile do
-              0 -> "You see a solid stone wall."
-              1 -> "You are standing on a stone floor. The air is cool and damp."
-              2 -> "You see clear blue water. It looks deep."
-              3 -> "A glittering treasure chest sits here, beckoning you closer."
-              _ -> "You see something strange and unidentifiable."
+            # Ensure coordinates are within bounds before accessing map data
+            if y >= 0 and y < length(game_state.map_data) do
+              row = Enum.at(game_state.map_data, y)
+              if x >= 0 and x < length(row) do
+                tile = Enum.at(row, x)
+                case tile do
+                  0 -> "You see a solid stone wall."
+                  1 -> "You are standing on a stone floor. The air is cool and damp."
+                  2 -> "You see clear blue water. It looks deep."
+                  3 -> "A glittering treasure chest sits here, beckoning you closer."
+                  _ -> "You see something strange and unidentifiable."
+                end
+              else
+                "You are in an undefined area beyond the known world."
+              end
+            else
+              "You are in an undefined area beyond the known world."
             end
           room -> 
             room.description || "You are in #{room.name || "an unnamed room"}. The air is cool and damp."
