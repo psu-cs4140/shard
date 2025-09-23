@@ -1113,13 +1113,6 @@ defmodule ShardWeb.MudGameLive do
         # Check for NPCs at current location
         npcs_here = get_npcs_at_location(x, y, game_state.map_id)
         
-        # Debug output
-        IO.puts("Looking at position (#{x}, #{y}) in map #{game_state.map_id}")
-        IO.puts("Found #{length(npcs_here)} NPCs")
-        if length(npcs_here) > 0 do
-          IO.puts("NPCs: #{Enum.map(npcs_here, & &1.name) |> Enum.join(", ")}")
-        end
-        
         description_lines = [base_description]
         
         # Add NPC descriptions if any are present
@@ -1248,14 +1241,17 @@ defmodule ShardWeb.MudGameLive do
         nil -> []
         goldie -> 
           # Update Goldie's location to (0,0) if it's not already set
-          if goldie.location_x != 0 or goldie.location_y != 0 do
-            {:ok, updated_goldie} = goldie
-            |> Ecto.Changeset.change(%{location_x: 0, location_y: 0, location_z: 0})
-            |> Repo.update()
-            [updated_goldie]
+          updated_goldie = if goldie.location_x != 0 or goldie.location_y != 0 do
+            case goldie
+                 |> Ecto.Changeset.change(%{location_x: 0, location_y: 0, location_z: 0})
+                 |> Repo.update() do
+              {:ok, updated} -> updated
+              {:error, _} -> goldie
+            end
           else
-            [goldie]
+            goldie
           end
+          [updated_goldie]
       end
     else
       # For other maps, get NPCs by coordinates
@@ -1358,7 +1354,7 @@ defmodule ShardWeb.MudGameLive do
   end
   
   # Find a valid starting position on the map (first non-wall tile)
-  defp find_valid_starting_position(map_data) do
+  defp find_valid_starting_position(_map_data) do
     # For tutorial terrain, always start at {0,0} where Goldie is
     {0, 0}
   end
