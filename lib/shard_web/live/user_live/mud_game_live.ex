@@ -2,6 +2,7 @@ defmodule ShardWeb.MudGameLive do
   use ShardWeb, :live_view
   alias Shard.Map, as: GameMap
   alias Shard.Npcs.Npc
+  alias Shard.Quests.Quest
   alias Shard.Repo
   import Ecto.Query
 
@@ -1453,10 +1454,56 @@ defmodule ShardWeb.MudGameLive do
       _ -> "#{npc_name} acknowledges your presence."
     end
     
-    [
+    # Check for quests this NPC can give
+    available_quests = get_quests_by_giver_npc(npc.id)
+    
+    response = [
       personality_response,
       "",
-      "#{npc_name} says: \"#{dialogue}\"",
+      "#{npc_name} says: \"#{dialogue}\""
+    ]
+    
+    # Add quest information if any quests are available
+    if length(available_quests) > 0 do
+      response = response ++ [""]
+      
+      for quest <- available_quests do
+        quest_status_text = case quest.status do
+          "available" -> "#{npc_name} has a quest for you!"
+          "active" -> "#{npc_name} is waiting for you to complete your current quest."
+          "completed" -> "#{npc_name} thanks you for completing the quest."
+          _ -> "#{npc_name} mentions something about a quest."
+        end
+        
+        quest_description = quest.short_description || quest.description || "A mysterious quest awaits."
+        
+        response = response ++ [
+          quest_status_text,
+          "",
+          "Quest: #{quest.title}",
+          quest_description
+        ]
+        
+        # Add quest details for available quests
+        if quest.status == "available" do
+          response = response ++ [""]
+          
+          if quest.experience_reward && quest.experience_reward > 0 do
+            response = response ++ ["Reward: #{quest.experience_reward} experience"]
+          end
+          
+          if quest.gold_reward && quest.gold_reward > 0 do
+            response = response ++ ["Gold Reward: #{quest.gold_reward} gold"]
+          end
+          
+          if quest.min_level && quest.min_level > 0 do
+            response = response ++ ["Minimum Level: #{quest.min_level}"]
+          end
+        end
+      end
+    end
+    
+    response ++ [
       "",
       "#{npc_name} waits to see if you have anything else to say."
     ]
@@ -1470,6 +1517,14 @@ defmodule ShardWeb.MudGameLive do
     |> Repo.all()
     
     npcs
+  end
+
+  # Helper function to get quests by giver NPC ID
+  defp get_quests_by_giver_npc(npc_id) do
+    from(q in Quest,
+      where: q.giver_npc_id == ^npc_id and q.is_active == true,
+      order_by: [asc: q.sort_order, asc: q.id])
+    |> Repo.all()
   end
 
   # Helper function to generate map data from database
