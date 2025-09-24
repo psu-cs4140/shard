@@ -176,43 +176,69 @@ defmodule ShardWeb.MudGameLive do
         npc_name = npc.name || "Unknown NPC"
         quest_title = quest.title || "Untitled Quest"
         
-        # Check if quest has already been completed
-        if quest_completed_by_user_in_game_state?(quest.id, game_state) do
+        # Check if quest has already been accepted or completed
+        user_id = 1  # Mock user_id - should come from session in real implementation
+        if Shard.Quests.quest_ever_accepted_by_user?(user_id, quest.id) do
           response = [
             "#{npc_name} looks at you with confusion.",
             "",
-            "\"You have already completed this quest. I cannot offer it to you again.\""
+            "\"You have already accepted this quest. I cannot offer it to you again.\""
           ]
           
           updated_game_state = %{game_state | pending_quest_offer: nil}
           {response, updated_game_state}
         else
-          # Add quest to player's active quests
-          new_quest = %{
-            id: quest.id,
-            title: quest_title,
-            status: "In Progress",
-            progress: "0% complete",
-            npc_giver: npc_name,
-            description: quest.description
-          }
-          
-          updated_quests = [new_quest | game_state.quests]
-          
-          response = [
-            "You accept the quest '#{quest_title}' from #{npc_name}.",
-            "",
-            "#{npc_name} says: \"Excellent! I knew I could count on you.\"",
-            "",
-            "Quest '#{quest_title}' has been added to your quest log."
-          ]
-          
-          updated_game_state = %{game_state | 
-            quests: updated_quests,
-            pending_quest_offer: nil
-          }
-          
-          {response, updated_game_state}
+          # Accept the quest in the database
+          user_id = 1  # Mock user_id - should come from session in real implementation
+          case Shard.Quests.accept_quest(user_id, quest.id) do
+            {:ok, _quest_acceptance} ->
+              # Add quest to player's active quests in game state
+              new_quest = %{
+                id: quest.id,
+                title: quest_title,
+                status: "In Progress",
+                progress: "0% complete",
+                npc_giver: npc_name,
+                description: quest.description
+              }
+              
+              updated_quests = [new_quest | game_state.quests]
+              
+              response = [
+                "You accept the quest '#{quest_title}' from #{npc_name}.",
+                "",
+                "#{npc_name} says: \"Excellent! I knew I could count on you.\"",
+                "",
+                "Quest '#{quest_title}' has been added to your quest log."
+              ]
+              
+              updated_game_state = %{game_state | 
+                quests: updated_quests,
+                pending_quest_offer: nil
+              }
+              
+              {response, updated_game_state}
+            
+            {:error, :quest_already_completed} ->
+              response = [
+                "#{npc_name} looks at you with confusion.",
+                "",
+                "\"You have already completed this quest. I cannot offer it to you again.\""
+              ]
+              
+              updated_game_state = %{game_state | pending_quest_offer: nil}
+              {response, updated_game_state}
+            
+            {:error, _changeset} ->
+              response = [
+                "#{npc_name} looks troubled.",
+                "",
+                "\"I'm sorry, but there seems to be an issue with accepting this quest right now.\""
+              ]
+              
+              updated_game_state = %{game_state | pending_quest_offer: nil}
+              {response, updated_game_state}
+          end
         end
     end
   end
@@ -1702,20 +1728,16 @@ defmodule ShardWeb.MudGameLive do
 
   # Helper function to get quests by giver NPC ID excluding completed ones
   defp get_quests_by_giver_npc_excluding_completed(npc_id, user_id) do
-    # For now, we'll check the game state for completed quests
-    # In a full implementation, this would use the database functions
-    all_quests = get_quests_by_giver_npc(npc_id)
-    
-    # Filter out quests that are completed in the current game session
-    # This is a simplified approach for the tutorial terrain
-    all_quests
+    # Use the proper database function to exclude completed quests
+    Shard.Quests.get_available_quests_by_giver_excluding_completed(user_id, npc_id)
   end
 
-  # Helper function to check if a quest has been completed by the user in the current game state
-  defp quest_completed_by_user_in_game_state?(quest_id, game_state) do
-    Enum.any?(game_state.quests, fn quest ->
-      quest[:id] == quest_id && quest[:status] == "Completed"
-    end)
+  # Helper function to check if a quest has been completed by the user
+  defp quest_completed_by_user_in_game_state?(quest_id, _game_state) do
+    # Use a mock user_id of 1 for now - in a real implementation, 
+    # this should come from the current user session
+    user_id = 1
+    Shard.Quests.quest_completed_by_user?(user_id, quest_id)
   end
 
   # Generate quest response for an NPC
@@ -1909,14 +1931,29 @@ defmodule ShardWeb.MudGameLive do
     # Check if player levels up
     {updated_stats, level_up_message} = check_level_up(updated_stats)
     
-    # Mark the quest as completed in player's quest list
-    updated_quests = Enum.map(game_state.quests, fn q ->
-      if q[:id] == quest.id do
-        %{q | status: "Completed", progress: "100% complete"}
-      else
-        q
-      end
-    end)
+    # Complete the quest in the database
+    user_id = 1  # Mock user_id - should come from session in real implementation
+    case Shard.Quests.complete_quest(user_id, quest.id) do
+      {:ok, _quest_acceptance} ->
+        # Mark the quest as completed in player's quest list
+        updated_quests = Enum.map(game_state.quests, fn q ->
+          if q[:id] == quest.id do
+            %{q | status: "Completed", progress: "100% complete"}
+          else
+            q
+          end
+        end)
+      
+      {:error, _} ->
+        # If database update fails, still update game state for consistency
+        updated_quests = Enum.map(game_state.quests, fn q ->
+          if q[:id] == quest.id do
+            %{q | status: "Completed", progress: "100% complete"}
+          else
+            q
+          end
+        end)
+    end
     
     # Build response message
     response = [
