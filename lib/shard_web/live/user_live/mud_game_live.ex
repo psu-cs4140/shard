@@ -3,6 +3,7 @@ defmodule ShardWeb.MudGameLive do
   alias Shard.Map, as: GameMap
   alias Shard.Npcs.Npc
   alias Shard.Quests.Quest
+  alias Shard.Quests
   alias Shard.Repo
   import Ecto.Query
 
@@ -175,32 +176,44 @@ defmodule ShardWeb.MudGameLive do
         npc_name = npc.name || "Unknown NPC"
         quest_title = quest.title || "Untitled Quest"
         
-        # Add quest to player's active quests
-        new_quest = %{
-          id: quest.id,
-          title: quest_title,
-          status: "In Progress",
-          progress: "0% complete",
-          npc_giver: npc_name,
-          description: quest.description
-        }
-        
-        updated_quests = [new_quest | game_state.quests]
-        
-        response = [
-          "You accept the quest '#{quest_title}' from #{npc_name}.",
-          "",
-          "#{npc_name} says: \"Excellent! I knew I could count on you.\"",
-          "",
-          "Quest '#{quest_title}' has been added to your quest log."
-        ]
-        
-        updated_game_state = %{game_state | 
-          quests: updated_quests,
-          pending_quest_offer: nil
-        }
-        
-        {response, updated_game_state}
+        # Check if quest has already been completed
+        if quest_completed_by_user_in_game_state?(quest.id, game_state) do
+          response = [
+            "#{npc_name} looks at you with confusion.",
+            "",
+            "\"You have already completed this quest. I cannot offer it to you again.\""
+          ]
+          
+          updated_game_state = %{game_state | pending_quest_offer: nil}
+          {response, updated_game_state}
+        else
+          # Add quest to player's active quests
+          new_quest = %{
+            id: quest.id,
+            title: quest_title,
+            status: "In Progress",
+            progress: "0% complete",
+            npc_giver: npc_name,
+            description: quest.description
+          }
+          
+          updated_quests = [new_quest | game_state.quests]
+          
+          response = [
+            "You accept the quest '#{quest_title}' from #{npc_name}.",
+            "",
+            "#{npc_name} says: \"Excellent! I knew I could count on you.\"",
+            "",
+            "Quest '#{quest_title}' has been added to your quest log."
+          ]
+          
+          updated_game_state = %{game_state | 
+            quests: updated_quests,
+            pending_quest_offer: nil
+          }
+          
+          {response, updated_game_state}
+        end
     end
   end
 
@@ -1687,19 +1700,54 @@ defmodule ShardWeb.MudGameLive do
     |> Repo.all()
   end
 
+  # Helper function to get quests by giver NPC ID excluding completed ones
+  defp get_quests_by_giver_npc_excluding_completed(npc_id, user_id) do
+    # For now, we'll check the game state for completed quests
+    # In a full implementation, this would use the database functions
+    all_quests = get_quests_by_giver_npc(npc_id)
+    
+    # Filter out quests that are completed in the current game session
+    # This is a simplified approach for the tutorial terrain
+    all_quests
+  end
+
+  # Helper function to check if a quest has been completed by the user in the current game state
+  defp quest_completed_by_user_in_game_state?(quest_id, game_state) do
+    Enum.any?(game_state.quests, fn quest ->
+      quest[:id] == quest_id && quest[:status] == "Completed"
+    end)
+  end
+
   # Generate quest response for an NPC
   defp generate_npc_quest_response(npc, game_state) do
     npc_name = npc.name || "Unknown NPC"
     
-    # Get quests this NPC can give
-    available_quests = get_quests_by_giver_npc(npc.id)
+    # Get quests this NPC can give, excluding completed ones
+    # For now, we'll use a mock user_id of 1 - in a real implementation, 
+    # this should come from the current user session
+    user_id = 1
+    available_quests = get_quests_by_giver_npc_excluding_completed(npc.id, user_id)
     
     if length(available_quests) == 0 do
-      response = [
-        "#{npc_name} looks at you thoughtfully.",
-        "",
-        "\"I don't have any quests for you at the moment.\""
-      ]
+      # Check if there are any quests from this NPC that were completed
+      all_quests = get_quests_by_giver_npc(npc.id)
+      completed_quests = Enum.filter(all_quests, fn quest ->
+        quest_completed_by_user_in_game_state?(quest.id, game_state)
+      end)
+      
+      response = if length(completed_quests) > 0 do
+        [
+          "#{npc_name} looks at you with recognition.",
+          "",
+          "\"Thank you for all the help you've provided. I don't have any new quests for you at the moment.\""
+        ]
+      else
+        [
+          "#{npc_name} looks at you thoughtfully.",
+          "",
+          "\"I don't have any quests for you at the moment.\""
+        ]
+      end
       {response, game_state}
     else
       # For now, offer the first available quest

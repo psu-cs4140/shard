@@ -127,6 +127,42 @@ defmodule Shard.Quests do
   end
 
   @doc """
+  Checks if a user has already completed a specific quest.
+
+  ## Examples
+
+      iex> quest_completed_by_user?(user_id, quest_id)
+      true
+
+      iex> quest_completed_by_user?(user_id, quest_id)
+      false
+
+  """
+  def quest_completed_by_user?(user_id, quest_id) do
+    from(qa in QuestAcceptance,
+      where: qa.user_id == ^user_id and qa.quest_id == ^quest_id and qa.status == "completed")
+    |> Repo.exists?()
+  end
+
+  @doc """
+  Checks if a user has ever accepted a quest (regardless of current status).
+
+  ## Examples
+
+      iex> quest_ever_accepted_by_user?(user_id, quest_id)
+      true
+
+      iex> quest_ever_accepted_by_user?(user_id, quest_id)
+      false
+
+  """
+  def quest_ever_accepted_by_user?(user_id, quest_id) do
+    from(qa in QuestAcceptance,
+      where: qa.user_id == ^user_id and qa.quest_id == ^quest_id)
+    |> Repo.exists?()
+  end
+
+  @doc """
   Accepts a quest for a user.
 
   ## Examples
@@ -139,9 +175,38 @@ defmodule Shard.Quests do
 
   """
   def accept_quest(user_id, quest_id) do
-    %QuestAcceptance{}
-    |> QuestAcceptance.accept_changeset(%{user_id: user_id, quest_id: quest_id})
-    |> Repo.insert()
+    # Check if the user has already completed this quest
+    if quest_completed_by_user?(user_id, quest_id) do
+      {:error, :quest_already_completed}
+    else
+      %QuestAcceptance{}
+      |> QuestAcceptance.accept_changeset(%{user_id: user_id, quest_id: quest_id})
+      |> Repo.insert()
+    end
+  end
+
+  @doc """
+  Completes a quest for a user.
+
+  ## Examples
+
+      iex> complete_quest(user_id, quest_id)
+      {:ok, %QuestAcceptance{}}
+
+      iex> complete_quest(user_id, quest_id)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def complete_quest(user_id, quest_id) do
+    case from(qa in QuestAcceptance,
+      where: qa.user_id == ^user_id and qa.quest_id == ^quest_id and qa.status in ["accepted", "in_progress"])
+    |> Repo.one() do
+      nil -> {:error, :quest_not_found}
+      quest_acceptance ->
+        quest_acceptance
+        |> QuestAcceptance.changeset(%{status: "completed"})
+        |> Repo.update()
+    end
   end
 
   @doc """
@@ -214,6 +279,31 @@ defmodule Shard.Quests do
              q.is_active == true and 
              q.status == "available" and
              q.id not in subquery(accepted_quest_ids),
+      order_by: [asc: q.sort_order, asc: q.id])
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets quests by giver NPC that are available to a user and haven't been completed.
+  This excludes quests that have been completed to prevent repetition.
+
+  ## Examples
+
+      iex> get_available_quests_by_giver_excluding_completed(user_id, npc_id)
+      [%Quest{}, ...]
+
+  """
+  def get_available_quests_by_giver_excluding_completed(user_id, npc_id) do
+    # Get all quest IDs that the user has ever accepted (including completed ones)
+    ever_accepted_quest_ids = from(qa in QuestAcceptance,
+      where: qa.user_id == ^user_id,
+      select: qa.quest_id)
+
+    from(q in Quest,
+      where: q.giver_npc_id == ^npc_id and 
+             q.is_active == true and 
+             q.status == "available" and
+             q.id not in subquery(ever_accepted_quest_ids),
       order_by: [asc: q.sort_order, asc: q.id])
     |> Repo.all()
   end
