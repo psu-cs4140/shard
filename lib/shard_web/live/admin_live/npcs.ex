@@ -386,8 +386,8 @@ defmodule ShardWeb.AdminLive.Npcs do
         movement_pattern: "stationary",
         is_active: true,
         dialogue: "Welcome, young adventurer! I have been expecting you. There are many mysteries in this realm that need solving.",
-        location_x: 3,
-        location_y: 2,
+        location_x: 0,
+        location_y: 1,
         location_z: 0
       },
       %{
