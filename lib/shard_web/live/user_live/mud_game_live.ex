@@ -1165,6 +1165,7 @@ defmodule ShardWeb.MudGameLive do
           "  quest \"npc_name\" - Get quest from a specific NPC",
           "  accept - Accept a quest offer",
           "  deny - Deny a quest offer",
+          "  deliver_quest \"npc_name\" - Deliver completed quest to NPC",
           "  north/south/east/west - Move in cardinal directions",
           "  northeast/southeast/northwest/southwest - Move diagonally",
           "  Shortcuts: n/s/e/w/ne/se/nw/sw",
@@ -1341,7 +1342,13 @@ defmodule ShardWeb.MudGameLive do
               {:ok, npc_name} ->
                 execute_quest_command(game_state, npc_name)
               :error ->
-                {["Unknown command: '#{command}'. Type 'help' for available commands."], game_state}
+                # Check if it's a deliver_quest command
+                case parse_deliver_quest_command(command) do
+                  {:ok, npc_name} ->
+                    execute_deliver_quest_command(game_state, npc_name)
+                  :error ->
+                    {["Unknown command: '#{command}'. Type 'help' for available commands."], game_state}
+                end
             end
         end
     end
@@ -1493,6 +1500,28 @@ defmodule ShardWeb.MudGameLive do
       # Match quest npc_name (single word, no quotes)
       Regex.match?(~r/^quest\s+(\w+)\s*$/i, command) ->
         case Regex.run(~r/^quest\s+(\w+)\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+      
+      true -> :error
+    end
+  end
+
+  # Parse deliver_quest command to extract NPC name
+  defp parse_deliver_quest_command(command) do
+    # Match patterns like: deliver_quest "npc name", deliver_quest 'npc name', deliver_quest npc_name
+    cond do
+      # Match deliver_quest "npc name" or deliver_quest 'npc name'
+      Regex.match?(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+      
+      # Match deliver_quest npc_name (single word, no quotes)
+      Regex.match?(~r/^deliver_quest\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^deliver_quest\s+(\w+)\s*$/i, command) do
           [_, npc_name] -> {:ok, String.trim(npc_name)}
           _ -> :error
         end
@@ -1748,6 +1777,170 @@ defmodule ShardWeb.MudGameLive do
       }
       
       {full_response, updated_game_state}
+    end
+  end
+
+  # Execute deliver_quest command with a specific NPC
+  defp execute_deliver_quest_command(game_state, npc_name) do
+    {x, y} = game_state.player_position
+    npcs_here = get_npcs_at_location(x, y, game_state.map_id)
+    
+    # Find the NPC by name (case-insensitive)
+    target_npc = Enum.find(npcs_here, fn npc ->
+      npc_name_normalized = String.downcase(npc.name || "")
+      input_name_normalized = String.downcase(npc_name)
+      npc_name_normalized == input_name_normalized
+    end)
+    
+    case target_npc do
+      nil ->
+        if length(npcs_here) > 0 do
+          available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+          response = [
+            "There is no NPC named '#{npc_name}' here.",
+            "Available NPCs: #{available_names}"
+          ]
+          {response, game_state}
+        else
+          {["There are no NPCs here to deliver quests to."], game_state}
+        end
+      
+      npc ->
+        # Find active quests that can be turned in to this NPC
+        deliverable_quest = find_deliverable_quest(game_state.quests, npc)
+        
+        case deliverable_quest do
+          nil ->
+            npc_display_name = npc.name || "Unknown NPC"
+            response = [
+              "#{npc_display_name} looks at you expectantly.",
+              "",
+              "\"I don't see any completed quests that you can turn in to me.\""
+            ]
+            {response, game_state}
+          
+          quest ->
+            # Complete the quest and give rewards
+            complete_quest_and_give_rewards(game_state, quest, npc)
+        end
+    end
+  end
+
+  # Find a quest that can be delivered to the specified NPC
+  defp find_deliverable_quest(player_quests, npc) do
+    # Look for quests that are "In Progress" and have this NPC as the turn-in target
+    Enum.find(player_quests, fn quest ->
+      quest.status == "In Progress" && 
+      (quest[:npc_giver] == npc.name || quest[:turn_in_npc] == npc.name)
+    end)
+  end
+
+  # Complete the quest and give rewards to the player
+  defp complete_quest_and_give_rewards(game_state, quest, npc) do
+    npc_name = npc.name || "Unknown NPC"
+    quest_title = quest.title || "Untitled Quest"
+    
+    # Get the full quest data from database if we have an ID
+    full_quest = if quest[:id] do
+      Repo.get(Quest, quest.id)
+    else
+      nil
+    end
+    
+    # Calculate rewards
+    exp_reward = if full_quest && full_quest.experience_reward do
+      full_quest.experience_reward
+    else
+      100  # Default experience reward
+    end
+    
+    gold_reward = if full_quest && full_quest.gold_reward do
+      full_quest.gold_reward
+    else
+      50  # Default gold reward
+    end
+    
+    # Update player stats with rewards
+    updated_stats = game_state.player_stats
+    |> Map.update(:experience, 0, &(&1 + exp_reward))
+    
+    # Check if player levels up
+    {updated_stats, level_up_message} = check_level_up(updated_stats)
+    
+    # Remove the completed quest from player's quest list
+    updated_quests = Enum.map(game_state.quests, fn q ->
+      if q.title == quest_title do
+        %{q | status: "Completed", progress: "100% complete"}
+      else
+        q
+      end
+    end)
+    
+    # Build response message
+    response = [
+      "#{npc_name} examines your progress carefully.",
+      "",
+      "\"Excellent work! You have completed the quest '#{quest_title}'!\"",
+      "",
+      "Quest Completed: #{quest_title}",
+      "Experience gained: #{exp_reward} XP"
+    ]
+    
+    response = if gold_reward > 0 do
+      response ++ ["Gold received: #{gold_reward} gold"]
+    else
+      response
+    end
+    
+    # Add item rewards if any
+    response = if full_quest && full_quest.item_rewards && map_size(full_quest.item_rewards) > 0 do
+      item_list = Enum.map(full_quest.item_rewards, fn {_key, item} -> "  - #{item}" end)
+      response ++ ["Items received:"] ++ item_list
+    else
+      response
+    end
+    
+    # Add level up message if applicable
+    response = if level_up_message do
+      response ++ ["", level_up_message]
+    else
+      response
+    end
+    
+    response = response ++ [
+      "",
+      "#{npc_name} says: \"Thank you for your service. You have proven yourself worthy!\""
+    ]
+    
+    # Update game state
+    updated_game_state = %{game_state |
+      player_stats: updated_stats,
+      quests: updated_quests
+    }
+    
+    {response, updated_game_state}
+  end
+
+  # Check if player should level up based on experience
+  defp check_level_up(stats) do
+    if stats.experience >= stats.next_level_exp do
+      new_level = stats.level + 1
+      new_next_level_exp = stats.next_level_exp + (new_level * 500)  # Scaling experience requirement
+      
+      updated_stats = stats
+      |> Map.put(:level, new_level)
+      |> Map.put(:next_level_exp, new_next_level_exp)
+      |> Map.update(:max_health, 100, &(&1 + 10))  # Increase max health
+      |> Map.update(:max_stamina, 100, &(&1 + 5))  # Increase max stamina
+      |> Map.update(:max_mana, 100, &(&1 + 5))     # Increase max mana
+      |> Map.update(:strength, 10, &(&1 + 1))      # Increase strength
+      |> Map.update(:health, 100, &min(&1 + 10, updated_stats.max_health + 10))  # Restore some health
+      
+      level_up_message = "*** LEVEL UP! *** You are now level #{new_level}!"
+      
+      {updated_stats, level_up_message}
+    else
+      {stats, nil}
     end
   end
 
