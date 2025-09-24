@@ -1356,3 +1356,27 @@
 
 # 2025-09-23 23:06:41.397070
 +y
+
+# 2025-09-23 23:12:14.568072
++create a command "deliver_quest npc_name" that checks to see if there is an active quest with a turn in npc of the same name. If so, then have the quest completed and give the player the reward.
+
+# 2025-09-23 23:12:22.959382
++y
+
+# 2025-09-23 23:15:29.554161
++when i try to run mix phx.server i get an error that there is an undefined variable "updated stats" in lib/shard_web/live/user_live/mud_game_live.ex.1937
+
+# 2025-09-23 23:16:52.611219
++y
+
+# 2025-09-23 23:17:02.956391
++/run mix phx.server
+
+# 2025-09-23 23:17:02.956469
++/run mix phx.server
+
+# 2025-09-23 23:18:19.992783
++y
+
+# 2025-09-23 23:20:26.941462
++when you say "deliver_quest npc_name", it should see what quests are active, not completed. If a quest is active, check the turn in NPC field of the active quest in the database and see if it matches the NPC the player is talking to. If it does, then the npc should say thank you and the quest labelled as complete with the associated rewards given to the player
