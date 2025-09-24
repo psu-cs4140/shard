@@ -178,7 +178,16 @@ defmodule ShardWeb.MudGameLive do
         
         # Check if quest has already been accepted or completed
         user_id = 1  # Mock user_id - should come from session in real implementation
-        if Shard.Quests.quest_ever_accepted_by_user?(user_id, quest.id) do
+        
+        already_accepted = try do
+          Shard.Quests.quest_ever_accepted_by_user?(user_id, quest.id)
+        rescue
+          error ->
+            IO.inspect(error, label: "Error checking if quest already accepted")
+            false
+        end
+        
+        if already_accepted do
           response = [
             "#{npc_name} looks at you with confusion.",
             "",
@@ -189,8 +198,15 @@ defmodule ShardWeb.MudGameLive do
           {response, updated_game_state}
         else
           # Accept the quest in the database
-          user_id = 1  # Mock user_id - should come from session in real implementation
-          case Shard.Quests.accept_quest(user_id, quest.id) do
+          accept_result = try do
+            Shard.Quests.accept_quest(user_id, quest.id)
+          rescue
+            error ->
+            IO.inspect(error, label: "Error accepting quest")
+            {:error, :database_error}
+          end
+          
+          case accept_result do
             {:ok, _quest_acceptance} ->
               # Add quest to player's active quests in game state
               new_quest = %{
@@ -227,6 +243,35 @@ defmodule ShardWeb.MudGameLive do
               ]
               
               updated_game_state = %{game_state | pending_quest_offer: nil}
+              {response, updated_game_state}
+            
+            {:error, :database_error} ->
+              # Fallback: add quest to game state even if database fails
+              new_quest = %{
+                id: quest.id,
+                title: quest_title,
+                status: "In Progress",
+                progress: "0% complete",
+                npc_giver: npc_name,
+                description: quest.description
+              }
+              
+              updated_quests = [new_quest | game_state.quests]
+              
+              response = [
+                "You accept the quest '#{quest_title}' from #{npc_name}.",
+                "",
+                "#{npc_name} says: \"Excellent! I knew I could count on you.\"",
+                "",
+                "Quest '#{quest_title}' has been added to your quest log.",
+                "(Note: Quest saved locally due to database issue)"
+              ]
+              
+              updated_game_state = %{game_state | 
+                quests: updated_quests,
+                pending_quest_offer: nil
+              }
+              
               {response, updated_game_state}
             
             {:error, _changeset} ->
