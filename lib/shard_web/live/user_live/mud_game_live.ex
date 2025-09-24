@@ -1,20 +1,28 @@
 defmodule ShardWeb.MudGameLive do
   use ShardWeb, :live_view
   alias Shard.Map, as: GameMap
+  alias Shard.Npcs.Npc
+  alias Shard.Quests.Quest
+  alias Shard.Quests
   alias Shard.Repo
+  import Ecto.Query
 
   @impl true
-  def mount(_params, _session, socket) do
-    # Generate map data first
-    map_data = generate_map_from_database()
+  def mount(%{"map_id" => map_id}, _session, socket) do
+    # Generate map data based on selected map
+    map_data = generate_map_from_database(map_id)
     
     # Find a valid starting position (first floor tile found)
     starting_position = find_valid_starting_position(map_data)
+    
+    # Store the map_id for later use
+    map_id = map_id
     
     # Initialize game state
     game_state = %{
       player_position: starting_position,
       map_data: map_data,
+      map_id: map_id,
       active_panel: nil,
       player_stats: %{
         health: 100,
@@ -45,10 +53,9 @@ defmodule ShardWeb.MudGameLive do
         slot_5: nil
       },
       quests: [
-        %{title: "The Lost Artifact", status: "In Progress", progress: "2/5 artifacts found"},
-        %{title: "Clear the Dungeon", status: "Available", progress: "0/10 enemies slain"},
-        %{title: "Merchant's Request", status: "Completed", progress: "Done"}
-      ]
+        
+      ],
+      pending_quest_offer: nil  # Stores quest offer waiting for acceptance/denial
     }
 
     terminal_state = %{
@@ -157,6 +164,152 @@ defmodule ShardWeb.MudGameLive do
       </footer>
     </div>
     """
+  end
+
+  # Execute quest acceptance
+  defp execute_accept_quest(game_state) do
+    case game_state.pending_quest_offer do
+      nil ->
+        {["There is no quest offer to accept."], game_state}
+      
+      %{quest: quest, npc: npc} ->
+        npc_name = npc.name || "Unknown NPC"
+        quest_title = quest.title || "Untitled Quest"
+        
+        # Check if quest has already been accepted or completed
+        user_id = 1  # Mock user_id - should come from session in real implementation
+        
+        already_accepted = try do
+          Shard.Quests.quest_ever_accepted_by_user?(user_id, quest.id)
+        rescue
+          error ->
+            IO.inspect(error, label: "Error checking if quest already accepted")
+            false
+        end
+        
+        if already_accepted do
+          response = [
+            "#{npc_name} looks at you with confusion.",
+            "",
+            "\"You have already accepted this quest. I cannot offer it to you again.\""
+          ]
+          
+          updated_game_state = %{game_state | pending_quest_offer: nil}
+          {response, updated_game_state}
+        else
+          # Accept the quest in the database
+          accept_result = try do
+            Shard.Quests.accept_quest(user_id, quest.id)
+          rescue
+            error ->
+            IO.inspect(error, label: "Error accepting quest")
+            {:error, :database_error}
+          end
+          
+          case accept_result do
+            {:ok, _quest_acceptance} ->
+              # Add quest to player's active quests in game state
+              new_quest = %{
+                id: quest.id,
+                title: quest_title,
+                status: "In Progress",
+                progress: "0% complete",
+                npc_giver: npc_name,
+                description: quest.description
+              }
+              
+              updated_quests = [new_quest | game_state.quests]
+              
+              response = [
+                "You accept the quest '#{quest_title}' from #{npc_name}.",
+                "",
+                "#{npc_name} says: \"Excellent! I knew I could count on you.\"",
+                "",
+                "Quest '#{quest_title}' has been added to your quest log."
+              ]
+              
+              updated_game_state = %{game_state | 
+                quests: updated_quests,
+                pending_quest_offer: nil
+              }
+              
+              {response, updated_game_state}
+            
+            {:error, :quest_already_completed} ->
+              response = [
+                "#{npc_name} looks at you with confusion.",
+                "",
+                "\"You have already completed this quest. I cannot offer it to you again.\""
+              ]
+              
+              updated_game_state = %{game_state | pending_quest_offer: nil}
+              {response, updated_game_state}
+            
+            {:error, :database_error} ->
+              # Fallback: add quest to game state even if database fails
+              new_quest = %{
+                id: quest.id,
+                title: quest_title,
+                status: "In Progress",
+                progress: "0% complete",
+                npc_giver: npc_name,
+                description: quest.description
+              }
+              
+              updated_quests = [new_quest | game_state.quests]
+              
+              response = [
+                "You accept the quest '#{quest_title}' from #{npc_name}.",
+                "",
+                "#{npc_name} says: \"Excellent! I knew I could count on you.\"",
+                "",
+                "Quest '#{quest_title}' has been added to your quest log.",
+                "(Note: Quest saved locally due to database issue)"
+              ]
+              
+              updated_game_state = %{game_state | 
+                quests: updated_quests,
+                pending_quest_offer: nil
+              }
+              
+              {response, updated_game_state}
+            
+            {:error, _changeset} ->
+              response = [
+                "#{npc_name} looks troubled.",
+                "",
+                "\"I'm sorry, but there seems to be an issue with accepting this quest right now.\""
+              ]
+              
+              updated_game_state = %{game_state | pending_quest_offer: nil}
+              {response, updated_game_state}
+          end
+        end
+    end
+  end
+
+  # Execute quest denial
+  defp execute_deny_quest(game_state) do
+    case game_state.pending_quest_offer do
+      nil ->
+        {["There is no quest offer to deny."], game_state}
+      
+      %{quest: quest, npc: npc} ->
+        npc_name = npc.name || "Unknown NPC"
+        quest_title = quest.title || "Untitled Quest"
+        
+        response = [
+          "You decline the quest '#{quest_title}' from #{npc_name}.",
+          "",
+          "#{npc_name} says: \"I understand. Perhaps another time when you're ready.\"",
+          "",
+          "The quest offer has been declined."
+        ]
+        
+        updated_game_state = %{game_state | pending_quest_offer: nil}
+        
+        {response, updated_game_state}
+    end
   end
 
   defp character_sheet(assigns) do
@@ -634,11 +787,13 @@ defmodule ShardWeb.MudGameLive do
     game_state = %{
       player_position: new_position,
       map_data: map_data,
+      map_id: socket.assigns.game_state.map_id,
       active_panel: nil,
       player_stats: socket.assigns.game_state.player_stats,
       hotbar: socket.assigns.game_state.hotbar,
       inventory_items: socket.assigns.game_state.inventory_items,
-      quests: socket.assigns.game_state.quests
+      quests: socket.assigns.game_state.quests,
+      pending_quest_offer: socket.assigns.game_state.pending_quest_offer
     }
     {:noreply, assign(socket, game_state: game_state, terminal_state: terminal_state)}
   end
@@ -1087,6 +1242,12 @@ defmodule ShardWeb.MudGameLive do
           "  stats - Show your character stats",
           "  position - Show your current position",
           "  inventory - Show your inventory (coming soon)",
+          "  npc - Show descriptions of NPCs in this room",
+          "  talk \"npc_name\" - Talk to a specific NPC",
+          "  quest \"npc_name\" - Get quest from a specific NPC",
+          "  accept - Accept a quest offer",
+          "  deny - Deny a quest offer",
+          "  deliver_quest \"npc_name\" - Deliver completed quest to NPC",
           "  north/south/east/west - Move in cardinal directions",
           "  northeast/southeast/northwest/southwest - Move diagonally",
           "  Shortcuts: n/s/e/w/ne/se/nw/sw",
@@ -1096,15 +1257,98 @@ defmodule ShardWeb.MudGameLive do
 
       "look" ->
         {x, y} = game_state.player_position
-        tile = game_state.map_data |> Enum.at(y) |> Enum.at(x)
-        description = case tile do
-          0 -> "You see a solid stone wall."
-          1 -> "You are standing on a stone floor. The air is cool and damp."
-          2 -> "You see clear blue water. It looks deep."
-          3 -> "A glittering treasure chest sits here, beckoning you closer."
-          _ -> "You see something strange and unidentifiable."
+        
+        # Get room from database
+        room = GameMap.get_room_by_coordinates(x, y)
+        
+        # Build room description - always use predetermined descriptions for tutorial terrain
+        room_description = if game_state.map_id == "tutorial_terrain" do
+          # Provide tutorial-specific descriptions based on coordinates
+          case {x, y} do
+            {0, 0} -> "Tutorial Starting Chamber\nYou are in a small stone chamber with rough-hewn walls. Ancient torches mounted on iron brackets cast flickering light across the weathered stones. This appears to be the beginning of your adventure. You can see worn footprints in the dust, suggesting others have passed this way before."
+            
+            {1, 0} -> "Eastern Alcove\nA narrow alcove extends eastward from the starting chamber. The walls here are carved with simple symbols that seem to glow faintly in the torchlight. The air carries a hint of something ancient and mysterious."
+            
+            {0, 1} -> "Southern Passage\nA short passage leads south from the starting chamber. The stone floor is worn smooth by countless footsteps. Moisture drips steadily from somewhere in the darkness ahead."
+            
+            {1, 1} -> "Corner Junction\nYou stand at a junction where two passages meet. The walls here show signs of careful construction, with fitted stones and mortar still holding strong after unknown years. A cool breeze flows through the intersection."
+            
+            {5, 5} -> "Central Treasure Chamber\nYou stand in a magnificent circular chamber with a high vaulted ceiling. Ornate pillars support graceful arches, and in the center sits an elaborate treasure chest made of dark wood bound with brass. The chest gleams with an inner light, and precious gems are scattered around its base."
+            
+            {2, 2} -> "Training Grounds\nThis rectangular chamber appears to have been used for combat training. Wooden practice dummies stand against the walls, and the floor is marked with scuff marks from countless sparring sessions. Weapon racks line the eastern wall."
+            
+            {3, 3} -> "Meditation Garden\nA peaceful underground garden with carefully tended moss growing in geometric patterns on the floor. A small fountain in the center provides the gentle sound of flowing water. The air here feels calm and restorative."
+            
+            {4, 4} -> "Library Ruins\nThe remains of what was once a grand library. Broken shelves line the walls, and scattered parchments lie across the floor. A few intact books rest on a reading table, their pages yellowed with age but still legible."
+            
+            {6, 6} -> "Armory\nA well-organized armory with weapons and armor displayed on stands and hanging from hooks. Most of the equipment shows signs of age, but some pieces still gleam with careful maintenance. A forge in the corner appears recently used."
+            
+            {7, 7} -> "Crystal Cavern\nA natural cavern where the walls are embedded with glowing crystals that provide a soft, blue-white light. The crystals hum with a barely audible resonance, and the air shimmers with magical energy."
+            
+            {8, 8} -> "Underground Lake\nYou stand on the shore of a vast underground lake. The water is crystal clear and so still it perfectly reflects the cavern ceiling above. Strange fish with luminescent scales can be seen swimming in the depths."
+            
+            {9, 9} -> "Ancient Shrine\nA small shrine dedicated to forgotten deities. Stone statues stand in alcoves around the room, their faces worn smooth by time. An altar in the center holds offerings left by previous visitors - coins, flowers, and small trinkets."
+            
+            _ -> 
+              # Check tile type for other positions
+              if y >= 0 and y < length(game_state.map_data) do
+                row = Enum.at(game_state.map_data, y)
+                if x >= 0 and x < length(row) do
+                  tile = Enum.at(row, x)
+                  case tile do
+                    0 -> "Solid Stone Wall\nYou face an impenetrable wall of fitted stone blocks. The craftsmanship is excellent, with no gaps or weaknesses visible. There's no passage here."
+                    1 -> "Stone Corridor\nYou are in a well-constructed stone corridor. The walls are made of carefully fitted blocks, and the floor is worn smooth by the passage of many feet over the years. Torch brackets line the walls, though most are empty. The air is cool and carries the faint scent of old stone and distant moisture."
+                    2 -> "Underground Pool\nYou stand beside a clear underground pool fed by a natural spring. The water is deep and perfectly still, reflecting the ceiling above like a mirror. Small ripples occasionally disturb the surface as drops fall from stalactites overhead. The air here is humid and fresh."
+                    3 -> "Treasure Alcove\nA small alcove has been carved into the stone wall here. The niche shows signs of having once held something valuable - there are mounting brackets and a small pedestal. Scratches on the floor suggest heavy objects were once moved in and out of this space."
+                    _ -> "Mystical Chamber\nYou are in a chamber that defies easy description. The very air seems to shimmer with arcane energy, and the walls appear to shift slightly when you're not looking directly at them. Strange symbols carved into the stone pulse with a faint, otherworldly light."
+                  end
+                else
+                  "The Void\nYou have somehow moved beyond the boundaries of the known world. Reality becomes uncertain here, and the very ground beneath your feet feels insubstantial. Wisps of strange energy drift through the air, and distant sounds echo from nowhere."
+                end
+              else
+                "The Void\nYou have somehow moved beyond the boundaries of the known world. Reality becomes uncertain here, and the very ground beneath your feet feels insubstantial. Wisps of strange energy drift through the air, and distant sounds echo from nowhere."
+              end
+          end
+        else
+          # For non-tutorial maps, use room data from database if available
+          case room do
+            nil -> "Empty Space\nYou are in an empty area with no defined room. The ground beneath your feet feels uncertain, as if this space exists between the cracks of reality."
+            room -> 
+              room_title = room.name || "Unnamed Room"
+              room_desc = room.description || "A mysterious room with no particular features. The walls are bare stone, and the air is still and quiet."
+              "#{room_title}\n#{room_desc}"
+          end
         end
-        {[description], game_state}
+        
+        # Check for NPCs at current location
+        npcs_here = get_npcs_at_location(x, y, game_state.map_id)
+        
+        description_lines = [room_description]
+        
+        # Add NPC descriptions if any are present
+        if length(npcs_here) > 0 do
+          description_lines = description_lines ++ [""]  # Empty line for spacing
+          
+          # Add each NPC with their description
+          npc_descriptions = Enum.map(npcs_here, fn npc ->
+            npc_name = Map.get(npc, :name) || "Unknown NPC"
+            npc_desc = Map.get(npc, :description) || "They look at you with interest."
+            "#{npc_name} is here.\n#{npc_desc}"
+          end)
+          description_lines = description_lines ++ npc_descriptions
+        end
+        
+        # Add available exits information
+        exits = get_available_exits(x, y, room)
+        if length(exits) > 0 do
+          description_lines = description_lines ++ [""]
+          exit_text = "Exits: " <> Enum.join(exits, ", ")
+          description_lines = description_lines ++ [exit_text]
+        else
+          description_lines = description_lines ++ ["", "There are no obvious exits."]
+        end
+        
+        {description_lines, game_state}
 
       "stats" ->
         stats = game_state.player_stats
@@ -1122,6 +1366,22 @@ defmodule ShardWeb.MudGameLive do
 
       "inventory" ->
         {["Your inventory is empty. (Feature coming soon!)"], game_state}
+
+      "npc" ->
+        {x, y} = game_state.player_position
+        npcs_here = get_npcs_at_location(x, y, game_state.map_id)
+        
+        if length(npcs_here) > 0 do
+          response = ["NPCs in this area:"] ++
+            Enum.flat_map(npcs_here, fn npc ->
+              npc_name = Map.get(npc, :name) || "Unknown NPC"
+              npc_desc = Map.get(npc, :description) || "They look at you with interest."
+              ["", "#{npc_name}:", npc_desc]
+            end)
+          {response, game_state}
+        else
+          {["There are no NPCs in this area."], game_state}
+        end
 
       cmd when cmd in ["north", "n"] ->
         execute_movement(game_state, "ArrowUp")
@@ -1147,8 +1407,32 @@ defmodule ShardWeb.MudGameLive do
       cmd when cmd in ["southwest", "sw"] ->
         execute_movement(game_state, "southwest")
 
+      "accept" ->
+        execute_accept_quest(game_state)
+
+      "deny" ->
+        execute_deny_quest(game_state)
+
       _ ->
-        {["Unknown command: '#{command}'. Type 'help' for available commands."], game_state}
+        # Check if it's a talk command
+        case parse_talk_command(command) do
+          {:ok, npc_name} ->
+            execute_talk_command(game_state, npc_name)
+          :error ->
+            # Check if it's a quest command
+            case parse_quest_command(command) do
+              {:ok, npc_name} ->
+                execute_quest_command(game_state, npc_name)
+              :error ->
+                # Check if it's a deliver_quest command
+                case parse_deliver_quest_command(command) do
+                  {:ok, npc_name} ->
+                    execute_deliver_quest_command(game_state, npc_name)
+                  :error ->
+                    {["Unknown command: '#{command}'. Type 'help' for available commands."], game_state}
+                end
+            end
+        end
     end
   end
 
@@ -1174,7 +1458,18 @@ defmodule ShardWeb.MudGameLive do
 
       # Update game state with new position
       updated_game_state = %{game_state | player_position: new_pos}
+      
+      # Check for NPCs at the new location
+      {new_x, new_y} = new_pos
+      npcs_here = get_npcs_at_location(new_x, new_y, game_state.map_id)
+      
       response = ["You traversed #{direction_name}."]
+      
+      # Add NPC presence notification if any NPCs are at the new location
+      if length(npcs_here) > 0 do
+        npc_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+        response = response ++ ["You see #{npc_names} here."]
+      end
 
       {response, updated_game_state}
     end
@@ -1199,54 +1494,711 @@ defmodule ShardWeb.MudGameLive do
     "{#{x}, #{y}}"
   end
 
-  # Helper function to generate map data from database
-  defp generate_map_from_database() do
-    # Get all rooms from database
-    rooms = Repo.all(GameMap.Room)
+  # Helper function to get available exits from current position
+  defp get_available_exits(x, y, room) do
+    exits = []
     
-    # If no rooms exist, return a simple default map
-    if Enum.empty?(rooms) do
-      generate_default_map()
+    # If we have a room, check for doors
+    exits = if room do
+      # Get doors from this room using Ecto query since the function might not exist
+      doors = from(d in GameMap.Door, where: d.from_room_id == ^room.id)
+              |> Repo.all()
+      door_exits = Enum.map(doors, fn door ->
+        cond do
+          door.door_type == "secret" and door.is_locked -> nil  # Hidden secret doors
+          door.is_locked -> "#{door.direction} (locked)"
+          door.key_required && door.key_required != "" -> "#{door.direction} (key required)"
+          true -> door.direction
+        end
+      end)
+      |> Enum.filter(& &1 != nil)
+      
+      exits ++ door_exits
     else
-      # Find the bounds of all rooms
-      {min_x, max_x} = rooms 
-        |> Enum.map(& &1.x_coordinate) 
-        |> Enum.filter(& &1 != nil)
-        |> case do
-          [] -> {0, 10}
-          coords -> Enum.min_max(coords)
+      exits
+    end
+    
+    # For tutorial terrain, also check basic movement possibilities
+    basic_directions = ["north", "south", "east", "west", "northeast", "southeast", "northwest", "southwest"]
+    
+    tutorial_exits = Enum.filter(basic_directions, fn direction ->
+      test_pos = calc_position({x, y}, direction_to_key(direction), nil)
+      test_pos != {x, y} and is_valid_movement?({x, y}, test_pos, direction_to_key(direction))
+    end)
+    
+    (exits ++ tutorial_exits)
+    |> Enum.uniq()
+    |> Enum.sort()
+  end
+  
+  # Helper function to convert direction string to key for calc_position
+  defp direction_to_key(direction) do
+    case direction do
+      "north" -> "ArrowUp"
+      "south" -> "ArrowDown"
+      "east" -> "ArrowRight"
+      "west" -> "ArrowLeft"
+      "northeast" -> "northeast"
+      "southeast" -> "southeast"
+      "northwest" -> "northwest"
+      "southwest" -> "southwest"
+      _ -> direction
+    end
+  end
+
+  # Parse talk command to extract NPC name
+  defp parse_talk_command(command) do
+    # Match patterns like: talk "npc name", talk 'npc name', talk npc_name
+    cond do
+      # Match talk "npc name" or talk 'npc name'
+      Regex.match?(~r/^talk\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^talk\s+["'](.+)["']\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
         end
       
-      {min_y, max_y} = rooms 
-        |> Enum.map(& &1.y_coordinate) 
-        |> Enum.filter(& &1 != nil)
-        |> case do
-          [] -> {0, 10}
-          coords -> Enum.min_max(coords)
+      # Match talk npc_name (single word, no quotes)
+      Regex.match?(~r/^talk\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^talk\s+(\w+)\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
         end
       
-      # Add padding around the map
-      min_x = min_x - 1
-      max_x = max_x + 1
-      min_y = min_y - 1
-      max_y = max_y + 1
+      true -> :error
+    end
+  end
+
+  # Parse quest command to extract NPC name
+  defp parse_quest_command(command) do
+    # Match patterns like: quest "npc name", quest 'npc name', quest npc_name
+    cond do
+      # Match quest "npc name" or quest 'npc name'
+      Regex.match?(~r/^quest\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^quest\s+["'](.+)["']\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
       
-      # Create a map of room coordinates for quick lookup
-      room_map = rooms
-        |> Enum.filter(fn room -> room.x_coordinate != nil and room.y_coordinate != nil end)
-        |> Enum.into(%{}, fn room -> {{room.x_coordinate, room.y_coordinate}, room} end)
+      # Match quest npc_name (single word, no quotes)
+      Regex.match?(~r/^quest\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^quest\s+(\w+)\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
       
-      # Generate the grid
-      for y <- min_y..max_y do
-        for x <- min_x..max_x do
-          case room_map[{x, y}] do
-            nil -> 0  # Wall/empty space
-            room -> 
-              case room.room_type do
-                "treasure" -> 3  # Treasure room
-                "water" -> 2     # Water room
-                _ -> 1           # Regular floor
-              end
+      true -> :error
+    end
+  end
+
+  # Parse deliver_quest command to extract NPC name
+  defp parse_deliver_quest_command(command) do
+    # Match patterns like: deliver_quest "npc name", deliver_quest 'npc name', deliver_quest npc_name
+    cond do
+      # Match deliver_quest "npc name" or deliver_quest 'npc name'
+      Regex.match?(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+      
+      # Match deliver_quest npc_name (single word, no quotes)
+      Regex.match?(~r/^deliver_quest\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^deliver_quest\s+(\w+)\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+      
+      true -> :error
+    end
+  end
+
+  # Execute talk command with a specific NPC
+  defp execute_talk_command(game_state, npc_name) do
+    {x, y} = game_state.player_position
+    npcs_here = get_npcs_at_location(x, y, game_state.map_id)
+    
+    # Find the NPC by name (case-insensitive)
+    target_npc = Enum.find(npcs_here, fn npc ->
+      npc_name_normalized = String.downcase(npc.name || "")
+      input_name_normalized = String.downcase(npc_name)
+      npc_name_normalized == input_name_normalized
+    end)
+    
+    case target_npc do
+      nil ->
+        if length(npcs_here) > 0 do
+          available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+          response = [
+            "There is no NPC named '#{npc_name}' here.",
+            "Available NPCs: #{available_names}"
+          ]
+          {response, game_state}
+        else
+          {["There are no NPCs here to talk to."], game_state}
+        end
+      
+      npc ->
+        # Generate dialogue based on NPC
+        dialogue_response = generate_npc_dialogue(npc, game_state)
+        {dialogue_response, game_state}
+    end
+  end
+
+  # Execute quest command with a specific NPC
+  defp execute_quest_command(game_state, npc_name) do
+    {x, y} = game_state.player_position
+    npcs_here = get_npcs_at_location(x, y, game_state.map_id)
+    
+    # Find the NPC by name (case-insensitive)
+    target_npc = Enum.find(npcs_here, fn npc ->
+      npc_name_normalized = String.downcase(npc.name || "")
+      input_name_normalized = String.downcase(npc_name)
+      npc_name_normalized == input_name_normalized
+    end)
+    
+    case target_npc do
+      nil ->
+        if length(npcs_here) > 0 do
+          available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+          response = [
+            "There is no NPC named '#{npc_name}' here.",
+            "Available NPCs: #{available_names}"
+          ]
+          {response, game_state}
+        else
+          {["There are no NPCs here to ask for quests."], game_state}
+        end
+      
+      npc ->
+        # Get quests from this NPC
+        generate_npc_quest_response(npc, game_state)
+    end
+  end
+
+  # Generate dialogue for an NPC
+  defp generate_npc_dialogue(npc, _game_state) do
+    npc_name = npc.name || "Unknown NPC"
+    
+    # Get dialogue from NPC record
+    dialogue = case npc.dialogue do
+      nil -> "I don't have much to say right now."
+      "" -> "..."
+      dialogue_text when is_binary(dialogue_text) -> dialogue_text
+      dialogue_text when is_list(dialogue_text) -> Enum.join(dialogue_text, " ")
+      _ -> "I seem to be having trouble speaking."
+    end
+    
+    # Add some personality based on NPC type
+    personality_response = case npc.npc_type do
+      "friendly" -> "#{npc_name} smiles warmly at you."
+      "hostile" -> "#{npc_name} glares at you menacingly."
+      "neutral" -> "#{npc_name} regards you with mild interest."
+      "merchant" -> "#{npc_name} eyes you as a potential customer."
+      "guard" -> "#{npc_name} stands at attention and nods formally."
+      _ -> "#{npc_name} acknowledges your presence."
+    end
+    
+    # Check for quests this NPC can give
+    available_quests = get_quests_by_giver_npc(npc.id)
+    
+    response = [
+      personality_response,
+      "",
+      "#{npc_name} says: \"#{dialogue}\""
+    ]
+    
+    # Add quest information if any quests are available
+    if length(available_quests) > 0 do
+      response = response ++ [""]
+      
+      for quest <- available_quests do
+        quest_status_text = case quest.status do
+          "available" -> "#{npc_name} has a quest for you!"
+          "active" -> "#{npc_name} is waiting for you to complete your current quest."
+          "completed" -> "#{npc_name} thanks you for completing the quest."
+          _ -> "#{npc_name} mentions something about a quest."
+        end
+        
+        quest_description = quest.short_description || quest.description || "A mysterious quest awaits."
+        
+        response = response ++ [
+          quest_status_text,
+          "",
+          "Quest: #{quest.title}",
+          quest_description
+        ]
+        
+        # Add quest details for available quests
+        if quest.status == "available" do
+          response = response ++ [""]
+          
+          if quest.experience_reward && quest.experience_reward > 0 do
+            response = response ++ ["Reward: #{quest.experience_reward} experience"]
+          end
+          
+          if quest.gold_reward && quest.gold_reward > 0 do
+            response = response ++ ["Gold Reward: #{quest.gold_reward} gold"]
+          end
+          
+          if quest.min_level && quest.min_level > 0 do
+            response = response ++ ["Minimum Level: #{quest.min_level}"]
+          end
+        end
+      end
+    end
+    
+    response ++ [
+      "",
+      "#{npc_name} waits to see if you have anything else to say."
+    ]
+  end
+
+  # Helper function to get NPCs at a specific location
+  defp get_npcs_at_location(x, y, _map_id) do
+    # Query database for NPCs at the specified coordinates
+    npcs = from(n in Npc,
+      where: n.location_x == ^x and n.location_y == ^y and n.is_active == true)
+    |> Repo.all()
+    
+    npcs
+  end
+
+  # Helper function to get quests by giver NPC ID
+  defp get_quests_by_giver_npc(npc_id) do
+    from(q in Quest,
+      where: q.giver_npc_id == ^npc_id and q.is_active == true,
+      order_by: [asc: q.sort_order, asc: q.id])
+    |> Repo.all()
+  end
+
+  # Helper function to get quests by giver NPC ID excluding completed ones
+  defp get_quests_by_giver_npc_excluding_completed(npc_id, user_id) do
+    try do
+      # Use the proper database function to exclude completed quests
+      Shard.Quests.get_available_quests_by_giver_excluding_completed(user_id, npc_id)
+    rescue
+      _ ->
+        # Fallback to basic quest query if the function doesn't exist or fails
+        from(q in Quest,
+          where: q.giver_npc_id == ^npc_id and q.is_active == true and q.status == "available",
+          order_by: [asc: q.sort_order, asc: q.id])
+        |> Repo.all()
+    end
+  end
+
+  # Helper function to check if a quest has been completed by the user
+  defp quest_completed_by_user_in_game_state?(quest_id, _game_state) do
+    try do
+      # Use a mock user_id of 1 for now - in a real implementation, 
+      # this should come from the current user session
+      user_id = 1
+      Shard.Quests.quest_completed_by_user?(user_id, quest_id)
+    rescue
+      _ -> false
+    end
+  end
+
+  # Generate quest response for an NPC
+  defp generate_npc_quest_response(npc, game_state) do
+    npc_name = npc.name || "Unknown NPC"
+    
+    # Get quests this NPC can give, excluding completed ones
+    # For now, we'll use a mock user_id of 1 - in a real implementation, 
+    # this should come from the current user session
+    user_id = 1
+    
+    available_quests = try do
+      get_quests_by_giver_npc_excluding_completed(npc.id, user_id)
+    rescue
+      error ->
+        IO.inspect(error, label: "Error getting quests for NPC #{npc.id}")
+        []
+    end
+    
+    if length(available_quests) == 0 do
+      # Check if there are any quests from this NPC that were completed
+      all_quests = try do
+        get_quests_by_giver_npc(npc.id)
+      rescue
+        _ -> []
+      end
+      
+      completed_quests = try do
+        Enum.filter(all_quests, fn quest ->
+          quest_completed_by_user_in_game_state?(quest.id, game_state)
+        end)
+      rescue
+        _ -> []
+      end
+      
+      response = if length(completed_quests) > 0 do
+        [
+          "#{npc_name} looks at you with recognition.",
+          "",
+          "\"Thank you for all the help you've provided. I don't have any new quests for you at the moment.\""
+        ]
+      else
+        [
+          "#{npc_name} looks at you thoughtfully.",
+          "",
+          "\"I don't have any quests for you at the moment.\""
+        ]
+      end
+      {response, game_state}
+    else
+      # For now, offer the first available quest
+      quest = List.first(available_quests)
+      quest_title = quest.title || "Untitled Quest"
+      quest_description = quest.description || "A mysterious quest awaits."
+      
+      response = [
+        "#{npc_name} brightens up when you ask about quests.",
+        "",
+        "=== #{quest_title} ===",
+        quest_description,
+        ""
+      ]
+      
+      # Add quest details
+      details = []
+      
+      if quest.difficulty do
+        details = details ++ ["Difficulty: #{String.capitalize(quest.difficulty)}"]
+      end
+      
+      if quest.min_level && quest.min_level > 0 do
+        details = details ++ ["Minimum Level: #{quest.min_level}"]
+      end
+      
+      if quest.max_level && quest.max_level > 0 do
+        details = details ++ ["Maximum Level: #{quest.max_level}"]
+      end
+      
+      if quest.experience_reward && quest.experience_reward > 0 do
+        details = details ++ ["Experience Reward: #{quest.experience_reward} XP"]
+      end
+      
+      if quest.gold_reward && quest.gold_reward > 0 do
+        details = details ++ ["Gold Reward: #{quest.gold_reward} gold"]
+      end
+      
+      if quest.time_limit && quest.time_limit > 0 do
+        details = details ++ ["Time Limit: #{quest.time_limit} hours"]
+      end
+      
+      # Add objectives if available
+      objectives = case quest.objectives do
+        objectives when is_map(objectives) and map_size(objectives) > 0 ->
+          objective_list = Enum.map(objectives, fn {_key, value} -> "  - #{value}" end)
+          ["Objectives:"] ++ objective_list
+        _ -> []
+      end
+      
+      # Add prerequisites if any
+      prerequisites = case quest.prerequisites do
+        prereqs when is_map(prereqs) and map_size(prereqs) > 0 ->
+          prereq_list = Enum.map(prereqs, fn {_key, value} -> "  - #{value}" end)
+          ["Prerequisites:"] ++ prereq_list
+        _ -> []
+      end
+      
+      # Combine all quest information
+      full_response = response ++ details ++ objectives ++ prerequisites ++ [
+        "",
+        "#{npc_name} says: \"Would you like to accept this quest?\"",
+        "",
+        "Type 'accept' to accept the quest or 'deny' to decline it."
+      ]
+      
+      # Store the quest offer in game state
+      updated_game_state = %{game_state | 
+        pending_quest_offer: %{
+          quest: quest,
+          npc: npc
+        }
+      }
+      
+      {full_response, updated_game_state}
+    end
+  end
+
+  # Execute deliver_quest command with a specific NPC
+  defp execute_deliver_quest_command(game_state, npc_name) do
+    {x, y} = game_state.player_position
+    npcs_here = get_npcs_at_location(x, y, game_state.map_id)
+    
+    # Find the NPC by name (case-insensitive)
+    target_npc = Enum.find(npcs_here, fn npc ->
+      npc_name_normalized = String.downcase(npc.name || "")
+      input_name_normalized = String.downcase(npc_name)
+      npc_name_normalized == input_name_normalized
+    end)
+    
+    case target_npc do
+      nil ->
+        if length(npcs_here) > 0 do
+          available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+          response = [
+            "There is no NPC named '#{npc_name}' here.",
+            "Available NPCs: #{available_names}"
+          ]
+          {response, game_state}
+        else
+          {["There are no NPCs here to deliver quests to."], game_state}
+        end
+      
+      npc ->
+        # Find active quests that can be turned in to this NPC
+        deliverable_quest = find_deliverable_quest(game_state.quests, npc)
+        
+        case deliverable_quest do
+          nil ->
+            npc_display_name = npc.name || "Unknown NPC"
+            response = [
+              "#{npc_display_name} looks at you expectantly.",
+              "",
+              "\"I don't see any completed quests that you can turn in to me.\""
+            ]
+            {response, game_state}
+          
+          quest ->
+            # Complete the quest and give rewards
+            complete_quest_and_give_rewards(game_state, quest, npc)
+        end
+    end
+  end
+
+  # Find a quest that can be delivered to the specified NPC
+  defp find_deliverable_quest(player_quests, npc) do
+    # Look for quests that are "In Progress" and check against database for turn-in NPC
+    try do
+      Enum.find(player_quests, fn quest ->
+        if quest.status == "In Progress" && quest[:id] do
+          # Get the full quest data from database to check turn_in_npc_id
+          try do
+            case Repo.get(Quest, quest.id) do
+              nil -> false
+              db_quest -> 
+                # Check if this NPC is the designated turn-in NPC
+                db_quest.turn_in_npc_id == npc.id
+            end
+          rescue
+            error ->
+              IO.inspect(error, label: "Error getting quest #{quest.id} from database")
+              false
+          end
+        else
+          false
+        end
+      end)
+    rescue
+      error ->
+        IO.inspect(error, label: "Error finding deliverable quest")
+        nil
+    end
+  end
+
+  # Complete the quest and give rewards to the player
+  defp complete_quest_and_give_rewards(game_state, quest, npc) do
+    npc_name = npc.name || "Unknown NPC"
+    quest_title = quest.title || "Untitled Quest"
+    
+    # Get the full quest data from database with error handling
+    full_quest = try do
+      Repo.get(Quest, quest.id)
+    rescue
+      error ->
+        IO.inspect(error, label: "Error getting quest #{quest.id} from database")
+        nil
+    end
+    
+    # Calculate rewards (use database values or defaults)
+    exp_reward = if full_quest, do: full_quest.experience_reward || 100, else: 100
+    gold_reward = if full_quest, do: full_quest.gold_reward || 50, else: 50
+    
+    # Update player stats with rewards
+    updated_stats = try do
+      game_state.player_stats
+      |> Map.update(:experience, 0, &(&1 + exp_reward))
+    rescue
+      error ->
+        IO.inspect(error, label: "Error updating player stats")
+        game_state.player_stats
+    end
+    
+    # Check if player levels up
+    {updated_stats, level_up_message} = try do
+      check_level_up(updated_stats)
+    rescue
+      error ->
+        IO.inspect(error, label: "Error checking level up")
+        {updated_stats, nil}
+    end
+    
+    # Complete the quest in the database
+    user_id = 1  # Mock user_id - should come from session in real implementation
+    updated_quests = try do
+      case Shard.Quests.complete_quest(user_id, quest.id) do
+        {:ok, _quest_acceptance} ->
+          # Mark the quest as completed in player's quest list
+          Enum.map(game_state.quests, fn q ->
+            if q[:id] == quest.id do
+              %{q | status: "Completed", progress: "100% complete"}
+            else
+              q
+            end
+          end)
+        
+        {:error, _} ->
+          # If database update fails, still update game state for consistency
+          Enum.map(game_state.quests, fn q ->
+            if q[:id] == quest.id do
+              %{q | status: "Completed", progress: "100% complete"}
+            else
+              q
+            end
+          end)
+      end
+    rescue
+      error ->
+        IO.inspect(error, label: "Error completing quest in database")
+        # Fallback: update game state even if database fails
+        Enum.map(game_state.quests, fn q ->
+          if q[:id] == quest.id do
+            %{q | status: "Completed", progress: "100% complete"}
+          else
+            q
+          end
+        end)
+    end
+    
+    # Build response message
+    response = [
+      "#{npc_name} examines your progress carefully.",
+      "",
+      "\"Excellent work! You have completed the quest '#{quest_title}'!\"",
+      "",
+      "Quest Completed: #{quest_title}",
+      "Experience gained: #{exp_reward} XP"
+    ]
+    
+    response = if gold_reward > 0 do
+      response ++ ["Gold received: #{gold_reward} gold"]
+    else
+      response
+    end
+    
+    # Add item rewards if any (with error handling)
+    response = try do
+      if full_quest && full_quest.item_rewards && map_size(full_quest.item_rewards) > 0 do
+        item_list = Enum.map(full_quest.item_rewards, fn {_key, item} -> "  - #{item}" end)
+        response ++ ["Items received:"] ++ item_list
+      else
+        response
+      end
+    rescue
+      error ->
+        IO.inspect(error, label: "Error processing item rewards")
+        response
+    end
+    
+    # Add level up message if applicable
+    response = if level_up_message do
+      response ++ ["", level_up_message]
+    else
+      response
+    end
+    
+    response = response ++ [
+      "",
+      "#{npc_name} says: \"Thank you for your service. You have proven yourself worthy!\""
+    ]
+    
+    # Update game state
+    updated_game_state = %{game_state |
+      player_stats: updated_stats,
+      quests: updated_quests
+    }
+    
+    {response, updated_game_state}
+  end
+
+  # Check if player should level up based on experience
+  defp check_level_up(stats) do
+    if stats.experience >= stats.next_level_exp do
+      new_level = stats.level + 1
+      new_next_level_exp = stats.next_level_exp + (new_level * 500)  # Scaling experience requirement
+      
+      updated_stats = stats
+      |> Map.put(:level, new_level)
+      |> Map.put(:next_level_exp, new_next_level_exp)
+      |> Map.update(:max_health, 100, &(&1 + 10))  # Increase max health
+      |> Map.update(:max_stamina, 100, &(&1 + 5))  # Increase max stamina
+      |> Map.update(:max_mana, 100, &(&1 + 5))     # Increase max mana
+      |> Map.update(:strength, 10, &(&1 + 1))      # Increase strength
+      |> Map.update(:health, 100, &min(&1 + 10, stats.max_health + 10))  # Restore some health
+      
+      level_up_message = "*** LEVEL UP! *** You are now level #{new_level}!"
+      
+      {updated_stats, level_up_message}
+    else
+      {stats, nil}
+    end
+  end
+
+  # Helper function to generate map data from database
+  defp generate_map_from_database(map_id \\ "tutorial_terrain") do
+    # For tutorial terrain, always return the same predefined map
+    if map_id == "tutorial_terrain" do
+      generate_default_map(map_id)
+    else
+      # Get all rooms from database for other map types
+      rooms = Repo.all(GameMap.Room)
+      
+      # If no rooms exist, return a map based on the selected map_id
+      if Enum.empty?(rooms) do
+        generate_default_map(map_id)
+      else
+        # Find the bounds of all rooms
+        {min_x, max_x} = rooms 
+          |> Enum.map(& &1.x_coordinate) 
+          |> Enum.filter(& &1 != nil)
+          |> case do
+            [] -> {0, 10}
+            coords -> Enum.min_max(coords)
+          end
+        
+        {min_y, max_y} = rooms 
+          |> Enum.map(& &1.y_coordinate) 
+          |> Enum.filter(& &1 != nil)
+          |> case do
+            [] -> {0, 10}
+            coords -> Enum.min_max(coords)
+          end
+        
+        # Add padding around the map
+        min_x = min_x - 1
+        max_x = max_x + 1
+        min_y = min_y - 1
+        max_y = max_y + 1
+        
+        # Create a map of room coordinates for quick lookup
+        room_map = rooms
+          |> Enum.filter(fn room -> room.x_coordinate != nil and room.y_coordinate != nil end)
+          |> Enum.into(%{}, fn room -> {{room.x_coordinate, room.y_coordinate}, room} end)
+        
+        # Generate the grid
+        for y <- min_y..max_y do
+          for x <- min_x..max_x do
+            case room_map[{x, y}] do
+              nil -> 0  # Wall/empty space
+              room -> 
+                case room.room_type do
+                  "treasure" -> 3  # Treasure room
+                  "water" -> 2     # Water room
+                  _ -> 1           # Regular floor
+                end
+            end
           end
         end
       end
@@ -1254,35 +2206,42 @@ defmodule ShardWeb.MudGameLive do
   end
   
   # Fallback function for when no rooms exist in database
-  defp generate_default_map() do
-    # Generate an 11x11 map for display
-    for y <- 0..10 do
-      for x <- 0..10 do
-        cond do
-          x == 0 or y == 0 or x == 10 or y == 10 -> 0  # Walls around the edges
-          x == 5 and y == 5 -> 3  # Treasure in the center
-          x > 3 and x < 7 and y > 3 and y < 7 -> 1  # Central room floor
-          rem(x, 3) == 0 and rem(y, 3) == 0 -> 2  # Water at intervals
-          true -> 1  # Default floor
+  defp generate_default_map(map_id \\ "tutorial_terrain") do
+    case map_id do
+      "tutorial_terrain" ->
+        # Generate a simple tutorial map
+        for y <- 0..10 do
+          for x <- 0..10 do
+            cond do
+              x == 0 and y == 0 -> 1  # Starting position where Goldie is - must be floor
+              x == 0 or y == 0 or x == 10 or y == 10 -> 0  # Walls around the edges (except starting position)
+              x == 5 and y == 5 -> 3  # Treasure in the center
+              x > 3 and x < 7 and y > 3 and y < 7 -> 1  # Central room floor
+              rem(x + y, 4) == 0 -> 1  # Scattered floor tiles for tutorial
+              true -> 0  # Walls for tutorial simplicity
+            end
+          end
         end
-      end
+      _ ->
+        # Default fallback map for any other map_id
+        for y <- 0..10 do
+          for x <- 0..10 do
+            cond do
+              x == 0 or y == 0 or x == 10 or y == 10 -> 0  # Walls around the edges
+              x == 5 and y == 5 -> 3  # Treasure in the center
+              x > 3 and x < 7 and y > 3 and y < 7 -> 1  # Central room floor
+              rem(x, 3) == 0 and rem(y, 3) == 0 -> 2  # Water at intervals
+              true -> 1  # Default floor
+            end
+          end
+        end
     end
   end
   
   # Find a valid starting position on the map (first non-wall tile)
-  defp find_valid_starting_position(map_data) do
-    # Search for the first floor tile (value 1, 2, or 3 - anything but 0 which is wall)
-    Enum.with_index(map_data)
-    |> Enum.find_value(fn {row, y} ->
-      Enum.with_index(row)
-      |> Enum.find_value(fn {cell, x} ->
-        if cell != 0, do: {x, y}, else: nil
-      end)
-    end)
-    |> case do
-      nil -> {0, 0}  # Fallback if no valid position found (shouldn't happen)
-      position -> position
-    end
+  defp find_valid_starting_position(_map_data) do
+    # For tutorial terrain, always start at {0,0} where Goldie is
+    {0, 0}
   end
 
   # Calculate bounds and scale factor for minimap rendering

@@ -36,7 +36,8 @@ defmodule ShardWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-    live "/play", MudGameLive
+    live "/maps", MapSelectionLive
+    live "/play/:map_id", MudGameLive
   end
 
   # Admin routes
@@ -79,7 +80,7 @@ defmodule ShardWeb.Router do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
       live "/characters", CharacterLive.Index, :index
-      live "/characters/new", CharacterLive.New, :new
+      live "/characters", CharacterLive.Index, :new
       live "/characters/:id", CharacterLive.Show, :show
     end
 
@@ -96,6 +97,12 @@ defmodule ShardWeb.Router do
       live "/characters/:id", AdminLive.Characters, :show
       live "/characters/:id/edit", AdminLive.Characters, :edit
       live "/user_management", AdminLive.UserManagement, :index
+      live "/npcs", AdminLive.Npcs, :index
+      live "/npcs/new", AdminLive.Npcs, :new
+      live "/npcs/:id/edit", AdminLive.Npcs, :edit
+      live "/quests", AdminLive.Quests, :index
+      live "/quests/new", AdminLive.Quests, :new
+      live "/quests/:id/edit", AdminLive.Quests, :edit
     end
   end
 
