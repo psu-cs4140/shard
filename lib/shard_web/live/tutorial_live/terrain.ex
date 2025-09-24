@@ -27,9 +27,12 @@ defmodule ShardWeb.TutorialLive.Terrain do
     # Ensure Goldie is positioned at (0,0) for the tutorial
     ensure_goldie_in_tutorial()
     
+    # Load all active NPCs in the tutorial area (coordinates 0-4, 0-4)
     from(n in Npc,
-      where: n.name in ["Goldie", "Elder Sage Theron", "Captain Marcus", "Merchant Elara", "Forest Guardian Lyra"],
-      where: n.is_active == true
+      where: n.is_active == true,
+      where: n.location_x >= 0 and n.location_x <= 4,
+      where: n.location_y >= 0 and n.location_y <= 4,
+      where: n.location_z == 0
     )
     |> Repo.all()
   end
@@ -170,7 +173,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
       nil -> :ok  # Goldie doesn't exist, will be created by admin page
       goldie ->
         # Update Goldie's position to be at (0,0) for the tutorial
-        if goldie.location_x != 0 || goldie.location_y != 0 do
+        if goldie.location_x != 0 || goldie.location_y != 0 || goldie.location_z != 0 do
           goldie
           |> Ecto.Changeset.change(%{location_x: 0, location_y: 0, location_z: 0})
           |> Repo.update()
