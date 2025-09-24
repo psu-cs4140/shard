@@ -1311,3 +1311,48 @@
 
 # 2025-09-23 22:19:01.882593
 +y
+
+# 2025-09-23 22:43:54.850131
++have it so that when you talk to an npc, if a quest from the quest databse has them as the quest giver, they present that quest to the user.
+
+# 2025-09-23 22:44:04.825055
++y
+
+# 2025-09-23 22:47:50.562137
++create a command "quest npc_name" so that if an npc is a giver of a quest in the database, then they present that quest to the user.
+
+# 2025-09-23 22:48:01.702978
++y
+
+# 2025-09-23 22:51:06.141881
++when you say "quest npc_name", please display the description of the quest, not the short description.
+
+# 2025-09-23 22:52:48.918577
++when you say "quest npc_name", please display the description of the associated quest in the database and not just the short description.
+
+# 2025-09-23 22:53:54.442596
++when you say "quest npc_name", please display the decription of the associated quest in the database and not just the short description
+
+# 2025-09-23 22:54:04.676942
++y
+
+# 2025-09-23 22:56:12.401698
++please have it so that once the npc provides the description for the quest, the user can accept or deny the quest
+
+# 2025-09-23 22:56:21.089118
++y
+
+# 2025-09-23 23:04:39.621418
++have it so that once a player accepts a quest, they can no longer accept it again
+
+# 2025-09-23 23:04:51.350085
++y
+
+# 2025-09-23 23:06:38.042701
++/run mix ecto.migrate
+
+# 2025-09-23 23:06:38.042768
++/run mix ecto.migrate
+
+# 2025-09-23 23:06:41.397070
++y
