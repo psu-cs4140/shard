@@ -55,7 +55,8 @@ defmodule ShardWeb.MudGameLive do
         %{title: "The Lost Artifact", status: "In Progress", progress: "2/5 artifacts found"},
         %{title: "Clear the Dungeon", status: "Available", progress: "0/10 enemies slain"},
         %{title: "Merchant's Request", status: "Completed", progress: "Done"}
-      ]
+      ],
+      pending_quest_offer: nil  # Stores quest offer waiting for acceptance/denial
     }
 
     terminal_state = %{
@@ -164,6 +165,69 @@ defmodule ShardWeb.MudGameLive do
       </footer>
     </div>
     """
+  end
+
+  # Execute quest acceptance
+  defp execute_accept_quest(game_state) do
+    case game_state.pending_quest_offer do
+      nil ->
+        {["There is no quest offer to accept."], game_state}
+      
+      %{quest: quest, npc: npc} ->
+        npc_name = npc.name || "Unknown NPC"
+        quest_title = quest.title || "Untitled Quest"
+        
+        # Add quest to player's active quests
+        new_quest = %{
+          id: quest.id,
+          title: quest_title,
+          status: "In Progress",
+          progress: "0% complete",
+          npc_giver: npc_name,
+          description: quest.description
+        }
+        
+        updated_quests = [new_quest | game_state.quests]
+        
+        response = [
+          "You accept the quest '#{quest_title}' from #{npc_name}.",
+          "",
+          "#{npc_name} says: \"Excellent! I knew I could count on you.\"",
+          "",
+          "Quest '#{quest_title}' has been added to your quest log."
+        ]
+        
+        updated_game_state = %{game_state | 
+          quests: updated_quests,
+          pending_quest_offer: nil
+        }
+        
+        {response, updated_game_state}
+    end
+  end
+
+  # Execute quest denial
+  defp execute_deny_quest(game_state) do
+    case game_state.pending_quest_offer do
+      nil ->
+        {["There is no quest offer to deny."], game_state}
+      
+      %{quest: quest, npc: npc} ->
+        npc_name = npc.name || "Unknown NPC"
+        quest_title = quest.title || "Untitled Quest"
+        
+        response = [
+          "You decline the quest '#{quest_title}' from #{npc_name}.",
+          "",
+          "#{npc_name} says: \"I understand. Perhaps another time when you're ready.\"",
+          "",
+          "The quest offer has been declined."
+        ]
+        
+        updated_game_state = %{game_state | pending_quest_offer: nil}
+        
+        {response, updated_game_state}
+    end
   end
 
   defp character_sheet(assigns) do
@@ -646,7 +710,8 @@ defmodule ShardWeb.MudGameLive do
       player_stats: socket.assigns.game_state.player_stats,
       hotbar: socket.assigns.game_state.hotbar,
       inventory_items: socket.assigns.game_state.inventory_items,
-      quests: socket.assigns.game_state.quests
+      quests: socket.assigns.game_state.quests,
+      pending_quest_offer: socket.assigns.game_state.pending_quest_offer
     }
     {:noreply, assign(socket, game_state: game_state, terminal_state: terminal_state)}
   end
@@ -1098,6 +1163,8 @@ defmodule ShardWeb.MudGameLive do
           "  npc - Show descriptions of NPCs in this room",
           "  talk \"npc_name\" - Talk to a specific NPC",
           "  quest \"npc_name\" - Get quest from a specific NPC",
+          "  accept - Accept a quest offer",
+          "  deny - Deny a quest offer",
           "  north/south/east/west - Move in cardinal directions",
           "  northeast/southeast/northwest/southwest - Move diagonally",
           "  Shortcuts: n/s/e/w/ne/se/nw/sw",
@@ -1256,6 +1323,12 @@ defmodule ShardWeb.MudGameLive do
 
       cmd when cmd in ["southwest", "sw"] ->
         execute_movement(game_state, "southwest")
+
+      "accept" ->
+        execute_accept_quest(game_state)
+
+      "deny" ->
+        execute_deny_quest(game_state)
 
       _ ->
         # Check if it's a talk command
@@ -1487,8 +1560,7 @@ defmodule ShardWeb.MudGameLive do
       
       npc ->
         # Get quests from this NPC
-        quest_response = generate_npc_quest_response(npc, game_state)
-        {quest_response, game_state}
+        generate_npc_quest_response(npc, game_state)
     end
   end
 
@@ -1589,84 +1661,93 @@ defmodule ShardWeb.MudGameLive do
   end
 
   # Generate quest response for an NPC
-  defp generate_npc_quest_response(npc, _game_state) do
+  defp generate_npc_quest_response(npc, game_state) do
     npc_name = npc.name || "Unknown NPC"
     
     # Get quests this NPC can give
     available_quests = get_quests_by_giver_npc(npc.id)
     
     if length(available_quests) == 0 do
-      [
+      response = [
         "#{npc_name} looks at you thoughtfully.",
         "",
         "\"I don't have any quests for you at the moment.\""
       ]
+      {response, game_state}
     else
+      # For now, offer the first available quest
+      quest = List.first(available_quests)
+      quest_title = quest.title || "Untitled Quest"
+      quest_description = quest.description || "A mysterious quest awaits."
+      
       response = [
         "#{npc_name} brightens up when you ask about quests.",
+        "",
+        "=== #{quest_title} ===",
+        quest_description,
         ""
       ]
       
-      # Present each quest
-      quest_responses = Enum.flat_map(available_quests, fn quest ->
-        quest_title = quest.title || "Untitled Quest"
-        quest_description = quest.description || "A mysterious quest awaits."
-        
-        quest_lines = [
-          "=== #{quest_title} ===",
-          quest_description
-        ]
-        
-        # Add quest details
-        details = []
-        
-        if quest.difficulty do
-          details = details ++ ["Difficulty: #{String.capitalize(quest.difficulty)}"]
-        end
-        
-        if quest.min_level && quest.min_level > 0 do
-          details = details ++ ["Minimum Level: #{quest.min_level}"]
-        end
-        
-        if quest.max_level && quest.max_level > 0 do
-          details = details ++ ["Maximum Level: #{quest.max_level}"]
-        end
-        
-        if quest.experience_reward && quest.experience_reward > 0 do
-          details = details ++ ["Experience Reward: #{quest.experience_reward} XP"]
-        end
-        
-        if quest.gold_reward && quest.gold_reward > 0 do
-          details = details ++ ["Gold Reward: #{quest.gold_reward} gold"]
-        end
-        
-        if quest.time_limit && quest.time_limit > 0 do
-          details = details ++ ["Time Limit: #{quest.time_limit} hours"]
-        end
-        
-        # Add objectives if available
-        objectives = case quest.objectives do
-          objectives when is_map(objectives) and map_size(objectives) > 0 ->
-            objective_list = Enum.map(objectives, fn {_key, value} -> "  - #{value}" end)
-            ["Objectives:"] ++ objective_list
-          _ -> []
-        end
-        
-        # Add prerequisites if any
-        prerequisites = case quest.prerequisites do
-          prereqs when is_map(prereqs) and map_size(prereqs) > 0 ->
-            prereq_list = Enum.map(prereqs, fn {_key, value} -> "  - #{value}" end)
-            ["Prerequisites:"] ++ prereq_list
-          _ -> []
-        end
-        
-        # Combine all quest information
-        quest_lines ++ details ++ objectives ++ prerequisites ++ [""]
-      end)
+      # Add quest details
+      details = []
       
-      response ++ quest_responses ++ [
-        "#{npc_name} says: \"Which quest interests you? Just let me know if you'd like to accept any of these.\""
+      if quest.difficulty do
+        details = details ++ ["Difficulty: #{String.capitalize(quest.difficulty)}"]
+      end
+      
+      if quest.min_level && quest.min_level > 0 do
+        details = details ++ ["Minimum Level: #{quest.min_level}"]
+      end
+      
+      if quest.max_level && quest.max_level > 0 do
+        details = details ++ ["Maximum Level: #{quest.max_level}"]
+      end
+      
+      if quest.experience_reward && quest.experience_reward > 0 do
+        details = details ++ ["Experience Reward: #{quest.experience_reward} XP"]
+      end
+      
+      if quest.gold_reward && quest.gold_reward > 0 do
+        details = details ++ ["Gold Reward: #{quest.gold_reward} gold"]
+      end
+      
+      if quest.time_limit && quest.time_limit > 0 do
+        details = details ++ ["Time Limit: #{quest.time_limit} hours"]
+      end
+      
+      # Add objectives if available
+      objectives = case quest.objectives do
+        objectives when is_map(objectives) and map_size(objectives) > 0 ->
+          objective_list = Enum.map(objectives, fn {_key, value} -> "  - #{value}" end)
+          ["Objectives:"] ++ objective_list
+        _ -> []
+      end
+      
+      # Add prerequisites if any
+      prerequisites = case quest.prerequisites do
+        prereqs when is_map(prereqs) and map_size(prereqs) > 0 ->
+          prereq_list = Enum.map(prereqs, fn {_key, value} -> "  - #{value}" end)
+          ["Prerequisites:"] ++ prereq_list
+        _ -> []
+      end
+      
+      # Combine all quest information
+      full_response = response ++ details ++ objectives ++ prerequisites ++ [
+        "",
+        "#{npc_name} says: \"Would you like to accept this quest?\"",
+        "",
+        "Type 'accept' to accept the quest or 'deny' to decline it."
       ]
+      
+      # Store the quest offer in game state
+      updated_game_state = %{game_state | 
+        pending_quest_offer: %{
+          quest: quest,
+          npc: npc
+        }
+      }
+      
+      {full_response, updated_game_state}
     end
   end
 
