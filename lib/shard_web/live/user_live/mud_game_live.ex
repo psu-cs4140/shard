@@ -1934,7 +1934,7 @@ defmodule ShardWeb.MudGameLive do
       |> Map.update(:max_stamina, 100, &(&1 + 5))  # Increase max stamina
       |> Map.update(:max_mana, 100, &(&1 + 5))     # Increase max mana
       |> Map.update(:strength, 10, &(&1 + 1))      # Increase strength
-      |> Map.update(:health, 100, &min(&1 + 10, updated_stats.max_health + 10))  # Restore some health
+      |> Map.update(:health, 100, &min(&1 + 10, stats.max_health + 10))  # Restore some health
       
       level_up_message = "*** LEVEL UP! *** You are now level #{new_level}!"
       
