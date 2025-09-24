@@ -1504,10 +1504,10 @@ defmodule ShardWeb.MudGameLive do
         [goldie]
       
       map_id == "tutorial_terrain" and x == 0 and y == 1 ->
-        # Elder throne at (0,1) for tutorial terrain
-        elder_throne = %{
-          name: "Elder Throne",
-          description: "An ancient, ornate throne carved from a single piece of dark stone. Intricate runes are etched into its surface, glowing faintly with an otherworldly light. The throne emanates an aura of wisdom and power, as if it has witnessed countless ages pass. Though no one sits upon it, you sense a presence watching you from within the stone itself.",
+        # Elder wizard at (0,1) for tutorial terrain
+        elder_wizard = %{
+          name: "Elder Wizard",
+          description: "An ancient wizard with a long, flowing white beard that reaches nearly to the floor. His weathered face is lined with countless years of wisdom, and his piercing blue eyes seem to see through time itself. He wears deep purple robes adorned with silver stars and moons that shimmer with their own inner light. A gnarled oak staff topped with a glowing crystal rests in his right hand, pulsing gently with arcane energy. Despite his advanced age, he stands tall and proud, radiating an aura of immense magical power and knowledge.",
           location_x: 0,
           location_y: 1,
           location_z: 0,
@@ -1521,7 +1521,7 @@ defmodule ShardWeb.MudGameLive do
           npc_type: "neutral",
           dialogue: "The ancient throne pulses with magical energy. You hear a deep, resonant voice echo in your mind: 'Welcome, young adventurer. I have watched over this realm for millennia. Seek knowledge, grow strong, and remember that true power comes from wisdom, not force.'"
         }
-        [elder_throne]
+        [elder_wizard]
       
       true ->
         # For other locations and maps, check database
