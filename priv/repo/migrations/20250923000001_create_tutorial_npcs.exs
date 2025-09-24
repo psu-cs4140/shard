@@ -12,7 +12,7 @@ defmodule Shard.Repo.Migrations.CreateTutorialNpcs do
       inserted_at, updated_at
     ) VALUES
     (
-      'Elder Sage Theron',
+      'Elder Sage Throne',
       'An ancient wizard with a long white beard, wearing flowing robes. His eyes twinkle with wisdom and magical knowledge.',
       50, 200, 200, 500, 500, 15, 20, 45, 25, 1000, 100,
       'quest_giver',
@@ -53,7 +53,7 @@ defmodule Shard.Repo.Migrations.CreateTutorialNpcs do
   def down do
     execute """
     DELETE FROM npcs WHERE name IN (
-      'Elder Sage Theron',
+      'Elder Sage Throne',
       'Captain Marcus', 
       'Merchant Elara',
       'Forest Guardian Lyra'
