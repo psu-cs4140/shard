@@ -1933,10 +1933,10 @@ defmodule ShardWeb.MudGameLive do
     
     # Complete the quest in the database
     user_id = 1  # Mock user_id - should come from session in real implementation
-    case Shard.Quests.complete_quest(user_id, quest.id) do
+    updated_quests = case Shard.Quests.complete_quest(user_id, quest.id) do
       {:ok, _quest_acceptance} ->
         # Mark the quest as completed in player's quest list
-        updated_quests = Enum.map(game_state.quests, fn q ->
+        Enum.map(game_state.quests, fn q ->
           if q[:id] == quest.id do
             %{q | status: "Completed", progress: "100% complete"}
           else
@@ -1946,7 +1946,7 @@ defmodule ShardWeb.MudGameLive do
       
       {:error, _} ->
         # If database update fails, still update game state for consistency
-        updated_quests = Enum.map(game_state.quests, fn q ->
+        Enum.map(game_state.quests, fn q ->
           if q[:id] == quest.id do
             %{q | status: "Completed", progress: "100% complete"}
           else
