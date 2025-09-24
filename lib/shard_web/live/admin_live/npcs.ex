@@ -3,6 +3,7 @@ defmodule ShardWeb.AdminLive.Npcs do
 
   alias Shard.Npcs
   alias Shard.Npcs.Npc
+  alias Shard.Repo
 
   @impl true
   def mount(_params, _session, socket) do
