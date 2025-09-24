@@ -1097,6 +1097,7 @@ defmodule ShardWeb.MudGameLive do
           "  inventory - Show your inventory (coming soon)",
           "  npc - Show descriptions of NPCs in this room",
           "  talk \"npc_name\" - Talk to a specific NPC",
+          "  quest \"npc_name\" - Get quest from a specific NPC",
           "  north/south/east/west - Move in cardinal directions",
           "  northeast/southeast/northwest/southwest - Move diagonally",
           "  Shortcuts: n/s/e/w/ne/se/nw/sw",
@@ -1262,7 +1263,13 @@ defmodule ShardWeb.MudGameLive do
           {:ok, npc_name} ->
             execute_talk_command(game_state, npc_name)
           :error ->
-            {["Unknown command: '#{command}'. Type 'help' for available commands."], game_state}
+            # Check if it's a quest command
+            case parse_quest_command(command) do
+              {:ok, npc_name} ->
+                execute_quest_command(game_state, npc_name)
+              :error ->
+                {["Unknown command: '#{command}'. Type 'help' for available commands."], game_state}
+            end
         end
     end
   end
@@ -1399,6 +1406,28 @@ defmodule ShardWeb.MudGameLive do
     end
   end
 
+  # Parse quest command to extract NPC name
+  defp parse_quest_command(command) do
+    # Match patterns like: quest "npc name", quest 'npc name', quest npc_name
+    cond do
+      # Match quest "npc name" or quest 'npc name'
+      Regex.match?(~r/^quest\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^quest\s+["'](.+)["']\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+      
+      # Match quest npc_name (single word, no quotes)
+      Regex.match?(~r/^quest\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^quest\s+(\w+)\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+      
+      true -> :error
+    end
+  end
+
   # Execute talk command with a specific NPC
   defp execute_talk_command(game_state, npc_name) do
     {x, y} = game_state.player_position
@@ -1428,6 +1457,38 @@ defmodule ShardWeb.MudGameLive do
         # Generate dialogue based on NPC
         dialogue_response = generate_npc_dialogue(npc, game_state)
         {dialogue_response, game_state}
+    end
+  end
+
+  # Execute quest command with a specific NPC
+  defp execute_quest_command(game_state, npc_name) do
+    {x, y} = game_state.player_position
+    npcs_here = get_npcs_at_location(x, y, game_state.map_id)
+    
+    # Find the NPC by name (case-insensitive)
+    target_npc = Enum.find(npcs_here, fn npc ->
+      npc_name_normalized = String.downcase(npc.name || "")
+      input_name_normalized = String.downcase(npc_name)
+      npc_name_normalized == input_name_normalized
+    end)
+    
+    case target_npc do
+      nil ->
+        if length(npcs_here) > 0 do
+          available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+          response = [
+            "There is no NPC named '#{npc_name}' here.",
+            "Available NPCs: #{available_names}"
+          ]
+          {response, game_state}
+        else
+          {["There are no NPCs here to ask for quests."], game_state}
+        end
+      
+      npc ->
+        # Get quests from this NPC
+        quest_response = generate_npc_quest_response(npc, game_state)
+        {quest_response, game_state}
     end
   end
 
@@ -1525,6 +1586,89 @@ defmodule ShardWeb.MudGameLive do
       where: q.giver_npc_id == ^npc_id and q.is_active == true,
       order_by: [asc: q.sort_order, asc: q.id])
     |> Repo.all()
+  end
+
+  # Generate quest response for an NPC
+  defp generate_npc_quest_response(npc, _game_state) do
+    npc_name = npc.name || "Unknown NPC"
+    
+    # Get quests this NPC can give
+    available_quests = get_quests_by_giver_npc(npc.id)
+    
+    if length(available_quests) == 0 do
+      [
+        "#{npc_name} looks at you thoughtfully.",
+        "",
+        "\"I don't have any quests for you at the moment.\""
+      ]
+    else
+      response = [
+        "#{npc_name} brightens up when you ask about quests.",
+        ""
+      ]
+      
+      # Present each quest
+      quest_responses = Enum.flat_map(available_quests, fn quest ->
+        quest_title = quest.title || "Untitled Quest"
+        quest_description = quest.description || "A mysterious quest awaits."
+        quest_short_desc = quest.short_description || quest_description
+        
+        quest_lines = [
+          "=== #{quest_title} ===",
+          quest_short_desc
+        ]
+        
+        # Add quest details
+        details = []
+        
+        if quest.difficulty do
+          details = details ++ ["Difficulty: #{String.capitalize(quest.difficulty)}"]
+        end
+        
+        if quest.min_level && quest.min_level > 0 do
+          details = details ++ ["Minimum Level: #{quest.min_level}"]
+        end
+        
+        if quest.max_level && quest.max_level > 0 do
+          details = details ++ ["Maximum Level: #{quest.max_level}"]
+        end
+        
+        if quest.experience_reward && quest.experience_reward > 0 do
+          details = details ++ ["Experience Reward: #{quest.experience_reward} XP"]
+        end
+        
+        if quest.gold_reward && quest.gold_reward > 0 do
+          details = details ++ ["Gold Reward: #{quest.gold_reward} gold"]
+        end
+        
+        if quest.time_limit && quest.time_limit > 0 do
+          details = details ++ ["Time Limit: #{quest.time_limit} hours"]
+        end
+        
+        # Add objectives if available
+        objectives = case quest.objectives do
+          objectives when is_map(objectives) and map_size(objectives) > 0 ->
+            objective_list = Enum.map(objectives, fn {_key, value} -> "  - #{value}" end)
+            ["Objectives:"] ++ objective_list
+          _ -> []
+        end
+        
+        # Add prerequisites if any
+        prerequisites = case quest.prerequisites do
+          prereqs when is_map(prereqs) and map_size(prereqs) > 0 ->
+            prereq_list = Enum.map(prereqs, fn {_key, value} -> "  - #{value}" end)
+            ["Prerequisites:"] ++ prereq_list
+          _ -> []
+        end
+        
+        # Combine all quest information
+        quest_lines ++ details ++ objectives ++ prerequisites ++ [""]
+      end)
+      
+      response ++ quest_responses ++ [
+        "#{npc_name} says: \"Which quest interests you? Just let me know if you'd like to accept any of these.\""
+      ]
+    end
   end
 
   # Helper function to generate map data from database
