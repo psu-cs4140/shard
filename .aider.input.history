@@ -1248,3 +1248,51 @@
 
 # 2025-09-23 20:15:31.629029
 +please set the npc "elder thorne" to have a position of 0,1
+
+# 2025-09-23 20:18:30.668987
++please set npc "elder throne" to be at position (0,1)
+
+# 2025-09-23 20:18:40.742256
++y
+
+# 2025-09-23 20:24:39.779581
++please update the npc "elder thorne" in the admin/npcs to have the proper location
+
+# 2025-09-23 20:24:49.063921
++y
+
+# 2025-09-23 20:25:01.503409
++0,1
+
+# 2025-09-23 20:26:11.097797
++when i click manage npcs, i get an error function repo.update/1 is undefined 
+
+# 2025-09-23 20:26:18.319160
++y
+
+# 2025-09-23 20:31:02.594048
++please change the name of npc "elder thorne" to "elder throne"
+
+# 2025-09-23 20:31:10.244007
++y
+
+# 2025-09-23 21:15:18.453833
++please change the description of "elder throne" npc when you type npc in the chat. Have it be a description of an old wizrd
+
+# 2025-09-23 21:15:28.653469
++y
+
+# 2025-09-23 21:27:38.660074
++please connect the elder wizard npc from the tutorial terrain with the npc database stored in manage npc page
+
+# 2025-09-23 21:27:51.723467
++f
+
+# 2025-09-23 21:27:53.171061
++y
+
+# 2025-09-23 21:30:35.973938
++please have the npcs from the database populate into the map. so, if i call npc in 0,1 i talk to elder thorne
+
+# 2025-09-23 21:30:46.299531
++y
