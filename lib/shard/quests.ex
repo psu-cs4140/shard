@@ -109,6 +109,24 @@ defmodule Shard.Quests do
   end
 
   @doc """
+  Checks if a user has already accepted or is in progress on a specific quest.
+
+  ## Examples
+
+      iex> quest_in_progress_by_user?(user_id, quest_id)
+      true
+
+      iex> quest_in_progress_by_user?(user_id, quest_id)
+      false
+
+  """
+  def quest_in_progress_by_user?(user_id, quest_id) do
+    from(qa in QuestAcceptance,
+      where: qa.user_id == ^user_id and qa.quest_id == ^quest_id and qa.status in ["accepted", "in_progress"])
+    |> Repo.exists?()
+  end
+
+  @doc """
   Accepts a quest for a user.
 
   ## Examples

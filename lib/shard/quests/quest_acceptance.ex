@@ -34,8 +34,20 @@ defmodule Shard.Quests.QuestAcceptance do
     |> validate_required([:user_id, :quest_id])
     |> put_change(:status, "accepted")
     |> put_change(:accepted_at, DateTime.utc_now())
+    |> validate_quest_not_in_progress()
     |> unique_constraint([:user_id, :quest_id])
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:quest_id)
+  end
+
+  defp validate_quest_not_in_progress(changeset) do
+    user_id = get_field(changeset, :user_id)
+    quest_id = get_field(changeset, :quest_id)
+
+    if user_id && quest_id && Shard.Quests.quest_in_progress_by_user?(user_id, quest_id) do
+      add_error(changeset, :quest_id, "quest is already accepted or in progress")
+    else
+      changeset
+    end
   end
 end
