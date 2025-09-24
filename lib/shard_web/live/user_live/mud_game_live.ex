@@ -1094,6 +1094,7 @@ defmodule ShardWeb.MudGameLive do
           "  stats - Show your character stats",
           "  position - Show your current position",
           "  inventory - Show your inventory (coming soon)",
+          "  npc - Show descriptions of NPCs in this room",
           "  north/south/east/west - Move in cardinal directions",
           "  northeast/southeast/northwest/southwest - Move diagonally",
           "  Shortcuts: n/s/e/w/ne/se/nw/sw",
@@ -1212,6 +1213,22 @@ defmodule ShardWeb.MudGameLive do
 
       "inventory" ->
         {["Your inventory is empty. (Feature coming soon!)"], game_state}
+
+      "npc" ->
+        {x, y} = game_state.player_position
+        npcs_here = get_npcs_at_location(x, y, game_state.map_id)
+        
+        if length(npcs_here) > 0 do
+          response = ["NPCs in this area:"] ++
+            Enum.flat_map(npcs_here, fn npc ->
+              npc_name = Map.get(npc, :name) || "Unknown NPC"
+              npc_desc = Map.get(npc, :description) || "They look at you with interest."
+              ["", "#{npc_name}:", npc_desc]
+            end)
+          {response, game_state}
+        else
+          {["There are no NPCs in this area."], game_state}
+        end
 
       cmd when cmd in ["north", "n"] ->
         execute_movement(game_state, "ArrowUp")
