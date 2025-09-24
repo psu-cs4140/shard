@@ -1296,3 +1296,18 @@
 
 # 2025-09-23 21:30:46.299531
 +y
+
+# 2025-09-23 22:18:12.571782
++when i hit manage quests, i get a cannot load '[]' as type :map for field :item_rewards in %shard.Quests.Quest{__meta__ . please fix this so i can see current quests stored in the database
+
+# 2025-09-23 22:18:22.760159
++y
+
+# 2025-09-23 22:18:54.826850
++/run mix ecto.migrate
+
+# 2025-09-23 22:18:54.826935
++/run mix ecto.migrate
+
+# 2025-09-23 22:19:01.882593
++y
