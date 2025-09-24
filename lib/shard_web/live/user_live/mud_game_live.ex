@@ -1431,106 +1431,45 @@ defmodule ShardWeb.MudGameLive do
   end
 
   # Generate dialogue for an NPC
-  defp generate_npc_dialogue(npc, game_state) do
+  defp generate_npc_dialogue(npc, _game_state) do
     npc_name = npc.name || "Unknown NPC"
     
-    # Special dialogue for Goldie in tutorial
-    if npc_name == "Goldie" and game_state.map_id == "tutorial_terrain" do
-      [
-        "#{npc_name} wags her tail enthusiastically as you approach.",
-        "",
-        "Goldie says: \"Woof! Welcome to Shard, adventurer! I'm here to help you learn the basics.\"",
-        "",
-        "\"Try using these commands to get started:\"",
-        "  • 'look' - to examine your surroundings",
-        "  • 'north', 'south', 'east', 'west' - to move around",
-        "  • 'stats' - to check your character information",
-        "  • 'npc' - to see who's around you",
-        "",
-        "\"There's treasure to the southeast if you're feeling adventurous!\"",
-        "\"Remember, you can always type 'help' if you get stuck.\"",
-        "",
-        "Goldie sits and tilts her head, waiting to see what you'll do next."
-      ]
-    else
-      # Default dialogue for other NPCs
-      dialogue = case npc.dialogue do
-        nil -> "#{npc_name} looks at you but doesn't seem to have much to say."
-        "" -> "#{npc_name} nods at you in acknowledgment."
-        dialogue_text -> dialogue_text
-      end
-      
-      # Add some personality based on NPC type
-      personality_response = case npc.npc_type do
-        "friendly" -> "#{npc_name} smiles warmly at you."
-        "hostile" -> "#{npc_name} glares at you menacingly."
-        "neutral" -> "#{npc_name} regards you with mild interest."
-        "merchant" -> "#{npc_name} eyes you as a potential customer."
-        "guard" -> "#{npc_name} stands at attention and nods formally."
-        _ -> "#{npc_name} acknowledges your presence."
-      end
-      
-      [
-        personality_response,
-        "",
-        "#{npc_name} says: \"#{dialogue}\"",
-        "",
-        "#{npc_name} waits to see if you have anything else to say."
-      ]
+    # Get dialogue from NPC record
+    dialogue = case npc.dialogue do
+      nil -> "I don't have much to say right now."
+      "" -> "..."
+      dialogue_text when is_binary(dialogue_text) -> dialogue_text
+      dialogue_text when is_list(dialogue_text) -> Enum.join(dialogue_text, " ")
+      _ -> "I seem to be having trouble speaking."
     end
+    
+    # Add some personality based on NPC type
+    personality_response = case npc.npc_type do
+      "friendly" -> "#{npc_name} smiles warmly at you."
+      "hostile" -> "#{npc_name} glares at you menacingly."
+      "neutral" -> "#{npc_name} regards you with mild interest."
+      "merchant" -> "#{npc_name} eyes you as a potential customer."
+      "guard" -> "#{npc_name} stands at attention and nods formally."
+      _ -> "#{npc_name} acknowledges your presence."
+    end
+    
+    [
+      personality_response,
+      "",
+      "#{npc_name} says: \"#{dialogue}\"",
+      "",
+      "#{npc_name} waits to see if you have anything else to say."
+    ]
   end
 
   # Helper function to get NPCs at a specific location
-  defp get_npcs_at_location(x, y, map_id) do
-    # For tutorial terrain, handle special NPCs
-    cond do
-      map_id == "tutorial_terrain" and x == 0 and y == 0 ->
-        # Always return Goldie at (0,0) for tutorial terrain
-        goldie = %{
-          name: "Goldie",
-          description: "A friendly golden retriever with bright, intelligent eyes and a constantly wagging tail. Her golden fur gleams in the torchlight, and she sits patiently beside the entrance, as if she's been waiting for you. She wears a small leather collar with a brass nameplate that reads 'Goldie'. Her demeanor is warm and welcoming, and she seems eager to help newcomers learn the ways of this mysterious world.",
-          location_x: 0,
-          location_y: 0,
-          location_z: 0,
-          health: 100,
-          max_health: 100,
-          mana: 50,
-          max_mana: 50,
-          level: 1,
-          experience_reward: 0,
-          is_active: true,
-          npc_type: "friendly"
-        }
-        [goldie]
-      
-      map_id == "tutorial_terrain" and x == 0 and y == 1 ->
-        # Elder wizard at (0,1) for tutorial terrain
-        elder_wizard = %{
-          name: "Elder Wizard",
-          description: "An ancient wizard with a long, flowing white beard that reaches nearly to the floor. His weathered face is lined with countless years of wisdom, and his piercing blue eyes seem to see through time itself. He wears deep purple robes adorned with silver stars and moons that shimmer with their own inner light. A gnarled oak staff topped with a glowing crystal rests in his right hand, pulsing gently with arcane energy. Despite his advanced age, he stands tall and proud, radiating an aura of immense magical power and knowledge.",
-          location_x: 0,
-          location_y: 1,
-          location_z: 0,
-          health: 1000,
-          max_health: 1000,
-          mana: 500,
-          max_mana: 500,
-          level: 50,
-          experience_reward: 0,
-          is_active: true,
-          npc_type: "neutral",
-          dialogue: "Welcome, young adventurer. I have watched over this realm for millennia. Seek knowledge, grow strong, and remember that true power comes from wisdom, not force."
-        }
-        [elder_wizard]
-      
-      true ->
-        # For other locations and maps, check database
-        import Ecto.Query
-        npcs = from(n in Npc,
-          where: n.location_x == ^x and n.location_y == ^y and n.is_active == true)
-        |> Repo.all()
-        npcs
-    end
+  defp get_npcs_at_location(x, y, _map_id) do
+    # Query database for NPCs at the specified coordinates
+    npcs = from(n in Npc,
+      where: n.location_x == ^x and n.location_y == ^y and n.is_active == true)
+    |> Repo.all()
+    
+    npcs
   end
 
   # Helper function to generate map data from database
