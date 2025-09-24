@@ -1380,3 +1380,51 @@
 
 # 2025-09-23 23:20:26.941462
 +when you say "deliver_quest npc_name", it should see what quests are active, not completed. If a quest is active, check the turn in NPC field of the active quest in the database and see if it matches the NPC the player is talking to. If it does, then the npc should say thank you and the quest labelled as complete with the associated rewards given to the player
+
+# 2025-09-23 23:25:53.867842
++make it so that if a quest it already in progress, it cannot be accepted again
+
+# 2025-09-23 23:26:02.580420
++y
+
+# 2025-09-23 23:28:42.830056
++please make it so that when you do "quest npc_name", it does not ask you about any already accepted or completed quests
+
+# 2025-09-23 23:29:15.566882
++add the files that handle the quest command functionality to the chat
+
+# 2025-09-23 23:30:22.905458
++please remove the "lost artifact", "clear the dungeon", and "merchant request" from the quest log
+
+# 2025-09-23 23:30:51.774193
++please prompt me to the specific files i need to add
+
+# 2025-09-23 23:30:57.459562
++y
+
+# 2025-09-23 23:31:39.229690
++please prompt me to add the files
+
+# 2025-09-23 23:31:47.081275
++y
+
+# 2025-09-23 23:31:47.084730
++/run find priv/repo/migrations -name "*quest*" -type f
+
+# 2025-09-23 23:31:47.084853
++/run find priv/repo/migrations -name "*quest*" -type f
+
+# 2025-09-23 23:31:47.230096
++/run find test/support/fixtures -name "*quest*" -type f
+
+# 2025-09-23 23:31:47.230402
++/run find test/support/fixtures -name "*quest*" -type f
+
+# 2025-09-23 23:31:47.387050
++/run find lib -name "*quest*" -type f | grep -E "(seed|fixture|data)"
+
+# 2025-09-23 23:31:47.387441
++/run find lib -name "*quest*" -type f | grep -E "(seed|fixture|data)"
+
+# 2025-09-23 23:31:49.180363
++y
