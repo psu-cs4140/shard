@@ -1095,6 +1095,7 @@ defmodule ShardWeb.MudGameLive do
           "  position - Show your current position",
           "  inventory - Show your inventory (coming soon)",
           "  npc - Show descriptions of NPCs in this room",
+          "  talk \"npc_name\" - Talk to a specific NPC",
           "  north/south/east/west - Move in cardinal directions",
           "  northeast/southeast/northwest/southwest - Move diagonally",
           "  Shortcuts: n/s/e/w/ne/se/nw/sw",
@@ -1255,7 +1256,13 @@ defmodule ShardWeb.MudGameLive do
         execute_movement(game_state, "southwest")
 
       _ ->
-        {["Unknown command: '#{command}'. Type 'help' for available commands."], game_state}
+        # Check if it's a talk command
+        case parse_talk_command(command) do
+          {:ok, npc_name} ->
+            execute_talk_command(game_state, npc_name)
+          :error ->
+            {["Unknown command: '#{command}'. Type 'help' for available commands."], game_state}
+        end
     end
   end
 
@@ -1366,6 +1373,110 @@ defmodule ShardWeb.MudGameLive do
       "northwest" -> "northwest"
       "southwest" -> "southwest"
       _ -> direction
+    end
+  end
+
+  # Parse talk command to extract NPC name
+  defp parse_talk_command(command) do
+    # Match patterns like: talk "npc name", talk 'npc name', talk npc_name
+    cond do
+      # Match talk "npc name" or talk 'npc name'
+      Regex.match?(~r/^talk\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^talk\s+["'](.+)["']\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+      
+      # Match talk npc_name (single word, no quotes)
+      Regex.match?(~r/^talk\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^talk\s+(\w+)\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+      
+      true -> :error
+    end
+  end
+
+  # Execute talk command with a specific NPC
+  defp execute_talk_command(game_state, npc_name) do
+    {x, y} = game_state.player_position
+    npcs_here = get_npcs_at_location(x, y, game_state.map_id)
+    
+    # Find the NPC by name (case-insensitive)
+    target_npc = Enum.find(npcs_here, fn npc ->
+      npc_name_normalized = String.downcase(npc.name || "")
+      input_name_normalized = String.downcase(npc_name)
+      npc_name_normalized == input_name_normalized
+    end)
+    
+    case target_npc do
+      nil ->
+        if length(npcs_here) > 0 do
+          available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+          response = [
+            "There is no NPC named '#{npc_name}' here.",
+            "Available NPCs: #{available_names}"
+          ]
+          {response, game_state}
+        else
+          {["There are no NPCs here to talk to."], game_state}
+        end
+      
+      npc ->
+        # Generate dialogue based on NPC
+        dialogue_response = generate_npc_dialogue(npc, game_state)
+        {dialogue_response, game_state}
+    end
+  end
+
+  # Generate dialogue for an NPC
+  defp generate_npc_dialogue(npc, game_state) do
+    npc_name = npc.name || "Unknown NPC"
+    
+    # Special dialogue for Goldie in tutorial
+    if npc_name == "Goldie" and game_state.map_id == "tutorial_terrain" do
+      [
+        "#{npc_name} wags her tail enthusiastically as you approach.",
+        "",
+        "Goldie says: \"Woof! Welcome to Shard, adventurer! I'm here to help you learn the basics.\"",
+        "",
+        "\"Try using these commands to get started:\"",
+        "  • 'look' - to examine your surroundings",
+        "  • 'north', 'south', 'east', 'west' - to move around",
+        "  • 'stats' - to check your character information",
+        "  • 'npc' - to see who's around you",
+        "",
+        "\"There's treasure to the southeast if you're feeling adventurous!\"",
+        "\"Remember, you can always type 'help' if you get stuck.\"",
+        "",
+        "Goldie sits and tilts her head, waiting to see what you'll do next."
+      ]
+    else
+      # Default dialogue for other NPCs
+      dialogue = case npc.dialogue do
+        nil -> "#{npc_name} looks at you but doesn't seem to have much to say."
+        "" -> "#{npc_name} nods at you in acknowledgment."
+        dialogue_text -> dialogue_text
+      end
+      
+      # Add some personality based on NPC type
+      personality_response = case npc.npc_type do
+        "friendly" -> "#{npc_name} smiles warmly at you."
+        "hostile" -> "#{npc_name} glares at you menacingly."
+        "neutral" -> "#{npc_name} regards you with mild interest."
+        "merchant" -> "#{npc_name} eyes you as a potential customer."
+        "guard" -> "#{npc_name} stands at attention and nods formally."
+        _ -> "#{npc_name} acknowledges your presence."
+      end
+      
+      [
+        personality_response,
+        "",
+        "#{npc_name} says: \"#{dialogue}\"",
+        "",
+        "#{npc_name} waits to see if you have anything else to say."
+      ]
     end
   end
 
