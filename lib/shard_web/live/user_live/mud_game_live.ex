@@ -1828,10 +1828,19 @@ defmodule ShardWeb.MudGameLive do
 
   # Find a quest that can be delivered to the specified NPC
   defp find_deliverable_quest(player_quests, npc) do
-    # Look for quests that are "In Progress" and have this NPC as the turn-in target
+    # Look for quests that are "In Progress" and check against database for turn-in NPC
     Enum.find(player_quests, fn quest ->
-      quest.status == "In Progress" && 
-      (quest[:npc_giver] == npc.name || quest[:turn_in_npc] == npc.name)
+      if quest.status == "In Progress" && quest[:id] do
+        # Get the full quest data from database to check turn_in_npc_id
+        case Repo.get(Quest, quest.id) do
+          nil -> false
+          db_quest -> 
+            # Check if this NPC is the designated turn-in NPC
+            db_quest.turn_in_npc_id == npc.id
+        end
+      else
+        false
+      end
     end)
   end
 
@@ -1840,25 +1849,12 @@ defmodule ShardWeb.MudGameLive do
     npc_name = npc.name || "Unknown NPC"
     quest_title = quest.title || "Untitled Quest"
     
-    # Get the full quest data from database if we have an ID
-    full_quest = if quest[:id] do
-      Repo.get(Quest, quest.id)
-    else
-      nil
-    end
+    # Get the full quest data from database
+    full_quest = Repo.get(Quest, quest.id)
     
-    # Calculate rewards
-    exp_reward = if full_quest && full_quest.experience_reward do
-      full_quest.experience_reward
-    else
-      100  # Default experience reward
-    end
-    
-    gold_reward = if full_quest && full_quest.gold_reward do
-      full_quest.gold_reward
-    else
-      50  # Default gold reward
-    end
+    # Calculate rewards (use database values or defaults)
+    exp_reward = full_quest.experience_reward || 100
+    gold_reward = full_quest.gold_reward || 50
     
     # Update player stats with rewards
     updated_stats = game_state.player_stats
@@ -1867,9 +1863,9 @@ defmodule ShardWeb.MudGameLive do
     # Check if player levels up
     {updated_stats, level_up_message} = check_level_up(updated_stats)
     
-    # Remove the completed quest from player's quest list
+    # Mark the quest as completed in player's quest list
     updated_quests = Enum.map(game_state.quests, fn q ->
-      if q.title == quest_title do
+      if q[:id] == quest.id do
         %{q | status: "Completed", progress: "100% complete"}
       else
         q
@@ -1893,7 +1889,7 @@ defmodule ShardWeb.MudGameLive do
     end
     
     # Add item rewards if any
-    response = if full_quest && full_quest.item_rewards && map_size(full_quest.item_rewards) > 0 do
+    response = if full_quest.item_rewards && map_size(full_quest.item_rewards) > 0 do
       item_list = Enum.map(full_quest.item_rewards, fn {_key, item} -> "  - #{item}" end)
       response ++ ["Items received:"] ++ item_list
     else
