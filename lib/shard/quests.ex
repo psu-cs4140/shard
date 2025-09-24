@@ -6,7 +6,8 @@ defmodule Shard.Quests do
   import Ecto.Query, warn: false
   alias Shard.Repo
 
-  alias Shard.Quests.Quest
+  alias Shard.Quests.{Quest, QuestAcceptance}
+  alias Shard.Users.User
 
   @doc """
   Returns the list of quests.
@@ -86,6 +87,116 @@ defmodule Shard.Quests do
              q.is_active == true and 
              q.min_level <= ^level and 
              (is_nil(q.max_level) or q.max_level >= ^level))
+    |> Repo.all()
+  end
+
+  @doc """
+  Checks if a user has already accepted a specific quest.
+
+  ## Examples
+
+      iex> quest_accepted_by_user?(user_id, quest_id)
+      true
+
+      iex> quest_accepted_by_user?(user_id, quest_id)
+      false
+
+  """
+  def quest_accepted_by_user?(user_id, quest_id) do
+    from(qa in QuestAcceptance,
+      where: qa.user_id == ^user_id and qa.quest_id == ^quest_id)
+    |> Repo.exists?()
+  end
+
+  @doc """
+  Accepts a quest for a user.
+
+  ## Examples
+
+      iex> accept_quest(user_id, quest_id)
+      {:ok, %QuestAcceptance{}}
+
+      iex> accept_quest(user_id, quest_id)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def accept_quest(user_id, quest_id) do
+    %QuestAcceptance{}
+    |> QuestAcceptance.accept_changeset(%{user_id: user_id, quest_id: quest_id})
+    |> Repo.insert()
+  end
+
+  @doc """
+  Gets all quest acceptances for a user.
+
+  ## Examples
+
+      iex> get_user_quest_acceptances(user_id)
+      [%QuestAcceptance{}, ...]
+
+  """
+  def get_user_quest_acceptances(user_id) do
+    from(qa in QuestAcceptance,
+      where: qa.user_id == ^user_id,
+      preload: [:quest])
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets all active (accepted/in_progress) quest acceptances for a user.
+
+  ## Examples
+
+      iex> get_user_active_quests(user_id)
+      [%QuestAcceptance{}, ...]
+
+  """
+  def get_user_active_quests(user_id) do
+    from(qa in QuestAcceptance,
+      where: qa.user_id == ^user_id and qa.status in ["accepted", "in_progress"],
+      preload: [:quest])
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets quests available to a user (not yet accepted).
+
+  ## Examples
+
+      iex> get_available_quests_for_user(user_id)
+      [%Quest{}, ...]
+
+  """
+  def get_available_quests_for_user(user_id) do
+    accepted_quest_ids = from(qa in QuestAcceptance,
+      where: qa.user_id == ^user_id,
+      select: qa.quest_id)
+
+    from(q in Quest,
+      where: q.is_active == true and q.id not in subquery(accepted_quest_ids))
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets quests by giver NPC that are available to a user.
+
+  ## Examples
+
+      iex> get_available_quests_by_giver(user_id, npc_id)
+      [%Quest{}, ...]
+
+  """
+  def get_available_quests_by_giver(user_id, npc_id) do
+    accepted_quest_ids = from(qa in QuestAcceptance,
+      where: qa.user_id == ^user_id,
+      select: qa.quest_id)
+
+    from(q in Quest,
+      where: q.giver_npc_id == ^npc_id and 
+             q.is_active == true and 
+             q.status == "available" and
+             q.id not in subquery(accepted_quest_ids),
+      order_by: [asc: q.sort_order, asc: q.id])
     |> Repo.all()
   end
 
