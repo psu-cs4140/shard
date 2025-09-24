@@ -1179,7 +1179,7 @@ defmodule ShardWeb.MudGameLive do
           npc_descriptions = Enum.map(npcs_here, fn npc ->
             npc_name = Map.get(npc, :name) || "Unknown NPC"
             npc_desc = Map.get(npc, :description) || "They look at you with interest."
-            "#{npc_name} is here. #{npc_desc}"
+            "#{npc_name} is here.\n#{npc_desc}"
           end)
           description_lines = description_lines ++ npc_descriptions
         end
@@ -1359,7 +1359,7 @@ defmodule ShardWeb.MudGameLive do
       # Always return Goldie at (0,0) for tutorial terrain
       goldie = %{
         name: "Goldie",
-        description: "A friendly golden retriever with bright eyes and a wagging tail. She seems eager to help you learn the basics of this world.",
+        description: "A friendly golden retriever with bright, intelligent eyes and a constantly wagging tail. Her golden fur gleams in the torchlight, and she sits patiently beside the entrance, as if she's been waiting for you. She wears a small leather collar with a brass nameplate that reads 'Goldie - Tutorial Guide'. Her demeanor is warm and welcoming, and she seems eager to help newcomers learn the ways of this mysterious world.",
         location_x: 0,
         location_y: 0,
         location_z: 0,
