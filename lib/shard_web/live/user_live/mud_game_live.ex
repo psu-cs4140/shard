@@ -1482,32 +1482,54 @@ defmodule ShardWeb.MudGameLive do
 
   # Helper function to get NPCs at a specific location
   defp get_npcs_at_location(x, y, map_id) do
-    # For tutorial terrain, ensure Goldie is at (0,0)
-    if map_id == "tutorial_terrain" and x == 0 and y == 0 do
-      # Always return Goldie at (0,0) for tutorial terrain
-      goldie = %{
-        name: "Goldie",
-        description: "A friendly golden retriever with bright, intelligent eyes and a constantly wagging tail. Her golden fur gleams in the torchlight, and she sits patiently beside the entrance, as if she's been waiting for you. She wears a small leather collar with a brass nameplate that reads 'Goldie - Tutorial Guide'. Her demeanor is warm and welcoming, and she seems eager to help newcomers learn the ways of this mysterious world.",
-        location_x: 0,
-        location_y: 0,
-        location_z: 0,
-        health: 100,
-        max_health: 100,
-        mana: 50,
-        max_mana: 50,
-        level: 1,
-        experience_reward: 0,
-        is_active: true,
-        npc_type: "friendly"
-      }
-      [goldie]
-    else
-      # For other locations and maps, check database
-      import Ecto.Query
-      npcs = from(n in Npc,
-        where: n.location_x == ^x and n.location_y == ^y and n.is_active == true)
-      |> Repo.all()
-      npcs
+    # For tutorial terrain, handle special NPCs
+    cond do
+      map_id == "tutorial_terrain" and x == 0 and y == 0 ->
+        # Always return Goldie at (0,0) for tutorial terrain
+        goldie = %{
+          name: "Goldie",
+          description: "A friendly golden retriever with bright, intelligent eyes and a constantly wagging tail. Her golden fur gleams in the torchlight, and she sits patiently beside the entrance, as if she's been waiting for you. She wears a small leather collar with a brass nameplate that reads 'Goldie - Tutorial Guide'. Her demeanor is warm and welcoming, and she seems eager to help newcomers learn the ways of this mysterious world.",
+          location_x: 0,
+          location_y: 0,
+          location_z: 0,
+          health: 100,
+          max_health: 100,
+          mana: 50,
+          max_mana: 50,
+          level: 1,
+          experience_reward: 0,
+          is_active: true,
+          npc_type: "friendly"
+        }
+        [goldie]
+      
+      map_id == "tutorial_terrain" and x == 0 and y == 1 ->
+        # Elder throne at (0,1) for tutorial terrain
+        elder_throne = %{
+          name: "Elder Throne",
+          description: "An ancient, ornate throne carved from a single piece of dark stone. Intricate runes are etched into its surface, glowing faintly with an otherworldly light. The throne emanates an aura of wisdom and power, as if it has witnessed countless ages pass. Though no one sits upon it, you sense a presence watching you from within the stone itself.",
+          location_x: 0,
+          location_y: 1,
+          location_z: 0,
+          health: 1000,
+          max_health: 1000,
+          mana: 500,
+          max_mana: 500,
+          level: 50,
+          experience_reward: 0,
+          is_active: true,
+          npc_type: "neutral",
+          dialogue: "The ancient throne pulses with magical energy. You hear a deep, resonant voice echo in your mind: 'Welcome, young adventurer. I have watched over this realm for millennia. Seek knowledge, grow strong, and remember that true power comes from wisdom, not force.'"
+        }
+        [elder_throne]
+      
+      true ->
+        # For other locations and maps, check database
+        import Ecto.Query
+        npcs = from(n in Npc,
+          where: n.location_x == ^x and n.location_y == ^y and n.is_active == true)
+        |> Repo.all()
+        npcs
     end
   end
 
