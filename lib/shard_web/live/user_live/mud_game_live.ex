@@ -1971,19 +1971,31 @@ defmodule ShardWeb.MudGameLive do
   # Find a quest that can be delivered to the specified NPC
   defp find_deliverable_quest(player_quests, npc) do
     # Look for quests that are "In Progress" and check against database for turn-in NPC
-    Enum.find(player_quests, fn quest ->
-      if quest.status == "In Progress" && quest[:id] do
-        # Get the full quest data from database to check turn_in_npc_id
-        case Repo.get(Quest, quest.id) do
-          nil -> false
-          db_quest -> 
-            # Check if this NPC is the designated turn-in NPC
-            db_quest.turn_in_npc_id == npc.id
+    try do
+      Enum.find(player_quests, fn quest ->
+        if quest.status == "In Progress" && quest[:id] do
+          # Get the full quest data from database to check turn_in_npc_id
+          try do
+            case Repo.get(Quest, quest.id) do
+              nil -> false
+              db_quest -> 
+                # Check if this NPC is the designated turn-in NPC
+                db_quest.turn_in_npc_id == npc.id
+            end
+          rescue
+            error ->
+              IO.inspect(error, label: "Error getting quest #{quest.id} from database")
+              false
+          end
+        else
+          false
         end
-      else
-        false
-      end
-    end)
+      end)
+    rescue
+      error ->
+        IO.inspect(error, label: "Error finding deliverable quest")
+        nil
+    end
   end
 
   # Complete the quest and give rewards to the player
@@ -1991,35 +2003,66 @@ defmodule ShardWeb.MudGameLive do
     npc_name = npc.name || "Unknown NPC"
     quest_title = quest.title || "Untitled Quest"
     
-    # Get the full quest data from database
-    full_quest = Repo.get(Quest, quest.id)
+    # Get the full quest data from database with error handling
+    full_quest = try do
+      Repo.get(Quest, quest.id)
+    rescue
+      error ->
+        IO.inspect(error, label: "Error getting quest #{quest.id} from database")
+        nil
+    end
     
     # Calculate rewards (use database values or defaults)
-    exp_reward = full_quest.experience_reward || 100
-    gold_reward = full_quest.gold_reward || 50
+    exp_reward = if full_quest, do: full_quest.experience_reward || 100, else: 100
+    gold_reward = if full_quest, do: full_quest.gold_reward || 50, else: 50
     
     # Update player stats with rewards
-    updated_stats = game_state.player_stats
-    |> Map.update(:experience, 0, &(&1 + exp_reward))
+    updated_stats = try do
+      game_state.player_stats
+      |> Map.update(:experience, 0, &(&1 + exp_reward))
+    rescue
+      error ->
+        IO.inspect(error, label: "Error updating player stats")
+        game_state.player_stats
+    end
     
     # Check if player levels up
-    {updated_stats, level_up_message} = check_level_up(updated_stats)
+    {updated_stats, level_up_message} = try do
+      check_level_up(updated_stats)
+    rescue
+      error ->
+        IO.inspect(error, label: "Error checking level up")
+        {updated_stats, nil}
+    end
     
     # Complete the quest in the database
     user_id = 1  # Mock user_id - should come from session in real implementation
-    updated_quests = case Shard.Quests.complete_quest(user_id, quest.id) do
-      {:ok, _quest_acceptance} ->
-        # Mark the quest as completed in player's quest list
-        Enum.map(game_state.quests, fn q ->
-          if q[:id] == quest.id do
-            %{q | status: "Completed", progress: "100% complete"}
-          else
-            q
-          end
-        end)
-      
-      {:error, _} ->
-        # If database update fails, still update game state for consistency
+    updated_quests = try do
+      case Shard.Quests.complete_quest(user_id, quest.id) do
+        {:ok, _quest_acceptance} ->
+          # Mark the quest as completed in player's quest list
+          Enum.map(game_state.quests, fn q ->
+            if q[:id] == quest.id do
+              %{q | status: "Completed", progress: "100% complete"}
+            else
+              q
+            end
+          end)
+        
+        {:error, _} ->
+          # If database update fails, still update game state for consistency
+          Enum.map(game_state.quests, fn q ->
+            if q[:id] == quest.id do
+              %{q | status: "Completed", progress: "100% complete"}
+            else
+              q
+            end
+          end)
+      end
+    rescue
+      error ->
+        IO.inspect(error, label: "Error completing quest in database")
+        # Fallback: update game state even if database fails
         Enum.map(game_state.quests, fn q ->
           if q[:id] == quest.id do
             %{q | status: "Completed", progress: "100% complete"}
@@ -2045,12 +2088,18 @@ defmodule ShardWeb.MudGameLive do
       response
     end
     
-    # Add item rewards if any
-    response = if full_quest.item_rewards && map_size(full_quest.item_rewards) > 0 do
-      item_list = Enum.map(full_quest.item_rewards, fn {_key, item} -> "  - #{item}" end)
-      response ++ ["Items received:"] ++ item_list
-    else
-      response
+    # Add item rewards if any (with error handling)
+    response = try do
+      if full_quest && full_quest.item_rewards && map_size(full_quest.item_rewards) > 0 do
+        item_list = Enum.map(full_quest.item_rewards, fn {_key, item} -> "  - #{item}" end)
+        response ++ ["Items received:"] ++ item_list
+      else
+        response
+      end
+    rescue
+      error ->
+        IO.inspect(error, label: "Error processing item rewards")
+        response
     end
     
     # Add level up message if applicable
