@@ -1611,11 +1611,10 @@ defmodule ShardWeb.MudGameLive do
       quest_responses = Enum.flat_map(available_quests, fn quest ->
         quest_title = quest.title || "Untitled Quest"
         quest_description = quest.description || "A mysterious quest awaits."
-        quest_short_desc = quest.short_description || quest_description
         
         quest_lines = [
           "=== #{quest_title} ===",
-          quest_short_desc
+          quest_description
         ]
         
         # Add quest details
