@@ -1488,7 +1488,7 @@ defmodule ShardWeb.MudGameLive do
         # Always return Goldie at (0,0) for tutorial terrain
         goldie = %{
           name: "Goldie",
-          description: "A friendly golden retriever with bright, intelligent eyes and a constantly wagging tail. Her golden fur gleams in the torchlight, and she sits patiently beside the entrance, as if she's been waiting for you. She wears a small leather collar with a brass nameplate that reads 'Goldie - Tutorial Guide'. Her demeanor is warm and welcoming, and she seems eager to help newcomers learn the ways of this mysterious world.",
+          description: "A friendly golden retriever with bright, intelligent eyes and a constantly wagging tail. Her golden fur gleams in the torchlight, and she sits patiently beside the entrance, as if she's been waiting for you. She wears a small leather collar with a brass nameplate that reads 'Goldie'. Her demeanor is warm and welcoming, and she seems eager to help newcomers learn the ways of this mysterious world.",
           location_x: 0,
           location_y: 0,
           location_z: 0,
@@ -1519,7 +1519,7 @@ defmodule ShardWeb.MudGameLive do
           experience_reward: 0,
           is_active: true,
           npc_type: "neutral",
-          dialogue: "The ancient throne pulses with magical energy. You hear a deep, resonant voice echo in your mind: 'Welcome, young adventurer. I have watched over this realm for millennia. Seek knowledge, grow strong, and remember that true power comes from wisdom, not force.'"
+          dialogue: "Welcome, young adventurer. I have watched over this realm for millennia. Seek knowledge, grow strong, and remember that true power comes from wisdom, not force."
         }
         [elder_wizard]
       
