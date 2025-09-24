@@ -1428,3 +1428,84 @@
 
 # 2025-09-23 23:31:49.180363
 +y
+
+# 2025-09-23 23:35:57.253992
++under the game controls section, there is a tab that logs quests. there are some hard coded quests in the log quest section that i would like removed
+
+# 2025-09-23 23:36:18.178942
++lib/shard_web/live/game_live.ex
+
+# 2025-09-23 23:36:45.893302
++add any files needed to the chat, or prompt me to add the files that you do. 
+
+# 2025-09-23 23:50:14.010183
++please make it so that when a quest is in progress or completed when the user is in play/tutorial_terrain, that they can not longer accept the same quest. for example, after i complete the "deliver a message" quest, i shoudlnt be able to repeat the quest.
+
+# 2025-09-23 23:50:22.818709
++y
+
+# 2025-09-23 23:54:35.000341
++it still allows me to repeat a quest. please fix this
+
+# 2025-09-23 23:54:42.559243
++y
+
+# 2025-09-23 23:56:33.147065
++when i try to run mix phx.server, i get an error that there is an undefined variable "updated_quests" in lib/shard_web/live/user_live/mud_game_live.ex:1997
+
+# 2025-09-23 23:56:38.703889
++y
+
+# 2025-09-23 23:56:53.607849
++/run mix phx.server
+
+# 2025-09-23 23:56:53.607909
++/run mix phx.server
+
+# 2025-09-23 23:57:45.380742
++n
+
+# 2025-09-23 23:58:12.201211
++when i type "quest npc_name", it resets the entire mud terminal and no text appears. fix this
+
+# 2025-09-23 23:58:36.870016
++y
+
+# 2025-09-23 23:58:36.873430
++/run mix phx.server
+
+# 2025-09-23 23:58:36.873487
++/run mix phx.server
+
+# 2025-09-23 23:59:12.757207
++n
+
+# 2025-09-23 23:59:38.456986
++when i try to accept a quest, it resets the mud terminal and no text appears. fix this
+
+# 2025-09-24 00:00:13.368277
++y
+
+# 2025-09-24 00:00:13.371438
++/run mix phx.server
+
+# 2025-09-24 00:00:13.371547
++/run mix phx.server
+
+# 2025-09-24 00:01:54.736918
++n
+
+# 2025-09-24 00:02:27.384725
++when i try to deliver a quest, it resets the mud terminal and no text appears. fix this
+
+# 2025-09-24 00:03:09.923819
++y
+
+# 2025-09-24 00:03:09.927664
++/run mix phx.server
+
+# 2025-09-24 00:03:09.927711
++/run mix phx.server
+
+# 2025-09-24 00:05:14.901928
++n
