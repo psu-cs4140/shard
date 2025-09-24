@@ -52,9 +52,7 @@ defmodule ShardWeb.MudGameLive do
         slot_5: nil
       },
       quests: [
-        %{title: "The Lost Artifact", status: "In Progress", progress: "2/5 artifacts found"},
-        %{title: "Clear the Dungeon", status: "Available", progress: "0/10 enemies slain"},
-        %{title: "Merchant's Request", status: "Completed", progress: "Done"}
+        
       ],
       pending_quest_offer: nil  # Stores quest offer waiting for acceptance/denial
     }
