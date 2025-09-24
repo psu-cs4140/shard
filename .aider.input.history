@@ -1218,3 +1218,33 @@
 
 # 2025-09-23 19:17:09.011580
 +n
+
+# 2025-09-23 20:00:52.315771
++please create 3 other npcs that will be in the tutorial_terrain. these npcs should be the same no matter which user/character is playing
+
+# 2025-09-23 20:01:00.899496
++y
+
+# 2025-09-23 20:03:13.221474
++please have the mud terminal have a "look" command that provides a description of the room and describes any npcs in the room
+
+# 2025-09-23 20:03:22.317232
++y
+
+# 2025-09-23 20:04:52.228971
++yes! please have the npc goldie in position 0,0. please have it so that when you type the command "look", it gives her description along with the room
+
+# 2025-09-23 20:08:15.903802
++please create a command in play called "npc". this outputs the descriptions for any npcs in that room
+
+# 2025-09-23 20:08:22.146568
++y
+
+# 2025-09-23 20:09:58.545815
++create a command called "talk "npc_name"" which allows you to talk to the npc in the room
+
+# 2025-09-23 20:10:06.921128
++y
+
+# 2025-09-23 20:15:31.629029
++please set the npc "elder thorne" to have a position of 0,1
