@@ -86,7 +86,7 @@ defmodule ShardWeb.MudGameLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col h-screen bg-gray-900 text-white" phx-window-keydown="keypress">  <!-- "phx-window-keydown="keypress" -->
+    <div class="flex flex-col h-screen bg-gray-900 text-white" phx-window-keydown="keypress">
       <!-- Header -->
       <header class="bg-gray-800 p-4 shadow-lg">
         <h1 class="text-2xl font-bold">MUD Game</h1>
@@ -551,31 +551,30 @@ defmodule ShardWeb.MudGameLive do
             <div class="mt-6">
               <h4 class="text-lg font-semibold mb-2">Map Legend</h4>
 
-      <div class="bg-gray-800 rounded-lg p-4 mt-4">
-        <h4 class="text-lg font-semibold mb-3 text-center">Exits</h4>
+              <div class="bg-gray-800 rounded-lg p-4 mt-4">
+                <h4 class="text-lg font-semibold mb-3 text-center">Exits</h4>
 
-        <%= if @available_exits in [nil, []] do %>
-          <div class="text-center text-gray-400">No visible exits</div>
-        <% else %>
-          <div class="grid grid-cols-2 gap-2">
-            <%= for exit <- @available_exits do %>
-              <button
-                phx-click="click_exit"
-                phx-value-dir={exit.direction}
-                class="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-center border border-gray-600"
-                title={"Move " <> exit.direction}
-              >
-                <%= String.capitalize(exit.direction) %>
-              </button>
-            <% end %>
-          </div>
-        <% end %>
+                <%= if @available_exits in [nil, []] do %>
+                  <div class="text-center text-gray-400">No visible exits</div>
+                <% else %>
+                  <div class="grid grid-cols-2 gap-2">
+                    <%= for exit <- @available_exits do %>
+                      <button
+                        phx-click="click_exit"
+                        phx-value-dir={exit.direction}
+                        class="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-center border border-gray-600"
+                        title={"Move " <> exit.direction}
+                      >
+                        <%= String.capitalize(exit.direction) %>
+                      </button>
+                    <% end %>
+                  </div>
+                <% end %>
 
-        <div class="text-xs text-gray-400 mt-2 text-center">
-          Tip: Arrow keys still work for movement.
-        </div>
-      </div>
-
+                <div class="text-xs text-gray-400 mt-2 text-center">
+                  Tip: Arrow keys still work for movement.
+                </div>
+              </div>
 
               <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
                 <!-- Room Types -->
@@ -706,3 +705,99 @@ defmodule ShardWeb.MudGameLive do
                 </div>
                 <div class="flex items-center justify-between">
                   <span>Sound Effects</span>
+                  <input type="range" min="0" max="100" value="90" class="w-32">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end mt-6">
+            <button 
+              phx-click="hide_modal"
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  # Helper functions
+  defp generate_map_from_database(map_id) do
+    # This is a placeholder - in a real implementation, you would load the map from the database
+    case map_id do
+      "tutorial" -> 
+        [
+          ["#", "#", "#", "#", "#"],
+          ["#", ".", ".", ".", "#"],
+          ["#", ".", "#", ".", "#"],
+          ["#", ".", ".", ".", "#"],
+          ["#", "#", "#", "#", "#"]
+        ]
+      _ -> 
+        # Default map
+        [
+          ["#", "#", "#", "#", "#"],
+          ["#", ".", ".", ".", "#"],
+          ["#", ".", "#", ".", "#"],
+          ["#", ".", ".", ".", "#"],
+          ["#", "#", "#", "#", "#"]
+        ]
+    end
+  end
+
+  defp find_valid_starting_position(map_data) do
+    # Find the first walkable tile (represented by ".") as the starting position
+    for {row, y} <- Enum.with_index(map_data),
+        {cell, x} <- Enum.with_index(row),
+        cell == "." do
+      {x, y}
+    end
+    |> List.first()
+    |> case do
+      nil -> {1, 1}  # Default fallback position
+      pos -> pos
+    end
+  end
+
+  defp compute_available_exits(player_position) do
+    # This is a placeholder - in a real implementation, you would check the actual map data
+    # to determine which exits are available from the player's current position
+    [
+      %{direction: "north", x: 0, y: -1},
+      %{direction: "south", x: 0, y: 1},
+      %{direction: "east", x: 1, y: 0},
+      %{direction: "west", x: -1, y: 0}
+    ]
+  end
+
+  defp format_position({x, y}) do
+    "(#{x}, #{y})"
+  end
+
+  # Event handlers
+  @impl true
+  def handle_event("open_modal", %{"value" => modal_type}, socket) do
+    {:noreply, assign(socket, :modal_state, %{show: true, type: modal_type})}
+  end
+
+  @impl true
+  def handle_event("hide_modal", _params, socket) do
+    {:noreply, assign(socket, :modal_state, %{show: false, type: nil})}
+  end
+
+  @impl true
+  def handle_event("click_exit", %{"dir" => direction}, socket) do
+    # Handle player movement through exits
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("keypress", %{"key" => key}, socket) do
+    # Handle keyboard input for movement and commands
+    {:noreply, socket}
+  end
+end
