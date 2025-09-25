@@ -114,9 +114,25 @@ defmodule ShardWeb.Router do
       live "/users/register", UserLive.Registration, :new
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new
+      live "/npcs", NpcLive.Index, :index
+      live "/npcs/new", NpcLive.Form, :new
+      live "/npcs/:id", NpcLive.Show, :show
+      live "/npcs/:id/edit", NpcLive.Form, :edit
+
     end
 
     post "/users/log-in", UserSessionController, :create
     delete "/users/log-out", UserSessionController, :delete
   end
+ scope "/", ShardWeb do
+   pipe_through [:browser, :require_admin]  # make sure you have an admin plug if needed
+
+   live "/npcs", NpcLive.Index, :index
+   live "/npcs/new", NpcLive.Form, :new
+   live "/npcs/:id", NpcLive.Show, :show
+   live "/npcs/:id/edit", NpcLive.Form, :edit
+ end
+
+
 end
+
