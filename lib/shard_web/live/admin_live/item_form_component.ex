@@ -7,7 +7,7 @@ defmodule ShardWeb.AdminLive.ItemFormComponent do
   def render(assigns) do
     ~H"""
     <div>
-      <.header class="ml-8">
+      <.header class="ml-12">
         <%= @title %>
         <:subtitle>Use this form to manage item records in your database.</:subtitle>
       </.header>
