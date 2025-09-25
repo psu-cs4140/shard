@@ -75,7 +75,13 @@ defmodule ShardWeb.MudGameLive do
       type: 0
     }
 
-    {:ok, assign(socket, game_state: game_state, terminal_state: terminal_state, modal_state: modal_state)}
+    {:ok,
+ assign(socket,
+   game_state: game_state,
+   terminal_state: terminal_state,
+   modal_state: modal_state,
+   available_exits: compute_available_exits(game_state.player_position)
+ )}
   end
 
   @impl true
@@ -545,6 +551,33 @@ defmodule ShardWeb.MudGameLive do
 
             <div class="mt-6">
               <h4 class="text-lg font-semibold mb-2">Map Legend</h4>
+
+      <div class="bg-gray-800 rounded-lg p-4 mt-4">
+        <h4 class="text-lg font-semibold mb-3 text-center">Exits</h4>
+
+        <%= if @available_exits in [nil, []] do %>
+          <div class="text-center text-gray-400">No visible exits</div>
+        <% else %>
+          <div class="grid grid-cols-2 gap-2">
+            <%= for exit <- @available_exits do %>
+              <button
+                phx-click="click_exit"
+                phx-value-dir={exit.direction}
+                class="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-center border border-gray-600"
+                title={"Move " <> exit.direction}
+              >
+                <%= String.capitalize(exit.direction) %>
+              </button>
+            <% end %>
+          </div>
+        <% end %>
+
+        <div class="text-xs text-gray-400 mt-2 text-center">
+          Tip: Arrow keys still work for movement.
+        </div>
+      </div>
+
+
               <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
                 <!-- Room Types -->
                 <div class="flex items-center">
@@ -795,7 +828,12 @@ defmodule ShardWeb.MudGameLive do
       quests: socket.assigns.game_state.quests,
       pending_quest_offer: socket.assigns.game_state.pending_quest_offer
     }
-    {:noreply, assign(socket, game_state: game_state, terminal_state: terminal_state)}
+    {:noreply,
+ assign(socket,
+   game_state: game_state,
+   terminal_state: terminal_state,
+   available_exits: compute_available_exits(game_state.player_position)
+ )}
   end
 
   def handle_event("submit_command", %{"command" => %{"text" => command_text}}, socket) do
@@ -833,23 +871,25 @@ defmodule ShardWeb.MudGameLive do
 
   #To calculate new player position on map
   def calc_position(curr_position, key, _map_data) do
-    new_position = case key do
-      "ArrowUp" ->
-        {elem(curr_position, 0), elem(curr_position, 1) - 1}
-      "ArrowDown" ->
-        {elem(curr_position, 0), elem(curr_position, 1) + 1}
-      "ArrowRight" ->
-        {elem(curr_position, 0) + 1, elem(curr_position, 1)}
-      "ArrowLeft" ->
-        {elem(curr_position, 0) - 1, elem(curr_position, 1)}
-      "northeast" ->
-        {elem(curr_position, 0) + 1, elem(curr_position, 1) - 1}
-      "southeast" ->
-        {elem(curr_position, 0) + 1, elem(curr_position, 1) + 1}
-      "northwest" ->
-        {elem(curr_position, 0) - 1, elem(curr_position, 1) - 1}
-      "southwest" ->
-        {elem(curr_position, 0) - 1, elem(curr_position, 1) + 1}
+  new_position = case key do
+    # Align with DB: north increases y, south decreases y
+    "ArrowUp" ->
+      {elem(curr_position, 0), elem(curr_position, 1) + 1}
+    "ArrowDown" ->
+      {elem(curr_position, 0), elem(curr_position, 1) - 1}
+    "ArrowRight" ->
+      {elem(curr_position, 0) + 1, elem(curr_position, 1)}
+    "ArrowLeft" ->
+      {elem(curr_position, 0) - 1, elem(curr_position, 1)}
+    "northeast" ->
+      {elem(curr_position, 0) + 1, elem(curr_position, 1) + 1}
+    "southeast" ->
+      {elem(curr_position, 0) + 1, elem(curr_position, 1) - 1}
+    "northwest" ->
+      {elem(curr_position, 0) - 1, elem(curr_position, 1) + 1}
+    "southwest" ->
+      {elem(curr_position, 0) - 1, elem(curr_position, 1) - 1}
+
       _other  ->
         curr_position
     end
@@ -2376,4 +2416,66 @@ defmodule ShardWeb.MudGameLive do
     </div>
     """
   end
+  # === Exits helpers ===
+
+  # (A) Convert a cardinal direction label to a key your calc_position/3 already understands
+  defp dir_to_key("north"), do: "ArrowUp"
+  defp dir_to_key("south"), do: "ArrowDown"
+  defp dir_to_key("east"),  do: "ArrowRight"
+  defp dir_to_key("west"),  do: "ArrowLeft"
+  defp dir_to_key("northeast"), do: "northeast"
+  defp dir_to_key("northwest"), do: "northwest"
+  defp dir_to_key("southeast"), do: "southeast"
+  defp dir_to_key("southwest"), do: "southwest"
+  defp dir_to_key(_), do: nil
+
+  # (B) Given the player’s current grid position {x, y}, compute which exits (doors) exist
+  defp compute_available_exits({x, y}) do
+    case GameMap.get_room_by_coordinates(x, y) do
+      nil ->
+        []
+      room ->
+        doors = GameMap.get_doors_from_room(room.id)
+        valid_dirs = MapSet.new(["north","south","east","west","northeast","northwest","southeast","southwest"])
+        doors
+        |> Enum.filter(fn d -> d.direction in valid_dirs end)
+        |> Enum.map(fn d -> %{direction: d.direction, door: d} end)
+    end
+  end
+
+  # (C) Handle clicking an exit button to move rooms
+  @impl true
+  def handle_event("click_exit", %{"dir" => dir}, socket) do
+    key = dir_to_key(dir)
+    player_position = socket.assigns.game_state.player_position
+    map_data        = socket.assigns.game_state.map_data
+
+    new_position =
+      case key do
+        nil -> player_position
+        _   -> calc_position(player_position, key, map_data)
+      end
+
+    terminal_state =
+      if new_position != player_position do
+        msg = "You move #{dir}."
+        Map.update!(socket.assigns.terminal_state, :output, &(&1 ++ [msg, ""]))
+      else
+        socket.assigns.terminal_state
+      end
+
+    game_state = %{
+      socket.assigns.game_state
+      | player_position: new_position
+    }
+
+    {:noreply,
+     assign(socket,
+       game_state: game_state,
+       terminal_state: terminal_state,
+       available_exits: compute_available_exits(game_state.player_position)
+     )}
+  end
+
 end
+
