@@ -78,6 +78,7 @@ defmodule ShardWeb.Router do
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
       live "/characters", CharacterLive.Index, :index
       live "/characters/new", CharacterLive.New, :new
+      live "/inventory", InventoryLive.Index, :index
     end
 
     post "/users/update-password", UserSessionController, :update_password
@@ -92,6 +93,10 @@ defmodule ShardWeb.Router do
       live "/characters/new", AdminLive.Characters, :new
       live "/characters/:id", AdminLive.Characters, :show
       live "/characters/:id/edit", AdminLive.Characters, :edit
+      live "/items", AdminLive.Items, :index
+      live "/items/new", AdminLive.Items, :new
+      live "/items/:id", AdminLive.Items, :show
+      live "/items/:id/edit", AdminLive.Items, :edit
     end
   end
 

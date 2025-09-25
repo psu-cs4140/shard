@@ -3,6 +3,7 @@ defmodule Shard.Characters.Character do
   import Ecto.Changeset
 
   alias Shard.Users.User
+  alias Shard.Items.{CharacterInventory, HotbarSlot}
 
   schema "characters" do
     field :name, :string
@@ -22,6 +23,8 @@ defmodule Shard.Characters.Character do
     field :is_active, :boolean, default: true
 
     belongs_to :user, User
+    has_many :character_inventories, CharacterInventory
+    has_many :hotbar_slots, HotbarSlot
 
     timestamps(type: :utc_datetime)
   end

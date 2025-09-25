@@ -1,0 +1,160 @@
+<.header>
+  Inventory Management
+  <:subtitle>Manage your character's inventory, equipment, and hotbar</:subtitle>
+</.header>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Character Selection -->
+  <div class="lg:col-span-3">
+    <div class="bg-white shadow rounded-lg p-4">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Select Character</h3>
+      <div class="flex flex-wrap gap-2">
+        <%= for character <- @characters do %>
+          <button
+            phx-click="select_character"
+            phx-value-character_id={character.id}
+            class={[
+              "px-4 py-2 rounded-md text-sm font-medium",
+              if(@selected_character && @selected_character.id == character.id,
+                do: "bg-blue-600 text-white",
+                else: "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              )
+            ]}
+          >
+            <%= character.name %> (Level <%= character.level %> <%= String.capitalize(character.class) %>)
+          </button>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <%= if @selected_character do %>
+    <!-- Inventory -->
+    <div class="lg:col-span-2">
+      <div class="bg-white shadow rounded-lg p-4">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Inventory</h3>
+        <div class="grid grid-cols-6 gap-2">
+          <%= for inventory_item <- @inventory do %>
+            <div class="border border-gray-300 rounded p-2 hover:bg-gray-50">
+              <div class="text-xs font-medium <%= rarity_class(inventory_item.item.rarity) %>">
+                <%= inventory_item.item.name %>
+              </div>
+              <div class="text-xs text-gray-500">
+                Qty: <%= inventory_item.quantity %>
+              </div>
+              <%= if inventory_item.equipped do %>
+                <div class="text-xs text-green-600 font-medium">Equipped</div>
+              <% end %>
+              <div class="mt-2 space-y-1">
+                <%= if inventory_item.item.equippable && !inventory_item.equipped do %>
+                  <button
+                    phx-click="equip_item"
+                    phx-value-inventory_id={inventory_item.id}
+                    class="w-full text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200"
+                  >
+                    Equip
+                  </button>
+                <% end %>
+                <%= if inventory_item.equipped do %>
+                  <button
+                    phx-click="unequip_item"
+                    phx-value-inventory_id={inventory_item.id}
+                    class="w-full text-xs bg-red-100 text-red-800 px-2 py-1 rounded hover:bg-red-200"
+                  >
+                    Unequip
+                  </button>
+                <% end %>
+                <button
+                  phx-click="drop_item"
+                  phx-value-inventory_id={inventory_item.id}
+                  class="w-full text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded hover:bg-gray-200"
+                >
+                  Drop
+                </button>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Hotbar -->
+      <div class="bg-white shadow rounded-lg p-4 mt-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Hotbar</h3>
+        <div class="grid grid-cols-12 gap-2">
+          <%= for slot_num <- 1..12 do %>
+            <% hotbar_item = Enum.find(@hotbar, &(&1.slot_number == slot_num)) %>
+            <div class="border-2 border-gray-300 rounded p-2 h-16 flex flex-col justify-center items-center">
+              <div class="text-xs font-bold text-gray-400"><%= slot_num %></div>
+              <%= if hotbar_item && hotbar_item.item do %>
+                <div class="text-xs text-center <%= rarity_class(hotbar_item.item.rarity) %>">
+                  <%= String.slice(hotbar_item.item.name, 0..5) %>
+                </div>
+                <button
+                  phx-click="clear_hotbar"
+                  phx-value-slot={slot_num}
+                  class="text-xs text-red-600 hover:text-red-800"
+                >
+                  ×
+                </button>
+              <% else %>
+                <div class="text-xs text-gray-400">Empty</div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+        <div class="mt-4">
+          <p class="text-sm text-gray-600">
+            Drag items from inventory to hotbar slots, or use the buttons in inventory items.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Room Items -->
+    <div>
+      <div class="bg-white shadow rounded-lg p-4">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          Items in <%= String.replace(@selected_character.location, "_", " ") |> String.capitalize() %>
+        </h3>
+        <%= if Enum.empty?(@room_items) do %>
+          <p class="text-gray-500 text-sm">No items in this location.</p>
+        <% else %>
+          <div class="space-y-2">
+            <%= for room_item <- @room_items do %>
+              <div class="border border-gray-300 rounded p-3 hover:bg-gray-50">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <div class="font-medium <%= rarity_class(room_item.item.rarity) %>">
+                      <%= room_item.item.name %>
+                    </div>
+                    <div class="text-sm text-gray-500">
+                      Quantity: <%= room_item.quantity %>
+                    </div>
+                    <%= if room_item.item.description do %>
+                      <div class="text-xs text-gray-600 mt-1">
+                        <%= room_item.item.description %>
+                      </div>
+                    <% end %>
+                  </div>
+                  <button
+                    phx-click="pick_up_item"
+                    phx-value-room_item_id={room_item.id}
+                    class="bg-blue-100 text-blue-800 px-3 py-1 rounded text-sm hover:bg-blue-200"
+                  >
+                    Pick Up
+                  </button>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <div class="lg:col-span-3">
+      <div class="bg-white shadow rounded-lg p-8 text-center">
+        <p class="text-gray-500">Select a character to view their inventory.</p>
+      </div>
+    </div>
+  <% end %>
+</div>
