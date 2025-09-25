@@ -36,7 +36,7 @@
         <div class="grid grid-cols-6 gap-2">
           <%= for inventory_item <- @inventory do %>
             <div class="border border-gray-300 rounded p-2 hover:bg-gray-50">
-              <div class="text-xs font-medium <%= rarity_class(inventory_item.item.rarity) %>">
+              <div class={["text-xs font-medium", rarity_class(inventory_item.item.rarity)]}>
                 <%= inventory_item.item.name %>
               </div>
               <div class="text-xs text-gray-500">
@@ -86,7 +86,7 @@
             <div class="border-2 border-gray-300 rounded p-2 h-16 flex flex-col justify-center items-center">
               <div class="text-xs font-bold text-gray-400"><%= slot_num %></div>
               <%= if hotbar_item && hotbar_item.item do %>
-                <div class="text-xs text-center <%= rarity_class(hotbar_item.item.rarity) %>">
+                <div class={["text-xs text-center", rarity_class(hotbar_item.item.rarity)]}>
                   <%= String.slice(hotbar_item.item.name, 0..5) %>
                 </div>
                 <button
@@ -124,7 +124,7 @@
               <div class="border border-gray-300 rounded p-3 hover:bg-gray-50">
                 <div class="flex justify-between items-start">
                   <div>
-                    <div class="font-medium <%= rarity_class(room_item.item.rarity) %>">
+                    <div class={["font-medium", rarity_class(room_item.item.rarity)]}>
                       <%= room_item.item.name %>
                     </div>
                     <div class="text-sm text-gray-500">
