@@ -1,11 +1,13 @@
-<.header class="ml-12">
-  Items
-  <:actions>
-    <.link patch={~p"/admin/items/new"}>
-      <.button>New Item</.button>
-    </.link>
-  </:actions>
-</.header>
+<div style="padding-left: 3rem;">
+  <.header>
+    Items
+    <:actions>
+      <.link patch={~p"/admin/items/new"}>
+        <.button>New Item</.button>
+      </.link>
+    </:actions>
+  </.header>
+</div>
 
 <.table
   id="items"
