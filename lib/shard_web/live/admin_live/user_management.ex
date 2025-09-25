@@ -2,7 +2,6 @@ defmodule ShardWeb.AdminLive.UserManagement do
   use ShardWeb, :live_view
 
   alias Shard.Users
-  alias Shard.Users.User
 
   @impl true
   def mount(_params, _session, socket) do

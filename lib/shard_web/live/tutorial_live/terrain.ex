@@ -4,14 +4,6 @@ defmodule ShardWeb.TutorialLive.Terrain do
   alias Shard.Npcs.Npc
   import Ecto.Query
 
-  @tutorial_terrain_map [
-    ["🏔️", "🏔️", "🏔️", "🏔️", "🏔️"],
-    ["🏔️", "🌲", "🌲", "🌿", "🏔️"],
-    ["🏔️", "🌲", "🌿", "🌿", "🏔️"],
-    ["🏔️", "🌿", "🌿", "🌊", "🏔️"],
-    ["🏔️", "🏔️", "🏔️", "🏔️", "🏔️"]
-  ]
-
   def mount(_params, _session, socket) do
     tutorial_npcs = load_tutorial_npcs()
     
@@ -111,7 +103,13 @@ defmodule ShardWeb.TutorialLive.Terrain do
     <div class="bg-gray-100 p-4 rounded-lg">
       <h3 class="font-medium mb-3">World Map</h3>
       <div class="grid grid-cols-5 gap-1 w-fit mx-auto">
-        <%= for {row, row_index} <- Enum.with_index(@tutorial_terrain_map) do %>
+        <%= for {row, row_index} <- Enum.with_index([
+          ["🏔️", "🏔️", "🏔️", "🏔️", "🏔️"],
+          ["🏔️", "🌲", "🌲", "🌿", "🏔️"],
+          ["🏔️", "🌲", "🌿", "🌿", "🏔️"],
+          ["🏔️", "🌿", "🌿", "🌊", "🏔️"],
+          ["🏔️", "🏔️", "🏔️", "🏔️", "🏔️"]
+        ]) do %>
           <%= for {cell, col_index} <- Enum.with_index(row) do %>
             <div class="w-8 h-8 flex items-center justify-center text-lg border border-gray-300 rounded relative">
               <%= cell %>
