@@ -725,6 +725,164 @@ defmodule ShardWeb.MudGameLive do
     """
   end
 
+  # Terminal component implementation
+  defp terminal(assigns) do
+    ~H"""
+    <div class="flex flex-col h-full bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+      <div class="bg-gray-700 px-4 py-2 border-b border-gray-600">
+        <h3 class="font-semibold">Game Terminal</h3>
+      </div>
+      <div id="terminal-output" class="flex-1 p-4 overflow-y-auto font-mono text-sm">
+        <%= for line <- @terminal_state.output do %>
+          <div class="mb-1"><%= line %></div>
+        <% end %>
+      </div>
+      <div class="border-t border-gray-700 p-2">
+        <form phx-submit="submit_command" class="flex">
+          <span class="text-green-400 mr-2">&gt;</span>
+          <input 
+            type="text" 
+            name="command" 
+            value={@terminal_state.current_command}
+            class="flex-1 bg-gray-900 text-white px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter command..."
+            autocomplete="off"
+            phx-change="update_command"
+          />
+          <button type="submit" class="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded">
+            Send
+          </button>
+        </form>
+      </div>
+    </div>
+    """
+  end
+
+  # Minimap component implementation
+  defp minimap(assigns) do
+    ~H"""
+    <div class="bg-gray-700 rounded-lg p-4">
+      <h3 class="font-semibold mb-2">Minimap</h3>
+      <div class="bg-gray-800 rounded p-2">
+        <div class="grid grid-cols-5 gap-1 w-fit mx-auto">
+          <%= for y <- 0..4 do %>
+            <div class="flex">
+              <%= for x <- 0..4 do %>
+                <div class={"w-6 h-6 flex items-center justify-center text-xs border border-gray-700 " <>
+                  if(@player_position == {x, y}, do: "bg-red-500", else: "bg-gray-600")}>
+                  <%= if @player_position == {x, y}, do: "P", else: " " %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  # Player stats component implementation
+  defp player_stats(assigns) do
+    ~H"""
+    <div class="bg-gray-700 rounded-lg p-4">
+      <h3 class="font-semibold mb-2">Player Stats</h3>
+      <div class="space-y-2">
+        <div>
+          <div class="flex justify-between text-sm">
+            <span>Health</span>
+            <span><%= @stats.health %>/<%= @stats.max_health %></span>
+          </div>
+          <div class="w-full bg-gray-600 rounded-full h-2">
+            <div 
+              class="bg-red-500 h-2 rounded-full" 
+              style={"width: #{(@stats.health / @stats.max_health) * 100}%"}>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between text-sm">
+            <span>Mana</span>
+            <span><%= @stats.mana %>/<%= @stats.max_mana %></span>
+          </div>
+          <div class="w-full bg-gray-600 rounded-full h-2">
+            <div 
+              class="bg-blue-500 h-2 rounded-full" 
+              style={"width: #{(@stats.mana / @stats.max_mana) * 100}%"}>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between text-sm">
+            <span>Level <%= @stats.level %></span>
+            <span><%= @stats.experience %>/<%= @stats.next_level_exp %> XP</span>
+          </div>
+          <div class="w-full bg-gray-600 rounded-full h-2">
+            <div 
+              class="bg-purple-500 h-2 rounded-full" 
+              style={"width: #{(@stats.experience / @stats.next_level_exp) * 100}%"}>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="mt-4">
+        <h4 class="font-semibold text-sm mb-1">Quick Items</h4>
+        <div class="grid grid-cols-5 gap-1">
+          <%= for i <- 1..5 do %>
+            <div class="bg-gray-800 border border-gray-600 rounded h-8 flex items-center justify-center">
+              <%= if Map.get(@hotbar, String.to_atom("slot_#{i}")) do %>
+                <span class="text-xs">I<%= i %></span>
+              <% else %>
+                <span class="text-xs text-gray-500">-</span>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  # Control button component implementation
+  defp control_button(assigns) do
+    ~H"""
+    <button 
+      phx-click={@click}
+      phx-value={@value}
+      class="flex items-center justify-between w-full bg-gray-700 hover:bg-gray-600 px-4 py-3 rounded-lg transition-colors"
+    >
+      <div class="flex items-center">
+        <.icon name={@icon} class="w-5 h-5 mr-3" />
+        <span><%= @text %></span>
+      </div>
+      <.icon name="hero-chevron-right" class="w-4 h-4 text-gray-400" />
+    </button>
+    """
+  end
+
+  # Map cell legacy component implementation
+  defp map_cell_legacy(assigns) do
+    # Determine cell color based on cell type
+    cell_class = case @cell do
+      "#" -> "bg-gray-800"  # Wall
+      "." -> "bg-green-900" # Floor
+      "D" -> "bg-yellow-700" # Door
+      "T" -> "bg-blue-700"   # Treasure
+      _ -> "bg-gray-900"    # Default
+    end
+    
+    # Add player indicator if this is the player's position
+    player_class = if @is_player, do: " ring-2 ring-red-500", else: ""
+    
+    assigns = assign(assigns, :cell_class, cell_class <> player_class)
+    
+    ~H"""
+    <div class={"w-6 h-6 flex items-center justify-center text-xs #{@cell_class}"}>
+      <%= if @is_player, do: "P", else: "" %>
+    </div>
+    """
+  end
+
   # Helper functions
   defp generate_map_from_database(map_id) do
     # This is a placeholder - in a real implementation, you would load the map from the database
@@ -799,5 +957,103 @@ defmodule ShardWeb.MudGameLive do
   def handle_event("keypress", %{"key" => key}, socket) do
     # Handle keyboard input for movement and commands
     {:noreply, socket}
+  end
+
+  # Terminal event handlers
+  @impl true
+  def handle_event("update_command", %{"command" => command}, socket) do
+    terminal_state = socket.assigns.terminal_state
+    updated_terminal_state = %{terminal_state | current_command: command}
+    {:noreply, assign(socket, :terminal_state, updated_terminal_state)}
+  end
+
+  @impl true
+  def handle_event("submit_command", %{"command" => command}, socket) do
+    terminal_state = socket.assigns.terminal_state
+    
+    # Process the command
+    {response_lines, _new_game_state} = process_command(command, socket.assigns.game_state)
+    
+    # Update terminal output
+    new_output = terminal_state.output ++ ["> " <> command] ++ response_lines
+    new_command_history = [command | terminal_state.command_history]
+    
+    updated_terminal_state = %{
+      output: new_output,
+      command_history: new_command_history,
+      current_command: ""
+    }
+    
+    {:noreply, assign(socket, :terminal_state, updated_terminal_state)}
+  end
+
+  # Simple command processor
+  defp process_command("help", _game_state) do
+    response = [
+      "Available commands:",
+      "  help - Show this help message",
+      "  look - Look around your current location",
+      "  north/south/east/west - Move in that direction",
+      "  inventory - Show your inventory",
+      "  stats - Show your character stats",
+      ""
+    ]
+    {response, nil}
+  end
+  
+  defp process_command("look", _game_state) do
+    response = [
+      "You are in a dimly lit room.",
+      "The walls are made of rough stone.",
+      "There are exits to the north and east.",
+      ""
+    ]
+    {response, nil}
+  end
+  
+  defp process_command(command, _game_state) when command in ["north", "south", "east", "west"] do
+    response = [
+      "You move #{command}.",
+      ""
+    ]
+    {response, nil}
+  end
+  
+  defp process_command("inventory", _game_state) do
+    response = [
+      "You are carrying:",
+      "  Iron Sword",
+      "  Health Potion",
+      "  Leather Armor",
+      "  Torch",
+      "  Lockpick",
+      ""
+    ]
+    {response, nil}
+  end
+  
+  defp process_command("stats", game_state) do
+    stats = game_state.player_stats
+    response = [
+      "Player Stats:",
+      "  Level: #{stats.level}",
+      "  Health: #{stats.health}/#{stats.max_health}",
+      "  Mana: #{stats.mana}/#{stats.max_mana}",
+      "  Strength: #{stats.strength}",
+      "  Dexterity: #{stats.dexterity}",
+      "  Intelligence: #{stats.intelligence}",
+      "  Experience: #{stats.experience}/#{stats.next_level_exp}",
+      ""
+    ]
+    {response, nil}
+  end
+  
+  defp process_command(_command, _game_state) do
+    response = [
+      "I don't understand that command.",
+      "Type 'help' for available commands.",
+      ""
+    ]
+    {response, nil}
   end
 end
