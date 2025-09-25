@@ -35,13 +35,20 @@
   </:action>
 </.table>
 
-<.modal :if={@live_action in [:new, :edit]} id="item-modal" show on_cancel={JS.patch(~p"/admin/items")}>
-  <.live_component
-    module={ShardWeb.AdminLive.ItemFormComponent}
-    id={@item.id || :new}
-    title={@page_title}
-    action={@live_action}
-    item={@item}
-    patch={~p"/admin/items"}
-  />
-</.modal>
+<%= if @live_action in [:new, :edit] do %>
+  <div class="fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75" phx-click={JS.patch(~p"/admin/items")}></div>
+      <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
+        <.live_component
+          module={ShardWeb.AdminLive.ItemFormComponent}
+          id={@item.id || :new}
+          title={@page_title}
+          action={@live_action}
+          item={@item}
+          patch={~p"/admin/items"}
+        />
+      </div>
+    </div>
+  </div>
+<% end %>
