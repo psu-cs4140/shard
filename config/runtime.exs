@@ -21,8 +21,8 @@ if System.get_env("PHX_SERVER") do
 end
 
 config :shard, :open_router,
-  api_key: System.fetch_env!("OPENROUTER_API_KEY"),
-  model: "x-ai/grok-4-fast:free"
+  api_key: System.get_env("OPENROUTER_API_KEY"),
+  model: System.get_env("OPENROUTER_MODEL", "x-ai/grok-4-fast:free")
 
 if config_env() == :prod do
   database_url =
