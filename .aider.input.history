@@ -681,3 +681,21 @@
 
 # 2025-09-21 22:19:08.121849
 +/undo
+
+# 2025-09-25 20:21:38.042667
++I broke lib/shard_web/live/user_live/mud_game_live.ex, I need to be able to move between rooms using the arrow keys. Those inputs should count the same as typing "north" or another direction.
+
+# 2025-09-25 20:21:40.218066
++y
+
+# 2025-09-25 20:28:18.681834
++no
+
+# 2025-09-25 20:31:25.152626
++Can you just fix the navigation thing
+
+# 2025-09-25 20:35:23.029803
++y
+
+# 2025-09-25 20:39:06.130878
++yes
