@@ -7,6 +7,7 @@ defmodule Shard.Quests do
   alias Shard.Repo
 
   alias Shard.Quests.{Quest, QuestAcceptance}
+  alias Shard.Users.User
 
   @doc """
   Returns the list of quests.

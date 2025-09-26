@@ -2,6 +2,7 @@ defmodule Shard.Repo.Migrations.CreateTutorialNpcs do
   use Ecto.Migration
 
   def up do
+    # Create tutorial NPCs that will be shared across all users
     execute """
     INSERT INTO npcs (
       name, description, level, health, max_health, mana, max_mana,
@@ -16,7 +17,7 @@ defmodule Shard.Repo.Migrations.CreateTutorialNpcs do
       50, 200, 200, 500, 500, 15, 20, 45, 25, 1000, 100,
       'quest_giver',
       '{"greeting": "Welcome, young adventurer! I have been expecting you. The realm needs heroes like yourself.", "quest_offer": "I have an important task for you. Will you help protect our lands?", "farewell": "May the winds guide your path, brave one."}',
-      1, 1, 0, true, 'neutral', 1, 'stationary',
+      1, 1, 0, true, 'neutral', 'peaceful', 'stationary',
       NOW(), NOW()
     ),
     (
@@ -25,7 +26,7 @@ defmodule Shard.Repo.Migrations.CreateTutorialNpcs do
       35, 400, 400, 100, 100, 40, 25, 15, 35, 750, 75,
       'trainer',
       '{"greeting": "Greetings, recruit! Ready to learn the ways of combat?", "training_offer": "I can teach you sword techniques and battle tactics.", "farewell": "Remember - discipline and honor above all!"}',
-      3, 1, 0, true, 'alliance', 2, 'patrol',
+      3, 1, 0, true, 'alliance', 'defensive', 'patrol',
       NOW(), NOW()
     ),
     (
@@ -34,7 +35,7 @@ defmodule Shard.Repo.Migrations.CreateTutorialNpcs do
       20, 150, 150, 200, 200, 10, 30, 25, 20, 300, 50,
       'merchant',
       '{"greeting": "Hello there! Looking for some fine wares?", "shop_offer": "I have the best prices in all the land! Take a look at my goods.", "farewell": "Safe travels, and come back anytime!"}',
-      1, 3, 0, true, 'neutral', 0, 'stationary',
+      1, 3, 0, true, 'neutral', 'peaceful', 'stationary',
       NOW(), NOW()
     ),
     (
@@ -43,7 +44,7 @@ defmodule Shard.Repo.Migrations.CreateTutorialNpcs do
       40, 300, 300, 250, 250, 25, 35, 30, 28, 800, 80,
       'guardian',
       '{"greeting": "The forest whispers of your arrival, traveler.", "warning": "Respect the natural balance, and nature will aid you.", "farewell": "May the trees shelter you on your journey."}',
-      2, 2, 0, true, 'nature', 2, 'wander',
+      2, 2, 0, true, 'nature', 'protective', 'wander',
       NOW(), NOW()
     );
     """
@@ -51,7 +52,12 @@ defmodule Shard.Repo.Migrations.CreateTutorialNpcs do
 
   def down do
     execute """
-    DELETE FROM npcs WHERE name IN ('Elder Sage Throne', 'Captain Marcus', 'Merchant Elara', 'Forest Guardian Lyra');
+    DELETE FROM npcs WHERE name IN (
+      'Elder Sage Throne',
+      'Captain Marcus', 
+      'Merchant Elara',
+      'Forest Guardian Lyra'
+    );
     """
   end
 end
