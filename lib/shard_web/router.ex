@@ -80,8 +80,9 @@ defmodule ShardWeb.Router do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
       live "/characters", CharacterLive.Index, :index
-      live "/characters", CharacterLive.Index, :new
+      live "/characters/new", CharacterLive.Index, :new
       live "/characters/:id", CharacterLive.Show, :show
+
     end
 
     post "/users/update-password", UserSessionController, :update_password
