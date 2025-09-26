@@ -652,19 +652,19 @@ defmodule ShardWeb.MudGameLive do
   def handle_event("keypress", %{"key" => key}, socket) do
     case key do
       "ArrowUp" -> 
-        {response, updated_game_state} = execute_movement(socket.assigns.game_state, "ArrowUp")
+        {response, updated_game_state} = execute_movement(socket.assigns.game_state, "north")
         terminal_state = add_terminal_output(socket.assigns.terminal_state, response)
         {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
       "ArrowDown" -> 
-        {response, updated_game_state} = execute_movement(socket.assigns.game_state, "ArrowDown")
+        {response, updated_game_state} = execute_movement(socket.assigns.game_state, "south")
         terminal_state = add_terminal_output(socket.assigns.terminal_state, response)
         {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
       "ArrowRight" -> 
-        {response, updated_game_state} = execute_movement(socket.assigns.game_state, "ArrowRight")
+        {response, updated_game_state} = execute_movement(socket.assigns.game_state, "east")
         terminal_state = add_terminal_output(socket.assigns.terminal_state, response)
         {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
       "ArrowLeft" -> 
-        {response, updated_game_state} = execute_movement(socket.assigns.game_state, "ArrowLeft")
+        {response, updated_game_state} = execute_movement(socket.assigns.game_state, "west")
         terminal_state = add_terminal_output(socket.assigns.terminal_state, response)
         {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
       _ -> {:noreply, socket}
@@ -1088,49 +1088,4 @@ defmodule ShardWeb.MudGameLive do
       </div>
 
       <!-- Command Input -->
-      <div class="p-4 border-t border-gray-600 bg-gray-900 rounded-b-lg">
-        <.form for={%{}} as={:command} phx-submit="submit_command" phx-change="update_command" class="flex">
-          <span class="text-green-400 font-mono mr-2">></span>
-          <input
-            type="text"
-            name="command[text]"
-            value={@terminal_state.current_command}
-            placeholder="Enter command..."
-            class="flex-1 bg-transparent border-none text-green-400 font-mono focus:ring-0 focus:outline-none p-0"
-            autocomplete="off"
-          />
-        </.form>
-      </div>
-    </div>
-    """
-  end
-
-  # Process terminal commands
-  defp process_command(command, game_state) do
-    case String.downcase(command) do
-      "help" ->
-        response = [
-          "Available commands:",
-          "  look - Examine your surroundings",
-          "  stats - Show your character stats",
-          "  position - Show your current position",
-          "  inventory - Show your inventory (coming soon)",
-          "  north/south/east/west - Move in cardinal directions",
-          "  northeast/southeast/northwest/southwest - Move diagonally",
-          "  Shortcuts: n/s/e/w/ne/se/nw/sw",
-          "  help - Show this help message"
-        ]
-        {response, game_state}
-
-      "look" ->
-        {x, y} = game_state.player_position
-        tile = game_state.map_data |> Enum.at(y) |> Enum.at(x)
-        monsters = Enum.filter(game_state.monsters, fn value -> value[:position] == game_state.player_position end)
-        monster_count = Enum.count(monsters)
-        description = case monster_count do
-          0 -> case tile do
-            0 -> "You see a solid stone wall."
-            1 -> "You are standing on a stone floor. The air is cool and damp."
-            2 -> "You see clear blue water. It looks deep."
-            3 -> "A glittering treasure chest sits here, beckoning you closer."
-            _ -> "You see something strange and un
+      <div class="p-4 border-t border-gray-600 bg
