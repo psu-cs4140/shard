@@ -191,6 +191,42 @@ defmodule Shard.Users do
     |> Repo.update()
   end
 
+  @doc """
+  Revokes admin privileges from a user.
+  """
+  def revoke_admin(user) do
+    user
+    |> User.admin_changeset(%{admin: false})
+    |> Repo.update()
+  end
+
+  @doc """
+  Updates a user's admin status.
+  """
+  def update_user_admin_status(user, admin_status) do
+    user
+    |> User.admin_changeset(%{admin: admin_status})
+    |> Repo.update()
+  end
+
+  @doc """
+  Gets the first user ever created (by ID).
+  This user should always remain an admin.
+  """
+  def get_first_user do
+    Repo.one(from u in User, order_by: [asc: u.id], limit: 1)
+  end
+
+  @doc """
+  Checks if a user is the first user (and therefore cannot lose admin privileges).
+  """
+  def first_user?(user) do
+    case get_first_user() do
+      %User{id: first_id} -> user.id == first_id
+      nil -> false
+    end
+  end
+
   ## Session
 
   @doc """

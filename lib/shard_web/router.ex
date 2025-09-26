@@ -36,7 +36,8 @@ defmodule ShardWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-    live "/play", MudGameLive
+    live "/maps", MapSelectionLive
+    live "/play/:map_id", MudGameLive
   end
 
   # Admin routes
@@ -79,7 +80,7 @@ defmodule ShardWeb.Router do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
       live "/characters", CharacterLive.Index, :index
-      live "/characters/new", CharacterLive.New, :new
+      live "/characters", CharacterLive.Index, :new
       live "/characters/:id", CharacterLive.Show, :show
     end
 
@@ -95,6 +96,13 @@ defmodule ShardWeb.Router do
       live "/characters/new", AdminLive.Characters, :new
       live "/characters/:id", AdminLive.Characters, :show
       live "/characters/:id/edit", AdminLive.Characters, :edit
+      live "/user_management", AdminLive.UserManagement, :index
+      live "/npcs", AdminLive.Npcs, :index
+      live "/npcs/new", AdminLive.Npcs, :new
+      live "/npcs/:id/edit", AdminLive.Npcs, :edit
+      live "/quests", AdminLive.Quests, :index
+      live "/quests/new", AdminLive.Quests, :new
+      live "/quests/:id/edit", AdminLive.Quests, :edit
     end
   end
 
@@ -106,9 +114,25 @@ defmodule ShardWeb.Router do
       live "/users/register", UserLive.Registration, :new
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new
+      live "/npcs", NpcLive.Index, :index
+      live "/npcs/new", NpcLive.Form, :new
+      live "/npcs/:id", NpcLive.Show, :show
+      live "/npcs/:id/edit", NpcLive.Form, :edit
+
     end
 
     post "/users/log-in", UserSessionController, :create
     delete "/users/log-out", UserSessionController, :delete
   end
+ scope "/", ShardWeb do
+   pipe_through [:browser, :require_admin]  # make sure you have an admin plug if needed
+
+   live "/npcs", NpcLive.Index, :index
+   live "/npcs/new", NpcLive.Form, :new
+   live "/npcs/:id", NpcLive.Show, :show
+   live "/npcs/:id/edit", NpcLive.Form, :edit
+ end
+
+
 end
+

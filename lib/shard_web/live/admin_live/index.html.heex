@@ -34,7 +34,33 @@
         <h2 class="card-title">User Management</h2>
         <p>Manage user accounts and permissions.</p>
         <div class="card-actions justify-end">
-          <.button disabled>Coming Soon</.button>
+          <.link navigate={~p"/admin/user_management"}>
+            <.button>Manage Users</.button>
+          </.link>
+        </div>
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title">NPC Management</h2>
+        <p>Create, edit, and manage non-player characters.</p>
+        <div class="card-actions justify-end">
+          <.link navigate={~p"/admin/npcs"}>
+            <.button>Manage NPCs</.button>
+          </.link>
+        </div>
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title">Quest Management</h2>
+        <p>Create, edit, and manage quests and storylines.</p>
+        <div class="card-actions justify-end">
+          <.link navigate={~p"/admin/quests"}>
+            <.button>Manage Quests</.button>
+          </.link>
         </div>
       </div>
     </div>

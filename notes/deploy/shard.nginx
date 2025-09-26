@@ -4,6 +4,7 @@ upstream shard {
 
 server {
 
+	# Fix this to match your hostname.
 	server_name shard.homework.quest;
 
 	location / {
@@ -11,14 +12,14 @@ server {
 	}
 
 	location /socket {
-		proxy_pass http://nembot;
+		proxy_pass http://shard;
 		proxy_http_version 1.1;
 		proxy_set_header Upgrade $http_upgrade;
 		proxy_set_header Connection "upgrade";
 	}
 
 	location /live {
-		proxy_pass http://nembot;
+		proxy_pass http://shard;
 		proxy_http_version 1.1;
 		proxy_set_header Upgrade $http_upgrade;
 		proxy_set_header Connection "upgrade";
