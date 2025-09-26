@@ -651,43 +651,14 @@ defmodule ShardWeb.MudGameLive do
   # Handle keypresses for navigation, inventory, etc.
   def handle_event("keypress", %{"key" => key}, socket) do
     IO.inspect(key, pretty: true)
-    player_position = socket.assigns.game_state.player_position
-    map_data = socket.assigns.game_state.map_data
-    monsters = socket.assigns.game_state.monsters
-    new_position = calc_position(player_position, key, map_data)
-
-    # Add movement message to terminal if position changed
-    terminal_state = if new_position != player_position do
-      direction_name = case key do
-        "ArrowUp" -> "north"
-        "ArrowDown" -> "south"
-        "ArrowRight" -> "east"
-        "ArrowLeft" -> "west"
-        _ -> nil
-      end
-
-      if direction_name do
-        new_output = socket.assigns.terminal_state.output ++
-                     ["You traversed #{direction_name}.", ""]
-        Map.put(socket.assigns.terminal_state, :output, new_output)
-      else
-        socket.assigns.terminal_state
-      end
-    else
-      socket.assigns.terminal_state
+    {response, updated_game_state} = case key do
+      "ArrowUp" -> execute_movement(socket.assigns.game_state, "north")
+      "ArrowDown" -> execute_movement(socket.assigns.game_state, "south")
+      "ArrowRight" -> execute_movement(socket.assigns.game_state, "east")
+      "ArrowLeft" -> execute_movement(socket.assigns.game_state, "west")
+      _ -> {:noreply, socket}
     end
-
-    game_state = %{
-      player_position: new_position,
-      map_data: map_data,
-      active_panel: nil,
-      player_stats: socket.assigns.game_state.player_stats,
-      hotbar: socket.assigns.game_state.hotbar,
-      inventory_items: socket.assigns.game_state.inventory_items,
-      quests: socket.assigns.game_state.quests,
-      monsters: monsters
-    }
-    {:noreply, assign(socket, game_state: game_state, terminal_state: terminal_state)}
+    {response, updated_game_state}
   end
 
   def handle_event("submit_command", %{"command" => %{"text" => command_text}}, socket) do
@@ -1256,9 +1227,49 @@ defmodule ShardWeb.MudGameLive do
         "southwest" -> "southwest"
       end
 
+      monsters = Enum.filter(game_state.monsters, fn value -> value[:position] == new_pos end)
+      monster_count = Enum.count(monsters)
+      description = case monster_count do
+        0 -> "No monsters are present."
+        1 -> "There is a " <> Enum.at(monsters, 0)[:name] <>"! It prepares to attack."
+        _ -> "There are " <> to_string(monster_count) <> " monsters! The monsters include " <> Enum.map_join(monsters, ", ", fn monster -> "a " <> to_string(monster[:name]) end) <> ". They prepare to attack."
+      end
+
+      # "There is a " <> Enum.at(monsters, 0)[:name] <>"! It attacks you for " <> to_string(Enum.at(monsters, 0)[:attack]) <> " damage."
+      # "There are " <> to_string(monster_count) <> " monsters! The monsters include " <> Enum.map_join(monsters, ", ", fn monster -> "a " <> to_string(monster[:name]) end)
+      # new_game_state = if monster_count > 0 do
+      #   stats = game_state.player_stats
+      #   new_hp = stats.health - Enum.at(monsters, 0)[:attack]
+      #   %{
+      #     player_position: new_pos,
+      #     map_data: game_state.map_data,
+      #     active_panel: game_state.active_panel,
+      #     player_stats: %{
+      #       health: new_hp,
+      #       max_health: game_state.player_stats.max_health,
+      #       stamina: game_state.player_stats.stamina,
+      #       max_stamina: game_state.player_stats.max_stamina,
+      #       mana: game_state.player_stats.mana,
+      #       max_mana: game_state.player_stats.max_mana,
+      #       level: game_state.player_stats.level,
+      #       experience: game_state.player_stats.experience,
+      #       next_level_exp: game_state.player_stats.next_level_exp,
+      #       strength: game_state.player_stats.strength,
+      #       dexterity: game_state.player_stats.dexterity,
+      #       intelligence: game_state.player_stats.intelligence
+      #     },
+      #     inventory_items: game_state.inventory_items,
+      #     hotbar: game_state.hotbar,
+      #     quests: game_state.quests,
+      #     monsters: game_state.monsters,
+      #   }
+      # else
+      #   game_state
+      # end
+
       # Update game state with new position
       updated_game_state = %{game_state | player_position: new_pos}
-      response = ["You traversed #{direction_name}."]
+      response = ["You traversed #{direction_name}.\n" <> description]
 
       {response, updated_game_state}
     end
