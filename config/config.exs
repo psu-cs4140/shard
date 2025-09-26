@@ -76,3 +76,14 @@ config :phoenix, :json_library, Jason
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
+
+# ---- Tailwind (v3) Phoenix wrapper ----
+config :tailwind,
+  version: "3.4.10",
+  default: [
+    args: ~w(
+      --input=css/app.css
+      --output=../priv/static/assets/app.css
+    ),
+    cd: Path.expand("../assets", __DIR__)
+  ]

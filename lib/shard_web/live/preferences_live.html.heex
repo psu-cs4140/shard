@@ -1,0 +1,12 @@
+<section class="max-w-xl space-y-4">
+  <.simple_form for={@music_form} id="music-form" phx-change="validate" phx-submit="save">
+    <.input
+      field={@music_form[:music_enabled]}
+      type="checkbox"
+      label="Play background music"
+    />
+    <:actions>
+      <.button>Save</.button>
+    </:actions>
+  </.simple_form>
+</section>
