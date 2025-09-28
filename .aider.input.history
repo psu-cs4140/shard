@@ -1518,3 +1518,45 @@
 
 # 2025-09-28 15:32:22.864126
 +y
+
+# 2025-09-28 15:40:36.737908
++Upon the creation of the first user in the user database, make it so that they have admin by default
+
+# 2025-09-28 15:40:45.167490
++a
+
+# 2025-09-28 15:41:37.680464
++This error was created by your last implementation, fix it please:   1) test register user creates account but does not log in (ShardWeb.UserLive.RegistrationTest)
++     test/shard_web/live/user_live/registration_test.exs:39
++     ** (EXIT from #PID<0.479.0>) an exception was raised:
++         ** (Ecto.CastError) expected params to be a map with atoms or string keys, got a map with mixed keys: %{:admin => true, "email" => "user-576460752303420191@example.com"}
++             (ecto 3.13.2) lib/ecto/changeset.ex:995: anonymous fn/3 in Ecto.Changeset.convert_params/1
++             (stdlib 6.2.2.1) maps.erl:860: :maps.fold_1/4
++             (ecto 3.13.2) lib/ecto/changeset.ex:991: Ecto.Changeset.convert_params/1
++             (ecto 3.13.2) lib/ecto/changeset.ex:813: Ecto.Changeset.cast/6
++             (shard 0.1.0) lib/shard/users/user.ex:29: Shard.Users.User.email_changeset/3
++             (shard 0.1.0) lib/shard/users.ex:102: Shard.Users.register_user/1
++             (shard 0.1.0) lib/shard_web/live/user_live/registration.ex:58: ShardWeb.UserLive.Registration.handle_event/3
++             (phoenix_live_view 1.1.8) lib/phoenix_live_view/channel.ex:528: anonymous fn/3 in Phoenix.LiveView.Channel.view_handle_event/3
++             (telemetry 1.3.0) /home/pimbleton/shard_project/shard/deps/telemetry/src/telemetry.erl:324: :telemetry.span/3
++             (phoenix_live_view 1.1.8) lib/phoenix_live_view/channel.ex:260: Phoenix.LiveView.Channel.handle_info/2
++             (stdlib 6.2.2.1) gen_server.erl:2345: :gen_server.try_handle_info/3
++             (stdlib 6.2.2.1) gen_server.erl:2433: :gen_server.handle_msg/6
++             (stdlib 6.2.2.1) proc_lib.erl:329: :proc_lib.init_p_do_apply/3
++
+
+# 2025-09-28 15:42:02.534708
++This caused 87 more errors to occur
+
+# 2025-09-28 15:43:15.066082
++This caused 87 more errors to occur, all of them along the lines of this :      ** (Ecto.CastError) expected params to be a map with atoms or string keys, got a map with mixed keys: %{:email => "user-576460752303422653@example.com", "admin" => true}
++
+
+# 2025-09-28 15:45:10.424598
++add a temporary delete user button in settings.ex that rucursively deletes the user and all their data
+
+# 2025-09-28 15:45:14.475124
++y
+
+# 2025-09-28 15:48:06.939712
++/undo
