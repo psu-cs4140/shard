@@ -93,7 +93,7 @@ defmodule Shard.Users do
     
     # Set admin to true for the first user
     attrs = if is_first_user do
-      Map.put(attrs, :admin, true)
+      Map.put(attrs, "admin", true)
     else
       attrs
     end
