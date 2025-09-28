@@ -17,6 +17,41 @@ defmodule ShardWeb.AdminLive.UserManagement do
   end
 
   @impl true
+  def handle_event("delete_user", %{"user_id" => user_id}, socket) do
+    user = Users.get_user!(user_id)
+    current_user = socket.assigns.current_user
+    
+    cond do
+      # Prevent user from deleting themselves
+      user.id == current_user.id ->
+        {:noreply, 
+         socket
+         |> put_flash(:error, "You cannot delete your own account.")}
+      
+      # Prevent deleting the first user
+      Users.first_user?(user) ->
+        {:noreply, 
+         socket
+         |> put_flash(:error, "The first user cannot be deleted.")}
+      
+      # Delete the user
+      true ->
+        case Users.delete_user(user) do
+          {:ok, _deleted_user} ->
+            {:noreply, 
+             socket
+             |> put_flash(:info, "User #{user.email} has been deleted.")
+             |> assign(:users, Users.list_users())}
+          
+          {:error, _changeset} ->
+            {:noreply, 
+             socket
+             |> put_flash(:error, "Failed to delete user.")}
+        end
+    end
+  end
+
+  @impl true
   def handle_event("toggle_admin", %{"user_id" => user_id}, socket) do
     user = Users.get_user!(user_id)
     current_user = socket.assigns.current_user
@@ -100,30 +135,41 @@ defmodule ShardWeb.AdminLive.UserManagement do
                 <% end %>
               </td>
               <td>
-                <%= cond do %>
-                  <% user.id == @current_user.id -> %>
-                    <span class="text-gray-500 text-sm">Cannot modify yourself</span>
-                  <% Users.first_user?(user) -> %>
-                    <span class="text-gray-500 text-sm">Protected user</span>
-                  <% true -> %>
-                    <button 
-                      class={[
-                        "btn btn-sm",
-                        if(user.admin, do: "btn-warning", else: "btn-success")
-                      ]}
-                      phx-click="toggle_admin" 
-                      phx-value-user_id={user.id}
-                      data-confirm={
-                        if user.admin do
-                          "Are you sure you want to revoke admin privileges from #{user.email}?"
-                        else
-                          "Are you sure you want to grant admin privileges to #{user.email}?"
-                        end
-                      }
-                    >
-                      <%= if user.admin, do: "Revoke Admin", else: "Grant Admin" %>
-                    </button>
-                <% end %>
+                <div class="flex gap-2">
+                  <%= cond do %>
+                    <% user.id == @current_user.id -> %>
+                      <span class="text-gray-500 text-sm">Cannot modify yourself</span>
+                    <% Users.first_user?(user) -> %>
+                      <span class="text-gray-500 text-sm">Protected user</span>
+                    <% true -> %>
+                      <button 
+                        class={[
+                          "btn btn-sm",
+                          if(user.admin, do: "btn-warning", else: "btn-success")
+                        ]}
+                        phx-click="toggle_admin" 
+                        phx-value-user_id={user.id}
+                        data-confirm={
+                          if user.admin do
+                            "Are you sure you want to revoke admin privileges from #{user.email}?"
+                          else
+                            "Are you sure you want to grant admin privileges to #{user.email}?"
+                          end
+                        }
+                      >
+                        <%= if user.admin, do: "Revoke Admin", else: "Grant Admin" %>
+                      </button>
+                      
+                      <button 
+                        class="btn btn-sm btn-error"
+                        phx-click="delete_user" 
+                        phx-value-user_id={user.id}
+                        data-confirm="Are you sure you want to delete #{user.email}? This action cannot be undone and will remove all associated data."
+                      >
+                        Delete
+                      </button>
+                  <% end %>
+                </div>
               </td>
             </tr>
           </tbody>

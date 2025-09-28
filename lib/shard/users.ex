@@ -210,6 +210,13 @@ defmodule Shard.Users do
   end
 
   @doc """
+  Deletes a user and all their associated data.
+  """
+  def delete_user(user) do
+    Repo.delete(user)
+  end
+
+  @doc """
   Gets the first user ever created (by ID).
   This user should always remain an admin.
   """
