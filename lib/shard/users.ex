@@ -88,6 +88,16 @@ defmodule Shard.Users do
 
   """
   def register_user(attrs) do
+    # Check if this is the first user
+    is_first_user = Repo.aggregate(User, :count, :id) == 0
+    
+    # Set admin to true for the first user
+    attrs = if is_first_user do
+      Map.put(attrs, :admin, true)
+    else
+      attrs
+    end
+
     %User{}
     |> User.email_changeset(attrs)
     |> Repo.insert()
