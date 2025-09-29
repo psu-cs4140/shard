@@ -26,7 +26,7 @@ defmodule Shard.Users.User do
   """
   def email_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email])
+    |> cast(attrs, [:email, :admin])
     |> validate_email(opts)
   end
 

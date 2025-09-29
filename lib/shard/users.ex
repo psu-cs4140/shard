@@ -88,6 +88,21 @@ defmodule Shard.Users do
 
   """
   def register_user(attrs) do
+    # Check if this is the first user
+    is_first_user = Repo.aggregate(User, :count, :id) == 0
+    
+    # Convert all keys to strings to avoid mixed key types
+    attrs = 
+      attrs
+      |> Enum.into(%{}, fn {k, v} -> {to_string(k), v} end)
+    
+    # Set admin to true for the first user
+    attrs = if is_first_user do
+      Map.put(attrs, "admin", true)
+    else
+      attrs
+    end
+
     %User{}
     |> User.email_changeset(attrs)
     |> Repo.insert()
@@ -207,6 +222,13 @@ defmodule Shard.Users do
     user
     |> User.admin_changeset(%{admin: admin_status})
     |> Repo.update()
+  end
+
+  @doc """
+  Deletes a user and all their associated data.
+  """
+  def delete_user(user) do
+    Repo.delete(user)
   end
 
   @doc """

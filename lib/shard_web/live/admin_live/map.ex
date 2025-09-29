@@ -3,12 +3,14 @@ defmodule ShardWeb.AdminLive.Map do
 
   alias Shard.Map
   alias Shard.Map.{Room, Door}
+  alias Shard.Repo
+  alias Shard.AI
 
   @impl true
   def mount(_params, _session, socket) do
     rooms = Map.list_rooms()
     doors = Map.list_doors()
-    
+
     {:ok,
      socket
      |> assign(:rooms, rooms)
@@ -53,24 +55,25 @@ defmodule ShardWeb.AdminLive.Map do
 
   def handle_event("view_room", %{"id" => id}, socket) do
     room = Map.get_room!(id)
-    doors_from = Map.get_doors_from_room(room.id)
-    doors_to = Map.get_doors_to_room(room.id)
-    
-    {:noreply, 
+    doors_from = Map.get_doors_from_room(room.id) |> Repo.preload(:to_room)
+    doors_to = Map.get_doors_to_room(room.id) |> Repo.preload(:from_room)
+
+    {:noreply,
      socket
      |> assign(:viewing, room)
      |> assign(:doors_from, doors_from)
      |> assign(:doors_to, doors_to)
+     |> assign(:changeset, Map.change_room(room))
      |> assign(:tab, "room_details")}
   end
 
   def handle_event("delete_room", %{"id" => id}, socket) do
     room = Map.get_room!(id)
     {:ok, _} = Map.delete_room(room)
-    
+
     rooms = Map.list_rooms()
     doors = Map.list_doors()
-    
+
     {:noreply,
      socket
      |> assign(:rooms, rooms)
@@ -79,14 +82,14 @@ defmodule ShardWeb.AdminLive.Map do
   end
 
   def handle_event("validate_room", %{"room" => room_params}, socket) do
-    changeset = 
+    changeset =
       if socket.assigns.editing == :room && socket.assigns.changeset.data.id do
         Map.change_room(socket.assigns.changeset.data, room_params)
       else
         Map.change_room(%Room{}, room_params)
       end
       |> Map.put_action(:validate)
-    
+
     {:noreply, assign(socket, :changeset, changeset)}
   end
 
@@ -101,13 +104,38 @@ defmodule ShardWeb.AdminLive.Map do
     case Map.update_room(socket.assigns.viewing, room_params) do
       {:ok, updated_room} ->
         rooms = Map.list_rooms()
-        {:noreply, 
+        {:noreply,
          socket
          |> assign(:rooms, rooms)
          |> assign(:viewing, updated_room)
+         |> assign(:changeset, Map.change_room(updated_room))
          |> put_flash(:info, "Room updated successfully")}
+
       {:error, changeset} ->
         {:noreply, assign(socket, :changeset, changeset)}
+    end
+  end
+
+  def handle_event("generate_description", _params, socket) do
+    zone_description = "A dark and mysterious forest."
+
+    # Use the currently viewed room as the context for finding adjacent rooms.
+    surrounding_rooms =
+      if room = socket.assigns.viewing do
+        Map.get_adjacent_rooms(room.id)
+      else
+        []
+      end
+
+    case AI.generate_room_description(zone_description, surrounding_rooms) do
+      {:ok, description} ->
+        changeset =
+          Ecto.Changeset.put_change(socket.assigns.changeset, :description, description)
+
+        {:noreply, assign(socket, :changeset, changeset)}
+
+      {:error, reason} ->
+        {:noreply, put_flash(socket, :error, "Failed to generate description: #{reason}")}
     end
   end
 
@@ -134,10 +162,10 @@ defmodule ShardWeb.AdminLive.Map do
   def handle_event("delete_door", %{"id" => id}, socket) do
     door = Map.get_door!(id)
     {:ok, _} = Map.delete_door(door)
-    
+
     rooms = Map.list_rooms()
     doors = Map.list_doors()
-    
+
     {:noreply,
      socket
      |> assign(:rooms, rooms)
@@ -146,14 +174,14 @@ defmodule ShardWeb.AdminLive.Map do
   end
 
   def handle_event("validate_door", %{"door" => door_params}, socket) do
-    changeset = 
+    changeset =
       if socket.assigns.editing == :door && socket.assigns.changeset.data.id do
         Map.change_door(socket.assigns.changeset.data, door_params)
       else
         Map.change_door(%Door{}, door_params)
       end
       |> Map.put_action(:validate)
-    
+
     {:noreply, assign(socket, :changeset, changeset)}
   end
 
@@ -178,7 +206,7 @@ defmodule ShardWeb.AdminLive.Map do
   end
 
   def handle_event("reset_view", _params, socket) do
-    {:noreply, 
+    {:noreply,
      socket
      |> assign(:zoom, 1.0)
      |> assign(:pan_x, 0)
@@ -191,11 +219,13 @@ defmodule ShardWeb.AdminLive.Map do
 
   def handle_event("mousemove", %{"clientX" => x, "clientY" => y}, socket) do
     case socket.assigns.drag_start do
-      nil -> {:noreply, socket}
+      nil ->
+        {:noreply, socket}
+
       start ->
         delta_x = x - start.x
         delta_y = y - start.y
-        {:noreply, 
+        {:noreply,
          socket
          |> assign(:pan_x, socket.assigns.pan_x + delta_x)
          |> assign(:pan_y, socket.assigns.pan_y + delta_y)
@@ -213,35 +243,32 @@ defmodule ShardWeb.AdminLive.Map do
 
   # Generate default map
   def handle_event("generate_default_map", _params, socket) do
-    # Clear existing rooms and doors first
     Shard.Repo.delete_all(Door)
     Shard.Repo.delete_all(Room)
-    
-    # Create a 3x3 grid of rooms
-    rooms = 
+
+    rooms =
       for x <- 0..2, y <- 0..2 do
         name = "Room #{x},#{y}"
         description = "A room in the default map at coordinates (#{x}, #{y})"
         room_type = if x == 1 and y == 1, do: "safe_zone", else: "standard"
-        
-        {:ok, room} = Map.create_room(%{
-          name: name,
-          description: description,
-          x_coordinate: x,
-          y_coordinate: y,
-          z_coordinate: 0,
-          room_type: room_type,
-          is_public: true
-        })
-        
+
+        {:ok, room} =
+          Map.create_room(%{
+            name: name,
+            description: description,
+            x_coordinate: x,
+            y_coordinate: y,
+            z_coordinate: 0,
+            room_type: room_type,
+            is_public: true
+          })
+
         room
       end
-    
-    # Create doors between adjacent rooms
+
     for x <- 0..2, y <- 0..2 do
       current_room = Enum.find(rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
-      
-      # Connect to room to the east
+
       if x < 2 do
         east_room = Enum.find(rooms, &(&1.x_coordinate == x + 1 && &1.y_coordinate == y))
         Map.create_door(%{
@@ -252,8 +279,7 @@ defmodule ShardWeb.AdminLive.Map do
           is_locked: false
         })
       end
-      
-      # Connect to room to the south
+
       if y < 2 do
         south_room = Enum.find(rooms, &(&1.x_coordinate == x && &1.y_coordinate == y + 1))
         Map.create_door(%{
@@ -266,10 +292,9 @@ defmodule ShardWeb.AdminLive.Map do
       end
     end
 
-    # Refresh the rooms and doors lists
     rooms = Map.list_rooms()
     doors = Map.list_doors()
-    
+
     {:noreply,
      socket
      |> assign(:rooms, rooms)
@@ -279,23 +304,31 @@ defmodule ShardWeb.AdminLive.Map do
 
   defp save_room(socket, room_params) do
     case socket.assigns.editing do
-      :room when not is_nil(socket.assigns.changeset) and not is_nil(socket.assigns.changeset.data.id) ->
-        # Update existing room
+      :room when not is_nil(socket.assigns.changeset) and
+          not is_nil(socket.assigns.changeset.data.id) ->
         case Map.update_room(socket.assigns.changeset.data, room_params) do
           {:ok, _room} ->
             rooms = Map.list_rooms()
-            {:ok, assign(socket, :rooms, rooms) |> assign(:editing, nil) |> assign(:changeset, nil)
-                  |> put_flash(:info, "Room updated successfully")}
+            {:ok,
+             assign(socket, :rooms, rooms)
+             |> assign(:editing, nil)
+             |> assign(:changeset, nil)
+             |> put_flash(:info, "Room updated successfully")}
+
           {:error, changeset} ->
             {:error, assign(socket, :changeset, changeset)}
         end
+
       _ ->
-        # Create new room
         case Map.create_room(room_params) do
           {:ok, _room} ->
             rooms = Map.list_rooms()
-            {:ok, assign(socket, :rooms, rooms) |> assign(:editing, nil) |> assign(:changeset, nil)
-                  |> put_flash(:info, "Room created successfully")}
+            {:ok,
+             assign(socket, :rooms, rooms)
+             |> assign(:editing, nil)
+             |> assign(:changeset, nil)
+             |> put_flash(:info, "Room created successfully")}
+
           {:error, changeset} ->
             {:error, assign(socket, :changeset, changeset)}
         end
@@ -304,23 +337,31 @@ defmodule ShardWeb.AdminLive.Map do
 
   defp save_door(socket, door_params) do
     case socket.assigns.editing do
-      :door when not is_nil(socket.assigns.changeset) and not is_nil(socket.assigns.changeset.data.id) ->
-        # Update existing door
+      :door when not is_nil(socket.assigns.changeset) and
+          not is_nil(socket.assigns.changeset.data.id) ->
         case Map.update_door(socket.assigns.changeset.data, door_params) do
           {:ok, _door} ->
             doors = Map.list_doors()
-            {:ok, assign(socket, :doors, doors) |> assign(:editing, nil) |> assign(:changeset, nil)
-                  |> put_flash(:info, "Door updated successfully")}
+            {:ok,
+             assign(socket, :doors, doors)
+             |> assign(:editing, nil)
+             |> assign(:changeset, nil)
+             |> put_flash(:info, "Door updated successfully")}
+
           {:error, changeset} ->
             {:error, assign(socket, :changeset, changeset)}
         end
+
       _ ->
-        # Create new door
         case Map.create_door(door_params) do
           {:ok, _door} ->
             doors = Map.list_doors()
-            {:ok, assign(socket, :doors, doors) |> assign(:editing, nil) |> assign(:changeset, nil)
-                  |> put_flash(:info, "Door created successfully")}
+            {:ok,
+             assign(socket, :doors, doors)
+             |> assign(:editing, nil)
+             |> assign(:changeset, nil)
+             |> put_flash(:info, "Door created successfully")}
+
           {:error, changeset} ->
             {:error, assign(socket, :changeset, changeset)}
         end
@@ -338,41 +379,41 @@ defmodule ShardWeb.AdminLive.Map do
     <div class="mt-8">
       <div class="flex justify-between items-center mb-4">
         <div class="tabs tabs-lifted">
-          <button 
-            type="button" 
+          <button
+            type="button"
             class={["tab", @tab == "rooms" && "tab-active"]}
-            phx-click="change_tab" 
+            phx-click="change_tab"
             phx-value-tab="rooms"
           >
             Rooms
           </button>
-          <button 
-            type="button" 
+          <button
+            type="button"
             class={["tab", @tab == "doors" && "tab-active"]}
-            phx-click="change_tab" 
+            phx-click="change_tab"
             phx-value-tab="doors"
           >
             Doors
           </button>
-          <button 
-            type="button" 
+          <button
+            type="button"
             class={["tab", @tab == "map" && "tab-active"]}
-            phx-click="change_tab" 
+            phx-click="change_tab"
             phx-value-tab="map"
           >
             Map Visualization
           </button>
-          <button 
-            type="button" 
+          <button
+            type="button"
             class={["tab", @tab == "room_details" && "tab-active"]}
             :if={@tab == "room_details"}
           >
             Room Details
           </button>
         </div>
-        
-        <button 
-          type="button" 
+
+        <button
+          type="button"
           class="btn btn-secondary"
           phx-click="generate_default_map"
         >
@@ -387,49 +428,60 @@ defmodule ShardWeb.AdminLive.Map do
           <% "doors" -> %>
             <.doors_tab doors={@doors} rooms={@rooms} />
           <% "map" -> %>
-            <.map_visualization 
-              rooms={@rooms} 
-              doors={@doors} 
-              zoom={@zoom} 
-              pan_x={@pan_x} 
-              pan_y={@pan_y} 
+            <.map_visualization
+              rooms={@rooms}
+              doors={@doors}
+              zoom={@zoom}
+              pan_x={@pan_x}
+              pan_y={@pan_y}
             />
           <% "room_details" -> %>
-            <.room_details_tab room={@viewing} doors_from={@doors_from} doors_to={@doors_to} />
+            <.room_details_tab
+              room={@viewing}
+              doors_from={@doors_from}
+              doors_to={@doors_to}
+              changeset={@changeset}
+            />
         <% end %>
       </div>
     </div>
 
-    <!-- Room Form Modal -->
     <.modal :if={@editing == :room} id="room-modal" show>
       <.header>
         <%= if @changeset && @changeset.data.id, do: "Edit Room", else: "New Room" %>
         <:subtitle>Manage room details</:subtitle>
       </.header>
-      
+
       <.simple_form
+        :let={f}
         for={@changeset}
         id="room-form"
         phx-change="validate_room"
         phx-submit="save_room"
       >
-        <.input field={@changeset[:name]} type="text" label="Name" required />
-        <.input field={@changeset[:description]} type="textarea" label="Description" />
+        <.input field={f[:name]} type="text" label="Name" required />
+        <.input field={f[:description]} type="textarea" label="Description" />
         <div class="grid grid-cols-3 gap-4">
-          <.input field={@changeset[:x_coordinate]} type="number" label="X" />
-          <.input field={@changeset[:y_coordinate]} type="number" label="Y" />
-          <.input field={@changeset[:z_coordinate]} type="number" label="Z" />
+          <.input field={f[:x_coordinate]} type="number" label="X" />
+          <.input field={f[:y_coordinate]} type="number" label="Y" />
+          <.input field={f[:z_coordinate]} type="number" label="Z" />
         </div>
-        <.input field={@changeset[:room_type]} type="select" label="Type" prompt="Choose a type" options={[
-          {"Standard", "standard"},
-          {"Safe Zone", "safe_zone"},
-          {"Shop", "shop"},
-          {"Dungeon", "dungeon"},
-          {"Treasure Room", "treasure_room"},
-          {"Trap Room", "trap_room"}
-        ]} />
-        <.input field={@changeset[:is_public]} type="checkbox" label="Public Room" />
-        
+        <.input
+          field={f[:room_type]}
+          type="select"
+          label="Type"
+          prompt="Choose a type"
+          options={[
+            {"Standard", "standard"},
+            {"Safe Zone", "safe_zone"},
+            {"Shop", "shop"},
+            {"Dungeon", "dungeon"},
+            {"Treasure Room", "treasure_room"},
+            {"Trap Room", "trap_room"}
+          ]}
+        />
+        <.input field={f[:is_public]} type="checkbox" label="Public Room" />
+
         <:actions>
           <.button phx-click="cancel_room" variant="secondary">Cancel</.button>
           <.button phx-disable-with="Saving...">Save Room</.button>
@@ -437,47 +489,70 @@ defmodule ShardWeb.AdminLive.Map do
       </.simple_form>
     </.modal>
 
-    <!-- Door Form Modal -->
     <.modal :if={@editing == :door} id="door-modal" show>
       <.header>
         <%= if @changeset && @changeset.data.id, do: "Edit Door", else: "New Door" %>
         <:subtitle>Manage door details</:subtitle>
       </.header>
-      
+
       <.simple_form
+        :let={f}
         for={@changeset}
         id="door-form"
         phx-change="validate_door"
         phx-submit="save_door"
       >
-        <.input field={@changeset[:from_room_id]} type="select" label="From Room" prompt="Select room" options={
-          Enum.map(@rooms, &{&1.name, &1.id})
-        } required />
-        <.input field={@changeset[:to_room_id]} type="select" label="To Room" prompt="Select room" options={
-          Enum.map(@rooms, &{&1.name, &1.id})
-        } required />
-        <.input field={@changeset[:direction]} type="select" label="Direction" prompt="Select direction" options={[
-          {"North", "north"},
-          {"South", "south"},
-          {"East", "east"},
-          {"West", "west"},
-          {"Up", "up"},
-          {"Down", "down"},
-          {"Northeast", "northeast"},
-          {"Northwest", "northwest"},
-          {"Southeast", "southeast"},
-          {"Southwest", "southwest"}
-        ]} required />
-        <.input field={@changeset[:door_type]} type="select" label="Type" prompt="Choose a type" options={[
-          {"Standard", "standard"},
-          {"Gate", "gate"},
-          {"Portal", "portal"},
-          {"Secret", "secret"},
-          {"Locked Gate", "locked_gate"}
-        ]} />
-        <.input field={@changeset[:is_locked]} type="checkbox" label="Locked" />
-        <.input field={@changeset[:key_required]} type="text" label="Key Required" />
-        
+        <.input
+          field={f[:from_room_id]}
+          type="select"
+          label="From Room"
+          prompt="Select room"
+          options={Enum.map(@rooms, &{&1.name, &1.id})}
+          required
+        />
+        <.input
+          field={f[:to_room_id]}
+          type="select"
+          label="To Room"
+          prompt="Select room"
+          options={Enum.map(@rooms, &{&1.name, &1.id})}
+          required
+        />
+        <.input
+          field={f[:direction]}
+          type="select"
+          label="Direction"
+          prompt="Select direction"
+          options={[
+            {"North", "north"},
+            {"South", "south"},
+            {"East", "east"},
+            {"West", "west"},
+            {"Up", "up"},
+            {"Down", "down"},
+            {"Northeast", "northeast"},
+            {"Northwest", "northwest"},
+            {"Southeast", "southeast"},
+            {"Southwest", "southwest"}
+          ]}
+          required
+        />
+        <.input
+          field={f[:door_type]}
+          type="select"
+          label="Type"
+          prompt="Choose a type"
+          options={[
+            {"Standard", "standard"},
+            {"Gate", "gate"},
+            {"Portal", "portal"},
+            {"Secret", "secret"},
+            {"Locked Gate", "locked_gate"}
+          ]}
+        />
+        <.input field={f[:is_locked]} type="checkbox" label="Locked" />
+        <.input field={f[:key_required]} type="text" label="Key Required" />
+
         <:actions>
           <.button phx-click="cancel_door" variant="secondary">Cancel</.button>
           <.button phx-disable-with="Saving...">Save Door</.button>
@@ -493,7 +568,7 @@ defmodule ShardWeb.AdminLive.Map do
       <div class="mb-4">
         <.button phx-click="new_room" class="btn btn-primary">New Room</.button>
       </div>
-      
+
       <%= if Enum.empty?(@rooms) do %>
         <div class="text-center py-8">
           <p class="text-gray-500">No rooms found.</p>
@@ -536,7 +611,7 @@ defmodule ShardWeb.AdminLive.Map do
       <div class="mb-4">
         <.button phx-click="new_door" class="btn btn-primary">New Door</.button>
       </div>
-      
+
       <%= if Enum.empty?(@doors) do %>
         <div class="text-center py-8">
           <p class="text-gray-500">No doors found.</p>
@@ -587,24 +662,23 @@ defmodule ShardWeb.AdminLive.Map do
           <.button phx-click="reset_view" class="btn btn-sm">Reset View</.button>
         </div>
       </div>
-      
+
       <%= if Enum.empty?(@rooms) do %>
         <div class="text-center py-8">
           <p class="text-gray-500">No rooms available to display.</p>
         </div>
       <% else %>
-        <div 
+        <div
           class="relative overflow-hidden border border-base-300 rounded bg-base-100 cursor-move"
           style={"height: 600px; transform: scale(#{@zoom}); transform-origin: 0 0;"}
           id="map-container"
           phx-hook="MapDrag"
         >
-          <div 
+          <div
             class="absolute inset-0"
             style={"transform: translate(#{@pan_x}px, #{@pan_y}px);"}
             id="map-content"
           >
-            <!-- Render connections between rooms (doors) -->
             <%= for door <- @doors do %>
               <% from_room = Enum.find(@rooms, &(&1.id == door.from_room_id)) %>
               <% to_room = Enum.find(@rooms, &(&1.id == door.to_room_id)) %>
@@ -612,10 +686,9 @@ defmodule ShardWeb.AdminLive.Map do
                 <.door_connection from={from_room} to={to_room} />
               <% end %>
             <% end %>
-            
-            <!-- Render rooms as squares -->
+
             <%= for room <- @rooms do %>
-              <div 
+              <div
                 class={"absolute rounded border-2 flex items-center justify-center text-center p-1 #{room_classes(room)}"}
                 style={"left: #{room.x_coordinate * 100}px; top: #{room.y_coordinate * 100}px; width: 80px; height: 80px;"}
               >
@@ -627,7 +700,7 @@ defmodule ShardWeb.AdminLive.Map do
             <% end %>
           </div>
         </div>
-        
+
         <div class="mt-4 text-sm text-base-content">
           <p>Zoom: <%= Float.round(@zoom, 2) %>x | Pan: (<%= @pan_x %>, <%= @pan_y %>)</p>
           <p class="mt-2">Rooms: <%= Enum.count(@rooms) %> | Doors: <%= Enum.count(@doors) %></p>
@@ -644,29 +717,43 @@ defmodule ShardWeb.AdminLive.Map do
         <h3 class="text-xl font-bold">Room Details: <%= @room.name %></h3>
         <.button phx-click="back_to_rooms" class="btn btn-secondary">Back to Rooms</.button>
       </div>
-      
+
       <.simple_form
-        for={Map.change_room(@room)}
+        :let={f}
+        for={@changeset}
         id="room-details-form"
         phx-submit="apply_and_save"
       >
-        <.input field={Map.change_room(@room)[:name]} type="text" label="Name" required />
-        <.input field={Map.change_room(@room)[:description]} type="textarea" label="Description" />
-        <div class="grid grid-cols-3 gap-4">
-          <.input field={Map.change_room(@room)[:x_coordinate]} type="number" label="X Coordinate" />
-          <.input field={Map.change_room(@room)[:y_coordinate]} type="number" label="Y Coordinate" />
-          <.input field={Map.change_room(@room)[:z_coordinate]} type="number" label="Z Coordinate" />
+        <.input field={f[:name]} type="text" label="Name" required />
+        <div class="flex items-end space-x-2">
+          <div class="flex-grow">
+            <.input field={f[:description]} type="textarea" label="Description" />
+          </div>
+          <.button phx-click="generate_description" class="btn btn-secondary" type="button">
+            ✨ Generate with AI
+          </.button>
         </div>
-        <.input field={Map.change_room(@room)[:room_type]} type="select" label="Type" prompt="Choose a type" options={[
-          {"Standard", "standard"},
-          {"Safe Zone", "safe_zone"},
-          {"Shop", "shop"},
-          {"Dungeon", "dungeon"},
-          {"Treasure Room", "treasure_room"},
-          {"Trap Room", "trap_room"}
-        ]} />
-        <.input field={Map.change_room(@room)[:is_public]} type="checkbox" label="Public Room" />
-        
+        <div class="grid grid-cols-3 gap-4">
+          <.input field={f[:x_coordinate]} type="number" label="X Coordinate" />
+          <.input field={f[:y_coordinate]} type="number" label="Y Coordinate" />
+          <.input field={f[:z_coordinate]} type="number" label="Z Coordinate" />
+        </div>
+        <.input
+          field={f[:room_type]}
+          type="select"
+          label="Type"
+          prompt="Choose a type"
+          options={[
+            {"Standard", "standard"},
+            {"Safe Zone", "safe_zone"},
+            {"Shop", "shop"},
+            {"Dungeon", "dungeon"},
+            {"Treasure Room", "treasure_room"},
+            {"Trap Room", "trap_room"}
+          ]}
+        />
+        <.input field={f[:is_public]} type="checkbox" label="Public Room" />
+
         <div class="mt-6">
           <h4 class="text-lg font-bold mb-2">Doors Leading From This Room</h4>
           <%= if Enum.empty?(@doors_from) do %>
@@ -694,7 +781,7 @@ defmodule ShardWeb.AdminLive.Map do
             </table>
           <% end %>
         </div>
-        
+
         <div class="mt-6">
           <h4 class="text-lg font-bold mb-2">Doors Leading To This Room</h4>
           <%= if Enum.empty?(@doors_to) do %>
@@ -722,7 +809,7 @@ defmodule ShardWeb.AdminLive.Map do
             </table>
           <% end %>
         </div>
-        
+
         <:actions>
           <.button phx-disable-with="Saving..." class="btn btn-primary">Apply and Save</.button>
         </:actions>
@@ -732,12 +819,11 @@ defmodule ShardWeb.AdminLive.Map do
   end
 
   defp door_connection(assigns) do
-    # Calculate center positions of rooms
     from_x = assigns.from.x_coordinate * 100 + 40
     from_y = assigns.from.y_coordinate * 100 + 40
     to_x = assigns.to.x_coordinate * 100 + 40
     to_y = assigns.to.y_coordinate * 100 + 40
-    
+
     assigns
     |> assign(:from_x, from_x)
     |> assign(:from_y, from_y)
@@ -749,33 +835,36 @@ defmodule ShardWeb.AdminLive.Map do
   defp render_door_connection(assigns) do
     ~H"""
     <svg class="absolute inset-0 w-full h-full pointer-events-none">
-      <line 
-        x1={@from_x} 
-        y1={@from_y} 
-        x2={@to_x} 
-        y2={@to_y} 
-        stroke="currentColor" 
-        stroke-width="2" 
+      <line
+        x1={@from_x}
+        y1={@from_y}
+        x2={@to_x}
+        y2={@to_y}
+        stroke="currentColor"
+        stroke-width="2"
         stroke-dasharray="5,5"
-        class="text-base-content/30" />
+        class="text-base-content/30"
+      />
     </svg>
     """
   end
 
   defp room_classes(room) do
     base_classes = "flex flex-col items-center justify-center text-xs"
-    
-    type_classes = case room.room_type do
-      "safe_zone" -> "bg-green-200 border-green-600 dark:bg-green-900/30 dark:border-green-500"
-      "shop" -> "bg-blue-200 border-blue-600 dark:bg-blue-900/30 dark:border-blue-500"
-      "dungeon" -> "bg-red-200 border-red-600 dark:bg-red-900/30 dark:border-red-500"
-      "treasure_room" -> "bg-yellow-200 border-yellow-600 dark:bg-yellow-900/30 dark:border-yellow-500"
-      "trap_room" -> "bg-pink-200 border-pink-600 dark:bg-pink-900/30 dark:border-pink-500"
-      _ -> "bg-gray-200 border-gray-600 dark:bg-gray-700/30 dark:border-gray-500"
-    end
-    
+
+    type_classes =
+      case room.room_type do
+        "safe_zone" -> "bg-green-200 border-green-600 dark:bg-green-900/30 dark:border-green-500"
+        "shop" -> "bg-blue-200 border-blue-600 dark:bg-blue-900/30 dark:border-blue-500"
+        "dungeon" -> "bg-red-200 border-red-600 dark:bg-red-900/30 dark:border-red-500"
+        "treasure_room" ->
+          "bg-yellow-200 border-yellow-600 dark:bg-yellow-900/30 dark:border-yellow-500"
+        "trap_room" -> "bg-pink-200 border-pink-600 dark:bg-pink-900/30 dark:border-pink-500"
+        _ -> "bg-gray-200 border-gray-600 dark:bg-gray-700/30 dark:border-gray-500"
+      end
+
     text_classes = "text-gray-800 dark:text-gray-200"
-    
+
     "#{base_classes} #{type_classes} #{text_classes}"
   end
 end
