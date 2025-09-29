@@ -6,6 +6,7 @@ defmodule ShardWeb.MudGameLive do
   alias Shard.Quests
   alias Shard.Repo
   import Ecto.Query
+  alias Phoenix.PubSub
 
   @impl true
   def mount(%{"map_id" => map_id}, _session, socket) do
@@ -123,6 +124,11 @@ defmodule ShardWeb.MudGameLive do
       type: 0
     }
 
+    PubSub.subscribe(
+      Shard.PubSub, 
+      posn_to_room_channel(game_state.player_position)
+    )
+
     {:ok,
  assign(socket,
    game_state: game_state,
@@ -130,6 +136,10 @@ defmodule ShardWeb.MudGameLive do
    modal_state: modal_state,
    available_exits: compute_available_exits(game_state.player_position)
  )}
+  end
+
+  def posn_to_room_channel({xx, yy}) do
+    "room:#{xx},#{yy}"
   end
 
   @impl true
@@ -1529,6 +1539,16 @@ defmodule ShardWeb.MudGameLive do
     current_pos = game_state.player_position
     new_pos = calc_position(current_pos, direction, game_state.map_data)
 
+    PubSub.unsubscribe(
+      Shard.PubSub, 
+      posn_to_room_channel(current_pos)
+    )
+
+    PubSub.subscribe(
+      Shard.PubSub, 
+      posn_to_room_channel(new_pos)
+    )
+
     if new_pos == current_pos do
       response = ["You cannot move in that direction. There's no room or passage that way."]
       {response, game_state}
@@ -2562,4 +2582,34 @@ defmodule ShardWeb.MudGameLive do
      )}
   end
 
+  def add_message(socket, message) do
+    new_output = socket.assigns.terminal_state.output ++ [message] ++ [""]
+    ts1 = Map.put(socket.assigns.terminal_state, :output, new_output)
+    assign(socket, :terminal_state, ts1)
+  end
+  
+  @impl true
+  def handle_info({:noise, text}, socket) do
+    socket = add_message(socket, text)
+    {:noreply, socket}
+  end
+
+  def handle_info({:area_heal, xx, msg}, socket) do
+    socket = socket
+      |> add_message(msg)
+      |> add_message("Area heal effect: #{xx} damage healed")
+
+    health = socket.assigns.game_state.player_stats.health
+    IO.inspect({:health, health})
+
+    if health < 100 do
+      st1 = put_in(
+        socket.assigns.game_state, 
+        [:player_stats, :health], 
+        health + 5)
+      {:noreply, assign(socket, :game_state, st1)}
+    else
+      {:noreply, socket}
+    end
+  end
 end
