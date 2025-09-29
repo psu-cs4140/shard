@@ -117,6 +117,14 @@
             </li>
           <% end %>
           <li>
+            <.link href={~p"/characters"}>My Characters</.link>
+          </li>
+          <li>
+            <%= if assigns[:db_health] do %>
+              <ShardWeb.DBStatusBadge.db_status_badge health={@db_health} />
+            <% end %>
+          </li>
+          <li>
             <.link href={~p"/users/settings"}>Settings</.link>
           </li>
           <li>
@@ -135,3 +143,4 @@
     {@inner_content}
   </body>
 </html>
+

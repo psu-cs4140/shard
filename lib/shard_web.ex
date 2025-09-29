@@ -1,61 +1,61 @@
 defmodule ShardWeb do
   @moduledoc """
-  The entrypoint for defining your web interface, such
-  as controllers, components, channels, and so on.
+  The entrypoint for defining your web interface, such as controllers,
+  components, channels, and so on.
 
-  This can be used in your application as:
+  Use in your app as:
 
       use ShardWeb, :controller
       use ShardWeb, :html
-
-  The definitions below will be executed for every controller,
-  component, etc, so keep them short and clean, focused
-  on imports, uses and aliases.
-
-  Do NOT define functions inside the quoted expressions
-  below. Instead, define additional modules and import
-  those modules here.
   """
 
   def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)
 
+  ## Router
   def router do
     quote do
       use Phoenix.Router, helpers: false
 
-      # Import common connection and controller functions to use in pipelines
       import Plug.Conn
       import Phoenix.Controller
       import Phoenix.LiveView.Router
     end
   end
 
+  ## Channels
   def channel do
     quote do
       use Phoenix.Channel
     end
   end
 
+  ## Controllers
   def controller do
     quote do
       use Phoenix.Controller, formats: [:html, :json]
 
       use Gettext, backend: ShardWeb.Gettext
-
       import Plug.Conn
 
       unquote(verified_routes())
     end
   end
 
+  ## LiveViews
   def live_view do
     quote do
-      use Phoenix.LiveView
+      use Phoenix.LiveView,
+        layout: {ShardWeb.Layouts, :root}
 
+      # Bring in ~p, core components (<.button>, <.input>, <.header>, etc.)
       unquote(html_helpers())
+
+      # Make @db_health available in LiveViews/layouts
+      on_mount {ShardWeb.Init, :health}
     end
   end
 
+  ## LiveComponents
   def live_component do
     quote do
       use Phoenix.LiveComponent
@@ -64,38 +64,35 @@ defmodule ShardWeb do
     end
   end
 
+  ## HTML (function components, helpers)
   def html do
     quote do
       use Phoenix.Component
 
-      # Import convenience functions from controllers
+      # Convenience controller functions
       import Phoenix.Controller,
         only: [get_csrf_token: 0, view_module: 1, view_template: 1]
 
-      # Include general helpers for rendering HTML
       unquote(html_helpers())
     end
   end
 
+  # Helpers shared by views/components
   defp html_helpers do
     quote do
-      # Translation
       use Gettext, backend: ShardWeb.Gettext
 
-      # HTML escaping functionality
       import Phoenix.HTML
-      # Core UI components
       import ShardWeb.CoreComponents
 
-      # Common modules used in templates
       alias Phoenix.LiveView.JS
       alias ShardWeb.Layouts
 
-      # Routes generation with the ~p sigil
       unquote(verified_routes())
     end
   end
 
+  ## Verified Routes
   def verified_routes do
     quote do
       use Phoenix.VerifiedRoutes,
@@ -112,3 +109,4 @@ defmodule ShardWeb do
     apply(__MODULE__, which, [])
   end
 end
+
