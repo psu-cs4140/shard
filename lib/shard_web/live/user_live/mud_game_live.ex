@@ -97,7 +97,7 @@ defmodule ShardWeb.MudGameLive do
     }
 
     PubSub.subscribe(
-      Shard.PubSub, 
+      Shard.PubSub,
       posn_to_room_channel(game_state.player_position)
     )
 
@@ -1519,12 +1519,12 @@ defmodule ShardWeb.MudGameLive do
     new_pos = calc_position(current_pos, direction, game_state.map_data)
 
     PubSub.unsubscribe(
-      Shard.PubSub, 
+      Shard.PubSub,
       posn_to_room_channel(current_pos)
     )
 
     PubSub.subscribe(
-      Shard.PubSub, 
+      Shard.PubSub,
       posn_to_room_channel(new_pos)
     )
 
@@ -1624,7 +1624,15 @@ defmodule ShardWeb.MudGameLive do
           end
         end)
 
-        %{game_state | monsters: updated_monsters}
+        # Monster gets to attack back
+        new_player_stats = if new_hp > 0 do
+          new_player_health = game_state.player_stats[:health] - monster.attack
+          %{game_state.player_stats | health: new_player_health}
+        else
+          game_state.player_stats
+        end
+
+        %{game_state | monsters: updated_monsters, player_stats: new_player_stats}
 
       _ -> game_state
     end
@@ -1644,6 +1652,12 @@ defmodule ShardWeb.MudGameLive do
 
     in_combat = Enum.at(monsters, 0)[:hp] > 0
     monster = Enum.at(monsters, 0)
+
+    messages = if in_combat do
+      messages ++ ["The " <> Enum.at(monsters, 0)[:name] <> " attacks you for " <> to_string(Enum.at(monsters, 0)[:attack]) <> " damage.",]
+    else
+      messages
+    end
 
     updated_state = if monster[:hp] <= 0 do
       %{updated_state | monsters: List.delete(monsters, monster)}
@@ -2659,7 +2673,7 @@ defmodule ShardWeb.MudGameLive do
     ts1 = Map.put(socket.assigns.terminal_state, :output, new_output)
     assign(socket, :terminal_state, ts1)
   end
-  
+
   @impl true
   def handle_info({:noise, text}, socket) do
     socket = add_message(socket, text)
@@ -2676,8 +2690,8 @@ defmodule ShardWeb.MudGameLive do
 
     if health < 100 do
       st1 = put_in(
-        socket.assigns.game_state, 
-        [:player_stats, :health], 
+        socket.assigns.game_state,
+        [:player_stats, :health],
         health + 5)
       {:noreply, assign(socket, :game_state, st1)}
     else
