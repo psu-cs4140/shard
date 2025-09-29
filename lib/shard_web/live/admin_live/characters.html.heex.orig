@@ -1,3 +1,13 @@
+<<<<<<< HEAD
+<.header>
+  <%= @page_title %>
+  <:actions>
+    <.link patch={~p"/admin/characters/new"}>
+      <.button>New Character</.button>
+    </.link>
+  </:actions>
+</.header>
+=======
 <div style="padding-left: 3rem;">
   <.header>
     <%= @page_title %>
@@ -8,6 +18,7 @@
     </:actions>
   </.header>
 </div>
+>>>>>>> d7e549bffcd24f6d0bd5eb0e869a06baa335fe86
 
 <div class="mt-8">
   <%= if @live_action in [:new, :edit] do %>

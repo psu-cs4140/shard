@@ -8,10 +8,12 @@ defmodule ShardWeb.AdminLive.CharacterFormComponent do
   def render(assigns) do
     ~H"""
     <div>
-      <.header>
-        <%= @title %>
-        <:subtitle>Use this form to manage character records in your database.</:subtitle>
-      </.header>
+      <div style="padding-left: 3rem;">
+        <.header>
+          <%= @title %>
+          <:subtitle>Use this form to manage character records in your database.</:subtitle>
+        </.header>
+      </div>
 
       <.simple_form
         for={@form}

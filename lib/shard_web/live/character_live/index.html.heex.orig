@@ -1,0 +1,57 @@
+<<<<<<< HEAD
+<div id="character-index">
+=======
+>>>>>>> d7e549bffcd24f6d0bd5eb0e869a06baa335fe86
+<.header>
+  My Characters
+  <:actions>
+    <.link patch={~p"/characters/new"}>
+      <.button>New Character</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<div class="mt-8">
+  <%= if @characters == [] do %>
+    <div class="text-center py-12">
+      <p class="text-gray-500 text-lg">You don't have any characters yet.</p>
+      <.link patch={~p"/characters/new"} class="mt-4 inline-block">
+        <.button>Create Your First Character</.button>
+      </.link>
+    </div>
+  <% else %>
+    <.list>
+      <:item :for={character <- @characters} title={character.name}>
+        <div class="text-sm text-gray-600">
+          <p><strong>Level:</strong> <%= character.level || "N/A" %></p>
+          <p><strong>Class:</strong> <%= character.class || "N/A" %></p>
+          <p><strong>Race:</strong> <%= character.race || "N/A" %></p>
+          <%= if character.description do %>
+            <p class="mt-2"><strong>Description:</strong> <%= character.description %></p>
+          <% end %>
+        </div>
+        <div class="mt-2 flex gap-2">
+<<<<<<< HEAD
+          <.link navigate={~p"/characters/#{character}"} class="text-blue-600 hover:text-blue-800">
+=======
+          <.link navigate={~p"/characters/#{character.id}"} class="text-blue-600 hover:text-blue-800">
+>>>>>>> d7e549bffcd24f6d0bd5eb0e869a06baa335fe86
+            View
+          </.link>
+          <.link
+            phx-click="delete"
+            phx-value-id={character.id}
+            data-confirm="Are you sure you want to delete this character?"
+            class="text-red-600 hover:text-red-800"
+          >
+            Delete
+          </.link>
+        </div>
+      </:item>
+    </.list>
+  <% end %>
+</div>
+<<<<<<< HEAD
+</div>
+=======
+>>>>>>> d7e549bffcd24f6d0bd5eb0e869a06baa335fe86
