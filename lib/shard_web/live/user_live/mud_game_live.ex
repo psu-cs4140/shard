@@ -71,40 +71,12 @@ defmodule ShardWeb.MudGameLive do
           boss: false,
           hp: 30,
           hp_max: 30,
-          position: {2, 2}
+          position: {2,0}
           #position: find_valid_monster_position(map_data, starting_position)
         },
-        # %{
-        #   monster_id: 1,
-        #   name: "Goblin",
-        #   level: 1,
-        #   attack: 10,
-        #   defense: 0,
-        #   speed: 5,
-        #   xp_reward: 5,
-        #   gold_reward: 2,
-        #   boss: false,
-        #   hp: 30,
-        #   hp_max: 30,
-        #   position: find_valid_monster_position(map_data, starting_position)
-        # },%{
-        #   monster_id: 1,
-        #   name: "Goblin",
-        #   level: 1,
-        #   attack: 10,
-        #   defense: 0,
-        #   speed: 5,
-        #   xp_reward: 5,
-        #   gold_reward: 2,
-        #   boss: false,
-        #   hp: 30,
-        #   hp_max: 30,
-        #   position: find_valid_monster_position(map_data, starting_position)
-        # }
-      ]
+      ],
+      combat: false
     }
-
-    IO.inspect(game_state.monsters, label: "Generated monsters with positions")
 
     terminal_state = %{
       output: [
@@ -1324,6 +1296,13 @@ defmodule ShardWeb.MudGameLive do
         ]
         {response, game_state}
 
+      "attack" ->
+        if game_state[:combat] do
+          execute_combat_round(game_state, "attack")
+        else
+          {["You are not in combat."], game_state}
+        end
+
       "look" ->
         {x, y} = game_state.player_position
 
@@ -1554,9 +1533,11 @@ defmodule ShardWeb.MudGameLive do
       response = ["You traversed #{direction_name}."]
 
       # Add NPC presence notification if any NPCs are at the new location
-      if length(npcs_here) > 0 do
+      response = response ++ if length(npcs_here) > 0 do
         npc_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
-        response = response ++ ["You see #{npc_names} here."]
+        ["You see #{npc_names} here."]
+      else
+        []
       end
 
       #To see if there are monsters
@@ -1564,15 +1545,106 @@ defmodule ShardWeb.MudGameLive do
       monster_count = Enum.count(monsters)
 
       response = response ++ case monster_count do
-        0 -> [""]
+        0 -> []
         1 -> ["There is a " <> Enum.at(monsters, 0)[:name] <>"! It prepares to attack."]
-        _ -> ["There are " <> to_string(monster_count) <> " monsters! The monsters include " <> Enum.map_join(monsters, ", ", fn monster -> "a " <> to_string(monster[:name]) end) + ".", "They prepare to attack."]
+        _ -> ["There are " <> to_string(monster_count) <> " monsters! The monsters include " <> Enum.map_join(monsters, ", ", fn monster -> "a " <> to_string(monster[:name]) end) <> ".", "They prepare to attack."]
       end
 
       updated_game_state = %{game_state | player_position: new_pos}
+      updated_game_state = %{updated_game_state | combat: true}
+
+      # Begin combat
+      {response, final_game_state} = if monster_count > 0 do
+        {combat_messages, combat_state} = execute_combat_round(updated_game_state, "combat")
+        {response ++ combat_messages, combat_state}
+      else
+        {response, updated_game_state}
+      end
 
       {response, updated_game_state}
     end
+  end
+
+
+  @impl true
+  def handle_info(:combat, socket) do
+    game_state = socket.assigns.game_state
+
+    if game_state.combat do
+      {combat_messages, updated_game_state} = execute_combat_round(game_state, "combat")
+
+      updated_socket = socket
+      |> assign(:combat, true)
+      |> assign(:game_state, updated_game_state)
+      |> Phoenix.Component.update(:terminal_state, fn ts ->
+      %{ts | output: ts.output ++ combat_messages}
+      end)
+
+      {:noreply, updated_socket}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def execute_combat_round(game_state, action) do
+    monsters = Enum.filter(game_state.monsters, fn value -> value[:position] == game_state.player_position end)
+    monster = Enum.at(monsters, 0)
+
+    updated_state = case Enum.at(String.split(action, " "), 0) do
+      "attack" ->
+        new_hp = monster.hp - game_state.player_stats.strength
+        updated_monster = %{monster | hp: new_hp}
+
+        # Replace the old monster with the updated one in the full monsters list
+        updated_monsters = Enum.map(game_state.monsters, fn m ->
+          if m[:position] == game_state.player_position and m[:name] == monster[:name] do
+            updated_monster
+          else
+            m
+          end
+        end)
+
+        %{game_state | monsters: updated_monsters}
+
+      _ -> game_state
+    end
+
+    monsters = Enum.filter(updated_state.monsters, fn value -> value[:position] == updated_state.player_position end)
+
+    messages = case Enum.at(String.split(action, " "), 0) do
+      "combat" -> messages = ["Combat begins!"]
+        messages = messages ++ ["Monsters: \n" <> Enum.map_join(monsters, fn monster -> "  - " <> monster[:name] <> ": HP = " <> to_string(monster[:hp]) <> "/" <> to_string(monster[:hp_max]) <> "\n" end)]
+        messages ++ ["Actions:", "  - attack", "  - skill", "  - cast"]
+      "attack" -> ["You attack " <> Enum.at(monsters, 0)[:name] <> " for " <> to_string(game_state.player_stats.strength) <> " damage.",
+                  "Monsters: \n" <> Enum.map_join(monsters, fn monster -> "  - " <> monster[:name] <> ": HP = " <> to_string(monster[:hp]) <> "/" <> to_string(monster[:hp_max]) <> "\n" end)
+                ]
+      # "skill" ->
+      # "cast" ->
+    end
+
+    in_combat = Enum.at(monsters, 0)[:hp] > 0
+    monster = Enum.at(monsters, 0)
+
+    updated_state = if monster[:hp] <= 0 do
+      %{updated_state | monsters: List.delete(monsters, monster)}
+    else
+      updated_state
+    end
+
+    messages = messages ++ case in_combat do
+      true -> ["The battle rages on..."]
+      false -> ["All monsters have been defeated!"]
+    end
+
+    updated_state = if not in_combat do
+      %{updated_state | combat: false}
+    else
+      updated_state
+    end
+
+    {messages, updated_state}
+
+    # ... rest of your messages code
   end
 
   # Component for control buttons
