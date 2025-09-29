@@ -20,6 +20,10 @@ if System.get_env("PHX_SERVER") do
   config :shard, ShardWeb.Endpoint, server: true
 end
 
+config :shard, :open_router,
+  api_key: System.get_env("OPENROUTER_API_KEY"),
+  model: System.get_env("OPENROUTER_MODEL", "x-ai/grok-4-fast:free")
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

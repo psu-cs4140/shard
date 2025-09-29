@@ -62,19 +62,6 @@ defmodule ShardWeb.UserLive.Settings do
           Save Password
         </.button>
       </.form>
-
-      <%= if not @current_scope.user.admin do %>
-        <div class="divider" />
-        <div class="mt-6">
-          <.header>
-            Admin Privileges
-            <:subtitle>Request admin access for your account</:subtitle>
-          </.header>
-          <.button phx-click="make_admin" phx-disable-with="Processing..." class="btn btn-warning">
-            Make My Account Admin
-          </.button>
-        </div>
-      <% end %>
     </Layouts.app>
     """
   end
