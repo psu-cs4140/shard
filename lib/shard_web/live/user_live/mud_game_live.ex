@@ -1290,6 +1290,8 @@ defmodule ShardWeb.MudGameLive do
         response = [
           "Available commands:",
           "  look - Examine your surroundings",
+          "  attack - Attack an enemy in the room (if in combat)",
+          "  flee - Attempt to flee from combat",
           "  stats - Show your character stats",
           "  position - Show your current position",
           "  inventory - Show your inventory (coming soon)",
@@ -1307,10 +1309,17 @@ defmodule ShardWeb.MudGameLive do
         {response, game_state}
 
       "attack" ->
-        if game_state[:combat] do
-          execute_combat_round(game_state, "attack")
+        if Shard.Combat.in_combat?(game_state) do
+          Shard.Combat.execute_action(game_state, "attack")
         else
           {["You are not in combat."], game_state}
+        end
+
+      "flee" ->
+        if Shard.Combat.in_combat?(game_state) do
+          Shard.Combat.execute_action(game_state, "flee")
+        else
+          {["There is nothing to flee from..."], game_state}
         end
 
       "look" ->
@@ -1571,114 +1580,21 @@ defmodule ShardWeb.MudGameLive do
       end
 
       updated_game_state = %{game_state | player_position: new_pos}
-      updated_game_state = %{updated_game_state | combat: true}
 
-      # Begin combat
-      {response, final_game_state} = if monster_count > 0 do
-        {combat_messages, combat_state} = execute_combat_round(updated_game_state, "combat")
-        {response ++ combat_messages, combat_state}
-      else
-        {response, updated_game_state}
-      end
+      # Check for combat
+      {combat_messages, final_game_state} =
+        Shard.Combat.start_combat(updated_game_state)
 
-      {response, updated_game_state}
+      {response ++ combat_messages, updated_game_state}
     end
   end
 
-
-  @impl true
-  def handle_info(:combat, socket) do
-    game_state = socket.assigns.game_state
-
-    if game_state.combat do
-      {combat_messages, updated_game_state} = execute_combat_round(game_state, "combat")
-
-      updated_socket = socket
-      |> assign(:combat, true)
-      |> assign(:game_state, updated_game_state)
-      |> Phoenix.Component.update(:terminal_state, fn ts ->
-      %{ts | output: ts.output ++ combat_messages}
-      end)
-
-      {:noreply, updated_socket}
+  defp process_command("attack", game_state) do
+    if Shard.Combat.in_combat?(game_state) do
+      Shard.Combat.execute_action(game_state, "attack")
     else
-      {:noreply, socket}
+      {["You are not in combat."], game_state}
     end
-  end
-
-  def execute_combat_round(game_state, action) do
-    monsters = Enum.filter(game_state.monsters, fn value -> value[:position] == game_state.player_position end)
-    monster = Enum.at(monsters, 0)
-
-    updated_state = case Enum.at(String.split(action, " "), 0) do
-      "attack" ->
-        new_hp = monster.hp - game_state.player_stats.strength
-        updated_monster = %{monster | hp: new_hp}
-
-        # Replace the old monster with the updated one in the full monsters list
-        updated_monsters = Enum.map(game_state.monsters, fn m ->
-          if m[:position] == game_state.player_position and m[:name] == monster[:name] do
-            updated_monster
-          else
-            m
-          end
-        end)
-
-        # Monster gets to attack back
-        new_player_stats = if new_hp > 0 do
-          new_player_health = game_state.player_stats[:health] - monster.attack
-          %{game_state.player_stats | health: new_player_health}
-        else
-          game_state.player_stats
-        end
-
-        %{game_state | monsters: updated_monsters, player_stats: new_player_stats}
-
-      _ -> game_state
-    end
-
-    monsters = Enum.filter(updated_state.monsters, fn value -> value[:position] == updated_state.player_position end)
-
-    messages = case Enum.at(String.split(action, " "), 0) do
-      "combat" -> messages = ["Combat begins!"]
-        messages = messages ++ ["Monsters: \n" <> Enum.map_join(monsters, fn monster -> "  - " <> monster[:name] <> ": HP = " <> to_string(monster[:hp]) <> "/" <> to_string(monster[:hp_max]) <> "\n" end)]
-        messages ++ ["Actions:", "  - attack", "  - skill", "  - cast"]
-      "attack" -> ["You attack " <> Enum.at(monsters, 0)[:name] <> " for " <> to_string(game_state.player_stats.strength) <> " damage.",
-                  "Monsters: \n" <> Enum.map_join(monsters, fn monster -> "  - " <> monster[:name] <> ": HP = " <> to_string(monster[:hp]) <> "/" <> to_string(monster[:hp_max]) <> "\n" end)
-                ]
-      # "skill" ->
-      # "cast" ->
-    end
-
-    in_combat = Enum.at(monsters, 0)[:hp] > 0
-    monster = Enum.at(monsters, 0)
-
-    messages = if in_combat do
-      messages ++ ["The " <> Enum.at(monsters, 0)[:name] <> " attacks you for " <> to_string(Enum.at(monsters, 0)[:attack]) <> " damage.",]
-    else
-      messages
-    end
-
-    updated_state = if monster[:hp] <= 0 do
-      %{updated_state | monsters: List.delete(monsters, monster)}
-    else
-      updated_state
-    end
-
-    messages = messages ++ case in_combat do
-      true -> ["The battle rages on..."]
-      false -> ["All monsters have been defeated!"]
-    end
-
-    updated_state = if not in_combat do
-      %{updated_state | combat: false}
-    else
-      updated_state
-    end
-
-    {messages, updated_state}
-
-    # ... rest of your messages code
   end
 
   # Component for control buttons
