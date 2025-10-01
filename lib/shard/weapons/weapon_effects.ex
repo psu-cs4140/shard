@@ -6,7 +6,6 @@ defmodule Shard.Weapons.WeaponEffects do
 
     field :weapon_id, :id
     field :effect_id, :id
-    field :user_id, :id
 
     timestamps(type: :utc_datetime)
   end
@@ -16,6 +15,5 @@ defmodule Shard.Weapons.WeaponEffects do
     weapon_effects
     |> cast(attrs, [])
     |> validate_required([])
-    |> put_change(:user_id, user_scope.user.id)
   end
 end

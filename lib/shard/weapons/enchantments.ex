@@ -6,7 +6,6 @@ defmodule Shard.Weapons.Enchantments do
     field :name, :string
     field :modifier_type, :string
     field :modifier_value, :string
-    field :user_id, :id
 
     timestamps(type: :utc_datetime)
   end
@@ -16,6 +15,6 @@ defmodule Shard.Weapons.Enchantments do
     enchantments
     |> cast(attrs, [:name, :modifier_type, :modifier_value])
     |> validate_required([:name, :modifier_type, :modifier_value])
-    |> put_change(:user_id, user_scope.user.id)
+
   end
 end
