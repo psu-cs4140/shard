@@ -10,7 +10,7 @@ defmodule Shard.Weapons.Classes do
   end
 
   @doc false
-  def changeset(classes, attrs, user_scope) do
+  def changeset(classes, attrs) do
     classes
     |> cast(attrs, [:name])
     |> validate_required([:name])

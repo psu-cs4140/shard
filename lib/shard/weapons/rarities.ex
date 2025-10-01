@@ -9,7 +9,7 @@ defmodule Shard.Weapons.Rarities do
   end
 
   @doc false
-  def changeset(rarities, attrs, user_scope) do
+  def changeset(rarities, attrs) do
     rarities
     |> cast(attrs, [:name])
     |> validate_required([:name])

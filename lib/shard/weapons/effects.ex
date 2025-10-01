@@ -11,7 +11,7 @@ defmodule Shard.Weapons.Effects do
   end
 
   @doc false
-  def changeset(effects, attrs, user_scope) do
+  def changeset(effects, attrs) do
     effects
     |> cast(attrs, [:name, :modifier_type, :modifier_value])
     |> validate_required([:name, :modifier_type, :modifier_value])

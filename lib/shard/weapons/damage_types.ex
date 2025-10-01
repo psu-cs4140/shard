@@ -9,7 +9,7 @@ defmodule Shard.Weapons.DamageTypes do
   end
 
   @doc false
-  def changeset(damage_types, attrs, user_scope) do
+  def changeset(damage_types, attrs) do
     damage_types
     |> cast(attrs, [:name])
     |> validate_required([:name])

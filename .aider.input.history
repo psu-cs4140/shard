@@ -1560,3 +1560,33 @@
 
 # 2025-09-28 15:48:06.939712
 +/undo
+
+# 2025-10-01 08:43:03.191867
++In lib/shard/weapons there are a bunch of weapons related database tables. Fill these tables with some default testing data that makes sense. You know, like a dagger weapon, a fire enchantment, etc.
+
+# 2025-10-01 08:44:12.243464
++y
+
+# 2025-10-01 08:52:37.527360
++There are a bunch of weapons seeds in lib/shard/weapons/seed_data/
+
+# 2025-10-01 08:52:53.574115
++a
+
+# 2025-10-01 08:53:47.995971
++The seed data is fine, update the priv/repo/seeds.exs to populate the database automatically
+
+# 2025-10-01 08:53:50.265235
++y
+
+# 2025-10-01 09:11:23.635626
++Something is wrong: ** (UndefinedFunctionError) function Shard.Weapons.Weapons.changeset/2 is undefined or private. Did you mean:
++
++      * changeset/3
++This may be because I had some older functionality that i removed in the changeset. Take another look at the files in lib/shard/weapons/ and the lib/shard/weapons/seed_data/ and make sure it lines up with that you added to priv/repo.seeds.exs
+
+# 2025-10-01 09:15:49.349744
++There is an error in the priv/repo/seeds.exs. There is no longer a user scope parameter in the weapons related table changesets. Update to reflect this
+
+# 2025-10-01 09:15:50.984062
++y

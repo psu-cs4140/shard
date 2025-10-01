@@ -11,7 +11,7 @@ defmodule Shard.Weapons.Enchantments do
   end
 
   @doc false
-  def changeset(enchantments, attrs, user_scope) do
+  def changeset(enchantments, attrs) do
     enchantments
     |> cast(attrs, [:name, :modifier_type, :modifier_value])
     |> validate_required([:name, :modifier_type, :modifier_value])
