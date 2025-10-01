@@ -72,8 +72,10 @@ defmodule Shard.Npcs do
   Gets NPCs by location coordinates.
   """
   def get_npcs_by_location(x, y, z \\ 0) do
-    from(n in Npc, 
-      where: n.location_x == ^x and n.location_y == ^y and n.location_z == ^z and n.is_active == true)
+    from(n in Npc,
+      where:
+        n.location_x == ^x and n.location_y == ^y and n.location_z == ^z and n.is_active == true
+    )
     |> Repo.all()
   end
 

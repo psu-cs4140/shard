@@ -33,9 +33,22 @@ defmodule Shard.Characters.Character do
   def changeset(character, attrs) do
     character
     |> cast(attrs, [
-      :name, :level, :class, :race, :health, :mana,
-      :strength, :dexterity, :intelligence, :constitution,
-      :experience, :gold, :location, :description, :is_active, :user_id
+      :name,
+      :level,
+      :class,
+      :race,
+      :health,
+      :mana,
+      :strength,
+      :dexterity,
+      :intelligence,
+      :constitution,
+      :experience,
+      :gold,
+      :location,
+      :description,
+      :is_active,
+      :user_id
     ])
     |> validate_required([:name, :class, :race])
     |> validate_length(:name, min: 2, max: 50)

@@ -36,9 +36,22 @@ defmodule Shard.Items.Item do
   def changeset(item, attrs) do
     item
     |> cast(attrs, [
-      :name, :description, :item_type, :rarity, :value, :weight,
-      :stackable, :max_stack_size, :usable, :equippable, :equipment_slot,
-      :stats, :requirements, :effects, :icon, :is_active
+      :name,
+      :description,
+      :item_type,
+      :rarity,
+      :value,
+      :weight,
+      :stackable,
+      :max_stack_size,
+      :usable,
+      :equippable,
+      :equipment_slot,
+      :stats,
+      :requirements,
+      :effects,
+      :icon,
+      :is_active
     ])
     |> validate_required([:name, :item_type])
     |> validate_length(:name, min: 2, max: 100)
@@ -58,13 +71,13 @@ defmodule Shard.Items.Item do
     cond do
       equippable && is_nil(equipment_slot) ->
         add_error(changeset, :equipment_slot, "must be specified for equippable items")
-      
+
       equippable && equipment_slot not in @equipment_slots ->
         add_error(changeset, :equipment_slot, "is not a valid equipment slot")
-      
+
       !equippable && equipment_slot ->
         put_change(changeset, :equipment_slot, nil)
-      
+
       true ->
         changeset
     end

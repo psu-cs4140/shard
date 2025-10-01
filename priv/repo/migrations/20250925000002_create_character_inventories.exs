@@ -16,6 +16,9 @@ defmodule Shard.Repo.Migrations.CreateCharacterInventories do
     create index(:character_inventories, [:character_id])
     create index(:character_inventories, [:item_id])
     create unique_index(:character_inventories, [:character_id, :slot_position])
-    create unique_index(:character_inventories, [:character_id, :equipment_slot], where: "equipped = true")
+
+    create unique_index(:character_inventories, [:character_id, :equipment_slot],
+             where: "equipped = true"
+           )
   end
 end

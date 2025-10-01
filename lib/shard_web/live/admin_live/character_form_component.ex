@@ -10,7 +10,7 @@ defmodule ShardWeb.AdminLive.CharacterFormComponent do
     <div>
       <div style="padding-left: 3rem;">
         <.header>
-          <%= @title %>
+          {@title}
           <:subtitle>Use this form to manage character records in your database.</:subtitle>
         </.header>
       </div>

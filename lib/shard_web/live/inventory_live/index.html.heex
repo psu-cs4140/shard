@@ -21,7 +21,7 @@
               )
             ]}
           >
-            <%= character.name %> (Level <%= character.level %> <%= String.capitalize(character.class) %>)
+            {character.name} (Level {character.level} {String.capitalize(character.class)})
           </button>
         <% end %>
       </div>
@@ -37,10 +37,10 @@
           <%= for inventory_item <- @inventory do %>
             <div class="border border-gray-300 rounded p-2 hover:bg-gray-50">
               <div class={["text-xs font-medium", rarity_class(inventory_item.item.rarity)]}>
-                <%= inventory_item.item.name %>
+                {inventory_item.item.name}
               </div>
               <div class="text-xs text-gray-500">
-                Qty: <%= inventory_item.quantity %>
+                Qty: {inventory_item.quantity}
               </div>
               <%= if inventory_item.equipped do %>
                 <div class="text-xs text-green-600 font-medium">Equipped</div>
@@ -76,18 +76,18 @@
           <% end %>
         </div>
       </div>
-
-      <!-- Hotbar -->
+      
+<!-- Hotbar -->
       <div class="bg-white shadow rounded-lg p-4 mt-6">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Hotbar</h3>
         <div class="grid grid-cols-12 gap-2">
           <%= for slot_num <- 1..12 do %>
             <% hotbar_item = Enum.find(@hotbar, &(&1.slot_number == slot_num)) %>
             <div class="border-2 border-gray-300 rounded p-2 h-16 flex flex-col justify-center items-center">
-              <div class="text-xs font-bold text-gray-400"><%= slot_num %></div>
+              <div class="text-xs font-bold text-gray-400">{slot_num}</div>
               <%= if hotbar_item && hotbar_item.item do %>
                 <div class={["text-xs text-center", rarity_class(hotbar_item.item.rarity)]}>
-                  <%= String.slice(hotbar_item.item.name, 0..5) %>
+                  {String.slice(hotbar_item.item.name, 0..5)}
                 </div>
                 <button
                   phx-click="clear_hotbar"
@@ -109,12 +109,12 @@
         </div>
       </div>
     </div>
-
-    <!-- Room Items -->
+    
+<!-- Room Items -->
     <div>
       <div class="bg-white shadow rounded-lg p-4">
         <h3 class="text-lg font-medium text-gray-900 mb-4">
-          Items in <%= String.replace(@selected_character.location, "_", " ") |> String.capitalize() %>
+          Items in {String.replace(@selected_character.location, "_", " ") |> String.capitalize()}
         </h3>
         <%= if Enum.empty?(@room_items) do %>
           <p class="text-gray-500 text-sm">No items in this location.</p>
@@ -125,14 +125,14 @@
                 <div class="flex justify-between items-start">
                   <div>
                     <div class={["font-medium", rarity_class(room_item.item.rarity)]}>
-                      <%= room_item.item.name %>
+                      {room_item.item.name}
                     </div>
                     <div class="text-sm text-gray-500">
-                      Quantity: <%= room_item.quantity %>
+                      Quantity: {room_item.quantity}
                     </div>
                     <%= if room_item.item.description do %>
                       <div class="text-xs text-gray-600 mt-1">
-                        <%= room_item.item.description %>
+                        {room_item.item.description}
                       </div>
                     <% end %>
                   </div>
