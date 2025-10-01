@@ -60,11 +60,30 @@ defmodule Shard.Quests.Quest do
   def changeset(quest, attrs) do
     quest
     |> cast(attrs, [
-      :title, :description, :short_description, :quest_type, :difficulty,
-      :min_level, :max_level, :experience_reward, :gold_reward, :item_rewards,
-      :prerequisites, :objectives, :status, :is_repeatable, :cooldown_hours,
-      :giver_npc_id, :turn_in_npc_id, :location_hint, :time_limit,
-      :faction_requirement, :faction_reward, :is_active, :sort_order, :properties
+      :title,
+      :description,
+      :short_description,
+      :quest_type,
+      :difficulty,
+      :min_level,
+      :max_level,
+      :experience_reward,
+      :gold_reward,
+      :item_rewards,
+      :prerequisites,
+      :objectives,
+      :status,
+      :is_repeatable,
+      :cooldown_hours,
+      :giver_npc_id,
+      :turn_in_npc_id,
+      :location_hint,
+      :time_limit,
+      :faction_requirement,
+      :faction_reward,
+      :is_active,
+      :sort_order,
+      :properties
     ])
     |> cast_map_fields()
     |> validate_required([:title, :description])

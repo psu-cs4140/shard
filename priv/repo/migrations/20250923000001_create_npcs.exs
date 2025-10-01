@@ -16,7 +16,8 @@ defmodule Shard.Repo.Migrations.CreateNpcs do
       add :constitution, :integer, default: 10
       add :experience_reward, :integer, default: 0
       add :gold_reward, :integer, default: 0
-      add :npc_type, :string, default: "neutral" # neutral, friendly, hostile, merchant, quest_giver
+      # neutral, friendly, hostile, merchant, quest_giver
+      add :npc_type, :string, default: "neutral"
       add :dialogue, :text
       add :inventory, :map, default: %{}
       add :location_x, :integer
@@ -24,12 +25,16 @@ defmodule Shard.Repo.Migrations.CreateNpcs do
       add :location_z, :integer, default: 0
       add :room_id, references(:rooms, on_delete: :nilify_all)
       add :is_active, :boolean, default: true
-      add :respawn_time, :integer # in seconds, null means no respawn
+      # in seconds, null means no respawn
+      add :respawn_time, :integer
       add :last_death_at, :utc_datetime
       add :faction, :string
-      add :aggression_level, :integer, default: 0 # 0 = peaceful, 10 = very aggressive
-      add :movement_pattern, :string, default: "stationary" # stationary, patrol, random, follow
-      add :properties, :map, default: %{} # for custom properties
+      # 0 = peaceful, 10 = very aggressive
+      add :aggression_level, :integer, default: 0
+      # stationary, patrol, random, follow
+      add :movement_pattern, :string, default: "stationary"
+      # for custom properties
+      add :properties, :map, default: %{}
 
       timestamps(type: :utc_datetime)
     end

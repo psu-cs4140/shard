@@ -22,8 +22,14 @@ defmodule Shard.Items.RoomItem do
   def changeset(room_item, attrs) do
     room_item
     |> cast(attrs, [
-      :location, :item_id, :quantity, :x_position, :y_position,
-      :dropped_by_character_id, :respawn_timer, :is_permanent
+      :location,
+      :item_id,
+      :quantity,
+      :x_position,
+      :y_position,
+      :dropped_by_character_id,
+      :respawn_timer,
+      :is_permanent
     ])
     |> validate_required([:location, :item_id, :quantity])
     |> validate_number(:quantity, greater_than: 0)

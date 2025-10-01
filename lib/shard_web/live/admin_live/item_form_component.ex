@@ -9,7 +9,7 @@ defmodule ShardWeb.AdminLive.ItemFormComponent do
     <div>
       <div style="padding-left: 3rem;">
         <.header>
-          <%= @title %>
+          {@title}
           <:subtitle>Use this form to manage item records in your database.</:subtitle>
         </.header>
       </div>

@@ -9,8 +9,8 @@ defmodule ShardWeb.AdminLive.Characters do
   @impl true
   def mount(_params, _session, socket) do
     characters = list_all_characters()
-    
-    {:ok, 
+
+    {:ok,
      socket
      |> assign(:characters, characters)
      |> assign(:page_title, "Admin - All Characters")}
@@ -25,9 +25,9 @@ defmodule ShardWeb.AdminLive.Characters do
   def handle_event("delete", %{"id" => id}, socket) do
     character = Characters.get_character!(id)
     {:ok, _} = Characters.delete_character(character)
-    
+
     characters = list_all_characters()
-    
+
     {:noreply,
      socket
      |> put_flash(:info, "Character deleted successfully")
@@ -52,7 +52,7 @@ defmodule ShardWeb.AdminLive.Characters do
   defp apply_action(socket, :edit, %{"id" => id}) do
     character = Characters.get_character!(id)
     changeset = Characters.change_character(character)
-    
+
     socket
     |> assign(:page_title, "Edit Character")
     |> assign(:character, character)
@@ -62,7 +62,7 @@ defmodule ShardWeb.AdminLive.Characters do
   defp apply_action(socket, :new, _params) do
     character = %Character{}
     changeset = Characters.change_character(character)
-    
+
     socket
     |> assign(:page_title, "New Character")
     |> assign(:character, character)
@@ -71,7 +71,7 @@ defmodule ShardWeb.AdminLive.Characters do
 
   defp apply_action(socket, :show, %{"id" => id}) do
     character = Characters.get_character!(id)
-    
+
     socket
     |> assign(:page_title, "Character Details")
     |> assign(:character, character)
@@ -87,7 +87,7 @@ defmodule ShardWeb.AdminLive.Characters do
     case Characters.update_character(socket.assigns.character, character_params) do
       {:ok, _character} ->
         characters = list_all_characters()
-        
+
         {:noreply,
          socket
          |> put_flash(:info, "Character updated successfully")
@@ -103,7 +103,7 @@ defmodule ShardWeb.AdminLive.Characters do
     case Characters.create_character(character_params) do
       {:ok, _character} ->
         characters = list_all_characters()
-        
+
         {:noreply,
          socket
          |> put_flash(:info, "Character created successfully")
@@ -117,9 +117,10 @@ defmodule ShardWeb.AdminLive.Characters do
 
   defp list_all_characters do
     from(c in Character,
-         join: u in assoc(c, :user),
-         select: %{c | user: u},
-         order_by: [desc: c.inserted_at])
+      join: u in assoc(c, :user),
+      select: %{c | user: u},
+      order_by: [desc: c.inserted_at]
+    )
     |> Repo.all()
   end
 end

@@ -143,21 +143,21 @@ defmodule Shard.Map do
   """
   def get_adjacent_rooms(room_id) do
     # Get rooms that this room leads to
-    to_rooms_query = 
+    to_rooms_query =
       from d in Door,
         join: r in assoc(d, :to_room),
         where: d.from_room_id == ^room_id,
         select: r
 
     # Get rooms that lead to this room
-    from_rooms_query = 
+    from_rooms_query =
       from d in Door,
         join: r in assoc(d, :from_room),
         where: d.to_room_id == ^room_id,
         select: r
 
     # Combine queries
-    combined_query = 
+    combined_query =
       from r in subquery(to_rooms_query),
         union: ^from_rooms_query
 

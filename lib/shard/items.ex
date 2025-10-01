@@ -65,7 +65,7 @@ defmodule Shard.Items do
 
   def add_item_to_inventory(character_id, item_id, quantity \\ 1, opts \\ []) do
     item = get_item!(item_id)
-    
+
     if item.stackable do
       add_stackable_item(character_id, item, quantity, opts)
     else
@@ -77,14 +77,16 @@ defmodule Shard.Items do
     case find_existing_stack(character_id, item.id) do
       nil ->
         create_inventory_entry(character_id, item, quantity, opts)
-      
+
       existing ->
         new_quantity = existing.quantity + quantity
+
         if new_quantity <= item.max_stack_size do
           update_inventory_quantity(existing, new_quantity)
         else
           # Split into multiple stacks if needed
           remaining = new_quantity - item.max_stack_size
+
           with {:ok, _} <- update_inventory_quantity(existing, item.max_stack_size),
                {:ok, _} <- add_stackable_item(character_id, item, remaining, opts) do
             {:ok, :split_stack}
@@ -112,7 +114,7 @@ defmodule Shard.Items do
 
   defp create_inventory_entry(character_id, item, quantity, opts) do
     slot_position = Keyword.get(opts, :slot_position) || find_next_available_slot(character_id)
-    
+
     %CharacterInventory{}
     |> CharacterInventory.changeset(%{
       character_id: character_id,
@@ -130,26 +132,27 @@ defmodule Shard.Items do
   end
 
   defp find_next_available_slot(character_id) do
-    used_slots = from(ci in CharacterInventory,
-      where: ci.character_id == ^character_id,
-      select: ci.slot_position
-    )
-    |> Repo.all()
-    |> MapSet.new()
+    used_slots =
+      from(ci in CharacterInventory,
+        where: ci.character_id == ^character_id,
+        select: ci.slot_position
+      )
+      |> Repo.all()
+      |> MapSet.new()
 
     Enum.find(0..99, fn slot -> not MapSet.member?(used_slots, slot) end) || 0
   end
 
   def remove_item_from_inventory(inventory_id, quantity \\ 1) do
     inventory = Repo.get!(CharacterInventory, inventory_id)
-    
+
     cond do
       inventory.quantity > quantity ->
         update_inventory_quantity(inventory, inventory.quantity - quantity)
-      
+
       inventory.quantity == quantity ->
         Repo.delete(inventory)
-      
+
       true ->
         {:error, :insufficient_quantity}
     end
@@ -157,11 +160,11 @@ defmodule Shard.Items do
 
   def equip_item(inventory_id) do
     inventory = Repo.get!(CharacterInventory, inventory_id) |> Repo.preload(:item)
-    
+
     if inventory.item.equippable do
       # Unequip any existing item in the same slot
       unequip_slot(inventory.character_id, inventory.item.equipment_slot)
-      
+
       inventory
       |> CharacterInventory.changeset(%{
         equipped: true,
@@ -175,7 +178,7 @@ defmodule Shard.Items do
 
   def unequip_item(inventory_id) do
     inventory = Repo.get!(CharacterInventory, inventory_id)
-    
+
     inventory
     |> CharacterInventory.changeset(%{equipped: false, equipment_slot: nil})
     |> Repo.update()
@@ -200,19 +203,20 @@ defmodule Shard.Items do
 
   def drop_item_in_room(character_id, inventory_id, location, quantity \\ 1) do
     inventory = Repo.get!(CharacterInventory, inventory_id) |> Repo.preload(:item)
-    
+
     if inventory.quantity >= quantity do
       Repo.transaction(fn ->
         # Create room item
-        {:ok, room_item} = %RoomItem{}
-        |> RoomItem.changeset(%{
-          location: location,
-          item_id: inventory.item_id,
-          quantity: quantity,
-          dropped_by_character_id: character_id
-        })
-        |> Repo.insert()
-        
+        {:ok, room_item} =
+          %RoomItem{}
+          |> RoomItem.changeset(%{
+            location: location,
+            item_id: inventory.item_id,
+            quantity: quantity,
+            dropped_by_character_id: character_id
+          })
+          |> Repo.insert()
+
         # Remove from inventory
         case remove_item_from_inventory(inventory_id, quantity) do
           {:ok, _} -> room_item
@@ -227,7 +231,7 @@ defmodule Shard.Items do
   def pick_up_item(character_id, room_item_id, quantity \\ nil) do
     room_item = Repo.get!(RoomItem, room_item_id)
     pickup_quantity = quantity || room_item.quantity
-    
+
     if room_item.quantity >= pickup_quantity do
       Repo.transaction(fn ->
         # Add to inventory
@@ -241,8 +245,9 @@ defmodule Shard.Items do
               |> RoomItem.changeset(%{quantity: room_item.quantity - pickup_quantity})
               |> Repo.update!()
             end
-          
-          error -> Repo.rollback(error)
+
+          error ->
+            Repo.rollback(error)
         end
       end)
     else
@@ -263,20 +268,20 @@ defmodule Shard.Items do
 
   def set_hotbar_slot(character_id, slot_number, inventory_id \\ nil) do
     inventory = if inventory_id, do: Repo.get!(CharacterInventory, inventory_id), else: nil
-    
+
     attrs = %{
       character_id: character_id,
       slot_number: slot_number,
       item_id: inventory && inventory.item_id,
       inventory_id: inventory_id
     }
-    
+
     case Repo.get_by(HotbarSlot, character_id: character_id, slot_number: slot_number) do
       nil ->
         %HotbarSlot{}
         |> HotbarSlot.changeset(attrs)
         |> Repo.insert()
-      
+
       existing ->
         existing
         |> HotbarSlot.changeset(attrs)

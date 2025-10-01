@@ -7,7 +7,8 @@ defmodule ShardWeb.MapSelectionLive do
       %{
         id: "tutorial_terrain",
         name: "Tutorial Terrain",
-        description: "A gentle introduction to the world of Shard. Perfect for new adventurers to learn the basics.",
+        description:
+          "A gentle introduction to the world of Shard. Perfect for new adventurers to learn the basics.",
         difficulty: "Beginner",
         unlocked: true,
         image: "🌱"
@@ -23,7 +24,8 @@ defmodule ShardWeb.MapSelectionLive do
       %{
         id: "crystal_caves",
         name: "Crystal Caves",
-        description: "Glittering underground caverns with valuable treasures and dangerous guardians.",
+        description:
+          "Glittering underground caverns with valuable treasures and dangerous guardians.",
         difficulty: "Advanced",
         unlocked: false,
         image: "💎"
@@ -65,13 +67,15 @@ defmodule ShardWeb.MapSelectionLive do
         <!-- Header -->
         <div class="text-center mb-12">
           <h1 class="text-5xl font-bold text-amber-900 mb-4">🗺️ Choose Your Adventure</h1>
-          <p class="text-xl text-amber-800 mb-6">Select a map to begin your journey through the realms of Shard</p>
+          <p class="text-xl text-amber-800 mb-6">
+            Select a map to begin your journey through the realms of Shard
+          </p>
           <.button navigate={~p"/"} class="prairie-btn">
             ← Back to Home
           </.button>
         </div>
-
-        <!-- Maps Grid -->
+        
+    <!-- Maps Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <%= for map <- @maps do %>
             <div class={"relative bg-white rounded-xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl #{if map.unlocked, do: "border-amber-200 hover:border-amber-300", else: "border-gray-200 opacity-60"}"}>
@@ -85,44 +89,44 @@ defmodule ShardWeb.MapSelectionLive do
                   </div>
                 </div>
               <% end %>
-
-              <!-- Map Card Content -->
+              
+    <!-- Map Card Content -->
               <div class="p-6">
                 <!-- Map Icon -->
                 <div class="text-6xl text-center mb-4">
-                  <%= map.image %>
+                  {map.image}
                 </div>
-
-                <!-- Map Info -->
+                
+    <!-- Map Info -->
                 <h3 class="text-2xl font-bold text-gray-900 text-center mb-2">
-                  <%= map.name %>
+                  {map.name}
                 </h3>
-
-                <!-- Difficulty Badge -->
+                
+    <!-- Difficulty Badge -->
                 <div class="flex justify-center mb-4">
                   <span class={"px-3 py-1 rounded-full text-sm font-semibold #{difficulty_color(map.difficulty)}"}>
-                    <%= map.difficulty %>
+                    {map.difficulty}
                   </span>
                 </div>
-
-                <!-- Description -->
+                
+    <!-- Description -->
                 <p class="text-gray-600 text-center mb-6 leading-relaxed">
-                  <%= map.description %>
+                  {map.description}
                 </p>
-
-                <!-- Action Button -->
+                
+    <!-- Action Button -->
                 <div class="text-center">
                   <%= if map.unlocked do %>
-                    <.button 
-                      navigate={~p"/play/#{map.id}"} 
-                      variant="primary" 
+                    <.button
+                      navigate={~p"/play/#{map.id}"}
+                      variant="primary"
                       class="w-full prairie-btn-primary"
                     >
-                      🏇 Enter <%= map.name %>
+                      🏇 Enter {map.name}
                     </.button>
                   <% else %>
-                    <button 
-                      disabled 
+                    <button
+                      disabled
                       class="w-full px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed"
                     >
                       🔒 Locked
@@ -133,19 +137,18 @@ defmodule ShardWeb.MapSelectionLive do
             </div>
           <% end %>
         </div>
-
-        <!-- Footer Info -->
+        
+    <!-- Footer Info -->
         <div class="mt-16 text-center">
           <div class="bg-white/80 backdrop-blur-sm rounded-lg p-6 border border-amber-200">
             <h3 class="text-xl font-semibold text-amber-900 mb-3">🌟 Adventure Awaits</h3>
             <p class="text-amber-800 mb-4">
-              Each map offers unique challenges, treasures, and experiences. 
+              Each map offers unique challenges, treasures, and experiences.
               Complete maps to unlock new territories and face greater challenges!
             </p>
             <div class="flex justify-center space-x-6 text-sm text-amber-700">
               <div class="flex items-center">
-                <span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
-                Unlocked & Ready
+                <span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span> Unlocked & Ready
               </div>
               <div class="flex items-center">
                 <span class="w-3 h-3 bg-gray-400 rounded-full mr-2"></span>
