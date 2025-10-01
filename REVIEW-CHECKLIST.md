@@ -15,3 +15,4 @@
   - Game logic goes into game logic files (optimally, of pure functions).
   - Schemas in schema files.
 - Will merging this PR, as is, improve the code base?
+- Did this PR raise the coverage threshold (by at least 1%, until it's 80%)?
