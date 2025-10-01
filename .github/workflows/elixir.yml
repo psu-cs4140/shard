@@ -60,3 +60,5 @@ jobs:
       run: mix format --check-formatted
     - name: Run tests
       run: mix test
+    - name: Test Coverage
+      run: mix test --cover
