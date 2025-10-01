@@ -113,9 +113,6 @@ alias Shard.Weapons.SeedData.{
   WeaponEnchantmentsSeeds
 }
 
-# Create a mock user scope for weapons that require it
-mock_user_scope = %{user: %{id: 1}}
-
 # Check if damage types exist
 damage_type_count = Repo.aggregate(DamageTypes, :count, :id)
 
@@ -192,7 +189,7 @@ weapon_count = Repo.aggregate(Weapons, :count, :id)
 if weapon_count == 0 do
   WeaponsSeeds.data()
   |> Enum.each(fn weapon ->
-    Repo.insert!(%Weapons{} |> Weapons.changeset(weapon, mock_user_scope))
+    Repo.insert!(%Weapons{} |> Weapons.changeset(weapon))
   end)
   
   IO.puts("Seeded weapons")
@@ -206,7 +203,7 @@ weapon_effect_count = Repo.aggregate(WeaponEffects, :count, :id)
 if weapon_effect_count == 0 do
   WeaponEffectsSeeds.data()
   |> Enum.each(fn weapon_effect ->
-    Repo.insert!(%WeaponEffects{} |> WeaponEffects.changeset(weapon_effect, mock_user_scope))
+    Repo.insert!(%WeaponEffects{} |> WeaponEffects.changeset(weapon_effect))
   end)
   
   IO.puts("Seeded weapon effects")
@@ -220,7 +217,7 @@ weapon_enchantment_count = Repo.aggregate(WeaponEnchantments, :count, :id)
 if weapon_enchantment_count == 0 do
   WeaponEnchantmentsSeeds.data()
   |> Enum.each(fn weapon_enchantment ->
-    Repo.insert!(%WeaponEnchantments{} |> WeaponEnchantments.changeset(weapon_enchantment, mock_user_scope))
+    Repo.insert!(%WeaponEnchantments{} |> WeaponEnchantments.changeset(weapon_enchantment))
   end)
   
   IO.puts("Seeded weapon enchantments")
