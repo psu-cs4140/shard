@@ -1420,21 +1420,11 @@ defmodule ShardWeb.MudGameLive do
 
         description_lines = description_lines ++ case monster_count do
           0 -> [""]
-          1 -> ["", "There is a " <> Enum.at(monsters, 0)[:name] <>"! It attacks you for " <> to_string(Enum.at(monsters, 0)[:attack]) <> " damage."]
-          _ -> ["", "There are " <> to_string(monster_count) <> " monsters! The monsters include " <> Enum.map_join(monsters, ", ", fn monster -> "a " <> to_string(monster[:name]) end) + ".", "They attack you for " + Enum.sum(Enum.map(monsters, & &1[:attack])) + "damage."]
+          1 -> ["", "There is a " <> Enum.at(monsters, 0)[:name] <> "."]
+          _ -> ["", "There are " <> to_string(monster_count) <> " monsters! The monsters include " <> Enum.map_join(monsters, ", ", fn monster -> "a " <> to_string(monster[:name]) end) <> "."]
         end
 
-        # Monster attacks you
-        updated_game_state = if monster_count > 0 do
-          stats = game_state.player_stats
-          total_damage = Enum.sum(Enum.map(monsters, & &1[:attack]))
-          new_hp = stats.health - total_damage
-          %{game_state | player_stats: %{stats | health: new_hp}}
-        else
-          game_state
-        end
-
-        {description_lines, updated_game_state}
+        {description_lines, game_state}
 
       "stats" ->
         stats = game_state.player_stats
