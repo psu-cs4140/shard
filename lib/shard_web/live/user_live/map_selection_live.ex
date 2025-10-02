@@ -75,7 +75,10 @@ defmodule ShardWeb.MapSelectionLive do
       
       true ->
         IO.inspect(socket.assigns, label: "Socket assigns (no user found)")
-        []
+        # Temporary: Load all characters to test if database query works
+        all_chars = Characters.list_characters()
+        IO.inspect(all_chars, label: "All characters in database")
+        all_chars
     end
 
     IO.inspect(length(characters), label: "Number of characters loaded")
@@ -250,7 +253,10 @@ defmodule ShardWeb.MapSelectionLive do
       
       true ->
         IO.inspect("No user found when reloading characters", label: "Error")
-        []
+        # Temporary: Load all characters to test if database query works
+        all_chars = Characters.list_characters()
+        IO.inspect(all_chars, label: "All characters in database (modal)")
+        all_chars
     end
     
     {:noreply, assign(socket, show_character_modal: true, selected_map: map_id, characters: characters)}
