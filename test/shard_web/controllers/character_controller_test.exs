@@ -11,7 +11,7 @@ defmodule ShardWeb.CharacterControllerTest do
 
     test "redirects to login when not authenticated", %{conn: conn} do
       conn = get(conn, ~p"/characters")
-      assert redirected_to(conn) == ~p"/users/log_in"
+      assert redirected_to(conn) == ~p"/users/log-in"
     end
 
     test "shows characters page when authenticated", %{conn: conn, user: user} do
