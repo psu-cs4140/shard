@@ -1,5 +1,6 @@
 defmodule Shard.Weapons.WeaponEnchantmentsTest do
-  use ExUnit.Case, async: true
+  use Shard.DataCase
+
   alias Shard.Weapons.WeaponEnchantments
 
   test "defines weapon enchantments relationships" do
