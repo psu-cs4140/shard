@@ -9,12 +9,11 @@ defmodule Shard.Repo.Migrations.CreateWeapons do
       add :description, :string
       add :weapon_class_id, references(:weapon_classes, on_delete: :nothing)
       add :rarity_id, references(:rarities, on_delete: :nothing)
-      add :user_id, references(:users, type: :id, on_delete: :delete_all)
 
       timestamps(type: :utc_datetime)
     end
 
-    create index(:weapons, [:user_id])
+
 
     create index(:weapons, [:weapon_class_id])
     create index(:weapons, [:rarity_id])

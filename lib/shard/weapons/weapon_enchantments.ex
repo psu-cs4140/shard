@@ -6,16 +6,14 @@ defmodule Shard.Weapons.WeaponEnchantments do
 
     field :weapon_id, :id
     field :enchantment_id, :id
-    field :user_id, :id
 
     timestamps(type: :utc_datetime)
   end
 
   @doc false
-  def changeset(weapon_enchantments, attrs, user_scope) do
+  def changeset(weapon_enchantments, attrs) do
     weapon_enchantments
     |> cast(attrs, [])
     |> validate_required([])
-    |> put_change(:user_id, user_scope.user.id)
   end
 end

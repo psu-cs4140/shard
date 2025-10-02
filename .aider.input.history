@@ -1590,3 +1590,6 @@
 
 # 2025-10-01 09:15:50.984062
 +y
+
+# 2025-10-01 09:18:15.631975
++There is an error in the priv/repo/seeds.exs. There is no longer a user scop e parameter in the weapons related table changesets. Update to reflect this 

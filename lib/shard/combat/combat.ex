@@ -80,6 +80,7 @@ defmodule Shard.Combat do
     else
       # Monster survived - update it and let it counterattack
       updated_monsters = replace_monster(game_state.monsters, target_monster, updated_monster)
+      messages = messages ++ ["  - #{updated_monster[:name]}: HP = #{updated_monster[:hp]}/#{updated_monster[:hp_max]}"]
       {messages, game_state} = handle_monster_counterattack(game_state, updated_monster, messages)
       game_state = %{game_state | monsters: updated_monsters}
 
