@@ -14,7 +14,5 @@
   <:item title="Class"><%= @character.class || "N/A" %></:item>
   <:item title="Race"><%= @character.race || "N/A" %></:item>
   <:item title="Location"><%= @character.location || "Starting Area" %></:item>
-  <%= if @character.description do %>
-    <:item title="Description"><%= @character.description %></:item>
-  <% end %>
+  <:item title="Description"><%= @character.description || "No description" %></:item>
 </.list>
