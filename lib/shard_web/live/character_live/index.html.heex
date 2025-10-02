@@ -48,3 +48,15 @@
     <% end %>
   </div>
 </div>
+
+<.modal :if={@live_action == :new} id="character-modal" show on_cancel={JS.patch(~p"/characters")}>
+  <.live_component
+    module={ShardWeb.CharacterLive.FormComponent}
+    id="character-form"
+    title="New Character"
+    action={@live_action}
+    character={@character}
+    current_scope={@current_scope}
+    patch={~p"/characters"}
+  />
+</.modal>
