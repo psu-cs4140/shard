@@ -59,7 +59,7 @@ defmodule ShardWeb.MapSelectionLive do
 
     # Get user's characters - handle case where current_scope might not be set
     characters = case socket.assigns[:current_scope] do
-      %{user: user} -> Characters.list_characters_for_user(user.id)
+      %{user: user} -> Characters.get_characters_by_user(user.id)
       _ -> []
     end
 
