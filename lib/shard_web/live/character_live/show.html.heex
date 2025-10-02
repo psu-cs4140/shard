@@ -1,5 +1,5 @@
 <.header>
-  <%= @character.name %>
+  {@character.name}
   <:subtitle>Character Details</:subtitle>
   <:actions>
     <.link navigate={~p"/characters"}>
@@ -9,10 +9,10 @@
 </.header>
 
 <.list>
-  <:item title="Name"><%= @character.name %></:item>
-  <:item title="Level"><%= @character.level || "N/A" %></:item>
-  <:item title="Class"><%= @character.class || "N/A" %></:item>
-  <:item title="Race"><%= @character.race || "N/A" %></:item>
-  <:item title="Location"><%= @character.location || "Starting Area" %></:item>
-  <:item title="Description"><%= @character.description || "No description" %></:item>
+  <:item title="Name">{@character.name}</:item>
+  <:item title="Level">{@character.level || "N/A"}</:item>
+  <:item title="Class">{@character.class || "N/A"}</:item>
+  <:item title="Race">{@character.race || "N/A"}</:item>
+  <:item title="Location">{@character.location || "Starting Area"}</:item>
+  <:item title="Description">{@character.description || "No description"}</:item>
 </.list>

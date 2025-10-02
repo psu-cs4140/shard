@@ -15,20 +15,20 @@ defmodule ShardWeb.CharacterControllerTest do
     end
 
     test "shows characters page when authenticated", %{conn: conn, user: user} do
-      conn = 
+      conn =
         conn
         |> log_in_user(user)
         |> get(~p"/characters")
-      
+
       assert html_response(conn, 200) =~ "Characters"
     end
 
     test "shows new character page when authenticated", %{conn: conn, user: user} do
-      conn = 
+      conn =
         conn
         |> log_in_user(user)
         |> get(~p"/characters/new")
-      
+
       assert html_response(conn, 200) =~ "New Character"
     end
   end

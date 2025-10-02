@@ -11,10 +11,12 @@ defmodule ShardWeb.MudGameLive do
   @impl true
   def mount(%{"map_id" => map_id} = params, _session, socket) do
     # Get character if provided
-    character = 
+    character =
       case Map.get(params, "character_id") do
-        nil -> nil
-        character_id -> 
+        nil ->
+          nil
+
+        character_id ->
           try do
             Shard.Characters.get_character!(character_id)
           rescue
@@ -23,7 +25,7 @@ defmodule ShardWeb.MudGameLive do
       end
 
     # Get character name from URL parameter (fallback to character.name if available)
-    character_name = 
+    character_name =
       case Map.get(params, "character_name") do
         nil -> if character, do: character.name, else: "Unknown"
         name -> URI.decode(name)
@@ -31,7 +33,7 @@ defmodule ShardWeb.MudGameLive do
 
     # If no character provided or character not found, redirect to character selection
     if is_nil(character) do
-      {:ok, 
+      {:ok,
        socket
        |> put_flash(:error, "Please select a character to play")
        |> push_navigate(to: ~p"/maps")}
@@ -52,7 +54,6 @@ defmodule ShardWeb.MudGameLive do
         map_id: map_id,
         character: character,
         active_panel: nil,
-
         player_stats: %{
           health: 100,
           max_health: 100,
@@ -67,68 +68,67 @@ defmodule ShardWeb.MudGameLive do
           dexterity: 12,
           intelligence: 10
         },
+        inventory_items: [
+          %{name: "Iron Sword", type: "weapon", damage: "1d8+3"},
+          %{name: "Health Potion", type: "consumable", effect: "Restores 50 HP"},
+          %{name: "Leather Armor", type: "armor", defense: 5},
+          %{name: "Torch", type: "utility"},
+          %{name: "Lockpick", type: "tool"}
+        ],
+        equipped_weapon: Shard.Weapons.Weapon.get_tutorial_start_weapons(),
+        hotbar: %{
+          slot_1: nil,
+          slot_2: %{name: "Iron Sword", type: "weapon"},
+          slot_3: nil,
+          slot_4: %{name: "Health Potion", type: "consumable"},
+          slot_5: nil
+        },
+        quests: [],
+        # Stores quest offer waiting for acceptance/denial
+        pending_quest_offer: nil,
 
-      inventory_items: [
-        %{name: "Iron Sword", type: "weapon", damage: "1d8+3"},
-        %{name: "Health Potion", type: "consumable", effect: "Restores 50 HP"},
-        %{name: "Leather Armor", type: "armor", defense: 5},
-        %{name: "Torch", type: "utility"},
-        %{name: "Lockpick", type: "tool"}
-      ],
-      equipped_weapon: Shard.Weapons.Weapon.get_tutorial_start_weapons(),
-      hotbar: %{
-        slot_1: nil,
-        slot_2: %{name: "Iron Sword", type: "weapon"},
-        slot_3: nil,
-        slot_4: %{name: "Health Potion", type: "consumable"},
-        slot_5: nil
-      },
-      quests: [],
-      # Stores quest offer waiting for acceptance/denial
-      pending_quest_offer: nil,
+        # Will pull from db once that is created.
+        monsters: [
+          %{
+            monster_id: 1,
+            name: "Goblin",
+            level: 1,
+            attack: 10,
+            defense: 0,
+            speed: 5,
+            xp_reward: 5,
+            gold_reward: 2,
+            boss: false,
+            hp: 30,
+            hp_max: 30,
+            position: {2, 0}
+            # position: find_valid_monster_position(map_data, starting_position)
+          }
+        ],
+        combat: false
+      }
 
-      # Will pull from db once that is created.
-      monsters: [
-        %{
-          monster_id: 1,
-          name: "Goblin",
-          level: 1,
-          attack: 10,
-          defense: 0,
-          speed: 5,
-          xp_reward: 5,
-          gold_reward: 2,
-          boss: false,
-          hp: 30,
-          hp_max: 30,
-          position: {2, 0}
-          # position: find_valid_monster_position(map_data, starting_position)
-        }
-      ],
-      combat: false
-    }
+      terminal_state = %{
+        output: [
+          "Welcome to Shard!",
+          "You find yourself in a mysterious dungeon.",
+          "Type 'help' for available commands.",
+          ""
+        ],
+        command_history: [],
+        current_command: ""
+      }
 
-    terminal_state = %{
-      output: [
-        "Welcome to Shard!",
-        "You find yourself in a mysterious dungeon.",
-        "Type 'help' for available commands.",
-        ""
-      ],
-      command_history: [],
-      current_command: ""
-    }
+      # Controls what modal popup we are showing
+      modal_state = %{
+        show: false,
+        type: 0
+      }
 
-    # Controls what modal popup we are showing
-    modal_state = %{
-      show: false,
-      type: 0
-    }
-
-    PubSub.subscribe(
-      Shard.PubSub,
-      posn_to_room_channel(game_state.player_position)
-    )
+      PubSub.subscribe(
+        Shard.PubSub,
+        posn_to_room_channel(game_state.player_position)
+      )
 
       {:ok,
        assign(socket,

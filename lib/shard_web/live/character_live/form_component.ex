@@ -8,7 +8,7 @@ defmodule ShardWeb.CharacterLive.FormComponent do
     ~H"""
     <div>
       <.header>
-        <%= @title %>
+        {@title}
         <:subtitle>Create a new character to begin your adventure</:subtitle>
       </.header>
 
