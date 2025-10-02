@@ -59,6 +59,7 @@ defmodule ShardWeb.MapSelectionLive do
 
     # Debug: Check all available socket assigns
     IO.inspect(socket.assigns, label: "All socket assigns")
+    IO.inspect(Map.keys(socket.assigns), label: "Socket assign keys")
     
     # Get user's characters - try multiple ways to get the current user
     user = cond do
@@ -68,9 +69,13 @@ defmodule ShardWeb.MapSelectionLive do
       socket.assigns[:current_user] ->
         IO.inspect("Found user via current_user", label: "Auth method")
         socket.assigns.current_user
+      socket.assigns[:live_action] ->
+        IO.inspect("Checking live_action", label: "Debug")
+        IO.inspect(socket.assigns.live_action, label: "Live action value")
+        nil
       true ->
-        IO.inspect(Map.keys(socket.assigns), label: "Available socket assign keys")
-        IO.inspect("No authenticated user found", label: "Error")
+        IO.inspect("No authenticated user found - checking session", label: "Error")
+        IO.inspect(_session, label: "Session data")
         nil
     end
 
@@ -241,6 +246,8 @@ defmodule ShardWeb.MapSelectionLive do
   @impl true
   def handle_event("select_map", %{"map_id" => map_id}, socket) do
     # Reload characters when opening modal to ensure we have the latest data
+    IO.inspect(socket.assigns, label: "Socket assigns in select_map")
+    
     user = cond do
       socket.assigns[:current_scope] && socket.assigns.current_scope.user ->
         socket.assigns.current_scope.user
@@ -256,6 +263,7 @@ defmodule ShardWeb.MapSelectionLive do
       chars
     else
       IO.inspect("No user found when reloading characters", label: "Error")
+      IO.inspect(Map.keys(socket.assigns), label: "Available keys in select_map")
       []
     end
     
