@@ -66,7 +66,7 @@ defmodule Shard.Combat do
   # Private functions
 
   defp execute_attack(game_state, target_monster) do
-    player_damage = game_state.player_stats.strength
+    player_damage = game_state.equipped_weapon.damage + trunc(game_state.equipped_weapon.damage * (game_state.player_stats.strength / 100))
 
     # Apply damage to monster
     updated_monster = %{target_monster | hp: target_monster.hp - player_damage}

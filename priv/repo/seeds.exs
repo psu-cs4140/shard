@@ -133,7 +133,7 @@ if damage_type_count == 0 do
   |> Enum.each(fn damage_type ->
     Repo.insert!(%DamageTypes{} |> DamageTypes.changeset(damage_type))
   end)
-  
+
   IO.puts("Seeded damage types")
 else
   IO.puts("Damage types already exist, skipping seeding")
@@ -147,7 +147,7 @@ if rarity_count == 0 do
   |> Enum.each(fn rarity ->
     Repo.insert!(%Rarities{} |> Rarities.changeset(rarity))
   end)
-  
+
   IO.puts("Seeded rarities")
 else
   IO.puts("Rarities already exist, skipping seeding")
@@ -161,7 +161,7 @@ if class_count == 0 do
   |> Enum.each(fn class ->
     Repo.insert!(%Classes{} |> Classes.changeset(class))
   end)
-  
+
   IO.puts("Seeded weapon classes")
 else
   IO.puts("Weapon classes already exist, skipping seeding")
@@ -175,7 +175,7 @@ if effect_count == 0 do
   |> Enum.each(fn effect ->
     Repo.insert!(%Effects{} |> Effects.changeset(effect))
   end)
-  
+
   IO.puts("Seeded effects")
 else
   IO.puts("Effects already exist, skipping seeding")
@@ -189,7 +189,7 @@ if enchantment_count == 0 do
   |> Enum.each(fn enchantment ->
     Repo.insert!(%Enchantments{} |> Enchantments.changeset(enchantment))
   end)
-  
+
   IO.puts("Seeded enchantments")
 else
   IO.puts("Enchantments already exist, skipping seeding")
@@ -203,7 +203,7 @@ if weapon_count == 0 do
   |> Enum.each(fn weapon ->
     Repo.insert!(%Weapons{} |> Weapons.changeset(weapon))
   end)
-  
+
   IO.puts("Seeded weapons")
 else
   IO.puts("Weapons already exist, skipping seeding")
@@ -217,7 +217,7 @@ if weapon_effect_count == 0 do
   |> Enum.each(fn weapon_effect ->
     Repo.insert!(%WeaponEffects{} |> WeaponEffects.changeset(weapon_effect))
   end)
-  
+
   IO.puts("Seeded weapon effects")
 else
   IO.puts("Weapon effects already exist, skipping seeding")
@@ -231,7 +231,7 @@ if weapon_enchantment_count == 0 do
   |> Enum.each(fn weapon_enchantment ->
     Repo.insert!(%WeaponEnchantments{} |> WeaponEnchantments.changeset(weapon_enchantment))
   end)
-  
+
   IO.puts("Seeded weapon enchantments")
 else
   IO.puts("Weapon enchantments already exist, skipping seeding")

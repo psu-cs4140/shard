@@ -44,8 +44,9 @@ defmodule ShardWeb.MudGameLive do
         %{name: "Health Potion", type: "consumable", effect: "Restores 50 HP"},
         %{name: "Leather Armor", type: "armor", defense: 5},
         %{name: "Torch", type: "utility"},
-        %{name: "Lockpick", type: "tool"}
+        %{name: "Lockpick", type: "tool"},
       ],
+      equipped_weapon: Shard.Weapons.Weapon.get_tutorial_start_weapons(),
       hotbar: %{
         slot_1: nil,
         slot_2: %{name: "Iron Sword", type: "weapon"},
