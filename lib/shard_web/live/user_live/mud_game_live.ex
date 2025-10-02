@@ -9,105 +9,136 @@ defmodule ShardWeb.MudGameLive do
   alias Phoenix.PubSub
 
   @impl true
-  def mount(%{"map_id" => map_id}, _session, socket) do
-    # Generate map data based on selected map
-    map_data = generate_map_from_database(map_id)
+  def mount(%{"map_id" => map_id} = params, _session, socket) do
+    # Get character if provided
+    character =
+      case Map.get(params, "character_id") do
+        nil ->
+          nil
 
-    # Find a valid starting position (first floor tile found)
-    starting_position = find_valid_starting_position(map_data)
+        character_id ->
+          try do
+            Shard.Characters.get_character!(character_id)
+          rescue
+            _ -> nil
+          end
+      end
 
-    # Store the map_id for later use
-    map_id = map_id
+    # Get character name from URL parameter (fallback to character.name if available)
+    character_name =
+      case Map.get(params, "character_name") do
+        nil -> if character, do: character.name, else: "Unknown"
+        name -> URI.decode(name)
+      end
 
-    # Initialize game state
-    game_state = %{
-      player_position: starting_position,
-      map_data: map_data,
-      map_id: map_id,
-      active_panel: nil,
-      player_stats: %{
-        health: 100,
-        max_health: 100,
-        stamina: 100,
-        max_stamina: 100,
-        mana: 100,
-        max_mana: 100,
-        level: 5,
-        experience: 1250,
-        next_level_exp: 2000,
-        strength: 15,
-        dexterity: 12,
-        intelligence: 10
-      },
-      inventory_items: [
-        %{name: "Iron Sword", type: "weapon", damage: "1d8+3"},
-        %{name: "Health Potion", type: "consumable", effect: "Restores 50 HP"},
-        %{name: "Leather Armor", type: "armor", defense: 5},
-        %{name: "Torch", type: "utility"},
-        %{name: "Lockpick", type: "tool"}
-      ],
-      equipped_weapon: Shard.Weapons.Weapon.get_tutorial_start_weapons(),
-      hotbar: %{
-        slot_1: nil,
-        slot_2: %{name: "Iron Sword", type: "weapon"},
-        slot_3: nil,
-        slot_4: %{name: "Health Potion", type: "consumable"},
-        slot_5: nil
-      },
-      quests: [],
-      # Stores quest offer waiting for acceptance/denial
-      pending_quest_offer: nil,
+    # If no character provided or character not found, redirect to character selection
+    if is_nil(character) do
+      {:ok,
+       socket
+       |> put_flash(:error, "Please select a character to play")
+       |> push_navigate(to: ~p"/maps")}
+    else
+      # Generate map data based on selected map
+      map_data = generate_map_from_database(map_id)
 
-      # Will pull from db once that is created.
-      monsters: [
-        %{
-          monster_id: 1,
-          name: "Goblin",
-          level: 1,
-          attack: 10,
-          defense: 0,
-          speed: 5,
-          xp_reward: 5,
-          gold_reward: 2,
-          boss: false,
-          hp: 30,
-          hp_max: 30,
-          position: {2, 0}
-          # position: find_valid_monster_position(map_data, starting_position)
-        }
-      ],
-      combat: false
-    }
+      # Find a valid starting position (first floor tile found)
+      starting_position = find_valid_starting_position(map_data)
 
-    terminal_state = %{
-      output: [
-        "Welcome to Shard!",
-        "You find yourself in a mysterious dungeon.",
-        "Type 'help' for available commands.",
-        ""
-      ],
-      command_history: [],
-      current_command: ""
-    }
+      # Store the map_id and character for later use
+      map_id = map_id
 
-    # Controls what modal popup we are showing
-    modal_state = %{
-      show: false,
-      type: 0
-    }
+      # Initialize game state
+      game_state = %{
+        player_position: starting_position,
+        map_data: map_data,
+        map_id: map_id,
+        character: character,
+        active_panel: nil,
+        player_stats: %{
+          health: 100,
+          max_health: 100,
+          stamina: 100,
+          max_stamina: 100,
+          mana: 100,
+          max_mana: 100,
+          level: character.level || 1,
+          experience: character.experience || 0,
+          next_level_exp: 1000,
+          strength: 15,
+          dexterity: 12,
+          intelligence: 10
+        },
+        inventory_items: [
+          %{name: "Iron Sword", type: "weapon", damage: "1d8+3"},
+          %{name: "Health Potion", type: "consumable", effect: "Restores 50 HP"},
+          %{name: "Leather Armor", type: "armor", defense: 5},
+          %{name: "Torch", type: "utility"},
+          %{name: "Lockpick", type: "tool"}
+        ],
+        equipped_weapon: Shard.Weapons.Weapon.get_tutorial_start_weapons(),
+        hotbar: %{
+          slot_1: nil,
+          slot_2: %{name: "Iron Sword", type: "weapon"},
+          slot_3: nil,
+          slot_4: %{name: "Health Potion", type: "consumable"},
+          slot_5: nil
+        },
+        quests: [],
+        # Stores quest offer waiting for acceptance/denial
+        pending_quest_offer: nil,
 
-    PubSub.subscribe(
-      Shard.PubSub,
-      posn_to_room_channel(game_state.player_position)
-    )
+        # Will pull from db once that is created.
+        monsters: [
+          %{
+            monster_id: 1,
+            name: "Goblin",
+            level: 1,
+            attack: 10,
+            defense: 0,
+            speed: 5,
+            xp_reward: 5,
+            gold_reward: 2,
+            boss: false,
+            hp: 30,
+            hp_max: 30,
+            position: {2, 0}
+            # position: find_valid_monster_position(map_data, starting_position)
+          }
+        ],
+        combat: false
+      }
 
-    {:ok,
-     assign(socket,
-       game_state: game_state,
-       terminal_state: terminal_state,
-       modal_state: modal_state,
-       available_exits: compute_available_exits(game_state.player_position)
-     )}
+      terminal_state = %{
+        output: [
+          "Welcome to Shard!",
+          "You find yourself in a mysterious dungeon.",
+          "Type 'help' for available commands.",
+          ""
+        ],
+        command_history: [],
+        current_command: ""
+      }
+
+      # Controls what modal popup we are showing
+      modal_state = %{
+        show: false,
+        type: 0
+      }
+
+      PubSub.subscribe(
+        Shard.PubSub,
+        posn_to_room_channel(game_state.player_position)
+      )
+
+      {:ok,
+       assign(socket,
+         game_state: game_state,
+         terminal_state: terminal_state,
+         modal_state: modal_state,
+         available_exits: compute_available_exits(game_state.player_position),
+         character_name: character_name
+       )}
+    end
   end
 
   def posn_to_room_channel({xx, yy}) do
@@ -121,8 +152,16 @@ defmodule ShardWeb.MudGameLive do
     <div class="flex flex-col h-screen bg-gray-900 text-white" phx-window-keydown="keypress">
       <!-- "phx-window-keydown="keypress" -->
       <!-- Header -->
-      <header class="bg-gray-800 p-4 shadow-lg">
+      <header class="bg-gray-800 p-4 shadow-lg flex justify-between items-center">
         <h1 class="text-2xl font-bold">MUD Game</h1>
+        <div class="text-right">
+          <div class="text-lg font-semibold text-green-400">
+            {@character_name}
+          </div>
+          <div class="text-sm text-gray-400">
+            Level {@game_state.player_stats.level}
+          </div>
+        </div>
       </header>
       
     <!-- Main Content -->

@@ -1,5 +1,6 @@
 defmodule ShardWeb.MapSelectionLive do
   use ShardWeb, :live_view
+  alias Shard.Characters
 
   @impl true
   def mount(_params, _session, socket) do
@@ -56,7 +57,52 @@ defmodule ShardWeb.MapSelectionLive do
       }
     ]
 
-    {:ok, assign(socket, maps: maps)}
+    # Debug: Check all available socket assigns
+    IO.inspect(socket.assigns, label: "All socket assigns")
+    IO.inspect(Map.keys(socket.assigns), label: "Socket assign keys")
+
+    # Get user's characters - try multiple ways to get the current user
+    user =
+      cond do
+        socket.assigns[:current_scope] && socket.assigns.current_scope.user ->
+          IO.inspect("Found user via current_scope", label: "Auth method")
+          socket.assigns.current_scope.user
+
+        socket.assigns[:current_user] ->
+          IO.inspect("Found user via current_user", label: "Auth method")
+          socket.assigns.current_user
+
+        socket.assigns[:live_action] ->
+          IO.inspect("Checking live_action", label: "Debug")
+          IO.inspect(socket.assigns.live_action, label: "Live action value")
+          nil
+
+        true ->
+          IO.inspect("No authenticated user found - checking session", label: "Error")
+          IO.inspect(_session, label: "Session data")
+          nil
+      end
+
+    characters =
+      if user do
+        IO.inspect(user.id, label: "Loading characters for user ID")
+        chars = Characters.get_characters_by_user(user.id)
+        IO.inspect(chars, label: "User's characters")
+        chars
+      else
+        IO.inspect("No authenticated user found", label: "Error")
+        []
+      end
+
+    IO.inspect(length(characters), label: "Number of characters loaded")
+
+    {:ok,
+     assign(socket,
+       maps: maps,
+       characters: characters,
+       show_character_modal: false,
+       selected_map: nil
+     )}
   end
 
   @impl true
@@ -118,7 +164,8 @@ defmodule ShardWeb.MapSelectionLive do
                 <div class="text-center">
                   <%= if map.unlocked do %>
                     <.button
-                      navigate={~p"/play/#{map.id}"}
+                      phx-click="select_map"
+                      phx-value-map_id={map.id}
                       variant="primary"
                       class="w-full prairie-btn-primary"
                     >
@@ -158,8 +205,110 @@ defmodule ShardWeb.MapSelectionLive do
           </div>
         </div>
       </div>
+      
+    <!-- Character Selection Modal -->
+      <%= if @show_character_modal do %>
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Choose Your Character</h3>
+
+            <%= if Enum.empty?(@characters) do %>
+              <p class="text-gray-600 mb-4">
+                You don't have any characters yet. Create one to start playing!
+              </p>
+              <div class="flex space-x-3">
+                <.button navigate={~p"/characters"} class="flex-1">
+                  Create Character
+                </.button>
+                <.button phx-click="cancel_map_selection" variant="outline" class="flex-1">
+                  Cancel
+                </.button>
+              </div>
+            <% else %>
+              <p class="text-gray-600 mb-2">
+                Found {length(@characters)} character(s). Select one to enter the map:
+              </p>
+              <div class="space-y-2 mb-4">
+                <%= for character <- @characters do %>
+                  <button
+                    phx-click="select_character"
+                    phx-value-character_id={character.id}
+                    class="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div class="font-semibold">{character.name}</div>
+                    <div class="text-sm text-gray-600">
+                      Level {character.level || 1} {String.capitalize(character.class || "adventurer")}
+                    </div>
+                  </button>
+                <% end %>
+              </div>
+              <div class="flex space-x-3">
+                <.button navigate={~p"/characters"} variant="outline" class="flex-1">
+                  Manage Characters
+                </.button>
+                <.button phx-click="cancel_map_selection" variant="outline" class="flex-1">
+                  Cancel
+                </.button>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
     </div>
     """
+  end
+
+  @impl true
+  def handle_event("select_map", %{"map_id" => map_id}, socket) do
+    # Reload characters when opening modal to ensure we have the latest data
+    IO.inspect(socket.assigns, label: "Socket assigns in select_map")
+
+    user =
+      cond do
+        socket.assigns[:current_scope] && socket.assigns.current_scope.user ->
+          socket.assigns.current_scope.user
+
+        socket.assigns[:current_user] ->
+          socket.assigns.current_user
+
+        true ->
+          nil
+      end
+
+    characters =
+      if user do
+        chars = Characters.get_characters_by_user(user.id)
+        IO.inspect(chars, label: "Reloaded characters for modal")
+        chars
+      else
+        IO.inspect("No user found when reloading characters", label: "Error")
+        IO.inspect(Map.keys(socket.assigns), label: "Available keys in select_map")
+        []
+      end
+
+    {:noreply,
+     assign(socket, show_character_modal: true, selected_map: map_id, characters: characters)}
+  end
+
+  def handle_event("select_character", %{"character_id" => character_id}, socket) do
+    # Find the selected character to get their name
+    character =
+      Enum.find(socket.assigns.characters, fn char ->
+        to_string(char.id) == character_id
+      end)
+
+    character_name = if character, do: character.name, else: "Unknown"
+
+    {:noreply,
+     socket
+     |> push_navigate(
+       to:
+         ~p"/play/#{socket.assigns.selected_map}?character_id=#{character_id}&character_name=#{URI.encode(character_name)}"
+     )}
+  end
+
+  def handle_event("cancel_map_selection", _params, socket) do
+    {:noreply, assign(socket, show_character_modal: false, selected_map: nil)}
   end
 
   # Helper function to determine difficulty badge colors

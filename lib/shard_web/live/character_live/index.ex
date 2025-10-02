@@ -78,6 +78,12 @@ defmodule ShardWeb.CharacterLive.Index do
     |> refresh_characters()
   end
 
+  defp apply_action(socket, :new, _params) do
+    socket
+    |> assign(:page_title, "New Character")
+    |> assign(:character, %Shard.Characters.Character{})
+  end
+
   defp refresh_characters(socket) do
     user = socket.assigns.current_scope.user
     characters = Characters.get_characters_by_user(user.id)
