@@ -57,9 +57,11 @@ defmodule ShardWeb.MapSelectionLive do
       }
     ]
 
-    # Get user's characters
-    user = socket.assigns.current_scope.user
-    characters = Characters.list_characters_for_user(user.id)
+    # Get user's characters - handle case where current_scope might not be set
+    characters = case socket.assigns[:current_scope] do
+      %{user: user} -> Characters.list_characters_for_user(user.id)
+      _ -> []
+    end
 
     {:ok, assign(socket, maps: maps, characters: characters, show_character_modal: false, selected_map: nil)}
   end
