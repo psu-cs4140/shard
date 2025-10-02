@@ -58,27 +58,24 @@ defmodule ShardWeb.MapSelectionLive do
     ]
 
     # Get user's characters - try multiple ways to get the current user
-    characters = cond do
+    user = cond do
       socket.assigns[:current_scope] && socket.assigns.current_scope.user ->
-        user = socket.assigns.current_scope.user
-        IO.inspect(user, label: "Current user from current_scope")
-        chars = Characters.get_characters_by_user(user.id)
-        IO.inspect(chars, label: "Loaded characters")
-        chars
-      
+        socket.assigns.current_scope.user
       socket.assigns[:current_user] ->
-        user = socket.assigns.current_user
-        IO.inspect(user, label: "Current user from current_user")
-        chars = Characters.get_characters_by_user(user.id)
-        IO.inspect(chars, label: "Loaded characters")
-        chars
-      
+        socket.assigns.current_user
       true ->
-        IO.inspect(socket.assigns, label: "Socket assigns (no user found)")
-        # Temporary: Load all characters to test if database query works
-        all_chars = Characters.list_characters()
-        IO.inspect(all_chars, label: "All characters in database")
-        all_chars
+        IO.inspect(Map.keys(socket.assigns), label: "Available socket assign keys")
+        nil
+    end
+
+    characters = if user do
+      IO.inspect(user.id, label: "Loading characters for user ID")
+      chars = Characters.get_characters_by_user(user.id)
+      IO.inspect(chars, label: "User's characters")
+      chars
+    else
+      IO.inspect("No authenticated user found", label: "Error")
+      []
     end
 
     IO.inspect(length(characters), label: "Number of characters loaded")
@@ -238,25 +235,22 @@ defmodule ShardWeb.MapSelectionLive do
   @impl true
   def handle_event("select_map", %{"map_id" => map_id}, socket) do
     # Reload characters when opening modal to ensure we have the latest data
-    characters = cond do
+    user = cond do
       socket.assigns[:current_scope] && socket.assigns.current_scope.user ->
-        user = socket.assigns.current_scope.user
-        chars = Characters.get_characters_by_user(user.id)
-        IO.inspect(chars, label: "Reloaded characters for modal")
-        chars
-      
+        socket.assigns.current_scope.user
       socket.assigns[:current_user] ->
-        user = socket.assigns.current_user
-        chars = Characters.get_characters_by_user(user.id)
-        IO.inspect(chars, label: "Reloaded characters for modal")
-        chars
-      
+        socket.assigns.current_user
       true ->
-        IO.inspect("No user found when reloading characters", label: "Error")
-        # Temporary: Load all characters to test if database query works
-        all_chars = Characters.list_characters()
-        IO.inspect(all_chars, label: "All characters in database (modal)")
-        all_chars
+        nil
+    end
+
+    characters = if user do
+      chars = Characters.get_characters_by_user(user.id)
+      IO.inspect(chars, label: "Reloaded characters for modal")
+      chars
+    else
+      IO.inspect("No user found when reloading characters", label: "Error")
+      []
     end
     
     {:noreply, assign(socket, show_character_modal: true, selected_map: map_id, characters: characters)}
