@@ -12,7 +12,7 @@ defmodule Shard.Weapons.WeaponEnchantments do
   @doc false
   def changeset(weapon_enchantments, attrs) do
     weapon_enchantments
-    |> cast(attrs, [])
-    |> validate_required([])
+    |> cast(attrs, [:weapon_id, :enchantment_id])
+    |> validate_required([:weapon_id, :enchantment_id])
   end
 end
