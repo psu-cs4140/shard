@@ -9,17 +9,18 @@ defmodule ShardWeb.AdminLive.Npcs do
   def mount(_params, _session, socket) do
     # Ensure tutorial NPCs exist
     ensure_tutorial_npcs_exist()
-    
+
     npcs = Npcs.list_npcs_with_preloads()
     rooms = Npcs.list_rooms()
-    
-    {:ok, assign(socket, 
-      npcs: npcs, 
-      rooms: rooms,
-      show_form: false,
-      form_npc: nil,
-      form_title: "Create NPC"
-    )}
+
+    {:ok,
+     assign(socket,
+       npcs: npcs,
+       rooms: rooms,
+       show_form: false,
+       form_npc: nil,
+       form_title: "Create NPC"
+     )}
   end
 
   @impl true
@@ -37,6 +38,7 @@ defmodule ShardWeb.AdminLive.Npcs do
 
   defp apply_action(socket, :new, _params) do
     changeset = Npcs.change_npc(%Npc{})
+
     socket
     |> assign(:page_title, "New NPC")
     |> assign(:show_form, true)
@@ -48,7 +50,7 @@ defmodule ShardWeb.AdminLive.Npcs do
   defp apply_action(socket, :edit, %{"id" => id}) do
     npc = Npcs.get_npc_with_preloads!(id)
     changeset = Npcs.change_npc(npc)
-    
+
     socket
     |> assign(:page_title, "Edit NPC")
     |> assign(:show_form, true)
@@ -61,52 +63,49 @@ defmodule ShardWeb.AdminLive.Npcs do
   def handle_event("edit_npc", %{"id" => id}, socket) do
     npc = Npcs.get_npc_with_preloads!(id)
     changeset = Npcs.change_npc(npc)
-    
+
     {:noreply,
-      socket
-      |> assign(:show_form, true)
-      |> assign(:form_npc, npc)
-      |> assign(:form_title, "Edit NPC")
-      |> assign(:changeset, changeset)
-    }
+     socket
+     |> assign(:show_form, true)
+     |> assign(:form_npc, npc)
+     |> assign(:form_title, "Edit NPC")
+     |> assign(:changeset, changeset)}
   end
 
   @impl true
   def handle_event("delete_npc", %{"id" => id}, socket) do
     npc = Npcs.get_npc!(id)
     {:ok, _} = Npcs.delete_npc(npc)
-    
+
     npcs = Npcs.list_npcs_with_preloads()
-    
-    {:noreply, 
-      socket
-      |> assign(:npcs, npcs)
-      |> put_flash(:info, "NPC deleted successfully")
-    }
+
+    {:noreply,
+     socket
+     |> assign(:npcs, npcs)
+     |> put_flash(:info, "NPC deleted successfully")}
   end
 
   @impl true
   def handle_event("cancel_form", _params, socket) do
-    {:noreply, 
-      socket
-      |> assign(:show_form, false)
-      |> push_patch(to: ~p"/admin/npcs")
-    }
+    {:noreply,
+     socket
+     |> assign(:show_form, false)
+     |> push_patch(to: ~p"/admin/npcs")}
   end
 
   @impl true
   def handle_event("save_npc", %{"npc" => npc_params}, socket) do
     # Clean up empty string values that should be nil
-    cleaned_params = 
+    cleaned_params =
       npc_params
-      |> Enum.map(fn {k, v} -> 
+      |> Enum.map(fn {k, v} ->
         case v do
           "" -> {k, nil}
           v -> {k, v}
         end
       end)
       |> Enum.into(%{})
-    
+
     case socket.assigns.form_npc.id do
       nil -> create_npc(socket, cleaned_params)
       _id -> update_npc(socket, cleaned_params)
@@ -117,14 +116,13 @@ defmodule ShardWeb.AdminLive.Npcs do
     case Npcs.create_npc(npc_params) do
       {:ok, _npc} ->
         npcs = Npcs.list_npcs_with_preloads()
-        
+
         {:noreply,
-          socket
-          |> assign(:npcs, npcs)
-          |> assign(:show_form, false)
-          |> put_flash(:info, "NPC created successfully")
-          |> push_patch(to: ~p"/admin/npcs")
-        }
+         socket
+         |> assign(:npcs, npcs)
+         |> assign(:show_form, false)
+         |> put_flash(:info, "NPC created successfully")
+         |> push_patch(to: ~p"/admin/npcs")}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, :changeset, changeset)}
@@ -135,14 +133,13 @@ defmodule ShardWeb.AdminLive.Npcs do
     case Npcs.update_npc(socket.assigns.form_npc, npc_params) do
       {:ok, _npc} ->
         npcs = Npcs.list_npcs_with_preloads()
-        
+
         {:noreply,
-          socket
-          |> assign(:npcs, npcs)
-          |> assign(:show_form, false)
-          |> put_flash(:info, "NPC updated successfully")
-          |> push_patch(to: ~p"/admin/npcs")
-        }
+         socket
+         |> assign(:npcs, npcs)
+         |> assign(:show_form, false)
+         |> put_flash(:info, "NPC updated successfully")
+         |> push_patch(to: ~p"/admin/npcs")}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, :changeset, changeset)}
@@ -155,7 +152,7 @@ defmodule ShardWeb.AdminLive.Npcs do
     <div class="p-6">
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">NPCs Administration</h1>
-        <.link 
+        <.link
           patch={~p"/admin/npcs/new"}
           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg inline-block"
         >
@@ -166,17 +163,17 @@ defmodule ShardWeb.AdminLive.Npcs do
       <%= if @show_form do %>
         <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold"><%= @form_title %></h2>
-            <button 
+            <h2 class="text-xl font-semibold">{@form_title}</h2>
+            <button
               phx-click="cancel_form"
               class="text-gray-500 hover:text-gray-700"
             >
               ✕
             </button>
           </div>
-          
+
           <%= if assigns[:changeset] do %>
-            <.simple_form 
+            <.simple_form
               for={to_form(@changeset)}
               phx-submit="save_npc"
               id="npc-form"
@@ -184,66 +181,78 @@ defmodule ShardWeb.AdminLive.Npcs do
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <% form = to_form(@changeset) %>
                 <.input field={form[:name]} label="Name" required />
-                <.input field={form[:npc_type]} type="select" label="Type" 
+                <.input
+                  field={form[:npc_type]}
+                  type="select"
+                  label="Type"
                   options={[
                     {"Neutral", "neutral"},
-                    {"Friendly", "friendly"}, 
+                    {"Friendly", "friendly"},
                     {"Hostile", "hostile"},
                     {"Merchant", "merchant"},
                     {"Quest Giver", "quest_giver"}
-                  ]} />
-                
+                  ]}
+                />
+
                 <.input field={form[:level]} type="number" label="Level" />
                 <.input field={form[:faction]} label="Faction" />
-                
+
                 <.input field={form[:health]} type="number" label="Health" />
                 <.input field={form[:max_health]} type="number" label="Max Health" />
-                
+
                 <.input field={form[:mana]} type="number" label="Mana" />
                 <.input field={form[:max_mana]} type="number" label="Max Mana" />
-                
+
                 <.input field={form[:strength]} type="number" label="Strength" />
                 <.input field={form[:dexterity]} type="number" label="Dexterity" />
-                
+
                 <.input field={form[:intelligence]} type="number" label="Intelligence" />
                 <.input field={form[:constitution]} type="number" label="Constitution" />
-                
+
                 <.input field={form[:experience_reward]} type="number" label="Experience Reward" />
                 <.input field={form[:gold_reward]} type="number" label="Gold Reward" />
-                
+
                 <.input field={form[:location_x]} type="number" label="Location X" />
                 <.input field={form[:location_y]} type="number" label="Location Y" />
-                
-                <.input field={form[:room_id]} type="select" label="Room" 
-                  options={[{"None", nil} | Enum.map(@rooms, &{&1.name || "Room #{&1.id}", &1.id})]} />
-                
-                <.input field={form[:movement_pattern]} type="select" label="Movement Pattern"
+
+                <.input
+                  field={form[:room_id]}
+                  type="select"
+                  label="Room"
+                  options={[{"None", nil} | Enum.map(@rooms, &{&1.name || "Room #{&1.id}", &1.id})]}
+                />
+
+                <.input
+                  field={form[:movement_pattern]}
+                  type="select"
+                  label="Movement Pattern"
                   options={[
                     {"Stationary", "stationary"},
                     {"Patrol", "patrol"},
                     {"Random", "random"},
                     {"Follow", "follow"}
-                  ]} />
-                
+                  ]}
+                />
+
                 <.input field={form[:aggression_level]} type="number" label="Aggression Level (0-10)" />
                 <.input field={form[:respawn_time]} type="number" label="Respawn Time (seconds)" />
               </div>
-              
+
               <.input field={form[:description]} type="textarea" label="Description" />
               <.input field={form[:dialogue]} type="textarea" label="Dialogue" />
-              
+
               <div class="flex items-center space-x-4">
                 <.input field={form[:is_active]} type="checkbox" label="Active" />
               </div>
-              
+
               <div class="flex justify-end space-x-2">
-                <.link 
+                <.link
                   patch={~p"/admin/npcs"}
                   class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 inline-block"
                 >
                   Cancel
                 </.link>
-                <button 
+                <button
                   type="submit"
                   class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
@@ -263,58 +272,77 @@ defmodule ShardWeb.AdminLive.Npcs do
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Name
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Type
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Level
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Location
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Room
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <%= for npc <- @npcs do %>
               <tr>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm font-medium text-gray-900"><%= npc.name %></div>
-                  <div class="text-sm text-gray-500"><%= String.slice(npc.description || "", 0, 50) %><%= if String.length(npc.description || "") > 50, do: "..." %></div>
+                  <div class="text-sm font-medium text-gray-900">{npc.name}</div>
+                  <div class="text-sm text-gray-500">
+                    {String.slice(npc.description || "", 0, 50)}{if String.length(
+                                                                      npc.description || ""
+                                                                    ) > 50,
+                                                                    do: "..."}
+                  </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span class={"px-2 inline-flex text-xs leading-5 font-semibold rounded-full #{npc_type_color(npc.npc_type)}"}>
-                    <%= String.capitalize(npc.npc_type) %>
+                    {String.capitalize(npc.npc_type)}
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <%= npc.level %>
+                  {npc.level}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <%= if npc.location_x && npc.location_y do %>
-                    (<%= npc.location_x %>, <%= npc.location_y %>)
+                    ({npc.location_x}, {npc.location_y})
                   <% else %>
                     -
                   <% end %>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <%= if npc.room do %>
-                    <%= npc.room.name || "Room #{npc.room.id}" %>
+                    {npc.room.name || "Room #{npc.room.id}"}
                   <% else %>
                     -
                   <% end %>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span class={"px-2 inline-flex text-xs leading-5 font-semibold rounded-full #{if npc.is_active, do: "bg-green-100 text-green-800", else: "bg-red-100 text-red-800"}"}>
-                    <%= if npc.is_active, do: "Active", else: "Inactive" %>
+                    {if npc.is_active, do: "Active", else: "Inactive"}
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <.link 
+                  <.link
                     patch={~p"/admin/npcs/#{npc.id}/edit"}
                     class="text-indigo-600 hover:text-indigo-900 mr-3"
                   >
                     Edit
                   </.link>
-                  <button 
-                    phx-click="delete_npc" 
+                  <button
+                    phx-click="delete_npc"
                     phx-value-id={npc.id}
                     data-confirm="Are you sure you want to delete this NPC?"
                     class="text-red-600 hover:text-red-900"
@@ -345,7 +373,8 @@ defmodule ShardWeb.AdminLive.Npcs do
     tutorial_npcs = [
       %{
         name: "Goldie",
-        description: "A friendly golden retriever with a wagging tail and bright, intelligent eyes. Goldie loves to greet adventurers and seems to understand more than most dogs.",
+        description:
+          "A friendly golden retriever with a wagging tail and bright, intelligent eyes. Goldie loves to greet adventurers and seems to understand more than most dogs.",
         npc_type: "friendly",
         level: 1,
         health: 50,
@@ -369,7 +398,8 @@ defmodule ShardWeb.AdminLive.Npcs do
       },
       %{
         name: "Elder Thorne",
-        description: "An ancient wizard with a long white beard and twinkling eyes. His robes shimmer with magical energy, and he carries a gnarled staff topped with a glowing crystal.",
+        description:
+          "An ancient wizard with a long white beard and twinkling eyes. His robes shimmer with magical energy, and he carries a gnarled staff topped with a glowing crystal.",
         npc_type: "quest_giver",
         level: 50,
         health: 200,
@@ -386,14 +416,16 @@ defmodule ShardWeb.AdminLive.Npcs do
         aggression_level: 0,
         movement_pattern: "stationary",
         is_active: true,
-        dialogue: "Welcome, young adventurer! I have been expecting you. There are many mysteries in this realm that need solving.",
+        dialogue:
+          "Welcome, young adventurer! I have been expecting you. There are many mysteries in this realm that need solving.",
         location_x: 0,
         location_y: 1,
         location_z: 0
       },
       %{
         name: "Merchant Pip",
-        description: "A cheerful halfling merchant with a round belly and a wide smile. His cart is filled with various goods, potions, and trinkets that catch the light.",
+        description:
+          "A cheerful halfling merchant with a round belly and a wide smile. His cart is filled with various goods, potions, and trinkets that catch the light.",
         npc_type: "merchant",
         level: 10,
         health: 80,
@@ -410,14 +442,16 @@ defmodule ShardWeb.AdminLive.Npcs do
         aggression_level: 0,
         movement_pattern: "stationary",
         is_active: true,
-        dialogue: "Welcome to Pip's Traveling Emporium! I've got the finest wares this side of the mountains. What can I get for you today?",
+        dialogue:
+          "Welcome to Pip's Traveling Emporium! I've got the finest wares this side of the mountains. What can I get for you today?",
         location_x: -2,
         location_y: 1,
         location_z: 0
       },
       %{
         name: "Training Dummy",
-        description: "A sturdy wooden training dummy wrapped in straw and leather. It bears the marks of countless practice sessions and stands ready for combat training.",
+        description:
+          "A sturdy wooden training dummy wrapped in straw and leather. It bears the marks of countless practice sessions and stands ready for combat training.",
         npc_type: "neutral",
         level: 1,
         health: 100,
@@ -448,24 +482,25 @@ defmodule ShardWeb.AdminLive.Npcs do
             {:ok, _npc} -> :ok
             {:error, _changeset} -> :error
           end
-        
-        existing_npc -> 
+
+        existing_npc ->
           # Ensure NPC is at correct tutorial location
           expected_x = npc_params.location_x
           expected_y = npc_params.location_y
           expected_z = npc_params.location_z
-          
-          if existing_npc.location_x != expected_x or 
-             existing_npc.location_y != expected_y or 
-             existing_npc.location_z != expected_z do
+
+          if existing_npc.location_x != expected_x or
+               existing_npc.location_y != expected_y or
+               existing_npc.location_z != expected_z do
             existing_npc
             |> Ecto.Changeset.change(%{
-              location_x: expected_x, 
-              location_y: expected_y, 
+              location_x: expected_x,
+              location_y: expected_y,
               location_z: expected_z
             })
             |> Repo.update()
           end
+
           :ok
       end
     end)

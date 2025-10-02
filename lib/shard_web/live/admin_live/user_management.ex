@@ -8,8 +8,8 @@ defmodule ShardWeb.AdminLive.UserManagement do
   def mount(_params, _session, socket) do
     users = Users.list_users()
     first_user = Users.get_first_user()
-    
-    {:ok, 
+
+    {:ok,
      socket
      |> assign(:users, users)
      |> assign(:first_user, first_user)
@@ -20,31 +20,31 @@ defmodule ShardWeb.AdminLive.UserManagement do
   def handle_event("delete_user", %{"user_id" => user_id}, socket) do
     user = Users.get_user!(user_id)
     current_user = socket.assigns.current_user
-    
+
     cond do
       # Prevent user from deleting themselves
       user.id == current_user.id ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "You cannot delete your own account.")}
-      
+
       # Prevent deleting the first user
       Users.first_user?(user) ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "The first user cannot be deleted.")}
-      
+
       # Delete the user
       true ->
         case Users.delete_user(user) do
           {:ok, _deleted_user} ->
-            {:noreply, 
+            {:noreply,
              socket
              |> put_flash(:info, "User #{user.email} has been deleted.")
              |> assign(:users, Users.list_users())}
-          
+
           {:error, _changeset} ->
-            {:noreply, 
+            {:noreply,
              socket
              |> put_flash(:error, "Failed to delete user.")}
         end
@@ -55,35 +55,35 @@ defmodule ShardWeb.AdminLive.UserManagement do
   def handle_event("toggle_admin", %{"user_id" => user_id}, socket) do
     user = Users.get_user!(user_id)
     current_user = socket.assigns.current_user
-    
+
     cond do
       # Prevent admin from removing their own admin status
       user.id == current_user.id ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "You cannot remove your own admin privileges.")}
-      
+
       # Prevent removing admin status from the first user
       Users.first_user?(user) ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "The first user must always remain an admin.")}
-      
+
       # Toggle admin status
       true ->
         new_admin_status = !user.admin
-        
+
         case Users.update_user_admin_status(user, new_admin_status) do
           {:ok, _updated_user} ->
             action = if new_admin_status, do: "granted", else: "revoked"
-            
-            {:noreply, 
+
+            {:noreply,
              socket
              |> put_flash(:info, "Admin privileges #{action} for #{user.email}.")
              |> assign(:users, Users.list_users())}
-          
+
           {:error, _changeset} ->
-            {:noreply, 
+            {:noreply,
              socket
              |> put_flash(:error, "Failed to update user privileges.")}
         end
@@ -112,7 +112,7 @@ defmodule ShardWeb.AdminLive.UserManagement do
           <tbody>
             <tr :for={user <- @users} class="hover">
               <td class="font-medium">
-                <%= user.email %>
+                {user.email}
                 <%= if Users.first_user?(user) do %>
                   <span class="badge badge-primary badge-sm ml-2">First User</span>
                 <% end %>
@@ -142,12 +142,12 @@ defmodule ShardWeb.AdminLive.UserManagement do
                     <% Users.first_user?(user) -> %>
                       <span class="text-gray-500 text-sm">Protected user</span>
                     <% true -> %>
-                      <button 
+                      <button
                         class={[
                           "btn btn-sm",
                           if(user.admin, do: "btn-warning", else: "btn-success")
                         ]}
-                        phx-click="toggle_admin" 
+                        phx-click="toggle_admin"
                         phx-value-user_id={user.id}
                         data-confirm={
                           if user.admin do
@@ -157,12 +157,12 @@ defmodule ShardWeb.AdminLive.UserManagement do
                           end
                         }
                       >
-                        <%= if user.admin, do: "Revoke Admin", else: "Grant Admin" %>
+                        {if user.admin, do: "Revoke Admin", else: "Grant Admin"}
                       </button>
-                      
-                      <button 
+
+                      <button
                         class="btn btn-sm btn-error"
-                        phx-click="delete_user" 
+                        phx-click="delete_user"
                         phx-value-user_id={user.id}
                         data-confirm="Are you sure you want to delete #{user.email}? This action cannot be undone and will remove all associated data."
                       >

@@ -12,6 +12,7 @@ defmodule Shard.Application do
       Shard.Repo,
       {DNSCluster, query: Application.get_env(:shard, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Shard.PubSub},
+      Shard.Artifacts.ArtifactServer,
       # Start a worker by calling: Shard.Worker.start_link(arg)
       # {Shard.Worker, arg},
       # Start to serve requests, typically the last entry

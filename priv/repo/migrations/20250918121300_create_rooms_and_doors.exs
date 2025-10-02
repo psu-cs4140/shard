@@ -13,7 +13,7 @@ defmodule Shard.Repo.Migrations.CreateRoomsAndDoors do
         add :is_public, :boolean, default: true
         add :room_type, :string, default: "standard"
         add :properties, :map, default: %{}
-        
+
         timestamps(type: :utc_datetime)
       end
 
@@ -28,12 +28,13 @@ defmodule Shard.Repo.Migrations.CreateRoomsAndDoors do
         add :description, :text
         add :from_room_id, references(:rooms, on_delete: :delete_all), null: false
         add :to_room_id, references(:rooms, on_delete: :delete_all), null: false
-        add :direction, :string, null: false # north, south, east, west, up, down, etc.
+        # north, south, east, west, up, down, etc.
+        add :direction, :string, null: false
         add :is_locked, :boolean, default: false
         add :key_required, :string
         add :door_type, :string, default: "standard"
         add :properties, :map, default: %{}
-        
+
         timestamps(type: :utc_datetime)
       end
 
@@ -46,6 +47,7 @@ defmodule Shard.Repo.Migrations.CreateRoomsAndDoors do
 
   defp table_exists?(table_name) do
     query = "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = $1)"
+
     case Ecto.Adapters.SQL.query(Shard.Repo, query, [Atom.to_string(table_name)]) do
       {:ok, %{rows: [[true]]}} -> true
       {:ok, %{rows: [[false]]}} -> false

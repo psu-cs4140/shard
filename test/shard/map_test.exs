@@ -80,7 +80,7 @@ defmodule Shard.MapTest do
     test "create_door/1 with valid data creates a door" do
       room1 = room_fixture(%{name: "Room 1"})
       room2 = room_fixture(%{name: "Room 2"})
-      
+
       valid_attrs = %{
         from_room_id: room1.id,
         to_room_id: room2.id,
