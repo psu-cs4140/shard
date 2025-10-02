@@ -16,7 +16,9 @@ defmodule Shard.Weapons.Weapons do
   @doc false
   def changeset(weapons, attrs) do
     weapons
-    |> cast(attrs, [:name, :damage, :gold_value, :description])
+    |> cast(attrs, [:name, :damage, :gold_value, :description, :weapon_class_id, :rarity_id])
     |> validate_required([:name, :damage, :gold_value, :description])
+    |> foreign_key_constraint(:weapon_class_id)
+    |> foreign_key_constraint(:rarity_id)
   end
 end
