@@ -60,11 +60,16 @@ defmodule ShardWeb.MapSelectionLive do
     # Get user's characters - handle case where current_scope might not be set
     characters = case socket.assigns[:current_scope] do
       %{user: user} -> 
+        IO.inspect(user, label: "Current user")
         chars = Characters.get_characters_by_user(user.id)
         IO.inspect(chars, label: "Loaded characters")
         chars
-      _ -> []
+      _ -> 
+        IO.inspect(socket.assigns, label: "Socket assigns (no current_scope)")
+        []
     end
+
+    IO.inspect(length(characters), label: "Number of characters loaded")
 
     {:ok, assign(socket, maps: maps, characters: characters, show_character_modal: false, selected_map: nil)}
   end
@@ -220,7 +225,16 @@ defmodule ShardWeb.MapSelectionLive do
 
   @impl true
   def handle_event("select_map", %{"map_id" => map_id}, socket) do
-    {:noreply, assign(socket, show_character_modal: true, selected_map: map_id)}
+    # Reload characters when opening modal to ensure we have the latest data
+    characters = case socket.assigns[:current_scope] do
+      %{user: user} -> 
+        chars = Characters.get_characters_by_user(user.id)
+        IO.inspect(chars, label: "Reloaded characters for modal")
+        chars
+      _ -> []
+    end
+    
+    {:noreply, assign(socket, show_character_modal: true, selected_map: map_id, characters: characters)}
   end
 
   def handle_event("select_character", %{"character_id" => character_id}, socket) do
