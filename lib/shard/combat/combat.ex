@@ -66,7 +66,9 @@ defmodule Shard.Combat do
   # Private functions
 
   defp execute_attack(game_state, target_monster) do
-    player_damage = game_state.equipped_weapon.damage + trunc(game_state.equipped_weapon.damage * (game_state.player_stats.strength / 100))
+    player_damage =
+      game_state.equipped_weapon.damage +
+        trunc(game_state.equipped_weapon.damage * (game_state.player_stats.strength / 100))
 
     # Apply damage to monster
     updated_monster = %{target_monster | hp: target_monster.hp - player_damage}
@@ -80,7 +82,13 @@ defmodule Shard.Combat do
     else
       # Monster survived - update it and let it counterattack
       updated_monsters = replace_monster(game_state.monsters, target_monster, updated_monster)
-      messages = messages ++ ["  - #{updated_monster[:name]}: HP = #{updated_monster[:hp]}/#{updated_monster[:hp_max]}"]
+
+      messages =
+        messages ++
+          [
+            "  - #{updated_monster[:name]}: HP = #{updated_monster[:hp]}/#{updated_monster[:hp_max]}"
+          ]
+
       {messages, game_state} = handle_monster_counterattack(game_state, updated_monster, messages)
       game_state = %{game_state | monsters: updated_monsters}
 
@@ -105,13 +113,15 @@ defmodule Shard.Combat do
     gold_reward = dead_monster[:gold_reward] || 0
 
     # Remove the monster from the list (use the ORIGINAL monster, not updated one)
-    updated_monsters = Enum.reject(game_state.monsters, fn m ->
-      m[:position] == dead_monster[:position] and
-      m[:monster_id] == dead_monster[:monster_id]
-    end)
+    updated_monsters =
+      Enum.reject(game_state.monsters, fn m ->
+        m[:position] == dead_monster[:position] and
+          m[:monster_id] == dead_monster[:monster_id]
+      end)
 
-    updated_stats = game_state.player_stats
-    |> Map.update(:experience, 0, &(&1 + xp_reward))
+    updated_stats =
+      game_state.player_stats
+      |> Map.update(:experience, 0, &(&1 + xp_reward))
 
     death_messages = [
       "#{dead_monster[:name]} has been defeated!",
@@ -119,10 +129,7 @@ defmodule Shard.Combat do
       "On its corpse you find #{gold_reward} gold."
     ]
 
-    updated_state = %{game_state |
-      player_stats: updated_stats,
-      monsters: updated_monsters
-    }
+    updated_state = %{game_state | player_stats: updated_stats, monsters: updated_monsters}
 
     # Check if combat should end
     check_combat_end(updated_state, messages ++ death_messages)
@@ -131,7 +138,7 @@ defmodule Shard.Combat do
   defp replace_monster(monsters, old_monster, new_monster) do
     Enum.map(monsters, fn m ->
       if m[:position] == old_monster[:position] and
-         m[:name] == old_monster[:name] do
+           m[:name] == old_monster[:name] do
         new_monster
       else
         m
@@ -150,9 +157,10 @@ defmodule Shard.Combat do
   end
 
   defp build_combat_start_messages(monsters) do
-    monster_list = Enum.map_join(monsters, "\n", fn m ->
-      "  - #{m[:name]}: HP = #{m[:hp]}/#{m[:hp_max]}"
-    end)
+    monster_list =
+      Enum.map_join(monsters, "\n", fn m ->
+        "  - #{m[:name]}: HP = #{m[:hp]}/#{m[:hp_max]}"
+      end)
 
     [
       "Combat begins!",

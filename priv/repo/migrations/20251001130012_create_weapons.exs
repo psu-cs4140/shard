@@ -13,8 +13,6 @@ defmodule Shard.Repo.Migrations.CreateWeapons do
       timestamps(type: :utc_datetime)
     end
 
-
-
     create index(:weapons, [:weapon_class_id])
     create index(:weapons, [:rarity_id])
   end

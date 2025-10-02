@@ -15,6 +15,5 @@ defmodule Shard.Weapons.Enchantments do
     enchantments
     |> cast(attrs, [:name, :modifier_type, :modifier_value])
     |> validate_required([:name, :modifier_type, :modifier_value])
-
   end
 end

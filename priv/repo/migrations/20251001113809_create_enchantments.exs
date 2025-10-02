@@ -7,10 +7,7 @@ defmodule Shard.Repo.Migrations.CreateEnchantments do
       add :modifier_type, :string
       add :modifier_value, :string
 
-
       timestamps(type: :utc_datetime)
     end
-
-
   end
 end

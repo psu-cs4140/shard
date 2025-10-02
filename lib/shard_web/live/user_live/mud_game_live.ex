@@ -44,7 +44,7 @@ defmodule ShardWeb.MudGameLive do
         %{name: "Health Potion", type: "consumable", effect: "Restores 50 HP"},
         %{name: "Leather Armor", type: "armor", defense: 5},
         %{name: "Torch", type: "utility"},
-        %{name: "Lockpick", type: "tool"},
+        %{name: "Lockpick", type: "tool"}
       ],
       equipped_weapon: Shard.Weapons.Weapon.get_tutorial_start_weapons(),
       hotbar: %{
@@ -72,9 +72,9 @@ defmodule ShardWeb.MudGameLive do
           boss: false,
           hp: 30,
           hp_max: 30,
-          position: {2,0}
-          #position: find_valid_monster_position(map_data, starting_position)
-        },
+          position: {2, 0}
+          # position: find_valid_monster_position(map_data, starting_position)
+        }
       ],
       combat: false
     }
@@ -124,14 +124,14 @@ defmodule ShardWeb.MudGameLive do
       <header class="bg-gray-800 p-4 shadow-lg">
         <h1 class="text-2xl font-bold">MUD Game</h1>
       </header>
-
+      
     <!-- Main Content -->
       <div class="flex flex-1 overflow-hidden">
         <!-- Left Panel - Terminal -->
         <div class="flex-1 p-4 flex flex-col">
           <.terminal terminal_state={@terminal_state} />
         </div>
-
+        
     <!-- Right Panel - Controls -->
         <div class="w-100 bg-gray-800 px-4 py-4 flex flex-col space-y-4 overflow-y-auto">
           <.minimap
@@ -202,7 +202,7 @@ defmodule ShardWeb.MudGameLive do
           />
         </div>
       </div>
-
+      
     <!-- Footer -->
       <footer class="bg-gray-800 p-2 text-center text-sm">
         <p>MUD Game v1.0</p>
@@ -672,7 +672,7 @@ defmodule ShardWeb.MudGameLive do
                   <div class="w-4 h-4 bg-red-500 ring-2 ring-red-300 rounded-full mr-2"></div>
                   <span class="text-sm">Player</span>
                 </div>
-
+                
     <!-- Door Types -->
                 <div class="col-span-2 md:col-span-3 mt-2">
                   <h5 class="text-sm font-semibold mb-1">Door Types:</h5>
@@ -833,7 +833,7 @@ defmodule ShardWeb.MudGameLive do
     <div class="w-12 h-12 bg-gray-600 border-2 border-gray-500 rounded-lg flex items-center justify-center relative hover:border-gray-400 transition-colors">
       <!-- Slot number -->
       <span class="absolute top-0 left-1 text-xs text-gray-400">{@slot_number}</span>
-
+      
     <!-- Item content -->
       <%= if @slot_data do %>
         <div class="text-center">
@@ -1052,7 +1052,7 @@ defmodule ShardWeb.MudGameLive do
     ~H"""
     <div class="bg-gray-700 rounded-lg p-4 shadow-xl">
       <h2 class="text-xl font-semibold mb-4 text-center">Player Stats</h2>
-
+      
     <!-- Health Bar -->
       <div class="mb-3">
         <div class="flex justify-between text-sm mb-1">
@@ -1067,7 +1067,7 @@ defmodule ShardWeb.MudGameLive do
           </div>
         </div>
       </div>
-
+      
     <!-- Stamina Bar -->
       <div class="mb-3">
         <div class="flex justify-between text-sm mb-1">
@@ -1082,7 +1082,7 @@ defmodule ShardWeb.MudGameLive do
           </div>
         </div>
       </div>
-
+      
     <!-- Mana Bar -->
       <div class="mb-3">
         <div class="flex justify-between text-sm mb-1">
@@ -1097,7 +1097,7 @@ defmodule ShardWeb.MudGameLive do
           </div>
         </div>
       </div>
-
+      
     <!-- Hotbar -->
       <div class="mt-4">
         <h3 class="text-lg font-semibold mb-2 text-center">Hotbar</h3>
@@ -1156,7 +1156,7 @@ defmodule ShardWeb.MudGameLive do
           <%= for door <- @doors do %>
             <.door_line door={door} bounds={@bounds} scale_factor={@scale_factor} />
           <% end %>
-
+          
     <!-- Render rooms as circles -->
           <%= for room <- @rooms do %>
             <.room_circle
@@ -1166,7 +1166,7 @@ defmodule ShardWeb.MudGameLive do
               scale_factor={@scale_factor}
             />
           <% end %>
-
+          
     <!-- Show player position even if no room exists there -->
           <%= if @player_position not in Enum.map(@rooms, &{&1.x_coordinate, &1.y_coordinate}) do %>
             <.player_marker
@@ -1364,7 +1364,7 @@ defmodule ShardWeb.MudGameLive do
       <div class="bg-gray-800 px-4 py-2 rounded-t-lg border-b border-gray-600">
         <h2 class="text-green-400 font-mono text-sm">MUD Terminal</h2>
       </div>
-
+      
     <!-- Terminal Output -->
       <div
         class="flex-1 p-4 overflow-y-auto font-mono text-sm text-green-400 bg-black"
@@ -1375,7 +1375,7 @@ defmodule ShardWeb.MudGameLive do
           <div class="whitespace-pre-wrap">{line}</div>
         <% end %>
       </div>
-
+      
     <!-- Command Input -->
       <div class="p-4 border-t border-gray-600 bg-gray-900 rounded-b-lg">
         <.form
@@ -1574,11 +1574,26 @@ defmodule ShardWeb.MudGameLive do
 
         monster_count = Enum.count(monsters)
 
-        description_lines = description_lines ++ case monster_count do
-          0 -> [""]
-          1 -> ["", "There is a " <> Enum.at(monsters, 0)[:name] <> "."]
-          _ -> ["", "There are " <> to_string(monster_count) <> " monsters! The monsters include " <> Enum.map_join(monsters, ", ", fn monster -> "a " <> to_string(monster[:name]) end) <> "."]
-        end
+        description_lines =
+          description_lines ++
+            case monster_count do
+              0 ->
+                [""]
+
+              1 ->
+                ["", "There is a " <> Enum.at(monsters, 0)[:name] <> "."]
+
+              _ ->
+                [
+                  "",
+                  "There are " <>
+                    to_string(monster_count) <>
+                    " monsters! The monsters include " <>
+                    Enum.map_join(monsters, ", ", fn monster ->
+                      "a " <> to_string(monster[:name])
+                    end) <> "."
+                ]
+            end
 
         {description_lines, game_state}
 
@@ -1717,22 +1732,39 @@ defmodule ShardWeb.MudGameLive do
       response = ["You traversed #{direction_name}."]
 
       # Add NPC presence notification if any NPCs are at the new location
-      response = response ++ if length(npcs_here) > 0 do
-        npc_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
-        ["You see #{npc_names} here."]
-      else
-        []
-      end
+      response =
+        response ++
+          if length(npcs_here) > 0 do
+            npc_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+            ["You see #{npc_names} here."]
+          else
+            []
+          end
 
       # To see if there are monsters
       monsters = Enum.filter(game_state.monsters, fn value -> value[:position] == new_pos end)
       monster_count = Enum.count(monsters)
 
-      response = response ++ case monster_count do
-        0 -> []
-        1 -> ["There is a " <> Enum.at(monsters, 0)[:name] <>"! It prepares to attack."]
-        _ -> ["There are " <> to_string(monster_count) <> " monsters! The monsters include " <> Enum.map_join(monsters, ", ", fn monster -> "a " <> to_string(monster[:name]) end) <> ".", "They prepare to attack."]
-      end
+      response =
+        response ++
+          case monster_count do
+            0 ->
+              []
+
+            1 ->
+              ["There is a " <> Enum.at(monsters, 0)[:name] <> "! It prepares to attack."]
+
+            _ ->
+              [
+                "There are " <>
+                  to_string(monster_count) <>
+                  " monsters! The monsters include " <>
+                  Enum.map_join(monsters, ", ", fn monster ->
+                    "a " <> to_string(monster[:name])
+                  end) <> ".",
+                "They prepare to attack."
+              ]
+          end
 
       updated_game_state = %{game_state | player_position: new_pos}
 

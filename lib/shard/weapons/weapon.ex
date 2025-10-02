@@ -13,7 +13,15 @@ defmodule Shard.Weapons.Weapon do
   def get_weapon!(id) do
     Weapons
     |> where([w], w.id == ^id)
-    |> select([w], %{id: w.id, name: w.name, damage: w.damage, gold_value: w.gold_value, description: w.description, weapon_class_id: w.weapon_class_id, rarity_id: w.rarity_id})
+    |> select([w], %{
+      id: w.id,
+      name: w.name,
+      damage: w.damage,
+      gold_value: w.gold_value,
+      description: w.description,
+      weapon_class_id: w.weapon_class_id,
+      rarity_id: w.rarity_id
+    })
     |> Repo.one()
   end
 
@@ -39,7 +47,15 @@ defmodule Shard.Weapons.Weapon do
   def get_tutorial_start_weapons() do
     Weapons
     |> where([w], w.id == 2)
-    |> select([w], %{id: w.id, name: w.name, damage: w.damage, gold_value: w.gold_value, description: w.description, weapon_class_id: w.weapon_class_id, rarity_id: w.rarity_id})
+    |> select([w], %{
+      id: w.id,
+      name: w.name,
+      damage: w.damage,
+      gold_value: w.gold_value,
+      description: w.description,
+      weapon_class_id: w.weapon_class_id,
+      rarity_id: w.rarity_id
+    })
     |> Repo.one()
   end
 end

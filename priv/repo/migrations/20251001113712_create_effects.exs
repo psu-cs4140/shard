@@ -7,9 +7,7 @@ defmodule Shard.Repo.Migrations.CreateEffects do
       add :modifier_type, :string
       add :modifier_value, :integer
 
-
       timestamps(type: :utc_datetime)
     end
-
   end
 end

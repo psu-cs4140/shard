@@ -3,7 +3,6 @@ defmodule Shard.Weapons.WeaponEffects do
   import Ecto.Changeset
 
   schema "weapon_effects" do
-
     field :weapon_id, :id
     field :effect_id, :id
 
