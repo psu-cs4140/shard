@@ -271,9 +271,16 @@ defmodule ShardWeb.MapSelectionLive do
   end
 
   def handle_event("select_character", %{"character_id" => character_id}, socket) do
+    # Find the selected character to get their name
+    character = Enum.find(socket.assigns.characters, fn char -> 
+      to_string(char.id) == character_id 
+    end)
+    
+    character_name = if character, do: character.name, else: "Unknown"
+    
     {:noreply,
      socket
-     |> push_navigate(to: ~p"/play/#{socket.assigns.selected_map}?character_id=#{character_id}")}
+     |> push_navigate(to: ~p"/play/#{socket.assigns.selected_map}?character_id=#{character_id}&character_name=#{URI.encode(character_name)}")}
   end
 
   def handle_event("cancel_map_selection", _params, socket) do
