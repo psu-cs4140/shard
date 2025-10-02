@@ -46,6 +46,7 @@ defmodule ShardWeb.MudGameLive do
         %{name: "Torch", type: "utility"},
         %{name: "Lockpick", type: "tool"}
       ],
+      equipped_weapon: Shard.Weapons.Weapon.get_tutorial_start_weapons(),
       hotbar: %{
         slot_1: nil,
         slot_2: %{name: "Iron Sword", type: "weapon"},
@@ -71,40 +72,12 @@ defmodule ShardWeb.MudGameLive do
           boss: false,
           hp: 30,
           hp_max: 30,
-          position: {2, 2}
+          position: {2, 0}
           # position: find_valid_monster_position(map_data, starting_position)
         }
-        # %{
-        #   monster_id: 1,
-        #   name: "Goblin",
-        #   level: 1,
-        #   attack: 10,
-        #   defense: 0,
-        #   speed: 5,
-        #   xp_reward: 5,
-        #   gold_reward: 2,
-        #   boss: false,
-        #   hp: 30,
-        #   hp_max: 30,
-        #   position: find_valid_monster_position(map_data, starting_position)
-        # },%{
-        #   monster_id: 1,
-        #   name: "Goblin",
-        #   level: 1,
-        #   attack: 10,
-        #   defense: 0,
-        #   speed: 5,
-        #   xp_reward: 5,
-        #   gold_reward: 2,
-        #   boss: false,
-        #   hp: 30,
-        #   hp_max: 30,
-        #   position: find_valid_monster_position(map_data, starting_position)
-        # }
-      ]
+      ],
+      combat: false
     }
-
-    IO.inspect(game_state.monsters, label: "Generated monsters with positions")
 
     terminal_state = %{
       output: [
@@ -1434,6 +1407,8 @@ defmodule ShardWeb.MudGameLive do
         response = [
           "Available commands:",
           "  look - Examine your surroundings",
+          "  attack - Attack an enemy in the room (if in combat)",
+          "  flee - Attempt to flee from combat",
           "  stats - Show your character stats",
           "  position - Show your current position",
           "  inventory - Show your inventory (coming soon)",
@@ -1450,6 +1425,20 @@ defmodule ShardWeb.MudGameLive do
         ]
 
         {response, game_state}
+
+      "attack" ->
+        if Shard.Combat.in_combat?(game_state) do
+          Shard.Combat.execute_action(game_state, "attack")
+        else
+          {["You are not in combat."], game_state}
+        end
+
+      "flee" ->
+        if Shard.Combat.in_combat?(game_state) do
+          Shard.Combat.execute_action(game_state, "flee")
+        else
+          {["There is nothing to flee from..."], game_state}
+        end
 
       "look" ->
         {x, y} = game_state.player_position
@@ -1592,13 +1581,7 @@ defmodule ShardWeb.MudGameLive do
                 [""]
 
               1 ->
-                [
-                  "",
-                  "There is a " <>
-                    Enum.at(monsters, 0)[:name] <>
-                    "! It attacks you for " <>
-                    to_string(Enum.at(monsters, 0)[:attack]) <> " damage."
-                ]
+                ["", "There is a " <> Enum.at(monsters, 0)[:name] <> "."]
 
               _ ->
                 [
@@ -1606,25 +1589,13 @@ defmodule ShardWeb.MudGameLive do
                   "There are " <>
                     to_string(monster_count) <>
                     " monsters! The monsters include " <>
-                    (Enum.map_join(monsters, ", ", fn monster ->
-                       "a " <> to_string(monster[:name])
-                     end) + "."),
-                  "They attack you for " + Enum.sum(Enum.map(monsters, & &1[:attack])) + "damage."
+                    Enum.map_join(monsters, ", ", fn monster ->
+                      "a " <> to_string(monster[:name])
+                    end) <> "."
                 ]
             end
 
-        # Monster attacks you
-        updated_game_state =
-          if monster_count > 0 do
-            stats = game_state.player_stats
-            total_damage = Enum.sum(Enum.map(monsters, & &1[:attack]))
-            new_hp = stats.health - total_damage
-            %{game_state | player_stats: %{stats | health: new_hp}}
-          else
-            game_state
-          end
-
-        {description_lines, updated_game_state}
+        {description_lines, game_state}
 
       "stats" ->
         stats = game_state.player_stats
@@ -1761,10 +1732,14 @@ defmodule ShardWeb.MudGameLive do
       response = ["You traversed #{direction_name}."]
 
       # Add NPC presence notification if any NPCs are at the new location
-      if length(npcs_here) > 0 do
-        npc_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
-        response = response ++ ["You see #{npc_names} here."]
-      end
+      response =
+        response ++
+          if length(npcs_here) > 0 do
+            npc_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+            ["You see #{npc_names} here."]
+          else
+            []
+          end
 
       # To see if there are monsters
       monsters = Enum.filter(game_state.monsters, fn value -> value[:position] == new_pos end)
@@ -1774,7 +1749,7 @@ defmodule ShardWeb.MudGameLive do
         response ++
           case monster_count do
             0 ->
-              [""]
+              []
 
             1 ->
               ["There is a " <> Enum.at(monsters, 0)[:name] <> "! It prepares to attack."]
@@ -1784,16 +1759,28 @@ defmodule ShardWeb.MudGameLive do
                 "There are " <>
                   to_string(monster_count) <>
                   " monsters! The monsters include " <>
-                  (Enum.map_join(monsters, ", ", fn monster ->
-                     "a " <> to_string(monster[:name])
-                   end) + "."),
+                  Enum.map_join(monsters, ", ", fn monster ->
+                    "a " <> to_string(monster[:name])
+                  end) <> ".",
                 "They prepare to attack."
               ]
           end
 
       updated_game_state = %{game_state | player_position: new_pos}
 
-      {response, updated_game_state}
+      # Check for combat
+      {combat_messages, final_game_state} =
+        Shard.Combat.start_combat(updated_game_state)
+
+      {response ++ combat_messages, updated_game_state}
+    end
+  end
+
+  defp process_command("attack", game_state) do
+    if Shard.Combat.in_combat?(game_state) do
+      Shard.Combat.execute_action(game_state, "attack")
+    else
+      {["You are not in combat."], game_state}
     end
   end
 
