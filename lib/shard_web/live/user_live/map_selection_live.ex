@@ -123,7 +123,8 @@ defmodule ShardWeb.MapSelectionLive do
                 <div class="text-center">
                   <%= if map.unlocked do %>
                     <.button
-                      navigate={~p"/play/#{map.id}"}
+                      phx-click="select_map"
+                      phx-value-map_id={map.id}
                       variant="primary"
                       class="w-full prairie-btn-primary"
                     >
