@@ -217,14 +217,7 @@ defmodule ShardWeb.MapSelectionLive do
 
   @impl true
   def handle_event("select_map", %{"map_id" => map_id}, socket) do
-    if length(socket.assigns.characters) == 0 do
-      {:noreply,
-       socket
-       |> put_flash(:info, "You need to create a character before you can play!")
-       |> push_navigate(to: ~p"/characters")}
-    else
-      {:noreply, assign(socket, show_character_modal: true, selected_map: map_id)}
-    end
+    {:noreply, assign(socket, show_character_modal: true, selected_map: map_id)}
   end
 
   def handle_event("select_character", %{"character_id" => character_id}, socket) do
