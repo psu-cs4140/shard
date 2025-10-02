@@ -82,11 +82,13 @@ defmodule Shard.Quests do
   Gets available quests for a given level.
   """
   def get_available_quests_for_level(level) do
-    from(q in Quest, 
-      where: q.status == "available" and 
-             q.is_active == true and 
-             q.min_level <= ^level and 
-             (is_nil(q.max_level) or q.max_level >= ^level))
+    from(q in Quest,
+      where:
+        q.status == "available" and
+          q.is_active == true and
+          q.min_level <= ^level and
+          (is_nil(q.max_level) or q.max_level >= ^level)
+    )
     |> Repo.all()
   end
 
@@ -104,7 +106,8 @@ defmodule Shard.Quests do
   """
   def quest_accepted_by_user?(user_id, quest_id) do
     from(qa in QuestAcceptance,
-      where: qa.user_id == ^user_id and qa.quest_id == ^quest_id)
+      where: qa.user_id == ^user_id and qa.quest_id == ^quest_id
+    )
     |> Repo.exists?()
   end
 
@@ -122,7 +125,10 @@ defmodule Shard.Quests do
   """
   def quest_in_progress_by_user?(user_id, quest_id) do
     from(qa in QuestAcceptance,
-      where: qa.user_id == ^user_id and qa.quest_id == ^quest_id and qa.status in ["accepted", "in_progress"])
+      where:
+        qa.user_id == ^user_id and qa.quest_id == ^quest_id and
+          qa.status in ["accepted", "in_progress"]
+    )
     |> Repo.exists?()
   end
 
@@ -140,7 +146,8 @@ defmodule Shard.Quests do
   """
   def quest_completed_by_user?(user_id, quest_id) do
     from(qa in QuestAcceptance,
-      where: qa.user_id == ^user_id and qa.quest_id == ^quest_id and qa.status == "completed")
+      where: qa.user_id == ^user_id and qa.quest_id == ^quest_id and qa.status == "completed"
+    )
     |> Repo.exists?()
   end
 
@@ -158,7 +165,8 @@ defmodule Shard.Quests do
   """
   def quest_ever_accepted_by_user?(user_id, quest_id) do
     from(qa in QuestAcceptance,
-      where: qa.user_id == ^user_id and qa.quest_id == ^quest_id)
+      where: qa.user_id == ^user_id and qa.quest_id == ^quest_id
+    )
     |> Repo.exists?()
   end
 
@@ -199,9 +207,14 @@ defmodule Shard.Quests do
   """
   def complete_quest(user_id, quest_id) do
     case from(qa in QuestAcceptance,
-      where: qa.user_id == ^user_id and qa.quest_id == ^quest_id and qa.status in ["accepted", "in_progress"])
-    |> Repo.one() do
-      nil -> {:error, :quest_not_found}
+           where:
+             qa.user_id == ^user_id and qa.quest_id == ^quest_id and
+               qa.status in ["accepted", "in_progress"]
+         )
+         |> Repo.one() do
+      nil ->
+        {:error, :quest_not_found}
+
       quest_acceptance ->
         quest_acceptance
         |> QuestAcceptance.changeset(%{status: "completed"})
@@ -221,7 +234,8 @@ defmodule Shard.Quests do
   def get_user_quest_acceptances(user_id) do
     from(qa in QuestAcceptance,
       where: qa.user_id == ^user_id,
-      preload: [:quest])
+      preload: [:quest]
+    )
     |> Repo.all()
   end
 
@@ -237,7 +251,8 @@ defmodule Shard.Quests do
   def get_user_active_quests(user_id) do
     from(qa in QuestAcceptance,
       where: qa.user_id == ^user_id and qa.status in ["accepted", "in_progress"],
-      preload: [:quest])
+      preload: [:quest]
+    )
     |> Repo.all()
   end
 
@@ -251,12 +266,15 @@ defmodule Shard.Quests do
 
   """
   def get_available_quests_for_user(user_id) do
-    accepted_quest_ids = from(qa in QuestAcceptance,
-      where: qa.user_id == ^user_id,
-      select: qa.quest_id)
+    accepted_quest_ids =
+      from(qa in QuestAcceptance,
+        where: qa.user_id == ^user_id,
+        select: qa.quest_id
+      )
 
     from(q in Quest,
-      where: q.is_active == true and q.id not in subquery(accepted_quest_ids))
+      where: q.is_active == true and q.id not in subquery(accepted_quest_ids)
+    )
     |> Repo.all()
   end
 
@@ -270,16 +288,20 @@ defmodule Shard.Quests do
 
   """
   def get_available_quests_by_giver(user_id, npc_id) do
-    accepted_quest_ids = from(qa in QuestAcceptance,
-      where: qa.user_id == ^user_id,
-      select: qa.quest_id)
+    accepted_quest_ids =
+      from(qa in QuestAcceptance,
+        where: qa.user_id == ^user_id,
+        select: qa.quest_id
+      )
 
     from(q in Quest,
-      where: q.giver_npc_id == ^npc_id and 
-             q.is_active == true and 
-             q.status == "available" and
-             q.id not in subquery(accepted_quest_ids),
-      order_by: [asc: q.sort_order, asc: q.id])
+      where:
+        q.giver_npc_id == ^npc_id and
+          q.is_active == true and
+          q.status == "available" and
+          q.id not in subquery(accepted_quest_ids),
+      order_by: [asc: q.sort_order, asc: q.id]
+    )
     |> Repo.all()
   end
 
@@ -295,16 +317,20 @@ defmodule Shard.Quests do
   """
   def get_available_quests_by_giver_excluding_completed(user_id, npc_id) do
     # Get all quest IDs that the user has ever accepted (including completed ones)
-    ever_accepted_quest_ids = from(qa in QuestAcceptance,
-      where: qa.user_id == ^user_id,
-      select: qa.quest_id)
+    ever_accepted_quest_ids =
+      from(qa in QuestAcceptance,
+        where: qa.user_id == ^user_id,
+        select: qa.quest_id
+      )
 
     from(q in Quest,
-      where: q.giver_npc_id == ^npc_id and 
-             q.is_active == true and 
-             q.status == "available" and
-             q.id not in subquery(ever_accepted_quest_ids),
-      order_by: [asc: q.sort_order, asc: q.id])
+      where:
+        q.giver_npc_id == ^npc_id and
+          q.is_active == true and
+          q.status == "available" and
+          q.id not in subquery(ever_accepted_quest_ids),
+      order_by: [asc: q.sort_order, asc: q.id]
+    )
     |> Repo.all()
   end
 

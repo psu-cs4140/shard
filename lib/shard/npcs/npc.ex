@@ -41,11 +41,33 @@ defmodule Shard.Npcs.Npc do
   def changeset(npc, attrs) do
     npc
     |> cast(attrs, [
-      :name, :description, :level, :health, :max_health, :mana, :max_mana,
-      :strength, :dexterity, :intelligence, :constitution, :experience_reward,
-      :gold_reward, :npc_type, :dialogue, :inventory, :location_x, :location_y,
-      :location_z, :room_id, :is_active, :respawn_time, :last_death_at,
-      :faction, :aggression_level, :movement_pattern, :properties
+      :name,
+      :description,
+      :level,
+      :health,
+      :max_health,
+      :mana,
+      :max_mana,
+      :strength,
+      :dexterity,
+      :intelligence,
+      :constitution,
+      :experience_reward,
+      :gold_reward,
+      :npc_type,
+      :dialogue,
+      :inventory,
+      :location_x,
+      :location_y,
+      :location_z,
+      :room_id,
+      :is_active,
+      :respawn_time,
+      :last_death_at,
+      :faction,
+      :aggression_level,
+      :movement_pattern,
+      :properties
     ])
     |> validate_required([:name])
     |> validate_length(:name, min: 2, max: 100)

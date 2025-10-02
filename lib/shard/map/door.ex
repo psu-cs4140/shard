@@ -5,11 +5,14 @@ defmodule Shard.Map.Door do
   schema "doors" do
     field :name, :string
     field :description, :string
-    field :direction, :string # north, south, east, west, up, down, etc.
+    # north, south, east, west, up, down, etc.
+    field :direction, :string
     field :is_locked, :boolean, default: false
     field :key_required, :string
-    field :door_type, :string, default: "standard" # standard, gate, portal, etc.
-    field :properties, :map, default: %{} # For extensibility: lock difficulty, etc.
+    # standard, gate, portal, etc.
+    field :door_type, :string, default: "standard"
+    # For extensibility: lock difficulty, etc.
+    field :properties, :map, default: %{}
 
     belongs_to :from_room, Shard.Map.Room, foreign_key: :from_room_id
     belongs_to :to_room, Shard.Map.Room, foreign_key: :to_room_id
@@ -21,13 +24,13 @@ defmodule Shard.Map.Door do
   def changeset(door, attrs) do
     door
     |> cast(attrs, [
-      :name, 
-      :description, 
-      :from_room_id, 
-      :to_room_id, 
-      :direction, 
-      :is_locked, 
-      :key_required, 
+      :name,
+      :description,
+      :from_room_id,
+      :to_room_id,
+      :direction,
+      :is_locked,
+      :key_required,
       :door_type,
       :properties
     ])
@@ -36,22 +39,22 @@ defmodule Shard.Map.Door do
     |> validate_length(:description, max: 500)
     |> validate_length(:key_required, max: 100)
     |> validate_inclusion(:direction, [
-      "north", 
-      "south", 
-      "east", 
-      "west", 
-      "up", 
-      "down", 
-      "northeast", 
-      "northwest", 
-      "southeast", 
+      "north",
+      "south",
+      "east",
+      "west",
+      "up",
+      "down",
+      "northeast",
+      "northwest",
+      "southeast",
       "southwest"
     ])
     |> validate_inclusion(:door_type, [
-      "standard", 
-      "gate", 
-      "portal", 
-      "secret", 
+      "standard",
+      "gate",
+      "portal",
+      "secret",
       "locked_gate"
     ])
     |> validate_different_rooms()

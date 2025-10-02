@@ -1,7 +1,9 @@
-<.header>
-  Admin Dashboard
-  <:subtitle>Administrative tools and management</:subtitle>
-</.header>
+<div style="padding-left: 3rem;">
+  <.header>
+    Admin Dashboard
+    <:subtitle>Administrative tools and management</:subtitle>
+  </.header>
+</div>
 
 <div class="mt-8">
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -24,6 +26,18 @@
         <div class="card-actions justify-end">
           <.link navigate={~p"/admin/map"}>
             <.button>View Map</.button>
+          </.link>
+        </div>
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title">Item Management</h2>
+        <p>Create, edit, and manage all game items and equipment.</p>
+        <div class="card-actions justify-end">
+          <.link navigate={~p"/admin/items"}>
+            <.button>Manage Items</.button>
           </.link>
         </div>
       </div>
