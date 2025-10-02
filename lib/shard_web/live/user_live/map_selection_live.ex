@@ -59,7 +59,10 @@ defmodule ShardWeb.MapSelectionLive do
 
     # Get user's characters - handle case where current_scope might not be set
     characters = case socket.assigns[:current_scope] do
-      %{user: user} -> Characters.get_characters_by_user(user.id)
+      %{user: user} -> 
+        chars = Characters.get_characters_by_user(user.id)
+        IO.inspect(chars, label: "Loaded characters")
+        chars
       _ -> []
     end
 
@@ -173,7 +176,7 @@ defmodule ShardWeb.MapSelectionLive do
           <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 class="text-xl font-bold text-gray-900 mb-4">Choose Your Character</h3>
             
-            <%= if length(@characters) == 0 do %>
+            <%= if Enum.empty?(@characters) do %>
               <p class="text-gray-600 mb-4">You don't have any characters yet. Create one to start playing!</p>
               <div class="flex space-x-3">
                 <.button navigate={~p"/characters"} class="flex-1">
@@ -184,7 +187,7 @@ defmodule ShardWeb.MapSelectionLive do
                 </.button>
               </div>
             <% else %>
-              <p class="text-gray-600 mb-4">Select a character to enter the map:</p>
+              <p class="text-gray-600 mb-2">Found <%= length(@characters) %> character(s). Select one to enter the map:</p>
               <div class="space-y-2 mb-4">
                 <%= for character <- @characters do %>
                   <button
