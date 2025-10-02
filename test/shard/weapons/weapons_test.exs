@@ -1,5 +1,6 @@
 defmodule Shard.Weapons.WeaponsTest do
-  use ExUnit.Case, async: true
+  use Shard.DataCase
+
   alias Shard.Weapons.Weapons
 
   test "defines weapons functionality" do
