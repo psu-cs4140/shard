@@ -57,15 +57,24 @@ defmodule ShardWeb.MapSelectionLive do
       }
     ]
 
-    # Get user's characters - handle case where current_scope might not be set
-    characters = case socket.assigns[:current_scope] do
-      %{user: user} -> 
-        IO.inspect(user, label: "Current user")
+    # Get user's characters - try multiple ways to get the current user
+    characters = cond do
+      socket.assigns[:current_scope] && socket.assigns.current_scope.user ->
+        user = socket.assigns.current_scope.user
+        IO.inspect(user, label: "Current user from current_scope")
         chars = Characters.get_characters_by_user(user.id)
         IO.inspect(chars, label: "Loaded characters")
         chars
-      _ -> 
-        IO.inspect(socket.assigns, label: "Socket assigns (no current_scope)")
+      
+      socket.assigns[:current_user] ->
+        user = socket.assigns.current_user
+        IO.inspect(user, label: "Current user from current_user")
+        chars = Characters.get_characters_by_user(user.id)
+        IO.inspect(chars, label: "Loaded characters")
+        chars
+      
+      true ->
+        IO.inspect(socket.assigns, label: "Socket assigns (no user found)")
         []
     end
 
@@ -226,12 +235,22 @@ defmodule ShardWeb.MapSelectionLive do
   @impl true
   def handle_event("select_map", %{"map_id" => map_id}, socket) do
     # Reload characters when opening modal to ensure we have the latest data
-    characters = case socket.assigns[:current_scope] do
-      %{user: user} -> 
+    characters = cond do
+      socket.assigns[:current_scope] && socket.assigns.current_scope.user ->
+        user = socket.assigns.current_scope.user
         chars = Characters.get_characters_by_user(user.id)
         IO.inspect(chars, label: "Reloaded characters for modal")
         chars
-      _ -> []
+      
+      socket.assigns[:current_user] ->
+        user = socket.assigns.current_user
+        chars = Characters.get_characters_by_user(user.id)
+        IO.inspect(chars, label: "Reloaded characters for modal")
+        chars
+      
+      true ->
+        IO.inspect("No user found when reloading characters", label: "Error")
+        []
     end
     
     {:noreply, assign(socket, show_character_modal: true, selected_map: map_id, characters: characters)}
