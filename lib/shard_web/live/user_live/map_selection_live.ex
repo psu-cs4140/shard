@@ -1,5 +1,6 @@
 defmodule ShardWeb.MapSelectionLive do
   use ShardWeb, :live_view
+  alias Shard.Characters
 
   @impl true
   def mount(_params, _session, socket) do
@@ -56,7 +57,11 @@ defmodule ShardWeb.MapSelectionLive do
       }
     ]
 
-    {:ok, assign(socket, maps: maps)}
+    # Get user's characters
+    user = socket.assigns.current_scope.user
+    characters = Characters.list_characters_for_user(user.id)
+
+    {:ok, assign(socket, maps: maps, characters: characters, show_character_modal: false, selected_map: nil)}
   end
 
   @impl true
@@ -158,8 +163,75 @@ defmodule ShardWeb.MapSelectionLive do
           </div>
         </div>
       </div>
+
+      <!-- Character Selection Modal -->
+      <%= if @show_character_modal do %>
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Choose Your Character</h3>
+            
+            <%= if length(@characters) == 0 do %>
+              <p class="text-gray-600 mb-4">You don't have any characters yet. Create one to start playing!</p>
+              <div class="flex space-x-3">
+                <.button navigate={~p"/characters"} class="flex-1">
+                  Create Character
+                </.button>
+                <.button phx-click="cancel_map_selection" variant="outline" class="flex-1">
+                  Cancel
+                </.button>
+              </div>
+            <% else %>
+              <p class="text-gray-600 mb-4">Select a character to enter the map:</p>
+              <div class="space-y-2 mb-4">
+                <%= for character <- @characters do %>
+                  <button
+                    phx-click="select_character"
+                    phx-value-character_id={character.id}
+                    class="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div class="font-semibold"><%= character.name %></div>
+                    <div class="text-sm text-gray-600">
+                      Level <%= character.level || 1 %> <%= String.capitalize(character.class || "adventurer") %>
+                    </div>
+                  </button>
+                <% end %>
+              </div>
+              <div class="flex space-x-3">
+                <.button navigate={~p"/characters"} variant="outline" class="flex-1">
+                  Manage Characters
+                </.button>
+                <.button phx-click="cancel_map_selection" variant="outline" class="flex-1">
+                  Cancel
+                </.button>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
     </div>
     """
+  end
+
+  @impl true
+  def handle_event("select_map", %{"map_id" => map_id}, socket) do
+    if length(socket.assigns.characters) == 0 do
+      {:noreply,
+       socket
+       |> put_flash(:info, "You need to create a character before you can play!")
+       |> push_navigate(to: ~p"/characters")}
+    else
+      {:noreply, assign(socket, show_character_modal: true, selected_map: map_id)}
+    end
+  end
+
+  def handle_event("select_character", %{"character_id" => character_id}, socket) do
+    {:noreply,
+     socket
+     |> push_navigate(to: ~p"/play/#{socket.assigns.selected_map}?character_id=#{character_id}")}
+  end
+
+  def handle_event("cancel_map_selection", _params, socket) do
+    {:noreply, assign(socket, show_character_modal: false, selected_map: nil)}
   end
 
   # Helper function to determine difficulty badge colors

@@ -9,37 +9,57 @@ defmodule ShardWeb.MudGameLive do
   alias Phoenix.PubSub
 
   @impl true
-  def mount(%{"map_id" => map_id}, _session, socket) do
-    # Generate map data based on selected map
-    map_data = generate_map_from_database(map_id)
+  def mount(%{"map_id" => map_id} = params, _session, socket) do
+    # Get character if provided
+    character = 
+      case Map.get(params, "character_id") do
+        nil -> nil
+        character_id -> 
+          try do
+            Shard.Characters.get_character!(character_id)
+          rescue
+            _ -> nil
+          end
+      end
 
-    # Find a valid starting position (first floor tile found)
-    starting_position = find_valid_starting_position(map_data)
+    # If no character provided or character not found, redirect to character selection
+    if is_nil(character) do
+      {:ok, 
+       socket
+       |> put_flash(:error, "Please select a character to play")
+       |> push_navigate(to: ~p"/maps")}
+    else
+      # Generate map data based on selected map
+      map_data = generate_map_from_database(map_id)
 
-    # Store the map_id for later use
-    map_id = map_id
+      # Find a valid starting position (first floor tile found)
+      starting_position = find_valid_starting_position(map_data)
 
-    # Initialize game state
-    game_state = %{
-      player_position: starting_position,
-      map_data: map_data,
-      map_id: map_id,
-      active_panel: nil,
+      # Store the map_id and character for later use
+      map_id = map_id
 
-      player_stats: %{
-        health: 100,
-        max_health: 100,
-        stamina: 100,
-        max_stamina: 100,
-        mana: 100,
-        max_mana: 100,
-        level: 5,
-        experience: 1250,
-        next_level_exp: 2000,
-        strength: 15,
-        dexterity: 12,
-        intelligence: 10
-      },
+      # Initialize game state
+      game_state = %{
+        player_position: starting_position,
+        map_data: map_data,
+        map_id: map_id,
+        character: character,
+        active_panel: nil,
+
+        player_stats: %{
+          health: 100,
+          max_health: 100,
+          stamina: 100,
+          max_stamina: 100,
+          mana: 100,
+          max_mana: 100,
+          level: character.level || 1,
+          experience: character.experience || 0,
+          next_level_exp: 1000,
+          strength: 15,
+          dexterity: 12,
+          intelligence: 10
+        },
 
       inventory_items: [
         %{name: "Iron Sword", type: "weapon", damage: "1d8+3"},
@@ -103,13 +123,14 @@ defmodule ShardWeb.MudGameLive do
       posn_to_room_channel(game_state.player_position)
     )
 
-    {:ok,
-     assign(socket,
-       game_state: game_state,
-       terminal_state: terminal_state,
-       modal_state: modal_state,
-       available_exits: compute_available_exits(game_state.player_position)
-     )}
+      {:ok,
+       assign(socket,
+         game_state: game_state,
+         terminal_state: terminal_state,
+         modal_state: modal_state,
+         available_exits: compute_available_exits(game_state.player_position)
+       )}
+    end
   end
 
   def posn_to_room_channel({xx, yy}) do
