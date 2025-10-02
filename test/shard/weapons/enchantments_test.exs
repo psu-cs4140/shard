@@ -19,6 +19,7 @@ defmodule Shard.Weapons.EnchantmentsTest do
         modifier_type: "fire_damage",
         modifier_value: "1d6"
       }
+
       changeset = Enchantments.changeset(%Enchantments{}, attrs)
       assert changeset.valid?
     end

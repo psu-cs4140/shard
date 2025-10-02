@@ -8,6 +8,7 @@ defmodule Shard.Weapons.WeaponEnchantmentsTest do
       attrs = %{}
       changeset = WeaponEnchantments.changeset(%WeaponEnchantments{}, attrs)
       refute changeset.valid?
+
       assert errors_on(changeset) == %{
                weapon_id: ["can't be blank"],
                enchantment_id: ["can't be blank"]
@@ -19,6 +20,7 @@ defmodule Shard.Weapons.WeaponEnchantmentsTest do
         weapon_id: 1,
         enchantment_id: 1
       }
+
       changeset = WeaponEnchantments.changeset(%WeaponEnchantments{}, attrs)
       assert changeset.valid?
     end

@@ -19,6 +19,7 @@ defmodule Shard.Weapons.EffectsTest do
         modifier_type: "damage_over_time",
         modifier_value: 5
       }
+
       changeset = Effects.changeset(%Effects{}, attrs)
       assert changeset.valid?
     end

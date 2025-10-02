@@ -35,6 +35,7 @@ defmodule Shard.CombatTest do
     test "returns monsters at player position" do
       goblin = %{position: {0, 0}, name: "Goblin"}
       orc = %{position: {0, 0}, name: "Orc"}
+
       game_state = %{
         player_position: {0, 0},
         monsters: [goblin, orc, %{position: {1, 1}, name: "Troll"}]
@@ -63,6 +64,7 @@ defmodule Shard.CombatTest do
 
     test "starts combat when monsters are present" do
       goblin = %{position: {0, 0}, name: "Goblin", hp: 10, hp_max: 10}
+
       game_state = %{
         player_position: {0, 0},
         monsters: [goblin],
@@ -93,6 +95,7 @@ defmodule Shard.CombatTest do
 
     test "returns message for unknown action" do
       goblin = %{position: {0, 0}, name: "Goblin"}
+
       game_state = %{
         player_position: {0, 0},
         monsters: [goblin],
@@ -107,6 +110,7 @@ defmodule Shard.CombatTest do
 
     test "handles flee action" do
       goblin = %{position: {0, 0}, name: "Goblin"}
+
       game_state = %{
         player_position: {0, 0},
         monsters: [goblin],

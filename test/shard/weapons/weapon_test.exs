@@ -8,13 +8,14 @@ defmodule Shard.Weapons.WeaponTest do
   describe "get_weapon!/1" do
     test "returns a single weapon with the specified fields" do
       # First insert without foreign key constraints to avoid constraint errors
-      weapon = %Weapons{
-        name: "Test Sword",
-        damage: 10,
-        gold_value: 100,
-        description: "A test sword"
-      }
-      |> Repo.insert!()
+      weapon =
+        %Weapons{
+          name: "Test Sword",
+          damage: 10,
+          gold_value: 100,
+          description: "A test sword"
+        }
+        |> Repo.insert!()
 
       result = Weapon.get_weapon!(weapon.id)
 
@@ -28,21 +29,23 @@ defmodule Shard.Weapons.WeaponTest do
 
   describe "list_weapons/0" do
     test "returns all weapons" do
-      weapon1 = %Weapons{
-        name: "Test Sword",
-        damage: 10,
-        gold_value: 100,
-        description: "A test sword"
-      }
-      |> Repo.insert!()
+      weapon1 =
+        %Weapons{
+          name: "Test Sword",
+          damage: 10,
+          gold_value: 100,
+          description: "A test sword"
+        }
+        |> Repo.insert!()
 
-      weapon2 = %Weapons{
-        name: "Test Axe",
-        damage: 12,
-        gold_value: 150,
-        description: "A test axe"
-      }
-      |> Repo.insert!()
+      weapon2 =
+        %Weapons{
+          name: "Test Axe",
+          damage: 12,
+          gold_value: 150,
+          description: "A test axe"
+        }
+        |> Repo.insert!()
 
       weapons = Weapon.list_weapons()
 

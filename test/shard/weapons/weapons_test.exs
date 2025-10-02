@@ -21,6 +21,7 @@ defmodule Shard.Weapons.WeaponsTest do
 
       changeset = Weapons.changeset(%Weapons{}, attrs)
       refute changeset.valid?
+
       assert errors_on(changeset) == %{
                name: ["can't be blank"],
                damage: ["can't be blank"],
