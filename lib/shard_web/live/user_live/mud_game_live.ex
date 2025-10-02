@@ -25,6 +25,7 @@ defmodule ShardWeb.MudGameLive do
       map_data: map_data,
       map_id: map_id,
       active_panel: nil,
+
       player_stats: %{
         health: 100,
         max_health: 100,
@@ -39,6 +40,7 @@ defmodule ShardWeb.MudGameLive do
         dexterity: 12,
         intelligence: 10
       },
+
       inventory_items: [
         %{name: "Iron Sword", type: "weapon", damage: "1d8+3"},
         %{name: "Health Potion", type: "consumable", effect: "Restores 50 HP"},
