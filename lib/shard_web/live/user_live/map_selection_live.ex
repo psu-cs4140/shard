@@ -57,15 +57,28 @@ defmodule ShardWeb.MapSelectionLive do
       }
     ]
 
+    # Debug: Check all available socket assigns
+    IO.inspect(socket.assigns, label: "All socket assigns")
+    
     # Get user's characters - try multiple ways to get the current user
     user = cond do
       socket.assigns[:current_scope] && socket.assigns.current_scope.user ->
+        IO.inspect("Found user via current_scope", label: "Auth method")
         socket.assigns.current_scope.user
       socket.assigns[:current_user] ->
+        IO.inspect("Found user via current_user", label: "Auth method")
         socket.assigns.current_user
       true ->
         IO.inspect(Map.keys(socket.assigns), label: "Available socket assign keys")
-        nil
+        # Temporary: Try to get the first user from the database for testing
+        case Shard.Repo.all(Shard.Users.User) do
+          [first_user | _] -> 
+            IO.inspect("Using first user from database for testing", label: "Fallback")
+            first_user
+          [] -> 
+            IO.inspect("No users found in database", label: "Error")
+            nil
+        end
     end
 
     characters = if user do
@@ -241,7 +254,11 @@ defmodule ShardWeb.MapSelectionLive do
       socket.assigns[:current_user] ->
         socket.assigns.current_user
       true ->
-        nil
+        # Temporary: Try to get the first user from the database for testing
+        case Shard.Repo.all(Shard.Users.User) do
+          [first_user | _] -> first_user
+          [] -> nil
+        end
     end
 
     characters = if user do
