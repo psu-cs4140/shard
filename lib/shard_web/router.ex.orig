@@ -5,9 +5,7 @@ defmodule ShardWeb.Router do
 
   defp ensure_admin(conn, _opts) do
     case conn.assigns[:current_scope] do
-      %{user: %{admin: true}} ->
-        conn
-
+      %{user: %{admin: true}} -> conn
       _ ->
         conn
         |> Phoenix.Controller.put_flash(:error, "You must be an admin to access this page.")
@@ -44,11 +42,13 @@ defmodule ShardWeb.Router do
 
   # Admin routes
   scope "/admin", ShardWeb do
-    pipe_through [:browser, :require_authenticated_user]
+    pipe_through [:browser, :require_authenticated_user, :require_admin]
 
     live "/", AdminLive.Index, :index
-    # Added this line for the map page
-    live "/map", AdminLive.Map, :index
+<<<<<<< HEAD
+    live "/map", AdminLive.Map, :index  # Added this line for the map page
+=======
+>>>>>>> d7e549bffcd24f6d0bd5eb0e869a06baa335fe86
   end
 
   # Other scopes may use custom stacks.
@@ -83,16 +83,20 @@ defmodule ShardWeb.Router do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
       live "/characters", CharacterLive.Index, :index
+<<<<<<< HEAD
       live "/characters", CharacterLive.Index, :new
       live "/characters/:id", CharacterLive.Show, :show
+=======
+      live "/characters/new", CharacterLive.New, :new
       live "/inventory", InventoryLive.Index, :index
+>>>>>>> d7e549bffcd24f6d0bd5eb0e869a06baa335fe86
     end
 
     post "/users/update-password", UserSessionController, :update_password
   end
 
   scope "/admin", ShardWeb do
-    pipe_through [:browser, :require_authenticated_user]
+    pipe_through [:browser, :require_authenticated_user, :require_admin]
 
     live_session :require_admin,
       on_mount: [{ShardWeb.UserAuth, :require_authenticated}] do
@@ -100,6 +104,7 @@ defmodule ShardWeb.Router do
       live "/characters/new", AdminLive.Characters, :new
       live "/characters/:id", AdminLive.Characters, :show
       live "/characters/:id/edit", AdminLive.Characters, :edit
+<<<<<<< HEAD
       live "/user_management", AdminLive.UserManagement, :index
       live "/npcs", AdminLive.Npcs, :index
       live "/npcs/new", AdminLive.Npcs, :new
@@ -107,10 +112,12 @@ defmodule ShardWeb.Router do
       live "/quests", AdminLive.Quests, :index
       live "/quests/new", AdminLive.Quests, :new
       live "/quests/:id/edit", AdminLive.Quests, :edit
+=======
       live "/items", AdminLive.Items, :index
       live "/items/new", AdminLive.Items, :new
       live "/items/:id", AdminLive.Items, :show
       live "/items/:id/edit", AdminLive.Items, :edit
+>>>>>>> d7e549bffcd24f6d0bd5eb0e869a06baa335fe86
     end
   end
 
@@ -126,19 +133,21 @@ defmodule ShardWeb.Router do
       live "/npcs/new", NpcLive.Form, :new
       live "/npcs/:id", NpcLive.Show, :show
       live "/npcs/:id/edit", NpcLive.Form, :edit
+
     end
 
     post "/users/log-in", UserSessionController, :create
     delete "/users/log-out", UserSessionController, :delete
   end
+ scope "/", ShardWeb do
+   pipe_through [:browser, :require_admin]  # make sure you have an admin plug if needed
 
-  scope "/", ShardWeb do
-    # make sure you have an admin plug if needed
-    pipe_through [:browser, :require_admin]
+   live "/npcs", NpcLive.Index, :index
+   live "/npcs/new", NpcLive.Form, :new
+   live "/npcs/:id", NpcLive.Show, :show
+   live "/npcs/:id/edit", NpcLive.Form, :edit
+ end
 
-    live "/npcs", NpcLive.Index, :index
-    live "/npcs/new", NpcLive.Form, :new
-    live "/npcs/:id", NpcLive.Show, :show
-    live "/npcs/:id/edit", NpcLive.Form, :edit
-  end
+
 end
+

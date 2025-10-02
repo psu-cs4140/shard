@@ -495,20 +495,16 @@ defmodule ShardWeb.CoreComponents do
         class="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
         aria-hidden="true"
       />
-      <div
-        class={[
-          "fixed inset-0 z-50 overflow-y-auto",
-          @show && "block",
-          !@show && "hidden"
-        ]}
-      >
+      <div class={[
+        "fixed inset-0 z-50 overflow-y-auto",
+        @show && "block",
+        !@show && "hidden"
+      ]}>
         <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-          <div
-            class={[
-              "relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg",
-              @class
-            ]}
-          >
+          <div class={[
+            "relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg",
+            @class
+          ]}>
             <div class="absolute top-0 right-0 pt-4 pr-4">
               <button
                 type="button"

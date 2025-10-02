@@ -1,9 +1,16 @@
+<<<<<<< HEAD
+<.header>
+  Admin Dashboard
+  <:subtitle>Administrative tools and management</:subtitle>
+</.header>
+=======
 <div style="padding-left: 3rem;">
   <.header>
     Admin Dashboard
     <:subtitle>Administrative tools and management</:subtitle>
   </.header>
 </div>
+>>>>>>> d7e549bffcd24f6d0bd5eb0e869a06baa335fe86
 
 <div class="mt-8">
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -21,23 +28,19 @@
 
     <div class="card bg-base-100 shadow-xl">
       <div class="card-body">
+<<<<<<< HEAD
         <h2 class="card-title">Map Management</h2>
         <p>View and manage the game world map, rooms, and connections.</p>
         <div class="card-actions justify-end">
           <.link navigate={~p"/admin/map"}>
             <.button>View Map</.button>
-          </.link>
-        </div>
-      </div>
-    </div>
-
-    <div class="card bg-base-100 shadow-xl">
-      <div class="card-body">
+=======
         <h2 class="card-title">Item Management</h2>
         <p>Create, edit, and manage all game items and equipment.</p>
         <div class="card-actions justify-end">
           <.link navigate={~p"/admin/items"}>
             <.button>Manage Items</.button>
+>>>>>>> d7e549bffcd24f6d0bd5eb0e869a06baa335fe86
           </.link>
         </div>
       </div>
@@ -48,6 +51,7 @@
         <h2 class="card-title">User Management</h2>
         <p>Manage user accounts and permissions.</p>
         <div class="card-actions justify-end">
+<<<<<<< HEAD
           <.link navigate={~p"/admin/user_management"}>
             <.button>Manage Users</.button>
           </.link>
@@ -75,6 +79,9 @@
           <.link navigate={~p"/admin/quests"}>
             <.button>Manage Quests</.button>
           </.link>
+=======
+          <.button disabled>Coming Soon</.button>
+>>>>>>> d7e549bffcd24f6d0bd5eb0e869a06baa335fe86
         </div>
       </div>
     </div>

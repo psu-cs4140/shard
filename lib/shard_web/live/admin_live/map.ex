@@ -104,6 +104,7 @@ defmodule ShardWeb.AdminLive.Map do
     case Map.update_room(socket.assigns.viewing, room_params) do
       {:ok, updated_room} ->
         rooms = Map.list_rooms()
+
         {:noreply,
          socket
          |> assign(:rooms, rooms)
@@ -225,6 +226,7 @@ defmodule ShardWeb.AdminLive.Map do
       start ->
         delta_x = x - start.x
         delta_y = y - start.y
+
         {:noreply,
          socket
          |> assign(:pan_x, socket.assigns.pan_x + delta_x)
@@ -271,6 +273,7 @@ defmodule ShardWeb.AdminLive.Map do
 
       if x < 2 do
         east_room = Enum.find(rooms, &(&1.x_coordinate == x + 1 && &1.y_coordinate == y))
+
         Map.create_door(%{
           from_room_id: current_room.id,
           to_room_id: east_room.id,
@@ -282,6 +285,7 @@ defmodule ShardWeb.AdminLive.Map do
 
       if y < 2 do
         south_room = Enum.find(rooms, &(&1.x_coordinate == x && &1.y_coordinate == y + 1))
+
         Map.create_door(%{
           from_room_id: current_room.id,
           to_room_id: south_room.id,
@@ -304,11 +308,13 @@ defmodule ShardWeb.AdminLive.Map do
 
   defp save_room(socket, room_params) do
     case socket.assigns.editing do
-      :room when not is_nil(socket.assigns.changeset) and
-          not is_nil(socket.assigns.changeset.data.id) ->
+      :room
+      when not is_nil(socket.assigns.changeset) and
+             not is_nil(socket.assigns.changeset.data.id) ->
         case Map.update_room(socket.assigns.changeset.data, room_params) do
           {:ok, _room} ->
             rooms = Map.list_rooms()
+
             {:ok,
              assign(socket, :rooms, rooms)
              |> assign(:editing, nil)
@@ -323,6 +329,7 @@ defmodule ShardWeb.AdminLive.Map do
         case Map.create_room(room_params) do
           {:ok, _room} ->
             rooms = Map.list_rooms()
+
             {:ok,
              assign(socket, :rooms, rooms)
              |> assign(:editing, nil)
@@ -337,11 +344,13 @@ defmodule ShardWeb.AdminLive.Map do
 
   defp save_door(socket, door_params) do
     case socket.assigns.editing do
-      :door when not is_nil(socket.assigns.changeset) and
-          not is_nil(socket.assigns.changeset.data.id) ->
+      :door
+      when not is_nil(socket.assigns.changeset) and
+             not is_nil(socket.assigns.changeset.data.id) ->
         case Map.update_door(socket.assigns.changeset.data, door_params) do
           {:ok, _door} ->
             doors = Map.list_doors()
+
             {:ok,
              assign(socket, :doors, doors)
              |> assign(:editing, nil)
@@ -356,6 +365,7 @@ defmodule ShardWeb.AdminLive.Map do
         case Map.create_door(door_params) do
           {:ok, _door} ->
             doors = Map.list_doors()
+
             {:ok,
              assign(socket, :doors, doors)
              |> assign(:editing, nil)
@@ -404,9 +414,9 @@ defmodule ShardWeb.AdminLive.Map do
             Map Visualization
           </button>
           <button
+            :if={@tab == "room_details"}
             type="button"
             class={["tab", @tab == "room_details" && "tab-active"]}
-            :if={@tab == "room_details"}
           >
             Room Details
           </button>
@@ -448,7 +458,7 @@ defmodule ShardWeb.AdminLive.Map do
 
     <.modal :if={@editing == :room} id="room-modal" show>
       <.header>
-        <%= if @changeset && @changeset.data.id, do: "Edit Room", else: "New Room" %>
+        {if @changeset && @changeset.data.id, do: "Edit Room", else: "New Room"}
         <:subtitle>Manage room details</:subtitle>
       </.header>
 
@@ -491,7 +501,7 @@ defmodule ShardWeb.AdminLive.Map do
 
     <.modal :if={@editing == :door} id="door-modal" show>
       <.header>
-        <%= if @changeset && @changeset.data.id, do: "Edit Door", else: "New Door" %>
+        {if @changeset && @changeset.data.id, do: "Edit Door", else: "New Door"}
         <:subtitle>Manage door details</:subtitle>
       </.header>
 
@@ -587,14 +597,25 @@ defmodule ShardWeb.AdminLive.Map do
           <tbody>
             <%= for room <- @rooms do %>
               <tr>
-                <td><%= room.name %></td>
-                <td>(<%= room.x_coordinate %>, <%= room.y_coordinate %>, <%= room.z_coordinate %>)</td>
-                <td><%= room.room_type %></td>
-                <td><%= if room.is_public, do: "Yes", else: "No" %></td>
+                <td>{room.name}</td>
+                <td>({room.x_coordinate}, {room.y_coordinate}, {room.z_coordinate})</td>
+                <td>{room.room_type}</td>
+                <td>{if room.is_public, do: "Yes", else: "No"}</td>
                 <td class="flex space-x-2">
-                  <.button phx-click="view_room" phx-value-id={room.id} class="btn btn-sm btn-info">View</.button>
-                  <.button phx-click="edit_room" phx-value-id={room.id} class="btn btn-sm btn-primary">Edit</.button>
-                  <.button phx-click="delete_room" phx-value-id={room.id} class="btn btn-sm btn-error" data-confirm="Are you sure?">Delete</.button>
+                  <.button phx-click="view_room" phx-value-id={room.id} class="btn btn-sm btn-info">
+                    View
+                  </.button>
+                  <.button phx-click="edit_room" phx-value-id={room.id} class="btn btn-sm btn-primary">
+                    Edit
+                  </.button>
+                  <.button
+                    phx-click="delete_room"
+                    phx-value-id={room.id}
+                    class="btn btn-sm btn-error"
+                    data-confirm="Are you sure?"
+                  >
+                    Delete
+                  </.button>
                 </td>
               </tr>
             <% end %>
@@ -633,14 +654,23 @@ defmodule ShardWeb.AdminLive.Map do
               <% from_room = Enum.find(@rooms, &(&1.id == door.from_room_id)) %>
               <% to_room = Enum.find(@rooms, &(&1.id == door.to_room_id)) %>
               <tr>
-                <td><%= if from_room, do: from_room.name, else: "Unknown" %></td>
-                <td><%= if to_room, do: to_room.name, else: "Unknown" %></td>
-                <td><%= door.direction %></td>
-                <td><%= door.door_type %></td>
-                <td><%= if door.is_locked, do: "Yes", else: "No" %></td>
+                <td>{if from_room, do: from_room.name, else: "Unknown"}</td>
+                <td>{if to_room, do: to_room.name, else: "Unknown"}</td>
+                <td>{door.direction}</td>
+                <td>{door.door_type}</td>
+                <td>{if door.is_locked, do: "Yes", else: "No"}</td>
                 <td class="flex space-x-2">
-                  <.button phx-click="edit_door" phx-value-id={door.id} class="btn btn-sm btn-primary">Edit</.button>
-                  <.button phx-click="delete_door" phx-value-id={door.id} class="btn btn-sm btn-error" data-confirm="Are you sure?">Delete</.button>
+                  <.button phx-click="edit_door" phx-value-id={door.id} class="btn btn-sm btn-primary">
+                    Edit
+                  </.button>
+                  <.button
+                    phx-click="delete_door"
+                    phx-value-id={door.id}
+                    class="btn btn-sm btn-error"
+                    data-confirm="Are you sure?"
+                  >
+                    Delete
+                  </.button>
                 </td>
               </tr>
             <% end %>
@@ -693,8 +723,8 @@ defmodule ShardWeb.AdminLive.Map do
                 style={"left: #{room.x_coordinate * 100}px; top: #{room.y_coordinate * 100}px; width: 80px; height: 80px;"}
               >
                 <div>
-                  <div class="font-bold text-xs truncate w-full"><%= room.name %></div>
-                  <div class="text-xs mt-1">(<%= room.x_coordinate %>, <%= room.y_coordinate %>)</div>
+                  <div class="font-bold text-xs truncate w-full">{room.name}</div>
+                  <div class="text-xs mt-1">({room.x_coordinate}, {room.y_coordinate})</div>
                 </div>
               </div>
             <% end %>
@@ -702,8 +732,8 @@ defmodule ShardWeb.AdminLive.Map do
         </div>
 
         <div class="mt-4 text-sm text-base-content">
-          <p>Zoom: <%= Float.round(@zoom, 2) %>x | Pan: (<%= @pan_x %>, <%= @pan_y %>)</p>
-          <p class="mt-2">Rooms: <%= Enum.count(@rooms) %> | Doors: <%= Enum.count(@doors) %></p>
+          <p>Zoom: {Float.round(@zoom, 2)}x | Pan: ({@pan_x}, {@pan_y})</p>
+          <p class="mt-2">Rooms: {Enum.count(@rooms)} | Doors: {Enum.count(@doors)}</p>
         </div>
       <% end %>
     </div>
@@ -714,7 +744,7 @@ defmodule ShardWeb.AdminLive.Map do
     ~H"""
     <div class="bg-base-200 p-6 rounded-lg">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-xl font-bold">Room Details: <%= @room.name %></h3>
+        <h3 class="text-xl font-bold">Room Details: {@room.name}</h3>
         <.button phx-click="back_to_rooms" class="btn btn-secondary">Back to Rooms</.button>
       </div>
 
@@ -771,10 +801,10 @@ defmodule ShardWeb.AdminLive.Map do
               <tbody>
                 <%= for door <- @doors_from do %>
                   <tr>
-                    <td><%= door.to_room.name %></td>
-                    <td><%= door.direction %></td>
-                    <td><%= door.door_type %></td>
-                    <td><%= if door.is_locked, do: "Yes", else: "No" %></td>
+                    <td>{door.to_room.name}</td>
+                    <td>{door.direction}</td>
+                    <td>{door.door_type}</td>
+                    <td>{if door.is_locked, do: "Yes", else: "No"}</td>
                   </tr>
                 <% end %>
               </tbody>
@@ -799,10 +829,10 @@ defmodule ShardWeb.AdminLive.Map do
               <tbody>
                 <%= for door <- @doors_to do %>
                   <tr>
-                    <td><%= door.from_room.name %></td>
-                    <td><%= door.direction %></td>
-                    <td><%= door.door_type %></td>
-                    <td><%= if door.is_locked, do: "Yes", else: "No" %></td>
+                    <td>{door.from_room.name}</td>
+                    <td>{door.direction}</td>
+                    <td>{door.door_type}</td>
+                    <td>{if door.is_locked, do: "Yes", else: "No"}</td>
                   </tr>
                 <% end %>
               </tbody>
@@ -854,13 +884,23 @@ defmodule ShardWeb.AdminLive.Map do
 
     type_classes =
       case room.room_type do
-        "safe_zone" -> "bg-green-200 border-green-600 dark:bg-green-900/30 dark:border-green-500"
-        "shop" -> "bg-blue-200 border-blue-600 dark:bg-blue-900/30 dark:border-blue-500"
-        "dungeon" -> "bg-red-200 border-red-600 dark:bg-red-900/30 dark:border-red-500"
+        "safe_zone" ->
+          "bg-green-200 border-green-600 dark:bg-green-900/30 dark:border-green-500"
+
+        "shop" ->
+          "bg-blue-200 border-blue-600 dark:bg-blue-900/30 dark:border-blue-500"
+
+        "dungeon" ->
+          "bg-red-200 border-red-600 dark:bg-red-900/30 dark:border-red-500"
+
         "treasure_room" ->
           "bg-yellow-200 border-yellow-600 dark:bg-yellow-900/30 dark:border-yellow-500"
-        "trap_room" -> "bg-pink-200 border-pink-600 dark:bg-pink-900/30 dark:border-pink-500"
-        _ -> "bg-gray-200 border-gray-600 dark:bg-gray-700/30 dark:border-gray-500"
+
+        "trap_room" ->
+          "bg-pink-200 border-pink-600 dark:bg-pink-900/30 dark:border-pink-500"
+
+        _ ->
+          "bg-gray-200 border-gray-600 dark:bg-gray-700/30 dark:border-gray-500"
       end
 
     text_classes = "text-gray-800 dark:text-gray-200"

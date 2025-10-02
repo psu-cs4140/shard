@@ -53,10 +53,9 @@ defmodule ShardWeb.MudGameLive do
         slot_4: %{name: "Health Potion", type: "consumable"},
         slot_5: nil
       },
-      quests: [
-
-      ],
-      pending_quest_offer: nil,  # Stores quest offer waiting for acceptance/denial
+      quests: [],
+      # Stores quest offer waiting for acceptance/denial
+      pending_quest_offer: nil,
 
       # Will pull from db once that is created.
       monsters: [
@@ -102,12 +101,12 @@ defmodule ShardWeb.MudGameLive do
     )
 
     {:ok,
- assign(socket,
-   game_state: game_state,
-   terminal_state: terminal_state,
-   modal_state: modal_state,
-   available_exits: compute_available_exits(game_state.player_position)
- )}
+     assign(socket,
+       game_state: game_state,
+       terminal_state: terminal_state,
+       modal_state: modal_state,
+       available_exits: compute_available_exits(game_state.player_position)
+     )}
   end
 
   def posn_to_room_channel({xx, yy}) do
@@ -118,23 +117,22 @@ defmodule ShardWeb.MudGameLive do
   @spec render(any()) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col h-screen bg-gray-900 text-white" phx-window-keydown="keypress">  <!-- "phx-window-keydown="keypress" -->
+    <div class="flex flex-col h-screen bg-gray-900 text-white" phx-window-keydown="keypress">
+      <!-- "phx-window-keydown="keypress" -->
       <!-- Header -->
       <header class="bg-gray-800 p-4 shadow-lg">
         <h1 class="text-2xl font-bold">MUD Game</h1>
       </header>
 
-      <!-- Main Content -->
+    <!-- Main Content -->
       <div class="flex flex-1 overflow-hidden">
         <!-- Left Panel - Terminal -->
         <div class="flex-1 p-4 flex flex-col">
-          <.terminal
-            terminal_state={@terminal_state}
-          />
+          <.terminal terminal_state={@terminal_state} />
         </div>
 
-        <!-- Right Panel - Controls -->
-        <div class="w-100 bg-gray-800 px-4 py-4 flex flex-col space-y-4 overflow-y-auto" >
+    <!-- Right Panel - Controls -->
+        <div class="w-100 bg-gray-800 px-4 py-4 flex flex-col space-y-4 overflow-y-auto">
           <.minimap
             map_data={@game_state.map_data}
             player_position={@game_state.player_position}
@@ -183,19 +181,28 @@ defmodule ShardWeb.MudGameLive do
           />
 
           <%!-- This is used to show char sheet, inventory, etc --%>
-          <.character_sheet :if={@modal_state.show && @modal_state.type == "character_sheet"} game_state={@game_state} />
+          <.character_sheet
+            :if={@modal_state.show && @modal_state.type == "character_sheet"}
+            game_state={@game_state}
+          />
 
-          <.inventory :if={@modal_state.show && @modal_state.type == "inventory"} game_state={@game_state} />
+          <.inventory
+            :if={@modal_state.show && @modal_state.type == "inventory"}
+            game_state={@game_state}
+          />
 
           <.quests :if={@modal_state.show && @modal_state.type == "quests"} game_state={@game_state} />
 
           <.map :if={@modal_state.show && @modal_state.type == "map"} game_state={@game_state} />
 
-          <.settings :if={@modal_state.show && @modal_state.type == "settings"} game_state={@game_state} />
+          <.settings
+            :if={@modal_state.show && @modal_state.type == "settings"}
+            game_state={@game_state}
+          />
         </div>
       </div>
 
-      <!-- Footer -->
+    <!-- Footer -->
       <footer class="bg-gray-800 p-2 text-center text-sm">
         <p>MUD Game v1.0</p>
       </footer>
@@ -214,15 +221,17 @@ defmodule ShardWeb.MudGameLive do
         quest_title = quest.title || "Untitled Quest"
 
         # Check if quest has already been accepted or completed
-        user_id = 1  # Mock user_id - should come from session in real implementation
+        # Mock user_id - should come from session in real implementation
+        user_id = 1
 
-        already_accepted = try do
-          Shard.Quests.quest_ever_accepted_by_user?(user_id, quest.id)
-        rescue
-          error ->
-            IO.inspect(error, label: "Error checking if quest already accepted")
-            false
-        end
+        already_accepted =
+          try do
+            Shard.Quests.quest_ever_accepted_by_user?(user_id, quest.id)
+          rescue
+            error ->
+              IO.inspect(error, label: "Error checking if quest already accepted")
+              false
+          end
 
         if already_accepted do
           response = [
@@ -235,13 +244,14 @@ defmodule ShardWeb.MudGameLive do
           {response, updated_game_state}
         else
           # Accept the quest in the database
-          accept_result = try do
-            Shard.Quests.accept_quest(user_id, quest.id)
-          rescue
-            error ->
-            IO.inspect(error, label: "Error accepting quest")
-            {:error, :database_error}
-          end
+          accept_result =
+            try do
+              Shard.Quests.accept_quest(user_id, quest.id)
+            rescue
+              error ->
+                IO.inspect(error, label: "Error accepting quest")
+                {:error, :database_error}
+            end
 
           case accept_result do
             {:ok, _quest_acceptance} ->
@@ -265,9 +275,10 @@ defmodule ShardWeb.MudGameLive do
                 "Quest '#{quest_title}' has been added to your quest log."
               ]
 
-              updated_game_state = %{game_state |
-                quests: updated_quests,
-                pending_quest_offer: nil
+              updated_game_state = %{
+                game_state
+                | quests: updated_quests,
+                  pending_quest_offer: nil
               }
 
               {response, updated_game_state}
@@ -304,9 +315,10 @@ defmodule ShardWeb.MudGameLive do
                 "(Note: Quest saved locally due to database issue)"
               ]
 
-              updated_game_state = %{game_state |
-                quests: updated_quests,
-                pending_quest_offer: nil
+              updated_game_state = %{
+                game_state
+                | quests: updated_quests,
+                  pending_quest_offer: nil
               }
 
               {response, updated_game_state}
@@ -351,7 +363,10 @@ defmodule ShardWeb.MudGameLive do
 
   defp character_sheet(assigns) do
     ~H"""
-    <div class="fixed inset-0 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div
+      class="fixed inset-0 flex items-center justify-center"
+      style="background-color: rgba(0, 0, 0, 0.5);"
+    >
       <div class="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div class="bg-gray-700 rounded-lg shadow-lg w-full mx-4 p-6" phx-click-away="hide_modal">
           <div class="flex justify-between items-center mb-4">
@@ -367,19 +382,19 @@ defmodule ShardWeb.MudGameLive do
               <div class="space-y-2">
                 <div class="flex justify-between">
                   <span>Level:</span>
-                  <span class="font-mono"><%= @game_state.player_stats.level %></span>
+                  <span class="font-mono">{@game_state.player_stats.level}</span>
                 </div>
                 <div class="flex justify-between">
                   <span>Strength:</span>
-                  <span class="font-mono"><%= @game_state.player_stats.strength %></span>
+                  <span class="font-mono">{@game_state.player_stats.strength}</span>
                 </div>
                 <div class="flex justify-between">
                   <span>Dexterity:</span>
-                  <span class="font-mono"><%= @game_state.player_stats.dexterity %></span>
+                  <span class="font-mono">{@game_state.player_stats.dexterity}</span>
                 </div>
                 <div class="flex justify-between">
                   <span>Intelligence:</span>
-                  <span class="font-mono"><%= @game_state.player_stats.intelligence %></span>
+                  <span class="font-mono">{@game_state.player_stats.intelligence}</span>
                 </div>
               </div>
             </div>
@@ -389,7 +404,9 @@ defmodule ShardWeb.MudGameLive do
               <div class="mb-2">
                 <div class="flex justify-between text-sm mb-1">
                   <span>EXP</span>
-                  <span><%= @game_state.player_stats.experience %>/<%= @game_state.player_stats.next_level_exp %></span>
+                  <span>
+                    {@game_state.player_stats.experience}/{@game_state.player_stats.next_level_exp}
+                  </span>
                 </div>
                 <div class="w-full bg-gray-600 rounded-full h-3">
                   <div
@@ -406,7 +423,9 @@ defmodule ShardWeb.MudGameLive do
               <div class="grid grid-cols-3 gap-4">
                 <div class="text-center">
                   <div class="text-red-400">Health</div>
-                  <div class="text-xl"><%= @game_state.player_stats.health %>/<%= @game_state.player_stats.max_health %></div>
+                  <div class="text-xl">
+                    {@game_state.player_stats.health}/{@game_state.player_stats.max_health}
+                  </div>
                   <div class="w-full bg-gray-600 rounded-full h-2 mt-1">
                     <div
                       class="bg-red-500 h-2 rounded-full"
@@ -417,7 +436,9 @@ defmodule ShardWeb.MudGameLive do
                 </div>
                 <div class="text-center">
                   <div class="text-yellow-400">Stamina</div>
-                  <div class="text-xl"><%= @game_state.player_stats.stamina %>/<%= @game_state.player_stats.max_stamina %></div>
+                  <div class="text-xl">
+                    {@game_state.player_stats.stamina}/{@game_state.player_stats.max_stamina}
+                  </div>
                   <div class="w-full bg-gray-600 rounded-full h-2 mt-1">
                     <div
                       class="bg-yellow-500 h-2 rounded-full"
@@ -428,7 +449,9 @@ defmodule ShardWeb.MudGameLive do
                 </div>
                 <div class="text-center">
                   <div class="text-blue-400">Mana</div>
-                  <div class="text-xl"><%= @game_state.player_stats.mana %>/<%= @game_state.player_stats.max_mana %></div>
+                  <div class="text-xl">
+                    {@game_state.player_stats.mana}/{@game_state.player_stats.max_mana}
+                  </div>
                   <div class="w-full bg-gray-600 rounded-full h-2 mt-1">
                     <div
                       class="bg-blue-500 h-2 rounded-full"
@@ -448,7 +471,10 @@ defmodule ShardWeb.MudGameLive do
 
   defp inventory(assigns) do
     ~H"""
-    <div class="fixed inset-0 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div
+      class="fixed inset-0 flex items-center justify-center"
+      style="background-color: rgba(0, 0, 0, 0.5);"
+    >
       <div class="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div class="bg-gray-700 rounded-lg shadow-lg w-full mx-4 p-6" phx-click-away="hide_modal">
           <div class="flex justify-between items-center mb-4">
@@ -478,16 +504,16 @@ defmodule ShardWeb.MudGameLive do
                   <% end %>
                 </div>
                 <div>
-                  <div class="font-semibold"><%= item.name %></div>
-                  <div class="text-sm text-gray-300 capitalize"><%= item.type %></div>
+                  <div class="font-semibold">{item.name}</div>
+                  <div class="text-sm text-gray-300 capitalize">{item.type}</div>
                   <%= if item[:damage] do %>
-                    <div class="text-sm">Damage: <%= item.damage %></div>
+                    <div class="text-sm">Damage: {item.damage}</div>
                   <% end %>
                   <%= if item[:defense] do %>
-                    <div class="text-sm">Defense: <%= item.defense %></div>
+                    <div class="text-sm">Defense: {item.defense}</div>
                   <% end %>
                   <%= if item[:effect] do %>
-                    <div class="text-sm">Effect: <%= item.effect %></div>
+                    <div class="text-sm">Effect: {item.effect}</div>
                   <% end %>
                 </div>
               </div>
@@ -501,7 +527,10 @@ defmodule ShardWeb.MudGameLive do
 
   defp quests(assigns) do
     ~H"""
-    <div class="fixed inset-0 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div
+      class="fixed inset-0 flex items-center justify-center"
+      style="background-color: rgba(0, 0, 0, 0.5);"
+    >
       <div class="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div class="bg-gray-700 rounded-lg shadow-lg w-full mx-4 p-6" phx-click-away="hide_modal">
           <div class="flex justify-between items-center mb-4">
@@ -515,28 +544,29 @@ defmodule ShardWeb.MudGameLive do
             <%= for quest <- @game_state.quests do %>
               <div class="bg-gray-800 rounded-lg p-4">
                 <div class="flex justify-between items-start">
-                  <h4 class="text-lg font-semibold"><%= quest.title %></h4>
+                  <h4 class="text-lg font-semibold">{quest.title}</h4>
                   <span class={"px-2 py-1 rounded text-xs font-semibold " <>
                     case quest.status do
                       "Completed" -> "bg-green-500"
                       "In Progress" -> "bg-yellow-500"
                       "Available" -> "bg-blue-500"
                     end}>
-                    <%= quest.status %>
+                    {quest.status}
                   </span>
                 </div>
                 <div class="mt-2">
                   <div class="flex justify-between text-sm mb-1">
                     <span>Progress</span>
-                    <span><%= quest.progress %></span>
+                    <span>{quest.progress}</span>
                   </div>
                   <%= if quest.status != "Completed" do %>
                     <div class="w-full bg-gray-600 rounded-full h-2">
-                      <% progress_percent = case quest.status do
-                        "In Progress" -> 40
-                        "Available" -> 0
-                        _ -> 100
-                      end %>
+                      <% progress_percent =
+                        case quest.status do
+                          "In Progress" -> 40
+                          "Available" -> 0
+                          _ -> 100
+                        end %>
                       <div
                         class="bg-green-500 h-2 rounded-full"
                         style={"width: #{progress_percent}%"}
@@ -556,7 +586,10 @@ defmodule ShardWeb.MudGameLive do
 
   defp map(assigns) do
     ~H"""
-    <div class="fixed inset-0 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div
+      class="fixed inset-0 flex items-center justify-center"
+      style="background-color: rgba(0, 0, 0, 0.5);"
+    >
       <div class="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div class="bg-gray-700 rounded-lg shadow-lg w-full mx-4 p-6" phx-click-away="hide_modal">
           <div class="flex justify-between items-center mb-4">
@@ -583,31 +616,30 @@ defmodule ShardWeb.MudGameLive do
             <div class="mt-6">
               <h4 class="text-lg font-semibold mb-2">Map Legend</h4>
 
-      <div class="bg-gray-800 rounded-lg p-4 mt-4">
-        <h4 class="text-lg font-semibold mb-3 text-center">Exits</h4>
+              <div class="bg-gray-800 rounded-lg p-4 mt-4">
+                <h4 class="text-lg font-semibold mb-3 text-center">Exits</h4>
 
-        <%= if @available_exits in [nil, []] do %>
-          <div class="text-center text-gray-400">No visible exits</div>
-        <% else %>
-          <div class="grid grid-cols-2 gap-2">
-            <%= for exit <- @available_exits do %>
-              <button
-                phx-click="click_exit"
-                phx-value-dir={exit.direction}
-                class="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-center border border-gray-600"
-                title={"Move " <> exit.direction}
-              >
-                <%= String.capitalize(exit.direction) %>
-              </button>
-            <% end %>
-          </div>
-        <% end %>
+                <%= if @available_exits in [nil, []] do %>
+                  <div class="text-center text-gray-400">No visible exits</div>
+                <% else %>
+                  <div class="grid grid-cols-2 gap-2">
+                    <%= for exit <- @available_exits do %>
+                      <button
+                        phx-click="click_exit"
+                        phx-value-dir={exit.direction}
+                        class="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-center border border-gray-600"
+                        title={"Move " <> exit.direction}
+                      >
+                        {String.capitalize(exit.direction)}
+                      </button>
+                    <% end %>
+                  </div>
+                <% end %>
 
-        <div class="text-xs text-gray-400 mt-2 text-center">
-          Tip: Arrow keys still work for movement.
-        </div>
-      </div>
-
+                <div class="text-xs text-gray-400 mt-2 text-center">
+                  Tip: Arrow keys still work for movement.
+                </div>
+              </div>
 
               <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
                 <!-- Room Types -->
@@ -640,7 +672,7 @@ defmodule ShardWeb.MudGameLive do
                   <span class="text-sm">Player</span>
                 </div>
 
-                <!-- Door Types -->
+    <!-- Door Types -->
                 <div class="col-span-2 md:col-span-3 mt-2">
                   <h5 class="text-sm font-semibold mb-1">Door Types:</h5>
                   <div class="grid grid-cols-2 md:grid-cols-3 gap-1 text-xs">
@@ -673,7 +705,11 @@ defmodule ShardWeb.MudGameLive do
                       <span>One-way</span>
                     </div>
                     <div class="flex items-center">
-                      <div class="w-3 h-0.5 bg-green-500 border-dashed border-t mr-1" style="border-top: 1.5px dashed #22c55e;"></div>
+                      <div
+                        class="w-3 h-0.5 bg-green-500 border-dashed border-t mr-1"
+                        style="border-top: 1.5px dashed #22c55e;"
+                      >
+                      </div>
                       <span>Diagonal</span>
                     </div>
                   </div>
@@ -682,7 +718,7 @@ defmodule ShardWeb.MudGameLive do
             </div>
 
             <div class="mt-4 text-center">
-              <p class="text-lg">Current Position: <%= format_position(@game_state.player_position) %></p>
+              <p class="text-lg">Current Position: {format_position(@game_state.player_position)}</p>
             </div>
           </div>
         </div>
@@ -693,7 +729,10 @@ defmodule ShardWeb.MudGameLive do
 
   defp settings(assigns) do
     ~H"""
-    <div class="fixed inset-0 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div
+      class="fixed inset-0 flex items-center justify-center"
+      style="background-color: rgba(0, 0, 0, 0.5);"
+    >
       <div class="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div class="bg-gray-700 rounded-lg shadow-lg w-full mx-4 p-6" phx-click-away="hide_modal">
           <div class="flex justify-between items-center mb-4">
@@ -710,8 +749,9 @@ defmodule ShardWeb.MudGameLive do
                 <div class="flex items-center justify-between">
                   <span>Fullscreen Mode</span>
                   <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" class="sr-only peer">
-                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <input type="checkbox" class="sr-only peer" />
+                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                    </div>
                   </label>
                 </div>
                 <div class="flex items-center justify-between">
@@ -730,15 +770,15 @@ defmodule ShardWeb.MudGameLive do
               <div class="space-y-3">
                 <div class="flex items-center justify-between">
                   <span>Master Volume</span>
-                  <input type="range" min="0" max="100" value="80" class="w-32">
+                  <input type="range" min="0" max="100" value="80" class="w-32" />
                 </div>
                 <div class="flex items-center justify-between">
                   <span>Music Volume</span>
-                  <input type="range" min="0" max="100" value="70" class="w-32">
+                  <input type="range" min="0" max="100" value="70" class="w-32" />
                 </div>
                 <div class="flex items-center justify-between">
                   <span>Sound Effects</span>
-                  <input type="range" min="0" max="100" value="90" class="w-32">
+                  <input type="range" min="0" max="100" value="90" class="w-32" />
                 </div>
               </div>
             </div>
@@ -749,25 +789,33 @@ defmodule ShardWeb.MudGameLive do
                 <div class="flex items-center justify-between">
                   <span>Enable Auto-Save</span>
                   <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" class="sr-only peer" checked>
-                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <input type="checkbox" class="sr-only peer" checked />
+                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                    </div>
                   </label>
                 </div>
                 <div class="flex items-center justify-between">
                   <span>Show Tutorial Tips</span>
                   <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" class="sr-only peer" checked>
-                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <input type="checkbox" class="sr-only peer" checked />
+                    <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                    </div>
                   </label>
                 </div>
               </div>
             </div>
 
             <div class="flex justify-end">
-              <button phx-click="hide_modal" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg mr-2">
+              <button
+                phx-click="hide_modal"
+                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg mr-2"
+              >
                 Save Settings
               </button>
-              <button phx-click="hide_modal" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg">
+              <button
+                phx-click="hide_modal"
+                class="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg"
+              >
                 Cancel
               </button>
             </div>
@@ -783,9 +831,9 @@ defmodule ShardWeb.MudGameLive do
     ~H"""
     <div class="w-12 h-12 bg-gray-600 border-2 border-gray-500 rounded-lg flex items-center justify-center relative hover:border-gray-400 transition-colors">
       <!-- Slot number -->
-      <span class="absolute top-0 left-1 text-xs text-gray-400"><%= @slot_number %></span>
+      <span class="absolute top-0 left-1 text-xs text-gray-400">{@slot_number}</span>
 
-      <!-- Item content -->
+    <!-- Item content -->
       <%= if @slot_data do %>
         <div class="text-center">
           <%= case @slot_data.type do %>
@@ -801,7 +849,7 @@ defmodule ShardWeb.MudGameLive do
         </div>
         <!-- Tooltip on hover (item name) -->
         <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
-          <%= @slot_data.name %>
+          {@slot_data.name}
         </div>
       <% else %>
         <!-- Empty slot -->
@@ -858,10 +906,11 @@ defmodule ShardWeb.MudGameLive do
       {response, updated_game_state} = process_command(trimmed_command, socket.assigns.game_state)
 
       # Add command and response to output
-      new_output = socket.assigns.terminal_state.output ++
-                   ["> #{trimmed_command}"] ++
-                   response ++
-                   [""]
+      new_output =
+        socket.assigns.terminal_state.output ++
+          ["> #{trimmed_command}"] ++
+          response ++
+          [""]
 
       terminal_state = %{
         output: new_output,
@@ -880,30 +929,38 @@ defmodule ShardWeb.MudGameLive do
     {:noreply, assign(socket, terminal_state: terminal_state)}
   end
 
-  #To calculate new player position on map
+  # To calculate new player position on map
   def calc_position(curr_position, key, _map_data) do
-  new_position = case key do
-    # Align with DB: north increases y, south decreases y
-    "ArrowUp" ->
-      {elem(curr_position, 0), elem(curr_position, 1) + 1}
-    "ArrowDown" ->
-      {elem(curr_position, 0), elem(curr_position, 1) - 1}
-    "ArrowRight" ->
-      {elem(curr_position, 0) + 1, elem(curr_position, 1)}
-    "ArrowLeft" ->
-      {elem(curr_position, 0) - 1, elem(curr_position, 1)}
-    "northeast" ->
-      {elem(curr_position, 0) + 1, elem(curr_position, 1) + 1}
-    "southeast" ->
-      {elem(curr_position, 0) + 1, elem(curr_position, 1) - 1}
-    "northwest" ->
-      {elem(curr_position, 0) - 1, elem(curr_position, 1) + 1}
-    "southwest" ->
-      {elem(curr_position, 0) - 1, elem(curr_position, 1) - 1}
+    new_position =
+      case key do
+        # Align with DB: north increases y, south decreases y
+        "ArrowUp" ->
+          {elem(curr_position, 0), elem(curr_position, 1) + 1}
 
-      _other  ->
-        curr_position
-    end
+        "ArrowDown" ->
+          {elem(curr_position, 0), elem(curr_position, 1) - 1}
+
+        "ArrowRight" ->
+          {elem(curr_position, 0) + 1, elem(curr_position, 1)}
+
+        "ArrowLeft" ->
+          {elem(curr_position, 0) - 1, elem(curr_position, 1)}
+
+        "northeast" ->
+          {elem(curr_position, 0) + 1, elem(curr_position, 1) + 1}
+
+        "southeast" ->
+          {elem(curr_position, 0) + 1, elem(curr_position, 1) - 1}
+
+        "northwest" ->
+          {elem(curr_position, 0) - 1, elem(curr_position, 1) + 1}
+
+        "southwest" ->
+          {elem(curr_position, 0) - 1, elem(curr_position, 1) - 1}
+
+        _other ->
+          curr_position
+      end
 
     # Check if the movement is valid (room exists or door connection exists)
     if is_valid_movement?(curr_position, new_position, key) do
@@ -917,8 +974,10 @@ defmodule ShardWeb.MudGameLive do
   defp is_valid_position?({x, y}, _map_data) do
     # Check if there's a room at this position
     case GameMap.get_room_by_coordinates(x, y) do
-      nil -> false  # No room exists at this position
-      _room -> true  # Room exists, movement is valid
+      # No room exists at this position
+      nil -> false
+      # Room exists, movement is valid
+      _room -> true
     end
   end
 
@@ -931,39 +990,48 @@ defmodule ShardWeb.MudGameLive do
     current_room = GameMap.get_room_by_coordinates(curr_x, curr_y)
 
     case current_room do
-      nil -> false  # No current room, can't move
+      # No current room, can't move
+      nil ->
+        false
+
       room ->
         # Check if there's a door in the specified direction from current room
-        direction_str = case direction do
-          "ArrowUp" -> "north"
-          "ArrowDown" -> "south"
-          "ArrowRight" -> "east"
-          "ArrowLeft" -> "west"
-          "northeast" -> "northeast"
-          "southeast" -> "southeast"
-          "northwest" -> "northwest"
-          "southwest" -> "southwest"
-          _ -> nil
-        end
+        direction_str =
+          case direction do
+            "ArrowUp" -> "north"
+            "ArrowDown" -> "south"
+            "ArrowRight" -> "east"
+            "ArrowLeft" -> "west"
+            "northeast" -> "northeast"
+            "southeast" -> "southeast"
+            "northwest" -> "northwest"
+            "southwest" -> "southwest"
+            _ -> nil
+          end
 
         if direction_str do
           door = GameMap.get_door_in_direction(room.id, direction_str)
+
           case door do
             nil ->
               # No door, check if target position has a room
               is_valid_position?(new_pos, nil)
+
             door ->
               # Check door accessibility based on type and status
               cond do
                 door.is_locked ->
                   IO.puts("Movement blocked: The #{door.door_type} is locked")
                   false
+
                 door.door_type == "secret" ->
                   IO.puts("Movement blocked: Secret passage not discovered")
                   false
+
                 true ->
                   # Door exists and is accessible, check if it leads to target position
                   target_room = GameMap.get_room!(door.to_room_id)
+
                   if target_room.x_coordinate == new_x and target_room.y_coordinate == new_y do
                     IO.puts("Moving through #{door.door_type} door")
                     true
@@ -984,11 +1052,11 @@ defmodule ShardWeb.MudGameLive do
     <div class="bg-gray-700 rounded-lg p-4 shadow-xl">
       <h2 class="text-xl font-semibold mb-4 text-center">Player Stats</h2>
 
-      <!-- Health Bar -->
+    <!-- Health Bar -->
       <div class="mb-3">
         <div class="flex justify-between text-sm mb-1">
           <span class="text-red-400">Health</span>
-          <span class="text-gray-300"><%= @stats.health %>/<%= @stats.max_health %></span>
+          <span class="text-gray-300">{@stats.health}/{@stats.max_health}</span>
         </div>
         <div class="w-full bg-gray-600 rounded-full h-3">
           <div
@@ -999,11 +1067,11 @@ defmodule ShardWeb.MudGameLive do
         </div>
       </div>
 
-      <!-- Stamina Bar -->
+    <!-- Stamina Bar -->
       <div class="mb-3">
         <div class="flex justify-between text-sm mb-1">
           <span class="text-yellow-400">Stamina</span>
-          <span class="text-gray-300"><%= @stats.stamina %>/<%= @stats.max_stamina %></span>
+          <span class="text-gray-300">{@stats.stamina}/{@stats.max_stamina}</span>
         </div>
         <div class="w-full bg-gray-600 rounded-full h-3">
           <div
@@ -1014,11 +1082,11 @@ defmodule ShardWeb.MudGameLive do
         </div>
       </div>
 
-      <!-- Mana Bar -->
+    <!-- Mana Bar -->
       <div class="mb-3">
         <div class="flex justify-between text-sm mb-1">
           <span class="text-blue-400">Mana</span>
-          <span class="text-gray-300"><%= @stats.mana %>/<%= @stats.max_mana %></span>
+          <span class="text-gray-300">{@stats.mana}/{@stats.max_mana}</span>
         </div>
         <div class="w-full bg-gray-600 rounded-full h-3">
           <div
@@ -1029,7 +1097,7 @@ defmodule ShardWeb.MudGameLive do
         </div>
       </div>
 
-      <!-- Hotbar -->
+    <!-- Hotbar -->
       <div class="mt-4">
         <h3 class="text-lg font-semibold mb-2 text-center">Hotbar</h3>
         <div class="flex justify-center space-x-2">
@@ -1052,28 +1120,31 @@ defmodule ShardWeb.MudGameLive do
     doors = Repo.all(GameMap.Door) |> Repo.preload([:from_room, :to_room])
 
     # Filter out rooms without coordinates
-    valid_rooms = Enum.filter(rooms, fn room ->
-      room.x_coordinate != nil and room.y_coordinate != nil
-    end)
+    valid_rooms =
+      Enum.filter(rooms, fn room ->
+        room.x_coordinate != nil and room.y_coordinate != nil
+      end)
 
     # Filter out doors without valid room connections
-    valid_doors = Enum.filter(doors, fn door ->
-      door.from_room && door.to_room &&
-      door.from_room.x_coordinate != nil && door.from_room.y_coordinate != nil &&
-      door.to_room.x_coordinate != nil && door.to_room.y_coordinate != nil
-    end)
+    valid_doors =
+      Enum.filter(doors, fn door ->
+        door.from_room && door.to_room &&
+          door.from_room.x_coordinate != nil && door.from_room.y_coordinate != nil &&
+          door.to_room.x_coordinate != nil && door.to_room.y_coordinate != nil
+      end)
 
     # Calculate bounds and scaling for the minimap
     {bounds, scale_factor} = calculate_minimap_bounds(valid_rooms)
 
-    assigns = assign(assigns,
-      rooms: valid_rooms,
-      doors: valid_doors,
-      bounds: bounds,
-      scale_factor: scale_factor,
-      all_rooms_count: length(rooms),
-      all_doors_count: length(doors)
-    )
+    assigns =
+      assign(assigns,
+        rooms: valid_rooms,
+        doors: valid_doors,
+        bounds: bounds,
+        scale_factor: scale_factor,
+        all_rooms_count: length(rooms),
+        all_doors_count: length(doors)
+      )
 
     ~H"""
     <div class="bg-gray-700 rounded-lg p-4 shadow-xl">
@@ -1085,7 +1156,7 @@ defmodule ShardWeb.MudGameLive do
             <.door_line door={door} bounds={@bounds} scale_factor={@scale_factor} />
           <% end %>
 
-          <!-- Render rooms as circles -->
+    <!-- Render rooms as circles -->
           <%= for room <- @rooms do %>
             <.room_circle
               room={room}
@@ -1095,7 +1166,7 @@ defmodule ShardWeb.MudGameLive do
             />
           <% end %>
 
-          <!-- Show player position even if no room exists there -->
+    <!-- Show player position even if no room exists there -->
           <%= if @player_position not in Enum.map(@rooms, &{&1.x_coordinate, &1.y_coordinate}) do %>
             <.player_marker
               position={@player_position}
@@ -1106,10 +1177,9 @@ defmodule ShardWeb.MudGameLive do
         </svg>
       </div>
       <div class="mt-4 text-center text-sm text-gray-300">
-        <p>Player Position: <%= format_position(@player_position) %></p>
+        <p>Player Position: {format_position(@player_position)}</p>
         <p class="text-xs mt-1">
-          Showing: <%= length(@rooms) %>/<%= @all_rooms_count %> rooms |
-          <%= length(@doors) %>/<%= @all_doors_count %> doors
+          Showing: {length(@rooms)}/{@all_rooms_count} rooms | {length(@doors)}/{@all_doors_count} doors
         </p>
         <%= if length(@rooms) == 0 do %>
           <p class="text-xs text-yellow-400 mt-1">No rooms with coordinates found in database</p>
@@ -1123,38 +1193,47 @@ defmodule ShardWeb.MudGameLive do
   def room_circle(assigns) do
     return_early = assigns.room.x_coordinate == nil or assigns.room.y_coordinate == nil
 
-    assigns = if return_early do
-      assign(assigns, :skip_render, true)
-    else
-      # Calculate position within the minimap bounds
-      {x_pos, y_pos} = calculate_minimap_position(
-        {assigns.room.x_coordinate, assigns.room.y_coordinate},
-        assigns.bounds,
-        assigns.scale_factor
-      )
+    assigns =
+      if return_early do
+        assign(assigns, :skip_render, true)
+      else
+        # Calculate position within the minimap bounds
+        {x_pos, y_pos} =
+          calculate_minimap_position(
+            {assigns.room.x_coordinate, assigns.room.y_coordinate},
+            assigns.bounds,
+            assigns.scale_factor
+          )
 
-      # Define colors for rooms based on room type
-      {fill_color, stroke_color} = case assigns.room.room_type do
-        "safe_zone" -> {"#10b981", "#34d399"}      # Green for safe zones
-        "shop" -> {"#f59e0b", "#fbbf24"}           # Orange for shops
-        "dungeon" -> {"#7c2d12", "#dc2626"}        # Dark red for dungeons
-        "treasure_room" -> {"#eab308", "#facc15"}  # Gold for treasure rooms
-        "trap_room" -> {"#991b1b", "#ef4444"}      # Red for trap rooms
-        _ -> {"#3b82f6", "#60a5fa"}                # Blue for standard rooms
+        # Define colors for rooms based on room type
+        {fill_color, stroke_color} =
+          case assigns.room.room_type do
+            # Green for safe zones
+            "safe_zone" -> {"#10b981", "#34d399"}
+            # Orange for shops
+            "shop" -> {"#f59e0b", "#fbbf24"}
+            # Dark red for dungeons
+            "dungeon" -> {"#7c2d12", "#dc2626"}
+            # Gold for treasure rooms
+            "treasure_room" -> {"#eab308", "#facc15"}
+            # Red for trap rooms
+            "trap_room" -> {"#991b1b", "#ef4444"}
+            # Blue for standard rooms
+            _ -> {"#3b82f6", "#60a5fa"}
+          end
+
+        player_stroke = if assigns.is_player, do: "#ef4444", else: stroke_color
+        player_width = if assigns.is_player, do: "3", else: "1"
+
+        assign(assigns,
+          x_pos: x_pos,
+          y_pos: y_pos,
+          fill_color: fill_color,
+          stroke_color: player_stroke,
+          stroke_width: player_width,
+          skip_render: false
+        )
       end
-
-      player_stroke = if assigns.is_player, do: "#ef4444", else: stroke_color
-      player_width = if assigns.is_player, do: "3", else: "1"
-
-      assign(assigns,
-        x_pos: x_pos,
-        y_pos: y_pos,
-        fill_color: fill_color,
-        stroke_color: player_stroke,
-        stroke_width: player_width,
-        skip_render: false
-      )
-    end
 
     ~H"""
     <%= unless @skip_render do %>
@@ -1166,7 +1245,11 @@ defmodule ShardWeb.MudGameLive do
         stroke={@stroke_color}
         stroke-width={@stroke_width}
       >
-        <title><%= @room.name || "Room #{@room.id}" %> (<%= @room.x_coordinate %>, <%= @room.y_coordinate %>) - <%= String.capitalize(@room.room_type || "standard") %></title>
+        <title>
+          {@room.name || "Room #{@room.id}"} ({@room.x_coordinate}, {@room.y_coordinate}) - {String.capitalize(
+            @room.room_type || "standard"
+          )}
+        </title>
       </circle>
     <% end %>
     """
@@ -1178,58 +1261,77 @@ defmodule ShardWeb.MudGameLive do
     from_room = assigns.door.from_room
     to_room = assigns.door.to_room
 
-    return_early = from_room == nil or to_room == nil or
-                   from_room.x_coordinate == nil or from_room.y_coordinate == nil or
-                   to_room.x_coordinate == nil or to_room.y_coordinate == nil
+    return_early =
+      from_room == nil or to_room == nil or
+        from_room.x_coordinate == nil or from_room.y_coordinate == nil or
+        to_room.x_coordinate == nil or to_room.y_coordinate == nil
 
-    assigns = if return_early do
-      assign(assigns, :skip_render, true)
-    else
-      {x1, y1} = calculate_minimap_position(
-        {from_room.x_coordinate, from_room.y_coordinate},
-        assigns.bounds,
-        assigns.scale_factor
-      )
-      {x2, y2} = calculate_minimap_position(
-        {to_room.x_coordinate, to_room.y_coordinate},
-        assigns.bounds,
-        assigns.scale_factor
-      )
+    assigns =
+      if return_early do
+        assign(assigns, :skip_render, true)
+      else
+        {x1, y1} =
+          calculate_minimap_position(
+            {from_room.x_coordinate, from_room.y_coordinate},
+            assigns.bounds,
+            assigns.scale_factor
+          )
 
-      # Check if this is a one-way door (no return door in opposite direction)
-      is_one_way = is_one_way_door?(assigns.door)
+        {x2, y2} =
+          calculate_minimap_position(
+            {to_room.x_coordinate, to_room.y_coordinate},
+            assigns.bounds,
+            assigns.scale_factor
+          )
 
-      # Determine if this is a diagonal door
-      is_diagonal = assigns.door.direction in ["northeast", "northwest", "southeast", "southwest"]
+        # Check if this is a one-way door (no return door in opposite direction)
+        is_one_way = is_one_way_door?(assigns.door)
 
-      # Color scheme based on door type and status
-      stroke_color = cond do
-        assigns.door.is_locked -> "#dc2626"  # Red for locked doors
-        is_one_way -> "#ec4899"  # Pink for one-way doors
-        assigns.door.door_type == "portal" -> "#8b5cf6"  # Purple for portals
-        assigns.door.door_type == "gate" -> "#d97706"  # Orange for gates
-        assigns.door.door_type == "locked_gate" -> "#991b1b"  # Dark red for locked gates
-        assigns.door.door_type == "secret" -> "#6b7280"  # Gray for secret doors
-        assigns.door.key_required && assigns.door.key_required != "" -> "#f59e0b"  # Orange for doors requiring keys
-        true -> "#22c55e"  # Green for standard doors
+        # Determine if this is a diagonal door
+        is_diagonal =
+          assigns.door.direction in ["northeast", "northwest", "southeast", "southwest"]
+
+        # Color scheme based on door type and status
+        stroke_color =
+          cond do
+            # Red for locked doors
+            assigns.door.is_locked -> "#dc2626"
+            # Pink for one-way doors
+            is_one_way -> "#ec4899"
+            # Purple for portals
+            assigns.door.door_type == "portal" -> "#8b5cf6"
+            # Orange for gates
+            assigns.door.door_type == "gate" -> "#d97706"
+            # Dark red for locked gates
+            assigns.door.door_type == "locked_gate" -> "#991b1b"
+            # Gray for secret doors
+            assigns.door.door_type == "secret" -> "#6b7280"
+            # Orange for doors requiring keys
+            assigns.door.key_required && assigns.door.key_required != "" -> "#f59e0b"
+            # Green for standard doors
+            true -> "#22c55e"
+          end
+
+        # Adjust stroke width and style for diagonal doors
+        stroke_width = if is_diagonal, do: "1.5", else: "2"
+        stroke_dasharray = if is_diagonal, do: "3,2", else: nil
+
+        door_name =
+          assigns.door.name || "#{String.capitalize(assigns.door.door_type || "standard")} Door"
+
+        assign(assigns,
+          x1: x1,
+          y1: y1,
+          x2: x2,
+          y2: y2,
+          stroke_color: stroke_color,
+          stroke_width: stroke_width,
+          stroke_dasharray: stroke_dasharray,
+          door_name: door_name,
+          is_diagonal: is_diagonal,
+          skip_render: false
+        )
       end
-
-      # Adjust stroke width and style for diagonal doors
-      stroke_width = if is_diagonal, do: "1.5", else: "2"
-      stroke_dasharray = if is_diagonal, do: "3,2", else: nil
-
-      door_name = assigns.door.name || "#{String.capitalize(assigns.door.door_type || "standard")} Door"
-
-      assign(assigns,
-        x1: x1, y1: y1, x2: x2, y2: y2,
-        stroke_color: stroke_color,
-        stroke_width: stroke_width,
-        stroke_dasharray: stroke_dasharray,
-        door_name: door_name,
-        is_diagonal: is_diagonal,
-        skip_render: false
-      )
-    end
 
     ~H"""
     <%= unless @skip_render do %>
@@ -1243,7 +1345,11 @@ defmodule ShardWeb.MudGameLive do
         stroke-dasharray={@stroke_dasharray}
         opacity="0.8"
       >
-        <title><%= @door_name %> (<%= @door.direction %>) - <%= String.capitalize(@door.door_type || "standard") %><%= if @is_diagonal, do: " (diagonal)", else: "" %></title>
+        <title>
+          {@door_name} ({@door.direction}) - {String.capitalize(@door.door_type || "standard")}{if @is_diagonal,
+            do: " (diagonal)",
+            else: ""}
+        </title>
       </line>
     <% end %>
     """
@@ -1258,16 +1364,26 @@ defmodule ShardWeb.MudGameLive do
         <h2 class="text-green-400 font-mono text-sm">MUD Terminal</h2>
       </div>
 
-      <!-- Terminal Output -->
-      <div class="flex-1 p-4 overflow-y-auto font-mono text-sm text-green-400 bg-black" id="terminal-output" phx-hook="TerminalScroll">
+    <!-- Terminal Output -->
+      <div
+        class="flex-1 p-4 overflow-y-auto font-mono text-sm text-green-400 bg-black"
+        id="terminal-output"
+        phx-hook="TerminalScroll"
+      >
         <%= for line <- @terminal_state.output do %>
-          <div class="whitespace-pre-wrap"><%= line %></div>
+          <div class="whitespace-pre-wrap">{line}</div>
         <% end %>
       </div>
 
-      <!-- Command Input -->
+    <!-- Command Input -->
       <div class="p-4 border-t border-gray-600 bg-gray-900 rounded-b-lg">
-        <.form for={%{}} as={:command} phx-submit="submit_command" phx-change="update_command" class="flex">
+        <.form
+          for={%{}}
+          as={:command}
+          phx-submit="submit_command"
+          phx-change="update_command"
+          class="flex"
+        >
           <span class="text-green-400 font-mono mr-2">></span>
           <input
             type="text"
@@ -1306,6 +1422,7 @@ defmodule ShardWeb.MudGameLive do
           "  Shortcuts: n/s/e/w/ne/se/nw/sw",
           "  help - Show this help message"
         ]
+
         {response, game_state}
 
       "attack" ->
@@ -1328,63 +1445,93 @@ defmodule ShardWeb.MudGameLive do
         # Get room from database
         room = GameMap.get_room_by_coordinates(x, y)
         # Build room description - always use predetermined descriptions for tutorial terrain
-        room_description = if game_state.map_id == "tutorial_terrain" do
-          # Provide tutorial-specific descriptions based on coordinates
-          case {x, y} do
-            {0, 0} -> "Tutorial Starting Chamber\nYou are in a small stone chamber with rough-hewn walls. Ancient torches mounted on iron brackets cast flickering light across the weathered stones. This appears to be the beginning of your adventure. You can see worn footprints in the dust, suggesting others have passed this way before."
+        room_description =
+          if game_state.map_id == "tutorial_terrain" do
+            # Provide tutorial-specific descriptions based on coordinates
+            case {x, y} do
+              {0, 0} ->
+                "Tutorial Starting Chamber\nYou are in a small stone chamber with rough-hewn walls. Ancient torches mounted on iron brackets cast flickering light across the weathered stones. This appears to be the beginning of your adventure. You can see worn footprints in the dust, suggesting others have passed this way before."
 
-            {1, 0} -> "Eastern Alcove\nA narrow alcove extends eastward from the starting chamber. The walls here are carved with simple symbols that seem to glow faintly in the torchlight. The air carries a hint of something ancient and mysterious."
+              {1, 0} ->
+                "Eastern Alcove\nA narrow alcove extends eastward from the starting chamber. The walls here are carved with simple symbols that seem to glow faintly in the torchlight. The air carries a hint of something ancient and mysterious."
 
-            {0, 1} -> "Southern Passage\nA short passage leads south from the starting chamber. The stone floor is worn smooth by countless footsteps. Moisture drips steadily from somewhere in the darkness ahead."
+              {0, 1} ->
+                "Southern Passage\nA short passage leads south from the starting chamber. The stone floor is worn smooth by countless footsteps. Moisture drips steadily from somewhere in the darkness ahead."
 
-            {1, 1} -> "Corner Junction\nYou stand at a junction where two passages meet. The walls here show signs of careful construction, with fitted stones and mortar still holding strong after unknown years. A cool breeze flows through the intersection."
+              {1, 1} ->
+                "Corner Junction\nYou stand at a junction where two passages meet. The walls here show signs of careful construction, with fitted stones and mortar still holding strong after unknown years. A cool breeze flows through the intersection."
 
-            {5, 5} -> "Central Treasure Chamber\nYou stand in a magnificent circular chamber with a high vaulted ceiling. Ornate pillars support graceful arches, and in the center sits an elaborate treasure chest made of dark wood bound with brass. The chest gleams with an inner light, and precious gems are scattered around its base."
+              {5, 5} ->
+                "Central Treasure Chamber\nYou stand in a magnificent circular chamber with a high vaulted ceiling. Ornate pillars support graceful arches, and in the center sits an elaborate treasure chest made of dark wood bound with brass. The chest gleams with an inner light, and precious gems are scattered around its base."
 
-            {2, 2} -> "Training Grounds\nThis rectangular chamber appears to have been used for combat training. Wooden practice dummies stand against the walls, and the floor is marked with scuff marks from countless sparring sessions. Weapon racks line the eastern wall."
+              {2, 2} ->
+                "Training Grounds\nThis rectangular chamber appears to have been used for combat training. Wooden practice dummies stand against the walls, and the floor is marked with scuff marks from countless sparring sessions. Weapon racks line the eastern wall."
 
-            {3, 3} -> "Meditation Garden\nA peaceful underground garden with carefully tended moss growing in geometric patterns on the floor. A small fountain in the center provides the gentle sound of flowing water. The air here feels calm and restorative."
+              {3, 3} ->
+                "Meditation Garden\nA peaceful underground garden with carefully tended moss growing in geometric patterns on the floor. A small fountain in the center provides the gentle sound of flowing water. The air here feels calm and restorative."
 
-            {4, 4} -> "Library Ruins\nThe remains of what was once a grand library. Broken shelves line the walls, and scattered parchments lie across the floor. A few intact books rest on a reading table, their pages yellowed with age but still legible."
+              {4, 4} ->
+                "Library Ruins\nThe remains of what was once a grand library. Broken shelves line the walls, and scattered parchments lie across the floor. A few intact books rest on a reading table, their pages yellowed with age but still legible."
 
-            {6, 6} -> "Armory\nA well-organized armory with weapons and armor displayed on stands and hanging from hooks. Most of the equipment shows signs of age, but some pieces still gleam with careful maintenance. A forge in the corner appears recently used."
+              {6, 6} ->
+                "Armory\nA well-organized armory with weapons and armor displayed on stands and hanging from hooks. Most of the equipment shows signs of age, but some pieces still gleam with careful maintenance. A forge in the corner appears recently used."
 
-            {7, 7} -> "Crystal Cavern\nA natural cavern where the walls are embedded with glowing crystals that provide a soft, blue-white light. The crystals hum with a barely audible resonance, and the air shimmers with magical energy."
+              {7, 7} ->
+                "Crystal Cavern\nA natural cavern where the walls are embedded with glowing crystals that provide a soft, blue-white light. The crystals hum with a barely audible resonance, and the air shimmers with magical energy."
 
-            {8, 8} -> "Underground Lake\nYou stand on the shore of a vast underground lake. The water is crystal clear and so still it perfectly reflects the cavern ceiling above. Strange fish with luminescent scales can be seen swimming in the depths."
+              {8, 8} ->
+                "Underground Lake\nYou stand on the shore of a vast underground lake. The water is crystal clear and so still it perfectly reflects the cavern ceiling above. Strange fish with luminescent scales can be seen swimming in the depths."
 
-            {9, 9} -> "Ancient Shrine\nA small shrine dedicated to forgotten deities. Stone statues stand in alcoves around the room, their faces worn smooth by time. An altar in the center holds offerings left by previous visitors - coins, flowers, and small trinkets."
+              {9, 9} ->
+                "Ancient Shrine\nA small shrine dedicated to forgotten deities. Stone statues stand in alcoves around the room, their faces worn smooth by time. An altar in the center holds offerings left by previous visitors - coins, flowers, and small trinkets."
 
-            _ ->
-              # Check tile type for other positions
-              if y >= 0 and y < length(game_state.map_data) do
-                row = Enum.at(game_state.map_data, y)
-                if x >= 0 and x < length(row) do
-                  tile = Enum.at(row, x)
-                  case tile do
-                    0 -> "Solid Stone Wall\nYou face an impenetrable wall of fitted stone blocks. The craftsmanship is excellent, with no gaps or weaknesses visible. There's no passage here."
-                    1 -> "Stone Corridor\nYou are in a well-constructed stone corridor. The walls are made of carefully fitted blocks, and the floor is worn smooth by the passage of many feet over the years. Torch brackets line the walls, though most are empty. The air is cool and carries the faint scent of old stone and distant moisture."
-                    2 -> "Underground Pool\nYou stand beside a clear underground pool fed by a natural spring. The water is deep and perfectly still, reflecting the ceiling above like a mirror. Small ripples occasionally disturb the surface as drops fall from stalactites overhead. The air here is humid and fresh."
-                    3 -> "Treasure Alcove\nA small alcove has been carved into the stone wall here. The niche shows signs of having once held something valuable - there are mounting brackets and a small pedestal. Scratches on the floor suggest heavy objects were once moved in and out of this space."
-                    _ -> "Mystical Chamber\nYou are in a chamber that defies easy description. The very air seems to shimmer with arcane energy, and the walls appear to shift slightly when you're not looking directly at them. Strange symbols carved into the stone pulse with a faint, otherworldly light."
+              _ ->
+                # Check tile type for other positions
+                if y >= 0 and y < length(game_state.map_data) do
+                  row = Enum.at(game_state.map_data, y)
+
+                  if x >= 0 and x < length(row) do
+                    tile = Enum.at(row, x)
+
+                    case tile do
+                      0 ->
+                        "Solid Stone Wall\nYou face an impenetrable wall of fitted stone blocks. The craftsmanship is excellent, with no gaps or weaknesses visible. There's no passage here."
+
+                      1 ->
+                        "Stone Corridor\nYou are in a well-constructed stone corridor. The walls are made of carefully fitted blocks, and the floor is worn smooth by the passage of many feet over the years. Torch brackets line the walls, though most are empty. The air is cool and carries the faint scent of old stone and distant moisture."
+
+                      2 ->
+                        "Underground Pool\nYou stand beside a clear underground pool fed by a natural spring. The water is deep and perfectly still, reflecting the ceiling above like a mirror. Small ripples occasionally disturb the surface as drops fall from stalactites overhead. The air here is humid and fresh."
+
+                      3 ->
+                        "Treasure Alcove\nA small alcove has been carved into the stone wall here. The niche shows signs of having once held something valuable - there are mounting brackets and a small pedestal. Scratches on the floor suggest heavy objects were once moved in and out of this space."
+
+                      _ ->
+                        "Mystical Chamber\nYou are in a chamber that defies easy description. The very air seems to shimmer with arcane energy, and the walls appear to shift slightly when you're not looking directly at them. Strange symbols carved into the stone pulse with a faint, otherworldly light."
+                    end
+                  else
+                    "The Void\nYou have somehow moved beyond the boundaries of the known world. Reality becomes uncertain here, and the very ground beneath your feet feels insubstantial. Wisps of strange energy drift through the air, and distant sounds echo from nowhere."
                   end
                 else
                   "The Void\nYou have somehow moved beyond the boundaries of the known world. Reality becomes uncertain here, and the very ground beneath your feet feels insubstantial. Wisps of strange energy drift through the air, and distant sounds echo from nowhere."
                 end
-              else
-                "The Void\nYou have somehow moved beyond the boundaries of the known world. Reality becomes uncertain here, and the very ground beneath your feet feels insubstantial. Wisps of strange energy drift through the air, and distant sounds echo from nowhere."
-              end
+            end
+          else
+            # For non-tutorial maps, use room data from database if available
+            case room do
+              nil ->
+                "Empty Space\nYou are in an empty area with no defined room. The ground beneath your feet feels uncertain, as if this space exists between the cracks of reality."
+
+              room ->
+                room_title = room.name || "Unnamed Room"
+
+                room_desc =
+                  room.description ||
+                    "A mysterious room with no particular features. The walls are bare stone, and the air is still and quiet."
+
+                "#{room_title}\n#{room_desc}"
+            end
           end
-        else
-          # For non-tutorial maps, use room data from database if available
-          case room do
-            nil -> "Empty Space\nYou are in an empty area with no defined room. The ground beneath your feet feels uncertain, as if this space exists between the cracks of reality."
-            room ->
-              room_title = room.name || "Unnamed Room"
-              room_desc = room.description || "A mysterious room with no particular features. The walls are bare stone, and the air is still and quiet."
-              "#{room_title}\n#{room_desc}"
-          end
-        end
 
         # Check for NPCs at current location
         npcs_here = get_npcs_at_location(x, y, game_state.map_id)
@@ -1393,19 +1540,23 @@ defmodule ShardWeb.MudGameLive do
 
         # Add NPC descriptions if any are present
         if length(npcs_here) > 0 do
-          description_lines = description_lines ++ [""]  # Empty line for spacing
+          # Empty line for spacing
+          description_lines = description_lines ++ [""]
 
           # Add each NPC with their description
-          npc_descriptions = Enum.map(npcs_here, fn npc ->
-            npc_name = Map.get(npc, :name) || "Unknown NPC"
-            npc_desc = Map.get(npc, :description) || "They look at you with interest."
-            "#{npc_name} is here.\n#{npc_desc}"
-          end)
+          npc_descriptions =
+            Enum.map(npcs_here, fn npc ->
+              npc_name = Map.get(npc, :name) || "Unknown NPC"
+              npc_desc = Map.get(npc, :description) || "They look at you with interest."
+              "#{npc_name} is here.\n#{npc_desc}"
+            end)
+
           description_lines = description_lines ++ npc_descriptions
         end
 
         # Add available exits information
         exits = get_available_exits(x, y, room)
+
         if length(exits) > 0 do
           description_lines = description_lines ++ [""]
           exit_text = "Exits: " <> Enum.join(exits, ", ")
@@ -1414,8 +1565,12 @@ defmodule ShardWeb.MudGameLive do
           description_lines = description_lines ++ ["", "There are no obvious exits."]
         end
 
-        #To see if there are monsters
-        monsters = Enum.filter(game_state.monsters, fn value -> value[:position] == game_state.player_position end)
+        # To see if there are monsters
+        monsters =
+          Enum.filter(game_state.monsters, fn value ->
+            value[:position] == game_state.player_position
+          end)
+
         monster_count = Enum.count(monsters)
 
         description_lines = description_lines ++ case monster_count do
@@ -1428,12 +1583,14 @@ defmodule ShardWeb.MudGameLive do
 
       "stats" ->
         stats = game_state.player_stats
+
         response = [
           "Character Stats:",
           "  Health: #{stats.health}/#{stats.max_health}",
           "  Stamina: #{stats.stamina}/#{stats.max_stamina}",
           "  Mana: #{stats.mana}/#{stats.max_mana}"
         ]
+
         {response, game_state}
 
       "position" ->
@@ -1448,12 +1605,14 @@ defmodule ShardWeb.MudGameLive do
         npcs_here = get_npcs_at_location(x, y, game_state.map_id)
 
         if length(npcs_here) > 0 do
-          response = ["NPCs in this area:"] ++
-            Enum.flat_map(npcs_here, fn npc ->
-              npc_name = Map.get(npc, :name) || "Unknown NPC"
-              npc_desc = Map.get(npc, :description) || "They look at you with interest."
-              ["", "#{npc_name}:", npc_desc]
-            end)
+          response =
+            ["NPCs in this area:"] ++
+              Enum.flat_map(npcs_here, fn npc ->
+                npc_name = Map.get(npc, :name) || "Unknown NPC"
+                npc_desc = Map.get(npc, :description) || "They look at you with interest."
+                ["", "#{npc_name}:", npc_desc]
+              end)
+
           {response, game_state}
         else
           {["There are no NPCs in this area."], game_state}
@@ -1494,18 +1653,22 @@ defmodule ShardWeb.MudGameLive do
         case parse_talk_command(command) do
           {:ok, npc_name} ->
             execute_talk_command(game_state, npc_name)
+
           :error ->
             # Check if it's a quest command
             case parse_quest_command(command) do
               {:ok, npc_name} ->
                 execute_quest_command(game_state, npc_name)
+
               :error ->
                 # Check if it's a deliver_quest command
                 case parse_deliver_quest_command(command) do
                   {:ok, npc_name} ->
                     execute_deliver_quest_command(game_state, npc_name)
+
                   :error ->
-                    {["Unknown command: '#{command}'. Type 'help' for available commands."], game_state}
+                    {["Unknown command: '#{command}'. Type 'help' for available commands."],
+                     game_state}
                 end
             end
         end
@@ -1531,19 +1694,20 @@ defmodule ShardWeb.MudGameLive do
       response = ["You cannot move in that direction. There's no room or passage that way."]
       {response, game_state}
     else
-      direction_name = case direction do
-        "ArrowUp" -> "north"
-        "ArrowDown" -> "south"
-        "ArrowRight" -> "east"
-        "ArrowLeft" -> "west"
-        "northeast" -> "northeast"
-        "southeast" -> "southeast"
-        "northwest" -> "northwest"
-        "southwest" -> "southwest"
-      end
+      direction_name =
+        case direction do
+          "ArrowUp" -> "north"
+          "ArrowDown" -> "south"
+          "ArrowRight" -> "east"
+          "ArrowLeft" -> "west"
+          "northeast" -> "northeast"
+          "southeast" -> "southeast"
+          "northwest" -> "northwest"
+          "southwest" -> "southwest"
+        end
 
       # Update game state with new position
-      #updated_game_state = %{game_state | player_position: new_pos}
+      # updated_game_state = %{game_state | player_position: new_pos}
 
       # Check for NPCs at the new location
       {new_x, new_y} = new_pos
@@ -1559,7 +1723,7 @@ defmodule ShardWeb.MudGameLive do
         []
       end
 
-      #To see if there are monsters
+      # To see if there are monsters
       monsters = Enum.filter(game_state.monsters, fn value -> value[:position] == new_pos end)
       monster_count = Enum.count(monsters)
 
@@ -1596,7 +1760,7 @@ defmodule ShardWeb.MudGameLive do
       class="w-full flex items-center justify-start gap-3 p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
     >
       <.icon name={@icon} class="w-5 h-5" />
-      <span><%= @text %></span>
+      <span>{@text}</span>
     </button>
     """
   end
@@ -1611,32 +1775,47 @@ defmodule ShardWeb.MudGameLive do
     exits = []
 
     # If we have a room, check for doors
-    exits = if room do
-      # Get doors from this room using Ecto query since the function might not exist
-      doors = from(d in GameMap.Door, where: d.from_room_id == ^room.id)
-              |> Repo.all()
-      door_exits = Enum.map(doors, fn door ->
-        cond do
-          door.door_type == "secret" and door.is_locked -> nil  # Hidden secret doors
-          door.is_locked -> "#{door.direction} (locked)"
-          door.key_required && door.key_required != "" -> "#{door.direction} (key required)"
-          true -> door.direction
-        end
-      end)
-      |> Enum.filter(& &1 != nil)
+    exits =
+      if room do
+        # Get doors from this room using Ecto query since the function might not exist
+        doors =
+          from(d in GameMap.Door, where: d.from_room_id == ^room.id)
+          |> Repo.all()
 
-      exits ++ door_exits
-    else
-      exits
-    end
+        door_exits =
+          Enum.map(doors, fn door ->
+            cond do
+              # Hidden secret doors
+              door.door_type == "secret" and door.is_locked -> nil
+              door.is_locked -> "#{door.direction} (locked)"
+              door.key_required && door.key_required != "" -> "#{door.direction} (key required)"
+              true -> door.direction
+            end
+          end)
+          |> Enum.filter(&(&1 != nil))
+
+        exits ++ door_exits
+      else
+        exits
+      end
 
     # For tutorial terrain, also check basic movement possibilities
-    basic_directions = ["north", "south", "east", "west", "northeast", "southeast", "northwest", "southwest"]
+    basic_directions = [
+      "north",
+      "south",
+      "east",
+      "west",
+      "northeast",
+      "southeast",
+      "northwest",
+      "southwest"
+    ]
 
-    tutorial_exits = Enum.filter(basic_directions, fn direction ->
-      test_pos = calc_position({x, y}, direction_to_key(direction), nil)
-      test_pos != {x, y} and is_valid_movement?({x, y}, test_pos, direction_to_key(direction))
-    end)
+    tutorial_exits =
+      Enum.filter(basic_directions, fn direction ->
+        test_pos = calc_position({x, y}, direction_to_key(direction), nil)
+        test_pos != {x, y} and is_valid_movement?({x, y}, test_pos, direction_to_key(direction))
+      end)
 
     (exits ++ tutorial_exits)
     |> Enum.uniq()
@@ -1676,7 +1855,8 @@ defmodule ShardWeb.MudGameLive do
           _ -> :error
         end
 
-      true -> :error
+      true ->
+        :error
     end
   end
 
@@ -1698,7 +1878,8 @@ defmodule ShardWeb.MudGameLive do
           _ -> :error
         end
 
-      true -> :error
+      true ->
+        :error
     end
   end
 
@@ -1720,7 +1901,8 @@ defmodule ShardWeb.MudGameLive do
           _ -> :error
         end
 
-      true -> :error
+      true ->
+        :error
     end
   end
 
@@ -1730,20 +1912,23 @@ defmodule ShardWeb.MudGameLive do
     npcs_here = get_npcs_at_location(x, y, game_state.map_id)
 
     # Find the NPC by name (case-insensitive)
-    target_npc = Enum.find(npcs_here, fn npc ->
-      npc_name_normalized = String.downcase(npc.name || "")
-      input_name_normalized = String.downcase(npc_name)
-      npc_name_normalized == input_name_normalized
-    end)
+    target_npc =
+      Enum.find(npcs_here, fn npc ->
+        npc_name_normalized = String.downcase(npc.name || "")
+        input_name_normalized = String.downcase(npc_name)
+        npc_name_normalized == input_name_normalized
+      end)
 
     case target_npc do
       nil ->
         if length(npcs_here) > 0 do
           available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+
           response = [
             "There is no NPC named '#{npc_name}' here.",
             "Available NPCs: #{available_names}"
           ]
+
           {response, game_state}
         else
           {["There are no NPCs here to talk to."], game_state}
@@ -1762,20 +1947,23 @@ defmodule ShardWeb.MudGameLive do
     npcs_here = get_npcs_at_location(x, y, game_state.map_id)
 
     # Find the NPC by name (case-insensitive)
-    target_npc = Enum.find(npcs_here, fn npc ->
-      npc_name_normalized = String.downcase(npc.name || "")
-      input_name_normalized = String.downcase(npc_name)
-      npc_name_normalized == input_name_normalized
-    end)
+    target_npc =
+      Enum.find(npcs_here, fn npc ->
+        npc_name_normalized = String.downcase(npc.name || "")
+        input_name_normalized = String.downcase(npc_name)
+        npc_name_normalized == input_name_normalized
+      end)
 
     case target_npc do
       nil ->
         if length(npcs_here) > 0 do
           available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+
           response = [
             "There is no NPC named '#{npc_name}' here.",
             "Available NPCs: #{available_names}"
           ]
+
           {response, game_state}
         else
           {["There are no NPCs here to ask for quests."], game_state}
@@ -1792,23 +1980,25 @@ defmodule ShardWeb.MudGameLive do
     npc_name = npc.name || "Unknown NPC"
 
     # Get dialogue from NPC record
-    dialogue = case npc.dialogue do
-      nil -> "I don't have much to say right now."
-      "" -> "..."
-      dialogue_text when is_binary(dialogue_text) -> dialogue_text
-      dialogue_text when is_list(dialogue_text) -> Enum.join(dialogue_text, " ")
-      _ -> "I seem to be having trouble speaking."
-    end
+    dialogue =
+      case npc.dialogue do
+        nil -> "I don't have much to say right now."
+        "" -> "..."
+        dialogue_text when is_binary(dialogue_text) -> dialogue_text
+        dialogue_text when is_list(dialogue_text) -> Enum.join(dialogue_text, " ")
+        _ -> "I seem to be having trouble speaking."
+      end
 
     # Add some personality based on NPC type
-    personality_response = case npc.npc_type do
-      "friendly" -> "#{npc_name} smiles warmly at you."
-      "hostile" -> "#{npc_name} glares at you menacingly."
-      "neutral" -> "#{npc_name} regards you with mild interest."
-      "merchant" -> "#{npc_name} eyes you as a potential customer."
-      "guard" -> "#{npc_name} stands at attention and nods formally."
-      _ -> "#{npc_name} acknowledges your presence."
-    end
+    personality_response =
+      case npc.npc_type do
+        "friendly" -> "#{npc_name} smiles warmly at you."
+        "hostile" -> "#{npc_name} glares at you menacingly."
+        "neutral" -> "#{npc_name} regards you with mild interest."
+        "merchant" -> "#{npc_name} eyes you as a potential customer."
+        "guard" -> "#{npc_name} stands at attention and nods formally."
+        _ -> "#{npc_name} acknowledges your presence."
+      end
 
     # Check for quests this NPC can give
     available_quests = get_quests_by_giver_npc(npc.id)
@@ -1824,21 +2014,25 @@ defmodule ShardWeb.MudGameLive do
       response = response ++ [""]
 
       for quest <- available_quests do
-        quest_status_text = case quest.status do
-          "available" -> "#{npc_name} has a quest for you!"
-          "active" -> "#{npc_name} is waiting for you to complete your current quest."
-          "completed" -> "#{npc_name} thanks you for completing the quest."
-          _ -> "#{npc_name} mentions something about a quest."
-        end
+        quest_status_text =
+          case quest.status do
+            "available" -> "#{npc_name} has a quest for you!"
+            "active" -> "#{npc_name} is waiting for you to complete your current quest."
+            "completed" -> "#{npc_name} thanks you for completing the quest."
+            _ -> "#{npc_name} mentions something about a quest."
+          end
 
-        quest_description = quest.short_description || quest.description || "A mysterious quest awaits."
+        quest_description =
+          quest.short_description || quest.description || "A mysterious quest awaits."
 
-        response = response ++ [
-          quest_status_text,
-          "",
-          "Quest: #{quest.title}",
-          quest_description
-        ]
+        response =
+          response ++
+            [
+              quest_status_text,
+              "",
+              "Quest: #{quest.title}",
+              quest_description
+            ]
 
         # Add quest details for available quests
         if quest.status == "available" do
@@ -1859,18 +2053,21 @@ defmodule ShardWeb.MudGameLive do
       end
     end
 
-    response ++ [
-      "",
-      "#{npc_name} waits to see if you have anything else to say."
-    ]
+    response ++
+      [
+        "",
+        "#{npc_name} waits to see if you have anything else to say."
+      ]
   end
 
   # Helper function to get NPCs at a specific location
   defp get_npcs_at_location(x, y, _map_id) do
     # Query database for NPCs at the specified coordinates
-    npcs = from(n in Npc,
-      where: n.location_x == ^x and n.location_y == ^y and n.is_active == true)
-    |> Repo.all()
+    npcs =
+      from(n in Npc,
+        where: n.location_x == ^x and n.location_y == ^y and n.is_active == true
+      )
+      |> Repo.all()
 
     npcs
   end
@@ -1879,7 +2076,8 @@ defmodule ShardWeb.MudGameLive do
   defp get_quests_by_giver_npc(npc_id) do
     from(q in Quest,
       where: q.giver_npc_id == ^npc_id and q.is_active == true,
-      order_by: [asc: q.sort_order, asc: q.id])
+      order_by: [asc: q.sort_order, asc: q.id]
+    )
     |> Repo.all()
   end
 
@@ -1893,7 +2091,8 @@ defmodule ShardWeb.MudGameLive do
         # Fallback to basic quest query if the function doesn't exist or fails
         from(q in Quest,
           where: q.giver_npc_id == ^npc_id and q.is_active == true and q.status == "available",
-          order_by: [asc: q.sort_order, asc: q.id])
+          order_by: [asc: q.sort_order, asc: q.id]
+        )
         |> Repo.all()
     end
   end
@@ -1919,43 +2118,48 @@ defmodule ShardWeb.MudGameLive do
     # this should come from the current user session
     user_id = 1
 
-    available_quests = try do
-      get_quests_by_giver_npc_excluding_completed(npc.id, user_id)
-    rescue
-      error ->
-        IO.inspect(error, label: "Error getting quests for NPC #{npc.id}")
-        []
-    end
+    available_quests =
+      try do
+        get_quests_by_giver_npc_excluding_completed(npc.id, user_id)
+      rescue
+        error ->
+          IO.inspect(error, label: "Error getting quests for NPC #{npc.id}")
+          []
+      end
 
     if length(available_quests) == 0 do
       # Check if there are any quests from this NPC that were completed
-      all_quests = try do
-        get_quests_by_giver_npc(npc.id)
-      rescue
-        _ -> []
-      end
+      all_quests =
+        try do
+          get_quests_by_giver_npc(npc.id)
+        rescue
+          _ -> []
+        end
 
-      completed_quests = try do
-        Enum.filter(all_quests, fn quest ->
-          quest_completed_by_user_in_game_state?(quest.id, game_state)
-        end)
-      rescue
-        _ -> []
-      end
+      completed_quests =
+        try do
+          Enum.filter(all_quests, fn quest ->
+            quest_completed_by_user_in_game_state?(quest.id, game_state)
+          end)
+        rescue
+          _ -> []
+        end
 
-      response = if length(completed_quests) > 0 do
-        [
-          "#{npc_name} looks at you with recognition.",
-          "",
-          "\"Thank you for all the help you've provided. I don't have any new quests for you at the moment.\""
-        ]
-      else
-        [
-          "#{npc_name} looks at you thoughtfully.",
-          "",
-          "\"I don't have any quests for you at the moment.\""
-        ]
-      end
+      response =
+        if length(completed_quests) > 0 do
+          [
+            "#{npc_name} looks at you with recognition.",
+            "",
+            "\"Thank you for all the help you've provided. I don't have any new quests for you at the moment.\""
+          ]
+        else
+          [
+            "#{npc_name} looks at you thoughtfully.",
+            "",
+            "\"I don't have any quests for you at the moment.\""
+          ]
+        end
+
       {response, game_state}
     else
       # For now, offer the first available quest
@@ -1999,35 +2203,47 @@ defmodule ShardWeb.MudGameLive do
       end
 
       # Add objectives if available
-      objectives = case quest.objectives do
-        objectives when is_map(objectives) and map_size(objectives) > 0 ->
-          objective_list = Enum.map(objectives, fn {_key, value} -> "  - #{value}" end)
-          ["Objectives:"] ++ objective_list
-        _ -> []
-      end
+      objectives =
+        case quest.objectives do
+          objectives when is_map(objectives) and map_size(objectives) > 0 ->
+            objective_list = Enum.map(objectives, fn {_key, value} -> "  - #{value}" end)
+            ["Objectives:"] ++ objective_list
+
+          _ ->
+            []
+        end
 
       # Add prerequisites if any
-      prerequisites = case quest.prerequisites do
-        prereqs when is_map(prereqs) and map_size(prereqs) > 0 ->
-          prereq_list = Enum.map(prereqs, fn {_key, value} -> "  - #{value}" end)
-          ["Prerequisites:"] ++ prereq_list
-        _ -> []
-      end
+      prerequisites =
+        case quest.prerequisites do
+          prereqs when is_map(prereqs) and map_size(prereqs) > 0 ->
+            prereq_list = Enum.map(prereqs, fn {_key, value} -> "  - #{value}" end)
+            ["Prerequisites:"] ++ prereq_list
+
+          _ ->
+            []
+        end
 
       # Combine all quest information
-      full_response = response ++ details ++ objectives ++ prerequisites ++ [
-        "",
-        "#{npc_name} says: \"Would you like to accept this quest?\"",
-        "",
-        "Type 'accept' to accept the quest or 'deny' to decline it."
-      ]
+      full_response =
+        response ++
+          details ++
+          objectives ++
+          prerequisites ++
+          [
+            "",
+            "#{npc_name} says: \"Would you like to accept this quest?\"",
+            "",
+            "Type 'accept' to accept the quest or 'deny' to decline it."
+          ]
 
       # Store the quest offer in game state
-      updated_game_state = %{game_state |
-        pending_quest_offer: %{
-          quest: quest,
-          npc: npc
-        }
+      updated_game_state = %{
+        game_state
+        | pending_quest_offer: %{
+            quest: quest,
+            npc: npc
+          }
       }
 
       {full_response, updated_game_state}
@@ -2040,20 +2256,23 @@ defmodule ShardWeb.MudGameLive do
     npcs_here = get_npcs_at_location(x, y, game_state.map_id)
 
     # Find the NPC by name (case-insensitive)
-    target_npc = Enum.find(npcs_here, fn npc ->
-      npc_name_normalized = String.downcase(npc.name || "")
-      input_name_normalized = String.downcase(npc_name)
-      npc_name_normalized == input_name_normalized
-    end)
+    target_npc =
+      Enum.find(npcs_here, fn npc ->
+        npc_name_normalized = String.downcase(npc.name || "")
+        input_name_normalized = String.downcase(npc_name)
+        npc_name_normalized == input_name_normalized
+      end)
 
     case target_npc do
       nil ->
         if length(npcs_here) > 0 do
           available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+
           response = [
             "There is no NPC named '#{npc_name}' here.",
             "Available NPCs: #{available_names}"
           ]
+
           {response, game_state}
         else
           {["There are no NPCs here to deliver quests to."], game_state}
@@ -2066,11 +2285,13 @@ defmodule ShardWeb.MudGameLive do
         case deliverable_quest do
           nil ->
             npc_display_name = npc.name || "Unknown NPC"
+
             response = [
               "#{npc_display_name} looks at you expectantly.",
               "",
               "\"I don't see any completed quests that you can turn in to me.\""
             ]
+
             {response, game_state}
 
           quest ->
@@ -2089,7 +2310,9 @@ defmodule ShardWeb.MudGameLive do
           # Get the full quest data from database to check turn_in_npc_id
           try do
             case Repo.get(Quest, quest.id) do
-              nil -> false
+              nil ->
+                false
+
               db_quest ->
                 # Check if this NPC is the designated turn-in NPC
                 db_quest.turn_in_npc_id == npc.id
@@ -2116,53 +2339,71 @@ defmodule ShardWeb.MudGameLive do
     quest_title = quest.title || "Untitled Quest"
 
     # Get the full quest data from database with error handling
-    full_quest = try do
-      Repo.get(Quest, quest.id)
-    rescue
-      error ->
-        IO.inspect(error, label: "Error getting quest #{quest.id} from database")
-        nil
-    end
+    full_quest =
+      try do
+        Repo.get(Quest, quest.id)
+      rescue
+        error ->
+          IO.inspect(error, label: "Error getting quest #{quest.id} from database")
+          nil
+      end
 
     # Calculate rewards (use database values or defaults)
     exp_reward = if full_quest, do: full_quest.experience_reward || 100, else: 100
     gold_reward = if full_quest, do: full_quest.gold_reward || 50, else: 50
 
     # Update player stats with rewards
-    updated_stats = try do
-      game_state.player_stats
-      |> Map.update(:experience, 0, &(&1 + exp_reward))
-    rescue
-      error ->
-        IO.inspect(error, label: "Error updating player stats")
+    updated_stats =
+      try do
         game_state.player_stats
-    end
+        |> Map.update(:experience, 0, &(&1 + exp_reward))
+      rescue
+        error ->
+          IO.inspect(error, label: "Error updating player stats")
+          game_state.player_stats
+      end
 
     # Check if player levels up
-    {updated_stats, level_up_message} = try do
-      check_level_up(updated_stats)
-    rescue
-      error ->
-        IO.inspect(error, label: "Error checking level up")
-        {updated_stats, nil}
-    end
+    {updated_stats, level_up_message} =
+      try do
+        check_level_up(updated_stats)
+      rescue
+        error ->
+          IO.inspect(error, label: "Error checking level up")
+          {updated_stats, nil}
+      end
 
     # Complete the quest in the database
-    user_id = 1  # Mock user_id - should come from session in real implementation
-    updated_quests = try do
-      case Shard.Quests.complete_quest(user_id, quest.id) do
-        {:ok, _quest_acceptance} ->
-          # Mark the quest as completed in player's quest list
-          Enum.map(game_state.quests, fn q ->
-            if q[:id] == quest.id do
-              %{q | status: "Completed", progress: "100% complete"}
-            else
-              q
-            end
-          end)
+    # Mock user_id - should come from session in real implementation
+    user_id = 1
 
-        {:error, _} ->
-          # If database update fails, still update game state for consistency
+    updated_quests =
+      try do
+        case Shard.Quests.complete_quest(user_id, quest.id) do
+          {:ok, _quest_acceptance} ->
+            # Mark the quest as completed in player's quest list
+            Enum.map(game_state.quests, fn q ->
+              if q[:id] == quest.id do
+                %{q | status: "Completed", progress: "100% complete"}
+              else
+                q
+              end
+            end)
+
+          {:error, _} ->
+            # If database update fails, still update game state for consistency
+            Enum.map(game_state.quests, fn q ->
+              if q[:id] == quest.id do
+                %{q | status: "Completed", progress: "100% complete"}
+              else
+                q
+              end
+            end)
+        end
+      rescue
+        error ->
+          IO.inspect(error, label: "Error completing quest in database")
+          # Fallback: update game state even if database fails
           Enum.map(game_state.quests, fn q ->
             if q[:id] == quest.id do
               %{q | status: "Completed", progress: "100% complete"}
@@ -2171,18 +2412,6 @@ defmodule ShardWeb.MudGameLive do
             end
           end)
       end
-    rescue
-      error ->
-        IO.inspect(error, label: "Error completing quest in database")
-        # Fallback: update game state even if database fails
-        Enum.map(game_state.quests, fn q ->
-          if q[:id] == quest.id do
-            %{q | status: "Completed", progress: "100% complete"}
-          else
-            q
-          end
-        end)
-    end
 
     # Build response message
     response = [
@@ -2194,43 +2423,45 @@ defmodule ShardWeb.MudGameLive do
       "Experience gained: #{exp_reward} XP"
     ]
 
-    response = if gold_reward > 0 do
-      response ++ ["Gold received: #{gold_reward} gold"]
-    else
-      response
-    end
-
-    # Add item rewards if any (with error handling)
-    response = try do
-      if full_quest && full_quest.item_rewards && map_size(full_quest.item_rewards) > 0 do
-        item_list = Enum.map(full_quest.item_rewards, fn {_key, item} -> "  - #{item}" end)
-        response ++ ["Items received:"] ++ item_list
+    response =
+      if gold_reward > 0 do
+        response ++ ["Gold received: #{gold_reward} gold"]
       else
         response
       end
-    rescue
-      error ->
-        IO.inspect(error, label: "Error processing item rewards")
-        response
-    end
+
+    # Add item rewards if any (with error handling)
+    response =
+      try do
+        if full_quest && full_quest.item_rewards && map_size(full_quest.item_rewards) > 0 do
+          item_list = Enum.map(full_quest.item_rewards, fn {_key, item} -> "  - #{item}" end)
+          response ++ ["Items received:"] ++ item_list
+        else
+          response
+        end
+      rescue
+        error ->
+          IO.inspect(error, label: "Error processing item rewards")
+          response
+      end
 
     # Add level up message if applicable
-    response = if level_up_message do
-      response ++ ["", level_up_message]
-    else
-      response
-    end
+    response =
+      if level_up_message do
+        response ++ ["", level_up_message]
+      else
+        response
+      end
 
-    response = response ++ [
-      "",
-      "#{npc_name} says: \"Thank you for your service. You have proven yourself worthy!\""
-    ]
+    response =
+      response ++
+        [
+          "",
+          "#{npc_name} says: \"Thank you for your service. You have proven yourself worthy!\""
+        ]
 
     # Update game state
-    updated_game_state = %{game_state |
-      player_stats: updated_stats,
-      quests: updated_quests
-    }
+    updated_game_state = %{game_state | player_stats: updated_stats, quests: updated_quests}
 
     {response, updated_game_state}
   end
@@ -2239,16 +2470,23 @@ defmodule ShardWeb.MudGameLive do
   defp check_level_up(stats) do
     if stats.experience >= stats.next_level_exp do
       new_level = stats.level + 1
-      new_next_level_exp = stats.next_level_exp + (new_level * 500)  # Scaling experience requirement
+      # Scaling experience requirement
+      new_next_level_exp = stats.next_level_exp + new_level * 500
 
-      updated_stats = stats
-      |> Map.put(:level, new_level)
-      |> Map.put(:next_level_exp, new_next_level_exp)
-      |> Map.update(:max_health, 100, &(&1 + 10))  # Increase max health
-      |> Map.update(:max_stamina, 100, &(&1 + 5))  # Increase max stamina
-      |> Map.update(:max_mana, 100, &(&1 + 5))     # Increase max mana
-      |> Map.update(:strength, 10, &(&1 + 1))      # Increase strength
-      |> Map.update(:health, 100, &min(&1 + 10, stats.max_health + 10))  # Restore some health
+      updated_stats =
+        stats
+        |> Map.put(:level, new_level)
+        |> Map.put(:next_level_exp, new_next_level_exp)
+        # Increase max health
+        |> Map.update(:max_health, 100, &(&1 + 10))
+        # Increase max stamina
+        |> Map.update(:max_stamina, 100, &(&1 + 5))
+        # Increase max mana
+        |> Map.update(:max_mana, 100, &(&1 + 5))
+        # Increase strength
+        |> Map.update(:strength, 10, &(&1 + 1))
+        # Restore some health
+        |> Map.update(:health, 100, &min(&1 + 10, stats.max_health + 10))
 
       level_up_message = "*** LEVEL UP! *** You are now level #{new_level}!"
 
@@ -2272,17 +2510,19 @@ defmodule ShardWeb.MudGameLive do
         generate_default_map(map_id)
       else
         # Find the bounds of all rooms
-        {min_x, max_x} = rooms
+        {min_x, max_x} =
+          rooms
           |> Enum.map(& &1.x_coordinate)
-          |> Enum.filter(& &1 != nil)
+          |> Enum.filter(&(&1 != nil))
           |> case do
             [] -> {0, 10}
             coords -> Enum.min_max(coords)
           end
 
-        {min_y, max_y} = rooms
+        {min_y, max_y} =
+          rooms
           |> Enum.map(& &1.y_coordinate)
-          |> Enum.filter(& &1 != nil)
+          |> Enum.filter(&(&1 != nil))
           |> case do
             [] -> {0, 10}
             coords -> Enum.min_max(coords)
@@ -2295,7 +2535,8 @@ defmodule ShardWeb.MudGameLive do
         max_y = max_y + 1
 
         # Create a map of room coordinates for quick lookup
-        room_map = rooms
+        room_map =
+          rooms
           |> Enum.filter(fn room -> room.x_coordinate != nil and room.y_coordinate != nil end)
           |> Enum.into(%{}, fn room -> {{room.x_coordinate, room.y_coordinate}, room} end)
 
@@ -2303,12 +2544,18 @@ defmodule ShardWeb.MudGameLive do
         for y <- min_y..max_y do
           for x <- min_x..max_x do
             case room_map[{x, y}] do
-              nil -> 0  # Wall/empty space
+              # Wall/empty space
+              nil ->
+                0
+
               room ->
                 case room.room_type do
-                  "treasure" -> 3  # Treasure room
-                  "water" -> 2     # Water room
-                  _ -> 1           # Regular floor
+                  # Treasure room
+                  "treasure" -> 3
+                  # Water room
+                  "water" -> 2
+                  # Regular floor
+                  _ -> 1
                 end
             end
           end
@@ -2325,25 +2572,37 @@ defmodule ShardWeb.MudGameLive do
         for y <- 0..10 do
           for x <- 0..10 do
             cond do
-              x == 0 and y == 0 -> 1  # Starting position where Goldie is - must be floor
-              x == 0 or y == 0 or x == 10 or y == 10 -> 0  # Walls around the edges (except starting position)
-              x == 5 and y == 5 -> 3  # Treasure in the center
-              x > 3 and x < 7 and y > 3 and y < 7 -> 1  # Central room floor
-              rem(x + y, 4) == 0 -> 1  # Scattered floor tiles for tutorial
-              true -> 0  # Walls for tutorial simplicity
+              # Starting position where Goldie is - must be floor
+              x == 0 and y == 0 -> 1
+              # Walls around the edges (except starting position)
+              x == 0 or y == 0 or x == 10 or y == 10 -> 0
+              # Treasure in the center
+              x == 5 and y == 5 -> 3
+              # Central room floor
+              x > 3 and x < 7 and y > 3 and y < 7 -> 1
+              # Scattered floor tiles for tutorial
+              rem(x + y, 4) == 0 -> 1
+              # Walls for tutorial simplicity
+              true -> 0
             end
           end
         end
+
       _ ->
         # Default fallback map for any other map_id
         for y <- 0..10 do
           for x <- 0..10 do
             cond do
-              x == 0 or y == 0 or x == 10 or y == 10 -> 0  # Walls around the edges
-              x == 5 and y == 5 -> 3  # Treasure in the center
-              x > 3 and x < 7 and y > 3 and y < 7 -> 1  # Central room floor
-              rem(x, 3) == 0 and rem(y, 3) == 0 -> 2  # Water at intervals
-              true -> 1  # Default floor
+              # Walls around the edges
+              x == 0 or y == 0 or x == 10 or y == 10 -> 0
+              # Treasure in the center
+              x == 5 and y == 5 -> 3
+              # Central room floor
+              x > 3 and x < 7 and y > 3 and y < 7 -> 1
+              # Water at intervals
+              rem(x, 3) == 0 and rem(y, 3) == 0 -> 2
+              # Default floor
+              true -> 1
             end
           end
         end
@@ -2360,15 +2619,21 @@ defmodule ShardWeb.MudGameLive do
   # Claude helped write this one
   defp find_valid_monster_position(map_data, starting_position) do
     # Find all floor tiles (value == 1) in the map
-    valid_positions = map_data
-      |> Enum.with_index()  # Get {row, y_index}
+    valid_positions =
+      map_data
+      # Get {row, y_index}
+      |> Enum.with_index()
       |> Enum.flat_map(fn {row, y_index} ->
         row
-        |> Enum.with_index()  # Get {cell_value, x_index}
-        |> Enum.filter(fn {cell_value, _x_index} -> cell_value == 1 end)  # Only floor tiles
-        |> Enum.map(fn {_cell_value, x_index} -> {x_index, y_index} end)  # Convert to {x, y}
+        # Get {cell_value, x_index}
+        |> Enum.with_index()
+        # Only floor tiles
+        |> Enum.filter(fn {cell_value, _x_index} -> cell_value == 1 end)
+        # Convert to {x, y}
+        |> Enum.map(fn {_cell_value, x_index} -> {x_index, y_index} end)
       end)
-      |> Enum.filter(fn position -> position != starting_position end)  # Exclude starting position
+      # Exclude starting position
+      |> Enum.filter(fn position -> position != starting_position end)
 
     # Return a random valid position, or fallback if none found
     case valid_positions do
@@ -2376,6 +2641,7 @@ defmodule ShardWeb.MudGameLive do
         # Fallback: place monster at a default position if no valid positions found
         IO.warn("No valid monster positions found, using fallback position")
         {1, 1}
+
       positions ->
         Enum.random(positions)
     end
@@ -2410,8 +2676,10 @@ defmodule ShardWeb.MudGameLive do
       width = max(width, 1)
       height = max(height, 1)
 
-      scale_x = 260 / width  # 260 to leave 20px padding on each side
-      scale_y = 160 / height  # 160 to leave 20px padding top/bottom
+      # 260 to leave 20px padding on each side
+      scale_x = 260 / width
+      # 160 to leave 20px padding top/bottom
+      scale_y = 160 / height
       scale_factor = min(scale_x, scale_y)
 
       # Ensure minimum scale factor for visibility
@@ -2424,8 +2692,10 @@ defmodule ShardWeb.MudGameLive do
   # Calculate position within minimap coordinates
   defp calculate_minimap_position({x, y}, {min_x, min_y, _max_x, _max_y}, scale_factor) do
     # Translate to origin and scale, then center in minimap
-    scaled_x = (x - min_x) * scale_factor + 20  # 20px padding
-    scaled_y = (y - min_y) * scale_factor + 20  # 20px padding
+    # 20px padding
+    scaled_x = (x - min_x) * scale_factor + 20
+    # 20px padding
+    scaled_y = (y - min_y) * scale_factor + 20
 
     # Ensure coordinates are within bounds
     scaled_x = max(10, min(scaled_x, 290))
@@ -2443,11 +2713,14 @@ defmodule ShardWeb.MudGameLive do
       return_door = GameMap.get_door_in_direction(door.to_room_id, opposite_direction)
 
       case return_door do
-        nil -> true  # No return door found, this is one-way
-        return_door -> return_door.to_room_id != door.from_room_id  # Return door doesn't lead back
+        # No return door found, this is one-way
+        nil -> true
+        # Return door doesn't lead back
+        return_door -> return_door.to_room_id != door.from_room_id
       end
     else
-      false  # Can't determine opposite direction, assume two-way
+      # Can't determine opposite direction, assume two-way
+      false
     end
   end
 
@@ -2470,11 +2743,12 @@ defmodule ShardWeb.MudGameLive do
 
   # Component for player marker when no room exists at player position
   def player_marker(assigns) do
-    {x_pos, y_pos} = calculate_minimap_position(
-      assigns.position,
-      assigns.bounds,
-      assigns.scale_factor
-    )
+    {x_pos, y_pos} =
+      calculate_minimap_position(
+        assigns.position,
+        assigns.bounds,
+        assigns.scale_factor
+      )
 
     assigns = assign(assigns, x_pos: x_pos, y_pos: y_pos)
 
@@ -2488,7 +2762,7 @@ defmodule ShardWeb.MudGameLive do
       stroke-width="2"
       opacity="0.9"
     >
-      <title>Player at <%= format_position(@position) %> (no room)</title>
+      <title>Player at {format_position(@position)} (no room)</title>
     </circle>
     """
   end
@@ -2496,30 +2770,36 @@ defmodule ShardWeb.MudGameLive do
   # Component for individual map cells (legacy grid-based map)
   def map_cell_legacy(assigns) do
     # Define colors based on cell type
-    color_class = case assigns.cell do
-      0 -> "bg-gray-900"  # Wall
-      1 -> "bg-green-700" # Floor
-      2 -> "bg-blue-600"  # Water
-      3 -> "bg-yellow-600" # Treasure
-      _ -> "bg-purple-600" # Unknown
-    end
+    color_class =
+      case assigns.cell do
+        # Wall
+        0 -> "bg-gray-900"
+        # Floor
+        1 -> "bg-green-700"
+        # Water
+        2 -> "bg-blue-600"
+        # Treasure
+        3 -> "bg-yellow-600"
+        # Unknown
+        _ -> "bg-purple-600"
+      end
 
     player_class = if assigns.is_player, do: "ring-2 ring-red-500", else: ""
 
     assigns = assign(assigns, color_class: color_class, player_class: player_class)
 
     ~H"""
-    <div class={"w-6 h-6 #{@color_class} #{@player_class} border border-gray-800"}>
-    </div>
+    <div class={"w-6 h-6 #{@color_class} #{@player_class} border border-gray-800"}></div>
     """
   end
+
   # === Exits helpers ===
 
   # (A) Convert a cardinal direction label to a key your calc_position/3 already understands
   defp dir_to_key("north"), do: "ArrowUp"
   defp dir_to_key("south"), do: "ArrowDown"
-  defp dir_to_key("east"),  do: "ArrowRight"
-  defp dir_to_key("west"),  do: "ArrowLeft"
+  defp dir_to_key("east"), do: "ArrowRight"
+  defp dir_to_key("west"), do: "ArrowLeft"
   defp dir_to_key("northeast"), do: "northeast"
   defp dir_to_key("northwest"), do: "northwest"
   defp dir_to_key("southeast"), do: "southeast"
@@ -2531,9 +2811,22 @@ defmodule ShardWeb.MudGameLive do
     case GameMap.get_room_by_coordinates(x, y) do
       nil ->
         []
+
       room ->
         doors = GameMap.get_doors_from_room(room.id)
-        valid_dirs = MapSet.new(["north","south","east","west","northeast","northwest","southeast","southwest"])
+
+        valid_dirs =
+          MapSet.new([
+            "north",
+            "south",
+            "east",
+            "west",
+            "northeast",
+            "northwest",
+            "southeast",
+            "southwest"
+          ])
+
         doors
         |> Enum.filter(fn d -> d.direction in valid_dirs end)
         |> Enum.map(fn d -> %{direction: d.direction, door: d} end)
@@ -2545,12 +2838,12 @@ defmodule ShardWeb.MudGameLive do
   def handle_event("click_exit", %{"dir" => dir}, socket) do
     key = dir_to_key(dir)
     player_position = socket.assigns.game_state.player_position
-    map_data        = socket.assigns.game_state.map_data
+    map_data = socket.assigns.game_state.map_data
 
     new_position =
       case key do
         nil -> player_position
-        _   -> calc_position(player_position, key, map_data)
+        _ -> calc_position(player_position, key, map_data)
       end
 
     terminal_state =
@@ -2587,7 +2880,8 @@ defmodule ShardWeb.MudGameLive do
   end
 
   def handle_info({:area_heal, xx, msg}, socket) do
-    socket = socket
+    socket =
+      socket
       |> add_message(msg)
       |> add_message("Area heal effect: #{xx} damage healed")
 
@@ -2595,10 +2889,13 @@ defmodule ShardWeb.MudGameLive do
     IO.inspect({:health, health})
 
     if health < 100 do
-      st1 = put_in(
-        socket.assigns.game_state,
-        [:player_stats, :health],
-        health + 5)
+      st1 =
+        put_in(
+          socket.assigns.game_state,
+          [:player_stats, :health],
+          health + 5
+        )
+
       {:noreply, assign(socket, :game_state, st1)}
     else
       {:noreply, socket}

@@ -9,12 +9,14 @@ defmodule Shard.Map.Room do
     field :y_coordinate, :integer, default: 0
     field :z_coordinate, :integer, default: 0
     field :is_public, :boolean, default: true
-    field :room_type, :string, default: "standard" # standard, safe_zone, shop, dungeon, etc.
-    field :properties, :map, default: %{} # For extensibility: lighting, weather, etc.
+    # standard, safe_zone, shop, dungeon, etc.
+    field :room_type, :string, default: "standard"
+    # For extensibility: lighting, weather, etc.
+    field :properties, :map, default: %{}
 
     has_many :doors_from, Shard.Map.Door, foreign_key: :from_room_id
     has_many :doors_to, Shard.Map.Door, foreign_key: :to_room_id
-    
+
     timestamps(type: :utc_datetime)
   end
 
@@ -22,12 +24,12 @@ defmodule Shard.Map.Room do
   def changeset(room, attrs) do
     room
     |> cast(attrs, [
-      :name, 
-      :description, 
-      :x_coordinate, 
-      :y_coordinate, 
-      :z_coordinate, 
-      :is_public, 
+      :name,
+      :description,
+      :x_coordinate,
+      :y_coordinate,
+      :z_coordinate,
+      :is_public,
       :room_type,
       :properties
     ])
@@ -35,11 +37,11 @@ defmodule Shard.Map.Room do
     |> validate_length(:name, min: 1, max: 100)
     |> validate_length(:description, max: 1000)
     |> validate_inclusion(:room_type, [
-      "standard", 
-      "safe_zone", 
-      "shop", 
-      "dungeon", 
-      "treasure_room", 
+      "standard",
+      "safe_zone",
+      "shop",
+      "dungeon",
+      "treasure_room",
       "trap_room"
     ])
     |> unique_constraint(:name)
