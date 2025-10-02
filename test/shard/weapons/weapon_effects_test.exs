@@ -1,9 +1,13 @@
 defmodule Shard.Weapons.WeaponEffectsTest do
-  use ExUnit.Case, async: true
+  use Shard.DataCase
+
   alias Shard.Weapons.WeaponEffects
 
-  test "defines weapon effects relationships" do
-    # This test will need to be updated based on actual implementation
-    assert WeaponEffects != nil
+  describe "changeset/2" do
+    test "accepts empty attributes" do
+      attrs = %{}
+      changeset = WeaponEffects.changeset(%WeaponEffects{}, attrs)
+      assert changeset.valid?
+    end
   end
 end

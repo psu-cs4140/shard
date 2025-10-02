@@ -1,9 +1,20 @@
 defmodule Shard.Weapons.RaritiesTest do
-  use ExUnit.Case, async: true
+  use Shard.DataCase
+
   alias Shard.Weapons.Rarities
 
-  test "defines weapon rarities" do
-    # This test will need to be updated based on actual implementation
-    assert Rarities != nil
+  describe "changeset/2" do
+    test "validates required fields" do
+      attrs = %{}
+      changeset = Rarities.changeset(%Rarities{}, attrs)
+      assert changeset.valid? == false
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
+    end
+
+    test "accepts valid attributes" do
+      attrs = %{name: "Legendary"}
+      changeset = Rarities.changeset(%Rarities{}, attrs)
+      assert changeset.valid?
+    end
   end
 end

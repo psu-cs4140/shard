@@ -1,9 +1,20 @@
 defmodule Shard.Weapons.DamageTypesTest do
-  use ExUnit.Case, async: true
+  use Shard.DataCase
+
   alias Shard.Weapons.DamageTypes
 
-  test "defines damage types" do
-    # This test will need to be updated based on actual implementation
-    assert DamageTypes != nil
+  describe "changeset/2" do
+    test "validates required fields" do
+      attrs = %{}
+      changeset = DamageTypes.changeset(%DamageTypes{}, attrs)
+      assert changeset.valid? == false
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
+    end
+
+    test "accepts valid attributes" do
+      attrs = %{name: "Fire"}
+      changeset = DamageTypes.changeset(%DamageTypes{}, attrs)
+      assert changeset.valid?
+    end
   end
 end
