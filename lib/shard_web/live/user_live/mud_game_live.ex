@@ -22,6 +22,13 @@ defmodule ShardWeb.MudGameLive do
           end
       end
 
+    # Get character name from URL parameter (fallback to character.name if available)
+    character_name = 
+      case Map.get(params, "character_name") do
+        nil -> if character, do: character.name, else: "Unknown"
+        name -> URI.decode(name)
+      end
+
     # If no character provided or character not found, redirect to character selection
     if is_nil(character) do
       {:ok, 
@@ -128,7 +135,8 @@ defmodule ShardWeb.MudGameLive do
          game_state: game_state,
          terminal_state: terminal_state,
          modal_state: modal_state,
-         available_exits: compute_available_exits(game_state.player_position)
+         available_exits: compute_available_exits(game_state.player_position),
+         character_name: character_name
        )}
     end
   end
@@ -144,8 +152,16 @@ defmodule ShardWeb.MudGameLive do
     <div class="flex flex-col h-screen bg-gray-900 text-white" phx-window-keydown="keypress">
       <!-- "phx-window-keydown="keypress" -->
       <!-- Header -->
-      <header class="bg-gray-800 p-4 shadow-lg">
+      <header class="bg-gray-800 p-4 shadow-lg flex justify-between items-center">
         <h1 class="text-2xl font-bold">MUD Game</h1>
+        <div class="text-right">
+          <div class="text-lg font-semibold text-green-400">
+            {@character_name}
+          </div>
+          <div class="text-sm text-gray-400">
+            Level {@game_state.player_stats.level}
+          </div>
+        </div>
       </header>
       
     <!-- Main Content -->
