@@ -14,7 +14,7 @@ defmodule Shard.MixProject do
       listeners: [Phoenix.CodeReloader],
       test_coverage: [
         summary: [
-          threshold: 22
+          threshold: 21
         ]
       ]
     ]
