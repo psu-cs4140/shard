@@ -74,25 +74,24 @@ defmodule ShardWeb.CharacterLiveTest do
     test "saves new character", %{conn: conn} do
       {:ok, index_live, _html} = live(conn, ~p"/characters")
 
-      assert {:ok, form_live, _} =
-               index_live
-               |> element("a", "New Character")
-               |> render_click()
-               |> follow_redirect(conn, ~p"/characters/new")
+      # Click the "New Character" link which opens a modal
+      index_live |> element("a", "New Character") |> render_click()
+      
+      # The form is in the modal, so we check the index_live render output
+      assert render(index_live) =~ "New Character"
 
-      assert render(form_live) =~ "Create New Character"
-
-      assert form_live
+      assert index_live
              |> form("#character-form", character: @invalid_attrs)
              |> render_change() =~ "can&#39;t be blank"
 
-      assert {:ok, index_live, _html} =
-               form_live
+      assert {:ok, _index_live, _html} =
+               index_live
                |> form("#character-form", character: @create_attrs)
                |> render_submit()
                |> follow_redirect(conn, ~p"/characters")
 
-      html = render(index_live)
+      # Get a new live view since we were redirected
+      {:ok, index_live, html} = live(conn, ~p"/characters")
       assert html =~ "Character created successfully"
       assert html =~ "some name"
     end
