@@ -76,11 +76,11 @@ defmodule ShardWeb.CharacterLiveTest do
 
       assert {:ok, form_live, _} =
                index_live
-               |> element("button", "New Character")
+               |> element("a", "New Character")
                |> render_click()
                |> follow_redirect(conn, ~p"/characters/new")
 
-      assert render(form_live) =~ "New Character"
+      assert render(form_live) =~ "Create New Character"
 
       assert form_live
              |> form("#character-form", character: @invalid_attrs)
