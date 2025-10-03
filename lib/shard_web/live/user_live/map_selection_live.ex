@@ -1,6 +1,7 @@
 defmodule ShardWeb.MapSelectionLive do
   use ShardWeb, :live_view
   alias Shard.Characters
+  alias Shard.Characters.Character
 
   @impl true
   def mount(_params, _session, socket) do
@@ -101,7 +102,10 @@ defmodule ShardWeb.MapSelectionLive do
        maps: maps,
        characters: characters,
        show_character_modal: false,
-       selected_map: nil
+       selected_map: nil,
+       # :select or :create
+       modal_mode: :select,
+       character_form: to_form(Shard.Characters.change_character(%Shard.Characters.Character{}))
      )}
   end
 
@@ -210,46 +214,110 @@ defmodule ShardWeb.MapSelectionLive do
       <%= if @show_character_modal do %>
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 class="text-xl font-bold text-gray-900 mb-4">Choose Your Character</h3>
+            <h3 class="text-xl font-bold text-gray-900 mb-4">
+              {if @modal_mode == :create, do: "Create New Character", else: "Choose Your Character"}
+            </h3>
 
-            <%= if Enum.empty?(@characters) do %>
-              <p class="text-gray-600 mb-4">
-                You don't have any characters yet. Create one to start playing!
-              </p>
-              <div class="flex space-x-3">
-                <.button navigate={~p"/characters"} class="flex-1">
-                  Create Character
-                </.button>
-                <.button phx-click="cancel_map_selection" variant="outline" class="flex-1">
-                  Cancel
-                </.button>
-              </div>
+            <%= if @modal_mode == :create do %>
+              <!-- Character Creation Form -->
+              <.simple_form
+                for={@character_form}
+                id="character-form"
+                phx-change="validate_character"
+                phx-submit="create_character"
+                class="space-y-4"
+              >
+                <.input field={@character_form[:name]} type="text" label="Character Name" required />
+                <.input
+                  field={@character_form[:class]}
+                  type="select"
+                  label="Class"
+                  prompt="Choose a class"
+                  options={[
+                    {"Warrior", "warrior"},
+                    {"Mage", "mage"},
+                    {"Rogue", "rogue"},
+                    {"Cleric", "cleric"},
+                    {"Ranger", "ranger"}
+                  ]}
+                  required
+                />
+                <.input
+                  field={@character_form[:race]}
+                  type="select"
+                  label="Race"
+                  prompt="Choose a race"
+                  options={[
+                    {"Human", "human"},
+                    {"Elf", "elf"},
+                    {"Dwarf", "dwarf"},
+                    {"Halfling", "halfling"},
+                    {"Orc", "orc"}
+                  ]}
+                  required
+                />
+                <.input field={@character_form[:description]} type="textarea" label="Description" />
+
+                <:actions>
+                  <div class="flex space-x-4">
+                    <.button phx-disable-with="Creating..." class="flex-1">
+                      Create & Enter Map
+                    </.button>
+                    <.button
+                      phx-click="switch_to_select_mode"
+                      variant="outline"
+                      class="flex-1"
+                      type="button"
+                    >
+                      Back to Selection
+                    </.button>
+                  </div>
+                </:actions>
+              </.simple_form>
             <% else %>
-              <p class="text-gray-600 mb-2">
-                Found {length(@characters)} character(s). Select one to enter the map:
-              </p>
-              <div class="space-y-2 mb-4">
-                <%= for character <- @characters do %>
-                  <button
-                    phx-click="select_character"
-                    phx-value-character_id={character.id}
-                    class="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <div class="font-semibold">{character.name}</div>
-                    <div class="text-sm text-gray-600">
-                      Level {character.level || 1} {String.capitalize(character.class || "adventurer")}
-                    </div>
-                  </button>
-                <% end %>
-              </div>
-              <div class="flex space-x-3">
-                <.button navigate={~p"/characters"} variant="outline" class="flex-1">
-                  Manage Characters
-                </.button>
-                <.button phx-click="cancel_map_selection" variant="outline" class="flex-1">
-                  Cancel
-                </.button>
-              </div>
+              <!-- Character Selection Mode -->
+              <%= if Enum.empty?(@characters) do %>
+                <p class="text-gray-600 mb-4">
+                  You don't have any characters yet. Create your first character to start playing!
+                </p>
+                <div class="flex flex-col space-y-3">
+                  <.button phx-click="switch_to_create_mode" class="w-full">
+                    Create Your First Character
+                  </.button>
+                  <.button phx-click="cancel_map_selection" variant="outline" class="w-full">
+                    Cancel
+                  </.button>
+                </div>
+              <% else %>
+                <p class="text-gray-600 mb-2">
+                  Found {length(@characters)} character(s). Select one to enter the map:
+                </p>
+                <div class="space-y-2 mb-4">
+                  <%= for character <- @characters do %>
+                    <button
+                      phx-click="select_character"
+                      phx-value-character_id={character.id}
+                      class="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div class="font-semibold">{character.name}</div>
+                      <div class="text-sm text-gray-600">
+                        Level {character.level || 1} {String.capitalize(
+                          character.class || "adventurer"
+                        )}
+                      </div>
+                    </button>
+                  <% end %>
+                </div>
+
+                <div class="flex space-x-3">
+                  <.button phx-click="switch_to_create_mode" variant="outline" class="flex-1">
+                    Create New Character
+                  </.button>
+                  <.button phx-click="cancel_map_selection" variant="outline" class="flex-1">
+                    Cancel
+                  </.button>
+                </div>
+              <% end %>
             <% end %>
           </div>
         </div>
@@ -287,7 +355,12 @@ defmodule ShardWeb.MapSelectionLive do
       end
 
     {:noreply,
-     assign(socket, show_character_modal: true, selected_map: map_id, characters: characters)}
+     assign(socket,
+       show_character_modal: true,
+       selected_map: map_id,
+       characters: characters,
+       modal_mode: if(Enum.empty?(characters), do: :create, else: :select)
+     )}
   end
 
   def handle_event("select_character", %{"character_id" => character_id}, socket) do
@@ -309,6 +382,45 @@ defmodule ShardWeb.MapSelectionLive do
 
   def handle_event("cancel_map_selection", _params, socket) do
     {:noreply, assign(socket, show_character_modal: false, selected_map: nil)}
+  end
+
+  def handle_event("switch_to_create_mode", _params, socket) do
+    {:noreply, assign(socket, modal_mode: :create)}
+  end
+
+  def handle_event("switch_to_select_mode", _params, socket) do
+    {:noreply, assign(socket, modal_mode: :select)}
+  end
+
+  def handle_event("validate_character", %{"character" => character_params}, socket) do
+    changeset =
+      %Shard.Characters.Character{}
+      |> Shard.Characters.change_character(character_params)
+      |> Map.put(:action, :validate)
+
+    {:noreply, assign(socket, character_form: to_form(changeset))}
+  end
+
+  def handle_event("create_character", %{"character" => character_params}, socket) do
+    user = socket.assigns.current_scope.user
+    character_params = Map.put(character_params, "user_id", user.id)
+
+    case Shard.Characters.create_character(character_params) do
+      {:ok, character} ->
+        # Reload characters and proceed to map
+        characters = Shard.Characters.get_characters_by_user(user.id)
+
+        {:noreply,
+         socket
+         |> assign(characters: characters)
+         |> push_navigate(
+           to:
+             ~p"/play/#{socket.assigns.selected_map}?character_id=#{character.id}&character_name=#{URI.encode(character.name)}"
+         )}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign(socket, character_form: to_form(changeset))}
+    end
   end
 
   # Helper function to determine difficulty badge colors
