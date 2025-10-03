@@ -1,20 +1,20 @@
 defmodule Shard.World.Exit do
   use Ecto.Schema
+  import Ecto.Changeset
+  alias Shard.World.Room
 
   schema "exits" do
     field :dir, :string
-    belongs_to :from_room, Shard.World.Room
-    belongs_to :to_room, Shard.World.Room
+    belongs_to :from_room, Room, foreign_key: :from_room_id
+    belongs_to :to_room, Room, foreign_key: :to_id
     timestamps()
   end
 
   def changeset(exit, attrs) do
     exit
-    |> Ecto.Changeset.cast(attrs, [:dir, :from_room_id, :to_room_id])
-    |> Ecto.Changeset.validate_required([:dir, :from_room_id, :to_room_id])
-    |> Ecto.Changeset.validate_inclusion(:dir, ~w(n s e w up down))
-    |> Ecto.Changeset.foreign_key_constraint(:from_room_id)
-    |> Ecto.Changeset.foreign_key_constraint(:to_room_id)
-    |> Ecto.Changeset.unique_constraint(:dir, name: :exits_from_room_id_dir_index)
+    |> cast(attrs, [:dir, :from_room_id, :to_id])
+    |> validate_required([:dir, :from_room_id, :to_id])
+    |> foreign_key_constraint(:from_room_id)
+    |> foreign_key_constraint(:to_id)
   end
 end

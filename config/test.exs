@@ -10,8 +10,9 @@ config :argon2_elixir, t_cost: 1, m_cost: 8
 # Run `mix help test` for more information.
 config :shard, Shard.Repo,
   username: "shard",
-  password: "Chu7eeg0iih2yeiN",
-  hostname: "localhost",
+  password: "change-me",
+  hostname: "127.0.0.1",
+  port: 5432,
   database: "shard_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: System.schedulers_online() * 2

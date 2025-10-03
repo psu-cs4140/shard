@@ -1,287 +1,376 @@
 defmodule ShardWeb.UserAuth do
+  @moduledoc """
+  Authentication helpers for controllers and LiveViews.
+  """
+
+  # Enable ~p verified routes in this plain module
   use ShardWeb, :verified_routes
 
   import Plug.Conn
-  import Phoenix.Controller
+  import Phoenix.Controller, only: [redirect: 2, put_flash: 3, fetch_flash: 1, current_path: 1]
+  alias Phoenix.Controller, as: PController
+  alias Phoenix.Component, as: PC
+  alias Phoenix.LiveView
 
   alias Shard.Users
-  alias Shard.Users.Scope
+  alias Shard.Users.{User, Scope}
+  alias ShardWeb.Endpoint
 
-  # Make the remember me cookie valid for 14 days. This should match
-  # the session validity setting in UserToken.
-  @max_cookie_age_in_days 14
   @remember_me_cookie "_shard_web_user_remember_me"
-  @remember_me_options [
-    sign: true,
-    max_age: @max_cookie_age_in_days * 24 * 60 * 60,
-    same_site: "Lax"
-  ]
+  # Signed cookie, 14 days, SameSite=Lax, HttpOnly
+  @remember_me_opts [sign: true, max_age: 60 * 60 * 24 * 14, same_site: "Lax", http_only: true]
 
-  # How old the session token should be before a new one is issued. When a request is made
-  # with a session token older than this value, then a new session token will be created
-  # and the session and remember-me cookies (if set) will be updated with the new token.
-  # Lowering this value will result in more tokens being created by active users. Increasing
-  # it will result in less time before a session token expires for a user to get issued a new
-  # token. This can be set to a value greater than `@max_cookie_age_in_days` to disable
-  # the reissuing of tokens completely.
-  @session_reissue_age_in_days 7
+  # ======================================================================
+  # Controller plugs
+  # ======================================================================
 
   @doc """
-  Logs the user in.
+  Assigns `:current_scope` and `:current_user` from session token or signed cookie.
 
-  Redirects to the session's `:user_return_to` path
-  or falls back to the `signed_in_path/1`.
-  """
-  def log_in_user(conn, user, params \\ %{}) do
-    user_return_to = get_session(conn, :user_return_to)
-
-    conn
-    |> create_or_extend_session(user, params)
-    |> redirect(to: user_return_to || signed_in_path(conn))
-  end
-
-  @doc """
-  Logs the user out.
-
-  It clears all session data for safety. See renew_session.
-  """
-  def log_out_user(conn) do
-    user_token = get_session(conn, :user_token)
-    user_token && Users.delete_user_session_token(user_token)
-
-    if live_socket_id = get_session(conn, :live_socket_id) do
-      ShardWeb.Endpoint.broadcast(live_socket_id, "disconnect", %{})
-    end
-
-    conn
-    |> renew_session(nil)
-    |> delete_resp_cookie(@remember_me_cookie)
-    |> redirect(to: ~p"/")
-  end
-
-  @doc """
-  Authenticates the user by looking into the session and remember me token.
-
-  Will reissue the session token if it is older than the configured age.
+  If authenticating via cookie, issues a fresh session token and cookie.
   """
   def fetch_current_scope_for_user(conn, _opts) do
-    with {token, conn} <- ensure_user_token(conn),
-         {user, token_inserted_at} <- Users.get_user_by_session_token(token) do
-      conn
-      |> assign(:current_scope, Scope.for_user(user))
-      |> maybe_reissue_user_session_token(user, token_inserted_at)
-    else
-      nil -> assign(conn, :current_scope, Scope.for_user(nil))
+    conn = conn |> fetch_session() |> fetch_cookies(signed: [@remember_me_cookie])
+
+    case get_session(conn, :user_token) do
+      token when is_binary(token) ->
+        case normalize_user_lookup(Users.get_user_by_session_token(token)) do
+          {:ok, user, meta} ->
+            user = maybe_put_authenticated_at(user, meta)
+
+            conn
+            |> maybe_put_live_socket_id(token)
+            |> assign_current(user)
+
+          :error ->
+            assign_guest(conn)
+        end
+
+      _ ->
+        case conn.cookies[@remember_me_cookie] do
+          cookie_token when is_binary(cookie_token) ->
+            case normalize_user_lookup(Users.get_user_by_session_token(cookie_token)) do
+              {:ok, user, meta} ->
+                user = maybe_put_authenticated_at(user, meta)
+                token = Users.generate_user_session_token(user)
+
+                conn
+                |> renew_session_preserving_return_to(clear?: true)
+                |> put_session(:user_token, token)
+                |> put_session(:user_remember_me, true)
+                |> maybe_put_live_socket_id(token)
+                |> PController.put_resp_cookie(@remember_me_cookie, token, @remember_me_opts)
+                |> assign_current(user)
+
+              :error ->
+                assign_guest(conn)
+            end
+
+          _ ->
+            assign_guest(conn)
+        end
     end
   end
 
-  defp ensure_user_token(conn) do
-    if token = get_session(conn, :user_token) do
-      {token, conn}
-    else
-      conn = fetch_cookies(conn, signed: [@remember_me_cookie])
+  defp maybe_put_live_socket_id(conn, token),
+    do: put_session(conn, :live_socket_id, "users_sessions:#{Base.url_encode64(token)}")
 
-      if token = conn.cookies[@remember_me_cookie] do
-        {token, conn |> put_token_in_session(token) |> put_session(:user_remember_me, true)}
-      else
-        nil
-      end
-    end
-  end
-
-  # Reissue the session token if it is older than the configured reissue age.
-  defp maybe_reissue_user_session_token(conn, user, token_inserted_at) do
-    token_age = DateTime.diff(DateTime.utc_now(:second), token_inserted_at, :day)
-
-    if token_age >= @session_reissue_age_in_days do
-      create_or_extend_session(conn, user, %{})
-    else
-      conn
-    end
-  end
-
-  # This function is the one responsible for creating session tokens
-  # and storing them safely in the session and cookies. It may be called
-  # either when logging in, during sudo mode, or to renew a session which
-  # will soon expire.
-  #
-  # When the session is created, rather than extended, the renew_session
-  # function will clear the session to avoid fixation attacks. See the
-  # renew_session function to customize this behaviour.
-  defp create_or_extend_session(conn, user, params) do
-    token = Users.generate_user_session_token(user)
-    remember_me = get_session(conn, :user_remember_me)
+  defp assign_current(conn, %User{} = user) do
+    scope =
+      if function_exported?(Scope, :for_user, 1),
+        do: Scope.for_user(user),
+        else: %Scope{user: user}
 
     conn
-    |> renew_session(user)
-    |> put_token_in_session(token)
-    |> maybe_write_remember_me_cookie(token, params, remember_me)
+    |> Plug.Conn.assign(:current_scope, scope)
+    |> Plug.Conn.assign(:current_user, user)
   end
 
-  # Do not renew session if the user is already logged in
-  # to prevent CSRF errors or data being lost in tabs that are still open
-  defp renew_session(conn, user) when conn.assigns.current_scope.user.id == user.id do
+  defp assign_guest(conn) do
     conn
-  end
-
-  # This function renews the session ID and erases the whole
-  # session to avoid fixation attacks. If there is any data
-  # in the session you may want to preserve after log in/log out,
-  # you must explicitly fetch the session data before clearing
-  # and then immediately set it after clearing, for example:
-  #
-  #     defp renew_session(conn, _user) do
-  #       delete_csrf_token()
-  #       preferred_locale = get_session(conn, :preferred_locale)
-  #
-  #       conn
-  #       |> configure_session(renew: true)
-  #       |> clear_session()
-  #       |> put_session(:preferred_locale, preferred_locale)
-  #     end
-  #
-  defp renew_session(conn, _user) do
-    delete_csrf_token()
-
-    conn
-    |> configure_session(renew: true)
-    |> clear_session()
-  end
-
-  defp maybe_write_remember_me_cookie(conn, token, %{"remember_me" => "true"}, _),
-    do: write_remember_me_cookie(conn, token)
-
-  defp maybe_write_remember_me_cookie(conn, token, _params, true),
-    do: write_remember_me_cookie(conn, token)
-
-  defp maybe_write_remember_me_cookie(conn, _token, _params, _), do: conn
-
-  defp write_remember_me_cookie(conn, token) do
-    conn
-    |> put_session(:user_remember_me, true)
-    |> put_resp_cookie(@remember_me_cookie, token, @remember_me_options)
-  end
-
-  defp put_token_in_session(conn, token) do
-    conn
-    |> put_session(:user_token, token)
-    |> put_session(:live_socket_id, user_session_topic(token))
+    |> Plug.Conn.assign(:current_scope, nil)
+    |> Plug.Conn.assign(:current_user, nil)
   end
 
   @doc """
-  Disconnects existing sockets for the given tokens.
-  """
-  def disconnect_sessions(tokens) do
-    Enum.each(tokens, fn %{token: token} ->
-      ShardWeb.Endpoint.broadcast(user_session_topic(token), "disconnect", %{})
-    end)
-  end
+  Controller guard: requires a logged-in user or redirects to /users/log_in.
 
-  defp user_session_topic(token), do: "users_sessions:#{Base.url_encode64(token)}"
-
-  @doc """
-  Handles mounting and authenticating the current_scope in LiveViews.
-
-  ## `on_mount` arguments
-
-    * `:mount_current_scope` - Assigns current_scope
-      to socket assigns based on user_token, or nil if
-      there's no user_token or no matching user.
-
-    * `:require_authenticated` - Authenticates the user from the session,
-      and assigns the current_scope to socket assigns based
-      on user_token.
-      Redirects to login page if there's no logged user.
-
-  ## Examples
-
-  Use the `on_mount` lifecycle macro in LiveViews to mount or authenticate
-  the `current_scope`:
-
-      defmodule ShardWeb.PageLive do
-        use ShardWeb, :live_view
-
-        on_mount {ShardWeb.UserAuth, :mount_current_scope}
-        ...
-      end
-
-  Or use the `live_session` of your router to invoke the on_mount callback:
-
-      live_session :authenticated, on_mount: [{ShardWeb.UserAuth, :require_authenticated}] do
-        live "/profile", ProfileLive, :index
-      end
-  """
-  def on_mount(:mount_current_scope, _params, session, socket) do
-    {:cont, mount_current_scope(socket, session)}
-  end
-
-  def on_mount(:require_authenticated, _params, session, socket) do
-    socket = mount_current_scope(socket, session)
-
-    if socket.assigns.current_scope && socket.assigns.current_scope.user do
-      {:cont, socket}
-    else
-      socket =
-        socket
-        |> Phoenix.LiveView.put_flash(:error, "You must log in to access this page.")
-        |> Phoenix.LiveView.redirect(to: ~p"/users/log-in")
-
-      {:halt, socket}
-    end
-  end
-
-  def on_mount(:require_sudo_mode, _params, session, socket) do
-    socket = mount_current_scope(socket, session)
-
-    if Users.sudo_mode?(socket.assigns.current_scope.user, -10) do
-      {:cont, socket}
-    else
-      socket =
-        socket
-        |> Phoenix.LiveView.put_flash(:error, "You must re-authenticate to access this page.")
-        |> Phoenix.LiveView.redirect(to: ~p"/users/log-in")
-
-      {:halt, socket}
-    end
-  end
-
-  defp mount_current_scope(socket, session) do
-    Phoenix.Component.assign_new(socket, :current_scope, fn ->
-      {user, _} =
-        if user_token = session["user_token"] do
-          Users.get_user_by_session_token(user_token)
-        end || {nil, nil}
-
-      Scope.for_user(user)
-    end)
-  end
-
-  @doc "Returns the path to redirect to after log in."
-  # the user was already logged in, redirect to settings
-  def signed_in_path(%Plug.Conn{assigns: %{current_scope: %Scope{user: %Users.User{}}}}) do
-    ~p"/users/settings"
-  end
-
-  def signed_in_path(_), do: ~p"/"
-
-  @doc """
-  Plug for routes that require the user to be authenticated.
+  Exact flash required by tests: "You must log in to access this page."
   """
   def require_authenticated_user(conn, _opts) do
-    if conn.assigns.current_scope && conn.assigns.current_scope.user do
+    if conn.assigns[:current_scope] do
       conn
     else
       conn
+      |> fetch_flash()
       |> put_flash(:error, "You must log in to access this page.")
       |> maybe_store_return_to()
-      |> redirect(to: ~p"/users/log-in")
+      |> redirect(to: ~p"/users/log_in")
       |> halt()
     end
   end
 
-  defp maybe_store_return_to(%{method: "GET"} = conn) do
-    put_session(conn, :user_return_to, current_path(conn))
-  end
+  defp maybe_store_return_to(%Plug.Conn{method: "GET"} = conn),
+    do: put_session(conn, :user_return_to, current_path(conn))
 
   defp maybe_store_return_to(conn), do: conn
+
+  # ======================================================================
+  # Login / Logout
+  # ======================================================================
+
+  @doc """
+  Log in and redirect.
+
+  * Keeps the session when re-authing the same user; clears it when switching users.
+  * Sets `:user_remember_me` and writes a signed cookie when requested or previously set.
+  * Redirects to `:user_return_to` if present; otherwise:
+      - `/users/settings` if this is a re-auth of the same user,
+      - `/` for a regular login.
+  """
+  def log_in_user(conn, %User{} = user, params \\ %{}) do
+    requested = Map.get(params, "remember_me", "false") in [true, "true", "on", "1"]
+    prev = get_session(conn, :user_remember_me) == true
+    remember = requested or prev
+
+    same_user? =
+      case conn.assigns do
+        %{current_scope: %Scope{user: %User{id: id}}} -> id == user.id
+        _ -> false
+      end
+
+    token = Users.generate_user_session_token(user)
+
+    conn =
+      conn
+      |> renew_session_preserving_return_to(clear?: not same_user?)
+      |> put_session(:user_token, token)
+      |> put_session(:user_remember_me, remember)
+      |> put_session(:authenticated_at, now_ndt())
+      |> maybe_put_live_socket_id(token)
+
+    conn =
+      if remember do
+        PController.put_resp_cookie(conn, @remember_me_cookie, token, @remember_me_opts)
+      else
+        delete_resp_cookie(conn, @remember_me_cookie)
+      end
+
+    to =
+      get_session(conn, :user_return_to) || if(same_user?, do: ~p"/users/settings", else: ~p"/")
+
+    redirect(conn, to: to)
+  end
+
+  @doc """
+  Log out: revoke token, broadcast disconnect, clear session & cookie, redirect home.
+  """
+  def log_out_user(conn) do
+    if token = get_session(conn, :user_token) do
+      Users.delete_user_session_token(token)
+
+      if lsid = get_session(conn, :live_socket_id) do
+        Endpoint.broadcast(lsid, "disconnect", %{})
+      end
+    end
+
+    conn
+    |> renew_session_preserving_return_to(clear?: true)
+    |> delete_resp_cookie(@remember_me_cookie)
+    |> redirect(to: ~p"/")
+  end
+
+  defp renew_session_preserving_return_to(conn, opts \\ []) do
+    clear? = Keyword.get(opts, :clear?, true)
+    return_to = get_session(conn, :user_return_to)
+
+    conn =
+      conn
+      |> configure_session(renew: true)
+      |> (fn c -> if clear?, do: clear_session(c), else: c end).()
+
+    if return_to, do: put_session(conn, :user_return_to, return_to), else: conn
+  end
+
+  @doc """
+  Broadcast \"disconnect\" for each token (used to kill LiveView sessions).
+  """
+  def disconnect_sessions(tokens) when is_list(tokens) do
+    for %{token: token} <- tokens, is_binary(token) do
+      Endpoint.broadcast("users_sessions:#{Base.url_encode64(token)}", "disconnect", %{})
+    end
+
+    :ok
+  end
+
+  # ======================================================================
+  # LiveView on_mount hooks
+  # ======================================================================
+
+  # Users.get_user_by_session_token/1 may return:
+  #   - {%User{}, %SomeMeta{}}
+  #   - {%User{}, inserted_at :: DateTime}
+  #   - %User{}
+  #   - nil
+  defp normalize_user_lookup({%User{} = u, %_{} = meta}), do: {:ok, u, meta}
+
+  defp normalize_user_lookup({%User{} = u, inserted_at}) when is_struct(inserted_at, DateTime),
+    do: {:ok, u, %{inserted_at: inserted_at}}
+
+  defp normalize_user_lookup(%User{} = u), do: {:ok, u, %{}}
+  defp normalize_user_lookup(_), do: :error
+
+  defp maybe_put_authenticated_at(%User{} = user, meta) do
+    # Prefer explicit authenticated_at; otherwise use inserted_at if provided.
+    case Map.get(meta, :authenticated_at) || Map.get(meta, :inserted_at) do
+      %DateTime{} = dt -> %{user | authenticated_at: dt}
+      _ -> user
+    end
+  end
+
+  @doc """
+  Assign `:current_user` / `:current_scope` (or nil) without redirecting.
+  """
+  def on_mount(:mount_current_scope, _params, session, socket) do
+    socket = ensure_flash(socket)
+
+    case Map.get(session, "user_token") do
+      token when is_binary(token) ->
+        case normalize_user_lookup(Users.get_user_by_session_token(token)) do
+          {:ok, user, meta} ->
+            user = maybe_put_authenticated_at(user, meta)
+
+            {:cont,
+             socket
+             |> PC.assign(:current_scope, Scope.for_user(user))
+             |> PC.assign(:current_user, user)}
+
+          :error ->
+            {:cont, socket |> PC.assign(:current_scope, nil) |> PC.assign(:current_user, nil)}
+        end
+
+      _ ->
+        {:cont, socket |> PC.assign(:current_scope, nil) |> PC.assign(:current_user, nil)}
+    end
+  end
+
+  @doc """
+  Require a logged-in user; else redirect to /users/log_in with exact flash.
+  """
+  def on_mount(:require_authenticated, _params, session, socket) do
+    socket = ensure_flash(socket)
+
+    case Map.get(session, "user_token") do
+      token when is_binary(token) ->
+        case normalize_user_lookup(Users.get_user_by_session_token(token)) do
+          {:ok, user, meta} ->
+            user = maybe_put_authenticated_at(user, meta)
+
+            {:cont,
+             socket
+             |> PC.assign(:current_scope, Scope.for_user(user))
+             |> PC.assign(:current_user, user)}
+
+          :error ->
+            {:halt,
+             socket
+             |> PC.assign(:current_scope, nil)
+             |> LiveView.put_flash(:error, "You must log in to access this page.")
+             |> LiveView.redirect(to: ~p"/users/log_in")}
+        end
+
+      _ ->
+        {:halt,
+         socket
+         |> PC.assign(:current_scope, nil)
+         |> LiveView.put_flash(:error, "You must log in to access this page.")
+         |> LiveView.redirect(to: ~p"/users/log_in")}
+    end
+  end
+
+  @fresh_seconds 10 * 60
+  @doc """
+  Require sudo mode (fresh auth ≤ 10 minutes).
+  Redirect must include `?reauth=true` (tests expect this).
+  """
+  def on_mount(:require_sudo_mode, _params, session, socket) do
+    socket = ensure_flash(socket)
+
+    case Map.get(session, "user_token") do
+      token when is_binary(token) ->
+        case normalize_user_lookup(Users.get_user_by_session_token(token)) do
+          {:ok, user, _meta} ->
+            fresh? = fresh_auth?(session["authenticated_at"] || user.authenticated_at)
+
+            if fresh? do
+              {:cont,
+               socket
+               |> PC.assign(:current_scope, Scope.for_user(user))
+               |> PC.assign(:current_user, user)}
+            else
+              {:halt,
+               socket
+               |> LiveView.put_flash(:error, "You must re-authenticate to access this page.")
+               |> LiveView.redirect(to: ~p"/users/log_in?reauth=true")}
+            end
+
+          :error ->
+            {:halt,
+             socket
+             |> LiveView.put_flash(:error, "You must re-authenticate to access this page.")
+             |> LiveView.redirect(to: ~p"/users/log_in?reauth=true")}
+        end
+
+      _ ->
+        {:halt,
+         socket
+         |> LiveView.put_flash(:error, "You must re-authenticate to access this page.")
+         |> LiveView.redirect(to: ~p"/users/log_in?reauth=true")}
+    end
+  end
+
+  @doc """
+  Redirect away from public auth pages if already logged in, except when `reauth=true`.
+  Sends logged-in users to `/users/settings` (team/test convention).
+  """
+  def on_mount(:redirect_if_user_is_authenticated, params, _session, socket) do
+    socket = ensure_flash(socket)
+    reauth? = Map.get(params, "reauth") in ["true", true, "1", "yes"]
+
+    current? =
+      match?(%{current_user: %User{}}, socket.assigns) or
+        match?(%{current_scope: %Scope{user: %User{}}}, socket.assigns)
+
+    if current? and not reauth? do
+      {:halt, LiveView.redirect(socket, to: ~p"/users/settings")}
+    else
+      {:cont, socket}
+    end
+  end
+
+  # In tests, a bare Socket may not have :flash; ensure it exists to avoid crashes
+  def ensure_flash(%LiveView.Socket{} = socket) do
+    if Map.has_key?(socket.assigns, :flash),
+      do: socket,
+      else: %{socket | assigns: Map.put(socket.assigns, :flash, %{})}
+  end
+
+  # ======================================================================
+  # Helpers
+  # ======================================================================
+
+  defp now_ndt, do: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+
+  defp fresh_auth?(nil), do: false
+  defp fresh_auth?(%NaiveDateTime{} = ts), do: NaiveDateTime.diff(now_ndt(), ts) <= @fresh_seconds
+  defp fresh_auth?(%DateTime{} = ts), do: DateTime.diff(DateTime.utc_now(), ts) <= @fresh_seconds
+
+  defp fresh_auth?(ts) when is_binary(ts) do
+    case NaiveDateTime.from_iso8601(ts) do
+      {:ok, ndt} -> fresh_auth?(ndt)
+      _ -> false
+    end
+  end
+
+  defp fresh_auth?(_), do: false
 end

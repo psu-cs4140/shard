@@ -1,0 +1,29 @@
+<h1 class="text-2xl font-semibold mb-4">Music</h1>
+
+<.link navigate={~p"/admin/music/new"} class="px-3 py-1 rounded border">New track</.link>
+
+<table class="table w-full mt-4">
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Artist</th>
+      <th>Active</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <%= for t <- @tracks do %>
+      <tr>
+        <td><.link navigate={~p"/admin/music/#{t}"}>{t.title}</.link></td>
+        <td>{t.artist}</td>
+        <td>{if t.is_active, do: "Yes", else: "No"}</td>
+        <td class="text-right space-x-2">
+          <.link navigate={~p"/admin/music/#{t}/edit"}>Edit</.link>
+          <.link href={~p"/admin/music/#{t}"} method="delete" data-confirm="Delete?">
+            Delete
+          </.link>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

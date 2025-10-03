@@ -11,6 +11,7 @@ defmodule Shard.Repo.Migrations.CreateRoomsExitsCharacters do
       add :y, :integer, null: false
       timestamps()
     end
+
     create unique_index(:rooms, [:slug])
     create unique_index(:rooms, [:x, :y])
 
@@ -20,15 +21,17 @@ defmodule Shard.Repo.Migrations.CreateRoomsExitsCharacters do
       add :room_id, references(:rooms, on_delete: :nilify_all), null: true
       timestamps()
     end
+
     create index(:characters, [:room_id])
 
     # 3) EXITS (FKs -> rooms)
     create table(:exits) do
       add :from_id, references(:rooms, on_delete: :delete_all), null: false
-      add :to_id,   references(:rooms, on_delete: :delete_all), null: false
-      add :dir,     :string, null: false
+      add :to_id, references(:rooms, on_delete: :delete_all), null: false
+      add :dir, :string, null: false
       timestamps()
     end
+
     # unique(from_id, dir) is added later; keep this basic index here
     create index(:exits, [:to_id])
   end

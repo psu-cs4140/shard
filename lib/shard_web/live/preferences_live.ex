@@ -30,6 +30,7 @@ defmodule ShardWeb.PreferencesLive do
     case Users.update_user_preferences(user, params) do
       {:ok, user} ->
         form = Component.to_form(Users.change_user_preferences(user))
+
         {:noreply,
          socket
          |> put_flash(:info, "Preferences updated")

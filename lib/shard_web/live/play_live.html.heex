@@ -3,8 +3,21 @@
   phx-window-keydown="key"
   class="p-4 space-y-3"
 >
-  <h2 class="text-xl font-semibold">{@room.name}</h2>
-  <p>{@room.description}</p>
+  <%= if @room do %>
+    <h2 class="text-xl font-semibold">{@room.name}</h2>
+    <p>{@room.description}</p>
+
+    <% cs = assigns[:current_scope] %>
+    <%= if cs && cs.user && Map.get(cs.user, :music_enabled, false) do %>
+      <audio id="bgm" phx-hook="Bgm" autoplay loop>
+        <source src={"/audio/#{@room.slug}.mp3"} type="audio/mpeg" />
+      </audio>
+    <% end %>
+  <% else %>
+    <h2 class="text-xl font-semibold">No room loaded</h2>
+    <p class="text-gray-600">Pick a starting room or visit the map.</p>
+    <a href="/map" class="underline">Open map</a>
+  <% end %>
 
   <%= if @flash_info do %>
     <div role="alert" class="rounded bg-yellow-100 text-yellow-900 px-3 py-2">

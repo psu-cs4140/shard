@@ -1,0 +1,24 @@
+<h1 class="text-xl font-semibold mb-3">Edit track</h1>
+
+<.simple_form :let={f} for={@changeset} action={~p"/admin/music/#{@track}"} method="put" multipart>
+  <.input field={f[:title]} label="Title" />
+  <.input field={f[:artist]} label="Artist" />
+  <.input field={f[:album]} label="Album" />
+
+  <p class="text-sm mb-2">Current file: <code>{@track.original_filename}</code></p>
+  <label class="block text-sm font-medium">Replace audio (optional)</label>
+  <input
+    type="file"
+    name="music_track[audio]"
+    accept="audio/*"
+    class="file-input file-input-bordered w-full mb-3"
+  />
+
+  <.input field={f[:is_active]} type="checkbox" label="Active" />
+  <.input field={f[:sort_order]} type="number" label="Sort order" />
+
+  <:actions>
+    <.button type="submit" variant="primary">Update</.button>
+    <.link href={~p"/admin/music"} class="btn btn-ghost ml-2">Cancel</.link>
+  </:actions>
+</.simple_form>

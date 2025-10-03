@@ -1,0 +1,56 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="mx-auto max-w-2xl space-y-4">
+    <div class="mx-auto max-w-sm">
+      <div class="text-center">
+        <.header>
+          <p>Register for an account</p>
+          <:subtitle>
+            Already registered?
+            <.link navigate={~p"/users/log_in"} class="font-semibold text-brand hover:underline">
+              Log in
+            </.link>
+            to your account now.
+          </:subtitle>
+        </.header>
+      </div>
+
+      <.form
+        :let={f}
+        for={@form}
+        id="registration_form"
+        action={~p"/users/register"}
+        phx-change="validate"
+        phx-submit="save"
+      >
+        <.input
+          field={f[:email]}
+          type="email"
+          label="Email"
+          autocomplete="username"
+          required
+          phx-mounted={JS.focus()}
+        />
+        <p class="text-xs text-base-content/60 mt-1">Email must have the @ sign and no spaces.</p>
+
+        <.input
+          field={f[:password]}
+          type="password"
+          label="Password"
+          autocomplete="new-password"
+          required
+        />
+        <.input
+          field={f[:password_confirmation]}
+          type="password"
+          label="Confirm password"
+          autocomplete="new-password"
+          required
+        />
+
+        <.button class="btn btn-primary w-full" phx-disable-with="Creating account...">
+          Create an account
+        </.button>
+      </.form>
+    </div>
+  </div>
+</Layouts.app>

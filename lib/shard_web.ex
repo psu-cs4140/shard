@@ -8,22 +8,17 @@ defmodule ShardWeb do
       use ShardWeb, :controller
       use ShardWeb, :html
 
-  The definitions below will be executed for every controller,
-  component, etc, so keep them short and clean, focused
-  on imports, uses and aliases.
-
-  Do NOT define functions inside the quoted expressions
-  below. Instead, define additional modules and import
-  those modules here.
+  Keep definitions short and focused on imports/aliases.
+  Do NOT define functions inside the quoted expressions below.
   """
 
-  def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)
+  def static_paths, do: ~w(assets fonts images audio favicon.ico robots.txt)
 
   def router do
     quote do
       use Phoenix.Router, helpers: false
 
-      # Import common connection and controller functions to use in pipelines
+      # Common connection and controller functions for pipelines
       import Plug.Conn
       import Phoenix.Controller
       import Phoenix.LiveView.Router
@@ -39,7 +34,6 @@ defmodule ShardWeb do
   def controller do
     quote do
       use Phoenix.Controller, formats: [:html, :json]
-
       use Gettext, backend: ShardWeb.Gettext
 
       import Plug.Conn
@@ -51,7 +45,6 @@ defmodule ShardWeb do
   def live_view do
     quote do
       use Phoenix.LiveView
-
       unquote(html_helpers())
     end
   end
@@ -59,7 +52,6 @@ defmodule ShardWeb do
   def live_component do
     quote do
       use Phoenix.LiveComponent
-
       unquote(html_helpers())
     end
   end
@@ -67,15 +59,15 @@ defmodule ShardWeb do
   def html do
     quote do
       use Phoenix.Component
-      import Phoenix.HTML
-      import Phoenix.HTML.Form
 
-      # Import convenience functions from controllers
-      import Phoenix.Controller,
-        only: [get_csrf_token: 0, view_module: 1, view_template: 1]
+      # Convenience from controllers (e.g. get_csrf_token/0 for layouts)
+      import Phoenix.Controller, only: [get_csrf_token: 0, view_module: 1, view_template: 1]
 
       # Include general helpers for rendering HTML
       unquote(html_helpers())
+
+      # Form helpers when rendering plain forms in HEEx components
+      import Phoenix.HTML.Form
     end
   end
 
@@ -84,16 +76,17 @@ defmodule ShardWeb do
       # Translation
       use Gettext, backend: ShardWeb.Gettext
 
-      # HTML escaping functionality
+      # HTML escaping & safe content
       import Phoenix.HTML
-      # Core UI components
+
+      # Core UI components (buttons, inputs, flashes, etc.)
       import ShardWeb.CoreComponents
 
-      # Common modules used in templates
+      # Common aliases used in templates
       alias Phoenix.LiveView.JS
       alias ShardWeb.Layouts
 
-      # Routes generation with the ~p sigil
+      # Routes (~p sigil)
       unquote(verified_routes())
     end
   end

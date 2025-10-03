@@ -1,0 +1,8 @@
+<h1 class="text-2xl font-semibold mb-2">{@track.title}</h1>
+<p class="mb-3">{@track.artist}{if @track.album, do: " • #{@track.album}"}</p>
+<audio controls src={@track.url} class="w-full mb-4"></audio>
+
+<div class="space-x-2">
+  <.link navigate={~p"/admin/music/#{@track}/edit"}>Edit</.link>
+  <.link navigate={~p"/admin/music"}>Back</.link>
+</div>

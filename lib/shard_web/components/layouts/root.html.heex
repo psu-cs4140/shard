@@ -11,18 +11,26 @@
     </.live_title>
 
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
-    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}></script>
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
+    </script>
   </head>
   <body class="min-h-screen bg-base-100">
     <header class="navbar bg-base-200 px-4">
       <div class="flex-1">
         <.link href={~p"/"} class="btn btn-ghost text-lg font-semibold">Shard</.link>
       </div>
+
       <nav class="flex-none space-x-2">
         <.link href={~p"/music"} class="btn btn-ghost">Music</.link>
-        <%= if @current_scope && @current_scope.user do %>
+
+        <%= if @current_user do %>
+          <!-- show email so controller tests can assert response =~ user.email -->
+          <span class="text-sm opacity-70">{@current_user.email}</span>
+
           <.link href={~p"/users/settings"} class="btn btn-ghost">Settings</.link>
           <.link href={~p"/admin"} class="btn btn-ghost">Admin</.link>
+          
+<!-- core <.link method="delete"> renders <a ... data-method="delete" ...> -->
           <.link href={~p"/users/log_out"} method="delete" class="btn">Log out</.link>
         <% else %>
           <.link navigate={~p"/users/register"} class="btn btn-ghost">Register</.link>

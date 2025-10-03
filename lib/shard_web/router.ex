@@ -1,118 +1,119 @@
 defmodule ShardWeb.Router do
   use ShardWeb, :router
-import ShardWeb.UserAuth
-  import Phoenix.LiveView.Router
 
-  # ---------- Pipelines ----------
+  import ShardWeb.UserAuth,
+    only: [
+      fetch_current_scope_for_user: 2,
+      require_authenticated_user: 2
+    ]
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
     plug :fetch_live_flash
-    plug :put_root_layout, html: {ShardWeb.Layouts, :root}
+    plug :put_root_layout, {ShardWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
-    plug :fetch_current_user
+    plug :fetch_current_scope_for_user
   end
 
-  pipeline :redirect_if_authed do
-    plug :redirect_if_user_is_authenticated
-  end
-
-  pipeline :auth_required do
+  # Separate name to avoid clashing with the imported plug function
+  pipeline :auth_browser do
     plug :require_authenticated_user
   end
 
-  # ---------- Routes ----------
+  pipeline :api do
+    plug :accepts, ["json"]
+  end
 
-  # Public (current-user aware via :browser)
+  # ----- Public site ---------------------------------------------------------
+
   scope "/", ShardWeb do
-    pipe_through [:browser]
+    pipe_through :browser
 
-    # Controller routes
     get "/", PageController, :home
-    get "/music", PageController, :music
+    get "/credits", PageController, :credits
+    get "/music", MusicController, :index
+    get "/play", PageController, :play
 
-    # LiveViews get current_scope via on_mount
-    live_session :public, on_mount: [{ShardWeb.UserAuth, :mount_current_scope}] do
-      live "/play", PlayLive, :index
+    # Characters (public)
+    live "/characters", CharacterLive.Index, :index
+    live "/characters/new", CharacterLive.New, :new
+    live "/characters/:id", CharacterLive.Show, :show
+  end
 
-      # Characters (public)
-      live "/characters", CharacterLive.Index, :index
-      live "/characters/new", CharacterLive.New, :new
-      live "/characters/:id", CharacterLive.Show, :show
+  # ----- Settings (LiveView) -------------------------------------------------
 
-      # Credits page
-      live "/credits", CreditsLive, :index
+  scope "/", ShardWeb do
+    pipe_through :browser
+
+    # Must be logged in AND within sudo window for /users/settings
+    live_session :users_settings,
+      on_mount: [
+        {ShardWeb.UserAuth, :mount_current_scope},
+        {ShardWeb.UserAuth, :require_authenticated},
+        {ShardWeb.UserAuth, :require_sudo_mode}
+      ] do
+      live "/users/settings", UserLive.Settings, :edit
     end
 
-    live_session :requires_auth,
-      on_mount: [{ShardWeb.UserAuth, :ensure_authenticated}] do
-      live "/settings", PreferencesLive, :index
+    # Email confirmation from settings: needs login, not sudo
+    live_session :users_settings_email,
+      on_mount: [
+        {ShardWeb.UserAuth, :mount_current_scope},
+        {ShardWeb.UserAuth, :require_authenticated}
+      ] do
+      live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
     end
   end
 
-  # Admin index + admin LiveViews (requires login)
-  scope "/admin", ShardWeb do
-    pipe_through [:browser, :auth_required]
+  # ----- Auth (public LV pages, controller POSTs) ----------------------------
 
-    # Controller route
-    get "/", AdminController, :index
+  scope "/", ShardWeb do
+    pipe_through :browser
 
-    # LiveViews with current_scope available
-    live_session :admin, on_mount: [{ShardWeb.UserAuth, :mount_current_scope}] do
-      live "/map", AdminLive.Index, :index
-      live "/characters", AdminLive.Characters, :index
-      live "/characters/new", AdminLive.Characters, :new
-      live "/characters/:id", AdminLive.Characters, :show
-      live "/characters/:id/edit", AdminLive.Characters, :edit
+    live_session :users_auth_public,
+      on_mount: [
+        {ShardWeb.UserAuth, :mount_current_scope},
+        {ShardWeb.UserAuth, :redirect_if_user_is_authenticated}
+      ] do
+      # Magic-link page: MUST be above the plain /users/log_in route
+      live "/users/log_in/:token", UserLive.Confirmation, :show
+
+      live "/users/register", UserLive.Registration, :new
+      live "/users/log_in", UserLive.Login, :new
     end
+
+    post "/users/register", UserRegistrationController, :create
+    post "/users/log_in", UserSessionController, :create
+    delete "/users/log_out", UserSessionController, :delete
   end
 
-  # Admin — Controllers (CRUD)
-  scope "/admin", ShardWeb.Admin, as: :admin do
-    pipe_through [:browser, :auth_required]
+  # ----- Admin area ----------------------------------------------------------
+
+  scope "/admin", ShardWeb.Admin do
+    pipe_through [:browser, :auth_browser]
+    # plug :require_admin # enable when admin roles exist
+
+    get "/", DashboardController, :index
+    live "/map", MapLive, :index
+
     resources "/rooms", RoomController
-    resources "/monsters", MonsterController
     resources "/exits", ExitController
     resources "/music", MusicTrackController
+    resources "/monsters", MonsterController
+
+    # If your admin templates reference these LV routes, keep them:
+    live "/characters", CharactersLive, :index
+    live "/characters/new", CharactersLive, :new
+    live "/characters/:id", CharactersLive, :show
+    live "/characters/:id/edit", CharactersLive, :edit
   end
 
-  # Auth pages for visitors (not logged in)
+  # ----- JSON API ------------------------------------------------------------
+
   scope "/", ShardWeb do
-    pipe_through [:browser, :redirect_if_authed]
-
-    # LiveViews need current_scope too
-    live_session :auth, on_mount: [{ShardWeb.UserAuth, :mount_current_scope}] do
-      live "/users/log_in", UserLive.Login, :new
-      live "/users/register", UserLive.Registration, :new
-      live "/users/confirm/:token", UserLive.Confirmation, :show
-    end
-
-    # Controller actions for form POSTs
-    post "/users/log_in", UserSessionController, :create
-    post "/users/register", UserRegistrationController, :create
-  end
-
-  # Logged-in LiveViews (auth enforced via on_mount)
-  scope "/", ShardWeb do
-    pipe_through [:browser]
-
-    live_session :authed,
-      on_mount: [
-        {ShardWeb.UserAuth, :ensure_authenticated},
-        {ShardWeb.UserAuth, :mount_current_scope}
-      ] do
-      live "/users/settings", UserLive.Settings, :index
-      live "/users/settings/confirm-email/:token", UserLive.Settings, :index
-    end
-
-    # Controller endpoint that still uses plugs
-    post "/users/update-password", UserSessionController, :update_password
-  end
-
-  # Shared (any state)
-  scope "/", ShardWeb do
-    pipe_through [:browser]
-    delete "/users/log_out", UserSessionController, :delete
+    pipe_through :api
+    get "/map", MapController, :index
   end
 end

@@ -26,6 +26,14 @@ defmodule ShardWeb.Endpoint do
     gzip: not code_reloading?,
     only: ShardWeb.static_paths()
 
+  # Serve uploaded media from "priv/uploads" at "/uploads"
+  plug Plug.Static,
+    at: "/uploads",
+    from: {:shard, "priv/uploads"},
+    gzip: false,
+    # Set a sane cache header for hashed filenames; tweak as needed.
+    cache_control_for_etags: "public, max-age=86400"
+
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
   if code_reloading? do

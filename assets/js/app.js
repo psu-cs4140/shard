@@ -4,36 +4,78 @@
 
 // You can include dependencies in two ways.
 //
-// The simplest option is to put them in assets/vendor and
-// import them using relative paths:
-//
+// The simplest option is to put them in assets/vendor and import them using relative paths:
 //     import "../vendor/some-package.js"
-//
-// Alternatively, you can `npm install some-package --prefix assets` and import
-// them using a path starting with the package name:
-//
+// Or install packages into assets with npm and import by name:
 //     import "some-package"
-//
-// If you have dependencies that try to import CSS, esbuild will generate a separate `app.css` file.
-// To load it, simply add a second `<link>` to your `root.html.heex` file.
 
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
 import "phoenix_html"
+
 // Establish Phoenix Socket and LiveView configuration.
-import {Socket} from "phoenix"
-import {LiveSocket} from "phoenix_live_view"
-import {hooks as colocatedHooks} from "phoenix-colocated/shard"
+import { Socket } from "phoenix"
+import { LiveSocket } from "phoenix_live_view"
+
 import topbar from "../vendor/topbar"
 
+// ---------------- LiveView Hooks ----------------
+const Hooks = {
+  // Background music via <audio phx-hook="Bgm" data-src="..." data-fallback="...">
+  Bgm: {
+    mounted() {
+      this.fallback = this.el.dataset.fallback || ""
+      this.el.addEventListener("error", () => {
+        if (this.fallback && !this.el.src.endsWith(this.fallback)) {
+          this.el.src = this.fallback
+          this.el.play?.().catch(() => {})
+        }
+      })
+      this.swap()
+    },
+    updated() { this.swap() },
+    swap() {
+      const desired = this.el.dataset.src || ""
+      if (!this.el.src.endsWith(desired)) {
+        this.el.src = desired
+        this.el.play?.().catch(() => {})
+      }
+    }
+  },
+
+  // Room music controlled by server events:
+  //   push_event("play-room-music", %{src, volume, loop})
+  //   push_event("stop-room-music", %{})
+  RoomMusic: {
+    mounted() {
+      this.handleEvent("play-room-music", ({ src, volume, loop }) => {
+        if (!this.audio) this.audio = new Audio()
+        this.audio.pause()
+        this.audio.src = src
+        this.audio.loop = !!loop
+        this.audio.volume = Math.max(0, Math.min(1, (volume ?? 70) / 100))
+        this.audio.play().catch(() => { /* user gesture may be required */ })
+      })
+      this.handleEvent("stop-room-music", () => {
+        if (this.audio) this.audio.pause()
+      })
+    },
+    destroyed() {
+      if (this.audio) { this.audio.pause(); this.audio = null }
+    }
+  }
+}
+// ------------------------------------------------------------------------
+
+// CSRF + LiveSocket
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
-  params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks},
+  params: { _csrf_token: csrfToken },
+  hooks: Hooks,
 })
 
 // Show progress bar on live navigation and form submits
-topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
+topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" })
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
 window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 
@@ -42,66 +84,53 @@ liveSocket.connect()
 
 // expose liveSocket on window for web console debug logs and latency simulation:
 // >> liveSocket.enableDebug()
-// >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
+// >> liveSocket.enableLatencySim(1000)
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
 
 // Prevent arrow keys from scrolling the page during game movement
 let keysPressed = new Set()
 
-document.addEventListener("keydown", function(event) {
+document.addEventListener("keydown", function (event) {
   keysPressed.add(event.key)
-  
-  // Check if the pressed key is an arrow key
+
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) {
-    // Prevent the default scrolling behavior
     event.preventDefault()
-    
-    // Check for diagonal movement combinations
+
     if (keysPressed.has("ArrowUp") && keysPressed.has("ArrowRight")) {
-      window.liveSocket.pushEventTo("#character-index", "diagonal_move", {direction: "northeast"})
+      window.liveSocket.pushEventTo("#character-index", "diagonal_move", { direction: "northeast" })
     } else if (keysPressed.has("ArrowUp") && keysPressed.has("ArrowLeft")) {
-      window.liveSocket.pushEventTo("#character-index", "diagonal_move", {direction: "northwest"})
+      window.liveSocket.pushEventTo("#character-index", "diagonal_move", { direction: "northwest" })
     } else if (keysPressed.has("ArrowDown") && keysPressed.has("ArrowRight")) {
-      window.liveSocket.pushEventTo("#character-index", "diagonal_move", {direction: "southeast"})
+      window.liveSocket.pushEventTo("#character-index", "diagonal_move", { direction: "southeast" })
     } else if (keysPressed.has("ArrowDown") && keysPressed.has("ArrowLeft")) {
-      window.liveSocket.pushEventTo("#character-index", "diagonal_move", {direction: "southwest"})
+      window.liveSocket.pushEventTo("#character-index", "diagonal_move", { direction: "southwest" })
     } else {
-      // Send single arrow key event to the LiveView for game movement handling
-      window.liveSocket.pushEventTo("#character-index", "keydown", {key: event.key})
+      window.liveSocket.pushEventTo("#character-index", "keydown", { key: event.key })
     }
   }
 })
 
-document.addEventListener("keyup", function(event) {
+document.addEventListener("keyup", function (event) {
   keysPressed.delete(event.key)
 })
 
-// The lines below enable quality of life phoenix_live_reload
-// development features:
-//
-//     1. stream server logs to the browser console
-//     2. click on elements to jump to their definitions in your code editor
-//
+// The lines below enable quality-of-life phoenix_live_reload dev features:
+//   1. stream server logs to the browser console
+//   2. click on elements to jump to their definitions in your code editor
 if (process.env.NODE_ENV === "development") {
-  window.addEventListener("phx:live_reload:attached", ({detail: reloader}) => {
-    // Enable server log streaming to client.
-    // Disable with reloader.disableServerLogs()
+  window.addEventListener("phx:live_reload:attached", ({ detail: reloader }) => {
     reloader.enableServerLogs()
 
-    // Open configured PLUG_EDITOR at file:line of the clicked element's HEEx component
-    //
-    //   * click with "c" key pressed to open at caller location
-    //   * click with "d" key pressed to open at function component definition location
     let keyDown
     window.addEventListener("keydown", e => keyDown = e.key)
-    window.addEventListener("keyup", e => keyDown = null)
+    window.addEventListener("keyup", _e => keyDown = null)
     window.addEventListener("click", e => {
-      if(keyDown === "c"){
+      if (keyDown === "c") {
         e.preventDefault()
         e.stopImmediatePropagation()
         reloader.openEditorAtCaller(e.target)
-      } else if(keyDown === "d"){
+      } else if (keyDown === "d") {
         e.preventDefault()
         e.stopImmediatePropagation()
         reloader.openEditorAtDef(e.target)
@@ -111,4 +140,3 @@ if (process.env.NODE_ENV === "development") {
     window.liveReloader = reloader
   })
 }
-

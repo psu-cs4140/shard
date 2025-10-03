@@ -1,33 +1,45 @@
 defmodule Shard.Users.Scope do
   @moduledoc """
-  Defines the scope of the caller to be used throughout the app.
-
-  The `Shard.Users.Scope` allows public interfaces to receive
-  information about the caller, such as if the call is initiated from an
-  end-user, and if so, which user. Additionally, such a scope can carry fields
-  such as "super user" or other privileges for use as authorization, or to
-  ensure specific code paths can only be access for a given scope.
-
-  It is useful for logging as well as for scoping pubsub subscriptions and
-  broadcasts when a caller subscribes to an interface or performs a particular
-  action.
-
-  Feel free to extend the fields on this struct to fit the needs of
-  growing application requirements.
+  A small container for the authenticated user and the time they re-authenticated
+  (used for ‘sudo mode’ checks).
   """
 
   alias Shard.Users.User
 
-  defstruct user: nil
+  @enforce_keys [:user]
+  defstruct [:user, :authenticated_at]
 
-  @doc """
-  Creates a scope for the given user.
+  @type t :: %__MODULE__{
+          user: User.t(),
+          authenticated_at: DateTime.t() | NaiveDateTime.t() | nil
+        }
 
-  Returns nil if no user is given.
-  """
-  def for_user(%User{} = user) do
-    %__MODULE__{user: user}
+  @doc "Build a new scope."
+  @spec new(User.t(), DateTime.t() | NaiveDateTime.t() | nil) :: t()
+  def new(%User{} = user, authenticated_at \\ nil) do
+    %__MODULE__{user: user, authenticated_at: authenticated_at}
   end
 
+  @doc """
+  Normalize a few common shapes into a %Scope{}.
+
+  * `%User{}` → `%Scope{user: user}`
+  * `{%User{}, dt}` → `%Scope{user: user, authenticated_at: dt}`
+  * `%Scope{}` → passthrough
+  * anything else → `nil`
+  """
+  @spec normalize(any) :: t() | nil
+  def normalize(%__MODULE__{} = scope), do: scope
+  def normalize(%User{} = user), do: new(user)
+  def normalize({%User{} = user, dt}), do: new(user, dt)
+  def normalize(_), do: nil
+
+  @doc """
+  Back-compat shim for older call sites & tests.
+
+  Equivalent to `normalize(user)`.
+  """
+  @spec for_user(User.t() | nil) :: t() | nil
   def for_user(nil), do: nil
+  def for_user(%User{} = user), do: new(user)
 end

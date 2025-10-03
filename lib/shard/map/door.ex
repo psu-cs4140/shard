@@ -8,7 +8,7 @@ defmodule Shard.Map.Door do
     # north, south, east, west, up, down, etc.
     field :direction, :string
     field :is_locked, :boolean, default: false
-    field :key_required, :string
+    field :key_required, :boolean, default: false
     # standard, gate, portal, etc.
     field :door_type, :string, default: "standard"
     # For extensibility: lock difficulty, etc.
@@ -37,7 +37,6 @@ defmodule Shard.Map.Door do
     |> validate_required([:from_room_id, :to_room_id, :direction])
     |> validate_length(:name, max: 100)
     |> validate_length(:description, max: 500)
-    |> validate_length(:key_required, max: 100)
     |> validate_inclusion(:direction, [
       "north",
       "south",
