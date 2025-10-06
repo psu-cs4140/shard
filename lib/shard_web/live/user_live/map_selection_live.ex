@@ -1,7 +1,6 @@
 defmodule ShardWeb.MapSelectionLive do
   use ShardWeb, :live_view
   alias Shard.Characters
-  alias Shard.Characters.Character
 
   @impl true
   def mount(_params, _session, socket) do
@@ -124,7 +123,7 @@ defmodule ShardWeb.MapSelectionLive do
             ← Back to Home
           </.button>
         </div>
-        
+
     <!-- Maps Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <%= for map <- @maps do %>
@@ -139,31 +138,31 @@ defmodule ShardWeb.MapSelectionLive do
                   </div>
                 </div>
               <% end %>
-              
+
     <!-- Map Card Content -->
               <div class="p-6">
                 <!-- Map Icon -->
                 <div class="text-6xl text-center mb-4">
                   {map.image}
                 </div>
-                
+
     <!-- Map Info -->
                 <h3 class="text-2xl font-bold text-gray-900 text-center mb-2">
                   {map.name}
                 </h3>
-                
+
     <!-- Difficulty Badge -->
                 <div class="flex justify-center mb-4">
                   <span class={"px-3 py-1 rounded-full text-sm font-semibold #{difficulty_color(map.difficulty)}"}>
                     {map.difficulty}
                   </span>
                 </div>
-                
+
     <!-- Description -->
                 <p class="text-gray-600 text-center mb-6 leading-relaxed">
                   {map.description}
                 </p>
-                
+
     <!-- Action Button -->
                 <div class="text-center">
                   <%= if map.unlocked do %>
@@ -188,7 +187,7 @@ defmodule ShardWeb.MapSelectionLive do
             </div>
           <% end %>
         </div>
-        
+
     <!-- Footer Info -->
         <div class="mt-16 text-center">
           <div class="bg-white/80 backdrop-blur-sm rounded-lg p-6 border border-amber-200">
@@ -209,7 +208,7 @@ defmodule ShardWeb.MapSelectionLive do
           </div>
         </div>
       </div>
-      
+
     <!-- Character Selection Modal -->
       <%= if @show_character_modal do %>
         <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
