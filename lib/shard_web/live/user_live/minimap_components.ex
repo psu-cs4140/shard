@@ -93,5 +93,4 @@ defmodule ShardWeb.UserLive.MinimapComponents do
       _ -> nil
     end
   end
-
 end

@@ -368,5 +368,4 @@ defmodule ShardWeb.AdminLive.Npcs do
       _ -> "bg-gray-100 text-gray-800"
     end
   end
-
 end

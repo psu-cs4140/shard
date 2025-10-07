@@ -39,6 +39,4 @@ defmodule ShardWeb.UserLive.LegacyMap do
   def dir_to_key("southeast"), do: "southeast"
   def dir_to_key("southwest"), do: "southwest"
   def dir_to_key(_), do: nil
-
-
 end

@@ -6,7 +6,6 @@ defmodule ShardWeb.UserLive.Movement do
   import Ecto.Query
   import ShardWeb.UserLive.MapHelpers
 
-
   # Execute movement command and update game state
   def execute_movement(game_state, direction) do
     current_pos = game_state.player_position
@@ -306,5 +305,4 @@ defmodule ShardWeb.UserLive.Movement do
   def posn_to_room_channel({xx, yy}) do
     "room:#{xx},#{yy}"
   end
-
 end

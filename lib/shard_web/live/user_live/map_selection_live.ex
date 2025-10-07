@@ -85,8 +85,8 @@ defmodule ShardWeb.MapSelectionLive do
             ← Back to Home
           </.button>
         </div>
-
-        <!-- Maps Grid -->
+        
+    <!-- Maps Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <%= for map <- @maps do %>
             <div class={"relative bg-white rounded-xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl #{if map.unlocked, do: "border-amber-200 hover:border-amber-300", else: "border-gray-200 opacity-60"}"}>
@@ -100,8 +100,8 @@ defmodule ShardWeb.MapSelectionLive do
                   </div>
                 </div>
               <% end %>
-
-              <!-- Map Card Content -->
+              
+    <!-- Map Card Content -->
               <div class="p-6">
                 <div class="text-6xl text-center mb-4">
                   {map.image}
@@ -144,8 +144,8 @@ defmodule ShardWeb.MapSelectionLive do
             </div>
           <% end %>
         </div>
-
-        <!-- Footer Info -->
+        
+    <!-- Footer Info -->
         <div class="mt-16 text-center">
           <div class="bg-white/80 backdrop-blur-sm rounded-lg p-6 border border-amber-200">
             <h3 class="text-xl font-semibold text-amber-900 mb-3">🌟 Adventure Awaits</h3>
@@ -165,8 +165,8 @@ defmodule ShardWeb.MapSelectionLive do
           </div>
         </div>
       </div>
-
-      <!-- Character Selection Modal Component -->
+      
+    <!-- Character Selection Modal Component -->
       <.live_component
         module={CharacterSelectionComponent}
         id="character-selection"

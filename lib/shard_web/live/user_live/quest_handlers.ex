@@ -345,5 +345,4 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       {stats, nil}
     end
   end
-
 end

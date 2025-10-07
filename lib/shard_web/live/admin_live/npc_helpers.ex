@@ -1,5 +1,4 @@
 defmodule ShardWeb.AdminLive.NpcHelpers do
-
   alias Shard.Repo
   alias Shard.Npcs
 

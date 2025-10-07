@@ -347,6 +347,4 @@ defmodule ShardWeb.UserLive.Commands2 do
       {full_response, updated_game_state}
     end
   end
-
-
 end

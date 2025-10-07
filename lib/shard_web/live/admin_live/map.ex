@@ -235,37 +235,64 @@ defmodule ShardWeb.AdminLive.Map do
 
   # Event handler delegations
   @impl true
-  def handle_event("change_tab", params, socket), do: MapHandlers.handle_change_tab(params, socket)
+  def handle_event("change_tab", params, socket),
+    do: MapHandlers.handle_change_tab(params, socket)
 
   # Room events
   def handle_event("new_room", params, socket), do: MapHandlers.handle_new_room(params, socket)
   def handle_event("edit_room", params, socket), do: MapHandlers.handle_edit_room(params, socket)
   def handle_event("view_room", params, socket), do: MapHandlers.handle_view_room(params, socket)
-  def handle_event("delete_room", params, socket), do: MapHandlers.handle_delete_room(params, socket)
-  def handle_event("validate_room", params, socket), do: MapHandlers.handle_validate_room(params, socket)
+
+  def handle_event("delete_room", params, socket),
+    do: MapHandlers.handle_delete_room(params, socket)
+
+  def handle_event("validate_room", params, socket),
+    do: MapHandlers.handle_validate_room(params, socket)
+
   def handle_event("save_room", params, socket), do: MapHandlers.handle_save_room(params, socket)
-  def handle_event("apply_and_save", params, socket), do: MapHandlers.handle_apply_and_save(params, socket)
-  def handle_event("generate_description", params, socket), do: MapHandlers.handle_generate_description(params, socket)
-  def handle_event("cancel_room", params, socket), do: MapHandlers.handle_cancel_room(params, socket)
-  def handle_event("back_to_rooms", params, socket), do: MapHandlers.handle_back_to_rooms(params, socket)
+
+  def handle_event("apply_and_save", params, socket),
+    do: MapHandlers.handle_apply_and_save(params, socket)
+
+  def handle_event("generate_description", params, socket),
+    do: MapHandlers.handle_generate_description(params, socket)
+
+  def handle_event("cancel_room", params, socket),
+    do: MapHandlers.handle_cancel_room(params, socket)
+
+  def handle_event("back_to_rooms", params, socket),
+    do: MapHandlers.handle_back_to_rooms(params, socket)
 
   # Door events
   def handle_event("new_door", params, socket), do: MapHandlers.handle_new_door(params, socket)
   def handle_event("edit_door", params, socket), do: MapHandlers.handle_edit_door(params, socket)
-  def handle_event("delete_door", params, socket), do: MapHandlers.handle_delete_door(params, socket)
-  def handle_event("validate_door", params, socket), do: MapHandlers.handle_validate_door(params, socket)
+
+  def handle_event("delete_door", params, socket),
+    do: MapHandlers.handle_delete_door(params, socket)
+
+  def handle_event("validate_door", params, socket),
+    do: MapHandlers.handle_validate_door(params, socket)
+
   def handle_event("save_door", params, socket), do: MapHandlers.handle_save_door(params, socket)
-  def handle_event("cancel_door", params, socket), do: MapHandlers.handle_cancel_door(params, socket)
+
+  def handle_event("cancel_door", params, socket),
+    do: MapHandlers.handle_cancel_door(params, socket)
 
   # Map interaction events
   def handle_event("zoom_in", params, socket), do: MapHandlers.handle_zoom_in(params, socket)
   def handle_event("zoom_out", params, socket), do: MapHandlers.handle_zoom_out(params, socket)
-  def handle_event("reset_view", params, socket), do: MapHandlers.handle_reset_view(params, socket)
+
+  def handle_event("reset_view", params, socket),
+    do: MapHandlers.handle_reset_view(params, socket)
+
   def handle_event("mousedown", params, socket), do: MapHandlers.handle_mousedown(params, socket)
   def handle_event("mousemove", params, socket), do: MapHandlers.handle_mousemove(params, socket)
   def handle_event("mouseup", params, socket), do: MapHandlers.handle_mouseup(params, socket)
-  def handle_event("mouseleave", params, socket), do: MapHandlers.handle_mouseleave(params, socket)
+
+  def handle_event("mouseleave", params, socket),
+    do: MapHandlers.handle_mouseleave(params, socket)
 
   # Generate default map
-  def handle_event("generate_default_map", params, socket), do: MapHandlers.handle_generate_default_map(params, socket)
+  def handle_event("generate_default_map", params, socket),
+    do: MapHandlers.handle_generate_default_map(params, socket)
 end

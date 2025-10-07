@@ -224,8 +224,6 @@ defmodule ShardWeb.UserLive.Components do
     """
   end
 
-
-
   def settings(assigns) do
     ~H"""
     <div
@@ -324,5 +322,4 @@ defmodule ShardWeb.UserLive.Components do
     </div>
     """
   end
-
 end

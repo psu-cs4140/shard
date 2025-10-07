@@ -205,6 +205,4 @@ defmodule ShardWeb.UserLive.MapHelpers do
       _ -> false
     end
   end
-
-
 end

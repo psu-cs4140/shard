@@ -93,7 +93,7 @@ defmodule ShardWeb.UserLive.MapComponents do
                   <div class="w-4 h-4 bg-red-500 ring-2 ring-red-300 rounded-full mr-2"></div>
                   <span class="text-sm">Player</span>
                 </div>
-
+                
     <!-- Door Types -->
                 <div class="col-span-2 md:col-span-3 mt-2">
                   <h5 class="text-sm font-semibold mb-1">Door Types:</h5>
@@ -191,7 +191,7 @@ defmodule ShardWeb.UserLive.MapComponents do
           <%= for door <- @doors do %>
             <.door_line door={door} bounds={@bounds} scale_factor={@scale_factor} />
           <% end %>
-
+          
     <!-- Render rooms as circles -->
           <%= for room <- @rooms do %>
             <.room_circle
@@ -201,7 +201,7 @@ defmodule ShardWeb.UserLive.MapComponents do
               scale_factor={@scale_factor}
             />
           <% end %>
-
+          
     <!-- Show player position even if no room exists there -->
           <%= if @player_position not in Enum.map(@rooms, &{&1.x_coordinate, &1.y_coordinate}) do %>
             <.player_marker
