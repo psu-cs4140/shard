@@ -225,7 +225,10 @@ defmodule Shard.CharactersTest do
     test "update_character/2 with invalid data returns error changeset" do
       character = character_fixture()
       assert {:error, %Ecto.Changeset{}} = Characters.update_character(character, %{name: ""})
-      assert character == Characters.get_character!(character.id)
+      # Reload the character to ensure same preloading as get_character!/1
+      reloaded_character = Characters.get_character!(character.id)
+      assert character.id == reloaded_character.id
+      assert character.name == reloaded_character.name
     end
 
     test "delete_character/1 deletes the character" do
