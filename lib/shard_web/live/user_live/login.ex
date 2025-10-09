@@ -61,7 +61,7 @@ defmodule ShardWeb.UserLive.Login do
         <.form
           :let={f}
           for={@form}
-          id="login_form" aria-label="Log in"
+          id="login_form_password" aria-label="Log in"
           action={~p"/users/log-in"}
           phx-submit="submit_password"
           phx-trigger-action={@trigger_submit}
