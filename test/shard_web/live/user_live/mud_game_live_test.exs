@@ -160,14 +160,14 @@ defmodule ShardWeb.MudGameLiveTest do
       
       {:ok, socket} = ShardWeb.MudGameLive.mount(params, session, socket)
       
-      # Verify character information is properly loaded in assigns
-      assert socket.assigns.character.name == "MageChar"
-      assert socket.assigns.character.class == "mage"
-      assert socket.assigns.character.race == "elf"
-      assert socket.assigns.character.level == 5
+      # Verify character information is properly loaded in game_state
+      assert socket.assigns.game_state.character.name == "MageChar"
+      assert socket.assigns.game_state.character.class == "mage"
+      assert socket.assigns.game_state.character.race == "elf"
+      assert socket.assigns.game_state.character.level == 5
       
       # Verify map_id parameter is handled
-      assert socket.assigns.map_id == "2"
+      assert socket.assigns.game_state.map_id == "2"
       
       # Verify terminal state is initialized with welcome messages
       assert is_list(socket.assigns.terminal_state.output)
@@ -179,8 +179,8 @@ defmodule ShardWeb.MudGameLiveTest do
       
       # Verify terminal state structure
       assert Map.has_key?(socket.assigns.terminal_state, :output)
-      assert Map.has_key?(socket.assigns.terminal_state, :current_input)
-      assert socket.assigns.terminal_state.current_input == ""
+      assert Map.has_key?(socket.assigns.terminal_state, :current_command)
+      assert socket.assigns.terminal_state.current_command == ""
     end
   end
 end
