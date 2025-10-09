@@ -38,7 +38,7 @@ defmodule ShardWeb.MudGameLive do
       {:ok,
        socket
        |> put_flash(:error, "Please select a character to play")
-       |> push_navigate(to: ~p"/maps")}
+       |> redirect(to: ~p"/maps")}
     else
       # Generate map data based on selected map
       map_data = generate_map_from_database(map_id)
