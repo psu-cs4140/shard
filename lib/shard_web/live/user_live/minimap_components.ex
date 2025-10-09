@@ -57,40 +57,4 @@ defmodule ShardWeb.UserLive.MinimapComponents do
     {scaled_x, scaled_y}
   end
 
-  # Check if a door is one-way (no return door in opposite direction)
-  def is_one_way_door?(door) do
-    opposite_direction = get_opposite_direction(door.direction)
-
-    if opposite_direction do
-      # Check if there's a door going back from the destination room
-      return_door = GameMap.get_door_in_direction(door.to_room_id, opposite_direction)
-
-      case return_door do
-        # No return door found, this is one-way
-        nil -> true
-        # Return door doesn't lead back
-        return_door -> return_door.to_room_id != door.from_room_id
-      end
-    else
-      # Can't determine opposite direction, assume two-way
-      false
-    end
-  end
-
-  # Get the opposite direction for checking return doors
-  def get_opposite_direction(direction) do
-    case direction do
-      "north" -> "south"
-      "south" -> "north"
-      "east" -> "west"
-      "west" -> "east"
-      "northeast" -> "southwest"
-      "southwest" -> "northeast"
-      "northwest" -> "southeast"
-      "southeast" -> "northwest"
-      "up" -> "down"
-      "down" -> "up"
-      _ -> nil
-    end
-  end
 end
