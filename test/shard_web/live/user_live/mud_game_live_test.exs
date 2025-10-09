@@ -30,7 +30,9 @@ defmodule ShardWeb.MudGameLiveTest do
     
     attrs = Enum.into(attrs, default_attrs)
     
-    {:ok, character} = Shard.Characters.create_character(attrs)
-    character
+    case Shard.Characters.create_character(attrs) do
+      {:ok, character} -> character
+      character when is_map(character) -> character
+    end
   end
 end
