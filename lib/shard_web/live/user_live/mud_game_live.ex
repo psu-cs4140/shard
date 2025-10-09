@@ -1,6 +1,7 @@
 defmodule ShardWeb.MudGameLive do
   use ShardWeb, :live_view
   alias Phoenix.PubSub
+  alias Phoenix.LiveView.JS
   import ShardWeb.UserLive.Components
   import ShardWeb.UserLive.Components2
   import ShardWeb.UserLive.MapHelpers
@@ -185,35 +186,35 @@ defmodule ShardWeb.MudGameLive do
           <.control_button
             text="Character Sheet"
             icon="hero-user"
-            click="open_modal"
+            click={JS.push("open_modal")}
             value="character_sheet"
           />
 
           <.control_button
             text="Inventory"
             icon="hero-shopping-bag"
-            click="open_modal"
+            click={JS.push("open_modal")}
             value="inventory"
           />
 
           <.control_button
             text="Quests"
             icon="hero-document-text"
-            click="open_modal"
+            click={JS.push("open_modal")}
             value="quests"
           />
 
           <.control_button
             text="Map"
             icon="hero-map"
-            click="open_modal"
+            click={JS.push("open_modal")}
             value="map"
           />
 
           <.control_button
             text="Settings"
             icon="hero-cog"
-            click="open_modal"
+            click={JS.push("open_modal")}
             value="settings"
           />
 

@@ -7,7 +7,6 @@ defmodule Shard.Items do
   alias Shard.Repo
 
   alias Shard.Items.{Item, CharacterInventory, RoomItem, HotbarSlot}
-  alias Shard.Characters.Character
 
   ## Items
 

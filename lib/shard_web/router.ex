@@ -3,6 +3,7 @@ defmodule ShardWeb.Router do
 
   import ShardWeb.UserAuth
 
+  # ───────────────────────── Admin guard ─────────────────────────
   defp ensure_admin(conn, _opts) do
     case conn.assigns[:current_scope] do
       %{user: %{admin: true}} ->
@@ -16,9 +17,11 @@ defmodule ShardWeb.Router do
     end
   end
 
+  # ───────────────────────── Pipelines ─────────────────────────
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
+    plug :fetch_flash
     plug :fetch_live_flash
     plug :put_root_layout, html: {ShardWeb.Layouts, :root}
     plug :protect_from_forgery
@@ -34,52 +37,65 @@ defmodule ShardWeb.Router do
     plug :ensure_admin
   end
 
+  # ───────────────────────── Public pages ─────────────────────────
   scope "/", ShardWeb do
     pipe_through :browser
 
     get "/", PageController, :home
-  end
 
-  # Admin routes
-  scope "/admin", ShardWeb do
-    pipe_through [:browser, :require_authenticated_user]
-
-    live "/", AdminLive.Index, :index
-    # Added this line for the map page
-    live "/map", AdminLive.Map, :index
-  end
-
-  # Other scopes may use custom stacks.
-  # scope "/api", ShardWeb do
-  #   pipe_through :api
-  # end
-
-  # Enable LiveDashboard and Swoosh mailbox preview in development
-  if Application.compile_env(:shard, :dev_routes) do
-    # If you want to use the LiveDashboard in production, you should put
-    # it behind authentication and allow only admins to access it.
-    # If your application does not have an admins-only section yet,
-    # you can use Plug.BasicAuth to set up some basic authentication
-    # as long as you are also using SSL (which you should anyway).
-    import Phoenix.LiveDashboard.Router
-
-    scope "/dev" do
-      pipe_through :browser
-
-      live_dashboard "/dashboard", metrics: ShardWeb.Telemetry
-      forward "/mailbox", Plug.Swoosh.MailboxPreview
+    # Auth pages that should be reachable even if already logged-in (sudo mode, confirmation)
+    live_session :auth_public,
+      on_mount: [{ShardWeb.UserAuth, :mount_current_scope}] do
+      live "/users/log-in/:token", UserLive.Confirmation, :new
+      live "/users/log-in", UserLive.Login, :new
     end
   end
 
-  ## Authentication routes
+  # ───────────────────────── Auth: public (redirect if already authed) ─────────────────────────
+  scope "/", ShardWeb do
+    pipe_through [:browser]
 
+    live_session :users_auth_public,
+      on_mount: [
+        {ShardWeb.UserAuth, :mount_current_scope},
+        {ShardWeb.UserAuth, :redirect_if_user_is_authenticated}
+      ] do
+      live "/users/register", UserLive.Registration, :new
+    end
+
+    post "/users/log-in", UserSessionController, :create
+    delete "/users/log-out", UserSessionController, :delete
+  end
+
+  # ───────────────────────── Auth: settings (requires auth; sudo for /users/settings) ─────────────────────────
   scope "/", ShardWeb do
     pipe_through [:browser, :require_authenticated_user]
 
-    live_session :require_authenticated_user,
-      on_mount: [{ShardWeb.UserAuth, :require_authenticated}] do
+    # Settings page requires fresh auth (sudo mode)
+    live_session :users_settings,
+      on_mount: [
+        {ShardWeb.UserAuth, :mount_current_scope},
+        {ShardWeb.UserAuth, :require_authenticated},
+        {ShardWeb.UserAuth, :require_sudo_mode}
+      ] do
       live "/users/settings", UserLive.Settings, :edit
+    end
+
+    # Email confirmation can skip sudo, still needs auth
+    live_session :users_settings_email,
+      on_mount: [
+        {ShardWeb.UserAuth, :mount_current_scope},
+        {ShardWeb.UserAuth, :require_authenticated}
+      ] do
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
+    end
+
+    # Other authenticated gameplay routes
+    live_session :app_authed,
+      on_mount: [
+        {ShardWeb.UserAuth, :mount_current_scope},
+        {ShardWeb.UserAuth, :require_authenticated}
+      ] do
       live "/characters", CharacterLive.Index, :index
       live "/characters/new", CharacterLive.New, :new
       live "/characters/:id", CharacterLive.Show, :show
@@ -91,54 +107,43 @@ defmodule ShardWeb.Router do
     post "/users/update-password", UserSessionController, :update_password
   end
 
+  # ───────────────────────── Admin ─────────────────────────
   scope "/admin", ShardWeb do
-    pipe_through [:browser, :require_authenticated_user]
+    pipe_through [:browser, :require_authenticated_user, :require_admin]
 
-    live_session :require_admin,
-      on_mount: [{ShardWeb.UserAuth, :require_authenticated}] do
-      live "/characters", AdminLive.Characters, :index
-      live "/characters/new", AdminLive.Characters, :new
-      live "/characters/:id", AdminLive.Characters, :show
-      live "/characters/:id/edit", AdminLive.Characters, :edit
-      live "/user_management", AdminLive.UserManagement, :index
-      live "/npcs", AdminLive.Npcs, :index
-      live "/npcs/new", AdminLive.Npcs, :new
-      live "/npcs/:id/edit", AdminLive.Npcs, :edit
-      live "/quests", AdminLive.Quests, :index
-      live "/quests/new", AdminLive.Quests, :new
-      live "/quests/:id/edit", AdminLive.Quests, :edit
-      live "/items", AdminLive.Items, :index
-      live "/items/new", AdminLive.Items, :new
-      live "/items/:id", AdminLive.Items, :show
-      live "/items/:id/edit", AdminLive.Items, :edit
-    end
+    live "/", AdminLive.Index, :index
+    live "/map", AdminLive.Map, :index
+
+    live "/characters", AdminLive.Characters, :index
+    live "/characters/new", AdminLive.Characters, :new
+    live "/characters/:id", AdminLive.Characters, :show
+    live "/characters/:id/edit", AdminLive.Characters, :edit
+
+    live "/user_management", AdminLive.UserManagement, :index
+
+    live "/npcs", AdminLive.Npcs, :index
+    live "/npcs/new", AdminLive.Npcs, :new
+    live "/npcs/:id/edit", AdminLive.Npcs, :edit
+
+    live "/quests", AdminLive.Quests, :index
+    live "/quests/new", AdminLive.Quests, :new
+    live "/quests/:id/edit", AdminLive.Quests, :edit
+
+    live "/items", AdminLive.Items, :index
+    live "/items/new", AdminLive.Items, :new
+    live "/items/:id", AdminLive.Items, :show
+    live "/items/:id/edit", AdminLive.Items, :edit
   end
 
-  scope "/", ShardWeb do
-    pipe_through [:browser]
+  # ───────────────────────── Dev-only routes ─────────────────────────
+  if Application.compile_env(:shard, :dev_routes) do
+    import Phoenix.LiveDashboard.Router
 
-    live_session :current_user,
-      on_mount: [{ShardWeb.UserAuth, :mount_current_scope}] do
-      live "/users/register", UserLive.Registration, :new
-      live "/users/log-in", UserLive.Login, :new
-      live "/users/log-in/:token", UserLive.Confirmation, :new
-      live "/npcs", NpcLive.Index, :index
-      live "/npcs/new", NpcLive.Form, :new
-      live "/npcs/:id", NpcLive.Show, :show
-      live "/npcs/:id/edit", NpcLive.Form, :edit
+    scope "/dev" do
+      pipe_through :browser
+
+      live_dashboard "/dashboard", metrics: ShardWeb.Telemetry
+      forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
-
-    post "/users/log-in", UserSessionController, :create
-    delete "/users/log-out", UserSessionController, :delete
-  end
-
-  scope "/", ShardWeb do
-    # make sure you have an admin plug if needed
-    pipe_through [:browser, :require_admin]
-
-    live "/npcs", NpcLive.Index, :index
-    live "/npcs/new", NpcLive.Form, :new
-    live "/npcs/:id", NpcLive.Show, :show
-    live "/npcs/:id/edit", NpcLive.Form, :edit
   end
 end

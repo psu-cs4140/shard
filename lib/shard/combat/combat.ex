@@ -5,8 +5,6 @@ defmodule Shard.Combat do
   Co-Authored by claude.ai
   """
 
-  alias Shard.Combat.{Damage, Actions}
-
   @doc """
   Checks if player is currently in combat (has monsters at position).
   """

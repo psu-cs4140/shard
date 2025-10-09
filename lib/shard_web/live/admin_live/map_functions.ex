@@ -5,7 +5,7 @@ defmodule ShardWeb.AdminLive.MapFunctions do
   """
 
   alias Shard.Map
-  import Phoenix.Component, only: [assign: 2, assign: 3]
+  import Phoenix.Component, only: [assign: 3]
   import Phoenix.LiveView, only: [put_flash: 3]
 
   def save_room(socket, room_params) do

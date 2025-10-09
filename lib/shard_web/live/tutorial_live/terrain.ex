@@ -4,6 +4,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
   alias Shard.Npcs.Npc
   import Ecto.Query
 
+  # Constant terrain map (compile-time)
   @tutorial_terrain_map [
     ["🏔️", "🏔️", "🏔️", "🏔️", "🏔️"],
     ["🏔️", "🌲", "🌲", "🌿", "🏔️"],
@@ -12,6 +13,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
     ["🏔️", "🏔️", "🏔️", "🏔️", "🏔️"]
   ]
 
+  @impl true
   def mount(_params, _session, socket) do
     tutorial_npcs = load_tutorial_npcs()
 
@@ -19,6 +21,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
       socket
       |> assign(:page_title, "Tutorial: Terrain")
       |> assign(:tutorial_npcs, tutorial_npcs)
+      |> assign(:terrain_map, @tutorial_terrain_map)
 
     {:ok, socket}
   end
@@ -37,6 +40,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
     |> Repo.all()
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="max-w-4xl mx-auto p-6">
@@ -83,7 +87,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
 
         <div class="space-y-4">
           <h2 class="text-2xl font-semibold">Tutorial Map</h2>
-          <.minimap tutorial_npcs={@tutorial_npcs} />
+          <.minimap tutorial_npcs={@tutorial_npcs} terrain_map={@terrain_map} />
 
           <div class="mt-4">
             <h3 class="text-lg font-semibold mb-2">NPCs in the Area</h3>
@@ -106,12 +110,16 @@ defmodule ShardWeb.TutorialLive.Terrain do
     """
   end
 
+  # function component inputs
+  attr :tutorial_npcs, :list, required: true
+  attr :terrain_map, :list, required: true
+
   defp minimap(assigns) do
     ~H"""
     <div class="bg-gray-100 p-4 rounded-lg">
       <h3 class="font-medium mb-3">World Map</h3>
       <div class="grid grid-cols-5 gap-1 w-fit mx-auto">
-        <%= for {row, row_index} <- Enum.with_index(@tutorial_terrain_map) do %>
+        <%= for {row, row_index} <- Enum.with_index(@terrain_map) do %>
           <%= for {cell, col_index} <- Enum.with_index(row) do %>
             <div class="w-8 h-8 flex items-center justify-center text-lg border border-gray-300 rounded relative">
               {cell}
@@ -135,6 +143,8 @@ defmodule ShardWeb.TutorialLive.Terrain do
     </div>
     """
   end
+
+  attr :npcs, :list, required: true
 
   defp npc_list(assigns) do
     ~H"""
@@ -174,13 +184,11 @@ defmodule ShardWeb.TutorialLive.Terrain do
 
   defp ensure_goldie_in_tutorial do
     case Repo.get_by(Npc, name: "Goldie") do
-      # Goldie doesn't exist, will be created by admin page
       nil ->
         :ok
 
       goldie ->
-        # Update Goldie's position to be at (0,0) for the tutorial
-        if goldie.location_x != 0 || goldie.location_y != 0 || goldie.location_z != 0 do
+        if goldie.location_x != 0 or goldie.location_y != 0 or goldie.location_z != 0 do
           goldie
           |> Ecto.Changeset.change(%{location_x: 0, location_y: 0, location_z: 0})
           |> Repo.update()
