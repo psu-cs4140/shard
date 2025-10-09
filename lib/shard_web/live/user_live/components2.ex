@@ -2,7 +2,9 @@ defmodule ShardWeb.UserLive.Components2 do
   use ShardWeb, :live_view
   import ShardWeb.UserLive.MinimapComponents
 
-  # Component for the terminal
+  # ───────────── Terminal ─────────────
+  attr :terminal_state, :map, required: true
+
   def terminal(assigns) do
     ~H"""
     <div class="flex flex-col h-full bg-black rounded-lg border border-gray-600">
@@ -46,7 +48,10 @@ defmodule ShardWeb.UserLive.Components2 do
     """
   end
 
-  # Component for player stats
+  # ───────────── Player Stats ─────────────
+  attr :stats, :map, required: true
+  attr :hotbar, :map, default: %{}
+
   def player_stats(assigns) do
     ~H"""
     <div class="bg-gray-700 rounded-lg p-4 shadow-xl">
@@ -62,8 +67,7 @@ defmodule ShardWeb.UserLive.Components2 do
           <div
             class="bg-red-500 h-3 rounded-full transition-all duration-300"
             style={"width: #{(@stats.health / @stats.max_health * 100)}%"}
-          >
-          </div>
+          />
         </div>
       </div>
       
@@ -77,8 +81,7 @@ defmodule ShardWeb.UserLive.Components2 do
           <div
             class="bg-yellow-500 h-3 rounded-full transition-all duration-300"
             style={"width: #{(@stats.stamina / @stats.max_stamina * 100)}%"}
-          >
-          </div>
+          />
         </div>
       </div>
       
@@ -92,8 +95,7 @@ defmodule ShardWeb.UserLive.Components2 do
           <div
             class="bg-blue-500 h-3 rounded-full transition-all duration-300"
             style={"width: #{(@stats.mana / @stats.max_mana * 100)}%"}
-          >
-          </div>
+          />
         </div>
       </div>
       
@@ -113,7 +115,12 @@ defmodule ShardWeb.UserLive.Components2 do
     """
   end
 
-  # Component for control buttons
+  # ───────────── Control Button ─────────────
+  attr :click, Phoenix.LiveView.JS, default: nil
+  attr :value, :any, default: nil
+  attr :icon, :string, required: true
+  attr :text, :string, required: true
+
   def control_button(assigns) do
     ~H"""
     <button
@@ -127,7 +134,10 @@ defmodule ShardWeb.UserLive.Components2 do
     """
   end
 
-  # Component for individual hotbar slots
+  # ───────────── Hotbar Slot ─────────────
+  attr :slot_data, :map, default: nil
+  attr :slot_number, :integer, required: true
+
   def hotbar_slot(assigns) do
     ~H"""
     <div class="w-12 h-12 bg-gray-600 border-2 border-gray-500 rounded-lg flex items-center justify-center relative hover:border-gray-400 transition-colors">
@@ -148,7 +158,7 @@ defmodule ShardWeb.UserLive.Components2 do
               <.icon name="hero-cube" class="w-6 h-6 text-gray-400" />
           <% end %>
         </div>
-        <!-- Tooltip on hover (item name) -->
+        <!-- Tooltip -->
         <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
           {@slot_data.name}
         </div>
@@ -160,7 +170,11 @@ defmodule ShardWeb.UserLive.Components2 do
     """
   end
 
-  # Component for player marker when no room exists at player position
+  # ───────────── Player Marker (single definition) ─────────────
+  attr :position, :any, required: true
+  attr :bounds, :any, required: true
+  attr :scale_factor, :any, required: true
+
   def player_marker(assigns) do
     {x_pos, y_pos} =
       calculate_minimap_position(
@@ -186,34 +200,6 @@ defmodule ShardWeb.UserLive.Components2 do
     """
   end
 
-  # Component for player marker when no room exists at player position
-  def player_marker(assigns) do
-    {x_pos, y_pos} =
-      calculate_minimap_position(
-        assigns.position,
-        assigns.bounds,
-        assigns.scale_factor
-      )
-
-    assigns = assign(assigns, x_pos: x_pos, y_pos: y_pos)
-
-    ~H"""
-    <circle
-      cx={@x_pos}
-      cy={@y_pos}
-      r="8"
-      fill="#ef4444"
-      stroke="#ffffff"
-      stroke-width="2"
-      opacity="0.9"
-    >
-      <title>Player at {format_position(@position)} (no room)</title>
-    </circle>
-    """
-  end
-
-  # Helper function to format position tuple as string
-  def format_position({x, y}) do
-    "{#{x}, #{y}}"
-  end
+  # ───────────── Helpers ─────────────
+  defp format_position({x, y}), do: "{#{x}, #{y}}"
 end

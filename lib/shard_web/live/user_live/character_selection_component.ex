@@ -92,7 +92,7 @@ defmodule ShardWeb.CharacterSelectionComponent do
                     <.button
                       phx-click="switch_to_select_mode"
                       phx-target={@myself}
-                      variant="outline"
+                      variant="secondary"
                       class="flex-1"
                       type="button"
                     >
@@ -114,7 +114,7 @@ defmodule ShardWeb.CharacterSelectionComponent do
                   <.button
                     phx-click="cancel_map_selection"
                     phx-target={@myself}
-                    variant="outline"
+                    variant="secondary"
                     class="w-full"
                   >
                     Cancel
@@ -146,7 +146,7 @@ defmodule ShardWeb.CharacterSelectionComponent do
                   <.button
                     phx-click="switch_to_create_mode"
                     phx-target={@myself}
-                    variant="outline"
+                    variant="secondary"
                     class="flex-1"
                   >
                     Create New Character
@@ -154,7 +154,7 @@ defmodule ShardWeb.CharacterSelectionComponent do
                   <.button
                     phx-click="cancel_map_selection"
                     phx-target={@myself}
-                    variant="outline"
+                    variant="secondary"
                     class="flex-1"
                   >
                     Cancel

@@ -28,8 +28,7 @@ defmodule ShardWeb.AdminLive.Npcs do
     {:noreply, apply_action(socket, socket.assigns.live_action, params)}
   end
 
-  @impl true
-
+  # NOTE: private helper (no @impl)
   defp apply_action(socket, :index, _params) do
     socket
     |> assign(:page_title, "NPCs Administration")
@@ -98,12 +97,7 @@ defmodule ShardWeb.AdminLive.Npcs do
     # Clean up empty string values that should be nil
     cleaned_params =
       npc_params
-      |> Enum.map(fn {k, v} ->
-        case v do
-          "" -> {k, nil}
-          v -> {k, v}
-        end
-      end)
+      |> Enum.map(fn {k, v} -> if v == "", do: {k, nil}, else: {k, v} end)
       |> Enum.into(%{})
 
     case socket.assigns.form_npc.id do
@@ -164,20 +158,11 @@ defmodule ShardWeb.AdminLive.Npcs do
         <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold">{@form_title}</h2>
-            <button
-              phx-click="cancel_form"
-              class="text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
+            <button phx-click="cancel_form" class="text-gray-500 hover:text-gray-700">✕</button>
           </div>
 
           <%= if assigns[:changeset] do %>
-            <.simple_form
-              for={to_form(@changeset)}
-              phx-submit="save_npc"
-              id="npc-form"
-            >
+            <.simple_form for={to_form(@changeset)} phx-submit="save_npc" id="npc-form">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <% form = to_form(@changeset) %>
                 <.input field={form[:name]} label="Name" required />

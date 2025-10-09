@@ -41,3 +41,6 @@ npm-debug.log
 
 .aider*
 .env
+
+# Local backup files
+*.bak.*
