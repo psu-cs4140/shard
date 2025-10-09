@@ -254,6 +254,9 @@ defmodule ShardWeb.MudGameLiveTest do
       # Send noise message
       send(view.pid, {:noise, "You hear a distant roar."})
       
+      # Wait for the message to be processed
+      :timer.sleep(10)
+      
       terminal_state = :sys.get_state(view.pid).assigns.terminal_state
       
       # Check that message was added
@@ -275,6 +278,9 @@ defmodule ShardWeb.MudGameLiveTest do
       # Send area heal message
       send(view.pid, {:area_heal, 5, "A healing aura surrounds you."})
       
+      # Wait for the message to be processed
+      :timer.sleep(10)
+      
       updated_game_state = :sys.get_state(view.pid).assigns.game_state
       terminal_state = :sys.get_state(view.pid).assigns.terminal_state
       
@@ -295,6 +301,9 @@ defmodule ShardWeb.MudGameLiveTest do
       # Send area heal message
       send(view.pid, {:area_heal, 5, "A healing aura surrounds you."})
       
+      # Wait for the message to be processed
+      :timer.sleep(10)
+      
       updated_game_state = :sys.get_state(view.pid).assigns.game_state
       
       # Health should remain at 100
@@ -311,6 +320,9 @@ defmodule ShardWeb.MudGameLiveTest do
       
       # Use the add_message function indirectly through noise message
       send(view.pid, {:noise, "Test message"})
+      
+      # Wait for the message to be processed
+      :timer.sleep(10)
       
       terminal_state = :sys.get_state(view.pid).assigns.terminal_state
       
