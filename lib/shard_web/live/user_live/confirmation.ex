@@ -1,6 +1,6 @@
 defmodule ShardWeb.UserLive.Confirmation do
   use ShardWeb, :live_view
-
+  alias Phoenix.LiveView.JS
   alias Shard.Users
 
   @impl true

@@ -1,9 +1,9 @@
 defmodule ShardWeb.AdminLive.Npcs do
   use ShardWeb, :live_view
 
+  import ShardWeb.AdminLive.NpcHelpers
   alias Shard.Npcs
   alias Shard.Npcs.Npc
-  alias Shard.Repo
 
   @impl true
   def mount(_params, _session, socket) do
@@ -28,8 +28,7 @@ defmodule ShardWeb.AdminLive.Npcs do
     {:noreply, apply_action(socket, socket.assigns.live_action, params)}
   end
 
-  @impl true
-
+  # NOTE: private helper (no @impl)
   defp apply_action(socket, :index, _params) do
     socket
     |> assign(:page_title, "NPCs Administration")
@@ -98,12 +97,7 @@ defmodule ShardWeb.AdminLive.Npcs do
     # Clean up empty string values that should be nil
     cleaned_params =
       npc_params
-      |> Enum.map(fn {k, v} ->
-        case v do
-          "" -> {k, nil}
-          v -> {k, v}
-        end
-      end)
+      |> Enum.map(fn {k, v} -> if v == "", do: {k, nil}, else: {k, v} end)
       |> Enum.into(%{})
 
     case socket.assigns.form_npc.id do
@@ -164,20 +158,11 @@ defmodule ShardWeb.AdminLive.Npcs do
         <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold">{@form_title}</h2>
-            <button
-              phx-click="cancel_form"
-              class="text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
+            <button phx-click="cancel_form" class="text-gray-500 hover:text-gray-700">✕</button>
           </div>
 
           <%= if assigns[:changeset] do %>
-            <.simple_form
-              for={to_form(@changeset)}
-              phx-submit="save_npc"
-              id="npc-form"
-            >
+            <.simple_form for={to_form(@changeset)} phx-submit="save_npc" id="npc-form">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <% form = to_form(@changeset) %>
                 <.input field={form[:name]} label="Name" required />
@@ -367,142 +352,5 @@ defmodule ShardWeb.AdminLive.Npcs do
       "quest_giver" -> "bg-purple-100 text-purple-800"
       _ -> "bg-gray-100 text-gray-800"
     end
-  end
-
-  defp ensure_tutorial_npcs_exist do
-    tutorial_npcs = [
-      %{
-        name: "Goldie",
-        description:
-          "A friendly golden retriever with a wagging tail and bright, intelligent eyes. Goldie loves to greet adventurers and seems to understand more than most dogs.",
-        npc_type: "friendly",
-        level: 1,
-        health: 50,
-        max_health: 50,
-        mana: 0,
-        max_mana: 0,
-        strength: 5,
-        dexterity: 8,
-        intelligence: 6,
-        constitution: 7,
-        experience_reward: 0,
-        gold_reward: 0,
-        faction: "neutral",
-        aggression_level: 0,
-        movement_pattern: "random",
-        is_active: true,
-        dialogue: "Woof! *wags tail enthusiastically*",
-        location_x: 0,
-        location_y: 0,
-        location_z: 0
-      },
-      %{
-        name: "Elder Thorne",
-        description:
-          "An ancient wizard with a long white beard and twinkling eyes. His robes shimmer with magical energy, and he carries a gnarled staff topped with a glowing crystal.",
-        npc_type: "quest_giver",
-        level: 50,
-        health: 200,
-        max_health: 200,
-        mana: 500,
-        max_mana: 500,
-        strength: 8,
-        dexterity: 6,
-        intelligence: 20,
-        constitution: 12,
-        experience_reward: 0,
-        gold_reward: 0,
-        faction: "neutral",
-        aggression_level: 0,
-        movement_pattern: "stationary",
-        is_active: true,
-        dialogue:
-          "Welcome, young adventurer! I have been expecting you. There are many mysteries in this realm that need solving.",
-        location_x: 0,
-        location_y: 1,
-        location_z: 0
-      },
-      %{
-        name: "Merchant Pip",
-        description:
-          "A cheerful halfling merchant with a round belly and a wide smile. His cart is filled with various goods, potions, and trinkets that catch the light.",
-        npc_type: "merchant",
-        level: 10,
-        health: 80,
-        max_health: 80,
-        mana: 50,
-        max_mana: 50,
-        strength: 6,
-        dexterity: 12,
-        intelligence: 14,
-        constitution: 10,
-        experience_reward: 0,
-        gold_reward: 0,
-        faction: "neutral",
-        aggression_level: 0,
-        movement_pattern: "stationary",
-        is_active: true,
-        dialogue:
-          "Welcome to Pip's Traveling Emporium! I've got the finest wares this side of the mountains. What can I get for you today?",
-        location_x: -2,
-        location_y: 1,
-        location_z: 0
-      },
-      %{
-        name: "Training Dummy",
-        description:
-          "A sturdy wooden training dummy wrapped in straw and leather. It bears the marks of countless practice sessions and stands ready for combat training.",
-        npc_type: "neutral",
-        level: 1,
-        health: 100,
-        max_health: 100,
-        mana: 0,
-        max_mana: 0,
-        strength: 1,
-        dexterity: 1,
-        intelligence: 1,
-        constitution: 15,
-        experience_reward: 5,
-        gold_reward: 0,
-        faction: "neutral",
-        aggression_level: 0,
-        movement_pattern: "stationary",
-        is_active: true,
-        dialogue: "*The training dummy stands silently, ready to absorb your attacks*",
-        location_x: 1,
-        location_y: -1,
-        location_z: 0
-      }
-    ]
-
-    Enum.each(tutorial_npcs, fn npc_params ->
-      case Npcs.get_npc_by_name(npc_params.name) do
-        nil ->
-          case Npcs.create_npc(npc_params) do
-            {:ok, _npc} -> :ok
-            {:error, _changeset} -> :error
-          end
-
-        existing_npc ->
-          # Ensure NPC is at correct tutorial location
-          expected_x = npc_params.location_x
-          expected_y = npc_params.location_y
-          expected_z = npc_params.location_z
-
-          if existing_npc.location_x != expected_x or
-               existing_npc.location_y != expected_y or
-               existing_npc.location_z != expected_z do
-            existing_npc
-            |> Ecto.Changeset.change(%{
-              location_x: expected_x,
-              location_y: expected_y,
-              location_z: expected_z
-            })
-            |> Repo.update()
-          end
-
-          :ok
-      end
-    end)
   end
 end
