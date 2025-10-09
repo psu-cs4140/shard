@@ -1,5 +1,4 @@
 defmodule Shard.Weapons.SeedData.ClassesSeeds do
-  alias Shard.Weapons.Classes
 
   def data do
     [

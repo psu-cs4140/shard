@@ -7,12 +7,9 @@ defmodule ShardWeb.UserLive.Commands2 do
     {x, y} = game_state.player_position
     npcs_here = get_npcs_at_location(x, y, game_state.map_id)
 
-    # Find the NPC by name (case-insensitive)
     target_npc =
       Enum.find(npcs_here, fn npc ->
-        npc_name_normalized = String.downcase(npc.name || "")
-        input_name_normalized = String.downcase(npc_name)
-        npc_name_normalized == input_name_normalized
+        String.downcase(npc.name || "") == String.downcase(npc_name)
       end)
 
     case target_npc do
@@ -31,7 +28,6 @@ defmodule ShardWeb.UserLive.Commands2 do
         end
 
       npc ->
-        # Generate dialogue based on NPC
         dialogue_response = generate_npc_dialogue(npc, game_state)
         {dialogue_response, game_state}
     end
@@ -42,12 +38,9 @@ defmodule ShardWeb.UserLive.Commands2 do
     {x, y} = game_state.player_position
     npcs_here = get_npcs_at_location(x, y, game_state.map_id)
 
-    # Find the NPC by name (case-insensitive)
     target_npc =
       Enum.find(npcs_here, fn npc ->
-        npc_name_normalized = String.downcase(npc.name || "")
-        input_name_normalized = String.downcase(npc_name)
-        npc_name_normalized == input_name_normalized
+        String.downcase(npc.name || "") == String.downcase(npc_name)
       end)
 
     case target_npc do
@@ -66,7 +59,6 @@ defmodule ShardWeb.UserLive.Commands2 do
         end
 
       npc ->
-        # Get quests from this NPC
         generate_npc_quest_response(npc, game_state)
     end
   end
@@ -76,12 +68,9 @@ defmodule ShardWeb.UserLive.Commands2 do
     {x, y} = game_state.player_position
     npcs_here = get_npcs_at_location(x, y, game_state.map_id)
 
-    # Find the NPC by name (case-insensitive)
     target_npc =
       Enum.find(npcs_here, fn npc ->
-        npc_name_normalized = String.downcase(npc.name || "")
-        input_name_normalized = String.downcase(npc_name)
-        npc_name_normalized == input_name_normalized
+        String.downcase(npc.name || "") == String.downcase(npc_name)
       end)
 
     case target_npc do
@@ -100,7 +89,6 @@ defmodule ShardWeb.UserLive.Commands2 do
         end
 
       npc ->
-        # Find active quests that can be turned in to this NPC
         deliverable_quest = find_deliverable_quest(game_state.quests, npc)
 
         case deliverable_quest do
@@ -116,7 +104,6 @@ defmodule ShardWeb.UserLive.Commands2 do
             {response, game_state}
 
           quest ->
-            # Complete the quest and give rewards
             complete_quest_and_give_rewards(game_state, quest, npc)
         end
     end
@@ -126,7 +113,6 @@ defmodule ShardWeb.UserLive.Commands2 do
   def generate_npc_dialogue(npc, _game_state) do
     npc_name = npc.name || "Unknown NPC"
 
-    # Get dialogue from NPC record
     dialogue =
       case npc.dialogue do
         nil -> "I don't have much to say right now."
@@ -136,7 +122,6 @@ defmodule ShardWeb.UserLive.Commands2 do
         _ -> "I seem to be having trouble speaking."
       end
 
-    # Add some personality based on NPC type
     personality_response =
       case npc.npc_type do
         "friendly" -> "#{npc_name} smiles warmly at you."
@@ -147,73 +132,68 @@ defmodule ShardWeb.UserLive.Commands2 do
         _ -> "#{npc_name} acknowledges your presence."
       end
 
-    # Check for quests this NPC can give
+    base =
+      [
+        personality_response,
+        "",
+        "#{npc_name} says: \"#{dialogue}\""
+      ]
+
     available_quests = get_quests_by_giver_npc(npc.id)
 
-    response = [
-      personality_response,
-      "",
-      "#{npc_name} says: \"#{dialogue}\""
-    ]
+    response =
+      if Enum.empty?(available_quests) do
+        base
+      else
+        # Append one block per quest without shadowing or unused vars
+        Enum.reduce(available_quests, base ++ [""], fn quest, acc ->
+          quest_status_text =
+            case quest.status do
+              "available" -> "#{npc_name} has a quest for you!"
+              "active" -> "#{npc_name} is waiting for you to complete your current quest."
+              "completed" -> "#{npc_name} thanks you for completing the quest."
+              _ -> "#{npc_name} mentions something about a quest."
+            end
 
-    # Add quest information if any quests are available
-    if length(available_quests) > 0 do
-      response = response ++ [""]
+          title = quest.title || "Untitled Quest"
+          quest_description = quest.short_description || quest.description || "A mysterious quest awaits."
 
-      for quest <- available_quests do
-        quest_status_text =
-          case quest.status do
-            "available" -> "#{npc_name} has a quest for you!"
-            "active" -> "#{npc_name} is waiting for you to complete your current quest."
-            "completed" -> "#{npc_name} thanks you for completing the quest."
-            _ -> "#{npc_name} mentions something about a quest."
+          acc =
+            acc ++
+              [
+                quest_status_text,
+                "",
+                "Quest: #{title}",
+                quest_description
+              ]
+
+          # Only include detailed rewards/requirements for "available" quests
+          if quest.status == "available" do
+            details =
+              []
+              |> maybe_push(quest.experience_reward && quest.experience_reward > 0, "Reward: #{quest.experience_reward} experience")
+              |> maybe_push(quest.gold_reward && quest.gold_reward > 0, "Gold Reward: #{quest.gold_reward} gold")
+              |> maybe_push(quest.min_level && quest.min_level > 0, "Minimum Level: #{quest.min_level}")
+
+            if details == [] do
+              acc
+            else
+              acc ++ [""] ++ details
+            end
+          else
+            acc
           end
-
-        quest_description =
-          quest.short_description || quest.description || "A mysterious quest awaits."
-
-        response =
-          response ++
-            [
-              quest_status_text,
-              "",
-              "Quest: #{quest.title}",
-              quest_description
-            ]
-
-        # Add quest details for available quests
-        if quest.status == "available" do
-          response = response ++ [""]
-
-          if quest.experience_reward && quest.experience_reward > 0 do
-            response = response ++ ["Reward: #{quest.experience_reward} experience"]
-          end
-
-          if quest.gold_reward && quest.gold_reward > 0 do
-            response = response ++ ["Gold Reward: #{quest.gold_reward} gold"]
-          end
-
-          if quest.min_level && quest.min_level > 0 do
-            response = response ++ ["Minimum Level: #{quest.min_level}"]
-          end
-        end
+        end)
       end
-    end
 
-    response ++
-      [
-        "",
-        "#{npc_name} waits to see if you have anything else to say."
-      ]
+    response ++ ["", "#{npc_name} waits to see if you have anything else to say."]
   end
 
   # Generate quest response for an NPC
   def generate_npc_quest_response(npc, game_state) do
     npc_name = npc.name || "Unknown NPC"
 
-    # Get quests this NPC can give, excluding completed ones
-    # For now, we'll use a mock user_id of 1 - in a real implementation,
-    # this should come from the current user session
+    # TODO: Replace mock user_id with current session's user id when available
     user_id = 1
 
     available_quests =
@@ -225,8 +205,7 @@ defmodule ShardWeb.UserLive.Commands2 do
           []
       end
 
-    if length(available_quests) == 0 do
-      # Check if there are any quests from this NPC that were completed
+    if Enum.empty?(available_quests) do
       all_quests =
         try do
           get_quests_by_giver_npc(npc.id)
@@ -260,12 +239,11 @@ defmodule ShardWeb.UserLive.Commands2 do
 
       {response, game_state}
     else
-      # For now, offer the first available quest
-      quest = List.first(available_quests)
+      quest = hd(available_quests)
       quest_title = quest.title || "Untitled Quest"
       quest_description = quest.description || "A mysterious quest awaits."
 
-      response = [
+      header = [
         "#{npc_name} brightens up when you ask about quests.",
         "",
         "=== #{quest_title} ===",
@@ -273,58 +251,70 @@ defmodule ShardWeb.UserLive.Commands2 do
         ""
       ]
 
-      # Add quest details
+      # Build details safely using rebinds (not inner-scope assignments)
       details = []
+      details =
+        if quest.difficulty do
+          details ++ ["Difficulty: #{String.capitalize(to_string(quest.difficulty))}"]
+        else
+          details
+        end
 
-      if quest.difficulty do
-        details = details ++ ["Difficulty: #{String.capitalize(quest.difficulty)}"]
-      end
+      details =
+        if quest.min_level && quest.min_level > 0 do
+          details ++ ["Minimum Level: #{quest.min_level}"]
+        else
+          details
+        end
 
-      if quest.min_level && quest.min_level > 0 do
-        details = details ++ ["Minimum Level: #{quest.min_level}"]
-      end
+      details =
+        if quest.max_level && quest.max_level > 0 do
+          details ++ ["Maximum Level: #{quest.max_level}"]
+        else
+          details
+        end
 
-      if quest.max_level && quest.max_level > 0 do
-        details = details ++ ["Maximum Level: #{quest.max_level}"]
-      end
+      details =
+        if quest.experience_reward && quest.experience_reward > 0 do
+          details ++ ["Experience Reward: #{quest.experience_reward} XP"]
+        else
+          details
+        end
 
-      if quest.experience_reward && quest.experience_reward > 0 do
-        details = details ++ ["Experience Reward: #{quest.experience_reward} XP"]
-      end
+      details =
+        if quest.gold_reward && quest.gold_reward > 0 do
+          details ++ ["Gold Reward: #{quest.gold_reward} gold"]
+        else
+          details
+        end
 
-      if quest.gold_reward && quest.gold_reward > 0 do
-        details = details ++ ["Gold Reward: #{quest.gold_reward} gold"]
-      end
+      details =
+        if quest.time_limit && quest.time_limit > 0 do
+          details ++ ["Time Limit: #{quest.time_limit} hours"]
+        else
+          details
+        end
 
-      if quest.time_limit && quest.time_limit > 0 do
-        details = details ++ ["Time Limit: #{quest.time_limit} hours"]
-      end
-
-      # Add objectives if available
       objectives =
         case quest.objectives do
           objectives when is_map(objectives) and map_size(objectives) > 0 ->
-            objective_list = Enum.map(objectives, fn {_key, value} -> "  - #{value}" end)
-            ["Objectives:"] ++ objective_list
+            ["Objectives:"] ++ Enum.map(objectives, fn {_k, v} -> "  - #{v}" end)
 
           _ ->
             []
         end
 
-      # Add prerequisites if any
       prerequisites =
         case quest.prerequisites do
           prereqs when is_map(prereqs) and map_size(prereqs) > 0 ->
-            prereq_list = Enum.map(prereqs, fn {_key, value} -> "  - #{value}" end)
-            ["Prerequisites:"] ++ prereq_list
+            ["Prerequisites:"] ++ Enum.map(prereqs, fn {_k, v} -> "  - #{v}" end)
 
           _ ->
             []
         end
 
-      # Combine all quest information
       full_response =
-        response ++
+        header ++
           details ++
           objectives ++
           prerequisites ++
@@ -335,7 +325,6 @@ defmodule ShardWeb.UserLive.Commands2 do
             "Type 'accept' to accept the quest or 'deny' to decline it."
           ]
 
-      # Store the quest offer in game state
       updated_game_state = %{
         game_state
         | pending_quest_offer: %{
@@ -347,4 +336,9 @@ defmodule ShardWeb.UserLive.Commands2 do
       {full_response, updated_game_state}
     end
   end
+
+  # ─────────────────────────── helpers ───────────────────────────
+
+  defp maybe_push(list, true, item), do: list ++ [item]
+  defp maybe_push(list, _cond, _item), do: list
 end

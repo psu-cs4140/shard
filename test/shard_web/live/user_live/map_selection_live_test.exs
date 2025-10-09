@@ -3,7 +3,6 @@ defmodule ShardWeb.MapSelectionLiveTest do
 
   import Phoenix.LiveViewTest
   import Shard.UsersFixtures
-  import Shard.CharactersFixtures
 
   describe "Map Selection page" do
     test "renders map selection page", %{conn: conn} do

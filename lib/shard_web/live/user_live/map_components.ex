@@ -1,4 +1,10 @@
 defmodule ShardWeb.UserLive.MapComponents do
+
+  # -- Helpers ----------------------------------------------------
+  defp format_position({x, y}), do: "{#{x}, #{y}}"
+  defp format_position({x, y, z}), do: "{#{x}, #{y}, #{z}}"
+  defp format_position(other), do: inspect(other)
+
   use ShardWeb, :live_view
   alias Shard.Map, as: GameMap
   alias Shard.Repo
@@ -391,3 +397,4 @@ defmodule ShardWeb.UserLive.MapComponents do
     """
   end
 end
+

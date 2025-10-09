@@ -183,14 +183,14 @@
             <.link href={~p"/users/settings"}>Settings</.link>
           </li>
           <li>
-            <.link href={~p"/users/log-out"} method="delete">Log out</.link>
+            <.link href={~p"/users/log_out"} method="delete">Log out</.link>
           </li>
         <% else %>
           <li>
             <.link href={~p"/users/register"}>Register</.link>
           </li>
           <li>
-            <.link href={~p"/users/log-in"}>Log in</.link>
+            <.link href={~p"/users/log_in"}>Log in</.link>
           </li>
         <% end %>
       </ul>

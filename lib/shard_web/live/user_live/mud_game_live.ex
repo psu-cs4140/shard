@@ -1,6 +1,7 @@
 defmodule ShardWeb.MudGameLive do
   use ShardWeb, :live_view
   alias Phoenix.PubSub
+  alias Phoenix.LiveView.JS
   import ShardWeb.UserLive.Components
   import ShardWeb.UserLive.Components2
   import ShardWeb.UserLive.MapHelpers
@@ -160,15 +161,15 @@ defmodule ShardWeb.MudGameLive do
           </div>
         </div>
       </header>
-      
-    <!-- Main Content -->
+
+      <!-- Main Content -->
       <div class="flex flex-1 overflow-hidden">
         <!-- Left Panel - Terminal -->
         <div class="flex-1 p-4 flex flex-col">
           <.terminal terminal_state={@terminal_state} />
         </div>
-        
-    <!-- Right Panel - Controls -->
+
+        <!-- Right Panel - Controls -->
         <div class="w-100 bg-gray-800 px-4 py-4 flex flex-col space-y-4 overflow-y-auto">
           <.minimap
             map_data={@game_state.map_data}
@@ -185,35 +186,35 @@ defmodule ShardWeb.MudGameLive do
           <.control_button
             text="Character Sheet"
             icon="hero-user"
-            click="open_modal"
+            click={JS.push("open_modal")}
             value="character_sheet"
           />
 
           <.control_button
             text="Inventory"
             icon="hero-shopping-bag"
-            click="open_modal"
+            click={JS.push("open_modal")}
             value="inventory"
           />
 
           <.control_button
             text="Quests"
             icon="hero-document-text"
-            click="open_modal"
+            click={JS.push("open_modal")}
             value="quests"
           />
 
           <.control_button
             text="Map"
             icon="hero-map"
-            click="open_modal"
+            click={JS.push("open_modal")}
             value="map"
           />
 
           <.control_button
             text="Settings"
             icon="hero-cog"
-            click="open_modal"
+            click={JS.push("open_modal")}
             value="settings"
           />
 
@@ -238,8 +239,8 @@ defmodule ShardWeb.MudGameLive do
           />
         </div>
       </div>
-      
-    <!-- Footer -->
+
+      <!-- Footer -->
       <footer class="bg-gray-800 p-2 text-center text-sm">
         <p>MUD Game v1.0</p>
       </footer>

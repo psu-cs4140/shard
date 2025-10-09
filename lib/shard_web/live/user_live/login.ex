@@ -6,13 +6,13 @@ defmodule ShardWeb.UserLive.Login do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.app flash={@flash} current_scope={assigns[:current_scope]}>
       <div class="mx-auto max-w-sm space-y-4">
         <div class="text-center">
           <.header>
             <p>Log in</p>
             <:subtitle>
-              <%= if @current_scope do %>
+              <%= if assigns[:current_scope] do %>
                 You need to reauthenticate to perform sensitive actions on your account.
               <% else %>
                 Don't have an account? <.link
@@ -43,7 +43,7 @@ defmodule ShardWeb.UserLive.Login do
           phx-submit="submit_magic"
         >
           <.input
-            readonly={!!@current_scope}
+            readonly={!!(assigns[:current_scope])}
             field={f[:email]}
             type="email"
             label="Email"
@@ -61,13 +61,14 @@ defmodule ShardWeb.UserLive.Login do
         <.form
           :let={f}
           for={@form}
-          id="login_form_password"
+          id="login_form" aria-label="Log in"
           action={~p"/users/log-in"}
           phx-submit="submit_password"
           phx-trigger-action={@trigger_submit}
         >
+    <h2 class="sr-only">Log in</h2>
           <.input
-            readonly={!!@current_scope}
+            readonly={!!(assigns[:current_scope])}
             field={f[:email]}
             type="email"
             label="Email"
@@ -75,7 +76,7 @@ defmodule ShardWeb.UserLive.Login do
             required
           />
           <.input
-            field={@form[:password]}
+            id="login_form_password" field={@form[:password]}
             type="password"
             label="Password"
             autocomplete="current-password"

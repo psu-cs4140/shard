@@ -28,8 +28,7 @@ defmodule ShardWeb.AdminLive.Npcs do
     {:noreply, apply_action(socket, socket.assigns.live_action, params)}
   end
 
-  @impl true
-
+  # NOTE: private helper (no @impl)
   defp apply_action(socket, :index, _params) do
     socket
     |> assign(:page_title, "NPCs Administration")
@@ -98,12 +97,7 @@ defmodule ShardWeb.AdminLive.Npcs do
     # Clean up empty string values that should be nil
     cleaned_params =
       npc_params
-      |> Enum.map(fn {k, v} ->
-        case v do
-          "" -> {k, nil}
-          v -> {k, v}
-        end
-      end)
+      |> Enum.map(fn {k, v} -> if v == "", do: {k, nil}, else: {k, v} end)
       |> Enum.into(%{})
 
     case socket.assigns.form_npc.id do
@@ -164,20 +158,11 @@ defmodule ShardWeb.AdminLive.Npcs do
         <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold">{@form_title}</h2>
-            <button
-              phx-click="cancel_form"
-              class="text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
+            <button phx-click="cancel_form" class="text-gray-500 hover:text-gray-700">✕</button>
           </div>
 
           <%= if assigns[:changeset] do %>
-            <.simple_form
-              for={to_form(@changeset)}
-              phx-submit="save_npc"
-              id="npc-form"
-            >
+            <.simple_form for={to_form(@changeset)} phx-submit="save_npc" id="npc-form">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <% form = to_form(@changeset) %>
                 <.input field={form[:name]} label="Name" required />
@@ -252,10 +237,7 @@ defmodule ShardWeb.AdminLive.Npcs do
                 >
                   Cancel
                 </.link>
-                <button
-                  type="submit"
-                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                   Save NPC
                 </button>
               </div>
@@ -272,27 +254,13 @@ defmodule ShardWeb.AdminLive.Npcs do
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Type
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Level
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Location
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Room
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
@@ -301,10 +269,7 @@ defmodule ShardWeb.AdminLive.Npcs do
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="text-sm font-medium text-gray-900">{npc.name}</div>
                   <div class="text-sm text-gray-500">
-                    {String.slice(npc.description || "", 0, 50)}{if String.length(
-                                                                      npc.description || ""
-                                                                    ) > 50,
-                                                                    do: "..."}
+                    {String.slice(npc.description || "", 0, 50)}{if String.length(npc.description || "") > 50, do: "..."}
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
@@ -335,10 +300,7 @@ defmodule ShardWeb.AdminLive.Npcs do
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <.link
-                    patch={~p"/admin/npcs/#{npc.id}/edit"}
-                    class="text-indigo-600 hover:text-indigo-900 mr-3"
-                  >
+                  <.link patch={~p"/admin/npcs/#{npc.id}/edit"} class="text-indigo-600 hover:text-indigo-900 mr-3">
                     Edit
                   </.link>
                   <button

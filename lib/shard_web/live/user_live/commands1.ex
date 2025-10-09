@@ -158,7 +158,7 @@ defmodule ShardWeb.UserLive.Commands1 do
               "#{npc_name} is here.\n#{npc_desc}"
             end)
 
-          description_lines = description_lines ++ npc_descriptions
+          _ = description_lines ++ npc_descriptions
         end
 
         # Add available exits information
@@ -167,9 +167,9 @@ defmodule ShardWeb.UserLive.Commands1 do
         if length(exits) > 0 do
           description_lines = description_lines ++ [""]
           exit_text = "Exits: " <> Enum.join(exits, ", ")
-          description_lines = description_lines ++ [exit_text]
+          _ = description_lines ++ [exit_text]
         else
-          description_lines = description_lines ++ ["", "There are no obvious exits."]
+          _ = description_lines ++ ["", "There are no obvious exits."]
         end
 
         # To see if there are monsters

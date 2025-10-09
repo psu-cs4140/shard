@@ -21,7 +21,6 @@ defmodule ShardWeb.Router do
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
-    plug :fetch_flash
     plug :fetch_live_flash
     plug :put_root_layout, html: {ShardWeb.Layouts, :root}
     plug :protect_from_forgery
@@ -42,14 +41,8 @@ defmodule ShardWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-
-    # Auth pages that should be reachable even if already logged-in (sudo mode, confirmation)
-    live_session :auth_public,
-      on_mount: [{ShardWeb.UserAuth, :mount_current_scope}] do
-      live "/users/log-in/:token", UserLive.Confirmation, :new
-      live "/users/log-in",       UserLive.Login,        :new
-    end
   end
+
   # ───────────────────────── Auth: public (redirect if already authed) ─────────────────────────
   scope "/", ShardWeb do
     pipe_through [:browser]
@@ -60,6 +53,8 @@ defmodule ShardWeb.Router do
         {ShardWeb.UserAuth, :redirect_if_user_is_authenticated}
       ] do
       live "/users/register", UserLive.Registration, :new
+      live "/users/log-in",   UserLive.Login,        :new
+      live "/users/log-in/:token", UserLive.Login,   :token
     end
 
     post   "/users/log-in",  UserSessionController, :create
