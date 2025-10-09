@@ -22,8 +22,8 @@ defmodule ShardWeb.MudGameLiveTest do
       
       # Use live_isolated to test the LiveView in isolation
       {:ok, view, _html} = live_isolated(conn, ShardWeb.MudGameLive, 
-        session: %{"current_scope" => %{user: user}},
-        params: %{"map_id" => "1", "character_id" => to_string(character.id)}
+        session: %{},
+        connect_params: %{"map_id" => "1", "character_id" => to_string(character.id)}
       )
       
       # Check that the terminal component renders with welcome messages
