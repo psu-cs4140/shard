@@ -76,7 +76,7 @@ defmodule ShardWeb.UserLive.Login do
             required
           />
           <.input
-            id="login_form_password" field={@form[:password]}
+            field={@form[:password]}
             type="password"
             label="Password"
             autocomplete="current-password"
