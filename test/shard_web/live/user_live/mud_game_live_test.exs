@@ -12,7 +12,8 @@ defmodule ShardWeb.MudGameLiveTest do
         name: "TestChar",
         level: 1,
         experience: 0,
-        user_id: user.id
+        user_id: user.id,
+        class: "warrior"
       }
       character = Shard.Repo.insert!(character)
       
