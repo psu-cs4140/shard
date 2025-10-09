@@ -69,8 +69,8 @@ defmodule ShardWeb.MudGameLiveTest do
       
       # Simulate typing a command
       {:noreply, updated_socket} = ShardWeb.MudGameLive.handle_event(
-        "command_input", 
-        %{"command" => "help"}, 
+        "submit_command", 
+        %{"command" => %{"text" => "help"}}, 
         socket
       )
       
