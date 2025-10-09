@@ -1,6 +1,4 @@
 defmodule Shard.Weapons.SeedData.EnchantmentsSeeds do
-  alias Shard.Weapons.Enchantments
-
   def data do
     [
       %{name: "Flaming", modifier_type: "fire_damage", modifier_value: "+5"},

@@ -1,6 +1,4 @@
 defmodule Shard.Weapons.SeedData.EffectsSeeds do
-  alias Shard.Weapons.Effects
-
   def data do
     [
       %{name: "Bleeding", modifier_type: "damage_over_time", modifier_value: 3},

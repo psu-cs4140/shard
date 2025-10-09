@@ -1,6 +1,4 @@
 defmodule Shard.Weapons.SeedData.ClassesSeeds do
-  alias Shard.Weapons.Classes
-
   def data do
     [
       %{name: "Dagger", damage_type_id: 1},
