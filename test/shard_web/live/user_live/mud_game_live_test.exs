@@ -132,5 +132,55 @@ defmodule ShardWeb.MudGameLiveTest do
       # Verify error message appears in response
       assert output_text =~ "Unknown command" or output_text =~ "Invalid command" or output_text =~ "Command not found"
     end
+
+    test "renders terminal with different character parameters and map configurations", %{conn: conn} do
+      user = user_fixture()
+      
+      # Create a character with different attributes
+      character = %Shard.Characters.Character{
+        name: "MageChar",
+        level: 5,
+        experience: 1000,
+        user_id: user.id,
+        class: "mage",
+        race: "elf"
+      }
+      character = Shard.Repo.insert!(character)
+      
+      conn = log_in_user(conn, user)
+      
+      # Test the LiveView with different map_id parameter
+      socket = %Phoenix.LiveView.Socket{
+        endpoint: ShardWeb.Endpoint,
+        assigns: %{__changed__: %{}}
+      }
+      
+      params = %{"map_id" => "2", "character_id" => to_string(character.id)}
+      session = %{}
+      
+      {:ok, socket} = ShardWeb.MudGameLive.mount(params, session, socket)
+      
+      # Verify character information is properly loaded in assigns
+      assert socket.assigns.character.name == "MageChar"
+      assert socket.assigns.character.class == "mage"
+      assert socket.assigns.character.race == "elf"
+      assert socket.assigns.character.level == 5
+      
+      # Verify map_id parameter is handled
+      assert socket.assigns.map_id == "2"
+      
+      # Verify terminal state is initialized with welcome messages
+      assert is_list(socket.assigns.terminal_state.output)
+      assert length(socket.assigns.terminal_state.output) > 0
+      
+      # Verify the terminal contains character-specific information
+      output_text = Enum.join(socket.assigns.terminal_state.output, "\n")
+      assert output_text =~ "Welcome to Shard!"
+      
+      # Verify terminal state structure
+      assert Map.has_key?(socket.assigns.terminal_state, :output)
+      assert Map.has_key?(socket.assigns.terminal_state, :current_input)
+      assert socket.assigns.terminal_state.current_input == ""
+    end
   end
 end
