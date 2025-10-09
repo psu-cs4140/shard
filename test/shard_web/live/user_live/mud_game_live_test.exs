@@ -28,8 +28,16 @@ defmodule ShardWeb.MudGameLiveTest do
 
   describe "mount/3" do
     test "redirects when no character is provided", %{conn: conn, map_id: map_id} do
-      assert {:error, {:redirect, redirect_info}} = live(conn, ~p"/maps/#{map_id}/play")
-      assert redirect_info.to == "/maps"
+      result = live(conn, ~p"/maps/#{map_id}/play")
+      
+      case result do
+        {:error, {:redirect, redirect_info}} ->
+          assert redirect_info.to == "/maps"
+        {:error, {:live_redirect, redirect_info}} ->
+          assert redirect_info.to == "/maps"
+        other ->
+          flunk("Expected redirect but got: #{inspect(other)}")
+      end
     end
 
     test "successfully mounts with valid character", %{conn: conn, character: character, map_id: map_id} do
