@@ -6,13 +6,6 @@ defmodule ShardWeb.AdminLive.MapTest do
   alias Shard.Map.{Room, Door}
   alias Shard.Users
 
-  defp log_in_user(conn, user) do
-    token = Shard.Users.generate_user_session_token(user)
-    conn
-    |> Phoenix.ConnTest.init_test_session(%{})
-    |> Plug.Conn.put_session(:user_token, token)
-  end
-
   describe "Map LiveView" do
     setup %{conn: conn} do
       # Clean up any existing data
