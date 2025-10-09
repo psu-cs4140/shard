@@ -182,5 +182,70 @@ defmodule ShardWeb.MudGameLiveTest do
       assert Map.has_key?(socket.assigns.terminal_state, :current_command)
       assert socket.assigns.terminal_state.current_command == ""
     end
+
+    test "handles modal open and close events correctly", %{conn: conn} do
+      user = user_fixture()
+      
+      # Create character using Repo.insert! directly to avoid fixture issues
+      character = %Shard.Characters.Character{
+        name: "TestChar",
+        level: 1,
+        experience: 0,
+        user_id: user.id,
+        class: "warrior",
+        race: "human"
+      }
+      character = Shard.Repo.insert!(character)
+      
+      conn = log_in_user(conn, user)
+      
+      # Test the LiveView by calling mount directly with proper socket setup
+      socket = %Phoenix.LiveView.Socket{
+        endpoint: ShardWeb.Endpoint,
+        assigns: %{__changed__: %{}}
+      }
+      
+      params = %{"map_id" => "1", "character_id" => to_string(character.id)}
+      session = %{}
+      
+      {:ok, socket} = ShardWeb.MudGameLive.mount(params, session, socket)
+      
+      # Verify initial modal state is closed
+      assert socket.assigns.modal_state.show == false
+      assert socket.assigns.modal_state.type == 0
+      
+      # Test opening character sheet modal
+      {:noreply, updated_socket} = ShardWeb.MudGameLive.handle_event(
+        "open_modal", 
+        %{"modal" => "character_sheet"}, 
+        socket
+      )
+      
+      # Verify modal state was updated correctly
+      assert updated_socket.assigns.modal_state.show == true
+      assert updated_socket.assigns.modal_state.type == "character_sheet"
+      
+      # Test opening inventory modal (should change type but keep show=true)
+      {:noreply, inventory_socket} = ShardWeb.MudGameLive.handle_event(
+        "open_modal", 
+        %{"modal" => "inventory"}, 
+        updated_socket
+      )
+      
+      # Verify modal type changed to inventory
+      assert inventory_socket.assigns.modal_state.show == true
+      assert inventory_socket.assigns.modal_state.type == "inventory"
+      
+      # Test closing modal
+      {:noreply, closed_socket} = ShardWeb.MudGameLive.handle_event(
+        "hide_modal", 
+        %{}, 
+        inventory_socket
+      )
+      
+      # Verify modal is now closed
+      assert closed_socket.assigns.modal_state.show == false
+      assert closed_socket.assigns.modal_state.type == ""
+    end
   end
 end
