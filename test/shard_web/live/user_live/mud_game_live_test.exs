@@ -28,9 +28,8 @@ defmodule ShardWeb.MudGameLiveTest do
 
   describe "mount/3" do
     test "redirects when no character is provided", %{conn: conn, map_id: map_id} do
-      {:ok, _view, html} = live(conn, ~p"/maps/#{map_id}/play")
-      
-      assert html =~ "Please select a character to play"
+      assert {:error, {:redirect, %{to: "/maps", flash: %{"error" => "Please select a character to play"}}}} = 
+        live(conn, ~p"/maps/#{map_id}/play")
     end
 
     test "successfully mounts with valid character", %{conn: conn, character: character, map_id: map_id} do
