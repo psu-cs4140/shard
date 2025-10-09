@@ -20,21 +20,17 @@ defmodule ShardWeb.MudGameLiveTest do
       
       conn = log_in_user(conn, user)
       
-      # Test the mount function directly instead of full LiveView
-      socket = %Phoenix.LiveView.Socket{
-        assigns: %{
-          current_scope: %{user: user}
-        }
-      }
+      # Use live_isolated to test the LiveView in isolation
+      {:ok, view, _html} = live_isolated(conn, ShardWeb.MudGameLive, 
+        session: %{"current_scope" => %{user: user}},
+        params: %{"map_id" => "1", "character_id" => to_string(character.id)}
+      )
       
-      params = %{"map_id" => "1", "character_id" => to_string(character.id)}
-      
-      {:ok, socket} = ShardWeb.MudGameLive.mount(params, %{}, socket)
-      
-      # Check that the terminal state contains welcome messages
-      assert "Welcome to Shard!" in socket.assigns.terminal_state.output
-      assert "You find yourself in a mysterious dungeon." in socket.assigns.terminal_state.output
-      assert "Type 'help' for available commands." in socket.assigns.terminal_state.output
+      # Check that the terminal component renders with welcome messages
+      html = render(view)
+      assert html =~ "Welcome to Shard!"
+      assert html =~ "You find yourself in a mysterious dungeon."
+      assert html =~ "Type 'help' for available commands."
     end
   end
 end
