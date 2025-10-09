@@ -47,6 +47,8 @@ defmodule ShardWeb.AdminLive.Map do
       <:subtitle>View and manage the game map</:subtitle>
     </.header>
 
+    <.flash_group flash={@flash} />
+
     <div class="mt-8">
       <div class="flex justify-between items-center mb-4">
         <div class="tabs tabs-lifted">
