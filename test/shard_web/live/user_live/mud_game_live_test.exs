@@ -13,7 +13,17 @@ defmodule ShardWeb.MudGameLiveTest do
         level: 1,
         experience: 0,
         user_id: user.id,
-        class: "warrior"
+        class: "warrior",
+        health: 100,
+        max_health: 100,
+        mana: 50,
+        max_mana: 50,
+        strength: 10,
+        dexterity: 10,
+        intelligence: 10,
+        constitution: 10,
+        wisdom: 10,
+        charisma: 10
       }
       character = Shard.Repo.insert!(character)
       
