@@ -1,5 +1,4 @@
 defmodule Shard.Weapons.SeedData.WeaponEnchantmentsSeeds do
-
   def data do
     [
       # Flaming Sword has Flaming enchantment

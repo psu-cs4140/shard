@@ -1,5 +1,4 @@
 defmodule Shard.Weapons.SeedData.WeaponEffectsSeeds do
-
   def data do
     [
       # Flaming Sword has Bleeding effect

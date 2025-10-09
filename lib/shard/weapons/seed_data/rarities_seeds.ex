@@ -1,5 +1,4 @@
 defmodule Shard.Weapons.SeedData.RaritiesSeeds do
-
   def data do
     [
       %{name: "Common"},

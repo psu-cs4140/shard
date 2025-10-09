@@ -161,15 +161,15 @@ defmodule ShardWeb.MudGameLive do
           </div>
         </div>
       </header>
-
-      <!-- Main Content -->
+      
+    <!-- Main Content -->
       <div class="flex flex-1 overflow-hidden">
         <!-- Left Panel - Terminal -->
         <div class="flex-1 p-4 flex flex-col">
           <.terminal terminal_state={@terminal_state} />
         </div>
-
-        <!-- Right Panel - Controls -->
+        
+    <!-- Right Panel - Controls -->
         <div class="w-100 bg-gray-800 px-4 py-4 flex flex-col space-y-4 overflow-y-auto">
           <.minimap
             map_data={@game_state.map_data}
@@ -239,8 +239,8 @@ defmodule ShardWeb.MudGameLive do
           />
         </div>
       </div>
-
-      <!-- Footer -->
+      
+    <!-- Footer -->
       <footer class="bg-gray-800 p-2 text-center text-sm">
         <p>MUD Game v1.0</p>
       </footer>

@@ -47,9 +47,10 @@ defmodule ShardWeb.Router do
     live_session :auth_public,
       on_mount: [{ShardWeb.UserAuth, :mount_current_scope}] do
       live "/users/log-in/:token", UserLive.Confirmation, :new
-      live "/users/log-in",       UserLive.Login,        :new
+      live "/users/log-in", UserLive.Login, :new
     end
   end
+
   # ───────────────────────── Auth: public (redirect if already authed) ─────────────────────────
   scope "/", ShardWeb do
     pipe_through [:browser]
@@ -62,7 +63,7 @@ defmodule ShardWeb.Router do
       live "/users/register", UserLive.Registration, :new
     end
 
-    post   "/users/log-in",  UserSessionController, :create
+    post "/users/log-in", UserSessionController, :create
     delete "/users/log-out", UserSessionController, :delete
   end
 
@@ -95,12 +96,12 @@ defmodule ShardWeb.Router do
         {ShardWeb.UserAuth, :mount_current_scope},
         {ShardWeb.UserAuth, :require_authenticated}
       ] do
-      live "/characters",       CharacterLive.Index, :index
-      live "/characters/new",   CharacterLive.New,   :new
-      live "/characters/:id",   CharacterLive.Show,  :show
-      live "/inventory",        InventoryLive.Index, :index
-      live "/maps",             MapSelectionLive
-      live "/play/:map_id",     MudGameLive
+      live "/characters", CharacterLive.Index, :index
+      live "/characters/new", CharacterLive.New, :new
+      live "/characters/:id", CharacterLive.Show, :show
+      live "/inventory", InventoryLive.Index, :index
+      live "/maps", MapSelectionLive
+      live "/play/:map_id", MudGameLive
     end
 
     post "/users/update-password", UserSessionController, :update_password
@@ -110,28 +111,28 @@ defmodule ShardWeb.Router do
   scope "/admin", ShardWeb do
     pipe_through [:browser, :require_authenticated_user, :require_admin]
 
-    live "/",     AdminLive.Index, :index
-    live "/map",  AdminLive.Map,   :index
+    live "/", AdminLive.Index, :index
+    live "/map", AdminLive.Map, :index
 
-    live "/characters",           AdminLive.Characters, :index
-    live "/characters/new",       AdminLive.Characters, :new
-    live "/characters/:id",       AdminLive.Characters, :show
-    live "/characters/:id/edit",  AdminLive.Characters, :edit
+    live "/characters", AdminLive.Characters, :index
+    live "/characters/new", AdminLive.Characters, :new
+    live "/characters/:id", AdminLive.Characters, :show
+    live "/characters/:id/edit", AdminLive.Characters, :edit
 
-    live "/user_management",      AdminLive.UserManagement, :index
+    live "/user_management", AdminLive.UserManagement, :index
 
-    live "/npcs",                 AdminLive.Npcs, :index
-    live "/npcs/new",             AdminLive.Npcs, :new
-    live "/npcs/:id/edit",        AdminLive.Npcs, :edit
+    live "/npcs", AdminLive.Npcs, :index
+    live "/npcs/new", AdminLive.Npcs, :new
+    live "/npcs/:id/edit", AdminLive.Npcs, :edit
 
-    live "/quests",               AdminLive.Quests, :index
-    live "/quests/new",           AdminLive.Quests, :new
-    live "/quests/:id/edit",      AdminLive.Quests, :edit
+    live "/quests", AdminLive.Quests, :index
+    live "/quests/new", AdminLive.Quests, :new
+    live "/quests/:id/edit", AdminLive.Quests, :edit
 
-    live "/items",                AdminLive.Items, :index
-    live "/items/new",            AdminLive.Items, :new
-    live "/items/:id",            AdminLive.Items, :show
-    live "/items/:id/edit",       AdminLive.Items, :edit
+    live "/items", AdminLive.Items, :index
+    live "/items/new", AdminLive.Items, :new
+    live "/items/:id", AdminLive.Items, :show
+    live "/items/:id/edit", AdminLive.Items, :edit
   end
 
   # ───────────────────────── Dev-only routes ─────────────────────────

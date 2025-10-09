@@ -113,6 +113,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
   # function component inputs
   attr :tutorial_npcs, :list, required: true
   attr :terrain_map, :list, required: true
+
   defp minimap(assigns) do
     ~H"""
     <div class="bg-gray-100 p-4 rounded-lg">
@@ -144,6 +145,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
   end
 
   attr :npcs, :list, required: true
+
   defp npc_list(assigns) do
     ~H"""
     <div class="space-y-2">

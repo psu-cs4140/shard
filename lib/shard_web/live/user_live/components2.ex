@@ -4,6 +4,7 @@ defmodule ShardWeb.UserLive.Components2 do
 
   # ───────────── Terminal ─────────────
   attr :terminal_state, :map, required: true
+
   def terminal(assigns) do
     ~H"""
     <div class="flex flex-col h-full bg-black rounded-lg border border-gray-600">
@@ -11,8 +12,8 @@ defmodule ShardWeb.UserLive.Components2 do
       <div class="bg-gray-800 px-4 py-2 rounded-t-lg border-b border-gray-600">
         <h2 class="text-green-400 font-mono text-sm">MUD Terminal</h2>
       </div>
-
-      <!-- Terminal Output -->
+      
+    <!-- Terminal Output -->
       <div
         class="flex-1 p-4 overflow-y-auto font-mono text-sm text-green-400 bg-black"
         id="terminal-output"
@@ -22,8 +23,8 @@ defmodule ShardWeb.UserLive.Components2 do
           <div class="whitespace-pre-wrap">{line}</div>
         <% end %>
       </div>
-
-      <!-- Command Input -->
+      
+    <!-- Command Input -->
       <div class="p-4 border-t border-gray-600 bg-gray-900 rounded-b-lg">
         <.form
           for={%{}}
@@ -50,12 +51,13 @@ defmodule ShardWeb.UserLive.Components2 do
   # ───────────── Player Stats ─────────────
   attr :stats, :map, required: true
   attr :hotbar, :map, default: %{}
+
   def player_stats(assigns) do
     ~H"""
     <div class="bg-gray-700 rounded-lg p-4 shadow-xl">
       <h2 class="text-xl font-semibold mb-4 text-center">Player Stats</h2>
-
-      <!-- Health Bar -->
+      
+    <!-- Health Bar -->
       <div class="mb-3">
         <div class="flex justify-between text-sm mb-1">
           <span class="text-red-400">Health</span>
@@ -68,8 +70,8 @@ defmodule ShardWeb.UserLive.Components2 do
           />
         </div>
       </div>
-
-      <!-- Stamina Bar -->
+      
+    <!-- Stamina Bar -->
       <div class="mb-3">
         <div class="flex justify-between text-sm mb-1">
           <span class="text-yellow-400">Stamina</span>
@@ -82,8 +84,8 @@ defmodule ShardWeb.UserLive.Components2 do
           />
         </div>
       </div>
-
-      <!-- Mana Bar -->
+      
+    <!-- Mana Bar -->
       <div class="mb-3">
         <div class="flex justify-between text-sm mb-1">
           <span class="text-blue-400">Mana</span>
@@ -96,8 +98,8 @@ defmodule ShardWeb.UserLive.Components2 do
           />
         </div>
       </div>
-
-      <!-- Hotbar -->
+      
+    <!-- Hotbar -->
       <div class="mt-4">
         <h3 class="text-lg font-semibold mb-2 text-center">Hotbar</h3>
         <div class="flex justify-center space-x-2">
@@ -118,6 +120,7 @@ defmodule ShardWeb.UserLive.Components2 do
   attr :value, :any, default: nil
   attr :icon, :string, required: true
   attr :text, :string, required: true
+
   def control_button(assigns) do
     ~H"""
     <button
@@ -134,13 +137,14 @@ defmodule ShardWeb.UserLive.Components2 do
   # ───────────── Hotbar Slot ─────────────
   attr :slot_data, :map, default: nil
   attr :slot_number, :integer, required: true
+
   def hotbar_slot(assigns) do
     ~H"""
     <div class="w-12 h-12 bg-gray-600 border-2 border-gray-500 rounded-lg flex items-center justify-center relative hover:border-gray-400 transition-colors">
       <!-- Slot number -->
       <span class="absolute top-0 left-1 text-xs text-gray-400">{@slot_number}</span>
-
-      <!-- Item content -->
+      
+    <!-- Item content -->
       <%= if @slot_data do %>
         <div class="text-center">
           <%= case @slot_data.type do %>
@@ -170,6 +174,7 @@ defmodule ShardWeb.UserLive.Components2 do
   attr :position, :any, required: true
   attr :bounds, :any, required: true
   attr :scale_factor, :any, required: true
+
   def player_marker(assigns) do
     {x_pos, y_pos} =
       calculate_minimap_position(

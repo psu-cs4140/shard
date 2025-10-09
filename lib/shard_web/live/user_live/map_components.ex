@@ -1,5 +1,4 @@
 defmodule ShardWeb.UserLive.MapComponents do
-
   # -- Helpers ----------------------------------------------------
   defp format_position({x, y}), do: "{#{x}, #{y}}"
   defp format_position({x, y, z}), do: "{#{x}, #{y}, #{z}}"
@@ -397,4 +396,3 @@ defmodule ShardWeb.UserLive.MapComponents do
     """
   end
 end
-

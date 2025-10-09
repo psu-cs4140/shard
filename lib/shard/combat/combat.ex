@@ -5,7 +5,6 @@ defmodule Shard.Combat do
   Co-Authored by claude.ai
   """
 
-
   @doc """
   Checks if player is currently in combat (has monsters at position).
   """

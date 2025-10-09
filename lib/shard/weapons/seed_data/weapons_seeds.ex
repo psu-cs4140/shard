@@ -1,5 +1,4 @@
 defmodule Shard.Weapons.SeedData.WeaponsSeeds do
-
   def data do
     [
       %{

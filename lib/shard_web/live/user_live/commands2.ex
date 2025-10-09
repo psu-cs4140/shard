@@ -156,7 +156,9 @@ defmodule ShardWeb.UserLive.Commands2 do
             end
 
           title = quest.title || "Untitled Quest"
-          quest_description = quest.short_description || quest.description || "A mysterious quest awaits."
+
+          quest_description =
+            quest.short_description || quest.description || "A mysterious quest awaits."
 
           acc =
             acc ++
@@ -171,9 +173,18 @@ defmodule ShardWeb.UserLive.Commands2 do
           if quest.status == "available" do
             details =
               []
-              |> maybe_push(quest.experience_reward && quest.experience_reward > 0, "Reward: #{quest.experience_reward} experience")
-              |> maybe_push(quest.gold_reward && quest.gold_reward > 0, "Gold Reward: #{quest.gold_reward} gold")
-              |> maybe_push(quest.min_level && quest.min_level > 0, "Minimum Level: #{quest.min_level}")
+              |> maybe_push(
+                quest.experience_reward && quest.experience_reward > 0,
+                "Reward: #{quest.experience_reward} experience"
+              )
+              |> maybe_push(
+                quest.gold_reward && quest.gold_reward > 0,
+                "Gold Reward: #{quest.gold_reward} gold"
+              )
+              |> maybe_push(
+                quest.min_level && quest.min_level > 0,
+                "Minimum Level: #{quest.min_level}"
+              )
 
             if details == [] do
               acc
@@ -253,6 +264,7 @@ defmodule ShardWeb.UserLive.Commands2 do
 
       # Build details safely using rebinds (not inner-scope assignments)
       details = []
+
       details =
         if quest.difficulty do
           details ++ ["Difficulty: #{String.capitalize(to_string(quest.difficulty))}"]

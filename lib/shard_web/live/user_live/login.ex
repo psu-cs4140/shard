@@ -43,7 +43,7 @@ defmodule ShardWeb.UserLive.Login do
           phx-submit="submit_magic"
         >
           <.input
-            readonly={!!(assigns[:current_scope])}
+            readonly={!!assigns[:current_scope]}
             field={f[:email]}
             type="email"
             label="Email"
@@ -61,14 +61,15 @@ defmodule ShardWeb.UserLive.Login do
         <.form
           :let={f}
           for={@form}
-          id="login_form_password" aria-label="Log in"
+          id="login_form_password"
+          aria-label="Log in"
           action={~p"/users/log-in"}
           phx-submit="submit_password"
           phx-trigger-action={@trigger_submit}
         >
-    <h2 class="sr-only">Log in</h2>
+          <h2 class="sr-only">Log in</h2>
           <.input
-            readonly={!!(assigns[:current_scope])}
+            readonly={!!assigns[:current_scope]}
             field={f[:email]}
             type="email"
             label="Email"

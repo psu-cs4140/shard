@@ -1,5 +1,4 @@
 defmodule Shard.Weapons.SeedData.DamageTypesSeeds do
-
   def data do
     [
       %{name: "Slashing"},

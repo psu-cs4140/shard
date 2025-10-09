@@ -237,7 +237,10 @@ defmodule ShardWeb.AdminLive.Npcs do
                 >
                   Cancel
                 </.link>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <button
+                  type="submit"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
                   Save NPC
                 </button>
               </div>
@@ -254,13 +257,27 @@ defmodule ShardWeb.AdminLive.Npcs do
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Name
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Type
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Level
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Location
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Room
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
@@ -269,7 +286,10 @@ defmodule ShardWeb.AdminLive.Npcs do
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="text-sm font-medium text-gray-900">{npc.name}</div>
                   <div class="text-sm text-gray-500">
-                    {String.slice(npc.description || "", 0, 50)}{if String.length(npc.description || "") > 50, do: "..."}
+                    {String.slice(npc.description || "", 0, 50)}{if String.length(
+                                                                      npc.description || ""
+                                                                    ) > 50,
+                                                                    do: "..."}
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
@@ -300,7 +320,10 @@ defmodule ShardWeb.AdminLive.Npcs do
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <.link patch={~p"/admin/npcs/#{npc.id}/edit"} class="text-indigo-600 hover:text-indigo-900 mr-3">
+                  <.link
+                    patch={~p"/admin/npcs/#{npc.id}/edit"}
+                    class="text-indigo-600 hover:text-indigo-900 mr-3"
+                  >
                     Edit
                   </.link>
                   <button
