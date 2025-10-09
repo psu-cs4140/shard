@@ -4,12 +4,29 @@ defmodule ShardWeb.AdminLive.MapTest do
 
   alias Shard.Map
   alias Shard.Map.{Room, Door}
+  alias Shard.Users
+
+  defp log_in_user(conn, user) do
+    token = Shard.Users.generate_user_session_token(user)
+    conn
+    |> Phoenix.ConnTest.init_test_session(%{})
+    |> Plug.Conn.put_session(:user_token, token)
+  end
 
   describe "Map LiveView" do
-    setup do
+    setup %{conn: conn} do
       # Clean up any existing data
       Shard.Repo.delete_all(Door)
       Shard.Repo.delete_all(Room)
+
+      # Create an admin user and log them in
+      {:ok, user} = Users.register_user(%{
+        email: "admin@example.com",
+        password: "hello world!",
+        admin: true
+      })
+
+      conn = log_in_user(conn, user)
 
       # Create test rooms
       {:ok, room1} = Map.create_room(%{
@@ -41,11 +58,11 @@ defmodule ShardWeb.AdminLive.MapTest do
         is_locked: false
       })
 
-      %{room1: room1, room2: room2, door: door}
+      %{conn: conn, room1: room1, room2: room2, door: door}
     end
 
     test "mounts successfully and displays rooms", %{conn: conn, room1: room1, room2: room2} do
-      {:ok, view, html} = live(conn, ~p"/admin/map")
+      {:ok, _view, html} = live(conn, ~p"/admin/map")
 
       assert html =~ "Map Management"
       assert html =~ room1.name
@@ -357,7 +374,7 @@ defmodule ShardWeb.AdminLive.MapTest do
       view |> element("button", "New Room") |> render_click()
 
       # Submit empty form
-      html = view
+      _html = view
       |> form("#room-form", room: %{})
       |> render_submit()
 
