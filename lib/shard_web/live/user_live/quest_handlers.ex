@@ -19,7 +19,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
             Shard.Quests.quest_ever_accepted_by_user?(user_id, quest.id)
           rescue
             error ->
-              IO.inspect(error, label: "Error checking if quest already accepted")
+              # IO.inspect(error, label: "Error checking if quest already accepted")
               false
           end
 
@@ -39,7 +39,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
               Shard.Quests.accept_quest(user_id, quest.id)
             rescue
               error ->
-                IO.inspect(error, label: "Error accepting quest")
+                # IO.inspect(error, label: "Error accepting quest") 
                 {:error, :database_error}
             end
 
@@ -169,7 +169,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
             end
           rescue
             error ->
-              IO.inspect(error, label: "Error getting quest #{quest.id} from database")
+              # IO.inspect(error, label: "Error getting quest #{quest.id} from database")
               false
           end
         else
@@ -178,7 +178,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       end)
     rescue
       error ->
-        IO.inspect(error, label: "Error finding deliverable quest")
+        # IO.inspect(error, label: "Error finding deliverable quest")
         nil
     end
   end
@@ -194,7 +194,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         Repo.get(Quest, quest.id)
       rescue
         error ->
-          IO.inspect(error, label: "Error getting quest #{quest.id} from database")
+          # IO.inspect(error, label: "Error getting quest #{quest.id} from database")
           nil
       end
 
@@ -209,7 +209,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         |> Map.update(:experience, 0, &(&1 + exp_reward))
       rescue
         error ->
-          IO.inspect(error, label: "Error updating player stats")
+          # IO.inspect(error, label: "Error updating player stats")
           game_state.player_stats
       end
 
@@ -219,7 +219,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         check_level_up(updated_stats)
       rescue
         error ->
-          IO.inspect(error, label: "Error checking level up")
+          # IO.inspect(error, label: "Error checking level up")
           {updated_stats, nil}
       end
 
@@ -252,7 +252,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         end
       rescue
         error ->
-          IO.inspect(error, label: "Error completing quest in database")
+          # IO.inspect(error, label: "Error completing quest in database")
           # Fallback: update game state even if database fails
           Enum.map(game_state.quests, fn q ->
             if q[:id] == quest.id do
@@ -291,7 +291,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         end
       rescue
         error ->
-          IO.inspect(error, label: "Error processing item rewards")
+          # IO.inspect(error, label: "Error processing item rewards")
           response
       end
 

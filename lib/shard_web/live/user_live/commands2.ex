@@ -221,11 +221,11 @@ defmodule ShardWeb.UserLive.Commands2 do
         get_quests_by_giver_npc_excluding_completed(npc.id, user_id)
       rescue
         error ->
-          IO.inspect(error, label: "Error getting quests for NPC #{npc.id}")
+          # IO.inspect(error, label: "Error getting quests for NPC #{npc.id}")
           []
       end
 
-    if length(available_quests) == 0 do
+    if available_quests == [] do
       # Check if there are any quests from this NPC that were completed
       all_quests =
         try do

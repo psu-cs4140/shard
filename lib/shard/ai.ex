@@ -27,7 +27,7 @@ defmodule Shard.AI do
       Based on the above information, generate a creative and descriptive text for the room.
       """
 
-      IO.inspect(prompt, label: "Prompt sent to grok (free model)")
+      # IO.inspect(prompt, label: "Prompt sent to grok (free model)")
 
       headers = [
         {"Authorization", "Bearer #{api_key}"},
@@ -42,7 +42,7 @@ defmodule Shard.AI do
       response =
         Req.post("https://openrouter.ai/api/v1/chat/completions", headers: headers, json: body)
 
-      IO.inspect(response, label: "OpenRouter AI Response")
+      # IO.inspect(response, label: "OpenRouter AI Response")
 
       case Req.post("https://openrouter.ai/api/v1/chat/completions", headers: headers, json: body) do
         {:ok, %{status: 200, body: %{"choices" => [%{"message" => %{"content" => description}}]}}} ->
