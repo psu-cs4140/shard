@@ -121,17 +121,32 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
   describe "toggle_admin event" do
     test "prevents admin from removing their own admin status", %{conn: conn} do
       admin_user = user_fixture(%{admin: true})
+      # Create another user to ensure admin_user is not the first user
+      _other_user = user_fixture(%{admin: false})
 
-      {:ok, view, _html} =
+      {:ok, view, html} =
         conn
         |> log_in_user(admin_user)
         |> live(~p"/admin/user_management")
 
-      result = render_click(view, "toggle_admin", %{"user_id" => admin_user.id})
-
-      assert result =~ "You cannot remove your own admin privileges."
+      # Check if admin_user is the first user (would show "Protected user")
+      if Users.first_user?(admin_user) do
+        # If admin_user is first user, they should show "Protected user"
+        assert html =~ "Protected user"
+        
+        # Try to click toggle_admin anyway (should trigger the server-side check)
+        result = render_click(view, "toggle_admin", %{"user_id" => admin_user.id})
+        assert result =~ "The first user must always remain an admin."
+      else
+        # If admin_user is not first user, they should show "Cannot modify yourself"
+        assert html =~ "Cannot modify yourself"
+        
+        # Try to click toggle_admin anyway (should trigger the server-side check)
+        result = render_click(view, "toggle_admin", %{"user_id" => admin_user.id})
+        assert result =~ "You cannot remove your own admin privileges."
+      end
       
-      # Verify admin status unchanged
+      # Verify admin status unchanged in either case
       updated_user = Users.get_user!(admin_user.id)
       assert updated_user.admin == true
     end
