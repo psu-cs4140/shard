@@ -36,7 +36,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
     setup [:create_admin_user, :create_character]
 
     test "lists all characters", %{conn: conn, admin: admin, character: character} do
-      {:ok, _index_live, html} = 
+      {:ok, _index_live, html} =
         conn
         |> log_in_user(admin)
         |> live(~p"/admin/characters")
@@ -46,7 +46,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
     end
 
     test "saves new character", %{conn: conn, admin: admin} do
-      {:ok, index_live, _html} = 
+      {:ok, index_live, _html} =
         conn
         |> log_in_user(admin)
         |> live(~p"/admin/characters")
@@ -69,12 +69,14 @@ defmodule ShardWeb.AdminLive.CharactersTest do
     end
 
     test "updates character in listing", %{conn: conn, admin: admin, character: character} do
-      {:ok, index_live, _html} = 
+      {:ok, index_live, _html} =
         conn
         |> log_in_user(admin)
         |> live(~p"/admin/characters")
 
-      assert index_live |> element("a[href='/admin/characters/#{character.id}/edit']", "Edit") |> render_click() =~
+      assert index_live
+             |> element("a[href='/admin/characters/#{character.id}/edit']", "Edit")
+             |> render_click() =~
                "Edit Character"
 
       assert_patch(index_live, ~p"/admin/characters/#{character}/edit")
@@ -94,28 +96,33 @@ defmodule ShardWeb.AdminLive.CharactersTest do
     end
 
     test "deletes character in listing", %{conn: conn, admin: admin, character: character} do
-      {:ok, index_live, _html} = 
+      {:ok, index_live, _html} =
         conn
         |> log_in_user(admin)
         |> live(~p"/admin/characters")
 
-      assert index_live |> element("a[phx-value-id='#{character.id}']", "Delete") |> render_click()
+      assert index_live
+             |> element("a[phx-value-id='#{character.id}']", "Delete")
+             |> render_click()
+
       refute has_element?(index_live, "a[phx-value-id='#{character.id}']")
     end
 
     test "redirects non-admin users", %{conn: conn} do
       user = user_fixture(%{admin: false})
-      
-      assert {:error, {:redirect, %{to: "/"}}} = 
-        conn
-        |> log_in_user(user)
-        |> live(~p"/admin/characters")
+
+      assert {:error, {:redirect, %{to: "/"}}} =
+               conn
+               |> log_in_user(user)
+               |> live(~p"/admin/characters")
     end
 
     test "redirects unauthenticated users", %{conn: conn} do
-      assert {:error, {:redirect, %{to: "/users/log-in", flash: %{"error" => "You must log in to access this page."}}}} = 
-        conn
-        |> live(~p"/admin/characters")
+      assert {:error,
+              {:redirect,
+               %{to: "/users/log-in", flash: %{"error" => "You must log in to access this page."}}}} =
+               conn
+               |> live(~p"/admin/characters")
     end
   end
 
@@ -123,7 +130,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
     setup [:create_admin_user, :create_character]
 
     test "displays character", %{conn: conn, admin: admin, character: character} do
-      {:ok, _show_live, html} = 
+      {:ok, _show_live, html} =
         conn
         |> log_in_user(admin)
         |> live(~p"/admin/characters/#{character}")
@@ -133,7 +140,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
     end
 
     test "updates character within modal", %{conn: conn, admin: admin, character: character} do
-      {:ok, show_live, _html} = 
+      {:ok, show_live, _html} =
         conn
         |> log_in_user(admin)
         |> live(~p"/admin/characters/#{character}")
@@ -159,11 +166,11 @@ defmodule ShardWeb.AdminLive.CharactersTest do
 
     test "redirects non-admin users", %{conn: conn, character: character} do
       user = user_fixture(%{admin: false})
-      
-      assert {:error, {:redirect, %{to: "/"}}} = 
-        conn
-        |> log_in_user(user)
-        |> live(~p"/admin/characters/#{character}")
+
+      assert {:error, {:redirect, %{to: "/"}}} =
+               conn
+               |> log_in_user(user)
+               |> live(~p"/admin/characters/#{character}")
     end
   end
 
@@ -172,13 +179,13 @@ defmodule ShardWeb.AdminLive.CharactersTest do
 
     test "displays characters in ascending order by insertion date", %{conn: conn, admin: admin} do
       user = user_fixture()
-      
+
       # Create characters with slight delay to ensure different timestamps
       character1 = character_fixture(user_id: user.id, name: "First Character")
       :timer.sleep(10)
       character2 = character_fixture(user_id: user.id, name: "Second Character")
 
-      {:ok, _index_live, html} = 
+      {:ok, _index_live, html} =
         conn
         |> log_in_user(admin)
         |> live(~p"/admin/characters")
@@ -187,7 +194,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
       # since they're ordered by ascending insertion date
       character1_pos = :binary.match(html, character1.name) |> elem(0)
       character2_pos = :binary.match(html, character2.name) |> elem(0)
-      
+
       assert character1_pos < character2_pos
     end
 
@@ -195,7 +202,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
       user = user_fixture(%{email: "test@example.com"})
       character = character_fixture(user: user)
 
-      {:ok, _index_live, html} = 
+      {:ok, _index_live, html} =
         conn
         |> log_in_user(admin)
         |> live(~p"/admin/characters")
@@ -217,7 +224,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
     end
 
     test "handles database errors gracefully during creation", %{conn: conn, admin: admin} do
-      {:ok, index_live, _html} = 
+      {:ok, index_live, _html} =
         conn
         |> log_in_user(admin)
         |> live(~p"/admin/characters")
