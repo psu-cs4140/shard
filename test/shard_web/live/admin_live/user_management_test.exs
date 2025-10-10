@@ -180,7 +180,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       {:ok, view, _html} =
         conn
         |> log_in_user(admin_user)
-        |> live(~p"/admin/users")
+        |> live(~p"/admin/user_management")
 
       # Try to toggle admin for non-existent user
       result = render_click(view, "toggle_admin", %{"user_id" => "999999"})

@@ -8,11 +8,18 @@ defmodule ShardWeb.AdminLive.UserManagement do
     users = Users.list_users()
     first_user = Users.get_first_user()
 
+    current_user = 
+      case socket.assigns do
+        %{current_scope: %{user: user}} -> user
+        %{current_user: user} -> user
+        _ -> nil
+      end
+
     {:ok,
      socket
      |> assign(:users, users)
      |> assign(:first_user, first_user)
-     |> assign(:current_user, socket.assigns.current_scope.user)}
+     |> assign(:current_user, current_user)}
   end
 
   @impl true
