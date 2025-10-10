@@ -48,7 +48,8 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       result = render_click(view, "delete_user", %{"user_id" => admin_user.id})
 
       assert result =~ "You cannot delete your own account."
-      assert Users.get_user(admin_user.id) # User still exists
+      # Verify user still exists
+      assert Users.get_user!(admin_user.id)
     end
 
     test "prevents deleting the first user", %{conn: conn} do
@@ -65,7 +66,8 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
         result = render_click(view, "delete_user", %{"user_id" => first_user.id})
 
         assert result =~ "The first user cannot be deleted."
-        assert Users.get_user(first_user.id) # User still exists
+        # Verify user still exists
+        assert Users.get_user!(first_user.id)
       end
     end
 
@@ -78,10 +80,16 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
         |> log_in_user(admin_user)
         |> live(~p"/admin/user_management")
 
-      result = render_click(view, "delete_user", %{"user_id" => regular_user.id})
+      render_click(view, "delete_user", %{"user_id" => regular_user.id})
 
-      assert result =~ "User #{regular_user.email} has been deleted."
-      assert is_nil(Users.get_user(regular_user.id))
+      # Check that the user was actually deleted from the database
+      assert_raise Ecto.NoResultsError, fn ->
+        Users.get_user!(regular_user.id)
+      end
+
+      # Check that the user no longer appears in the rendered HTML
+      updated_html = render(view)
+      refute updated_html =~ regular_user.email
     end
 
     test "handles delete error gracefully", %{conn: conn} do
