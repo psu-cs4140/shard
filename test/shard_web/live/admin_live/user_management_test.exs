@@ -38,17 +38,37 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
 
   describe "delete_user event" do
     test "prevents user from deleting themselves", %{conn: conn} do
+      # Create a dummy user first to ensure admin_user is not the first user
+      _dummy_user = user_fixture(%{admin: false})
       admin_user = user_fixture(%{admin: true})
 
-      {:ok, view, _html} =
+      {:ok, view, html} =
         conn
         |> log_in_user(admin_user)
         |> live(~p"/admin/user_management")
 
-      result = render_click(view, "delete_user", %{"user_id" => admin_user.id})
+      # Check if admin_user is the first user (would show "Protected user")
+      if Users.first_user?(admin_user) do
+        # If admin_user is first user, they should show "Protected user"
+        assert html =~ "Protected user"
+        
+        # Try to click delete anyway (should trigger the server-side check)
+        render_click(view, "delete_user", %{"user_id" => admin_user.id})
+        
+        # Verify the page still renders correctly and shows first user protection
+        updated_html = render(view)
+        assert updated_html =~ "Protected user"
+        assert updated_html =~ "First User"
+      else
+        # If admin_user is not first user, they should show "Cannot modify yourself"
+        assert html =~ "Cannot modify yourself"
+        
+        # Try to click delete anyway (should trigger the server-side check)
+        result = render_click(view, "delete_user", %{"user_id" => admin_user.id})
+        assert result =~ "You cannot delete your own account."
+      end
 
-      assert result =~ "You cannot delete your own account."
-      # Verify user still exists
+      # Verify user still exists in either case
       assert Users.get_user!(admin_user.id)
     end
 
