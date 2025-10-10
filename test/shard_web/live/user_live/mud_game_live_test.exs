@@ -1,6 +1,5 @@
 defmodule ShardWeb.MudGameLiveTest do
   use ShardWeb.ConnCase
-  import Phoenix.LiveViewTest
   import Shard.UsersFixtures
 
   describe "terminal component rendering" do
