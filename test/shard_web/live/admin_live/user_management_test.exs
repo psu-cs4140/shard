@@ -220,8 +220,9 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
 
   describe "render" do
     test "displays user information correctly", %{conn: conn} do
-      admin_user = user_fixture(%{admin: true, confirmed_at: DateTime.utc_now()})
-      regular_user = user_fixture(%{admin: false, confirmed_at: nil})
+      admin_user = user_fixture(%{admin: true})
+      # Create an unconfirmed user by using unconfirmed_user_fixture
+      unconfirmed_user = unconfirmed_user_fixture(%{admin: false})
 
       {:ok, _view, html} =
         conn
@@ -240,7 +241,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
 
       # Check user data
       assert html =~ admin_user.email
-      assert html =~ regular_user.email
+      assert html =~ unconfirmed_user.email
 
       # Check admin badges
       assert html =~ "Admin"
