@@ -57,4 +57,15 @@ defmodule ShardWeb.UserLive.MinimapComponents do
     {scaled_x, scaled_y}
   end
 
+  # Check if a door is one-way (no return door in opposite direction)
+  def is_one_way_door?(door) do
+    # This is a simplified implementation - you may want to enhance this
+    # based on your specific business logic for determining one-way doors
+    
+    # For now, we'll check if the door has a specific property or type
+    # that indicates it's one-way, or if there's no corresponding return door
+    door.door_type == "one_way" or 
+    (door.properties && Map.get(door.properties, "one_way", false))
+  end
+
 end
