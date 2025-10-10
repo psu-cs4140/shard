@@ -4,7 +4,7 @@ defmodule ShardWeb.MudGameLiveTest do
   import Shard.UsersFixtures
 
   describe "terminal component rendering" do
-    test "renders terminal with initial output", %{conn: conn} do
+    test "renders terminal with initial output", %{conn: _conn} do
       user = user_fixture()
       
       # Create character using Repo.insert! directly to avoid fixture issues
@@ -18,7 +18,7 @@ defmodule ShardWeb.MudGameLiveTest do
       }
       character = Shard.Repo.insert!(character)
       
-      conn = log_in_user(conn, user)
+      _conn = log_in_user(_conn, user)
       
       # Test the LiveView by calling mount directly with proper socket setup
       socket = %Phoenix.LiveView.Socket{
