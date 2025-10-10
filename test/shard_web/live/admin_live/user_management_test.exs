@@ -163,13 +163,16 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
         |> log_in_user(admin_user)
         |> live(~p"/admin/user_management")
 
-      result = render_click(view, "toggle_admin", %{"user_id" => regular_user.id})
+      render_click(view, "toggle_admin", %{"user_id" => regular_user.id})
 
-      assert result =~ "Admin privileges granted for #{regular_user.email}."
-      
-      # Verify admin status changed
+      # Verify admin status changed in database
       updated_user = Users.get_user!(regular_user.id)
       assert updated_user.admin == true
+
+      # Verify UI shows the user as admin now
+      updated_html = render(view)
+      assert updated_html =~ "Revoke Admin"
+      refute updated_html =~ "Grant Admin"
     end
 
     test "successfully revokes admin privileges from admin user", %{conn: conn} do
@@ -181,13 +184,16 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
         |> log_in_user(admin_user)
         |> live(~p"/admin/user_management")
 
-      result = render_click(view, "toggle_admin", %{"user_id" => another_admin.id})
+      render_click(view, "toggle_admin", %{"user_id" => another_admin.id})
 
-      assert result =~ "Admin privileges revoked for #{another_admin.email}."
-      
-      # Verify admin status changed
+      # Verify admin status changed in database
       updated_user = Users.get_user!(another_admin.id)
       assert updated_user.admin == false
+
+      # Verify UI shows the user as regular user now
+      updated_html = render(view)
+      assert updated_html =~ "Grant Admin"
+      refute updated_html =~ "Revoke Admin"
     end
 
     test "handles toggle admin error gracefully", %{conn: conn} do
