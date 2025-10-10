@@ -2,90 +2,126 @@ defmodule ShardWeb.AdminLive.UserManagement do
   use ShardWeb, :live_view
 
   alias Shard.Users
+  alias Shard.Repo
 
   @impl true
   def mount(_params, _session, socket) do
     users = Users.list_users()
     first_user = Users.get_first_user()
 
+    current_user =
+      case socket.assigns do
+        %{current_scope: %{user: user}} -> user
+        %{current_user: user} -> user
+        _ -> nil
+      end
+
     {:ok,
      socket
      |> assign(:users, users)
      |> assign(:first_user, first_user)
-     |> assign(:current_user, socket.assigns.current_scope.user)}
+     |> assign(:current_user, current_user)}
   end
 
   @impl true
   def handle_event("delete_user", %{"user_id" => user_id}, socket) do
-    user = Users.get_user!(user_id)
-    current_user = socket.assigns.current_user
+    try do
+      user = Users.get_user!(user_id)
+      current_user = socket.assigns.current_user
 
-    cond do
-      # Prevent user from deleting themselves
-      user.id == current_user.id ->
+      cond do
+        # Handle case where current_user is nil
+        is_nil(current_user) ->
+          {:noreply,
+           socket
+           |> put_flash(:error, "Authentication required.")}
+
+        # Prevent user from deleting themselves
+        user.id == current_user.id ->
+          {:noreply,
+           socket
+           |> put_flash(:error, "You cannot delete your own account.")}
+
+        # Prevent deleting the first user
+        Users.first_user?(user) ->
+          {:noreply,
+           socket
+           |> put_flash(:error, "The first user cannot be deleted.")}
+
+        # Delete the user
+        true ->
+          case Users.delete_user(user) do
+            {:ok, _deleted_user} ->
+              {:noreply,
+               socket
+               |> put_flash(:info, "User #{user.email} has been deleted.")
+               |> assign(:users, Users.list_users())}
+
+            {:error, _changeset} ->
+              {:noreply,
+               socket
+               |> put_flash(:error, "Failed to delete user.")}
+          end
+      end
+    rescue
+      Ecto.NoResultsError ->
         {:noreply,
          socket
-         |> put_flash(:error, "You cannot delete your own account.")}
-
-      # Prevent deleting the first user
-      Users.first_user?(user) ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "The first user cannot be deleted.")}
-
-      # Delete the user
-      true ->
-        case Users.delete_user(user) do
-          {:ok, _deleted_user} ->
-            {:noreply,
-             socket
-             |> put_flash(:info, "User #{user.email} has been deleted.")
-             |> assign(:users, Users.list_users())}
-
-          {:error, _changeset} ->
-            {:noreply,
-             socket
-             |> put_flash(:error, "Failed to delete user.")}
-        end
+         |> put_flash(:error, "User not found.")}
     end
   end
 
   @impl true
   def handle_event("toggle_admin", %{"user_id" => user_id}, socket) do
-    user = Users.get_user!(user_id)
-    current_user = socket.assigns.current_user
+    try do
+      user = Users.get_user!(user_id)
+      current_user = socket.assigns.current_user
 
-    cond do
-      # Prevent admin from removing their own admin status
-      user.id == current_user.id ->
+      cond do
+        # Handle case where current_user is nil
+        is_nil(current_user) ->
+          {:noreply,
+           socket
+           |> put_flash(:error, "Authentication required.")}
+
+        # Prevent admin from removing their own admin status
+        user.id == current_user.id ->
+          {:noreply,
+           socket
+           |> put_flash(:error, "You cannot remove your own admin privileges.")}
+
+        # Prevent removing admin status from the first user
+        Users.first_user?(user) ->
+          {:noreply,
+           socket
+           |> put_flash(:error, "The first user must always remain an admin.")}
+
+        # Toggle admin status
+        true ->
+          new_admin_status = !user.admin
+
+          changeset = Shard.Users.User.admin_changeset(user, %{admin: new_admin_status})
+
+          case Repo.update(changeset) do
+            {:ok, _updated_user} ->
+              action = if new_admin_status, do: "granted", else: "revoked"
+
+              {:noreply,
+               socket
+               |> put_flash(:info, "Admin privileges #{action} for #{user.email}.")
+               |> assign(:users, Users.list_users())}
+
+            {:error, _changeset} ->
+              {:noreply,
+               socket
+               |> put_flash(:error, "Failed to update user privileges.")}
+          end
+      end
+    rescue
+      Ecto.NoResultsError ->
         {:noreply,
          socket
-         |> put_flash(:error, "You cannot remove your own admin privileges.")}
-
-      # Prevent removing admin status from the first user
-      Users.first_user?(user) ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "The first user must always remain an admin.")}
-
-      # Toggle admin status
-      true ->
-        new_admin_status = !user.admin
-
-        case Users.update_user_admin_status(user, new_admin_status) do
-          {:ok, _updated_user} ->
-            action = if new_admin_status, do: "granted", else: "revoked"
-
-            {:noreply,
-             socket
-             |> put_flash(:info, "Admin privileges #{action} for #{user.email}.")
-             |> assign(:users, Users.list_users())}
-
-          {:error, _changeset} ->
-            {:noreply,
-             socket
-             |> put_flash(:error, "Failed to update user privileges.")}
-        end
+         |> put_flash(:error, "User not found.")}
     end
   end
 
@@ -115,7 +151,7 @@ defmodule ShardWeb.AdminLive.UserManagement do
                 <%= if Users.first_user?(user) do %>
                   <span class="badge badge-primary badge-sm ml-2">First User</span>
                 <% end %>
-                <%= if user.id == @current_user.id do %>
+                <%= if @current_user && user.id == @current_user.id do %>
                   <span class="badge badge-secondary badge-sm ml-2">You</span>
                 <% end %>
               </td>
@@ -136,10 +172,10 @@ defmodule ShardWeb.AdminLive.UserManagement do
               <td>
                 <div class="flex gap-2">
                   <%= cond do %>
-                    <% user.id == @current_user.id -> %>
-                      <span class="text-gray-500 text-sm">Cannot modify yourself</span>
                     <% Users.first_user?(user) -> %>
                       <span class="text-gray-500 text-sm">Protected user</span>
+                    <% @current_user && user.id == @current_user.id -> %>
+                      <span class="text-gray-500 text-sm">Cannot modify yourself</span>
                     <% true -> %>
                       <button
                         class={[

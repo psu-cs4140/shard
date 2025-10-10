@@ -1,5 +1,6 @@
 defmodule ShardWeb.UserLive.QuestHandlers do
   alias Shard.Repo
+  alias Shard.Quests.Quest
   # Execute quest acceptance
   def execute_accept_quest(game_state) do
     case game_state.pending_quest_offer do
