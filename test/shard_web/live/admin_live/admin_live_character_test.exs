@@ -145,7 +145,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
       assert show_live |> element("a", "Edit") |> render_click() =~
                "Edit Character"
 
-      assert_patch(show_live, ~p"/admin/characters/#{character}/show/edit")
+      assert_patch(show_live, ~p"/admin/characters/#{character}/edit")
 
       assert show_live
              |> form("#character-form", character: @invalid_attrs)
