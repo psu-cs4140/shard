@@ -77,7 +77,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
         |> log_in_user(admin)
         |> live(~p"/admin/characters")
 
-      assert index_live |> element("#characters-#{character.id} a", "Edit") |> render_click() =~
+      assert index_live |> element("a[href='/admin/characters/#{character.id}/edit']", "Edit") |> render_click() =~
                "Edit Character"
 
       assert_patch(index_live, ~p"/admin/characters/#{character}/edit")
