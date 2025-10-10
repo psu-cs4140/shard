@@ -259,8 +259,6 @@ defmodule ShardWeb.MudGameLive do
 
   # Handle keypresses for navigation, inventory, etc.
   def handle_event("keypress", %{"key" => key}, socket) do
-    IO.inspect(key, pretty: true)
-
     # Check if it's a movement key
     case key do
       arrow_key when arrow_key in ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"] ->
@@ -371,7 +369,6 @@ defmodule ShardWeb.MudGameLive do
       |> add_message("Area heal effect: #{xx} damage healed")
 
     health = socket.assigns.game_state.player_stats.health
-    IO.inspect({:health, health})
 
     if health < 100 do
       st1 =

@@ -2,7 +2,6 @@ defmodule Shard.Quests do
   @moduledoc """
   The Quests context.
   """
-
   import Ecto.Query, warn: false
   alias Shard.Repo
 
