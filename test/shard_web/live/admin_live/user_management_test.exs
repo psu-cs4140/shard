@@ -95,7 +95,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       # Try to delete non-existent user
       result = render_click(view, "delete_user", %{"user_id" => "999999"})
 
-      assert result =~ "Failed to delete user." or result =~ "not found"
+      assert result =~ "User not found."
     end
   end
 
@@ -185,7 +185,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       # Try to toggle admin for non-existent user
       result = render_click(view, "toggle_admin", %{"user_id" => "999999"})
 
-      assert result =~ "Failed to update user privileges." or result =~ "not found"
+      assert result =~ "User not found."
     end
   end
 
