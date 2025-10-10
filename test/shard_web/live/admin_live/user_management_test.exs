@@ -309,8 +309,14 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       assert html =~ "Confirmed"
       assert html =~ "Unconfirmed"
 
-      # Check "You" badge for current user
-      assert html =~ "You"
+      # Check "You" badge for current user (only if current user is not the first user)
+      if Users.first_user?(admin_user) do
+        # If admin_user is first user, they should show "Protected user" instead of "You"
+        assert html =~ "Protected user"
+      else
+        # If admin_user is not first user, they should show "You" badge
+        assert html =~ "You"
+      end
     end
 
     test "shows appropriate action buttons for different user types", %{conn: conn} do
