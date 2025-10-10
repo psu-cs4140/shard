@@ -117,7 +117,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
     end
 
     test "redirects unauthenticated users", %{conn: conn} do
-      assert {:error, {:redirect, %{to: "/users/log_in"}}} = 
+      assert {:error, {:redirect, %{to: "/users/log-in", flash: %{"error" => "You must log in to access this page."}}}} = 
         conn
         |> live(~p"/admin/characters")
     end
