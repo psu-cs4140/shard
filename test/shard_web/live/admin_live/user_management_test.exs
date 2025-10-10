@@ -49,10 +49,10 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       if Users.first_user?(admin_user) do
         # If admin_user is first user, they should show "Protected user"
         assert html =~ "Protected user"
-        
+
         # Try to click delete anyway (should trigger the server-side check)
         render_click(view, "delete_user", %{"user_id" => admin_user.id})
-        
+
         # Verify the page still renders correctly and shows first user protection
         updated_html = render(view)
         assert updated_html =~ "Protected user"
@@ -60,10 +60,10 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       else
         # If admin_user is not first user, they should show "Cannot modify yourself"
         assert html =~ "Cannot modify yourself"
-        
+
         # Try to click delete anyway (should trigger the server-side check)
         render_click(view, "delete_user", %{"user_id" => admin_user.id})
-        
+
         # Verify the page still renders correctly
         updated_html = render(view)
         assert updated_html =~ "Cannot modify yourself"
@@ -135,7 +135,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       updated_html = render(view)
       assert updated_html =~ "User Management"
       assert updated_html =~ admin_user.email
-      
+
       # Verify admin user still exists and is unchanged
       updated_admin = Users.get_user!(admin_user.id)
       assert updated_admin.admin == true
@@ -157,10 +157,10 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       if Users.first_user?(admin_user) do
         # If admin_user is first user, they should show "Protected user"
         assert html =~ "Protected user"
-        
+
         # Try to click toggle_admin anyway (should trigger the server-side check)
         render_click(view, "toggle_admin", %{"user_id" => admin_user.id})
-        
+
         # Verify the page still renders correctly and shows first user protection
         updated_html = render(view)
         assert updated_html =~ "Protected user"
@@ -168,15 +168,15 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       else
         # If admin_user is not first user, they should show "Cannot modify yourself"
         assert html =~ "Cannot modify yourself"
-        
+
         # Try to click toggle_admin anyway (should trigger the server-side check)
         render_click(view, "toggle_admin", %{"user_id" => admin_user.id})
-        
+
         # Verify the page still renders correctly
         updated_html = render(view)
         assert updated_html =~ "Cannot modify yourself"
       end
-      
+
       # Verify admin status unchanged in either case
       updated_user = Users.get_user!(admin_user.id)
       assert updated_user.admin == true
@@ -195,12 +195,12 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
 
         # First user should show "Protected user" instead of action buttons
         assert html =~ "Protected user"
-        
+
         # Try to click toggle_admin anyway (should trigger the server-side check)
         result = render_click(view, "toggle_admin", %{"user_id" => first_user.id})
 
         assert result =~ "The first user must always remain an admin."
-        
+
         # Verify admin status unchanged
         updated_user = Users.get_user!(first_user.id)
         assert updated_user.admin == true
@@ -273,7 +273,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       updated_html = render(view)
       assert updated_html =~ "User Management"
       assert updated_html =~ admin_user.email
-      
+
       # Verify admin user's status is unchanged
       updated_admin = Users.get_user!(admin_user.id)
       assert updated_admin.admin == true

@@ -9,7 +9,7 @@ defmodule ShardWeb.AdminLive.UserManagement do
     users = Users.list_users()
     first_user = Users.get_first_user()
 
-    current_user = 
+    current_user =
       case socket.assigns do
         %{current_scope: %{user: user}} -> user
         %{current_user: user} -> user
@@ -101,7 +101,7 @@ defmodule ShardWeb.AdminLive.UserManagement do
           new_admin_status = !user.admin
 
           changeset = Shard.Users.User.admin_changeset(user, %{admin: new_admin_status})
-          
+
           case Repo.update(changeset) do
             {:ok, _updated_user} ->
               action = if new_admin_status, do: "granted", else: "revoked"
