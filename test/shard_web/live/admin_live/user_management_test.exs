@@ -130,12 +130,16 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       first_user = Users.get_first_user()
 
       # Skip test if no first user exists or first user is not admin
-      if first_user && first_user.admin do
-        {:ok, view, _html} =
+      if first_user && first_user.admin && first_user.id != admin_user.id do
+        {:ok, view, html} =
           conn
           |> log_in_user(admin_user)
           |> live(~p"/admin/user_management")
 
+        # First user should show "Protected user" instead of action buttons
+        assert html =~ "Protected user"
+        
+        # Try to click toggle_admin anyway (should trigger the server-side check)
         result = render_click(view, "toggle_admin", %{"user_id" => first_user.id})
 
         assert result =~ "The first user must always remain an admin."
