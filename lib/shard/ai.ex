@@ -39,10 +39,12 @@ defmodule Shard.AI do
         "messages" => [%{"role" => "user", "content" => prompt}]
       }
 
-      response =
-        Req.post("https://openrouter.ai/api/v1/chat/completions", headers: headers, json: body)
-
+      # response =
+      # Req.post("https://openrouter.ai/api/v1/chat/completions", headers: headers, json: body)
       # IO.inspect(response, label: "OpenRouter AI Response")
+      #
+      # above is commented out because credo doesnt like IO.inspect
+      # then response is left unusused hence why its also commented out
 
       case Req.post("https://openrouter.ai/api/v1/chat/completions", headers: headers, json: body) do
         {:ok, %{status: 200, body: %{"choices" => [%{"message" => %{"content" => description}}]}}} ->
