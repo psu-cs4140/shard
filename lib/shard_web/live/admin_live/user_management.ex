@@ -24,86 +24,100 @@ defmodule ShardWeb.AdminLive.UserManagement do
 
   @impl true
   def handle_event("delete_user", %{"user_id" => user_id}, socket) do
-    user = Users.get_user!(user_id)
-    current_user = socket.assigns.current_user
-
-    cond do
-      # Handle case where current_user is nil
-      is_nil(current_user) ->
+    case Users.get_user(user_id) do
+      nil ->
         {:noreply,
          socket
-         |> put_flash(:error, "Authentication required.")}
+         |> put_flash(:error, "User not found.")}
 
-      # Prevent user from deleting themselves
-      user.id == current_user.id ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "You cannot delete your own account.")}
+      user ->
+        current_user = socket.assigns.current_user
 
-      # Prevent deleting the first user
-      Users.first_user?(user) ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "The first user cannot be deleted.")}
-
-      # Delete the user
-      true ->
-        case Users.delete_user(user) do
-          {:ok, _deleted_user} ->
+        cond do
+          # Handle case where current_user is nil
+          is_nil(current_user) ->
             {:noreply,
              socket
-             |> put_flash(:info, "User #{user.email} has been deleted.")
-             |> assign(:users, Users.list_users())}
+             |> put_flash(:error, "Authentication required.")}
 
-          {:error, _changeset} ->
+          # Prevent user from deleting themselves
+          user.id == current_user.id ->
             {:noreply,
              socket
-             |> put_flash(:error, "Failed to delete user.")}
+             |> put_flash(:error, "You cannot delete your own account.")}
+
+          # Prevent deleting the first user
+          Users.first_user?(user) ->
+            {:noreply,
+             socket
+             |> put_flash(:error, "The first user cannot be deleted.")}
+
+          # Delete the user
+          true ->
+            case Users.delete_user(user) do
+              {:ok, _deleted_user} ->
+                {:noreply,
+                 socket
+                 |> put_flash(:info, "User #{user.email} has been deleted.")
+                 |> assign(:users, Users.list_users())}
+
+              {:error, _changeset} ->
+                {:noreply,
+                 socket
+                 |> put_flash(:error, "Failed to delete user.")}
+            end
         end
     end
   end
 
   @impl true
   def handle_event("toggle_admin", %{"user_id" => user_id}, socket) do
-    user = Users.get_user!(user_id)
-    current_user = socket.assigns.current_user
-
-    cond do
-      # Handle case where current_user is nil
-      is_nil(current_user) ->
+    case Users.get_user(user_id) do
+      nil ->
         {:noreply,
          socket
-         |> put_flash(:error, "Authentication required.")}
+         |> put_flash(:error, "User not found.")}
 
-      # Prevent admin from removing their own admin status
-      user.id == current_user.id ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "You cannot remove your own admin privileges.")}
+      user ->
+        current_user = socket.assigns.current_user
 
-      # Prevent removing admin status from the first user
-      Users.first_user?(user) ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "The first user must always remain an admin.")}
-
-      # Toggle admin status
-      true ->
-        new_admin_status = !user.admin
-
-        case Users.update_user_admin_status(user, new_admin_status) do
-          {:ok, _updated_user} ->
-            action = if new_admin_status, do: "granted", else: "revoked"
-
+        cond do
+          # Handle case where current_user is nil
+          is_nil(current_user) ->
             {:noreply,
              socket
-             |> put_flash(:info, "Admin privileges #{action} for #{user.email}.")
-             |> assign(:users, Users.list_users())}
+             |> put_flash(:error, "Authentication required.")}
 
-          {:error, _changeset} ->
+          # Prevent admin from removing their own admin status
+          user.id == current_user.id ->
             {:noreply,
              socket
-             |> put_flash(:error, "Failed to update user privileges.")}
+             |> put_flash(:error, "You cannot remove your own admin privileges.")}
+
+          # Prevent removing admin status from the first user
+          Users.first_user?(user) ->
+            {:noreply,
+             socket
+             |> put_flash(:error, "The first user must always remain an admin.")}
+
+          # Toggle admin status
+          true ->
+            new_admin_status = !user.admin
+
+            case Users.update_user_admin_status(user, new_admin_status) do
+              {:ok, _updated_user} ->
+                action = if new_admin_status, do: "granted", else: "revoked"
+
+                {:noreply,
+                 socket
+                 |> put_flash(:info, "Admin privileges #{action} for #{user.email}.")
+                 |> assign(:users, Users.list_users())}
+
+              {:error, _changeset} ->
+                {:noreply,
+                 socket
+                 |> put_flash(:error, "Failed to update user privileges.")}
+            end
         end
     end
   end
