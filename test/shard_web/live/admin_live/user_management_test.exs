@@ -100,21 +100,24 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       admin_user = user_fixture(%{admin: true})
       regular_user = user_fixture(%{admin: false})
 
-      {:ok, view, _html} =
+      {:ok, view, html} =
         conn
         |> log_in_user(admin_user)
         |> live(~p"/admin/user_management")
 
+      # Verify the regular user appears in the initial HTML
+      assert html =~ regular_user.email
+
       render_click(view, "delete_user", %{"user_id" => regular_user.id})
+
+      # Check that the user no longer appears in the rendered HTML
+      updated_html = render(view)
+      refute updated_html =~ regular_user.email
 
       # Check that the user was actually deleted from the database
       assert_raise Ecto.NoResultsError, fn ->
         Users.get_user!(regular_user.id)
       end
-
-      # Check that the user no longer appears in the rendered HTML
-      updated_html = render(view)
-      refute updated_html =~ regular_user.email
     end
 
     test "handles delete error gracefully", %{conn: conn} do
