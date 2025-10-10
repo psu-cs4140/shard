@@ -13,7 +13,7 @@ defmodule Shard.MixProject do
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
       listeners: [Phoenix.CodeReloader],
       test_coverage: [
-        summary: [threshold: 26]
+        summary: [threshold: 29]
       ],
       # Fail compilation warnings only when running in CI
       elixirc_options: [warnings_as_errors: System.get_env("CI") == "true"],
