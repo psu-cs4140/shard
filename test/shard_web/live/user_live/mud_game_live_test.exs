@@ -316,7 +316,7 @@ defmodule ShardWeb.MudGameLiveTest do
       {:noreply, movement_socket} = ShardWeb.MudGameLive.handle_event("keypress", %{"key" => "ArrowUp"}, socket)
       
       # Verify movement was processed (terminal output should contain movement response)
-      movement_output = Enum.join(movement_socket.assigns.terminal_state.output, "\n")
+      _movement_output = Enum.join(movement_socket.assigns.terminal_state.output, "\n")
       # Movement should either succeed or fail, but should add some response to terminal
       assert length(movement_socket.assigns.terminal_state.output) > length(socket.assigns.terminal_state.output)
       
