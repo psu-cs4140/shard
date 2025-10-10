@@ -286,8 +286,14 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
         |> log_in_user(admin_user)
         |> live(~p"/admin/user_management")
 
-      # Current user should show "Cannot modify yourself"
-      assert html =~ "Cannot modify yourself"
+      # Check if admin_user is the first user (would show "Protected user")
+      if Users.first_user?(admin_user) do
+        # If admin_user is first user, they should show "Protected user"
+        assert html =~ "Protected user"
+      else
+        # If admin_user is not first user, they should show "Cannot modify yourself"
+        assert html =~ "Cannot modify yourself"
+      end
 
       # Regular user should show action buttons
       assert html =~ "Grant Admin"
