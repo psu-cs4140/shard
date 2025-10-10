@@ -122,7 +122,7 @@ defmodule ShardWeb.AdminLive.UserManagement do
                 <%= if Users.first_user?(user) do %>
                   <span class="badge badge-primary badge-sm ml-2">First User</span>
                 <% end %>
-                <%= if user.id == @current_user.id do %>
+                <%= if @current_user && user.id == @current_user.id do %>
                   <span class="badge badge-secondary badge-sm ml-2">You</span>
                 <% end %>
               </td>
@@ -143,7 +143,7 @@ defmodule ShardWeb.AdminLive.UserManagement do
               <td>
                 <div class="flex gap-2">
                   <%= cond do %>
-                    <% user.id == @current_user.id -> %>
+                    <% @current_user && user.id == @current_user.id -> %>
                       <span class="text-gray-500 text-sm">Cannot modify yourself</span>
                     <% Users.first_user?(user) -> %>
                       <span class="text-gray-500 text-sm">Protected user</span>
