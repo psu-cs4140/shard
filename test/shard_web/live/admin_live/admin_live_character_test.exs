@@ -103,8 +103,8 @@ defmodule ShardWeb.AdminLive.CharactersTest do
         |> log_in_user(admin)
         |> live(~p"/admin/characters")
 
-      assert index_live |> element("#characters-#{character.id} a", "Delete") |> render_click()
-      refute has_element?(index_live, "#characters-#{character.id}")
+      assert index_live |> element("a[phx-value-id='#{character.id}']", "Delete") |> render_click()
+      refute has_element?(index_live, "a[phx-value-id='#{character.id}']")
     end
 
     test "redirects non-admin users", %{conn: conn} do
