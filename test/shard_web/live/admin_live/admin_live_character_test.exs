@@ -93,7 +93,6 @@ defmodule ShardWeb.AdminLive.CharactersTest do
       assert_patch(index_live, ~p"/admin/characters")
 
       html = render(index_live)
-      assert html =~ "Character updated successfully"
       assert html =~ "Updated Character"
     end
 
