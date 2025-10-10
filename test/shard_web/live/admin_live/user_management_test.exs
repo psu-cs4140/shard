@@ -261,7 +261,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
     test "handles toggle admin error gracefully", %{conn: conn} do
       admin_user = user_fixture(%{admin: true})
 
-      {:ok, view, initial_html} =
+      {:ok, view, _initial_html} =
         conn
         |> log_in_user(admin_user)
         |> live(~p"/admin/user_management")
@@ -325,7 +325,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
 
     test "shows appropriate action buttons for different user types", %{conn: conn} do
       admin_user = user_fixture(%{admin: true})
-      regular_user = user_fixture(%{admin: false})
+      _regular_user = user_fixture(%{admin: false})
 
       {:ok, _view, html} =
         conn
@@ -362,7 +362,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
 
     test "shows confirmation dialogs for destructive actions", %{conn: conn} do
       admin_user = user_fixture(%{admin: true})
-      regular_user = user_fixture(%{admin: false})
+      _regular_user = user_fixture(%{admin: false})
 
       {:ok, _view, html} =
         conn
