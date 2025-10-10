@@ -2,7 +2,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
   use ShardWeb.ConnCase
 
   import Phoenix.LiveViewTest
-  import Shard.AccountsFixtures
+  import Shard.UsersFixtures
   import Shard.CharactersFixtures
 
   @create_attrs %{
