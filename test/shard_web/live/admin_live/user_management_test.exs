@@ -56,13 +56,17 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       admin_user = user_fixture(%{admin: true})
       first_user = Users.get_first_user()
 
-      # Skip test if no first user exists
-      if first_user do
-        {:ok, view, _html} =
+      # Skip test if no first user exists or if admin_user is the first user
+      if first_user && first_user.id != admin_user.id do
+        {:ok, view, html} =
           conn
           |> log_in_user(admin_user)
           |> live(~p"/admin/user_management")
 
+        # First user should show "Protected user" instead of action buttons
+        assert html =~ "Protected user"
+
+        # Try to click delete anyway (should trigger the server-side check)
         result = render_click(view, "delete_user", %{"user_id" => first_user.id})
 
         assert result =~ "The first user cannot be deleted."
