@@ -331,7 +331,7 @@ defmodule ShardWeb.MudGameLiveTest do
       {:noreply, exit_socket} = ShardWeb.MudGameLive.handle_event("click_exit", %{"dir" => "north"}, socket)
       
       # Verify exit click was processed (should either move or stay in place)
-      exit_output = Enum.join(exit_socket.assigns.terminal_state.output, "\n")
+      _exit_output = Enum.join(exit_socket.assigns.terminal_state.output, "\n")
       # Should either have movement message or no change, but socket should be valid
       assert is_map(exit_socket.assigns.game_state)
       assert is_list(exit_socket.assigns.terminal_state.output)
