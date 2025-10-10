@@ -99,7 +99,9 @@ defmodule ShardWeb.AdminLive.UserManagement do
         true ->
           new_admin_status = !user.admin
 
-          case Users.update_user(user, %{admin: new_admin_status}) do
+          changeset = Shard.Users.User.admin_changeset(user, %{admin: new_admin_status})
+          
+          case Shard.Repo.update(changeset) do
             {:ok, _updated_user} ->
               action = if new_admin_status, do: "granted", else: "revoked"
 
