@@ -247,5 +247,135 @@ defmodule ShardWeb.MudGameLiveTest do
       assert closed_socket.assigns.modal_state.show == false
       assert closed_socket.assigns.modal_state.type == ""
     end
+
+    test "handles PubSub messages and renders components with different states", %{conn: conn} do
+      user = user_fixture()
+      
+      # Create character with specific stats for testing
+      character = %Shard.Characters.Character{
+        name: "TestWarrior",
+        level: 10,
+        experience: 5000,
+        user_id: user.id,
+        class: "warrior",
+        race: "dwarf"
+      }
+      character = Shard.Repo.insert!(character)
+      
+      conn = log_in_user(conn, user)
+      
+      # Test the LiveView by calling mount directly with proper socket setup
+      socket = %Phoenix.LiveView.Socket{
+        endpoint: ShardWeb.Endpoint,
+        assigns: %{__changed__: %{}}
+      }
+      
+      params = %{"map_id" => "3", "character_id" => to_string(character.id)}
+      session = %{}
+      
+      {:ok, socket} = ShardWeb.MudGameLive.mount(params, session, socket)
+      
+      # Test handle_info for :noise message
+      {:noreply, noise_socket} = ShardWeb.MudGameLive.handle_info({:noise, "A distant roar echoes through the dungeon."}, socket)
+      
+      # Verify noise message was added to terminal output
+      output_text = Enum.join(noise_socket.assigns.terminal_state.output, "\n")
+      assert output_text =~ "A distant roar echoes through the dungeon."
+      
+      # Test handle_info for :area_heal message with low health
+      # First, set player health to low value
+      low_health_game_state = put_in(socket.assigns.game_state, [:player_stats, :health], 30)
+      low_health_socket = assign(socket, game_state: low_health_game_state)
+      
+      {:noreply, healed_socket} = ShardWeb.MudGameLive.handle_info(
+        {:area_heal, 5, "A warm light fills the area."}, 
+        low_health_socket
+      )
+      
+      # Verify heal message was added and health increased
+      healed_output = Enum.join(healed_socket.assigns.terminal_state.output, "\n")
+      assert healed_output =~ "A warm light fills the area."
+      assert healed_output =~ "Area heal effect: 5 damage healed"
+      assert healed_socket.assigns.game_state.player_stats.health == 35
+      
+      # Test handle_info for :area_heal message with full health
+      full_health_game_state = put_in(socket.assigns.game_state, [:player_stats, :health], 100)
+      full_health_socket = assign(socket, game_state: full_health_game_state)
+      
+      {:noreply, no_heal_socket} = ShardWeb.MudGameLive.handle_info(
+        {:area_heal, 5, "Another healing wave passes through."}, 
+        full_health_socket
+      )
+      
+      # Verify message was added but health didn't change (already at max)
+      no_heal_output = Enum.join(no_heal_socket.assigns.terminal_state.output, "\n")
+      assert no_heal_output =~ "Another healing wave passes through."
+      assert no_heal_output =~ "Area heal effect: 5 damage healed"
+      assert no_heal_socket.assigns.game_state.player_stats.health == 100
+      
+      # Test keypress event handling for arrow keys
+      {:noreply, movement_socket} = ShardWeb.MudGameLive.handle_event("keypress", %{"key" => "ArrowUp"}, socket)
+      
+      # Verify movement was processed (terminal output should contain movement response)
+      movement_output = Enum.join(movement_socket.assigns.terminal_state.output, "\n")
+      # Movement should either succeed or fail, but should add some response to terminal
+      assert length(movement_socket.assigns.terminal_state.output) > length(socket.assigns.terminal_state.output)
+      
+      # Test keypress event for non-movement key (should do nothing)
+      {:noreply, no_change_socket} = ShardWeb.MudGameLive.handle_event("keypress", %{"key" => "Space"}, socket)
+      
+      # Verify no changes were made for non-movement key
+      assert no_change_socket.assigns.terminal_state.output == socket.assigns.terminal_state.output
+      assert no_change_socket.assigns.game_state == socket.assigns.game_state
+      
+      # Test click_exit event
+      {:noreply, exit_socket} = ShardWeb.MudGameLive.handle_event("click_exit", %{"dir" => "north"}, socket)
+      
+      # Verify exit click was processed (should either move or stay in place)
+      exit_output = Enum.join(exit_socket.assigns.terminal_state.output, "\n")
+      # Should either have movement message or no change, but socket should be valid
+      assert is_map(exit_socket.assigns.game_state)
+      assert is_list(exit_socket.assigns.terminal_state.output)
+      
+      # Test update_command event
+      {:noreply, command_socket} = ShardWeb.MudGameLive.handle_event(
+        "update_command", 
+        %{"command" => %{"text" => "look around"}}, 
+        socket
+      )
+      
+      # Verify current command was updated
+      assert command_socket.assigns.terminal_state.current_command == "look around"
+      
+      # Test component rendering with different modal states
+      # Test that different modal types render different components
+      character_sheet_socket = assign(socket, modal_state: %{show: true, type: "character_sheet"})
+      inventory_socket = assign(socket, modal_state: %{show: true, type: "inventory"})
+      quests_socket = assign(socket, modal_state: %{show: true, type: "quests"})
+      map_socket = assign(socket, modal_state: %{show: true, type: "map"})
+      settings_socket = assign(socket, modal_state: %{show: true, type: "settings"})
+      
+      # Render each state to ensure components render correctly
+      character_sheet_html = render_component(&ShardWeb.MudGameLive.render/1, character_sheet_socket.assigns)
+      inventory_html = render_component(&ShardWeb.MudGameLive.render/1, inventory_socket.assigns)
+      quests_html = render_component(&ShardWeb.MudGameLive.render/1, quests_socket.assigns)
+      map_html = render_component(&ShardWeb.MudGameLive.render/1, map_socket.assigns)
+      settings_html = render_component(&ShardWeb.MudGameLive.render/1, settings_socket.assigns)
+      
+      # Verify each rendered HTML contains expected content
+      assert character_sheet_html =~ "TestWarrior"
+      assert character_sheet_html =~ "Level 10"
+      assert inventory_html =~ "Iron Sword"
+      assert quests_html =~ "game_state"
+      assert map_html =~ "game_state"
+      assert settings_html =~ "game_state"
+      
+      # Verify character name appears in header for all renders
+      assert character_sheet_html =~ "TestWarrior"
+      assert inventory_html =~ "TestWarrior"
+      assert quests_html =~ "TestWarrior"
+      assert map_html =~ "TestWarrior"
+      assert settings_html =~ "TestWarrior"
+    end
   end
 end
