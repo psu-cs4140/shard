@@ -172,10 +172,10 @@ defmodule ShardWeb.AdminLive.UserManagement do
               <td>
                 <div class="flex gap-2">
                   <%= cond do %>
-                    <% @current_user && user.id == @current_user.id -> %>
-                      <span class="text-gray-500 text-sm">Cannot modify yourself</span>
                     <% Users.first_user?(user) -> %>
                       <span class="text-gray-500 text-sm">Protected user</span>
+                    <% @current_user && user.id == @current_user.id -> %>
+                      <span class="text-gray-500 text-sm">Cannot modify yourself</span>
                     <% true -> %>
                       <button
                         class={[
