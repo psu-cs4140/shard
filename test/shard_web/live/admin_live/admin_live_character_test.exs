@@ -132,7 +132,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
         |> log_in_user(admin)
         |> live(~p"/admin/characters/#{character}")
 
-      assert html =~ "Show Character"
+      assert html =~ "Character Details"
       assert html =~ character.name
     end
 
