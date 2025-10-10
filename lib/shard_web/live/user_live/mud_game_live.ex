@@ -371,7 +371,6 @@ defmodule ShardWeb.MudGameLive do
       |> add_message("Area heal effect: #{xx} damage healed")
 
     health = socket.assigns.game_state.player_stats.health
-    IO.inspect({:health, health})
 
     if health < 100 do
       st1 =
