@@ -247,7 +247,7 @@ defmodule ShardWeb.MudGameLiveTest do
       assert closed_socket.assigns.modal_state.type == ""
     end
 
-    test "handles PubSub messages and renders components with different states", %{conn: conn} do
+    test "handles PubSub messages and renders components with different states", %{conn: _conn} do
       user = user_fixture()
       
       # Create character with specific stats for testing
@@ -261,7 +261,7 @@ defmodule ShardWeb.MudGameLiveTest do
       }
       character = Shard.Repo.insert!(character)
       
-      conn = log_in_user(conn, user)
+      _conn = log_in_user(_conn, user)
       
       # Test the LiveView by calling mount directly with proper socket setup
       socket = %Phoenix.LiveView.Socket{
