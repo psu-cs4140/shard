@@ -1,7 +1,6 @@
 defmodule ShardWeb.MudGameLiveTest do
   use ShardWeb.ConnCase
   import Phoenix.LiveViewTest
-  import Phoenix.LiveView, only: [assign: 2, assign: 3]
   import Shard.UsersFixtures
 
   describe "terminal component rendering" do
@@ -286,7 +285,7 @@ defmodule ShardWeb.MudGameLiveTest do
       # Test handle_info for :area_heal message with low health
       # First, set player health to low value
       low_health_game_state = put_in(socket.assigns.game_state, [:player_stats, :health], 30)
-      low_health_socket = assign(socket, game_state: low_health_game_state)
+      low_health_socket = %{socket | assigns: Map.put(socket.assigns, :game_state, low_health_game_state)}
       
       {:noreply, healed_socket} = ShardWeb.MudGameLive.handle_info(
         {:area_heal, 5, "A warm light fills the area."}, 
@@ -301,7 +300,7 @@ defmodule ShardWeb.MudGameLiveTest do
       
       # Test handle_info for :area_heal message with full health
       full_health_game_state = put_in(socket.assigns.game_state, [:player_stats, :health], 100)
-      full_health_socket = assign(socket, game_state: full_health_game_state)
+      full_health_socket = %{socket | assigns: Map.put(socket.assigns, :game_state, full_health_game_state)}
       
       {:noreply, no_heal_socket} = ShardWeb.MudGameLive.handle_info(
         {:area_heal, 5, "Another healing wave passes through."}, 
@@ -350,11 +349,11 @@ defmodule ShardWeb.MudGameLiveTest do
       
       # Test component rendering with different modal states
       # Test that different modal types render different components
-      character_sheet_socket = assign(socket, :modal_state, %{show: true, type: "character_sheet"})
-      inventory_socket = assign(socket, :modal_state, %{show: true, type: "inventory"})
-      quests_socket = assign(socket, :modal_state, %{show: true, type: "quests"})
-      map_socket = assign(socket, :modal_state, %{show: true, type: "map"})
-      settings_socket = assign(socket, :modal_state, %{show: true, type: "settings"})
+      character_sheet_socket = %{socket | assigns: Map.put(socket.assigns, :modal_state, %{show: true, type: "character_sheet"})}
+      inventory_socket = %{socket | assigns: Map.put(socket.assigns, :modal_state, %{show: true, type: "inventory"})}
+      quests_socket = %{socket | assigns: Map.put(socket.assigns, :modal_state, %{show: true, type: "quests"})}
+      map_socket = %{socket | assigns: Map.put(socket.assigns, :modal_state, %{show: true, type: "map"})}
+      settings_socket = %{socket | assigns: Map.put(socket.assigns, :modal_state, %{show: true, type: "settings"})}
       
       # Test that the modal states are correctly assigned
       assert character_sheet_socket.assigns.modal_state.show == true
