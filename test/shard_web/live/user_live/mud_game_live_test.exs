@@ -3,7 +3,7 @@ defmodule ShardWeb.MudGameLiveTest do
   import Shard.UsersFixtures
 
   describe "terminal component rendering" do
-    test "renders terminal with initial output", %{conn: conn} do
+    test "renders terminal with initial output", %{conn: _conn} do
       user = user_fixture()
       
       # Create character using Repo.insert! directly to avoid fixture issues
@@ -17,7 +17,7 @@ defmodule ShardWeb.MudGameLiveTest do
       }
       character = Shard.Repo.insert!(character)
       
-      conn = log_in_user(conn, user)
+      _conn = log_in_user(_conn, user)
       
       # Test the LiveView by calling mount directly with proper socket setup
       socket = %Phoenix.LiveView.Socket{
@@ -36,7 +36,7 @@ defmodule ShardWeb.MudGameLiveTest do
       assert "Type 'help' for available commands." in socket.assigns.terminal_state.output
     end
 
-    test "handles command input and updates terminal state", %{conn: conn} do
+    test "handles command input and updates terminal state", %{conn: _conn} do
       user = user_fixture()
       
       # Create character using Repo.insert! directly to avoid fixture issues
@@ -50,7 +50,7 @@ defmodule ShardWeb.MudGameLiveTest do
       }
       character = Shard.Repo.insert!(character)
       
-      conn = log_in_user(conn, user)
+      _conn = log_in_user(_conn, user)
       
       # Test the LiveView by calling mount directly with proper socket setup
       socket = %Phoenix.LiveView.Socket{
@@ -84,7 +84,7 @@ defmodule ShardWeb.MudGameLiveTest do
       assert output_text =~ "Available commands:"
     end
 
-    test "handles invalid commands gracefully", %{conn: conn} do
+    test "handles invalid commands gracefully", %{conn: _conn} do
       user = user_fixture()
       
       # Create character using Repo.insert! directly to avoid fixture issues
@@ -98,7 +98,7 @@ defmodule ShardWeb.MudGameLiveTest do
       }
       character = Shard.Repo.insert!(character)
       
-      conn = log_in_user(conn, user)
+      _conn = log_in_user(_conn, user)
       
       # Test the LiveView by calling mount directly with proper socket setup
       socket = %Phoenix.LiveView.Socket{
@@ -132,7 +132,7 @@ defmodule ShardWeb.MudGameLiveTest do
       assert output_text =~ "Unknown command" or output_text =~ "Invalid command" or output_text =~ "Command not found"
     end
 
-    test "renders terminal with different character parameters and map configurations", %{conn: conn} do
+    test "renders terminal with different character parameters and map configurations", %{conn: _conn} do
       user = user_fixture()
       
       # Create a character with different attributes
@@ -146,7 +146,7 @@ defmodule ShardWeb.MudGameLiveTest do
       }
       character = Shard.Repo.insert!(character)
       
-      conn = log_in_user(conn, user)
+      _conn = log_in_user(_conn, user)
       
       # Test the LiveView with different map_id parameter
       socket = %Phoenix.LiveView.Socket{
@@ -182,7 +182,7 @@ defmodule ShardWeb.MudGameLiveTest do
       assert socket.assigns.terminal_state.current_command == ""
     end
 
-    test "handles modal open and close events correctly", %{conn: conn} do
+    test "handles modal open and close events correctly", %{conn: _conn} do
       user = user_fixture()
       
       # Create character using Repo.insert! directly to avoid fixture issues
@@ -196,7 +196,7 @@ defmodule ShardWeb.MudGameLiveTest do
       }
       character = Shard.Repo.insert!(character)
       
-      conn = log_in_user(conn, user)
+      _conn = log_in_user(_conn, user)
       
       # Test the LiveView by calling mount directly with proper socket setup
       socket = %Phoenix.LiveView.Socket{
@@ -247,7 +247,7 @@ defmodule ShardWeb.MudGameLiveTest do
       assert closed_socket.assigns.modal_state.type == ""
     end
 
-    test "handles PubSub messages and renders components with different states", %{conn: conn} do
+    test "handles PubSub messages and renders components with different states", %{conn: _conn} do
       user = user_fixture()
       
       # Create character with specific stats for testing
@@ -261,7 +261,7 @@ defmodule ShardWeb.MudGameLiveTest do
       }
       character = Shard.Repo.insert!(character)
       
-      conn = log_in_user(conn, user)
+      _conn = log_in_user(_conn, user)
       
       # Test the LiveView by calling mount directly with proper socket setup
       socket = %Phoenix.LiveView.Socket{
