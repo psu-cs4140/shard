@@ -205,13 +205,21 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
     end
 
     test "successfully revokes admin privileges from admin user", %{conn: conn} do
+      # Create first admin user (will be the first user)
       admin_user = user_fixture(%{admin: true})
+      # Create a regular user first to ensure another_admin is not the first user
+      _regular_user = user_fixture(%{admin: false})
+      # Create another admin user (should not be the first user)
       another_admin = user_fixture(%{admin: true})
 
-      {:ok, view, _html} =
+      {:ok, view, html} =
         conn
         |> log_in_user(admin_user)
         |> live(~p"/admin/user_management")
+
+      # Verify another_admin is not the first user and shows revoke button
+      refute Users.first_user?(another_admin)
+      assert html =~ "Revoke Admin"
 
       render_click(view, "toggle_admin", %{"user_id" => another_admin.id})
 
@@ -222,7 +230,8 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       # Verify UI shows the user as regular user now
       updated_html = render(view)
       assert updated_html =~ "Grant Admin"
-      refute updated_html =~ "Revoke Admin"
+      # Check that we don't have "Revoke Admin" for the another_admin user specifically
+      refute updated_html =~ another_admin.email && updated_html =~ "Revoke Admin"
     end
 
     test "handles toggle admin error gracefully", %{conn: conn} do
