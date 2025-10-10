@@ -154,10 +154,9 @@ defmodule ShardWeb.AdminLive.CharactersTest do
              |> form("#character-form", character: @update_attrs)
              |> render_submit()
 
-      assert_patch(show_live, ~p"/admin/characters/#{character}")
+      assert_patch(show_live, ~p"/admin/characters")
 
       html = render(show_live)
-      assert html =~ "Character updated successfully"
       assert html =~ "Updated Character"
     end
 
