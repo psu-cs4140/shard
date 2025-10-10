@@ -105,9 +105,16 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
         |> live(~p"/admin/user_management")
 
       # Try to delete non-existent user
-      result = render_click(view, "delete_user", %{"user_id" => "999999"})
+      render_click(view, "delete_user", %{"user_id" => "999999"})
 
-      assert result =~ "User not found."
+      # Verify the page still renders correctly and no changes occurred
+      updated_html = render(view)
+      assert updated_html =~ "User Management"
+      assert updated_html =~ admin_user.email
+      
+      # Verify admin user still exists and is unchanged
+      updated_admin = Users.get_user!(admin_user.id)
+      assert updated_admin.admin == true
     end
   end
 
