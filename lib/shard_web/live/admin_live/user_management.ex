@@ -2,6 +2,7 @@ defmodule ShardWeb.AdminLive.UserManagement do
   use ShardWeb, :live_view
 
   alias Shard.Users
+  alias Shard.Repo
 
   @impl true
   def mount(_params, _session, socket) do
@@ -101,7 +102,7 @@ defmodule ShardWeb.AdminLive.UserManagement do
 
           changeset = Shard.Users.User.admin_changeset(user, %{admin: new_admin_status})
           
-          case Shard.Repo.update(changeset) do
+          case Repo.update(changeset) do
             {:ok, _updated_user} ->
               action = if new_admin_status, do: "granted", else: "revoked"
 
