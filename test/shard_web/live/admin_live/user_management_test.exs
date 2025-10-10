@@ -14,7 +14,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       {:ok, _view, html} =
         conn
         |> log_in_user(admin_user)
-        |> live(~p"/admin/users")
+        |> live(~p"/admin/user_management")
 
       assert html =~ admin_user.email
       assert html =~ regular_user.email
@@ -28,7 +28,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       {:ok, _view, html} =
         conn
         |> log_in_user(admin_user)
-        |> live(~p"/admin/users")
+        |> live(~p"/admin/user_management")
 
       if first_user do
         assert html =~ "First User"
@@ -43,7 +43,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       {:ok, view, _html} =
         conn
         |> log_in_user(admin_user)
-        |> live(~p"/admin/users")
+        |> live(~p"/admin/user_management")
 
       result = render_click(view, "delete_user", %{"user_id" => admin_user.id})
 
@@ -60,7 +60,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
         {:ok, view, _html} =
           conn
           |> log_in_user(admin_user)
-          |> live(~p"/admin/users")
+          |> live(~p"/admin/user_management")
 
         result = render_click(view, "delete_user", %{"user_id" => first_user.id})
 
@@ -76,7 +76,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       {:ok, view, _html} =
         conn
         |> log_in_user(admin_user)
-        |> live(~p"/admin/users")
+        |> live(~p"/admin/user_management")
 
       result = render_click(view, "delete_user", %{"user_id" => regular_user.id})
 
@@ -90,7 +90,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       {:ok, view, _html} =
         conn
         |> log_in_user(admin_user)
-        |> live(~p"/admin/users")
+        |> live(~p"/admin/user_management")
 
       # Try to delete non-existent user
       result = render_click(view, "delete_user", %{"user_id" => "999999"})
@@ -106,7 +106,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       {:ok, view, _html} =
         conn
         |> log_in_user(admin_user)
-        |> live(~p"/admin/users")
+        |> live(~p"/admin/user_management")
 
       result = render_click(view, "toggle_admin", %{"user_id" => admin_user.id})
 
@@ -126,7 +126,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
         {:ok, view, _html} =
           conn
           |> log_in_user(admin_user)
-          |> live(~p"/admin/users")
+          |> live(~p"/admin/user_management")
 
         result = render_click(view, "toggle_admin", %{"user_id" => first_user.id})
 
@@ -145,7 +145,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       {:ok, view, _html} =
         conn
         |> log_in_user(admin_user)
-        |> live(~p"/admin/users")
+        |> live(~p"/admin/user_management")
 
       result = render_click(view, "toggle_admin", %{"user_id" => regular_user.id})
 
@@ -163,7 +163,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       {:ok, view, _html} =
         conn
         |> log_in_user(admin_user)
-        |> live(~p"/admin/users")
+        |> live(~p"/admin/user_management")
 
       result = render_click(view, "toggle_admin", %{"user_id" => another_admin.id})
 
@@ -197,7 +197,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       {:ok, _view, html} =
         conn
         |> log_in_user(admin_user)
-        |> live(~p"/admin/users")
+        |> live(~p"/admin/user_management")
 
       # Check headers
       assert html =~ "User Management"
@@ -232,7 +232,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       {:ok, _view, html} =
         conn
         |> log_in_user(admin_user)
-        |> live(~p"/admin/users")
+        |> live(~p"/admin/user_management")
 
       # Current user should show "Cannot modify yourself"
       assert html =~ "Cannot modify yourself"
@@ -250,7 +250,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
         {:ok, _view, html} =
           conn
           |> log_in_user(admin_user)
-          |> live(~p"/admin/users")
+          |> live(~p"/admin/user_management")
 
         assert html =~ "Protected user"
       end
@@ -263,7 +263,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       {:ok, _view, html} =
         conn
         |> log_in_user(admin_user)
-        |> live(~p"/admin/users")
+        |> live(~p"/admin/user_management")
 
       # Check for confirmation dialog attributes
       assert html =~ "data-confirm"
