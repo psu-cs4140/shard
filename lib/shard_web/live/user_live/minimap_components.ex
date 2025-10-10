@@ -1,5 +1,4 @@
 defmodule ShardWeb.UserLive.MinimapComponents do
-  alias Shard.Map, as: GameMap
   # Calculate bounds and scale factor for minimap rendering
   def calculate_minimap_bounds(rooms) do
     if Enum.empty?(rooms) do
