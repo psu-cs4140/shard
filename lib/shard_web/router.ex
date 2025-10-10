@@ -111,28 +111,34 @@ defmodule ShardWeb.Router do
   scope "/admin", ShardWeb do
     pipe_through [:browser, :require_authenticated_user, :require_admin]
 
-    live "/", AdminLive.Index, :index
-    live "/map", AdminLive.Map, :index
+    live_session :admin,
+      on_mount: [
+        {ShardWeb.UserAuth, :mount_current_scope},
+        {ShardWeb.UserAuth, :require_authenticated}
+      ] do
+      live "/", AdminLive.Index, :index
+      live "/map", AdminLive.Map, :index
 
-    live "/characters", AdminLive.Characters, :index
-    live "/characters/new", AdminLive.Characters, :new
-    live "/characters/:id", AdminLive.Characters, :show
-    live "/characters/:id/edit", AdminLive.Characters, :edit
+      live "/characters", AdminLive.Characters, :index
+      live "/characters/new", AdminLive.Characters, :new
+      live "/characters/:id", AdminLive.Characters, :show
+      live "/characters/:id/edit", AdminLive.Characters, :edit
 
-    live "/user_management", AdminLive.UserManagement, :index
+      live "/user_management", AdminLive.UserManagement, :index
 
-    live "/npcs", AdminLive.Npcs, :index
-    live "/npcs/new", AdminLive.Npcs, :new
-    live "/npcs/:id/edit", AdminLive.Npcs, :edit
+      live "/npcs", AdminLive.Npcs, :index
+      live "/npcs/new", AdminLive.Npcs, :new
+      live "/npcs/:id/edit", AdminLive.Npcs, :edit
 
-    live "/quests", AdminLive.Quests, :index
-    live "/quests/new", AdminLive.Quests, :new
-    live "/quests/:id/edit", AdminLive.Quests, :edit
+      live "/quests", AdminLive.Quests, :index
+      live "/quests/new", AdminLive.Quests, :new
+      live "/quests/:id/edit", AdminLive.Quests, :edit
 
-    live "/items", AdminLive.Items, :index
-    live "/items/new", AdminLive.Items, :new
-    live "/items/:id", AdminLive.Items, :show
-    live "/items/:id/edit", AdminLive.Items, :edit
+      live "/items", AdminLive.Items, :index
+      live "/items/new", AdminLive.Items, :new
+      live "/items/:id", AdminLive.Items, :show
+      live "/items/:id/edit", AdminLive.Items, :edit
+    end
   end
 
   # ───────────────────────── Dev-only routes ─────────────────────────
