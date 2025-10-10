@@ -28,6 +28,12 @@ defmodule ShardWeb.AdminLive.UserManagement do
     current_user = socket.assigns.current_user
 
     cond do
+      # Handle case where current_user is nil
+      is_nil(current_user) ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Authentication required.")}
+
       # Prevent user from deleting themselves
       user.id == current_user.id ->
         {:noreply,
@@ -63,6 +69,12 @@ defmodule ShardWeb.AdminLive.UserManagement do
     current_user = socket.assigns.current_user
 
     cond do
+      # Handle case where current_user is nil
+      is_nil(current_user) ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Authentication required.")}
+
       # Prevent admin from removing their own admin status
       user.id == current_user.id ->
         {:noreply,
