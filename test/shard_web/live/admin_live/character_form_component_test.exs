@@ -2,7 +2,6 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
   use ShardWeb.ConnCase
 
   import Phoenix.LiveViewTest
-  import Phoenix.Component
   import Shard.UsersFixtures
 
   alias Shard.Characters
@@ -26,31 +25,13 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
     is_active: true
   }
 
-  @invalid_attrs %{
-    name: nil,
-    level: nil,
-    class: nil,
-    race: nil,
-    health: nil,
-    mana: nil,
-    strength: nil,
-    dexterity: nil,
-    intelligence: nil,
-    constitution: nil,
-    experience: nil,
-    gold: nil,
-    location: nil,
-    description: nil,
-    is_active: nil
-  }
-
   defp create_character(_) do
     user = user_fixture()
     character = character_fixture(Map.put(@valid_attrs, :user_id, user.id))
     %{character: character, user: user}
   end
 
-  defp character_fixture(attrs \\ %{}) do
+  defp character_fixture(attrs) do
     user = user_fixture()
     attrs = Map.put_new(attrs, :user_id, user.id)
 
@@ -65,14 +46,15 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
   describe "render" do
     setup [:create_character]
 
-    test "displays form for new character", %{conn: conn} do
-      html = render_component(ShardWeb.AdminLive.CharacterFormComponent,
-        character: %Character{},
-        title: "New Character",
-        action: :new,
-        patch: "/admin/characters",
-        id: "new-character"
-      )
+    test "displays form for new character", %{conn: _conn} do
+      html =
+        render_component(ShardWeb.AdminLive.CharacterFormComponent,
+          character: %Character{},
+          title: "New Character",
+          action: :new,
+          patch: "/admin/characters",
+          id: "new-character"
+        )
 
       assert html =~ "form"
       assert html =~ "character[name]"
@@ -94,28 +76,30 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
       assert html =~ "Save Character"
     end
 
-    test "displays form for editing character", %{conn: conn, character: character} do
-      html = render_component(ShardWeb.AdminLive.CharacterFormComponent,
-        character: character,
-        title: "Edit Character",
-        action: :edit,
-        patch: "/admin/characters",
-        id: "edit-character"
-      )
+    test "displays form for editing character", %{conn: _conn, character: character} do
+      html =
+        render_component(ShardWeb.AdminLive.CharacterFormComponent,
+          character: character,
+          title: "Edit Character",
+          action: :edit,
+          patch: "/admin/characters",
+          id: "edit-character"
+        )
 
       assert html =~ "form"
       assert html =~ character.name
       assert html =~ "#{character.level}"
     end
 
-    test "displays class options", %{conn: conn} do
-      html = render_component(ShardWeb.AdminLive.CharacterFormComponent,
-        character: %Character{},
-        title: "New Character",
-        action: :new,
-        patch: "/admin/characters",
-        id: "new-character"
-      )
+    test "displays class options", %{conn: _conn} do
+      html =
+        render_component(ShardWeb.AdminLive.CharacterFormComponent,
+          character: %Character{},
+          title: "New Character",
+          action: :new,
+          patch: "/admin/characters",
+          id: "new-character"
+        )
 
       assert html =~ "Warrior"
       assert html =~ "Mage"
@@ -124,14 +108,15 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
       assert html =~ "Ranger"
     end
 
-    test "displays race options", %{conn: conn} do
-      html = render_component(ShardWeb.AdminLive.CharacterFormComponent,
-        character: %Character{},
-        title: "New Character",
-        action: :new,
-        patch: "/admin/characters",
-        id: "new-character"
-      )
+    test "displays race options", %{conn: _conn} do
+      html =
+        render_component(ShardWeb.AdminLive.CharacterFormComponent,
+          character: %Character{},
+          title: "New Character",
+          action: :new,
+          patch: "/admin/characters",
+          id: "new-character"
+        )
 
       assert html =~ "Human"
       assert html =~ "Elf"
@@ -142,17 +127,18 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
   end
 
   describe "user options" do
-    test "loads user options for select dropdown", %{conn: conn} do
+    test "loads user options for select dropdown", %{conn: _conn} do
       user1 = user_fixture(%{email: "user1@example.com"})
       user2 = user_fixture(%{email: "user2@example.com"})
 
-      html = render_component(ShardWeb.AdminLive.CharacterFormComponent,
-        character: %Character{},
-        title: "New Character",
-        action: :new,
-        patch: "/admin/characters",
-        id: "new-character"
-      )
+      html =
+        render_component(ShardWeb.AdminLive.CharacterFormComponent,
+          character: %Character{},
+          title: "New Character",
+          action: :new,
+          patch: "/admin/characters",
+          id: "new-character"
+        )
 
       assert html =~ user1.email
       assert html =~ user2.email
