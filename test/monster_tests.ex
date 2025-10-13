@@ -41,10 +41,11 @@ defmodule Shard.MonstersTest do
     }
 
     def room_fixture(attrs \\ %{}) do
+      unique_id = System.unique_integer([:positive])
       {:ok, room} =
         attrs
         |> Enum.into(%{
-          name: "Test Room",
+          name: "Test Room #{unique_id}",
           description: "A test room for monsters"
         })
         |> then(&%Room{} |> Room.changeset(&1) |> Repo.insert())
