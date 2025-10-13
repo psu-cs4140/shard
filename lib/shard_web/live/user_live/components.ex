@@ -26,7 +26,9 @@ defmodule ShardWeb.UserLive.Components do
                 </div>
                 <div class="flex justify-between">
                   <span>Class:</span>
-                  <span class="font-mono capitalize">{@game_state.character.class || "Adventurer"}</span>
+                  <span class="font-mono capitalize">
+                    {@game_state.character.class || "Adventurer"}
+                  </span>
                 </div>
                 <div class="flex justify-between">
                   <span>Race:</span>
@@ -197,7 +199,7 @@ defmodule ShardWeb.UserLive.Components do
                       <div class="text-xs text-gray-400 mt-1">{item.description}</div>
                     <% end %>
                     
-                    <!-- Action buttons -->
+    <!-- Action buttons -->
                     <div class="flex gap-2 mt-2">
                       <%= if item.type in ["weapon", "armor"] do %>
                         <button

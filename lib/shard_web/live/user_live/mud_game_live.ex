@@ -484,26 +484,27 @@ defmodule ShardWeb.MudGameLive do
       # Check if character_inventories is loaded and has items
       case Map.get(character, :character_inventories) do
         inventories when is_list(inventories) and length(inventories) > 0 ->
-          loaded_items = Enum.map(inventories, fn inventory ->
-            item = Shard.Repo.get(Shard.Items.Item, inventory.item_id)
+          loaded_items =
+            Enum.map(inventories, fn inventory ->
+              item = Shard.Repo.get(Shard.Items.Item, inventory.item_id)
 
-            if item do
-              %{
-                id: item.id,
-                name: item.name,
-                type: item.item_type || "misc",
-                quantity: inventory.quantity,
-                damage: item.damage,
-                defense: item.defense,
-                effect: item.effect,
-                description: item.description
-              }
-            else
-              nil
-            end
-          end)
-          |> Enum.filter(&(&1 != nil))
-          
+              if item do
+                %{
+                  id: item.id,
+                  name: item.name,
+                  type: item.item_type || "misc",
+                  quantity: inventory.quantity,
+                  damage: item.damage,
+                  defense: item.defense,
+                  effect: item.effect,
+                  description: item.description
+                }
+              else
+                nil
+              end
+            end)
+            |> Enum.filter(&(&1 != nil))
+
           # If we have valid items, return them, otherwise fall back to defaults
           if length(loaded_items) > 0 do
             loaded_items
