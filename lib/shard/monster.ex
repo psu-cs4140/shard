@@ -38,16 +38,16 @@ defmodule Shard.Monsters do
   def get_monster!(id), do: Repo.get!(Monster, id)
 
   @doc """
-  Gets monsters by location.
+  Gets monsters by coordinates.
 
   ## Examples
 
-      iex> get_monsters_by_location(1)
+      iex> get_monsters_by_coordinates(10, 20)
       [%Monster{}, ...]
 
   """
-  def get_monsters_by_location(location_id) do
-    from(m in Monster, where: m.location_id == ^location_id)
+  def get_monsters_by_coordinates(x, y) do
+    from(m in Monster, where: m.x_location == ^x and m.y_location == ^y)
     |> Repo.all()
   end
 
