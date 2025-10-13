@@ -5,6 +5,10 @@ defmodule Shard.Combat do
   Co-Authored by claude.ai
   """
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> d647c99 (auth(login): force password field id=login_form_password for LiveView tests)
   @doc """
   Checks if player is currently in combat (has monsters at position).
   """
