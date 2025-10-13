@@ -115,4 +115,23 @@ defmodule Shard.Monsters do
   def change_monster(%Monster{} = monster, attrs \\ %{}) do
     Monster.changeset(monster, attrs)
   end
+
+  @doc """
+  Creates the XP Dummy monster for the tutorial terrain.
+  """
+  def create_xp_dummy do
+    create_monster(%{
+      name: "XP Dummy",
+      race: "Training Dummy",
+      health: 1,
+      max_health: 1,
+      attack_damage: 0,
+      xp_amount: 1001,
+      level: 1,
+      description: "A training dummy that awards experience points when defeated.",
+      x_location: 1,
+      y_location: 1,
+      potential_loot_drops: %{}
+    })
+  end
 end
