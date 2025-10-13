@@ -57,9 +57,9 @@ defmodule ShardWeb.UserLive.MinimapComponents do
   end
 
   # Check if a door is one-way (no return door in opposite direction)
-  def is_one_way_door?(door) do
-    # This is a simplified implementation - you may want to enhance this
-    # based on your specific business logic for determining one-way doors
+  def one_way_door_check(door) do
+    # opposite_direction = get_opposite_direction(door.direction)
+    # ^^ this doesn't do anything so its commented out
 
     # For now, we'll check if the door has a specific property or type
     # that indicates it's one-way, or if there's no corresponding return door

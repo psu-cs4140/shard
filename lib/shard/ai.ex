@@ -22,12 +22,16 @@ defmodule Shard.AI do
       #{zone_description}
 
       Surrounding Rooms:
-      #{Enum.map_join(surrounding_rooms, "\n", &"- #{&1.name}: #{&1.description}")}
+      #{if surrounding_rooms && !Enum.empty?(surrounding_rooms) do
+        Enum.map_join(surrounding_rooms, "\n", &"- #{&1.name}: #{&1.description}")
+      else
+        "None"
+      end}
 
       Based on the above information, generate a creative and descriptive text for the room.
       """
 
-      IO.inspect(prompt, label: "Prompt sent to grok (free model)")
+      # IO.inspect(prompt, label: "Prompt sent to grok (free model)")
 
       headers = [
         {"Authorization", "Bearer #{api_key}"},
@@ -39,10 +43,12 @@ defmodule Shard.AI do
         "messages" => [%{"role" => "user", "content" => prompt}]
       }
 
-      response =
-        Req.post("https://openrouter.ai/api/v1/chat/completions", headers: headers, json: body)
-
-      IO.inspect(response, label: "OpenRouter AI Response")
+      # response =
+      # Req.post("https://openrouter.ai/api/v1/chat/completions", headers: headers, json: body)
+      # IO.inspect(response, label: "OpenRouter AI Response")
+      #
+      # above is commented out because credo doesnt like IO.inspect
+      # then response is left unusused hence why its also commented out
 
       case Req.post("https://openrouter.ai/api/v1/chat/completions", headers: headers, json: body) do
         {:ok, %{status: 200, body: %{"choices" => [%{"message" => %{"content" => description}}]}}} ->
