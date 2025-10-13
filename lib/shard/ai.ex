@@ -9,9 +9,9 @@ defmodule Shard.AI do
 
     # Check if the API key is missing
     if is_nil(api_key) do
-      # Only log warning in test environment
-      if Mix.env() == :test do
-        Logger.warning("OPENROUTER_API_KEY not set. Bypassing AI call for tests.")
+      # Only log warning in non-test environments
+      if Mix.env() != :test do
+        Logger.warning("OPENROUTER_API_KEY not set. Bypassing AI call.")
       end
       # Return a successful dummy response
       {:ok, "A test room description generated without an API call."}
