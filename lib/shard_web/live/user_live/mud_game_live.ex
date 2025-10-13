@@ -622,34 +622,39 @@ defmodule ShardWeb.MudGameLive do
   # Use a consumable item (like health potions)
   defp use_consumable_item(game_state, item) do
     case item.effect do
-      effect when is_binary(effect) and effect =~ "Restores" ->
-        # Parse healing amount from effect string
-        healing_amount = case Regex.run(~r/(\d+)/, effect) do
-          [_, amount] -> String.to_integer(amount)
-          _ -> 25  # Default healing
-        end
-        
-        current_health = game_state.player_stats.health
-        max_health = game_state.player_stats.max_health
-        
-        if current_health >= max_health do
-          response = ["You are already at full health."]
-          {response, game_state}
+      effect when is_binary(effect) ->
+        if String.contains?(effect, "Restores") do
+          # Parse healing amount from effect string
+          healing_amount = case Regex.run(~r/(\d+)/, effect) do
+            [_, amount] -> String.to_integer(amount)
+            _ -> 25  # Default healing
+          end
+          
+          current_health = game_state.player_stats.health
+          max_health = game_state.player_stats.max_health
+          
+          if current_health >= max_health do
+            response = ["You are already at full health."]
+            {response, game_state}
+          else
+            new_health = min(current_health + healing_amount, max_health)
+            updated_stats = %{game_state.player_stats | health: new_health}
+            updated_game_state = %{game_state | player_stats: updated_stats}
+            
+            # Save updated stats to database
+            save_character_stats(game_state.character, updated_stats)
+            
+            response = [
+              "You use #{item.name}.",
+              "You recover #{new_health - current_health} health points.",
+              "Health: #{new_health}/#{max_health}"
+            ]
+            
+            {response, updated_game_state}
+          end
         else
-          new_health = min(current_health + healing_amount, max_health)
-          updated_stats = %{game_state.player_stats | health: new_health}
-          updated_game_state = %{game_state | player_stats: updated_stats}
-          
-          # Save updated stats to database
-          save_character_stats(game_state.character, updated_stats)
-          
-          response = [
-            "You use #{item.name}.",
-            "You recover #{new_health - current_health} health points.",
-            "Health: #{new_health}/#{max_health}"
-          ]
-          
-          {response, updated_game_state}
+          response = ["You use #{item.name}, but nothing happens."]
+          {response, game_state}
         end
       
       _ ->
