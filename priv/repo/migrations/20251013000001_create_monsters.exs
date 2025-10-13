@@ -17,7 +17,5 @@ defmodule Shard.Repo.Migrations.CreateMonsters do
 
       timestamps(type: :utc_datetime)
     end
-
-    create index(:monsters, [:location_id])
   end
 end
