@@ -438,17 +438,20 @@ defmodule ShardWeb.MudGameLive do
       |> add_message(msg)
       |> add_message("Area heal effect: #{xx} damage healed")
 
-    health = socket.assigns.game_state.player_stats.health
+    current_stats = socket.assigns.game_state.player_stats
+    max_health = current_stats.max_health
+    current_health = current_stats.health
 
-    if health < 100 do
-      st1 =
-        put_in(
-          socket.assigns.game_state,
-          [:player_stats, :health],
-          health + 5
-        )
+    if current_health < max_health do
+      new_health = min(current_health + xx, max_health)
+      
+      updated_stats = %{current_stats | health: new_health}
+      updated_game_state = %{socket.assigns.game_state | player_stats: updated_stats}
+      
+      # Save updated stats to database
+      save_character_stats(socket.assigns.game_state.character, updated_stats)
 
-      {:noreply, assign(socket, :game_state, st1)}
+      {:noreply, assign(socket, :game_state, updated_game_state)}
     else
       {:noreply, socket}
     end
