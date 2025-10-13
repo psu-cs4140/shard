@@ -50,6 +50,17 @@ defmodule ShardWeb.MudGameLive do
       map_id = map_id
 
       # Initialize game state with character stats from database
+      # Calculate max values based on character attributes
+      base_health = 100
+      base_stamina = 100
+      base_mana = 50
+      
+      # Calculate max stats based on character attributes
+      constitution = character.constitution || 10
+      max_health = base_health + (constitution - 10) * 5
+      max_stamina = base_stamina + (character.dexterity || 10) * 2
+      max_mana = base_mana + (character.intelligence || 10) * 3
+      
       game_state = %{
         player_position: starting_position,
         map_data: map_data,
@@ -57,18 +68,19 @@ defmodule ShardWeb.MudGameLive do
         character: character,
         active_panel: nil,
         player_stats: %{
-          health: character.health || character.max_health || 100,
-          max_health: character.max_health || 100,
-          stamina: character.stamina || character.max_stamina || 100,
-          max_stamina: character.max_stamina || 100,
-          mana: character.mana || character.max_mana || 100,
-          max_mana: character.max_mana || 100,
+          health: character.health || max_health,
+          max_health: max_health,
+          stamina: max_stamina,  # Always start with full stamina
+          max_stamina: max_stamina,
+          mana: character.mana || max_mana,
+          max_mana: max_mana,
           level: character.level || 1,
           experience: character.experience || 0,
           next_level_exp: calculate_next_level_exp(character.level || 1),
-          strength: character.strength || 15,
-          dexterity: character.dexterity || 12,
-          intelligence: character.intelligence || 10
+          strength: character.strength || 10,
+          dexterity: character.dexterity || 10,
+          intelligence: character.intelligence || 10,
+          constitution: constitution
         },
         inventory_items: [
           %{name: "Iron Sword", type: "weapon", damage: "1d8+3"},
@@ -389,16 +401,13 @@ defmodule ShardWeb.MudGameLive do
     try do
       attrs = %{
         health: stats.health,
-        max_health: stats.max_health,
-        stamina: stats.stamina,
-        max_stamina: stats.max_stamina,
         mana: stats.mana,
-        max_mana: stats.max_mana,
         level: stats.level,
         experience: stats.experience,
         strength: stats.strength,
         dexterity: stats.dexterity,
-        intelligence: stats.intelligence
+        intelligence: stats.intelligence,
+        constitution: stats.constitution || character.constitution || 10
       }
       
       Shard.Characters.update_character(character, attrs)
@@ -413,17 +422,16 @@ defmodule ShardWeb.MudGameLive do
 
   # Check if stats have changed significantly enough to warrant a database save
   defp stats_changed_significantly?(old_stats, new_stats) do
-    # Save if level, experience, or any max stats changed
+    # Save if level, experience, or core stats changed
     old_stats.level != new_stats.level ||
     old_stats.experience != new_stats.experience ||
-    old_stats.max_health != new_stats.max_health ||
-    old_stats.max_stamina != new_stats.max_stamina ||
-    old_stats.max_mana != new_stats.max_mana ||
     old_stats.strength != new_stats.strength ||
     old_stats.dexterity != new_stats.dexterity ||
     old_stats.intelligence != new_stats.intelligence ||
-    # Also save if health drops significantly (combat damage)
-    abs(old_stats.health - new_stats.health) >= 10
+    Map.get(old_stats, :constitution) != Map.get(new_stats, :constitution) ||
+    # Also save if health or mana drops significantly (combat damage/usage)
+    abs(old_stats.health - new_stats.health) >= 10 ||
+    abs(old_stats.mana - new_stats.mana) >= 15
   end
 
   @impl true

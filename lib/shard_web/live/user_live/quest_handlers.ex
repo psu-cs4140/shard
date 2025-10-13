@@ -328,20 +328,24 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         stats
         |> Map.put(:level, new_level)
         |> Map.put(:next_level_exp, new_next_level_exp)
-        # Increase max health
-        |> Map.update(:max_health, 100, &(&1 + 10))
-        # Increase max stamina
-        |> Map.update(:max_stamina, 100, &(&1 + 5))
-        # Increase max mana
-        |> Map.update(:max_mana, 100, &(&1 + 5))
-        # Increase strength
+        # Increase core attributes
         |> Map.update(:strength, 10, &(&1 + 1))
-        # Increase dexterity
         |> Map.update(:dexterity, 10, &(&1 + 1))
-        # Increase intelligence
         |> Map.update(:intelligence, 10, &(&1 + 1))
-        # Restore some health
-        |> Map.update(:health, 100, &min(&1 + 10, stats.max_health + 10))
+        |> Map.update(:constitution, 10, &(&1 + 1))
+
+      # Recalculate max stats based on new attributes
+      new_max_health = 100 + (updated_stats.constitution - 10) * 5
+      new_max_stamina = 100 + updated_stats.dexterity * 2
+      new_max_mana = 50 + updated_stats.intelligence * 3
+
+      updated_stats =
+        updated_stats
+        |> Map.put(:max_health, new_max_health)
+        |> Map.put(:max_stamina, new_max_stamina)
+        |> Map.put(:max_mana, new_max_mana)
+        # Restore some health (but don't exceed new max)
+        |> Map.update(:health, 100, &min(&1 + 10, new_max_health))
 
       level_up_message = "*** LEVEL UP! *** You are now level #{new_level}!"
 
