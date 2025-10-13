@@ -81,10 +81,6 @@ defmodule Shard.MonstersTest do
       room1 = room_fixture()
       room2 = room_fixture()
 
-      monster1 = monster_fixture(%{location_id: room1.id})
-      monster2 = monster_fixture(%{location_id: room1.id})
-      _monster3 = monster_fixture(%{location_id: room2.id})
-
       monsters = Monsters.get_monsters_by_location(room1.id)
       assert length(monsters) == 2
       assert Enum.member?(monsters, monster1)
