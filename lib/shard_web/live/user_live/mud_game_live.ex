@@ -481,9 +481,10 @@ defmodule ShardWeb.MudGameLive do
   # Load character inventory from database
   defp load_character_inventory(character) do
     try do
-      case character.character_inventories do
-        inventories when is_list(inventories) ->
-          Enum.map(inventories, fn inventory ->
+      # Check if character_inventories is loaded and has items
+      case Map.get(character, :character_inventories) do
+        inventories when is_list(inventories) and length(inventories) > 0 ->
+          loaded_items = Enum.map(inventories, fn inventory ->
             item = Shard.Repo.get(Shard.Items.Item, inventory.item_id)
 
             if item do
@@ -502,24 +503,32 @@ defmodule ShardWeb.MudGameLive do
             end
           end)
           |> Enum.filter(&(&1 != nil))
+          
+          # If we have valid items, return them, otherwise fall back to defaults
+          if length(loaded_items) > 0 do
+            loaded_items
+          else
+            get_default_inventory_items()
+          end
 
         _ ->
-          # Fallback to default items if no inventory loaded
-          [
-            %{name: "Iron Sword", type: "weapon", damage: "1d8+3"},
-            %{name: "Health Potion", type: "consumable", effect: "Restores 50 HP"},
-            %{name: "Leather Armor", type: "armor", defense: 5}
-          ]
+          # Fallback to default items if no inventory loaded or association not loaded
+          get_default_inventory_items()
       end
     rescue
       _ ->
         # Fallback to default items on error
-        [
-          %{name: "Iron Sword", type: "weapon", damage: "1d8+3"},
-          %{name: "Health Potion", type: "consumable", effect: "Restores 50 HP"},
-          %{name: "Leather Armor", type: "armor", defense: 5}
-        ]
+        get_default_inventory_items()
     end
+  end
+
+  # Helper function for default inventory items
+  defp get_default_inventory_items do
+    [
+      %{name: "Iron Sword", type: "weapon", damage: "1d8+3"},
+      %{name: "Health Potion", type: "consumable", effect: "Restores 50 HP"},
+      %{name: "Leather Armor", type: "armor", defense: 5}
+    ]
   end
 
   # Load equipped weapon from database
