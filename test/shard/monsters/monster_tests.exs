@@ -42,13 +42,14 @@ defmodule Shard.MonstersTest do
 
     def room_fixture(attrs \\ %{}) do
       unique_id = System.unique_integer([:positive])
+
       {:ok, room} =
         attrs
         |> Enum.into(%{
           name: "Test Room #{unique_id}",
           description: "A test room for monsters"
         })
-        |> then(&%Room{} |> Room.changeset(&1) |> Repo.insert())
+        |> then(&(%Room{} |> Room.changeset(&1) |> Repo.insert()))
 
       room
     end
@@ -79,7 +80,7 @@ defmodule Shard.MonstersTest do
     test "get_monsters_by_location/1 returns monsters in the given location" do
       room1 = room_fixture()
       room2 = room_fixture()
-      
+
       monster1 = monster_fixture(%{location_id: room1.id})
       monster2 = monster_fixture(%{location_id: room1.id})
       _monster3 = monster_fixture(%{location_id: room2.id})
