@@ -173,7 +173,7 @@ defmodule ShardWeb.UserLive.Commands1 do
         end
 
         # Check for monsters at current location from database
-        db_monsters_here = Shard.Monsters.get_monsters_by_location/1
+        db_monsters_here = Shard.Monsters.get_monsters_by_location()
 
         # Also check game state monsters for any spawned/temporary monsters
         game_monsters_here =
