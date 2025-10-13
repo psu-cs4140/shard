@@ -336,6 +336,10 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         |> Map.update(:max_mana, 100, &(&1 + 5))
         # Increase strength
         |> Map.update(:strength, 10, &(&1 + 1))
+        # Increase dexterity
+        |> Map.update(:dexterity, 10, &(&1 + 1))
+        # Increase intelligence
+        |> Map.update(:intelligence, 10, &(&1 + 1))
         # Restore some health
         |> Map.update(:health, 100, &min(&1 + 10, stats.max_health + 10))
 

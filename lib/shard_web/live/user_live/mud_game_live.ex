@@ -49,7 +49,7 @@ defmodule ShardWeb.MudGameLive do
       # Store the map_id and character for later use
       map_id = map_id
 
-      # Initialize game state
+      # Initialize game state with character stats from database
       game_state = %{
         player_position: starting_position,
         map_data: map_data,
@@ -57,18 +57,18 @@ defmodule ShardWeb.MudGameLive do
         character: character,
         active_panel: nil,
         player_stats: %{
-          health: 100,
-          max_health: 100,
-          stamina: 100,
-          max_stamina: 100,
-          mana: 100,
-          max_mana: 100,
+          health: character.health || character.max_health || 100,
+          max_health: character.max_health || 100,
+          stamina: character.stamina || character.max_stamina || 100,
+          max_stamina: character.max_stamina || 100,
+          mana: character.mana || character.max_mana || 100,
+          max_mana: character.max_mana || 100,
           level: character.level || 1,
           experience: character.experience || 0,
-          next_level_exp: 1000,
-          strength: 15,
-          dexterity: 12,
-          intelligence: 10
+          next_level_exp: calculate_next_level_exp(character.level || 1),
+          strength: character.strength || 15,
+          dexterity: character.dexterity || 12,
+          intelligence: character.intelligence || 10
         },
         inventory_items: [
           %{name: "Iron Sword", type: "weapon", damage: "1d8+3"},
@@ -292,6 +292,14 @@ defmodule ShardWeb.MudGameLive do
       # Process the command and get response and updated game state
       {response, updated_game_state} = process_command(trimmed_command, socket.assigns.game_state)
 
+      # Check if stats changed significantly and save to database
+      old_stats = socket.assigns.game_state.player_stats
+      new_stats = updated_game_state.player_stats
+      
+      if stats_changed_significantly?(old_stats, new_stats) do
+        save_character_stats(updated_game_state.character, new_stats)
+      end
+
       # Add command and response to output
       new_output =
         socket.assigns.terminal_state.output ++
@@ -314,6 +322,19 @@ defmodule ShardWeb.MudGameLive do
   def handle_event("update_command", %{"command" => %{"text" => command_text}}, socket) do
     terminal_state = Map.put(socket.assigns.terminal_state, :current_command, command_text)
     {:noreply, assign(socket, terminal_state: terminal_state)}
+  end
+
+  def handle_event("save_character_stats", _params, socket) do
+    # Manually save character stats to database
+    case save_character_stats(socket.assigns.game_state.character, socket.assigns.game_state.player_stats) do
+      {:ok, _character} ->
+        socket = add_message(socket, "Character stats saved successfully.")
+        {:noreply, socket}
+      
+      {:error, _error} ->
+        socket = add_message(socket, "Failed to save character stats.")
+        {:noreply, socket}
+    end
   end
 
   # (C) Handle clicking an exit button to move rooms
@@ -354,6 +375,55 @@ defmodule ShardWeb.MudGameLive do
     new_output = socket.assigns.terminal_state.output ++ [message] ++ [""]
     ts1 = Map.put(socket.assigns.terminal_state, :output, new_output)
     assign(socket, :terminal_state, ts1)
+  end
+
+  # Helper function to calculate next level experience requirement
+  defp calculate_next_level_exp(level) do
+    # Base experience + scaling factor based on level
+    base_exp = 1000
+    base_exp + (level - 1) * 500
+  end
+
+  # Function to save character stats back to database
+  defp save_character_stats(character, stats) do
+    try do
+      attrs = %{
+        health: stats.health,
+        max_health: stats.max_health,
+        stamina: stats.stamina,
+        max_stamina: stats.max_stamina,
+        mana: stats.mana,
+        max_mana: stats.max_mana,
+        level: stats.level,
+        experience: stats.experience,
+        strength: stats.strength,
+        dexterity: stats.dexterity,
+        intelligence: stats.intelligence
+      }
+      
+      Shard.Characters.update_character(character, attrs)
+    rescue
+      error ->
+        # Log error but don't crash the game
+        require Logger
+        Logger.error("Failed to save character stats: #{inspect(error)}")
+        {:error, error}
+    end
+  end
+
+  # Check if stats have changed significantly enough to warrant a database save
+  defp stats_changed_significantly?(old_stats, new_stats) do
+    # Save if level, experience, or any max stats changed
+    old_stats.level != new_stats.level ||
+    old_stats.experience != new_stats.experience ||
+    old_stats.max_health != new_stats.max_health ||
+    old_stats.max_stamina != new_stats.max_stamina ||
+    old_stats.max_mana != new_stats.max_mana ||
+    old_stats.strength != new_stats.strength ||
+    old_stats.dexterity != new_stats.dexterity ||
+    old_stats.intelligence != new_stats.intelligence ||
+    # Also save if health drops significantly (combat damage)
+    abs(old_stats.health - new_stats.health) >= 10
   end
 
   @impl true
