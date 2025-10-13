@@ -42,12 +42,13 @@ defmodule ShardWeb.UserLive.MinimapComponents do
   end
 
   # Calculate position within minimap coordinates
-  def calculate_minimap_position({x, y}, {min_x, min_y, _max_x, _max_y}, scale_factor) do
+  def calculate_minimap_position({x, y}, {min_x, min_y, max_x, max_y}, scale_factor) do
     # Translate to origin and scale, then center in minimap
     # 20px padding
     scaled_x = (x - min_x) * scale_factor + 20
-    # 20px padding
-    scaled_y = (y - min_y) * scale_factor + 20
+    # Invert Y-axis so (0,0) appears at bottom-left instead of top-left
+    # 20px padding, flip Y coordinate
+    scaled_y = 180 - ((y - min_y) * scale_factor) + 20
 
     # Ensure coordinates are within bounds
     scaled_x = max(10, min(scaled_x, 290))
