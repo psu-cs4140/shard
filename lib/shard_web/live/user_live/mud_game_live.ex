@@ -46,6 +46,9 @@ defmodule ShardWeb.MudGameLive do
       # Find a valid starting position (first floor tile found)
       starting_position = find_valid_starting_position(map_data)
 
+      # Load monsters from database
+      db_monsters = Shard.Monsters.list_monsters()
+
       # Store the map_id and character for later use
       map_id = map_id
 
@@ -89,24 +92,8 @@ defmodule ShardWeb.MudGameLive do
         # Stores quest offer waiting for acceptance/denial
         pending_quest_offer: nil,
 
-        # Will pull from db once that is created.
-        monsters: [
-          %{
-            monster_id: 1,
-            name: "Goblin",
-            level: 1,
-            attack: 10,
-            defense: 0,
-            speed: 5,
-            xp_reward: 5,
-            gold_reward: 2,
-            boss: false,
-            hp: 30,
-            hp_max: 30,
-            position: {2, 0}
-            # position: find_valid_monster_position(map_data, starting_position)
-          }
-        ],
+        # Load monsters from database and convert to game format
+        monsters: convert_db_monsters_to_game_format(db_monsters),
         combat: false
       }
 
@@ -382,5 +369,25 @@ defmodule ShardWeb.MudGameLive do
     else
       {:noreply, socket}
     end
+  end
+
+  # Helper function to convert database monsters to game format
+  defp convert_db_monsters_to_game_format(db_monsters) do
+    Enum.map(db_monsters, fn monster ->
+      %{
+        monster_id: monster.id,
+        name: monster.name,
+        level: monster.level,
+        attack: monster.attack_damage,
+        defense: 0,  # Add defense field to monster schema if needed
+        speed: 5,    # Add speed field to monster schema if needed
+        xp_reward: monster.xp_amount,
+        gold_reward: 0,  # Add gold_reward field to monster schema if needed
+        boss: false,     # Add boss field to monster schema if needed
+        hp: monster.health,
+        hp_max: monster.max_health,
+        position: {monster.x_location || 0, monster.y_location || 0}
+      }
+    end)
   end
 end

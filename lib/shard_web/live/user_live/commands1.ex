@@ -172,13 +172,17 @@ defmodule ShardWeb.UserLive.Commands1 do
           _ = description_lines ++ ["", "There are no obvious exits."]
         end
 
-        # To see if there are monsters
-        monsters =
-          Enum.filter(game_state.monsters, fn value ->
-            value[:position] == game_state.player_position
-          end)
-
-        monster_count = Enum.count(monsters)
+        # Check for monsters at current location from database
+        db_monsters_here = Shard.Monsters.get_monsters_by_coordinates(x, y)
+        
+        # Also check game state monsters for any spawned/temporary monsters
+        game_monsters_here = Enum.filter(game_state.monsters, fn monster ->
+          monster[:position] == game_state.player_position
+        end)
+        
+        # Combine both sources
+        all_monsters_here = db_monsters_here ++ game_monsters_here
+        monster_count = length(all_monsters_here)
 
         description_lines =
           description_lines ++
@@ -187,17 +191,26 @@ defmodule ShardWeb.UserLive.Commands1 do
                 [""]
 
               1 ->
-                ["", "There is a " <> Enum.at(monsters, 0)[:name] <> "."]
+                monster = hd(all_monsters_here)
+                monster_name = if is_map(monster) && Map.has_key?(monster, :name) do
+                  monster.name
+                else
+                  monster[:name]
+                end
+                ["", "There is a #{monster_name} here."]
 
               _ ->
+                monster_names = Enum.map_join(all_monsters_here, ", ", fn monster ->
+                  name = if is_map(monster) && Map.has_key?(monster, :name) do
+                    monster.name
+                  else
+                    monster[:name]
+                  end
+                  "a #{name}"
+                end)
                 [
                   "",
-                  "There are " <>
-                    to_string(monster_count) <>
-                    " monsters! The monsters include " <>
-                    Enum.map_join(monsters, ", ", fn monster ->
-                      "a " <> to_string(monster[:name])
-                    end) <> "."
+                  "There are #{monster_count} monsters here! The monsters include #{monster_names}."
                 ]
             end
 
