@@ -41,7 +41,7 @@ defmodule ShardWeb.MudGameLive do
        |> push_navigate(to: ~p"/maps")}
     else
       # Load character with associations
-      character = 
+      character =
         try do
           Shard.Repo.get!(Shard.Characters.Character, character.id)
           |> Shard.Repo.preload([:character_inventories, :hotbar_slots])
@@ -63,13 +63,13 @@ defmodule ShardWeb.MudGameLive do
       base_health = 100
       base_stamina = 100
       base_mana = 50
-      
+
       # Calculate max stats based on character attributes
       constitution = character.constitution || 10
       max_health = base_health + (constitution - 10) * 5
       max_stamina = base_stamina + (character.dexterity || 10) * 2
       max_mana = base_mana + (character.intelligence || 10) * 3
-      
+
       game_state = %{
         player_position: starting_position,
         map_data: map_data,
@@ -79,7 +79,8 @@ defmodule ShardWeb.MudGameLive do
         player_stats: %{
           health: character.health || max_health,
           max_health: max_health,
-          stamina: max_stamina,  # Always start with full stamina
+          # Always start with full stamina
+          stamina: max_stamina,
           max_stamina: max_stamina,
           mana: character.mana || max_mana,
           max_mana: max_mana,
@@ -304,7 +305,7 @@ defmodule ShardWeb.MudGameLive do
       # Check if stats changed significantly and save to database
       old_stats = socket.assigns.game_state.player_stats
       new_stats = updated_game_state.player_stats
-      
+
       if stats_changed_significantly?(old_stats, new_stats) do
         save_character_stats(updated_game_state.character, new_stats)
       end
@@ -335,11 +336,14 @@ defmodule ShardWeb.MudGameLive do
 
   def handle_event("save_character_stats", _params, socket) do
     # Manually save character stats to database
-    case save_character_stats(socket.assigns.game_state.character, socket.assigns.game_state.player_stats) do
+    case save_character_stats(
+           socket.assigns.game_state.character,
+           socket.assigns.game_state.player_stats
+         ) do
       {:ok, _character} ->
         socket = add_message(socket, "Character stats saved successfully.")
         {:noreply, socket}
-      
+
       {:error, _error} ->
         socket = add_message(socket, "Failed to save character stats.")
         {:noreply, socket}
@@ -349,41 +353,42 @@ defmodule ShardWeb.MudGameLive do
   def handle_event("use_hotbar_item", %{"slot" => slot_number}, socket) do
     slot_key = String.to_atom("slot_#{slot_number}")
     item = Map.get(socket.assigns.game_state.hotbar, slot_key)
-    
+
     case item do
       nil ->
         socket = add_message(socket, "Hotbar slot #{slot_number} is empty.")
         {:noreply, socket}
-      
+
       item ->
         {response, updated_game_state} = use_item(socket.assigns.game_state, item)
-        
+
         # Add response to terminal
         new_output = socket.assigns.terminal_state.output ++ response ++ [""]
         terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
-        
+
         {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
     end
   end
 
   def handle_event("equip_item", %{"item_id" => item_id}, socket) do
     # Find item in inventory
-    item = Enum.find(socket.assigns.game_state.inventory_items, fn inv_item ->
-      to_string(Map.get(inv_item, :id)) == item_id
-    end)
-    
+    item =
+      Enum.find(socket.assigns.game_state.inventory_items, fn inv_item ->
+        to_string(Map.get(inv_item, :id)) == item_id
+      end)
+
     case item do
       nil ->
         socket = add_message(socket, "Item not found in inventory.")
         {:noreply, socket}
-      
+
       item ->
         {response, updated_game_state} = equip_item(socket.assigns.game_state, item)
-        
+
         # Add response to terminal
         new_output = socket.assigns.terminal_state.output ++ response ++ [""]
         terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
-        
+
         {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
     end
   end
@@ -448,7 +453,7 @@ defmodule ShardWeb.MudGameLive do
         intelligence: stats.intelligence,
         constitution: stats.constitution || character.constitution || 10
       }
-      
+
       Shard.Characters.update_character(character, attrs)
     rescue
       error ->
@@ -462,15 +467,15 @@ defmodule ShardWeb.MudGameLive do
   # Check if stats have changed significantly enough to warrant a database save
   defp stats_changed_significantly?(old_stats, new_stats) do
     # Save if level, experience, or core stats changed
-    old_stats.level != new_stats.level ||
-    old_stats.experience != new_stats.experience ||
-    old_stats.strength != new_stats.strength ||
-    old_stats.dexterity != new_stats.dexterity ||
-    old_stats.intelligence != new_stats.intelligence ||
-    Map.get(old_stats, :constitution) != Map.get(new_stats, :constitution) ||
     # Also save if health or mana drops significantly (combat damage/usage)
-    abs(old_stats.health - new_stats.health) >= 10 ||
-    abs(old_stats.mana - new_stats.mana) >= 15
+    old_stats.level != new_stats.level ||
+      old_stats.experience != new_stats.experience ||
+      old_stats.strength != new_stats.strength ||
+      old_stats.dexterity != new_stats.dexterity ||
+      old_stats.intelligence != new_stats.intelligence ||
+      Map.get(old_stats, :constitution) != Map.get(new_stats, :constitution) ||
+      abs(old_stats.health - new_stats.health) >= 10 ||
+      abs(old_stats.mana - new_stats.mana) >= 15
   end
 
   # Load character inventory from database
@@ -480,6 +485,7 @@ defmodule ShardWeb.MudGameLive do
         inventories when is_list(inventories) ->
           Enum.map(inventories, fn inventory ->
             item = Shard.Repo.get(Shard.Items.Item, inventory.item_id)
+
             if item do
               %{
                 id: item.id,
@@ -496,7 +502,7 @@ defmodule ShardWeb.MudGameLive do
             end
           end)
           |> Enum.filter(&(&1 != nil))
-        
+
         _ ->
           # Fallback to default items if no inventory loaded
           [
@@ -522,13 +528,15 @@ defmodule ShardWeb.MudGameLive do
       # Try to get equipped weapon from character data or inventory
       case character.character_inventories do
         inventories when is_list(inventories) ->
-          equipped_weapon = Enum.find(inventories, fn inv ->
-            item = Shard.Repo.get(Shard.Items.Item, inv.item_id)
-            item && item.item_type == "weapon" && Map.get(inv, :equipped, false)
-          end)
-          
+          equipped_weapon =
+            Enum.find(inventories, fn inv ->
+              item = Shard.Repo.get(Shard.Items.Item, inv.item_id)
+              item && item.item_type == "weapon" && Map.get(inv, :equipped, false)
+            end)
+
           if equipped_weapon do
             item = Shard.Repo.get(Shard.Items.Item, equipped_weapon.item_id)
+
             %{
               name: item.name,
               damage: item.damage || "1d6",
@@ -538,7 +546,7 @@ defmodule ShardWeb.MudGameLive do
             # Default weapon
             %{name: "Fists", damage: "1d4", type: "unarmed"}
           end
-        
+
         _ ->
           %{name: "Fists", damage: "1d4", type: "unarmed"}
       end
@@ -554,33 +562,36 @@ defmodule ShardWeb.MudGameLive do
       case character.hotbar_slots do
         slots when is_list(slots) ->
           # Convert list of hotbar slots to map
-          hotbar_map = Enum.reduce(1..5, %{}, fn slot_num, acc ->
-            slot_key = String.to_atom("slot_#{slot_num}")
-            
-            slot_data = Enum.find(slots, fn slot -> slot.slot_number == slot_num end)
-            
-            slot_content = if slot_data && slot_data.item_id do
-              item = Shard.Repo.get(Shard.Items.Item, slot_data.item_id)
-              if item do
-                %{
-                  id: item.id,
-                  name: item.name,
-                  type: item.item_type || "misc",
-                  damage: item.damage,
-                  effect: item.effect
-                }
-              else
-                nil
-              end
-            else
-              nil
-            end
-            
-            Map.put(acc, slot_key, slot_content)
-          end)
-          
+          hotbar_map =
+            Enum.reduce(1..5, %{}, fn slot_num, acc ->
+              slot_key = String.to_atom("slot_#{slot_num}")
+
+              slot_data = Enum.find(slots, fn slot -> slot.slot_number == slot_num end)
+
+              slot_content =
+                if slot_data && slot_data.item_id do
+                  item = Shard.Repo.get(Shard.Items.Item, slot_data.item_id)
+
+                  if item do
+                    %{
+                      id: item.id,
+                      name: item.name,
+                      type: item.item_type || "misc",
+                      damage: item.damage,
+                      effect: item.effect
+                    }
+                  else
+                    nil
+                  end
+                else
+                  nil
+                end
+
+              Map.put(acc, slot_key, slot_content)
+            end)
+
           hotbar_map
-        
+
         _ ->
           # Default hotbar if no slots loaded
           %{
@@ -609,10 +620,10 @@ defmodule ShardWeb.MudGameLive do
     case item.type do
       "consumable" ->
         use_consumable_item(game_state, item)
-      
+
       "weapon" ->
         equip_item(game_state, item)
-      
+
       _ ->
         response = ["You cannot use #{item.name} in this way."]
         {response, game_state}
@@ -625,14 +636,16 @@ defmodule ShardWeb.MudGameLive do
       effect when is_binary(effect) ->
         if String.contains?(effect, "Restores") do
           # Parse healing amount from effect string
-          healing_amount = case Regex.run(~r/(\d+)/, effect) do
-            [_, amount] -> String.to_integer(amount)
-            _ -> 25  # Default healing
-          end
-          
+          healing_amount =
+            case Regex.run(~r/(\d+)/, effect) do
+              [_, amount] -> String.to_integer(amount)
+              # Default healing
+              _ -> 25
+            end
+
           current_health = game_state.player_stats.health
           max_health = game_state.player_stats.max_health
-          
+
           if current_health >= max_health do
             response = ["You are already at full health."]
             {response, game_state}
@@ -640,23 +653,23 @@ defmodule ShardWeb.MudGameLive do
             new_health = min(current_health + healing_amount, max_health)
             updated_stats = %{game_state.player_stats | health: new_health}
             updated_game_state = %{game_state | player_stats: updated_stats}
-            
+
             # Save updated stats to database
             save_character_stats(game_state.character, updated_stats)
-            
+
             response = [
               "You use #{item.name}.",
               "You recover #{new_health - current_health} health points.",
               "Health: #{new_health}/#{max_health}"
             ]
-            
+
             {response, updated_game_state}
           end
         else
           response = ["You use #{item.name}, but nothing happens."]
           {response, game_state}
         end
-      
+
       _ ->
         response = ["You use #{item.name}, but nothing happens."]
         {response, game_state}
@@ -669,23 +682,23 @@ defmodule ShardWeb.MudGameLive do
       "weapon" ->
         old_weapon = game_state.equipped_weapon
         updated_game_state = %{game_state | equipped_weapon: item}
-        
+
         response = [
           "You equip #{item.name}.",
           "You unequip #{old_weapon.name}."
         ]
-        
+
         {response, updated_game_state}
-      
+
       "armor" ->
         # For now, just show a message since we don't have equipped armor tracking yet
         response = [
           "You equip #{item.name}.",
           "Your defense increases!"
         ]
-        
+
         {response, game_state}
-      
+
       _ ->
         response = ["You cannot equip #{item.name}."]
         {response, game_state}
@@ -710,10 +723,10 @@ defmodule ShardWeb.MudGameLive do
 
     if current_health < max_health do
       new_health = min(current_health + xx, max_health)
-      
+
       updated_stats = %{current_stats | health: new_health}
       updated_game_state = %{socket.assigns.game_state | player_stats: updated_stats}
-      
+
       # Save updated stats to database
       save_character_stats(socket.assigns.game_state.character, updated_stats)
 
