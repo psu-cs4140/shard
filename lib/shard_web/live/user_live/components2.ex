@@ -140,7 +140,12 @@ defmodule ShardWeb.UserLive.Components2 do
 
   def hotbar_slot(assigns) do
     ~H"""
-    <div class="w-12 h-12 bg-gray-600 border-2 border-gray-500 rounded-lg flex items-center justify-center relative hover:border-gray-400 transition-colors">
+    <button
+      phx-click={if @slot_data, do: "use_hotbar_item", else: nil}
+      phx-value-slot={@slot_number}
+      class={"w-12 h-12 bg-gray-600 border-2 border-gray-500 rounded-lg flex items-center justify-center relative transition-colors #{if @slot_data, do: "hover:border-gray-400 cursor-pointer", else: "cursor-default"}"}
+      disabled={is_nil(@slot_data)}
+    >
       <!-- Slot number -->
       <span class="absolute top-0 left-1 text-xs text-gray-400">{@slot_number}</span>
       
@@ -159,14 +164,18 @@ defmodule ShardWeb.UserLive.Components2 do
           <% end %>
         </div>
         <!-- Tooltip -->
-        <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
-          {@slot_data.name}
+        <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 hover:opacity-100 transition-opacity pointer-events-none z-10">
+          <div class="font-semibold">{@slot_data.name}</div>
+          <%= if @slot_data[:effect] do %>
+            <div class="text-xs text-gray-300">{@slot_data.effect}</div>
+          <% end %>
+          <div class="text-xs text-yellow-300">Click to use</div>
         </div>
       <% else %>
         <!-- Empty slot -->
         <div class="w-8 h-8 border border-dashed border-gray-500 rounded"></div>
       <% end %>
-    </div>
+    </button>
     """
   end
 

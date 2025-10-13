@@ -18,12 +18,34 @@ defmodule ShardWeb.UserLive.Components do
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-gray-800 rounded-lg p-4">
-              <h4 class="text-lg font-semibold mb-3 text-center">Attributes</h4>
+              <h4 class="text-lg font-semibold mb-3 text-center">Character Info</h4>
               <div class="space-y-2">
+                <div class="flex justify-between">
+                  <span>Name:</span>
+                  <span class="font-mono">{@game_state.character.name}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Class:</span>
+                  <span class="font-mono capitalize">{@game_state.character.class || "Adventurer"}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Race:</span>
+                  <span class="font-mono capitalize">{@game_state.character.race || "Human"}</span>
+                </div>
                 <div class="flex justify-between">
                   <span>Level:</span>
                   <span class="font-mono">{@game_state.player_stats.level}</span>
                 </div>
+                <div class="flex justify-between">
+                  <span>Gold:</span>
+                  <span class="font-mono">{@game_state.character.gold || 0}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-4">
+              <h4 class="text-lg font-semibold mb-3 text-center">Attributes</h4>
+              <div class="space-y-2">
                 <div class="flex justify-between">
                   <span>Strength:</span>
                   <span class="font-mono">{@game_state.player_stats.strength}</span>
@@ -35,6 +57,10 @@ defmodule ShardWeb.UserLive.Components do
                 <div class="flex justify-between">
                   <span>Intelligence:</span>
                   <span class="font-mono">{@game_state.player_stats.intelligence}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Constitution:</span>
+                  <span class="font-mono">{@game_state.player_stats.constitution}</span>
                 </div>
               </div>
             </div>
@@ -124,41 +150,79 @@ defmodule ShardWeb.UserLive.Components do
             </button>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <%= for item <- @game_state.inventory_items do %>
-              <div class="bg-gray-800 rounded-lg p-4 flex items-center">
-                <div class="mr-4">
-                  <%= case item.type do %>
-                    <% "weapon" -> %>
-                      <.icon name="hero-sword" class="w-10 h-10 text-red-400" />
-                    <% "armor" -> %>
-                      <.icon name="hero-shield-check" class="w-10 h-10 text-blue-400" />
-                    <% "consumable" -> %>
-                      <.icon name="hero-beaker" class="w-10 h-10 text-green-400" />
-                    <% "utility" -> %>
-                      <.icon name="hero-light-bulb" class="w-10 h-10 text-yellow-400" />
-                    <% "tool" -> %>
-                      <.icon name="hero-wrench" class="w-10 h-10 text-purple-400" />
-                    <% _ -> %>
-                      <.icon name="hero-cube" class="w-10 h-10 text-gray-400" />
-                  <% end %>
+          <%= if Enum.empty?(@game_state.inventory_items) do %>
+            <div class="text-center text-gray-400 py-8">
+              <.icon name="hero-shopping-bag" class="w-16 h-16 mx-auto mb-4 opacity-50" />
+              <p class="text-lg">Your inventory is empty</p>
+              <p class="text-sm">Explore the world to find items!</p>
+            </div>
+          <% else %>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <%= for item <- @game_state.inventory_items do %>
+                <div class="bg-gray-800 rounded-lg p-4 flex items-center">
+                  <div class="mr-4">
+                    <%= case item.type do %>
+                      <% "weapon" -> %>
+                        <.icon name="hero-sword" class="w-10 h-10 text-red-400" />
+                      <% "armor" -> %>
+                        <.icon name="hero-shield-check" class="w-10 h-10 text-blue-400" />
+                      <% "consumable" -> %>
+                        <.icon name="hero-beaker" class="w-10 h-10 text-green-400" />
+                      <% "utility" -> %>
+                        <.icon name="hero-light-bulb" class="w-10 h-10 text-yellow-400" />
+                      <% "tool" -> %>
+                        <.icon name="hero-wrench" class="w-10 h-10 text-purple-400" />
+                      <% _ -> %>
+                        <.icon name="hero-cube" class="w-10 h-10 text-gray-400" />
+                    <% end %>
+                  </div>
+                  <div class="flex-1">
+                    <div class="flex justify-between items-start">
+                      <div class="font-semibold">{item.name}</div>
+                      <%= if item[:quantity] && item.quantity > 1 do %>
+                        <span class="text-sm bg-gray-600 px-2 py-1 rounded">x{item.quantity}</span>
+                      <% end %>
+                    </div>
+                    <div class="text-sm text-gray-300 capitalize">{item.type}</div>
+                    <%= if item[:damage] do %>
+                      <div class="text-sm text-red-300">Damage: {item.damage}</div>
+                    <% end %>
+                    <%= if item[:defense] do %>
+                      <div class="text-sm text-blue-300">Defense: {item.defense}</div>
+                    <% end %>
+                    <%= if item[:effect] do %>
+                      <div class="text-sm text-green-300">Effect: {item.effect}</div>
+                    <% end %>
+                    <%= if item[:description] do %>
+                      <div class="text-xs text-gray-400 mt-1">{item.description}</div>
+                    <% end %>
+                    
+                    <!-- Action buttons -->
+                    <div class="flex gap-2 mt-2">
+                      <%= if item.type in ["weapon", "armor"] do %>
+                        <button
+                          phx-click="equip_item"
+                          phx-value-item_id={item[:id]}
+                          class="text-xs bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded transition-colors"
+                        >
+                          Equip
+                        </button>
+                      <% end %>
+                      <%= if item.type == "consumable" do %>
+                        <button
+                          phx-click="use_hotbar_item"
+                          phx-value-item_id={item[:id]}
+                          class="text-xs bg-green-600 hover:bg-green-700 px-2 py-1 rounded transition-colors"
+                        >
+                          Use
+                        </button>
+                      <% end %>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div class="font-semibold">{item.name}</div>
-                  <div class="text-sm text-gray-300 capitalize">{item.type}</div>
-                  <%= if item[:damage] do %>
-                    <div class="text-sm">Damage: {item.damage}</div>
-                  <% end %>
-                  <%= if item[:defense] do %>
-                    <div class="text-sm">Defense: {item.defense}</div>
-                  <% end %>
-                  <%= if item[:effect] do %>
-                    <div class="text-sm">Effect: {item.effect}</div>
-                  <% end %>
-                </div>
-              </div>
-            <% end %>
-          </div>
+              <% end %>
+            </div>
+          <% end %>
         </div>
       </div>
     </div>
