@@ -13,43 +13,47 @@ defmodule ShardWeb.AdminLive.MapTest do
       Shard.Repo.delete_all(Room)
 
       # Create an admin user and log them in
-      {:ok, user} = Users.register_user(%{
-        email: "admin@example.com",
-        password: "hello world!",
-        admin: true
-      })
+      {:ok, user} =
+        Users.register_user(%{
+          email: "admin@example.com",
+          password: "hello world!",
+          admin: true
+        })
 
       conn = log_in_user(conn, user)
 
       # Create test rooms
-      {:ok, room1} = Map.create_room(%{
-        name: "Test Room 1",
-        description: "A test room",
-        x_coordinate: 0,
-        y_coordinate: 0,
-        z_coordinate: 0,
-        room_type: "standard",
-        is_public: true
-      })
+      {:ok, room1} =
+        Map.create_room(%{
+          name: "Test Room 1",
+          description: "A test room",
+          x_coordinate: 0,
+          y_coordinate: 0,
+          z_coordinate: 0,
+          room_type: "standard",
+          is_public: true
+        })
 
-      {:ok, room2} = Map.create_room(%{
-        name: "Test Room 2", 
-        description: "Another test room",
-        x_coordinate: 1,
-        y_coordinate: 0,
-        z_coordinate: 0,
-        room_type: "safe_zone",
-        is_public: true
-      })
+      {:ok, room2} =
+        Map.create_room(%{
+          name: "Test Room 2",
+          description: "Another test room",
+          x_coordinate: 1,
+          y_coordinate: 0,
+          z_coordinate: 0,
+          room_type: "safe_zone",
+          is_public: true
+        })
 
       # Create test door
-      {:ok, door} = Map.create_door(%{
-        from_room_id: room1.id,
-        to_room_id: room2.id,
-        direction: "east",
-        door_type: "standard",
-        is_locked: false
-      })
+      {:ok, door} =
+        Map.create_door(%{
+          from_room_id: room1.id,
+          to_room_id: room2.id,
+          direction: "east",
+          door_type: "standard",
+          is_locked: false
+        })
 
       %{conn: conn, room1: room1, room2: room2, door: door}
     end
@@ -83,15 +87,17 @@ defmodule ShardWeb.AdminLive.MapTest do
 
       # Fill out the form
       view
-      |> form("#room-form", room: %{
-        name: "New Test Room",
-        description: "A newly created room",
-        x_coordinate: 2,
-        y_coordinate: 0,
-        z_coordinate: 0,
-        room_type: "standard",
-        is_public: true
-      })
+      |> form("#room-form",
+        room: %{
+          name: "New Test Room",
+          description: "A newly created room",
+          x_coordinate: 2,
+          y_coordinate: 0,
+          z_coordinate: 0,
+          room_type: "standard",
+          is_public: true
+        }
+      )
       |> render_submit()
 
       # Verify room was created
@@ -107,15 +113,17 @@ defmodule ShardWeb.AdminLive.MapTest do
 
       # Update the room
       view
-      |> form("#room-form", room: %{
-        name: "Updated Room Name",
-        description: room1.description,
-        x_coordinate: room1.x_coordinate,
-        y_coordinate: room1.y_coordinate,
-        z_coordinate: room1.z_coordinate,
-        room_type: room1.room_type,
-        is_public: room1.is_public
-      })
+      |> form("#room-form",
+        room: %{
+          name: "Updated Room Name",
+          description: room1.description,
+          x_coordinate: room1.x_coordinate,
+          y_coordinate: room1.y_coordinate,
+          z_coordinate: room1.z_coordinate,
+          room_type: room1.room_type,
+          is_public: room1.is_public
+        }
+      )
       |> render_submit()
 
       # Verify room was updated
@@ -156,13 +164,15 @@ defmodule ShardWeb.AdminLive.MapTest do
 
       # Fill out the form
       view
-      |> form("#door-form", door: %{
-        from_room_id: room1.id,
-        to_room_id: room2.id,
-        direction: "west",
-        door_type: "standard",
-        is_locked: false
-      })
+      |> form("#door-form",
+        door: %{
+          from_room_id: room1.id,
+          to_room_id: room2.id,
+          direction: "west",
+          door_type: "standard",
+          is_locked: false
+        }
+      )
       |> render_submit()
 
       # Verify door was created
@@ -181,13 +191,15 @@ defmodule ShardWeb.AdminLive.MapTest do
 
       # Update the door
       view
-      |> form("#door-form", door: %{
-        from_room_id: door.from_room_id,
-        to_room_id: door.to_room_id,
-        direction: "west",
-        door_type: "gate",
-        is_locked: true
-      })
+      |> form("#door-form",
+        door: %{
+          from_room_id: door.from_room_id,
+          to_room_id: door.to_room_id,
+          direction: "west",
+          door_type: "gate",
+          is_locked: true
+        }
+      )
       |> render_submit()
 
       # Verify door was updated
@@ -237,10 +249,10 @@ defmodule ShardWeb.AdminLive.MapTest do
 
       # Test zoom in
       view |> element("button", "Zoom In") |> render_click()
-      
+
       # Test zoom out
       view |> element("button", "Zoom Out") |> render_click()
-      
+
       # Test reset view
       view |> element("button", "Reset View") |> render_click()
     end
@@ -252,15 +264,18 @@ defmodule ShardWeb.AdminLive.MapTest do
       view |> element("button", "New Room") |> render_click()
 
       # Submit form with invalid data (missing required name)
-      html = view
-      |> form("#room-form", room: %{
-        name: "",
-        description: "Test",
-        x_coordinate: 0,
-        y_coordinate: 0,
-        z_coordinate: 0
-      })
-      |> render_change()
+      html =
+        view
+        |> form("#room-form",
+          room: %{
+            name: "",
+            description: "Test",
+            x_coordinate: 0,
+            y_coordinate: 0,
+            z_coordinate: 0
+          }
+        )
+        |> render_change()
 
       # Form should show validation errors
       assert html =~ "can&#39;t be blank" or html =~ "can't be blank"
@@ -295,7 +310,7 @@ defmodule ShardWeb.AdminLive.MapTest do
 
     test "generates AI description for room", %{conn: conn, room1: room1} do
       # Set up AI config to return dummy response
-      Application.put_env(:shard, :open_router, [api_key: nil])
+      Application.put_env(:shard, :open_router, api_key: nil)
 
       {:ok, view, _html} = live(conn, ~p"/admin/map")
 
@@ -317,15 +332,17 @@ defmodule ShardWeb.AdminLive.MapTest do
 
       # Update room details
       view
-      |> form("#room-details-form", room: %{
-        name: "Updated via Details",
-        description: room1.description,
-        x_coordinate: room1.x_coordinate,
-        y_coordinate: room1.y_coordinate,
-        z_coordinate: room1.z_coordinate,
-        room_type: room1.room_type,
-        is_public: room1.is_public
-      })
+      |> form("#room-details-form",
+        room: %{
+          name: "Updated via Details",
+          description: room1.description,
+          x_coordinate: room1.x_coordinate,
+          y_coordinate: room1.y_coordinate,
+          z_coordinate: room1.z_coordinate,
+          room_type: room1.room_type,
+          is_public: room1.is_public
+        }
+      )
       |> render_submit()
 
       # Verify room was updated
@@ -367,9 +384,10 @@ defmodule ShardWeb.AdminLive.MapTest do
       view |> element("button", "New Room") |> render_click()
 
       # Submit empty form
-      _html = view
-      |> form("#room-form", room: %{})
-      |> render_submit()
+      _html =
+        view
+        |> form("#room-form", room: %{})
+        |> render_submit()
 
       # Should show validation errors and stay on form
       assert has_element?(view, "#room-modal")

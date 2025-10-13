@@ -225,11 +225,12 @@ defmodule ShardWeb.AdminLive.MapHandlers do
   end
 
   defp get_adjacent_rooms_for_ai(nil), do: []
+
   defp get_adjacent_rooms_for_ai(room) do
     # Get rooms connected by doors from this room
     doors_from = get_doors_from_room(room.id) |> Repo.all() |> Repo.preload(:to_room)
     doors_to = get_doors_to_room(room.id) |> Repo.all() |> Repo.preload(:from_room)
-    
+
     adjacent_rooms = Enum.map(doors_from, & &1.to_room) ++ Enum.map(doors_to, & &1.from_room)
     Enum.uniq_by(adjacent_rooms, & &1.id)
   end
