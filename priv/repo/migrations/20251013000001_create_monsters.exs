@@ -12,7 +12,8 @@ defmodule Shard.Repo.Migrations.CreateMonsters do
       add :xp_amount, :integer, null: false
       add :level, :integer, default: 1, null: false
       add :description, :text
-      add :location_id, references(:rooms, on_delete: :delete_all)
+      add :x_location, :integer
+      add :y_location, :integer
 
       timestamps(type: :utc_datetime)
     end
