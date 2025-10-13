@@ -48,7 +48,7 @@ defmodule ShardWeb.UserLive.MinimapComponents do
     scaled_x = (x - min_x) * scale_factor + 20
     # Invert Y-axis so (0,0) appears at bottom-left instead of top-left
     # 20px padding, flip Y coordinate
-    scaled_y = 180 - ((y - min_y) * scale_factor) + 20
+    scaled_y = 180 - (y - min_y) * scale_factor + 20
 
     # Ensure coordinates are within bounds
     scaled_x = max(10, min(scaled_x, 290))
