@@ -3,6 +3,8 @@ defmodule Shard.MonstersTest do
 
   alias Shard.Monsters
   alias Shard.Monsters.Monster
+  alias Shard.Map.Room
+  alias Shard.Repo
 
   describe "monsters" do
     @valid_attrs %{
@@ -38,6 +40,18 @@ defmodule Shard.MonstersTest do
       xp_amount: nil
     }
 
+    def room_fixture(attrs \\ %{}) do
+      {:ok, room} =
+        attrs
+        |> Enum.into(%{
+          name: "Test Room",
+          description: "A test room for monsters"
+        })
+        |> then(&%Room{} |> Room.changeset(&1) |> Repo.insert())
+
+      room
+    end
+
     def monster_fixture(attrs \\ %{}) do
       {:ok, monster} =
         attrs
@@ -62,13 +76,14 @@ defmodule Shard.MonstersTest do
     end
 
     test "get_monsters_by_location/1 returns monsters in the given location" do
-      # Create a room first (assuming we have a room factory or can create one)
-      # For this test, we'll use a location_id directly
-      monster1 = monster_fixture(%{location_id: 1})
-      monster2 = monster_fixture(%{location_id: 1})
-      _monster3 = monster_fixture(%{location_id: 2})
+      room1 = room_fixture()
+      room2 = room_fixture()
+      
+      monster1 = monster_fixture(%{location_id: room1.id})
+      monster2 = monster_fixture(%{location_id: room1.id})
+      _monster3 = monster_fixture(%{location_id: room2.id})
 
-      monsters = Monsters.get_monsters_by_location(1)
+      monsters = Monsters.get_monsters_by_location(room1.id)
       assert length(monsters) == 2
       assert Enum.member?(monsters, monster1)
       assert Enum.member?(monsters, monster2)
