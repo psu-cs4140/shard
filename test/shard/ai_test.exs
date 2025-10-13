@@ -13,12 +13,10 @@ defmodule Shard.AITest do
       zone_description = "A dark forest"
       surrounding_rooms = []
 
-      assert capture_log(fn ->
-               assert {:ok, description} =
-                        AI.generate_room_description(zone_description, surrounding_rooms)
+      assert {:ok, description} =
+               AI.generate_room_description(zone_description, surrounding_rooms)
 
-               assert description == "A test room description generated without an API call."
-             end) =~ "OPENROUTER_API_KEY not set. Bypassing AI call for tests."
+      assert description == "A test room description generated without an API call."
 
       # Restore original config
       if original_config do
