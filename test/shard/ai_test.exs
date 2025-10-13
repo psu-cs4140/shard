@@ -1,6 +1,5 @@
 defmodule Shard.AITest do
   use ExUnit.Case, async: true
-  import ExUnit.CaptureLog
 
   alias Shard.AI
 
