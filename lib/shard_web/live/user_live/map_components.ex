@@ -326,7 +326,7 @@ defmodule ShardWeb.UserLive.MapComponents do
           )
 
         # Check if this is a one-way door (no return door in opposite direction)
-        is_one_way = is_one_way_door?(assigns.door)
+        is_one_way = ShardWeb.UserLive.MinimapComponents.one_way_door_check(assigns.door)
 
         # Determine if this is a diagonal door
         is_diagonal =

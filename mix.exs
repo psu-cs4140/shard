@@ -13,7 +13,7 @@ defmodule Shard.MixProject do
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
       listeners: [Phoenix.CodeReloader],
       test_coverage: [
-        summary: [threshold: 19]
+        summary: [threshold: 31]
       ],
       # Fail compilation warnings only when running in CI
       elixirc_options: [warnings_as_errors: System.get_env("CI") == "true"],
@@ -66,7 +66,8 @@ defmodule Shard.MixProject do
       {:gettext, "~> 0.26"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.5"},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
     ]
   end
 

@@ -50,7 +50,9 @@ defmodule ShardWeb.UserLive.Movement do
       response =
         response ++
           if length(npcs_here) > 0 do
-            npc_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+            npc_names = Enum.map_join(npcs_here, ", ", & &1.name)
+            # above is more efficent
+            # npc_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
             ["You see #{npc_names} here."]
           else
             []
@@ -125,7 +127,7 @@ defmodule ShardWeb.UserLive.Movement do
       end
 
     # Check if the movement is valid (room exists or door connection exists)
-    if is_valid_movement?(curr_position, new_position, key) do
+    if valid_movement(curr_position, new_position, key) do
       new_position
     else
       curr_position
@@ -133,7 +135,7 @@ defmodule ShardWeb.UserLive.Movement do
   end
 
   # Helper function to check if a position is valid (has a room or door connection)
-  defp is_valid_position?({x, y}, _map_data) do
+  defp valid_position({x, y}, _map_data) do
     # Check if there's a room at this position
     case GameMap.get_room_by_coordinates(x, y) do
       # No room exists at this position
@@ -144,7 +146,7 @@ defmodule ShardWeb.UserLive.Movement do
   end
 
   # Helper function to check if movement is valid via door connection
-  defp is_valid_movement?(current_pos, new_pos, direction) do
+  defp valid_movement(current_pos, new_pos, direction) do
     {curr_x, curr_y} = current_pos
     {new_x, new_y} = new_pos
 
@@ -177,7 +179,7 @@ defmodule ShardWeb.UserLive.Movement do
           case door do
             nil ->
               # No door, check if target position has a room
-              is_valid_position?(new_pos, nil)
+              valid_position(new_pos, nil)
 
             door ->
               # Check door accessibility based on type and status
@@ -252,7 +254,7 @@ defmodule ShardWeb.UserLive.Movement do
     tutorial_exits =
       Enum.filter(basic_directions, fn direction ->
         test_pos = calc_position({x, y}, direction_to_key(direction), nil)
-        test_pos != {x, y} and is_valid_movement?({x, y}, test_pos, direction_to_key(direction))
+        test_pos != {x, y} and valid_movement({x, y}, test_pos, direction_to_key(direction))
       end)
 
     (exits ++ tutorial_exits)
