@@ -174,12 +174,13 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         # Check for monsters at current location from database
         db_monsters_here = Shard.Monsters.get_monsters_by_coordinates(x, y)
-        
+
         # Also check game state monsters for any spawned/temporary monsters
-        game_monsters_here = Enum.filter(game_state.monsters, fn monster ->
-          monster[:position] == game_state.player_position
-        end)
-        
+        game_monsters_here =
+          Enum.filter(game_state.monsters, fn monster ->
+            monster[:position] == game_state.player_position
+          end)
+
         # Combine both sources
         all_monsters_here = db_monsters_here ++ game_monsters_here
         monster_count = length(all_monsters_here)
@@ -192,22 +193,29 @@ defmodule ShardWeb.UserLive.Commands1 do
 
               1 ->
                 monster = hd(all_monsters_here)
-                monster_name = if is_map(monster) && Map.has_key?(monster, :name) do
-                  monster.name
-                else
-                  monster[:name]
-                end
-                ["", "There is a #{monster_name} here."]
 
-              _ ->
-                monster_names = Enum.map_join(all_monsters_here, ", ", fn monster ->
-                  name = if is_map(monster) && Map.has_key?(monster, :name) do
+                monster_name =
+                  if is_map(monster) && Map.has_key?(monster, :name) do
                     monster.name
                   else
                     monster[:name]
                   end
-                  "a #{name}"
-                end)
+
+                ["", "There is a #{monster_name} here."]
+
+              _ ->
+                monster_names =
+                  Enum.map_join(all_monsters_here, ", ", fn monster ->
+                    name =
+                      if is_map(monster) && Map.has_key?(monster, :name) do
+                        monster.name
+                      else
+                        monster[:name]
+                      end
+
+                    "a #{name}"
+                  end)
+
                 [
                   "",
                   "There are #{monster_count} monsters here! The monsters include #{monster_names}."

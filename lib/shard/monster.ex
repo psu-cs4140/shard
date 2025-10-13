@@ -115,5 +115,4 @@ defmodule Shard.Monsters do
   def change_monster(%Monster{} = monster, attrs \\ %{}) do
     Monster.changeset(monster, attrs)
   end
-
 end

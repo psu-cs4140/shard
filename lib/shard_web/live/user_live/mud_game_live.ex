@@ -379,11 +379,15 @@ defmodule ShardWeb.MudGameLive do
         name: monster.name,
         level: monster.level,
         attack: monster.attack_damage,
-        defense: 0,  # Add defense field to monster schema if needed
-        speed: 5,    # Add speed field to monster schema if needed
+        # Add defense field to monster schema if needed
+        defense: 0,
+        # Add speed field to monster schema if needed
+        speed: 5,
         xp_reward: monster.xp_amount,
-        gold_reward: 0,  # Add gold_reward field to monster schema if needed
-        boss: false,     # Add boss field to monster schema if needed
+        # Add gold_reward field to monster schema if needed
+        gold_reward: 0,
+        # Add boss field to monster schema if needed
+        boss: false,
         hp: monster.health,
         hp_max: monster.max_health,
         position: {monster.x_location || 0, monster.y_location || 0}
