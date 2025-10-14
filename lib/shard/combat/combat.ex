@@ -238,7 +238,14 @@ defmodule Shard.Combat do
         ""
       ]
       
-      {updated_stats, level_up_messages}
+      # Check if player can level up again with remaining experience
+      if remaining_experience >= calculate_next_level_exp(new_level) do
+        # Recursively check for multiple level ups
+        {final_stats, additional_messages} = check_level_up(updated_stats, remaining_experience)
+        {final_stats, level_up_messages ++ additional_messages}
+      else
+        {updated_stats, level_up_messages}
+      end
     else
       # No level up, just update experience
       updated_stats = %{current_stats | experience: new_experience}
