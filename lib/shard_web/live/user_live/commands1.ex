@@ -352,7 +352,11 @@ defmodule ShardWeb.UserLive.Commands1 do
     end
     
     direct_items = from(i in Item,
-      where: i.location == ^location_string and (i.map == ^map_name or i.map == ^map_id) and i.is_active == true,
+      where: i.location == ^location_string and 
+             (i.map == ^map_name or i.map == ^map_id or 
+              (^map_id == "tutorial_terrain" and i.map == "tutorial") or
+              (^map_id == "tutorial" and i.map == "tutorial_terrain")) and 
+             i.is_active == true,
       select: %{
         name: i.name,
         description: i.description,
@@ -362,8 +366,10 @@ defmodule ShardWeb.UserLive.Commands1 do
     )
     |> Repo.all()
     
-    # Combine both results
-    room_items ++ direct_items
+    # Combine both results and remove duplicates based on name
+    all_items = room_items ++ direct_items
+    all_items
+    |> Enum.uniq_by(& &1.name)
   end
 
   # Parse talk command to extract NPC name
