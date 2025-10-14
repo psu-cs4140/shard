@@ -53,7 +53,7 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
     try do
       # Check if character_inventories is loaded and has items
       case Map.get(character, :character_inventories) do
-        inventories when is_list(inventories) and length(inventories) > 0 ->
+        inventories when is_list(inventories) ->
           loaded_items =
             Enum.map(inventories, fn inventory ->
               item = Shard.Repo.get(Shard.Items.Item, inventory.item_id)
@@ -75,32 +75,19 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
             end)
             |> Enum.filter(&(&1 != nil))
 
-          # If we have valid items, return them, otherwise fall back to defaults
-          if length(loaded_items) > 0 do
-            loaded_items
-          else
-            get_default_inventory_items()
-          end
+          loaded_items
 
         _ ->
-          # Fallback to default items if no inventory loaded or association not loaded
-          get_default_inventory_items()
+          # Return empty list if no inventory loaded or association not loaded
+          []
       end
     rescue
       _ ->
-        # Fallback to default items on error
-        get_default_inventory_items()
+        # Return empty list on error instead of fallback items
+        []
     end
   end
 
-  # Helper function for default inventory items
-  defp get_default_inventory_items do
-    [
-      %{name: "Iron Sword", type: "weapon", damage: "1d8+3"},
-      %{name: "Health Potion", type: "consumable", effect: "Restores 50 HP"},
-      %{name: "Leather Armor", type: "armor", defense: 5}
-    ]
-  end
 
   # Load equipped weapon from database
   def load_equipped_weapon(character) do
@@ -173,23 +160,23 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
           hotbar_map
 
         _ ->
-          # Default hotbar if no slots loaded
+          # Empty hotbar if no slots loaded
           %{
             slot_1: nil,
-            slot_2: %{name: "Iron Sword", type: "weapon"},
+            slot_2: nil,
             slot_3: nil,
-            slot_4: %{name: "Health Potion", type: "consumable"},
+            slot_4: nil,
             slot_5: nil
           }
       end
     rescue
       _ ->
-        # Fallback hotbar on error
+        # Empty hotbar on error
         %{
           slot_1: nil,
-          slot_2: %{name: "Iron Sword", type: "weapon"},
+          slot_2: nil,
           slot_3: nil,
-          slot_4: %{name: "Health Potion", type: "consumable"},
+          slot_4: nil,
           slot_5: nil
         }
     end
