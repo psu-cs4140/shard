@@ -10,6 +10,8 @@ defmodule ShardWeb.MudGameLive do
   import ShardWeb.UserLive.MapComponents
   import ShardWeb.UserLive.LegacyMap
   import ShardWeb.UserLive.MonsterComponents
+  import ShardWeb.UserLive.CharacterHelpers
+  import ShardWeb.UserLive.ItemHelpers
 
   @impl true
   def mount(%{"map_id" => map_id} = params, _session, socket) do
@@ -41,6 +43,15 @@ defmodule ShardWeb.MudGameLive do
        |> put_flash(:error, "Please select a character to play")
        |> push_navigate(to: ~p"/maps")}
     else
+      # Load character with associations
+      character =
+        try do
+          Shard.Repo.get!(Shard.Characters.Character, character.id)
+          |> Shard.Repo.preload([:character_inventories, :hotbar_slots])
+        rescue
+          _ -> character
+        end
+
       # Generate map data based on selected map
       map_data = generate_map_from_database(map_id)
 
@@ -50,7 +61,18 @@ defmodule ShardWeb.MudGameLive do
       # Store the map_id and character for later use
       map_id = map_id
 
-      # Initialize game state
+      # Initialize game state with character stats from database
+      # Calculate max values based on character attributes
+      base_health = 100
+      base_stamina = 100
+      base_mana = 50
+
+      # Calculate max stats based on character attributes
+      constitution = character.constitution || 10
+      max_health = base_health + (constitution - 10) * 5
+      max_stamina = base_stamina + (character.dexterity || 10) * 2
+      max_mana = base_mana + (character.intelligence || 10) * 3
+
       game_state = %{
         player_position: starting_position,
         map_data: map_data,
@@ -58,34 +80,24 @@ defmodule ShardWeb.MudGameLive do
         character: character,
         active_panel: nil,
         player_stats: %{
-          health: 100,
-          max_health: 100,
-          stamina: 100,
-          max_stamina: 100,
-          mana: 100,
-          max_mana: 100,
+          health: character.health || max_health,
+          max_health: max_health,
+          # Always start with full stamina
+          stamina: max_stamina,
+          max_stamina: max_stamina,
+          mana: character.mana || max_mana,
+          max_mana: max_mana,
           level: character.level || 1,
           experience: character.experience || 0,
-          next_level_exp: 1000,
-          strength: 15,
-          dexterity: 12,
-          intelligence: 10
+          next_level_exp: calculate_next_level_exp(character.level || 1),
+          strength: character.strength || 10,
+          dexterity: character.dexterity || 10,
+          intelligence: character.intelligence || 10,
+          constitution: constitution
         },
-        inventory_items: [
-          %{name: "Iron Sword", type: "weapon", damage: "1d8+3"},
-          %{name: "Health Potion", type: "consumable", effect: "Restores 50 HP"},
-          %{name: "Leather Armor", type: "armor", defense: 5},
-          %{name: "Torch", type: "utility"},
-          %{name: "Lockpick", type: "tool"}
-        ],
-        equipped_weapon: Shard.Weapons.Weapon.get_tutorial_start_weapons(),
-        hotbar: %{
-          slot_1: nil,
-          slot_2: %{name: "Iron Sword", type: "weapon"},
-          slot_3: nil,
-          slot_4: %{name: "Health Potion", type: "consumable"},
-          slot_5: nil
-        },
+        inventory_items: load_character_inventory(character),
+        equipped_weapon: load_equipped_weapon(character),
+        hotbar: load_character_hotbar(character),
         quests: [],
         # Stores quest offer waiting for acceptance/denial
         pending_quest_offer: nil,
@@ -277,6 +289,14 @@ defmodule ShardWeb.MudGameLive do
       # Process the command and get response and updated game state
       {response, updated_game_state} = process_command(trimmed_command, socket.assigns.game_state)
 
+      # Check if stats changed significantly and save to database
+      old_stats = socket.assigns.game_state.player_stats
+      new_stats = updated_game_state.player_stats
+
+      if stats_changed_significantly?(old_stats, new_stats) do
+        save_character_stats(updated_game_state.character, new_stats)
+      end
+
       # Add command and response to output
       new_output =
         socket.assigns.terminal_state.output ++
@@ -299,6 +319,65 @@ defmodule ShardWeb.MudGameLive do
   def handle_event("update_command", %{"command" => %{"text" => command_text}}, socket) do
     terminal_state = Map.put(socket.assigns.terminal_state, :current_command, command_text)
     {:noreply, assign(socket, terminal_state: terminal_state)}
+  end
+
+  def handle_event("save_character_stats", _params, socket) do
+    # Manually save character stats to database
+    case save_character_stats(
+           socket.assigns.game_state.character,
+           socket.assigns.game_state.player_stats
+         ) do
+      {:ok, _character} ->
+        socket = add_message(socket, "Character stats saved successfully.")
+        {:noreply, socket}
+
+      {:error, _error} ->
+        socket = add_message(socket, "Failed to save character stats.")
+        {:noreply, socket}
+    end
+  end
+
+  def handle_event("use_hotbar_item", %{"slot" => slot_number}, socket) do
+    slot_key = String.to_atom("slot_#{slot_number}")
+    item = Map.get(socket.assigns.game_state.hotbar, slot_key)
+
+    case item do
+      nil ->
+        socket = add_message(socket, "Hotbar slot #{slot_number} is empty.")
+        {:noreply, socket}
+
+      item ->
+        {response, updated_game_state} = use_item(socket.assigns.game_state, item)
+
+        # Add response to terminal
+        new_output = socket.assigns.terminal_state.output ++ response ++ [""]
+        terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+
+        {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+    end
+  end
+
+  def handle_event("equip_item", %{"item_id" => item_id}, socket) do
+    # Find item in inventory
+    item =
+      Enum.find(socket.assigns.game_state.inventory_items, fn inv_item ->
+        to_string(Map.get(inv_item, :id)) == item_id
+      end)
+
+    case item do
+      nil ->
+        socket = add_message(socket, "Item not found in inventory.")
+        {:noreply, socket}
+
+      item ->
+        {response, updated_game_state} = equip_item(socket.assigns.game_state, item)
+
+        # Add response to terminal
+        new_output = socket.assigns.terminal_state.output ++ response ++ [""]
+        terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+
+        {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+    end
   end
 
   # (C) Handle clicking an exit button to move rooms
@@ -353,17 +432,20 @@ defmodule ShardWeb.MudGameLive do
       |> add_message(msg)
       |> add_message("Area heal effect: #{xx} damage healed")
 
-    health = socket.assigns.game_state.player_stats.health
+    current_stats = socket.assigns.game_state.player_stats
+    max_health = current_stats.max_health
+    current_health = current_stats.health
 
-    if health < 100 do
-      st1 =
-        put_in(
-          socket.assigns.game_state,
-          [:player_stats, :health],
-          health + 5
-        )
+    if current_health < max_health do
+      new_health = min(current_health + xx, max_health)
 
-      {:noreply, assign(socket, :game_state, st1)}
+      updated_stats = %{current_stats | health: new_health}
+      updated_game_state = %{socket.assigns.game_state | player_stats: updated_stats}
+
+      # Save updated stats to database
+      save_character_stats(socket.assigns.game_state.character, updated_stats)
+
+      {:noreply, assign(socket, :game_state, updated_game_state)}
     else
       {:noreply, socket}
     end
