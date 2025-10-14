@@ -4,7 +4,13 @@ defmodule ShardWeb.TutorialLive.Terrain do
   alias Shard.Npcs.Npc
   import Ecto.Query
 
-  IO.puts("🚀 TutorialLive.Terrain module loaded!")
+  IO.puts("🚀🚀🚀 TutorialLive.Terrain module loaded! 🚀🚀🚀")
+
+  # Add a simple function to test if this module is accessible
+  def test_module do
+    IO.puts("📞 TutorialLive.Terrain.test_module called!")
+    Shard.Items.create_tutorial_key()
+  end
 
   # Constant terrain map (compile-time)
   @tutorial_terrain_map [
