@@ -52,6 +52,11 @@ defmodule ShardWeb.UserLive.Commands1 do
       "look" ->
         {x, y} = game_state.player_position
 
+        # Ensure tutorial key exists if we're in tutorial terrain
+        if game_state.map_id == "tutorial_terrain" do
+          Shard.Items.create_tutorial_key()
+        end
+
         # Get room from database
         room = GameMap.get_room_by_coordinates(x, y)
         # Build room description - always use predetermined descriptions for tutorial terrain
