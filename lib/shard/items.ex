@@ -361,44 +361,53 @@ defmodule Shard.Items do
   def create_dungeon_door do
     alias Shard.Map
 
-    # Check if rooms exist first, create them if they don't
-    from_room = Map.get_room_by_coordinates(2, 2, 0) || create_room_if_missing(2, 2, 0, "Entrance Hall")
-    to_room = Map.get_room_by_coordinates(2, 1, 0) || create_room_if_missing(2, 1, 0, "Dungeon Entrance")
+    # Ensure rooms exist first, create them if they don't
+    {:ok, from_room} = ensure_room_exists(2, 2, 0, "Entrance Hall")
+    {:ok, to_room} = ensure_room_exists(2, 1, 0, "Dungeon Entrance")
 
     # Check if the locked door already exists
     existing_door = Map.get_door_in_direction(from_room.id, "north")
 
     if is_nil(existing_door) do
       # Create the locked door from (2,2) to (2,1) going north
-      Map.create_door(%{
+      case Map.create_door(%{
         from_room_id: from_room.id,
         to_room_id: to_room.id,
         direction: "north",
         door_type: "locked_gate",
         is_locked: true,
         key_required: "Tutorial Key",
-        new_dungeon: true,
         name: "Locked Dungeon Gate",
         description: "A heavy iron gate that blocks the entrance to the dungeon. It requires a key to open."
-      })
+      }) do
+        {:ok, door} -> {:ok, door}
+        {:error, reason} -> {:error, "Failed to create dungeon door: #{inspect(reason)}"}
+      end
     else
       {:ok, existing_door}
     end
   end
 
-  defp create_room_if_missing(x, y, z, name) do
-    case Shard.Map.create_room(%{
-      name: name,
-      description: "A room at coordinates (#{x}, #{y}, #{z})",
-      x_coordinate: x,
-      y_coordinate: y,
-      z_coordinate: z,
-      room_type: "standard"
-    }) do
-      {:ok, room} -> room
-      {:error, _changeset} -> 
-        # Room might already exist, try to get it again
-        Shard.Map.get_room_by_coordinates(x, y, z)
+  defp ensure_room_exists(x, y, z, name) do
+    case Shard.Map.get_room_by_coordinates(x, y, z) do
+      nil ->
+        # Room doesn't exist, create it
+        case Shard.Map.create_room(%{
+          name: name,
+          description: "A room at coordinates (#{x}, #{y}, #{z})",
+          x_coordinate: x,
+          y_coordinate: y,
+          z_coordinate: z,
+          room_type: "standard",
+          is_public: true
+        }) do
+          {:ok, room} -> {:ok, room}
+          {:error, changeset} -> {:error, "Failed to create room: #{inspect(changeset.errors)}"}
+        end
+      
+      room ->
+        # Room already exists
+        {:ok, room}
     end
   end
 end
