@@ -96,8 +96,8 @@ defmodule ShardWeb.AdminLive.MapHandlersMapTest do
         })
 
       # Verify we have data before deletion
-      assert length(Shard.Map.list_rooms()) > 0
-      assert length(Shard.Map.list_doors()) > 0
+      assert Shard.Map.list_rooms() != []
+      assert Shard.Map.list_doors() != []
 
       socket = create_socket(%{rooms: [room1, room2], doors: []})
 
@@ -106,12 +106,12 @@ defmodule ShardWeb.AdminLive.MapHandlersMapTest do
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) ==
                "All map data deleted successfully!"
 
-      assert length(updated_socket.assigns.rooms) == 0
-      assert length(updated_socket.assigns.doors) == 0
+      assert updated_socket.assigns.rooms == []
+      assert updated_socket.assigns.doors == []
 
       # Verify database is empty
-      assert length(Shard.Map.list_rooms()) == 0
-      assert length(Shard.Map.list_doors()) == 0
+      assert Shard.Map.list_rooms() == []
+      assert Shard.Map.list_doors() == []
     end
   end
 end

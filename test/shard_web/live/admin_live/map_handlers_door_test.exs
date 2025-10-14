@@ -137,7 +137,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Door deleted successfully"
       # After deleting one door, both the door and its return door are deleted
-      assert length(updated_socket.assigns.doors) == 0
+      assert updated_socket.assigns.doors == []
     end
   end
 
@@ -188,7 +188,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Door created successfully"
       # Should have at least 1 door (created door + automatic return door)
-      assert length(updated_socket.assigns.doors) >= 1
+      assert updated_socket.assigns.doors != []
       assert updated_socket.assigns.editing == nil
       assert updated_socket.assigns.changeset == nil
     end
