@@ -27,13 +27,13 @@ defmodule ShardWeb.TutorialLive.Terrain do
     IO.inspect(params, label: "Mount params")
     IO.inspect(session, label: "Mount session")
     IO.inspect(self(), label: "Process PID")
-    
+
     # Automatically create tutorial key when entering tutorial terrain
     IO.puts("🔑 About to call create_tutorial_key...")
-    
+
     result = Shard.Items.create_tutorial_key()
     IO.puts("🔑 create_tutorial_key returned: #{inspect(result)}")
-    
+
     case result do
       {:ok, _result} ->
         IO.puts("✅ Tutorial key created successfully")
