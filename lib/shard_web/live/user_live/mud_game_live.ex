@@ -59,8 +59,10 @@ defmodule ShardWeb.MudGameLive do
         case Shard.Items.create_tutorial_key() do
           {:ok, _result} ->
             IO.puts("✅ Tutorial key created successfully for tutorial terrain")
+
           {:error, reason} ->
             IO.puts("❌ Failed to create tutorial key: #{inspect(reason)}")
+
           other ->
             IO.puts("⚠️ Unexpected result from create_tutorial_key: #{inspect(other)}")
         end
