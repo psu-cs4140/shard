@@ -2,14 +2,20 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
   use ShardWeb.ConnCase, async: true
   alias ShardWeb.AdminLive.MapHandlers
   alias Shard.Map
+  alias Phoenix.LiveView.Socket
+
+  defp create_socket(assigns \\ %{}) do
+    %Socket{
+      assigns: Map.merge(%{
+        __changed__: %{},
+        flash: %{}
+      }, assigns)
+    }
+  end
 
   describe "handle_change_tab/2" do
     test "changes the tab correctly" do
-      socket = %Phoenix.LiveView.Socket{
-        assigns: %{
-          tab: "rooms"
-        }
-      }
+      socket = create_socket(%{tab: "rooms"})
 
       params = %{"tab" => "doors"}
       {:noreply, updated_socket} = MapHandlers.handle_change_tab(params, socket)
@@ -19,12 +25,7 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
 
   describe "handle_new_room/2" do
     test "sets up a new room form" do
-      socket = %Phoenix.LiveView.Socket{
-        assigns: %{
-          editing: nil,
-          changeset: nil
-        }
-      }
+      socket = create_socket(%{editing: nil, changeset: nil})
 
       {:noreply, updated_socket} = MapHandlers.handle_new_room(%{}, socket)
       assert updated_socket.assigns.editing == :room
@@ -50,12 +51,7 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
     end
 
     test "sets up an existing room for editing", %{room: room} do
-      socket = %Phoenix.LiveView.Socket{
-        assigns: %{
-          editing: nil,
-          changeset: nil
-        }
-      }
+      socket = create_socket(%{editing: nil, changeset: nil})
 
       params = %{"id" => to_string(room.id)}
       {:noreply, updated_socket} = MapHandlers.handle_edit_room(params, socket)
@@ -82,28 +78,21 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
     end
 
     test "deletes a room successfully", %{room: room} do
-      socket = %Phoenix.LiveView.Socket{
-        assigns: %{
-          rooms: [room],
-          doors: []
-        }
-      }
+      socket = create_socket(%{
+        rooms: [room],
+        doors: []
+      })
 
       params = %{"id" => to_string(room.id)}
       {:noreply, updated_socket} = MapHandlers.handle_delete_room(params, socket)
-      assert get_flash(updated_socket, :info) == "Room deleted successfully"
+      assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Room deleted successfully"
       assert Enum.empty?(updated_socket.assigns.rooms)
     end
   end
 
   describe "handle_new_door/2" do
     test "sets up a new door form" do
-      socket = %Phoenix.LiveView.Socket{
-        assigns: %{
-          editing: nil,
-          changeset: nil
-        }
-      }
+      socket = create_socket(%{editing: nil, changeset: nil})
 
       {:noreply, updated_socket} = MapHandlers.handle_new_door(%{}, socket)
       assert updated_socket.assigns.editing == :door
@@ -147,12 +136,7 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
     end
 
     test "sets up an existing door for editing", %{door: door} do
-      socket = %Phoenix.LiveView.Socket{
-        assigns: %{
-          editing: nil,
-          changeset: nil
-        }
-      }
+      socket = create_socket(%{editing: nil, changeset: nil})
 
       params = %{"id" => to_string(door.id)}
       {:noreply, updated_socket} = MapHandlers.handle_edit_door(params, socket)
@@ -197,51 +181,39 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
     end
 
     test "deletes a door successfully", %{door: door, room1: room1, room2: room2} do
-      socket = %Phoenix.LiveView.Socket{
-        assigns: %{
-          rooms: [room1, room2],
-          doors: [door]
-        }
-      }
+      socket = create_socket(%{
+        rooms: [room1, room2],
+        doors: [door]
+      })
 
       params = %{"id" => to_string(door.id)}
       {:noreply, updated_socket} = MapHandlers.handle_delete_door(params, socket)
-      assert get_flash(updated_socket, :info) == "Door deleted successfully"
+      assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Door deleted successfully"
       assert Enum.empty?(updated_socket.assigns.doors)
     end
   end
 
   describe "map interaction handlers" do
     test "handle_zoom_in/2 increases zoom level" do
-      socket = %Phoenix.LiveView.Socket{
-        assigns: %{
-          zoom: 1.0
-        }
-      }
+      socket = create_socket(%{zoom: 1.0})
 
       {:noreply, updated_socket} = MapHandlers.handle_zoom_in(%{}, socket)
       assert updated_socket.assigns.zoom == 1.2
     end
 
     test "handle_zoom_out/2 decreases zoom level" do
-      socket = %Phoenix.LiveView.Socket{
-        assigns: %{
-          zoom: 1.0
-        }
-      }
+      socket = create_socket(%{zoom: 1.0})
 
       {:noreply, updated_socket} = MapHandlers.handle_zoom_out(%{}, socket)
       assert updated_socket.assigns.zoom == 1.0 / 1.2
     end
 
     test "handle_reset_view/2 resets zoom and pan" do
-      socket = %Phoenix.LiveView.Socket{
-        assigns: %{
-          zoom: 2.0,
-          pan_x: 100,
-          pan_y: 50
-        }
-      }
+      socket = create_socket(%{
+        zoom: 2.0,
+        pan_x: 100,
+        pan_y: 50
+      })
 
       {:noreply, updated_socket} = MapHandlers.handle_reset_view(%{}, socket)
       assert updated_socket.assigns.zoom == 1.0
