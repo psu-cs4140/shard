@@ -4,7 +4,7 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
   alias Phoenix.LiveView.Socket
 
   # Helper function to create a socket with required assigns
-  defp create_socket(assigns \\ %{}) do
+  defp create_socket(assigns) do
     default_assigns = %{
       tab: "rooms",
       rooms: [],
@@ -16,10 +16,11 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
       pan_x: 0,
       pan_y: 0,
       drag_start: nil,
-      flash: %{}
+      flash: %{},
+      __changed__: %{}
     }
 
-    merged_assigns = Map.merge(default_assigns, assigns)
+    merged_assigns = :maps.merge(default_assigns, assigns)
     
     # Create socket with proper assigns
     %Socket{
@@ -332,15 +333,21 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
         })
 
       # Mock the AI module to return a successful response
-      Mox.defmock(Shard.AIMock, for: Shard.AI)
-      Application.put_env(:shard, :ai_module, Shard.AIMock)
-
-      Shard.AIMock
-      |> Mox.expect(:generate_room_description, fn _zone_desc, _surrounding_rooms ->
-        {:ok, "A beautifully generated description"}
-      end)
+      # Since Shard.AI is not a behaviour, we'll use a different approach
+      original_ai_module = Application.get_env(:shard, :ai_module, Shard.AI)
+      Application.put_env(:shard, :ai_module, TestAIStub)
+      
+      # Define a test stub module
+      defmodule TestAIStub do
+        def generate_room_description(_zone_desc, _surrounding_rooms) do
+          {:ok, "A beautifully generated description"}
+        end
+      end
 
       {:noreply, updated_socket} = MapHandlers.handle_generate_description(%{}, socket)
+      
+      # Restore original AI module
+      Application.put_env(:shard, :ai_module, original_ai_module)
 
       assert updated_socket.assigns.changeset.changes.description ==
                "A beautifully generated description"
@@ -368,15 +375,21 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
         })
 
       # Mock the AI module to return an error
-      Mox.defmock(Shard.AIMock, for: Shard.AI)
-      Application.put_env(:shard, :ai_module, Shard.AIMock)
-
-      Shard.AIMock
-      |> Mox.expect(:generate_room_description, fn _zone_desc, _surrounding_rooms ->
-        {:error, "AI service unavailable"}
-      end)
+      # Since Shard.AI is not a behaviour, we'll use a different approach
+      original_ai_module = Application.get_env(:shard, :ai_module, Shard.AI)
+      Application.put_env(:shard, :ai_module, TestAIErrorStub)
+      
+      # Define a test stub module that returns an error
+      defmodule TestAIErrorStub do
+        def generate_room_description(_zone_desc, _surrounding_rooms) do
+          {:error, "AI service unavailable"}
+        end
+      end
 
       {:noreply, updated_socket} = MapHandlers.handle_generate_description(%{}, socket)
+      
+      # Restore original AI module
+      Application.put_env(:shard, :ai_module, original_ai_module)
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :error) ==
                "Failed to generate description: AI service unavailable"

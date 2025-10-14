@@ -1,6 +1,5 @@
 defmodule ShardWeb.AdminLive.MapComponentsTest do
   use ShardWeb.ConnCase, async: true
-  import Phoenix.Component
   import Phoenix.LiveViewTest
   alias ShardWeb.AdminLive.MapComponents
 

@@ -5,16 +5,17 @@ defmodule ShardWeb.AdminLive.MapFunctionsDoorTest do
   alias Phoenix.LiveView.Socket
 
   # Helper function to create a socket with required assigns
-  defp create_socket(assigns \\ %{}) do
+  defp create_socket(assigns) do
     default_assigns = %{
       rooms: [],
       doors: [],
       editing: nil,
       changeset: nil,
-      flash: %{}
+      flash: %{},
+      __changed__: %{}
     }
 
-    merged_assigns = Map.merge(default_assigns, assigns)
+    merged_assigns = :maps.merge(default_assigns, assigns)
     
     # Create socket with proper assigns
     %Socket{

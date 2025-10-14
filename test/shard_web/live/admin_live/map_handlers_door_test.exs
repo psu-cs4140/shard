@@ -4,7 +4,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
   alias Phoenix.LiveView.Socket
 
   # Helper function to create a socket with required assigns
-  defp create_socket(assigns \\ %{}) do
+  defp create_socket(assigns) do
     default_assigns = %{
       tab: "rooms",
       rooms: [],
@@ -16,10 +16,11 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
       pan_x: 0,
       pan_y: 0,
       drag_start: nil,
-      flash: %{}
+      flash: %{},
+      __changed__: %{}
     }
 
-    merged_assigns = Map.merge(default_assigns, assigns)
+    merged_assigns = :maps.merge(default_assigns, assigns)
     
     # Create socket with proper assigns
     %Socket{
@@ -111,12 +112,12 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
           is_public: true
         })
 
-      # Create a door to delete
+      # Create a door to delete - use unique direction
       {:ok, door} =
         Shard.Map.create_door(%{
           from_room_id: room1.id,
           to_room_id: room2.id,
-          direction: "east",
+          direction: "north",
           door_type: "standard",
           is_locked: false
         })
@@ -126,7 +127,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
         Shard.Map.create_door(%{
           from_room_id: room2.id,
           to_room_id: room1.id,
-          direction: "west",
+          direction: "south",
           door_type: "standard",
           is_locked: false
         })

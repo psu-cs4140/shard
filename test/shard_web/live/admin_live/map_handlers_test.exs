@@ -15,10 +15,11 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       pan_x: 0,
       pan_y: 0,
       drag_start: nil,
-      flash: %{}
+      flash: %{},
+      __changed__: %{}
     }
 
-    merged_assigns = Map.merge(default_assigns, assigns)
+    merged_assigns = :maps.merge(default_assigns, assigns)
     
     # Create socket with proper assigns
     %Socket{
