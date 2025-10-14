@@ -180,14 +180,25 @@ defmodule Shard.Characters do
     end
   end
 
-  defp calculate_stat_increases(level_difference) do
+  defp calculate_stat_increases(0) do
+    %{
+      health: 0,
+      mana: 0,
+      strength: 0,
+      dexterity: 0,
+      intelligence: 0,
+      constitution: 0
+    }
+  end
+
+  defp calculate_stat_increases(level_difference) when level_difference > 0 do
     %{
       health: level_difference * 10,
       mana: level_difference * 5,
-      strength: level_difference * 1,
-      dexterity: level_difference * 1,
-      intelligence: level_difference * 1,
-      constitution: level_difference * 1
+      strength: level_difference,
+      dexterity: level_difference,
+      intelligence: level_difference,
+      constitution: level_difference
     }
   end
 
