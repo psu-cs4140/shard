@@ -15,7 +15,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
   ]
 
   @impl true
-  def mount(params, session, socket) do
+  def mount(_params, _session, socket) do
     # Automatically create tutorial key when entering tutorial terrain
     _result = Shard.Items.create_tutorial_key()
 
