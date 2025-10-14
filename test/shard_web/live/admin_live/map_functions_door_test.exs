@@ -55,13 +55,13 @@ defmodule ShardWeb.AdminLive.MapFunctionsDoorTest do
           doors: []
         })
 
-      # Use integer IDs and atom keys to match what the function expects after conversion
+      # Use string IDs to match form submission format (like the UI sends)
       door_params = %{
-        "from_room_id" => room1.id,
-        "to_room_id" => room2.id,
+        "from_room_id" => "#{room1.id}",
+        "to_room_id" => "#{room2.id}",
         "direction" => "east",
         "door_type" => "standard",
-        "is_locked" => false
+        "is_locked" => "false"
       }
 
       assert {:ok, updated_socket} = MapFunctions.save_door(socket, door_params)
@@ -116,15 +116,15 @@ defmodule ShardWeb.AdminLive.MapFunctionsDoorTest do
           doors: [door]
         })
 
-      # Use integer IDs and atom keys to match what the function expects after conversion
+      # Use string IDs to match form submission format (like the UI sends)
       door_params = %{
-        "id" => door.id,
-        "from_room_id" => room1.id,
-        "to_room_id" => room2.id,
+        "id" => "#{door.id}",
+        "from_room_id" => "#{room1.id}",
+        "to_room_id" => "#{room2.id}",
         # Changed direction to avoid constraint issues
         "direction" => "west",
         "door_type" => "standard",
-        "is_locked" => true
+        "is_locked" => "true"
       }
 
       assert {:ok, updated_socket} = MapFunctions.save_door(socket, door_params)

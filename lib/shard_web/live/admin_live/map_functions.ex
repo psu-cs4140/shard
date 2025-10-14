@@ -100,7 +100,7 @@ defmodule ShardWeb.AdminLive.MapFunctions do
   defp put_param(acc, params, key, converter \\ fn x -> x end) do
     case :maps.get(key, params, nil) do
       nil -> acc
-      value -> :maps.put(key, converter.(value), acc)
+      value -> :maps.put(String.to_atom(key), converter.(value), acc)
     end
   end
 
