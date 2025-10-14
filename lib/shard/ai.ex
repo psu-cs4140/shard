@@ -9,8 +9,6 @@ defmodule Shard.AI do
 
     # Check if the API key is missing
     if is_nil(api_key) do
-      # Log a warning instead of crashing
-      Logger.warning("OPENROUTER_API_KEY not set. Bypassing AI call for tests.")
       # Return a successful dummy response
       {:ok, "A test room description generated without an API call."}
     else
@@ -22,7 +20,11 @@ defmodule Shard.AI do
       #{zone_description}
 
       Surrounding Rooms:
-      #{Enum.map_join(surrounding_rooms, "\n", &"- #{&1.name}: #{&1.description}")}
+      #{if surrounding_rooms && !Enum.empty?(surrounding_rooms) do
+        Enum.map_join(surrounding_rooms, "\n", &"- #{&1.name}: #{&1.description}")
+      else
+        "None"
+      end}
 
       Based on the above information, generate a creative and descriptive text for the room.
       """

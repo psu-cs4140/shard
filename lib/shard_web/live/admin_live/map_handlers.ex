@@ -11,6 +11,7 @@ defmodule ShardWeb.AdminLive.MapHandlers do
   import Phoenix.Component, only: [assign: 3]
   import Phoenix.LiveView, only: [put_flash: 3]
   import ShardWeb.AdminLive.MapFunctions
+  import Ecto.Query
 
   def handle_change_tab(%{"tab" => tab}, socket) do
     {:noreply, assign(socket, :tab, tab)}
@@ -30,8 +31,8 @@ defmodule ShardWeb.AdminLive.MapHandlers do
 
   def handle_view_room(%{"id" => id}, socket) do
     room = Map.get_room!(id)
-    doors_from = Map.get_doors_from_room(room.id) |> Repo.preload(:to_room)
-    doors_to = Map.get_doors_to_room(room.id) |> Repo.preload(:from_room)
+    doors_from = get_doors_from_room(room.id) |> Repo.all() |> Repo.preload(:to_room)
+    doors_to = get_doors_to_room(room.id) |> Repo.all() |> Repo.preload(:from_room)
 
     {:noreply,
      socket
@@ -95,14 +96,9 @@ defmodule ShardWeb.AdminLive.MapHandlers do
   def handle_generate_description(_params, socket) do
     zone_description = "A dark and mysterious forest."
 
-    surrounding_rooms =
-      if room = socket.assigns.viewing do
-        Map.get_adjacent_rooms(room.id)
-      else
-        []
-      end
+    adjacent_rooms = get_adjacent_rooms_for_ai(socket.assigns.viewing)
 
-    case AI.generate_room_description(zone_description, surrounding_rooms) do
+    case AI.generate_room_description(zone_description, adjacent_rooms) do
       {:ok, description} ->
         changeset =
           Ecto.Changeset.put_change(socket.assigns.changeset, :description, description)
@@ -215,6 +211,28 @@ defmodule ShardWeb.AdminLive.MapHandlers do
 
   def handle_mouseleave(_params, socket) do
     {:noreply, assign(socket, :drag_start, nil)}
+  end
+
+  # Helper functions
+  defp get_doors_from_room(room_id) do
+    from d in Door,
+      where: d.from_room_id == ^room_id
+  end
+
+  defp get_doors_to_room(room_id) do
+    from d in Door,
+      where: d.to_room_id == ^room_id
+  end
+
+  defp get_adjacent_rooms_for_ai(nil), do: []
+
+  defp get_adjacent_rooms_for_ai(room) do
+    # Get rooms connected by doors from this room
+    doors_from = get_doors_from_room(room.id) |> Repo.all() |> Repo.preload(:to_room)
+    doors_to = get_doors_to_room(room.id) |> Repo.all() |> Repo.preload(:from_room)
+
+    adjacent_rooms = Enum.map(doors_from, & &1.to_room) ++ Enum.map(doors_to, & &1.from_room)
+    Enum.uniq_by(adjacent_rooms, & &1.id)
   end
 
   # Generate default map

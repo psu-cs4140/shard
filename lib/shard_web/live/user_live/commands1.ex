@@ -5,6 +5,9 @@ defmodule ShardWeb.UserLive.Commands1 do
   import ShardWeb.UserLive.Movement
   import ShardWeb.UserLive.Commands2
   alias Shard.Map, as: GameMap
+  alias Shard.Items.Item
+  alias Shard.Repo
+  import Ecto.Query
 
   # Process terminal commands
   def process_command(command, game_state) do
@@ -143,34 +146,59 @@ defmodule ShardWeb.UserLive.Commands1 do
         # Check for NPCs at current location
         npcs_here = get_npcs_at_location(x, y, game_state.map_id)
 
+        # Check for items at current location
+        items_here = get_items_at_location(x, y, game_state.map_id)
+
         description_lines = [room_description]
 
         # Add NPC descriptions if any are present
-        if length(npcs_here) > 0 do
-          # Empty line for spacing
-          description_lines = description_lines ++ [""]
+        description_lines =
+          if length(npcs_here) > 0 do
+            # Empty line for spacing
+            updated_lines = description_lines ++ [""]
 
-          # Add each NPC with their description
-          npc_descriptions =
-            Enum.map(npcs_here, fn npc ->
-              npc_name = Map.get(npc, :name) || "Unknown NPC"
-              npc_desc = Map.get(npc, :description) || "They look at you with interest."
-              "#{npc_name} is here.\n#{npc_desc}"
-            end)
+            # Add each NPC with their description
+            npc_descriptions =
+              Enum.map(npcs_here, fn npc ->
+                npc_name = Map.get(npc, :name) || "Unknown NPC"
+                npc_desc = Map.get(npc, :description) || "They look at you with interest."
+                "#{npc_name} is here.\n#{npc_desc}"
+              end)
 
-          _ = description_lines ++ npc_descriptions
-        end
+            updated_lines ++ npc_descriptions
+          else
+            description_lines
+          end
+
+        # Add item descriptions if any are present
+        description_lines =
+          if length(items_here) > 0 do
+            # Empty line for spacing
+            updated_lines = description_lines ++ [""]
+
+            # Add each item with their description
+            item_descriptions =
+              Enum.map(items_here, fn item ->
+                item_name = Map.get(item, :name) || "Unknown Item"
+                "You see a #{item_name} on ground"
+              end)
+
+            updated_lines ++ item_descriptions
+          else
+            description_lines
+          end
 
         # Add available exits information
         exits = get_available_exits(x, y, room)
 
-        if length(exits) > 0 do
-          description_lines = description_lines ++ [""]
-          exit_text = "Exits: " <> Enum.join(exits, ", ")
-          _ = description_lines ++ [exit_text]
-        else
-          _ = description_lines ++ ["", "There are no obvious exits."]
-        end
+        description_lines =
+          if length(exits) > 0 do
+            updated_lines = description_lines ++ [""]
+            exit_text = "Exits: " <> Enum.join(exits, ", ")
+            updated_lines ++ [exit_text]
+          else
+            description_lines ++ ["", "There are no obvious exits."]
+          end
 
         # To see if there are monsters
         monsters =
@@ -187,17 +215,27 @@ defmodule ShardWeb.UserLive.Commands1 do
                 [""]
 
               1 ->
-                ["", "There is a " <> Enum.at(monsters, 0)[:name] <> "."]
+                monster = Enum.at(monsters, 0)
+
+                monster_desc =
+                  if monster[:description] && monster[:description] != "",
+                    do: "\n" <> monster[:description],
+                    else: ""
+
+                ["", "There is a " <> monster[:name] <> " here." <> monster_desc]
 
               _ ->
+                monster_descriptions =
+                  Enum.map_join(monsters, ", ", fn monster ->
+                    "a " <> to_string(monster[:name])
+                  end)
+
                 [
                   "",
                   "There are " <>
                     to_string(monster_count) <>
                     " monsters! The monsters include " <>
-                    Enum.map_join(monsters, ", ", fn monster ->
-                      "a " <> to_string(monster[:name])
-                    end) <> "."
+                    monster_descriptions <> "."
                 ]
             end
 
@@ -295,6 +333,48 @@ defmodule ShardWeb.UserLive.Commands1 do
             end
         end
     end
+  end
+
+  # Get items at a specific location
+  defp get_items_at_location(x, y, map_id) do
+    alias Shard.Items.RoomItem
+    location_string = "#{x},#{y},0"
+
+    # Get items from RoomItem table (items placed in world)
+    room_items =
+      from(ri in RoomItem,
+        where: ri.location == ^location_string,
+        join: i in Item,
+        on: ri.item_id == i.id,
+        where: is_nil(i.is_active) or i.is_active == true,
+        select: %{
+          name: i.name,
+          description: i.description,
+          item_type: i.item_type,
+          quantity: ri.quantity
+        }
+      )
+      |> Repo.all()
+
+    # Also check for items directly in Item table with matching location and map
+    direct_items =
+      from(i in Item,
+        where:
+          i.location == ^location_string and
+            (i.map == ^map_id or is_nil(i.map)) and
+            (is_nil(i.is_active) or i.is_active == true),
+        select: %{
+          name: i.name,
+          description: i.description,
+          item_type: i.item_type,
+          quantity: 1
+        }
+      )
+      |> Repo.all()
+
+    # Combine both results and remove duplicates based on name
+    all_items = room_items ++ direct_items
+    all_items |> Enum.uniq_by(& &1.name)
   end
 
   # Parse talk command to extract NPC name

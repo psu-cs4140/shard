@@ -8,6 +8,7 @@ defmodule ShardWeb.AdminLive.Map do
   alias Shard.Map
   alias ShardWeb.AdminLive.{MapHandlers, MapComponents}
   import MapComponents
+  import ShardWeb.Layouts, only: [flash_group: 1]
 
   @impl true
   def mount(_params, _session, socket) do
@@ -46,6 +47,8 @@ defmodule ShardWeb.AdminLive.Map do
       Map Management
       <:subtitle>View and manage the game map</:subtitle>
     </.header>
+
+    <.flash_group flash={@flash} />
 
     <div class="mt-8">
       <div class="flex justify-between items-center mb-4">
