@@ -213,6 +213,7 @@ defmodule ShardWeb.UserLive.MapHelpers do
       case Shard.Map.get_room_by_coordinates(x, y) do
         nil ->
           []
+
         room ->
           # Get monsters in this room
           Shard.Monsters.get_monsters_by_location(room.id)

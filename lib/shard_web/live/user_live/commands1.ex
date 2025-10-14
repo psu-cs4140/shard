@@ -188,15 +188,20 @@ defmodule ShardWeb.UserLive.Commands1 do
 
               1 ->
                 monster = Enum.at(monsters, 0)
-                monster_desc = if monster[:description] && monster[:description] != "", 
-                  do: "\n" <> monster[:description], 
-                  else: ""
+
+                monster_desc =
+                  if monster[:description] && monster[:description] != "",
+                    do: "\n" <> monster[:description],
+                    else: ""
+
                 ["", "There is a " <> monster[:name] <> " here." <> monster_desc]
 
               _ ->
-                monster_descriptions = Enum.map_join(monsters, ", ", fn monster ->
-                  "a " <> to_string(monster[:name])
-                end)
+                monster_descriptions =
+                  Enum.map_join(monsters, ", ", fn monster ->
+                    "a " <> to_string(monster[:name])
+                  end)
+
                 [
                   "",
                   "There are " <>
