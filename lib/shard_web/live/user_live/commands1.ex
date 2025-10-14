@@ -1,4 +1,5 @@
 defmodule ShardWeb.UserLive.Commands1 do
+  @moduledoc false
   import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.Movement
   import ShardWeb.UserLive.QuestHandlers
@@ -393,5 +394,161 @@ defmodule ShardWeb.UserLive.Commands1 do
     # Combine both results and remove duplicates based on name
     all_items = room_items ++ direct_items
     all_items |> Enum.uniq_by(& &1.name)
+  end
+
+  # Parse talk command to extract NPC name
+  def parse_talk_command(command) do
+    # Match patterns like: talk "npc name", talk 'npc name', talk npc_name
+    cond do
+      # Match talk "npc name" or talk 'npc name'
+      Regex.match?(~r/^talk\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^talk\s+["'](.+)["']\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+
+      # Match talk npc_name (single word, no quotes)
+      Regex.match?(~r/^talk\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^talk\s+(\w+)\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
+    end
+  end
+
+  # Parse quest command to extract NPC name
+  def parse_quest_command(command) do
+    # Match patterns like: quest "npc name", quest 'npc name', quest npc_name
+    cond do
+      # Match quest "npc name" or quest 'npc name'
+      Regex.match?(~r/^quest\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^quest\s+["'](.+)["']\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+
+      # Match quest npc_name (single word, no quotes)
+      Regex.match?(~r/^quest\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^quest\s+(\w+)\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
+    end
+  end
+
+  # Parse deliver_quest command to extract NPC name
+  def parse_deliver_quest_command(command) do
+    # Match patterns like: deliver_quest "npc name", deliver_quest 'npc name', deliver_quest npc_name
+    cond do
+      # Match deliver_quest "npc name" or deliver_quest 'npc name'
+      Regex.match?(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+
+      # Match deliver_quest npc_name (single word, no quotes)
+      Regex.match?(~r/^deliver_quest\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^deliver_quest\s+(\w+)\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
+    end
+  end
+
+  # Parse pickup command to extract item name
+  def parse_pickup_command(command) do
+    # Match patterns like: pickup "item name", pickup 'item name', pickup item_name
+    cond do
+      # Match pickup "item name" or pickup 'item name'
+      Regex.match?(~r/^pickup\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^pickup\s+["'](.+)["']\s*$/i, command) do
+          [_, item_name] -> {:ok, String.trim(item_name)}
+          _ -> :error
+        end
+
+      # Match pickup item_name (single word, no quotes)
+      Regex.match?(~r/^pickup\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^pickup\s+(\w+)\s*$/i, command) do
+          [_, item_name] -> {:ok, String.trim(item_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
+    end
+  end
+
+  # Execute pickup command with a specific item name
+  def execute_pickup_command(game_state, item_name) do
+    {x, y} = game_state.player_position
+    items_here = get_items_at_location(x, y, game_state.map_id)
+
+    # Find the item by name (case-insensitive)
+    target_item =
+      Enum.find(items_here, fn item ->
+        String.downcase(item.name || "") == String.downcase(item_name)
+      end)
+
+    case target_item do
+      nil ->
+        if length(items_here) > 0 do
+          # credo:disable-for-next-line Credo.Check.Refactor.EnumMapJoin
+          available_names = Enum.map(items_here, & &1.name) |> Enum.join(", ")
+
+          response = [
+            "There is no item named '#{item_name}' here.",
+            "Available items: #{available_names}"
+          ]
+
+          {response, game_state}
+        else
+          {["There are no items here to pick up."], game_state}
+        end
+
+      item ->
+        # Check if item can be picked up (assuming all items can be picked up for now)
+        # In the future, you might want to add a "pickupable" field to items
+
+        # Add item to player's inventory
+        updated_inventory = [
+          %{
+            id: item[:id],
+            name: item.name,
+            type: item.item_type || "misc",
+            quantity: item.quantity || 1,
+            damage: item[:damage],
+            defense: item[:defense],
+            effect: item[:effect],
+            description: item[:description]
+          }
+          | game_state.inventory_items
+        ]
+
+        # Remove item from the room (this would need database implementation)
+        # For now, we'll just update the game state
+
+        response = [
+          "You pick up #{item.name}.",
+          "#{item.name} has been added to your inventory."
+        ]
+
+        updated_game_state = %{game_state | inventory_items: updated_inventory}
+
+        # NOTE: Remove item from database room/location
+        # This would require calling something like:
+        # Shard.Items.remove_item_from_location(item.id, "#{x},#{y},0")
+
+        {response, updated_game_state}
+    end
   end
 end
