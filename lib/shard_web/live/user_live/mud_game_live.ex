@@ -9,6 +9,7 @@ defmodule ShardWeb.MudGameLive do
   import ShardWeb.UserLive.Commands1
   import ShardWeb.UserLive.MapComponents
   import ShardWeb.UserLive.LegacyMap
+  import ShardWeb.UserLive.MonsterComponents
   import ShardWeb.UserLive.CharacterHelpers
   import ShardWeb.UserLive.ItemHelpers
 
@@ -101,24 +102,8 @@ defmodule ShardWeb.MudGameLive do
         # Stores quest offer waiting for acceptance/denial
         pending_quest_offer: nil,
 
-        # Will pull from db once that is created.
-        monsters: [
-          %{
-            monster_id: 1,
-            name: "Goblin",
-            level: 1,
-            attack: 10,
-            defense: 0,
-            speed: 5,
-            xp_reward: 5,
-            gold_reward: 2,
-            boss: false,
-            hp: 30,
-            hp_max: 30,
-            position: {2, 0}
-            # position: find_valid_monster_position(map_data, starting_position)
-          }
-        ],
+        # Load monsters from database
+        monsters: load_monsters_from_database(map_id, starting_position),
         combat: false
       }
 
