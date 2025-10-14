@@ -1,10 +1,6 @@
 defmodule ShardWeb.UserLive.Commands2 do
   import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.QuestHandlers
-  alias Shard.Items.Item
-  alias Shard.Items.RoomItem
-  alias Shard.Repo
-  import Ecto.Query
 
   # Execute talk command with a specific NPC
   def execute_talk_command(game_state, npc_name) do
