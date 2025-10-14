@@ -61,6 +61,9 @@ defmodule ShardWeb.AdminLive.MapComponents do
   end
 
   def doors_tab(assigns) do
+    # Sort doors so that each door is next to its return door
+    sorted_doors = sort_doors_with_returns(@doors, @rooms)
+    
     ~H"""
     <div class="overflow-x-auto">
       <div class="mb-4">
@@ -84,10 +87,10 @@ defmodule ShardWeb.AdminLive.MapComponents do
             </tr>
           </thead>
           <tbody>
-            <%= for door <- @doors do %>
+            <%= for door <- sorted_doors do %>
               <% from_room = Enum.find(@rooms, &(&1.id == door.from_room_id)) %>
               <% to_room = Enum.find(@rooms, &(&1.id == door.to_room_id)) %>
-              <tr>
+              <tr class={if Map.get(door, :is_return_door), do: "bg-base-200", else: ""}>
                 <td>{if from_room, do: from_room.name, else: "Unknown"}</td>
                 <td>{if to_room, do: to_room.name, else: "Unknown"}</td>
                 <td>{door.direction}</td>
@@ -370,5 +373,45 @@ defmodule ShardWeb.AdminLive.MapComponents do
     end)
     |> elem(1)
     |> Enum.reverse()
+  end
+
+  # Sort doors so that each door is next to its return door
+  defp sort_doors_with_returns(doors, rooms) do
+    # Create a map of door_id to door for quick lookup
+    door_map = Enum.into(doors, %{}, &{&1.id, &1})
+    
+    # Create a map of {to_room_id, from_room_id, opposite_direction} to door_id for finding return doors
+    door_lookup = 
+      Enum.into(doors, %{}, fn door ->
+        opposite_dir = Shard.Map.Door.opposite_direction(door.direction)
+        key = {door.to_room_id, door.from_room_id, opposite_dir}
+        {key, door.id}
+      end)
+    
+    # Process doors to pair them with their return doors
+    {processed_doors, _seen_ids} = 
+      Enum.reduce(doors, {[], MapSet.new()}, fn door, {acc, seen} ->
+        # Skip if this door was already processed
+        if MapSet.member?(seen, door.id) do
+          {acc, seen}
+        else
+          # Find the return door
+          opposite_dir = Shard.Map.Door.opposite_direction(door.direction)
+          return_door_key = {door.to_room_id, door.from_room_id, opposite_dir}
+          return_door_id = Map.get(door_lookup, return_door_key)
+          
+          if return_door_id && (return_door = Map.get(door_map, return_door_id)) do
+            # Mark both doors as processed
+            new_seen = MapSet.put(seen, door.id) |> MapSet.put(return_door_id)
+            # Add both doors to the result (door first, then its return)
+            {acc ++ [door, Map.put(return_door, :is_return_door, true)], new_seen}
+          else
+            # No return door found, add just this door
+            {acc ++ [door], MapSet.put(seen, door.id)}
+          end
+        end
+      end)
+    
+    processed_doors
   end
 end
