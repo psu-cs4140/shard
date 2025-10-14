@@ -467,4 +467,194 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       params = %{"door" => door_params}
       {:noreply, updated_socket} = MapHandlers.handle_save_door(params, socket)
       
-      assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) ==
+      assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Door updated successfully"
+      assert updated_socket.assigns.doors |> hd |> Map.get(:direction) == "west"
+      assert updated_socket.assigns.editing == nil
+      assert updated_socket.assigns.changeset == nil
+    end
+  end
+
+  describe "handle_validate_door/2" do
+    test "validates door changeset when creating new door" do
+      # Create rooms for the door
+      {:ok, room1} = Shard.Map.create_room(%{
+        name: "Room 1",
+        description: "First room",
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      {:ok, room2} = Shard.Map.create_room(%{
+        name: "Room 2",
+        description: "Second room",
+        x_coordinate: 1,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      socket = create_socket(%{
+        editing: nil,
+        changeset: nil,
+        rooms: [room1, room2]
+      })
+
+      door_params = %{
+        "from_room_id" => to_string(room1.id),
+        "to_room_id" => to_string(room2.id),
+        "direction" => "",
+        "door_type" => "standard",
+        "is_locked" => "false"
+      }
+
+      {:noreply, updated_socket} = MapHandlers.handle_validate_door(%{"door" => door_params}, socket)
+      
+      assert updated_socket.assigns.changeset != nil
+      assert updated_socket.assigns.changeset.action == :validate
+      assert updated_socket.assigns.changeset.errors != []
+    end
+
+    test "validates door changeset when editing existing door" do
+      # Create rooms for the door
+      {:ok, room1} = Shard.Map.create_room(%{
+        name: "Room 1",
+        description: "First room",
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      {:ok, room2} = Shard.Map.create_room(%{
+        name: "Room 2",
+        description: "Second room",
+        x_coordinate: 1,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      # Create a door for editing
+      {:ok, door} = Shard.Map.create_door(%{
+        from_room_id: room1.id,
+        to_room_id: room2.id,
+        direction: "east",
+        door_type: "standard",
+        is_locked: false
+      })
+
+      changeset = Shard.Map.change_door(door)
+      socket = create_socket(%{
+        editing: :door,
+        changeset: changeset,
+        rooms: [room1, room2]
+      })
+
+      door_params = %{
+        "id" => to_string(door.id),
+        "from_room_id" => to_string(room1.id),
+        "to_room_id" => to_string(room2.id),
+        "direction" => "",
+        "door_type" => "standard",
+        "is_locked" => "true"
+      }
+
+      {:noreply, updated_socket} = MapHandlers.handle_validate_door(%{"door" => door_params}, socket)
+      
+      assert updated_socket.assigns.changeset != nil
+      assert updated_socket.assigns.changeset.action == :validate
+      assert updated_socket.assigns.changeset.data.id == door.id
+      assert updated_socket.assigns.changeset.errors != []
+    end
+  end
+
+  describe "handle_cancel_room/2" do
+    test "cancels room editing and clears changeset" do
+      # Create a room for editing
+      {:ok, room} = Shard.Map.create_room(%{
+        name: "Test Room",
+        description: "A test room",
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      changeset = Shard.Map.change_room(room)
+      socket = create_socket(%{
+        editing: :room,
+        changeset: changeset
+      })
+
+      {:noreply, updated_socket} = MapHandlers.handle_cancel_room(%{}, socket)
+      
+      assert updated_socket.assigns.editing == nil
+      assert updated_socket.assigns.changeset == nil
+    end
+  end
+
+  describe "handle_zoom_in/2" do
+    test "increases zoom level" do
+      socket = create_socket(%{zoom: 1.0})
+
+      {:noreply, updated_socket} = MapHandlers.handle_zoom_in(%{}, socket)
+      
+      assert updated_socket.assigns.zoom == 1.2
+    end
+
+    test "caps zoom level at maximum" do
+      socket = create_socket(%{zoom: 5.0})
+
+      {:noreply, updated_socket} = MapHandlers.handle_zoom_in(%{}, socket)
+      
+      assert updated_socket.assigns.zoom == 5.0
+    end
+  end
+
+  describe "handle_apply_and_save/2" do
+    test "updates room when viewing room details" do
+      # Create a room for editing
+      {:ok, room} = Shard.Map.create_room(%{
+        name: "Test Room",
+        description: "A test room",
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      changeset = Shard.Map.change_room(room)
+      socket = create_socket(%{
+        viewing: room,
+        changeset: changeset,
+        rooms: [room]
+      })
+
+      room_params = %{
+        "name" => "Updated Room",
+        "description" => "An updated room",
+        "x_coordinate" => "0",
+        "y_coordinate" => "0",
+        "z_coordinate" => "0",
+        "room_type" => "standard",
+        "is_public" => "true"
+      }
+
+      params = %{"room" => room_params}
+      {:noreply, updated_socket} = MapHandlers.handle_apply_and_save(params, socket)
+      
+      assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Room updated successfully"
+      assert updated_socket.assigns.rooms |> hd |> Map.get(:name) == "Updated Room"
+      assert updated_socket.assigns.viewing.name == "Updated Room"
+      assert updated_socket.assigns.changeset.data.name == "Updated Room"
+    end
+  end
+end
