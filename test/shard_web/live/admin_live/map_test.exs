@@ -308,6 +308,8 @@ defmodule ShardWeb.AdminLive.MapTest do
       refute has_element?(view, "#door-modal")
     end
 
+    # TODO: uncomment this test and resolve error.
+    #
     # test "generates AI description for room", %{conn: conn, room1: room1} do
     #  # Set up AI config to return dummy response
     #  Application.put_env(:shard, :open_router, api_key: nil)
