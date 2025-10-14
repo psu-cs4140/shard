@@ -243,11 +243,17 @@ defmodule Shard.Items do
             {:ok, _} ->
               # Remove from room
               if room_item.quantity == pickup_quantity do
-                Repo.delete!(room_item)
+                case Repo.delete(room_item) do
+                  {:ok, _} -> {:ok, :picked_up}
+                  error -> Repo.rollback(error)
+                end
               else
-                room_item
-                |> RoomItem.changeset(%{quantity: room_item.quantity - pickup_quantity})
-                |> Repo.update!()
+                case room_item
+                     |> RoomItem.changeset(%{quantity: room_item.quantity - pickup_quantity})
+                     |> Repo.update() do
+                  {:ok, _} -> {:ok, :picked_up}
+                  error -> Repo.rollback(error)
+                end
               end
 
             error ->
