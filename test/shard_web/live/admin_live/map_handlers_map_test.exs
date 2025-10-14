@@ -20,9 +20,12 @@ defmodule ShardWeb.AdminLive.MapHandlersMapTest do
       flash: %{}
     }
 
-    %Socket{
-      assigns: Map.merge(default_assigns, assigns)
-    }
+    socket = %Socket{}
+    merged_assigns = Map.merge(default_assigns, assigns)
+    
+    Enum.reduce(merged_assigns, socket, fn {key, value}, acc ->
+      assign(acc, key, value)
+    end)
   end
 
   describe "handle_generate_default_map/2" do

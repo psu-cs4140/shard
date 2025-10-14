@@ -14,10 +14,12 @@ defmodule ShardWeb.AdminLive.MapFunctionsDoorTest do
       flash: %{}
     }
 
-    %Socket{
-      assigns: Map.merge(default_assigns, assigns),
-      private: %{connect_info: %{session: %{}}}
-    }
+    socket = %Socket{}
+    merged_assigns = Map.merge(default_assigns, assigns)
+    
+    Enum.reduce(merged_assigns, socket, fn {key, value}, acc ->
+      assign(acc, key, value)
+    end)
   end
 
   describe "save_door/2" do
