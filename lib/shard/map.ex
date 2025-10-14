@@ -104,12 +104,12 @@ defmodule Shard.Map do
         key_required: attrs[:key_required]
       }
 
-      {:ok, return_door} = 
+      {:ok, _return_door} = 
         %Door{}
         |> Door.changeset(return_attrs)
         |> Repo.insert()
 
-      {door, return_door}
+      door
     end)
   end
 
