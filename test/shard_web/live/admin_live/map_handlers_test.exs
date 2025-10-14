@@ -72,4 +72,39 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       assert updated_socket.assigns.changeset.data.id == room.id
     end
   end
+
+  describe "handle_delete_room/2" do
+    test "deletes a room successfully" do
+      # Create a room to delete
+      {:ok, room} = Shard.Map.create_room(%{
+        name: "Test Room",
+        description: "A test room",
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      # Create another room to ensure list functionality
+      {:ok, room2} = Shard.Map.create_room(%{
+        name: "Test Room 2",
+        description: "Another test room",
+        x_coordinate: 1,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      socket = create_socket(%{rooms: [room, room2], doors: []})
+
+      params = %{"id" => to_string(room.id)}
+      {:noreply, updated_socket} = MapHandlers.handle_delete_room(params, socket)
+      
+      assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Room deleted successfully"
+      assert length(updated_socket.assigns.rooms) == 1
+      assert List.first(updated_socket.assigns.rooms).id == room2.id
+    end
+  end
 end
