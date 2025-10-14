@@ -32,6 +32,11 @@ defmodule ShardWeb.TutorialLive.Terrain do
     {:ok, socket}
   end
 
+  @impl true
+  def handle_params(_params, _uri, socket) do
+    {:noreply, socket}
+  end
+
   defp load_tutorial_npcs do
     # Ensure Goldie is positioned at (0,0) for the tutorial
     ensure_goldie_in_tutorial()

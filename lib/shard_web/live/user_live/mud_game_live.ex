@@ -55,6 +55,20 @@ defmodule ShardWeb.MudGameLive do
       # Generate map data based on selected map
       map_data = generate_map_from_database(map_id)
 
+      # Create tutorial key if entering tutorial terrain
+      if map_id == "tutorial_terrain" do
+        case Shard.Items.create_tutorial_key() do
+          {:ok, _result} ->
+            :ok
+
+          {:error, _reason} ->
+            :error
+
+          _other ->
+            :error
+        end
+      end
+
       # Find a valid starting position (first floor tile found)
       starting_position = find_valid_starting_position(map_data)
 

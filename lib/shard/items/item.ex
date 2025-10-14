@@ -31,7 +31,7 @@ defmodule Shard.Items.Item do
     timestamps(type: :utc_datetime)
   end
 
-  @item_types ~w(weapon armor consumable material quest misc)
+  @item_types ~w(weapon armor consumable material quest misc key)
   @rarities ~w(common uncommon rare epic legendary)
   @equipment_slots ~w(head chest legs feet hands weapon shield ring necklace)
   @maps ~w(tutorial_terrain dark_forest crystal_caves volcanic_peaks frozen_wastes shadow_realm)
