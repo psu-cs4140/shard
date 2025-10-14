@@ -120,14 +120,15 @@ defmodule Shard.Combat do
     # Add experience and check for level up
     current_stats = game_state.player_stats
     new_experience = current_stats.experience + xp_reward
-    
+
     {updated_stats, level_up_messages} = check_level_up(current_stats, new_experience)
 
-    death_messages = [
-      "#{dead_monster[:name]} has been defeated!",
-      "You gain #{xp_reward} experience.",
-      "On its corpse you find #{gold_reward} gold."
-    ] ++ level_up_messages
+    death_messages =
+      [
+        "#{dead_monster[:name]} has been defeated!",
+        "You gain #{xp_reward} experience.",
+        "On its corpse you find #{gold_reward} gold."
+      ] ++ level_up_messages
 
     updated_state = %{game_state | player_stats: updated_stats, monsters: updated_monsters}
 
@@ -184,51 +185,52 @@ defmodule Shard.Combat do
         [num_dice, die_size] = String.split(damage, "d")
         num_dice = String.to_integer(num_dice)
         die_size = String.to_integer(die_size)
-        
+
         # Roll dice (simple average for now)
         Enum.sum(for _ <- 1..num_dice, do: :rand.uniform(die_size))
-        
+
       false ->
         # Plain number
         String.to_integer(damage)
     end
   end
-  
+
   defp parse_damage(damage) when is_integer(damage), do: damage
-  defp parse_damage(_), do: 1  # Default fallback
+  # Default fallback
+  defp parse_damage(_), do: 1
 
   defp check_level_up(current_stats, new_experience) do
     current_level = current_stats.level
     next_level_exp = calculate_next_level_exp(current_level)
-    
+
     if new_experience >= next_level_exp do
       # Level up!
       new_level = current_level + 1
-      
+
       # Calculate stat increases (simple +2 to all stats per level)
       stat_increase = 2
-      
+
       # Calculate remaining experience after leveling up
       remaining_experience = new_experience - next_level_exp
-      
+
       updated_stats = %{
-        current_stats |
-        level: new_level,
-        experience: remaining_experience,
-        next_level_exp: calculate_next_level_exp(new_level),
-        strength: current_stats.strength + stat_increase,
-        dexterity: current_stats.dexterity + stat_increase,
-        intelligence: current_stats.intelligence + stat_increase,
-        constitution: current_stats.constitution + stat_increase,
-        # Recalculate max health based on new constitution
-        max_health: 100 + (current_stats.constitution + stat_increase - 10) * 5,
-        # Heal to full on level up
-        health: 100 + (current_stats.constitution + stat_increase - 10) * 5,
-        # Recalculate max mana based on new intelligence  
-        max_mana: 50 + (current_stats.intelligence + stat_increase - 10) * 3,
-        mana: 50 + (current_stats.intelligence + stat_increase - 10) * 3
+        current_stats
+        | level: new_level,
+          experience: remaining_experience,
+          next_level_exp: calculate_next_level_exp(new_level),
+          strength: current_stats.strength + stat_increase,
+          dexterity: current_stats.dexterity + stat_increase,
+          intelligence: current_stats.intelligence + stat_increase,
+          constitution: current_stats.constitution + stat_increase,
+          # Recalculate max health based on new constitution
+          max_health: 100 + (current_stats.constitution + stat_increase - 10) * 5,
+          # Heal to full on level up
+          health: 100 + (current_stats.constitution + stat_increase - 10) * 5,
+          # Recalculate max mana based on new intelligence  
+          max_mana: 50 + (current_stats.intelligence + stat_increase - 10) * 3,
+          mana: 50 + (current_stats.intelligence + stat_increase - 10) * 3
       }
-      
+
       level_up_messages = [
         "",
         "*** LEVEL UP! ***",
@@ -237,7 +239,7 @@ defmodule Shard.Combat do
         "Health and mana restored to full!",
         ""
       ]
-      
+
       # Check if player can level up again with remaining experience
       if remaining_experience >= calculate_next_level_exp(new_level) do
         # Recursively check for multiple level ups

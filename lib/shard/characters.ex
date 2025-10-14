@@ -124,9 +124,9 @@ defmodule Shard.Characters do
 
   @doc """
   Add experience to a character and handle automatic leveling.
-  
+
   ## Examples
-  
+
       iex> add_experience(character, 150)
       {:ok, %Character{level: 2, experience: 50}}
       
@@ -135,14 +135,14 @@ defmodule Shard.Characters do
   """
   def add_experience(%Character{} = character, experience_gained) when experience_gained > 0 do
     new_experience = character.experience + experience_gained
-    
+
     # Check for level ups (handle multiple level ups in case of large experience gains)
     {final_level, final_experience} = process_level_ups(character.level, new_experience)
-    
+
     # Calculate stat increases for level ups
     level_difference = final_level - character.level
     stat_increases = calculate_stat_increases(level_difference)
-    
+
     attrs = %{
       level: final_level,
       experience: final_experience,
@@ -153,7 +153,7 @@ defmodule Shard.Characters do
       intelligence: character.intelligence + stat_increases.intelligence,
       constitution: character.constitution + stat_increases.constitution
     }
-    
+
     case update_character(character, attrs) do
       {:ok, updated_character} ->
         if level_difference > 0 do
@@ -161,32 +161,25 @@ defmodule Shard.Characters do
         else
           {:ok, updated_character, :experience_gained, experience_gained}
         end
-      
+
       error ->
         error
     end
   end
-  
+
   def add_experience(_character, _experience_gained), do: {:error, :invalid_experience}
 
-  @doc """
-  Process multiple level ups recursively.
-  """
   defp process_level_ups(current_level, current_experience) do
     case Character.check_level_up(current_level, current_experience) do
       {true, new_level, remaining_experience} ->
         # Recursively check for more level ups
         process_level_ups(new_level, remaining_experience)
-      
+
       {false, level, experience} ->
         {level, experience}
     end
   end
 
-  @doc """
-  Calculate stat increases per level up.
-  Each level grants +10 health, +5 mana, and +1 to each core stat.
-  """
   defp calculate_stat_increases(level_difference) do
     %{
       health: level_difference * 10,
@@ -219,7 +212,7 @@ defmodule Shard.Characters do
       required_for_next = Character.experience_for_level(character.level + 1)
       level_experience_range = required_for_next - required_for_current
       experience_in_current_level = character.experience - required_for_current
-      
+
       (experience_in_current_level / level_experience_range * 100) |> Float.round(1)
     end
   end

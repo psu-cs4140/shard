@@ -43,7 +43,7 @@ defmodule Shard.Characters.Character do
   """
   def check_level_up(current_level, current_experience) do
     required_exp = experience_for_level(current_level + 1)
-    
+
     if current_experience >= required_exp do
       remaining_exp = current_experience - required_exp
       {true, current_level + 1, remaining_exp}
