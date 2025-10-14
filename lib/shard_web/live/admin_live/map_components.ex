@@ -61,6 +61,9 @@ defmodule ShardWeb.AdminLive.MapComponents do
   end
 
   def doors_tab(assigns) do
+    assigns =
+      assign(assigns, :sorted_doors, sort_doors_with_returns(assigns.doors, assigns.rooms))
+
     ~H"""
     <div class="overflow-x-auto">
       <div class="mb-4">
@@ -84,10 +87,10 @@ defmodule ShardWeb.AdminLive.MapComponents do
             </tr>
           </thead>
           <tbody>
-            <%= for door <- @doors do %>
+            <%= for door <- @sorted_doors do %>
               <% from_room = Enum.find(@rooms, &(&1.id == door.from_room_id)) %>
               <% to_room = Enum.find(@rooms, &(&1.id == door.to_room_id)) %>
-              <tr>
+              <tr class={if Map.get(door, :is_return_door), do: "bg-base-200", else: ""}>
                 <td>{if from_room, do: from_room.name, else: "Unknown"}</td>
                 <td>{if to_room, do: to_room.name, else: "Unknown"}</td>
                 <td>{door.direction}</td>
@@ -143,7 +146,8 @@ defmodule ShardWeb.AdminLive.MapComponents do
             style={"transform: translate(#{@pan_x}px, #{@pan_y}px);"}
             id="map-content"
           >
-            <%= for door <- @doors do %>
+            <!-- Render unique door connections to avoid duplication -->
+            <%= for door <- get_unique_door_connections(@doors, @rooms) do %>
               <% from_room = Enum.find(@rooms, &(&1.id == door.from_room_id)) %>
               <% to_room = Enum.find(@rooms, &(&1.id == door.to_room_id)) %>
               <%= if from_room && to_room do %>
@@ -340,5 +344,82 @@ defmodule ShardWeb.AdminLive.MapComponents do
     text_classes = "text-gray-800 dark:text-gray-200"
 
     "#{base_classes} #{type_classes} #{text_classes}"
+  end
+
+  # Helper function to get unique door connections for visualization
+  # This prevents showing duplicate lines for bidirectional doors
+  defp get_unique_door_connections(doors, rooms) do
+    doors
+    |> Enum.reduce({MapSet.new(), []}, fn door, {seen_pairs, unique_doors} ->
+      from_room = Enum.find(rooms, &(&1.id == door.from_room_id))
+      to_room = Enum.find(rooms, &(&1.id == door.to_room_id))
+
+      if from_room && to_room do
+        # Create a normalized pair identifier (smaller ID first)
+        pair_key =
+          case {from_room.id, to_room.id} do
+            {a, b} when a < b -> {a, b}
+            {a, b} -> {b, a}
+          end
+
+        if MapSet.member?(seen_pairs, pair_key) do
+          {seen_pairs, unique_doors}
+        else
+          {MapSet.put(seen_pairs, pair_key), [door | unique_doors]}
+        end
+      else
+        {seen_pairs, unique_doors}
+      end
+    end)
+    |> elem(1)
+    |> Enum.reverse()
+  end
+
+  # Sort doors so that each door is next to its return door
+  defp sort_doors_with_returns(doors, _rooms) do
+    # Create a map of door_id to door for quick lookup
+    door_map = Enum.into(doors, %{}, &{&1.id, &1})
+
+    # Create a map of {to_room_id, from_room_id, opposite_direction} to door_id for finding return doors
+    door_lookup =
+      Enum.into(doors, %{}, fn door ->
+        opposite_dir = Shard.Map.Door.opposite_direction(door.direction)
+        key = {door.to_room_id, door.from_room_id, opposite_dir}
+        {key, door.id}
+      end)
+
+    # Process doors to pair them with their return doors
+    {processed_doors, _seen_ids} =
+      Enum.reduce(doors, {[], MapSet.new()}, fn door, {acc, seen} ->
+        # Skip if this door was already processed
+        if MapSet.member?(seen, door.id) do
+          {acc, seen}
+        else
+          # Find the return door
+          opposite_dir = Shard.Map.Door.opposite_direction(door.direction)
+          return_door_key = {door.to_room_id, door.from_room_id, opposite_dir}
+          return_door_id = Map.get(door_lookup, return_door_key)
+
+          if return_door_id do
+            return_door = Map.get(door_map, return_door_id)
+
+            if return_door do
+              # Mark both doors as processed
+              new_seen = MapSet.put(seen, door.id) |> MapSet.put(return_door_id)
+              # Only add the main door to the result, mark it as having a return door
+              door_with_mark = Map.put(door, :has_return_door, true)
+              {acc ++ [door_with_mark], new_seen}
+            else
+              # No return door found, add just this door
+              {acc ++ [door], MapSet.put(seen, door.id)}
+            end
+          else
+            # No return door found, add just this door
+            {acc ++ [door], MapSet.put(seen, door.id)}
+          end
+        end
+      end)
+
+    processed_doors
   end
 end

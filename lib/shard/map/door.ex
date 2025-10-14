@@ -71,4 +71,17 @@ defmodule Shard.Map.Door do
       changeset
     end
   end
+
+  # Map directions to their opposites
+  def opposite_direction("north"), do: "south"
+  def opposite_direction("south"), do: "north"
+  def opposite_direction("east"), do: "west"
+  def opposite_direction("west"), do: "east"
+  def opposite_direction("up"), do: "down"
+  def opposite_direction("down"), do: "up"
+  def opposite_direction("northeast"), do: "southwest"
+  def opposite_direction("northwest"), do: "southeast"
+  def opposite_direction("southeast"), do: "northwest"
+  def opposite_direction("southwest"), do: "northeast"
+  def opposite_direction(direction), do: direction
 end
