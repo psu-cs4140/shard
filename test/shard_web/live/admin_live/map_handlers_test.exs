@@ -823,4 +823,36 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       assert updated_socket.assigns.drag_start == %{x: 100, y: 200}
     end
   end
+
+  describe "handle_mousemove/2" do
+    test "updates pan coordinates when dragging" do
+      socket = create_socket(%{
+        drag_start: %{x: 100, y: 100},
+        pan_x: 0,
+        pan_y: 0
+      })
+      params = %{"clientX" => 150, "clientY" => 120}
+
+      {:noreply, updated_socket} = MapHandlers.handle_mousemove(params, socket)
+      
+      assert updated_socket.assigns.pan_x == 50
+      assert updated_socket.assigns.pan_y == 20
+      assert updated_socket.assigns.drag_start == %{x: 150, y: 120}
+    end
+
+    test "does nothing when not dragging" do
+      socket = create_socket(%{
+        drag_start: nil,
+        pan_x: 0,
+        pan_y: 0
+      })
+      params = %{"clientX" => 150, "clientY" => 120}
+
+      {:noreply, updated_socket} = MapHandlers.handle_mousemove(params, socket)
+      
+      assert updated_socket.assigns.pan_x == 0
+      assert updated_socket.assigns.pan_y == 0
+      assert updated_socket.assigns.drag_start == nil
+    end
+  end
 end
