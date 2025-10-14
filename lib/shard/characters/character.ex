@@ -29,6 +29,29 @@ defmodule Shard.Characters.Character do
     timestamps(type: :utc_datetime)
   end
 
+  @doc """
+  Calculate experience required for a given level.
+  Uses a simple formula: level * 100 experience per level.
+  """
+  def experience_for_level(level) do
+    level * 100
+  end
+
+  @doc """
+  Check if character should level up based on current experience.
+  Returns {should_level_up?, new_level, remaining_experience}
+  """
+  def check_level_up(current_level, current_experience) do
+    required_exp = experience_for_level(current_level + 1)
+    
+    if current_experience >= required_exp do
+      remaining_exp = current_experience - required_exp
+      {true, current_level + 1, remaining_exp}
+    else
+      {false, current_level, current_experience}
+    end
+  end
+
   @doc false
   def changeset(character, attrs) do
     character
