@@ -196,4 +196,57 @@ defmodule Shard.Combat do
   
   defp parse_damage(damage) when is_integer(damage), do: damage
   defp parse_damage(_), do: 1  # Default fallback
+
+  defp check_level_up(current_stats, new_experience) do
+    current_level = current_stats.level
+    next_level_exp = calculate_next_level_exp(current_level)
+    
+    if new_experience >= next_level_exp do
+      # Level up!
+      new_level = current_level + 1
+      
+      # Calculate stat increases (simple +2 to all stats per level)
+      stat_increase = 2
+      
+      updated_stats = %{
+        current_stats |
+        level: new_level,
+        experience: new_experience,
+        next_level_exp: calculate_next_level_exp(new_level),
+        strength: current_stats.strength + stat_increase,
+        dexterity: current_stats.dexterity + stat_increase,
+        intelligence: current_stats.intelligence + stat_increase,
+        constitution: current_stats.constitution + stat_increase,
+        # Recalculate max health based on new constitution
+        max_health: 100 + (current_stats.constitution + stat_increase - 10) * 5,
+        # Heal to full on level up
+        health: 100 + (current_stats.constitution + stat_increase - 10) * 5,
+        # Recalculate max mana based on new intelligence  
+        max_mana: 50 + (current_stats.intelligence + stat_increase - 10) * 3,
+        mana: 50 + (current_stats.intelligence + stat_increase - 10) * 3
+      }
+      
+      level_up_messages = [
+        "",
+        "*** LEVEL UP! ***",
+        "You are now level #{new_level}!",
+        "All stats increased by #{stat_increase}!",
+        "Health and mana restored to full!",
+        ""
+      ]
+      
+      {updated_stats, level_up_messages}
+    else
+      # No level up, just update experience
+      updated_stats = %{current_stats | experience: new_experience}
+      {updated_stats, []}
+    end
+  end
+
+  # Calculate experience needed for next level
+  defp calculate_next_level_exp(level) do
+    # Base experience + scaling factor based on level
+    base_exp = 1000
+    base_exp + (level - 1) * 500
+  end
 end
