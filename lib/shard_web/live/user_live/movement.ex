@@ -43,12 +43,6 @@ defmodule ShardWeb.UserLive.Movement do
 
       # Check for NPCs at the new location
       {new_x, new_y} = new_pos
-      
-      # Ensure tutorial key exists if we're in tutorial terrain
-      if game_state.map_id == "tutorial_terrain" do
-        Shard.Items.create_tutorial_key()
-      end
-      
       npcs_here = get_npcs_at_location(new_x, new_y, game_state.map_id)
       
       # Check for items at the new location

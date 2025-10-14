@@ -15,6 +15,9 @@ defmodule ShardWeb.TutorialLive.Terrain do
 
   @impl true
   def mount(_params, _session, socket) do
+    # Automatically create tutorial key when entering tutorial terrain
+    Shard.Items.create_tutorial_key()
+    
     tutorial_npcs = load_tutorial_npcs()
     tutorial_items = load_tutorial_items()
 
@@ -24,7 +27,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
       |> assign(:tutorial_npcs, tutorial_npcs)
       |> assign(:tutorial_items, tutorial_items)
       |> assign(:terrain_map, @tutorial_terrain_map)
-      |> assign(:tutorial_key_created, tutorial_key_exists?())
+      |> assign(:tutorial_key_created, true)
 
     {:ok, socket}
   end
@@ -74,24 +77,6 @@ defmodule ShardWeb.TutorialLive.Terrain do
   def handle_event("terrain_click", %{"x" => x, "y" => y}, socket) do
     x = String.to_integer(x)
     y = String.to_integer(y)
-    
-    # Create tutorial key on first terrain click if it doesn't exist
-    socket = if not socket.assigns.tutorial_key_created do
-      case Shard.Items.create_tutorial_key() do
-        {:ok, _} ->
-          # Reload items to include the new key
-          tutorial_items = load_tutorial_items()
-          socket
-          |> assign(:tutorial_items, tutorial_items)
-          |> assign(:tutorial_key_created, true)
-          |> put_flash(:info, "You discovered a Tutorial Key at (0, 2)!")
-        
-        {:error, _} ->
-          socket
-      end
-    else
-      socket
-    end
     
     {:noreply, socket}
   end
