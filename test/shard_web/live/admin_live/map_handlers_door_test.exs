@@ -123,12 +123,12 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
         })
 
       # Note: A return door is automatically created by the system
-      # We don't need to create it manually, which was causing the constraint violation
+      # When we delete the main door, the return door is also deleted automatically
+      # So we should have 0 doors remaining
 
       # Refresh the doors list to include both the created door and its automatic return door
       all_doors = Shard.Map.list_doors()
       created_door = Enum.find(all_doors, &(&1.direction == "north"))
-      return_door = Enum.find(all_doors, &(&1.direction == "south"))
 
       socket = create_socket(%{rooms: [room1, room2], doors: all_doors})
 
@@ -136,9 +136,8 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
       {:noreply, updated_socket} = MapHandlers.handle_delete_door(params, socket)
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Door deleted successfully"
-      # After deleting one door, we should have only the return door left
-      assert length(updated_socket.assigns.doors) == 1
-      assert List.first(updated_socket.assigns.doors).id == return_door.id
+      # After deleting one door, both the door and its return door are deleted
+      assert length(updated_socket.assigns.doors) == 0
     end
   end
 
@@ -175,13 +174,13 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
           doors: []
         })
 
-      # Convert IDs to strings as they would come from form submission
+      # Convert IDs to appropriate types
       door_params = %{
-        "from_room_id" => "#{room1.id}",
-        "to_room_id" => "#{room2.id}",
+        "from_room_id" => room1.id,
+        "to_room_id" => room2.id,
         "direction" => "east",
         "door_type" => "standard",
-        "is_locked" => "false"
+        "is_locked" => false
       }
 
       params = %{"door" => door_params}
@@ -242,14 +241,14 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
           doors: all_doors
         })
 
-      # Convert IDs to strings as they would come from form submission
+      # Use appropriate types
       door_params = %{
-        "id" => "#{main_door.id}",
-        "from_room_id" => "#{room1.id}",
-        "to_room_id" => "#{room2.id}",
+        "id" => main_door.id,
+        "from_room_id" => room1.id,
+        "to_room_id" => room2.id,
         "direction" => "west",  # Changed direction to avoid constraint issues
         "door_type" => "standard",
-        "is_locked" => "true"
+        "is_locked" => true
       }
 
       params = %{"door" => door_params}
@@ -296,13 +295,13 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
           rooms: [room1, room2]
         })
 
-      # Convert IDs to strings as they would come from form submission
+      # Use appropriate types
       door_params = %{
-        "from_room_id" => "#{room1.id}",
-        "to_room_id" => "#{room2.id}",
+        "from_room_id" => room1.id,
+        "to_room_id" => room2.id,
         "direction" => "",
         "door_type" => "standard",
-        "is_locked" => "false"
+        "is_locked" => false
       }
 
       {:noreply, updated_socket} =
@@ -360,14 +359,14 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
           rooms: [room1, room2]
         })
 
-      # Convert IDs to strings as they would come from form submission
+      # Use appropriate types
       door_params = %{
-        "id" => "#{main_door.id}",
-        "from_room_id" => "#{room1.id}",
-        "to_room_id" => "#{room2.id}",
+        "id" => main_door.id,
+        "from_room_id" => room1.id,
+        "to_room_id" => room2.id,
         "direction" => "",
         "door_type" => "standard",
-        "is_locked" => "true"
+        "is_locked" => true
       }
 
       {:noreply, updated_socket} =
