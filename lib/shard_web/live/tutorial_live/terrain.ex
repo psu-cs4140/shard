@@ -17,7 +17,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
   def mount(_params, _session, socket) do
     # Automatically create tutorial key when entering tutorial terrain
     Shard.Items.create_tutorial_key()
-    
+
     tutorial_npcs = load_tutorial_npcs()
     tutorial_items = load_tutorial_items()
 
@@ -49,9 +49,9 @@ defmodule ShardWeb.TutorialLive.Terrain do
   defp load_tutorial_items do
     # Load items from the database in the tutorial area (coordinates 0-4, 0-4, z=0)
     alias Shard.Items.RoomItem
-    
+
     tutorial_locations = for x <- 0..4, y <- 0..4, do: "#{x},#{y},0"
-    
+
     from(ri in RoomItem,
       where: ri.location in ^tutorial_locations,
       preload: [:item]
@@ -59,7 +59,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
     |> Repo.all()
     |> Enum.map(fn room_item ->
       [x_str, y_str, z_str] = String.split(room_item.location, ",")
-      
+
       %{
         name: room_item.item.name,
         description: room_item.item.description,
@@ -77,7 +77,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
   def handle_event("terrain_click", %{"x" => x, "y" => y}, socket) do
     x = String.to_integer(x)
     y = String.to_integer(y)
-    
+
     {:noreply, socket}
   end
 
@@ -128,7 +128,11 @@ defmodule ShardWeb.TutorialLive.Terrain do
 
         <div class="space-y-4">
           <h2 class="text-2xl font-semibold">Tutorial Map</h2>
-          <.minimap tutorial_npcs={@tutorial_npcs} tutorial_items={@tutorial_items} terrain_map={@terrain_map} />
+          <.minimap
+            tutorial_npcs={@tutorial_npcs}
+            tutorial_items={@tutorial_items}
+            terrain_map={@terrain_map}
+          />
 
           <div class="mt-4">
             <h3 class="text-lg font-semibold mb-2">NPCs in the Area</h3>
@@ -168,7 +172,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
       <div class="grid grid-cols-5 gap-1 w-fit mx-auto">
         <%= for {row, row_index} <- Enum.with_index(@terrain_map) do %>
           <%= for {cell, col_index} <- Enum.with_index(row) do %>
-            <div 
+            <div
               class="w-8 h-8 flex items-center justify-center text-lg border border-gray-300 rounded relative cursor-pointer hover:bg-gray-200"
               phx-click="terrain_click"
               phx-value-x={col_index}
@@ -290,14 +294,17 @@ defmodule ShardWeb.TutorialLive.Terrain do
 
   defp tutorial_key_exists? do
     alias Shard.Items.{Item, RoomItem}
-    
+
     # Check if tutorial key already exists in the room at (0,2,0)
-    existing_key = from(ri in RoomItem,
-      where: ri.location == "0,2,0",
-      join: i in Item, on: ri.item_id == i.id,
-      where: i.name == "Tutorial Key"
-    ) |> Repo.one()
-    
+    existing_key =
+      from(ri in RoomItem,
+        where: ri.location == "0,2,0",
+        join: i in Item,
+        on: ri.item_id == i.id,
+        where: i.name == "Tutorial Key"
+      )
+      |> Repo.one()
+
     not is_nil(existing_key)
   end
 
