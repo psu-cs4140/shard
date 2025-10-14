@@ -240,4 +240,65 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       assert List.first(updated_socket.assigns.doors).id == door2.id
     end
   end
+
+  describe "handle_validate_room/2" do
+    test "validates room changeset when creating new room" do
+      socket = create_socket(%{
+        editing: nil,
+        changeset: nil
+      })
+
+      room_params = %{
+        "name" => "",
+        "description" => "A test room",
+        "x_coordinate" => "0",
+        "y_coordinate" => "0",
+        "z_coordinate" => "0",
+        "room_type" => "standard",
+        "is_public" => "true"
+      }
+
+      {:noreply, updated_socket} = MapHandlers.handle_validate_room(%{"room" => room_params}, socket)
+      
+      assert updated_socket.assigns.changeset != nil
+      assert updated_socket.assigns.changeset.action == :validate
+      assert updated_socket.assigns.changeset.errors != []
+    end
+
+    test "validates room changeset when editing existing room" do
+      # Create a room for editing
+      {:ok, room} = Shard.Map.create_room(%{
+        name: "Test Room",
+        description: "A test room",
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      changeset = Shard.Map.change_room(room)
+      socket = create_socket(%{
+        editing: :room,
+        changeset: changeset
+      })
+
+      room_params = %{
+        "name" => "",
+        "description" => "Updated description",
+        "x_coordinate" => "0",
+        "y_coordinate" => "0",
+        "z_coordinate" => "0",
+        "room_type" => "standard",
+        "is_public" => "true"
+      }
+
+      {:noreply, updated_socket} = MapHandlers.handle_validate_room(%{"room" => room_params}, socket)
+      
+      assert updated_socket.assigns.changeset != nil
+      assert updated_socket.assigns.changeset.action == :validate
+      assert updated_socket.assigns.changeset.data.id == room.id
+      assert updated_socket.assigns.changeset.errors != []
+    end
+  end
 end
