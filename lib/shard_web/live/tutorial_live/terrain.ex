@@ -289,7 +289,6 @@ defmodule ShardWeb.TutorialLive.Terrain do
     end
   end
 
-
   defp get_item_icon("weapon"), do: "⚔️"
   defp get_item_icon("armor"), do: "🛡️"
   defp get_item_icon("potion"), do: "🧪"

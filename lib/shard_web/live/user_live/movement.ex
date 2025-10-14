@@ -44,7 +44,7 @@ defmodule ShardWeb.UserLive.Movement do
       # Check for NPCs at the new location
       {new_x, new_y} = new_pos
       npcs_here = get_npcs_at_location(new_x, new_y, game_state.map_id)
-      
+
       # Check for items at the new location
       items_here = get_items_at_location(new_x, new_y, game_state.map_id)
 
@@ -71,6 +71,7 @@ defmodule ShardWeb.UserLive.Movement do
                 item_name = Map.get(item, :name) || "Unknown Item"
                 "You see a #{item_name} on ground"
               end)
+
             item_descriptions
           else
             []
@@ -330,35 +331,39 @@ defmodule ShardWeb.UserLive.Movement do
   defp get_items_at_location(x, y, map_id) do
     alias Shard.Items.RoomItem
     location_string = "#{x},#{y},0"
-    
+
     # Get items from RoomItem table (items placed in world)
-    room_items = from(ri in RoomItem,
-      where: ri.location == ^location_string,
-      join: i in Item, on: ri.item_id == i.id,
-      where: is_nil(i.is_active) or i.is_active == true,
-      select: %{
-        name: i.name,
-        description: i.description,
-        item_type: i.item_type,
-        quantity: ri.quantity
-      }
-    )
-    |> Repo.all()
-    
+    room_items =
+      from(ri in RoomItem,
+        where: ri.location == ^location_string,
+        join: i in Item,
+        on: ri.item_id == i.id,
+        where: is_nil(i.is_active) or i.is_active == true,
+        select: %{
+          name: i.name,
+          description: i.description,
+          item_type: i.item_type,
+          quantity: ri.quantity
+        }
+      )
+      |> Repo.all()
+
     # Also check for items directly in Item table with matching location and map
-    direct_items = from(i in Item,
-      where: i.location == ^location_string and 
-             (i.map == ^map_id or is_nil(i.map)) and
-             (is_nil(i.is_active) or i.is_active == true),
-      select: %{
-        name: i.name,
-        description: i.description,
-        item_type: i.item_type,
-        quantity: 1
-      }
-    )
-    |> Repo.all()
-    
+    direct_items =
+      from(i in Item,
+        where:
+          i.location == ^location_string and
+            (i.map == ^map_id or is_nil(i.map)) and
+            (is_nil(i.is_active) or i.is_active == true),
+        select: %{
+          name: i.name,
+          description: i.description,
+          item_type: i.item_type,
+          quantity: 1
+        }
+      )
+      |> Repo.all()
+
     # Combine both results and remove duplicates based on name
     all_items = room_items ++ direct_items
     all_items |> Enum.uniq_by(& &1.name)
