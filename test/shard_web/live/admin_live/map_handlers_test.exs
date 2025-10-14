@@ -107,4 +107,29 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       assert List.first(updated_socket.assigns.rooms).id == room2.id
     end
   end
+
+  describe "handle_view_room/2" do
+    test "sets up room details view" do
+      # Create a room to view
+      {:ok, room} = Shard.Map.create_room(%{
+        name: "Test Room",
+        description: "A test room",
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      socket = create_socket(%{tab: "rooms"})
+
+      params = %{"id" => to_string(room.id)}
+      {:noreply, updated_socket} = MapHandlers.handle_view_room(params, socket)
+      
+      assert updated_socket.assigns.tab == "room_details"
+      assert updated_socket.assigns.viewing.id == room.id
+      assert updated_socket.assigns.changeset != nil
+      assert updated_socket.assigns.changeset.data.id == room.id
+    end
+  end
 end
