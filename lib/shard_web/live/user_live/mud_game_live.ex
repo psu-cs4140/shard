@@ -435,7 +435,6 @@ defmodule ShardWeb.MudGameLive do
     assign(socket, :terminal_state, ts1)
   end
 
-
   @impl true
   def handle_info({:noise, text}, socket) do
     socket = add_message(socket, text)

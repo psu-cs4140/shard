@@ -43,7 +43,10 @@ defmodule ShardWeb.UserLive.ItemHelpers do
             updated_game_state = %{game_state | player_stats: updated_stats}
 
             # Save updated stats to database
-            ShardWeb.UserLive.CharacterHelpers.save_character_stats(game_state.character, updated_stats)
+            ShardWeb.UserLive.CharacterHelpers.save_character_stats(
+              game_state.character,
+              updated_stats
+            )
 
             response = [
               "You use #{item.name}.",
