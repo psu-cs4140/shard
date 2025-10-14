@@ -51,11 +51,6 @@ defmodule ShardWeb.UserLive.Commands1 do
 
       "look" ->
         {x, y} = game_state.player_position
-        
-        # Ensure tutorial items exist if we're in tutorial terrain
-        if game_state.map_id == "tutorial_terrain" do
-          ensure_tutorial_items_exist()
-        end
 
         # Get room from database
         room = GameMap.get_room_by_coordinates(x, y)
@@ -329,9 +324,6 @@ defmodule ShardWeb.UserLive.Commands1 do
     alias Shard.Items.RoomItem
     location_string = "#{x},#{y},0"
     
-    # Debug: Log what we're searching for
-    IO.puts("DEBUG: Looking for items at location: #{location_string}, map_id: #{map_id}")
-    
     # First try to get items from RoomItem table (items placed in world)
     room_items = from(ri in RoomItem,
       where: ri.location == ^location_string,
@@ -341,15 +333,10 @@ defmodule ShardWeb.UserLive.Commands1 do
         description: i.description,
         item_type: i.item_type,
         quantity: ri.quantity,
-        is_active: i.is_active,
-        item_location: i.location,
-        item_map: i.map
+        is_active: i.is_active
       }
     )
     |> Repo.all()
-    
-    # Debug: Log room items found
-    IO.puts("DEBUG: Room items found: #{inspect(room_items)}")
     
     # Filter for active items only (treat nil as true for backwards compatibility)
     active_room_items = Enum.filter(room_items, fn item -> 
@@ -374,15 +361,10 @@ defmodule ShardWeb.UserLive.Commands1 do
         description: i.description,
         item_type: i.item_type,
         quantity: 1,
-        is_active: i.is_active,
-        item_location: i.location,
-        item_map: i.map
+        is_active: i.is_active
       }
     )
     |> Repo.all()
-    
-    # Debug: Log direct items found
-    IO.puts("DEBUG: Direct items found: #{inspect(direct_items)}")
     
     # Filter for active items only (treat nil as true for backwards compatibility)
     active_direct_items = Enum.filter(direct_items, fn item -> 
@@ -392,9 +374,6 @@ defmodule ShardWeb.UserLive.Commands1 do
     # Combine both results and remove duplicates based on name
     all_items = active_room_items ++ active_direct_items
     final_items = all_items |> Enum.uniq_by(& &1.name)
-    
-    # Debug: Log final items
-    IO.puts("DEBUG: Final items to display: #{inspect(final_items)}")
     
     # Return items in the expected format
     Enum.map(final_items, fn item ->
@@ -430,50 +409,6 @@ defmodule ShardWeb.UserLive.Commands1 do
     end
   end
 
-  # Ensure tutorial items exist in the database
-  defp ensure_tutorial_items_exist do
-    alias Shard.Items.{Item, RoomItem}
-    
-    # Check if tutorial key already exists in the room at (0,2,0)
-    existing_key = from(ri in RoomItem,
-      where: ri.location == "0,2,0",
-      join: i in Item, on: ri.item_id == i.id,
-      where: i.name == "Tutorial Key"
-    ) |> Repo.one()
-    
-    if is_nil(existing_key) do
-      # Create the tutorial key item if it doesn't exist in the items table
-      {:ok, key_item} = case Repo.get_by(Item, name: "Tutorial Key") do
-        nil ->
-          %Item{}
-          |> Item.changeset(%{
-            name: "Tutorial Key",
-            description: "A mysterious key that might unlock something important.",
-            item_type: "misc",
-            rarity: "common",
-            value: 10,
-            stackable: false,
-            equippable: false,
-            location: "0,2,0",
-            map: "tutorial_terrain",
-            is_active: true
-          })
-          |> Repo.insert()
-        
-        existing_item ->
-          {:ok, existing_item}
-      end
-      
-      # Place the key in the room at (0,2,0)
-      %RoomItem{}
-      |> RoomItem.changeset(%{
-        item_id: key_item.id,
-        location: "0,2,0",
-        quantity: 1
-      })
-      |> Repo.insert()
-    end
-  end
 
   # Parse quest command to extract NPC name
   def parse_quest_command(command) do
