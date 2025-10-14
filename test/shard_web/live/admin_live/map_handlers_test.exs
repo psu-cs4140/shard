@@ -188,4 +188,56 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       assert updated_socket.assigns.changeset.data.id == door.id
     end
   end
+
+  describe "handle_delete_door/2" do
+    test "deletes a door successfully" do
+      # Create rooms for the door
+      {:ok, room1} = Shard.Map.create_room(%{
+        name: "Room 1",
+        description: "First room",
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      {:ok, room2} = Shard.Map.create_room(%{
+        name: "Room 2",
+        description: "Second room",
+        x_coordinate: 1,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      # Create a door to delete
+      {:ok, door} = Shard.Map.create_door(%{
+        from_room_id: room1.id,
+        to_room_id: room2.id,
+        direction: "east",
+        door_type: "standard",
+        is_locked: false
+      })
+
+      # Create another door to ensure list functionality
+      {:ok, door2} = Shard.Map.create_door(%{
+        from_room_id: room2.id,
+        to_room_id: room1.id,
+        direction: "west",
+        door_type: "standard",
+        is_locked: false
+      })
+
+      socket = create_socket(%{rooms: [room1, room2], doors: [door, door2]})
+
+      params = %{"id" => to_string(door.id)}
+      {:noreply, updated_socket} = MapHandlers.handle_delete_door(params, socket)
+      
+      assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Door deleted successfully"
+      assert length(updated_socket.assigns.doors) == 1
+      assert List.first(updated_socket.assigns.doors).id == door2.id
+    end
+  end
 end
