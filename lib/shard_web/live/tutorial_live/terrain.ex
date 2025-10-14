@@ -4,10 +4,6 @@ defmodule ShardWeb.TutorialLive.Terrain do
   alias Shard.Npcs.Npc
   import Ecto.Query
 
-  # Add a simple function to test if this module is accessible
-  def test_module do
-    Shard.Items.create_tutorial_key()
-  end
 
   # Constant terrain map (compile-time)
   @tutorial_terrain_map [
@@ -21,18 +17,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
   @impl true
   def mount(params, session, socket) do
     # Automatically create tutorial key when entering tutorial terrain
-    result = Shard.Items.create_tutorial_key()
-
-    case result do
-      {:ok, _result} ->
-        :ok
-
-      {:error, reason} ->
-        :error
-
-      other ->
-        :ok
-    end
+    _result = Shard.Items.create_tutorial_key()
 
     tutorial_npcs = load_tutorial_npcs()
     tutorial_items = load_tutorial_items()
