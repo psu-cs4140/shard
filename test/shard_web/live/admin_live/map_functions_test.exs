@@ -1,7 +1,6 @@
 defmodule ShardWeb.AdminLive.MapFunctionsTest do
   use ShardWeb.ConnCase, async: true
   alias ShardWeb.AdminLive.MapFunctions
-  alias Shard.Map
   alias Phoenix.LiveView.Socket
 
   # Helper function to create a socket with required assigns
