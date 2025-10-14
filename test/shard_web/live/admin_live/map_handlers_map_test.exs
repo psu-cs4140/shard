@@ -42,7 +42,11 @@ defmodule ShardWeb.AdminLive.MapHandlersMapTest do
                "Default 3x3 map generated successfully!"
 
       assert length(updated_socket.assigns.rooms) == 9
-      assert length(updated_socket.assigns.doors) == 12
+      # In a 3x3 grid, each connection creates two doors (one in each direction)
+      # Horizontal connections: 3 rows * 2 connections per row = 6
+      # Vertical connections: 3 columns * 2 connections per column = 6
+      # Total unique connections: 12, but with return doors: 24
+      assert length(updated_socket.assigns.doors) == 24
 
       # Check that rooms have correct coordinates
       room_coords = Enum.map(updated_socket.assigns.rooms, &{&1.x_coordinate, &1.y_coordinate})
