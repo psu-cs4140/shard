@@ -289,21 +289,6 @@ defmodule ShardWeb.TutorialLive.Terrain do
     end
   end
 
-  defp tutorial_key_exists? do
-    alias Shard.Items.{Item, RoomItem}
-
-    # Check if tutorial key already exists in the room at (0,2,0)
-    existing_key =
-      from(ri in RoomItem,
-        where: ri.location == "0,2,0",
-        join: i in Item,
-        on: ri.item_id == i.id,
-        where: i.name == "Tutorial Key"
-      )
-      |> Repo.one()
-
-    not is_nil(existing_key)
-  end
 
   defp get_item_icon("weapon"), do: "⚔️"
   defp get_item_icon("armor"), do: "🛡️"
