@@ -378,15 +378,16 @@ defmodule Shard.Items do
 
     # Create the locked door from (2,2) to (2,1) going north
     case Map.create_door(%{
-      from_room_id: from_room.id,
-      to_room_id: to_room.id,
-      direction: "north",
-      door_type: "locked_gate",
-      is_locked: true,
-      key_required: "Tutorial Key",
-      name: "Locked Dungeon Gate",
-      description: "A heavy iron gate that blocks the entrance to the dungeon. It requires a key to open."
-    }) do
+           from_room_id: from_room.id,
+           to_room_id: to_room.id,
+           direction: "north",
+           door_type: "locked_gate",
+           is_locked: true,
+           key_required: "Tutorial Key",
+           name: "Locked Dungeon Gate",
+           description:
+             "A heavy iron gate that blocks the entrance to the dungeon. It requires a key to open."
+         }) do
       {:ok, door} -> {:ok, door}
       {:error, reason} -> {:error, "Failed to create dungeon door: #{inspect(reason)}"}
     end
@@ -397,18 +398,18 @@ defmodule Shard.Items do
       nil ->
         # Room doesn't exist, create it
         case Shard.Map.create_room(%{
-          name: name,
-          description: "A room at coordinates (#{x}, #{y}, #{z})",
-          x_coordinate: x,
-          y_coordinate: y,
-          z_coordinate: z,
-          room_type: "standard",
-          is_public: true
-        }) do
+               name: name,
+               description: "A room at coordinates (#{x}, #{y}, #{z})",
+               x_coordinate: x,
+               y_coordinate: y,
+               z_coordinate: z,
+               room_type: "standard",
+               is_public: true
+             }) do
           {:ok, room} -> {:ok, room}
           {:error, changeset} -> {:error, "Failed to create room: #{inspect(changeset.errors)}"}
         end
-      
+
       room ->
         # Room already exists
         {:ok, room}
