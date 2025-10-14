@@ -404,9 +404,9 @@ defmodule ShardWeb.AdminLive.MapComponents do
             if return_door do
               # Mark both doors as processed
               new_seen = MapSet.put(seen, door.id) |> MapSet.put(return_door_id)
-              # Add both doors to the result (door first, then its return)
-              return_door_marked = Map.put(return_door, :is_return_door, true)
-              {acc ++ [door, return_door_marked], new_seen}
+              # Only add the main door to the result, mark it as having a return door
+              door_with_mark = Map.put(door, :has_return_door, true)
+              {acc ++ [door_with_mark], new_seen}
             else
               # No return door found, add just this door
               {acc ++ [door], MapSet.put(seen, door.id)}
