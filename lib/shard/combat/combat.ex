@@ -117,15 +117,17 @@ defmodule Shard.Combat do
           m[:monster_id] == dead_monster[:monster_id]
       end)
 
-    updated_stats =
-      game_state.player_stats
-      |> Map.update(:experience, 0, &(&1 + xp_reward))
+    # Add experience and check for level up
+    current_stats = game_state.player_stats
+    new_experience = current_stats.experience + xp_reward
+    
+    {updated_stats, level_up_messages} = check_level_up(current_stats, new_experience)
 
     death_messages = [
       "#{dead_monster[:name]} has been defeated!",
       "You gain #{xp_reward} experience.",
       "On its corpse you find #{gold_reward} gold."
-    ]
+    ] ++ level_up_messages
 
     updated_state = %{game_state | player_stats: updated_stats, monsters: updated_monsters}
 
