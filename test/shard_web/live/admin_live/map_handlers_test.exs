@@ -865,4 +865,14 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       assert updated_socket.assigns.drag_start == nil
     end
   end
+
+  describe "handle_mouseleave/2" do
+    test "clears drag start coordinates" do
+      socket = create_socket(%{drag_start: %{x: 100, y: 200}})
+
+      {:noreply, updated_socket} = MapHandlers.handle_mouseleave(%{}, socket)
+      
+      assert updated_socket.assigns.drag_start == nil
+    end
+  end
 end
