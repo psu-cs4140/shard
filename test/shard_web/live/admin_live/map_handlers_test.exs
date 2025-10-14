@@ -812,4 +812,15 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       assert updated_socket.assigns.pan_y == 0
     end
   end
+
+  describe "handle_mousedown/2" do
+    test "sets drag start coordinates" do
+      socket = create_socket(%{drag_start: nil})
+      params = %{"clientX" => 100, "clientY" => 200}
+
+      {:noreply, updated_socket} = MapHandlers.handle_mousedown(params, socket)
+      
+      assert updated_socket.assigns.drag_start == %{x: 100, y: 200}
+    end
+  end
 end
