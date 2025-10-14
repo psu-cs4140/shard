@@ -61,7 +61,7 @@ defmodule Shard.Characters do
         # Create tutorial key when character is created
         Shard.Items.create_tutorial_key()
         {:ok, character}
-      
+
       error ->
         error
     end

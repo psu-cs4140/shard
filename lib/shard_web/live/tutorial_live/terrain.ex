@@ -4,7 +4,6 @@ defmodule ShardWeb.TutorialLive.Terrain do
   alias Shard.Npcs.Npc
   import Ecto.Query
 
-
   # Constant terrain map (compile-time)
   @tutorial_terrain_map [
     ["🏔️", "🏔️", "🏔️", "🏔️", "🏔️"],
