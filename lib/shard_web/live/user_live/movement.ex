@@ -99,10 +99,10 @@ defmodule ShardWeb.UserLive.Movement do
       case key do
         # Align with DB: north increases y, south decreases y
         "ArrowUp" ->
-          {elem(curr_position, 0), elem(curr_position, 1) + 1}
+          {elem(curr_position, 0), elem(curr_position, 1) - 1}
 
         "ArrowDown" ->
-          {elem(curr_position, 0), elem(curr_position, 1) - 1}
+          {elem(curr_position, 0), elem(curr_position, 1) + 1}
 
         "ArrowRight" ->
           {elem(curr_position, 0) + 1, elem(curr_position, 1)}

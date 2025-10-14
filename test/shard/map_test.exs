@@ -86,7 +86,10 @@ defmodule Shard.MapTest do
       assert Map.get_door!(door.id) == door
     end
 
-    test "create_door/1 with valid data creates a door and its return door", %{room1: room1, room2: room2} do
+    test "create_door/1 with valid data creates a door and its return door", %{
+      room1: room1,
+      room2: room2
+    } do
       valid_attrs = %{
         from_room_id: room1.id,
         to_room_id: room2.id,
@@ -97,7 +100,7 @@ defmodule Shard.MapTest do
       assert door.direction == "north"
       assert door.from_room_id == room1.id
       assert door.to_room_id == room2.id
-      
+
       # Check that a return door was also created
       return_door = Map.get_door_in_direction(room2.id, "south")
       assert return_door != nil
@@ -132,17 +135,17 @@ defmodule Shard.MapTest do
         to_room_id: room2.id,
         direction: "north"
       }
-      
+
       assert {:ok, door} = Map.create_door(valid_attrs)
-      
+
       # Verify the return door exists before deletion
       return_door = Map.get_door_in_direction(room2.id, "south")
       assert return_door != nil
-      
+
       # Delete the main door
       assert {:ok, %Door{}} = Map.delete_door(door)
       assert_raise Ecto.NoResultsError, fn -> Map.get_door!(door.id) end
-      
+
       # Verify the return door was also deleted
       assert Map.get_door_in_direction(room2.id, "south") == nil
     end
@@ -151,8 +154,11 @@ defmodule Shard.MapTest do
       door = door_fixture()
       assert %Ecto.Changeset{} = Map.change_door(door)
     end
-    
-    test "create_door/1 creates return door with correct opposite directions", %{room1: room1, room2: room2} do
+
+    test "create_door/1 creates return door with correct opposite directions", %{
+      room1: room1,
+      room2: room2
+    } do
       direction_tests = [
         {"north", "south"},
         {"south", "north"},
@@ -163,22 +169,25 @@ defmodule Shard.MapTest do
         {"southeast", "northwest"},
         {"southwest", "northeast"}
       ]
-      
+
       Enum.each(direction_tests, fn {main_direction, return_direction} ->
         # Clean up any existing doors
         Shard.Repo.delete_all(Door)
-        
+
         valid_attrs = %{
           from_room_id: room1.id,
           to_room_id: room2.id,
           direction: main_direction
         }
-        
+
         assert {:ok, _door} = Map.create_door(valid_attrs)
-        
+
         # Check that the return door has the correct opposite direction
         return_door = Map.get_door_in_direction(room2.id, return_direction)
-        assert return_door != nil, "No return door found for direction #{main_direction} (expected #{return_direction})"
+
+        assert return_door != nil,
+               "No return door found for direction #{main_direction} (expected #{return_direction})"
+
         assert return_door.direction == return_direction
         assert return_door.from_room_id == room2.id
         assert return_door.to_room_id == room1.id

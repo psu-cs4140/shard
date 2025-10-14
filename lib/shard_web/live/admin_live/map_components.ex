@@ -61,8 +61,9 @@ defmodule ShardWeb.AdminLive.MapComponents do
   end
 
   def doors_tab(assigns) do
-    assigns = assign(assigns, :sorted_doors, sort_doors_with_returns(assigns.doors, assigns.rooms))
-    
+    assigns =
+      assign(assigns, :sorted_doors, sort_doors_with_returns(assigns.doors, assigns.rooms))
+
     ~H"""
     <div class="overflow-x-auto">
       <div class="mb-4">
@@ -378,17 +379,17 @@ defmodule ShardWeb.AdminLive.MapComponents do
   defp sort_doors_with_returns(doors, _rooms) do
     # Create a map of door_id to door for quick lookup
     door_map = Enum.into(doors, %{}, &{&1.id, &1})
-    
+
     # Create a map of {to_room_id, from_room_id, opposite_direction} to door_id for finding return doors
-    door_lookup = 
+    door_lookup =
       Enum.into(doors, %{}, fn door ->
         opposite_dir = Shard.Map.Door.opposite_direction(door.direction)
         key = {door.to_room_id, door.from_room_id, opposite_dir}
         {key, door.id}
       end)
-    
+
     # Process doors to pair them with their return doors
-    {processed_doors, _seen_ids} = 
+    {processed_doors, _seen_ids} =
       Enum.reduce(doors, {[], MapSet.new()}, fn door, {acc, seen} ->
         # Skip if this door was already processed
         if MapSet.member?(seen, door.id) do
@@ -398,9 +399,10 @@ defmodule ShardWeb.AdminLive.MapComponents do
           opposite_dir = Shard.Map.Door.opposite_direction(door.direction)
           return_door_key = {door.to_room_id, door.from_room_id, opposite_dir}
           return_door_id = Map.get(door_lookup, return_door_key)
-          
+
           if return_door_id do
             return_door = Map.get(door_map, return_door_id)
+
             if return_door do
               # Mark both doors as processed
               new_seen = MapSet.put(seen, door.id) |> MapSet.put(return_door_id)
@@ -417,7 +419,7 @@ defmodule ShardWeb.AdminLive.MapComponents do
           end
         end
       end)
-    
+
     processed_doors
   end
 end

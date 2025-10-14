@@ -248,7 +248,7 @@ defmodule ShardWeb.AdminLive.MapHandlers do
       if x < 2 do
         east_room = Enum.find(rooms, &(&1.x_coordinate == x + 1 && &1.y_coordinate == y))
 
-        {:ok, _door} = 
+        {:ok, _door} =
           Map.create_door(%{
             from_room_id: current_room.id,
             to_room_id: east_room.id,
@@ -261,7 +261,7 @@ defmodule ShardWeb.AdminLive.MapHandlers do
       if y < 2 do
         south_room = Enum.find(rooms, &(&1.x_coordinate == x && &1.y_coordinate == y + 1))
 
-        {:ok, _door} = 
+        {:ok, _door} =
           Map.create_door(%{
             from_room_id: current_room.id,
             to_room_id: south_room.id,

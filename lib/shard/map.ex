@@ -89,7 +89,7 @@ defmodule Shard.Map do
   def create_door(attrs \\ %{}) do
     # First validate the changeset before starting transaction
     changeset = Door.changeset(%Door{}, attrs)
-    
+
     if changeset.valid? do
       Repo.transaction(fn ->
         # Create the main door
@@ -105,7 +105,7 @@ defmodule Shard.Map do
           key_required: attrs[:key_required]
         }
 
-        {:ok, _return_door} = 
+        {:ok, _return_door} =
           %Door{}
           |> Door.changeset(return_attrs)
           |> Repo.insert()
@@ -134,10 +134,11 @@ defmodule Shard.Map do
     Repo.transaction(fn ->
       # Find and delete the return door
       return_door = get_return_door(door)
+
       if return_door do
         Repo.delete!(return_door)
       end
-      
+
       # Delete the main door
       Repo.delete!(door)
     end)
@@ -213,9 +214,10 @@ defmodule Shard.Map do
   def get_return_door(door) do
     Repo.one(
       from d in Door,
-        where: d.from_room_id == ^door.to_room_id and
-               d.to_room_id == ^door.from_room_id and
-               d.direction == ^Door.opposite_direction(door.direction)
+        where:
+          d.from_room_id == ^door.to_room_id and
+            d.to_room_id == ^door.from_room_id and
+            d.direction == ^Door.opposite_direction(door.direction)
     )
   end
 end
