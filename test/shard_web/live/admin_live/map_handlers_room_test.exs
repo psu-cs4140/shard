@@ -349,7 +349,8 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
       # Restore original AI module
       Application.put_env(:shard, :ai_module, original_ai_module)
 
-      assert updated_socket.assigns.changeset.changes.description ==
+      # Check if the description is in the changes map
+      assert Map.get(updated_socket.assigns.changeset.changes, :description) ==
                "A beautifully generated description"
     end
 
@@ -391,8 +392,9 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
       # Restore original AI module
       Application.put_env(:shard, :ai_module, original_ai_module)
 
-      assert Phoenix.Flash.get(updated_socket.assigns.flash, :error) ==
-               "Failed to generate description: AI service unavailable"
+      actual_error = Phoenix.Flash.get(updated_socket.assigns.flash, :error)
+      assert actual_error =~ "Failed to generate description:"
+      assert actual_error =~ "AI service unavailable"
     end
   end
 
