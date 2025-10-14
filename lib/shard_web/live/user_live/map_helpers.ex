@@ -205,4 +205,20 @@ defmodule ShardWeb.UserLive.MapHelpers do
       _ -> false
     end
   end
+
+  # Helper function to get monsters at a specific location from database
+  def get_monsters_at_location(x, y, _map_id) do
+    try do
+      # First try to find a room at these coordinates
+      case Shard.Map.get_room_by_coordinates(x, y) do
+        nil ->
+          []
+        room ->
+          # Get monsters in this room
+          Shard.Monsters.get_monsters_by_location(room.id)
+      end
+    rescue
+      _ -> []
+    end
+  end
 end
