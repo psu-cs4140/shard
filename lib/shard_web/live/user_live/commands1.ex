@@ -181,8 +181,7 @@ defmodule ShardWeb.UserLive.Commands1 do
           item_descriptions =
             Enum.map(items_here, fn item ->
               item_name = Map.get(item, :name) || "Unknown Item"
-              item_desc = Map.get(item, :description) || "A mysterious object."
-              "#{item_name} lies here.\n#{item_desc}"
+              "You see a #{item_name} on ground"
             end)
 
           description_lines = description_lines ++ item_descriptions
