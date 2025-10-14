@@ -260,12 +260,12 @@ defmodule ShardWeb.TutorialLive.Terrain do
     """
   end
 
-  defp npc_at_position(npcs, x, y) do
-    Enum.any?(npcs, fn npc -> npc.location_x == x && npc.location_y == y end)
+  defp npc_at_position(npcs, target_x, target_y) do
+    Enum.any?(npcs, fn npc -> npc.location_x == target_x && npc.location_y == target_y end)
   end
 
-  defp item_at_position(items, x, y) do
-    Enum.any?(items, fn item -> item.location_x == x && item.location_y == y end)
+  defp item_at_position(items, target_x, target_y) do
+    Enum.any?(items, fn item -> item.location_x == target_x && item.location_y == target_y end)
   end
 
   defp npc_icon("quest_giver"), do: "🧙‍♂️"
