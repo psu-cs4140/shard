@@ -796,4 +796,20 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       assert updated_socket.assigns.zoom == 0.2
     end
   end
+
+  describe "handle_reset_view/2" do
+    test "resets zoom and pan to default values" do
+      socket = create_socket(%{
+        zoom: 2.5,
+        pan_x: 100,
+        pan_y: -50
+      })
+
+      {:noreply, updated_socket} = MapHandlers.handle_reset_view(%{}, socket)
+      
+      assert updated_socket.assigns.zoom == 1.0
+      assert updated_socket.assigns.pan_x == 0
+      assert updated_socket.assigns.pan_y == 0
+    end
+  end
 end
