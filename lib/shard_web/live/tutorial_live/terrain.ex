@@ -46,21 +46,25 @@ defmodule ShardWeb.TutorialLive.Terrain do
     # Ensure tutorial key exists in the database
     ensure_tutorial_key_exists()
     
-    # Load items from the database in the tutorial area
+    # Load items from the database in the tutorial area (coordinates 0-4, 0-4, z=0)
     alias Shard.Items.RoomItem
     
+    tutorial_locations = for x <- 0..4, y <- 0..4, do: "#{x},#{y},0"
+    
     from(ri in RoomItem,
-      where: ri.location == "0,2,0",
+      where: ri.location in ^tutorial_locations,
       preload: [:item]
     )
     |> Repo.all()
     |> Enum.map(fn room_item ->
+      [x_str, y_str, z_str] = String.split(room_item.location, ",")
+      
       %{
         name: room_item.item.name,
         description: room_item.item.description,
-        location_x: 0,
-        location_y: 2,
-        location_z: 0,
+        location_x: String.to_integer(x_str),
+        location_y: String.to_integer(y_str),
+        location_z: String.to_integer(z_str),
         item_type: room_item.item.type,
         icon: get_item_icon(room_item.item.type),
         quantity: room_item.quantity
@@ -273,7 +277,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
   defp ensure_tutorial_key_exists do
     alias Shard.Items.{Item, RoomItem}
     
-    # Check if tutorial key already exists in the room
+    # Check if tutorial key already exists in the room at (0,2,0)
     existing_key = from(ri in RoomItem,
       where: ri.location == "0,2,0",
       join: i in Item, on: ri.item_id == i.id,
@@ -281,14 +285,14 @@ defmodule ShardWeb.TutorialLive.Terrain do
     ) |> Repo.one()
     
     if is_nil(existing_key) do
-      # Create the tutorial key item if it doesn't exist
+      # Create the tutorial key item if it doesn't exist in the items table
       {:ok, key_item} = case Repo.get_by(Item, name: "Tutorial Key") do
         nil ->
           %Item{}
           |> Item.changeset(%{
             name: "Tutorial Key",
             description: "A mysterious key that might unlock something important.",
-            type: "key",
+            type: "misc",
             rarity: "common",
             value: 10,
             stackable: false,
@@ -311,10 +315,10 @@ defmodule ShardWeb.TutorialLive.Terrain do
     end
   end
 
-  defp get_item_icon("key"), do: "🗝️"
   defp get_item_icon("weapon"), do: "⚔️"
   defp get_item_icon("armor"), do: "🛡️"
   defp get_item_icon("potion"), do: "🧪"
   defp get_item_icon("scroll"), do: "📜"
+  defp get_item_icon("misc"), do: "🗝️"
   defp get_item_icon(_), do: "📦"
 end
