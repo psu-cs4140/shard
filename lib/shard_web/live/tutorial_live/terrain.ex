@@ -4,11 +4,8 @@ defmodule ShardWeb.TutorialLive.Terrain do
   alias Shard.Npcs.Npc
   import Ecto.Query
 
-  IO.puts("🚀🚀🚀 TutorialLive.Terrain module loaded! 🚀🚀🚀")
-
   # Add a simple function to test if this module is accessible
   def test_module do
-    IO.puts("📞 TutorialLive.Terrain.test_module called!")
     Shard.Items.create_tutorial_key()
   end
 
@@ -23,23 +20,18 @@ defmodule ShardWeb.TutorialLive.Terrain do
 
   @impl true
   def mount(params, session, socket) do
-    IO.puts("🔥🔥🔥 TUTORIAL TERRAIN MOUNT CALLED 🔥🔥🔥")
-
     # Automatically create tutorial key when entering tutorial terrain
-    IO.puts("🔑 About to call create_tutorial_key...")
-
     result = Shard.Items.create_tutorial_key()
-    IO.puts("🔑 create_tutorial_key returned: #{inspect(result)}")
 
     case result do
       {:ok, _result} ->
-        IO.puts("✅ Tutorial key created successfully")
+        :ok
 
       {:error, reason} ->
-        IO.puts("❌ Failed to create tutorial key: #{inspect(reason)}")
+        :error
 
       other ->
-        IO.puts("⚠️ Unexpected result from create_tutorial_key: #{inspect(other)}")
+        :ok
     end
 
     tutorial_npcs = load_tutorial_npcs()
@@ -58,7 +50,6 @@ defmodule ShardWeb.TutorialLive.Terrain do
 
   @impl true
   def handle_params(params, uri, socket) do
-    IO.puts("🌐 TUTORIAL TERRAIN HANDLE_PARAMS CALLED")
     {:noreply, socket}
   end
 
