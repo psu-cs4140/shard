@@ -15,13 +15,19 @@ defmodule ShardWeb.TutorialLive.Terrain do
 
   @impl true
   def mount(_params, _session, socket) do
+    # Automatically create tutorial key when entering tutorial terrain
+    Shard.Items.create_tutorial_key()
+
     tutorial_npcs = load_tutorial_npcs()
+    tutorial_items = load_tutorial_items()
 
     socket =
       socket
       |> assign(:page_title, "Tutorial: Terrain")
       |> assign(:tutorial_npcs, tutorial_npcs)
+      |> assign(:tutorial_items, tutorial_items)
       |> assign(:terrain_map, @tutorial_terrain_map)
+      |> assign(:tutorial_key_created, true)
 
     {:ok, socket}
   end
@@ -38,6 +44,38 @@ defmodule ShardWeb.TutorialLive.Terrain do
       where: n.location_z == 0
     )
     |> Repo.all()
+  end
+
+  defp load_tutorial_items do
+    # Load items from the database in the tutorial area (coordinates 0-4, 0-4, z=0)
+    alias Shard.Items.RoomItem
+
+    tutorial_locations = for x <- 0..4, y <- 0..4, do: "#{x},#{y},0"
+
+    from(ri in RoomItem,
+      where: ri.location in ^tutorial_locations,
+      preload: [:item]
+    )
+    |> Repo.all()
+    |> Enum.map(fn room_item ->
+      [x_str, y_str, z_str] = String.split(room_item.location, ",")
+
+      %{
+        name: room_item.item.name,
+        description: room_item.item.description,
+        location_x: String.to_integer(x_str),
+        location_y: String.to_integer(y_str),
+        location_z: String.to_integer(z_str),
+        item_type: room_item.item.item_type,
+        icon: get_item_icon(room_item.item.item_type),
+        quantity: room_item.quantity
+      }
+    end)
+  end
+
+  @impl true
+  def handle_event("terrain_click", %{"x" => _x, "y" => _y}, socket) do
+    {:noreply, socket}
   end
 
   @impl true
@@ -87,11 +125,20 @@ defmodule ShardWeb.TutorialLive.Terrain do
 
         <div class="space-y-4">
           <h2 class="text-2xl font-semibold">Tutorial Map</h2>
-          <.minimap tutorial_npcs={@tutorial_npcs} terrain_map={@terrain_map} />
+          <.minimap
+            tutorial_npcs={@tutorial_npcs}
+            tutorial_items={@tutorial_items}
+            terrain_map={@terrain_map}
+          />
 
           <div class="mt-4">
             <h3 class="text-lg font-semibold mb-2">NPCs in the Area</h3>
             <.npc_list npcs={@tutorial_npcs} />
+          </div>
+
+          <div class="mt-4">
+            <h3 class="text-lg font-semibold mb-2">Items in the Area</h3>
+            <.item_list items={@tutorial_items} />
           </div>
         </div>
       </div>
@@ -112,6 +159,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
 
   # function component inputs
   attr :tutorial_npcs, :list, required: true
+  attr :tutorial_items, :list, required: true
   attr :terrain_map, :list, required: true
 
   defp minimap(assigns) do
@@ -121,7 +169,12 @@ defmodule ShardWeb.TutorialLive.Terrain do
       <div class="grid grid-cols-5 gap-1 w-fit mx-auto">
         <%= for {row, row_index} <- Enum.with_index(@terrain_map) do %>
           <%= for {cell, col_index} <- Enum.with_index(row) do %>
-            <div class="w-8 h-8 flex items-center justify-center text-lg border border-gray-300 rounded relative">
+            <div
+              class="w-8 h-8 flex items-center justify-center text-lg border border-gray-300 rounded relative cursor-pointer hover:bg-gray-200"
+              phx-click="terrain_click"
+              phx-value-x={col_index}
+              phx-value-y={row_index}
+            >
               {cell}
               <%= if npc_at_position(@tutorial_npcs, col_index, row_index) do %>
                 <div
@@ -130,14 +183,25 @@ defmodule ShardWeb.TutorialLive.Terrain do
                 >
                 </div>
               <% end %>
+              <%= if item_at_position(@tutorial_items, col_index, row_index) do %>
+                <div
+                  class="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-400 rounded-full border border-blue-600"
+                  title="Item here"
+                >
+                </div>
+              <% end %>
             </div>
           <% end %>
         <% end %>
       </div>
-      <div class="mt-2 text-xs text-gray-600 text-center">
+      <div class="mt-2 text-xs text-gray-600 text-center space-x-3">
         <span class="inline-flex items-center">
           <div class="w-2 h-2 bg-yellow-400 rounded-full mr-1"></div>
           NPC Location
+        </span>
+        <span class="inline-flex items-center">
+          <div class="w-2 h-2 bg-blue-400 rounded-full mr-1"></div>
+          Item Location
         </span>
       </div>
     </div>
@@ -171,8 +235,37 @@ defmodule ShardWeb.TutorialLive.Terrain do
     """
   end
 
-  defp npc_at_position(npcs, x, y) do
-    Enum.any?(npcs, fn npc -> npc.location_x == x && npc.location_y == y end)
+  attr :items, :list, required: true
+
+  defp item_list(assigns) do
+    ~H"""
+    <div class="space-y-2">
+      <%= for item <- @items do %>
+        <div class="flex items-start space-x-3 p-3 bg-white rounded-lg border border-gray-200">
+          <div class="flex-shrink-0">
+            {item.icon}
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="font-medium text-gray-900">{item.name}</h4>
+            <p class="text-sm text-gray-600 line-clamp-2">{item.description}</p>
+            <div class="mt-1 flex items-center space-x-2 text-xs text-gray-500">
+              <span class="capitalize">{String.replace(item.item_type, "_", " ")}</span>
+              <span>•</span>
+              <span>Position: ({item.location_x}, {item.location_y})</span>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    """
+  end
+
+  defp npc_at_position(npcs, target_x, target_y) do
+    Enum.any?(npcs, fn npc -> npc.location_x == target_x && npc.location_y == target_y end)
+  end
+
+  defp item_at_position(items, target_x, target_y) do
+    Enum.any?(items, fn item -> item.location_x == target_x && item.location_y == target_y end)
   end
 
   defp npc_icon("quest_giver"), do: "🧙‍♂️"
@@ -195,4 +288,11 @@ defmodule ShardWeb.TutorialLive.Terrain do
         end
     end
   end
+
+  defp get_item_icon("weapon"), do: "⚔️"
+  defp get_item_icon("armor"), do: "🛡️"
+  defp get_item_icon("potion"), do: "🧪"
+  defp get_item_icon("scroll"), do: "📜"
+  defp get_item_icon("misc"), do: "🗝️"
+  defp get_item_icon(_), do: "📦"
 end
