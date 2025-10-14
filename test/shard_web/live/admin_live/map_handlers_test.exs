@@ -473,4 +473,104 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       assert updated_socket.assigns.changeset == nil
     end
   end
+
+  describe "handle_validate_door/2" do
+    test "validates door changeset when creating new door" do
+      # Create rooms for the door
+      {:ok, room1} = Shard.Map.create_room(%{
+        name: "Room 1",
+        description: "First room",
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      {:ok, room2} = Shard.Map.create_room(%{
+        name: "Room 2",
+        description: "Second room",
+        x_coordinate: 1,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      socket = create_socket(%{
+        editing: nil,
+        changeset: nil,
+        rooms: [room1, room2]
+      })
+
+      door_params = %{
+        "from_room_id" => to_string(room1.id),
+        "to_room_id" => to_string(room2.id),
+        "direction" => "",
+        "door_type" => "standard",
+        "is_locked" => "false"
+      }
+
+      {:noreply, updated_socket} = MapHandlers.handle_validate_door(%{"door" => door_params}, socket)
+      
+      assert updated_socket.assigns.changeset != nil
+      assert updated_socket.assigns.changeset.action == :validate
+      assert updated_socket.assigns.changeset.errors != []
+    end
+
+    test "validates door changeset when editing existing door" do
+      # Create rooms for the door
+      {:ok, room1} = Shard.Map.create_room(%{
+        name: "Room 1",
+        description: "First room",
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      {:ok, room2} = Shard.Map.create_room(%{
+        name: "Room 2",
+        description: "Second room",
+        x_coordinate: 1,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      # Create a door for editing
+      {:ok, door} = Shard.Map.create_door(%{
+        from_room_id: room1.id,
+        to_room_id: room2.id,
+        direction: "east",
+        door_type: "standard",
+        is_locked: false
+      })
+
+      changeset = Shard.Map.change_door(door)
+      socket = create_socket(%{
+        editing: :door,
+        changeset: changeset,
+        rooms: [room1, room2]
+      })
+
+      door_params = %{
+        "id" => to_string(door.id),
+        "from_room_id" => to_string(room1.id),
+        "to_room_id" => to_string(room2.id),
+        "direction" => "",
+        "door_type" => "standard",
+        "is_locked" => "true"
+      }
+
+      {:noreply, updated_socket} = MapHandlers.handle_validate_door(%{"door" => door_params}, socket)
+      
+      assert updated_socket.assigns.changeset != nil
+      assert updated_socket.assigns.changeset.action == :validate
+      assert updated_socket.assigns.changeset.data.id == door.id
+      assert updated_socket.assigns.changeset.errors != []
+    end
+  end
 end
