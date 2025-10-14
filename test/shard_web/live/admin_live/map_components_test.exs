@@ -21,9 +21,9 @@ defmodule ShardWeb.AdminLive.MapComponentsTest do
       ]
 
       assigns = %{rooms: rooms}
-      
+
       html = render_component(&MapComponents.rooms_tab/1, assigns)
-      
+
       assert html =~ "Test Room"
       assert html =~ "0, 0, 0"
       assert html =~ "standard"
@@ -33,9 +33,9 @@ defmodule ShardWeb.AdminLive.MapComponentsTest do
 
     test "renders empty state when no rooms" do
       assigns = %{rooms: []}
-      
+
       html = render_component(&MapComponents.rooms_tab/1, assigns)
-      
+
       assert html =~ "No rooms found."
       assert html =~ "New Room"
     end
