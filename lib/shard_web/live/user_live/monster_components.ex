@@ -6,7 +6,7 @@ defmodule ShardWeb.UserLive.MonsterComponents do
   @doc """
   Load monsters from database and convert them to game format.
   """
-  def load_monsters_from_database(map_id, starting_position) do
+  def load_monsters_from_database(_map_id, _starting_position) do
     try do
       # Get all monsters from database
       monsters = Shard.Monsters.list_monsters()
