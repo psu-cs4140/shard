@@ -574,6 +574,32 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
     end
   end
 
+  describe "handle_cancel_room/2" do
+    test "cancels room editing and clears changeset" do
+      # Create a room for editing
+      {:ok, room} = Shard.Map.create_room(%{
+        name: "Test Room",
+        description: "A test room",
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      changeset = Shard.Map.change_room(room)
+      socket = create_socket(%{
+        editing: :room,
+        changeset: changeset
+      })
+
+      {:noreply, updated_socket} = MapHandlers.handle_cancel_room(%{}, socket)
+      
+      assert updated_socket.assigns.editing == nil
+      assert updated_socket.assigns.changeset == nil
+    end
+  end
+
   describe "handle_zoom_in/2" do
     test "increases zoom level" do
       socket = create_socket(%{zoom: 1.0})
