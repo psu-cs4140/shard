@@ -506,7 +506,7 @@ defmodule ShardWeb.UserLive.Commands1 do
       item ->
         # Check if item can be picked up (assuming all items can be picked up for now)
         # In the future, you might want to add a "pickupable" field to items
-        
+
         # Add item to player's inventory
         updated_inventory = [
           %{
@@ -524,7 +524,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         # Remove item from the room (this would need database implementation)
         # For now, we'll just update the game state
-        
+
         response = [
           "You pick up #{item.name}.",
           "#{item.name} has been added to your inventory."
