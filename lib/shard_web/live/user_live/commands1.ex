@@ -324,7 +324,8 @@ defmodule ShardWeb.UserLive.Commands1 do
     alias Shard.Items.RoomItem
     location_string = "#{x},#{y},0"
     
-    from(ri in RoomItem,
+    # First try to get items from RoomItem table (items placed in world)
+    room_items = from(ri in RoomItem,
       where: ri.location == ^location_string,
       join: i in Item, on: ri.item_id == i.id,
       where: i.is_active == true,
@@ -336,6 +337,21 @@ defmodule ShardWeb.UserLive.Commands1 do
       }
     )
     |> Repo.all()
+    
+    # Also check for items directly in Item table with matching location and map
+    direct_items = from(i in Item,
+      where: i.location == ^location_string and i.map == ^map_id and i.is_active == true,
+      select: %{
+        name: i.name,
+        description: i.description,
+        item_type: i.item_type,
+        quantity: 1
+      }
+    )
+    |> Repo.all()
+    
+    # Combine both results
+    room_items ++ direct_items
   end
 
   # Parse talk command to extract NPC name
