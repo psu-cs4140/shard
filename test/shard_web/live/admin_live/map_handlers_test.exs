@@ -875,4 +875,29 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       assert updated_socket.assigns.drag_start == nil
     end
   end
+
+  describe "handle_generate_default_map/2" do
+    test "generates a default 3x3 map with rooms and doors" do
+      # Start with empty map
+      Shard.Repo.delete_all(Shard.Map.Door)
+      Shard.Repo.delete_all(Shard.Map.Room)
+      
+      socket = create_socket(%{rooms: [], doors: []})
+
+      {:noreply, updated_socket} = MapHandlers.handle_generate_default_map(%{}, socket)
+      
+      assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Default 3x3 map generated successfully!"
+      assert length(updated_socket.assigns.rooms) == 9
+      assert length(updated_socket.assigns.doors) == 12
+      
+      # Check that rooms have correct coordinates
+      room_coords = Enum.map(updated_socket.assigns.rooms, &{&1.x_coordinate, &1.y_coordinate})
+      expected_coords = for x <- 0..2, y <- 0..2, do: {x, y}
+      assert Enum.sort(room_coords) == Enum.sort(expected_coords)
+      
+      # Check that center room is a safe zone
+      center_room = Enum.find(updated_socket.assigns.rooms, &(&1.x_coordinate == 1 and &1.y_coordinate == 1))
+      assert center_room.room_type == "safe_zone"
+    end
+  end
 end
