@@ -66,7 +66,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
         location_y: String.to_integer(y_str),
         location_z: String.to_integer(z_str),
         item_type: room_item.item.item_type,
-        icon: get_item_icon(room_item.item.type),
+        icon: get_item_icon(room_item.item.item_type),
         quantity: room_item.quantity
       }
     end)
