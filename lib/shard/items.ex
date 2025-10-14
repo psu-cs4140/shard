@@ -340,7 +340,7 @@ defmodule Shard.Items do
           attrs = %{
             name: "Tutorial Key",
             description: "A mysterious key that might unlock something important.",
-            item_type: "misc",
+            item_type: "key",
             rarity: "common",
             value: 10,
             stackable: false,
