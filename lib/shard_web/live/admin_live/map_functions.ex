@@ -97,6 +97,7 @@ defmodule ShardWeb.AdminLive.MapFunctions do
     |> put_param(params, "key_required")
     |> put_param(params, "name")
     |> put_param(params, "description")
+    |> put_param(params, "new_dungeon", &to_boolean/1)
     |> put_param(params, "id", &to_integer/1)
   end
 

@@ -69,6 +69,20 @@ defmodule ShardWeb.MudGameLive do
         end
       end
 
+      # Create dungeon door for tutorial terrain
+      if map_id == "tutorial_terrain" do
+        case Shard.Items.create_dungeon_door() do
+          {:ok, _result} ->
+            :ok
+
+          {:error, _reason} ->
+            :error
+
+          _other ->
+            :error
+        end
+      end
+
       # Find a valid starting position (first floor tile found)
       starting_position = find_valid_starting_position(map_data)
 

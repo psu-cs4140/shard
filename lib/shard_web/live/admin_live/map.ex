@@ -236,6 +236,7 @@ defmodule ShardWeb.AdminLive.Map do
         />
         <.input field={f[:is_locked]} type="checkbox" label="Locked" />
         <.input field={f[:key_required]} type="text" label="Key Required" />
+        <.input field={f[:new_dungeon]} type="checkbox" label="New Dungeon" />
 
         <:actions>
           <.button phx-click="cancel_door" variant="secondary">Cancel</.button>

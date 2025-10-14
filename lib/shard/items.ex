@@ -243,11 +243,17 @@ defmodule Shard.Items do
             {:ok, _} ->
               # Remove from room
               if room_item.quantity == pickup_quantity do
-                Repo.delete!(room_item)
+                case Repo.delete(room_item) do
+                  {:ok, _} -> {:ok, :picked_up}
+                  error -> Repo.rollback(error)
+                end
               else
-                room_item
-                |> RoomItem.changeset(%{quantity: room_item.quantity - pickup_quantity})
-                |> Repo.update!()
+                case room_item
+                     |> RoomItem.changeset(%{quantity: room_item.quantity - pickup_quantity})
+                     |> Repo.update() do
+                  {:ok, _} -> {:ok, :picked_up}
+                  error -> Repo.rollback(error)
+                end
               end
 
             error ->
@@ -349,6 +355,64 @@ defmodule Shard.Items do
       end)
     else
       {:ok, existing_key}
+    end
+  end
+
+  def create_dungeon_door do
+    alias Shard.Map
+
+    # Ensure rooms exist first, create them if they don't
+    {:ok, from_room} = ensure_room_exists(2, 2, 0, "Entrance Hall")
+    {:ok, to_room} = ensure_room_exists(2, 1, 0, "Dungeon Entrance")
+
+    # Check if a door already exists and delete it if it does
+    existing_door = Map.get_door_in_direction(from_room.id, "north")
+
+    if not is_nil(existing_door) do
+      # Delete the existing door (this will also delete the return door)
+      case Map.delete_door(existing_door) do
+        {:ok, _} -> :ok
+        {:error, reason} -> {:error, "Failed to delete existing door: #{inspect(reason)}"}
+      end
+    end
+
+    # Create the locked door from (2,2) to (2,1) going north
+    case Map.create_door(%{
+           from_room_id: from_room.id,
+           to_room_id: to_room.id,
+           direction: "north",
+           door_type: "locked_gate",
+           is_locked: true,
+           key_required: "Tutorial Key",
+           name: "Locked Dungeon Gate",
+           description:
+             "A heavy iron gate that blocks the entrance to the dungeon. It requires a key to open."
+         }) do
+      {:ok, door} -> {:ok, door}
+      {:error, reason} -> {:error, "Failed to create dungeon door: #{inspect(reason)}"}
+    end
+  end
+
+  defp ensure_room_exists(x, y, z, name) do
+    case Shard.Map.get_room_by_coordinates(x, y, z) do
+      nil ->
+        # Room doesn't exist, create it
+        case Shard.Map.create_room(%{
+               name: name,
+               description: "A room at coordinates (#{x}, #{y}, #{z})",
+               x_coordinate: x,
+               y_coordinate: y,
+               z_coordinate: z,
+               room_type: "standard",
+               is_public: true
+             }) do
+          {:ok, room} -> {:ok, room}
+          {:error, changeset} -> {:error, "Failed to create room: #{inspect(changeset.errors)}"}
+        end
+
+      room ->
+        # Room already exists
+        {:ok, room}
     end
   end
 end

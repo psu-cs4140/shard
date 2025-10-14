@@ -13,6 +13,7 @@ defmodule Shard.Map.Door do
     field :door_type, :string, default: "standard"
     # For extensibility: lock difficulty, etc.
     field :properties, :map, default: %{}
+    field :new_dungeon, :boolean, default: false
 
     belongs_to :from_room, Shard.Map.Room, foreign_key: :from_room_id
     belongs_to :to_room, Shard.Map.Room, foreign_key: :to_room_id
@@ -32,7 +33,8 @@ defmodule Shard.Map.Door do
       :is_locked,
       :key_required,
       :door_type,
-      :properties
+      :properties,
+      :new_dungeon
     ])
     |> validate_required([:from_room_id, :to_room_id, :direction])
     |> validate_length(:name, max: 100)
