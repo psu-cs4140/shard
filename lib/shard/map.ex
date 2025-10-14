@@ -87,30 +87,35 @@ defmodule Shard.Map do
   Creates a return door automatically.
   """
   def create_door(attrs \\ %{}) do
-    Repo.transaction(fn ->
-      # Create the main door
-      {:ok, door} = 
-        %Door{}
-        |> Door.changeset(attrs)
-        |> Repo.insert()
+    # First validate the changeset before starting transaction
+    changeset = Door.changeset(%Door{}, attrs)
+    
+    if changeset.valid? do
+      Repo.transaction(fn ->
+        # Create the main door
+        {:ok, door} = Repo.insert(changeset)
 
-      # Create the return door with opposite direction
-      return_attrs = %{
-        from_room_id: attrs[:to_room_id],
-        to_room_id: attrs[:from_room_id],
-        direction: Door.opposite_direction(attrs[:direction]),
-        door_type: attrs[:door_type] || "standard",
-        is_locked: attrs[:is_locked] || false,
-        key_required: attrs[:key_required]
-      }
+        # Create the return door with opposite direction
+        return_attrs = %{
+          from_room_id: attrs[:to_room_id],
+          to_room_id: attrs[:from_room_id],
+          direction: Door.opposite_direction(attrs[:direction]),
+          door_type: attrs[:door_type] || "standard",
+          is_locked: attrs[:is_locked] || false,
+          key_required: attrs[:key_required]
+        }
 
-      {:ok, _return_door} = 
-        %Door{}
-        |> Door.changeset(return_attrs)
-        |> Repo.insert()
+        {:ok, _return_door} = 
+          %Door{}
+          |> Door.changeset(return_attrs)
+          |> Repo.insert()
 
-      door
-    end)
+        door
+      end)
+    else
+      # Return the invalid changeset if validation fails
+      {:error, changeset}
+    end
   end
 
   @doc """
