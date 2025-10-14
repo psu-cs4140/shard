@@ -43,19 +43,29 @@ defmodule ShardWeb.TutorialLive.Terrain do
   end
 
   defp load_tutorial_items do
-    # For the tutorial, we'll use a static list of items
-    # In a real implementation, this would query the database
-    [
+    # Ensure tutorial key exists in the database
+    ensure_tutorial_key_exists()
+    
+    # Load items from the database in the tutorial area
+    alias Shard.Items.RoomItem
+    
+    from(ri in RoomItem,
+      where: ri.location == "0,2,0",
+      preload: [:item]
+    )
+    |> Repo.all()
+    |> Enum.map(fn room_item ->
       %{
-        name: "Tutorial Key",
-        description: "A mysterious key that might unlock something important.",
+        name: room_item.item.name,
+        description: room_item.item.description,
         location_x: 0,
         location_y: 2,
         location_z: 0,
-        item_type: "key",
-        icon: "🗝️"
+        item_type: room_item.item.type,
+        icon: get_item_icon(room_item.item.type),
+        quantity: room_item.quantity
       }
-    ]
+    end)
   end
 
   @impl true
@@ -105,7 +115,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
 
         <div class="space-y-4">
           <h2 class="text-2xl font-semibold">Tutorial Map</h2>
-          <.minimap tutorial_npcs={@tutorial_npcs} terrain_map={@terrain_map} />
+          <.minimap tutorial_npcs={@tutorial_npcs} tutorial_items={@tutorial_items} terrain_map={@terrain_map} />
 
           <div class="mt-4">
             <h3 class="text-lg font-semibold mb-2">NPCs in the Area</h3>
@@ -135,6 +145,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
 
   # function component inputs
   attr :tutorial_npcs, :list, required: true
+  attr :tutorial_items, :list, required: true
   attr :terrain_map, :list, required: true
 
   defp minimap(assigns) do
@@ -258,4 +269,52 @@ defmodule ShardWeb.TutorialLive.Terrain do
         end
     end
   end
+
+  defp ensure_tutorial_key_exists do
+    alias Shard.Items.{Item, RoomItem}
+    
+    # Check if tutorial key already exists in the room
+    existing_key = from(ri in RoomItem,
+      where: ri.location == "0,2,0",
+      join: i in Item, on: ri.item_id == i.id,
+      where: i.name == "Tutorial Key"
+    ) |> Repo.one()
+    
+    if is_nil(existing_key) do
+      # Create the tutorial key item if it doesn't exist
+      {:ok, key_item} = case Repo.get_by(Item, name: "Tutorial Key") do
+        nil ->
+          %Item{}
+          |> Item.changeset(%{
+            name: "Tutorial Key",
+            description: "A mysterious key that might unlock something important.",
+            type: "key",
+            rarity: "common",
+            value: 10,
+            stackable: false,
+            equippable: false
+          })
+          |> Repo.insert()
+        
+        existing_item ->
+          {:ok, existing_item}
+      end
+      
+      # Place the key in the room at (0,2,0)
+      %RoomItem{}
+      |> RoomItem.changeset(%{
+        item_id: key_item.id,
+        location: "0,2,0",
+        quantity: 1
+      })
+      |> Repo.insert()
+    end
+  end
+
+  defp get_item_icon("key"), do: "🗝️"
+  defp get_item_icon("weapon"), do: "⚔️"
+  defp get_item_icon("armor"), do: "🛡️"
+  defp get_item_icon("potion"), do: "🧪"
+  defp get_item_icon("scroll"), do: "📜"
+  defp get_item_icon(_), do: "📦"
 end
