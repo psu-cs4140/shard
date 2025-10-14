@@ -778,4 +778,22 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       assert updated_socket.assigns.changeset == nil
     end
   end
+
+  describe "handle_zoom_out/2" do
+    test "decreases zoom level" do
+      socket = create_socket(%{zoom: 1.0})
+
+      {:noreply, updated_socket} = MapHandlers.handle_zoom_out(%{}, socket)
+      
+      assert updated_socket.assigns.zoom == 1.0 / 1.2
+    end
+
+    test "caps zoom level at minimum" do
+      socket = create_socket(%{zoom: 0.2})
+
+      {:noreply, updated_socket} = MapHandlers.handle_zoom_out(%{}, socket)
+      
+      assert updated_socket.assigns.zoom == 0.2
+    end
+  end
 end
