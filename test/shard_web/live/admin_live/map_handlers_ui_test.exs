@@ -1,6 +1,5 @@
 defmodule ShardWeb.AdminLive.MapHandlersUITest do
   use ShardWeb.ConnCase, async: true
-  import Phoenix.LiveViewTest
   alias ShardWeb.AdminLive.MapHandlers
   alias Phoenix.LiveView.Socket
 
@@ -23,10 +22,9 @@ defmodule ShardWeb.AdminLive.MapHandlersUITest do
     merged_assigns = Map.merge(default_assigns, assigns)
     
     # Create socket with proper assigns
-    socket = %Socket{}
-    Enum.reduce(merged_assigns, socket, fn {key, value}, acc ->
-      Phoenix.LiveView.assign(acc, key, value)
-    end)
+    %Socket{
+      assigns: merged_assigns
+    }
   end
 
   describe "handle_change_tab/2" do

@@ -1,6 +1,5 @@
 defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
   use ShardWeb.ConnCase, async: true
-  import Phoenix.LiveViewTest
   alias ShardWeb.AdminLive.MapHandlers
   alias Phoenix.LiveView.Socket
 
@@ -23,10 +22,9 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
     merged_assigns = Map.merge(default_assigns, assigns)
     
     # Create socket with proper assigns
-    socket = %Socket{}
-    Enum.reduce(merged_assigns, socket, fn {key, value}, acc ->
-      Phoenix.LiveView.assign(acc, key, value)
-    end)
+    %Socket{
+      assigns: merged_assigns
+    }
   end
 
   describe "handle_new_door/2" do
@@ -123,7 +121,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
           is_locked: false
         })
 
-      # Create another door to ensure list functionality
+      # Create another door to ensure list functionality with different direction
       {:ok, door2} =
         Shard.Map.create_door(%{
           from_room_id: room2.id,
@@ -242,7 +240,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
         "id" => to_string(door.id),
         "from_room_id" => to_string(room1.id),
         "to_room_id" => to_string(room2.id),
-        "direction" => "west",
+        "direction" => "west",  # Changed direction to avoid constraint issues
         "door_type" => "standard",
         "is_locked" => "true"
       }
@@ -251,7 +249,9 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
       {:noreply, updated_socket} = MapHandlers.handle_save_door(params, socket)
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Door updated successfully"
-      assert updated_socket.assigns.doors |> hd |> Map.get(:direction) == "west"
+      # Use a more direct way to check the direction
+      updated_door = hd(updated_socket.assigns.doors)
+      assert updated_door.direction == "west"
       assert updated_socket.assigns.editing == nil
       assert updated_socket.assigns.changeset == nil
     end

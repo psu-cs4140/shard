@@ -1,11 +1,9 @@
 defmodule ShardWeb.AdminLive.MapHandlersTest do
   use ShardWeb.ConnCase, async: true
-  import Phoenix.LiveViewTest
-  alias ShardWeb.AdminLive.MapHandlers
   alias Phoenix.LiveView.Socket
 
   # Helper function to create a socket with required assigns
-  defp create_socket(assigns \\ %{}) do
+  defp create_socket(assigns) do
     default_assigns = %{
       tab: "rooms",
       rooms: [],
@@ -20,8 +18,11 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       flash: %{}
     }
 
+    merged_assigns = Map.merge(default_assigns, assigns)
+    
+    # Create socket with proper assigns
     %Socket{
-      assigns: Map.merge(default_assigns, assigns)
+      assigns: merged_assigns
     }
   end
 
