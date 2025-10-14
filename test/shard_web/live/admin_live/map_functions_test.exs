@@ -1,6 +1,5 @@
 defmodule ShardWeb.AdminLive.MapFunctionsTest do
   use ShardWeb.ConnCase, async: true
-  import Phoenix.LiveViewTest
   alias ShardWeb.AdminLive.MapFunctions
   alias Shard.Map
   alias Phoenix.LiveView.Socket
@@ -16,7 +15,8 @@ defmodule ShardWeb.AdminLive.MapFunctionsTest do
     }
 
     %Socket{
-      assigns: Map.merge(default_assigns, assigns)
+      assigns: Map.merge(default_assigns, assigns),
+      private: %{connect_info: %{session: %{}}}
     }
   end
 
