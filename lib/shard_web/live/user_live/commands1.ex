@@ -52,8 +52,8 @@ defmodule ShardWeb.UserLive.Commands1 do
       "look" ->
         {x, y} = game_state.player_position
         
-        # Ensure tutorial key exists if we're in tutorial terrain at position (0,2)
-        if game_state.map_id == "tutorial_terrain" and {x, y} == {0, 2} do
+        # Ensure tutorial key exists if we're in tutorial terrain
+        if game_state.map_id == "tutorial_terrain" do
           Shard.Items.create_tutorial_key()
         end
 
@@ -331,7 +331,7 @@ defmodule ShardWeb.UserLive.Commands1 do
     
     IO.puts("DEBUG: Looking for items at #{location_string} on map #{map_id}")
     
-    # First try to get items from RoomItem table (items placed in world)
+    # Get items from RoomItem table (items placed in world)
     room_items_query = from(ri in RoomItem,
       where: ri.location == ^location_string,
       join: i in Item, on: ri.item_id == i.id,
@@ -340,62 +340,15 @@ defmodule ShardWeb.UserLive.Commands1 do
         description: i.description,
         item_type: i.item_type,
         quantity: ri.quantity,
-        is_active: i.is_active,
-        source: "room_item"
+        is_active: i.is_active
       }
     )
     
     room_items = Repo.all(room_items_query)
     IO.puts("DEBUG: Found #{length(room_items)} room items: #{inspect(room_items)}")
     
-    # Filter for active items only (treat nil as true for backwards compatibility)
-    active_room_items = Enum.filter(room_items, fn item -> 
-      is_nil(item.is_active) or item.is_active == true 
-    end)
-    
-    IO.puts("DEBUG: Active room items: #{length(active_room_items)}")
-    
-    # Also check for items directly in Item table with matching location and map
-    # Convert map_id to match the format stored in database
-    map_name = case map_id do
-      "tutorial_terrain" -> "tutorial_terrain"
-      "tutorial" -> "tutorial_terrain"
-      other -> other
-    end
-    
-    direct_items_query = from(i in Item,
-      where: i.location == ^location_string and 
-             (i.map == ^map_name or i.map == ^map_id or 
-              (^map_id == "tutorial_terrain" and i.map == "tutorial") or
-              (^map_id == "tutorial" and i.map == "tutorial_terrain")),
-      select: %{
-        name: i.name,
-        description: i.description,
-        item_type: i.item_type,
-        quantity: 1,
-        is_active: i.is_active,
-        source: "direct_item"
-      }
-    )
-    
-    direct_items = Repo.all(direct_items_query)
-    IO.puts("DEBUG: Found #{length(direct_items)} direct items: #{inspect(direct_items)}")
-    
-    # Filter for active items only (treat nil as true for backwards compatibility)
-    active_direct_items = Enum.filter(direct_items, fn item -> 
-      is_nil(item.is_active) or item.is_active == true 
-    end)
-    
-    IO.puts("DEBUG: Active direct items: #{length(active_direct_items)}")
-    
-    # Combine both results and remove duplicates based on name
-    all_items = active_room_items ++ active_direct_items
-    final_items = all_items |> Enum.uniq_by(& &1.name)
-    
-    IO.puts("DEBUG: Final items count: #{length(final_items)}")
-    
-    # Return items in the expected format
-    result = Enum.map(final_items, fn item ->
+    # Return items in the expected format (don't filter by is_active for now)
+    result = Enum.map(room_items, fn item ->
       %{
         name: item.name,
         description: item.description,
