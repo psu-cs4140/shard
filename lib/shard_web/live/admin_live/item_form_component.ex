@@ -50,6 +50,8 @@ defmodule ShardWeb.AdminLive.ItemFormComponent do
           options={Enum.map(Shard.Items.Item.equipment_slots(), &{String.capitalize(&1), &1})}
         />
         <.input field={@form[:icon]} type="text" label="Icon" />
+        <.input field={@form[:location]} type="text" label="Location" placeholder="e.g., 0,2,0" />
+        <.input field={@form[:map]} type="text" label="Map" placeholder="e.g., tutorial" />
         <.input field={@form[:is_active]} type="checkbox" label="Active" />
         <:actions>
           <.button phx-disable-with="Saving...">Save Item</.button>
