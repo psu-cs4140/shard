@@ -119,7 +119,7 @@ defmodule ShardWeb.AdminLive.Characters do
     from(c in Character,
       join: u in assoc(c, :user),
       select: %{c | user: u},
-      order_by: [desc: c.inserted_at]
+      order_by: [asc: c.inserted_at]
     )
     |> Repo.all()
   end

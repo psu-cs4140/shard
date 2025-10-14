@@ -47,11 +47,14 @@ defmodule ShardWeb.AdminLive.MapFunctions do
   end
 
   def save_door(socket, door_params) do
+    # Convert string parameters to proper types
+    converted_params = convert_door_params(door_params)
+
     case socket.assigns.editing do
       :door
       when not is_nil(socket.assigns.changeset) and
              not is_nil(socket.assigns.changeset.data.id) ->
-        case Map.update_door(socket.assigns.changeset.data, door_params) do
+        case Map.update_door(socket.assigns.changeset.data, converted_params) do
           {:ok, _door} ->
             doors = Map.list_doors()
 
@@ -67,7 +70,7 @@ defmodule ShardWeb.AdminLive.MapFunctions do
         end
 
       _ ->
-        case Map.create_door(door_params) do
+        case Map.create_door(converted_params) do
           {:ok, _door} ->
             doors = Map.list_doors()
 
@@ -83,4 +86,36 @@ defmodule ShardWeb.AdminLive.MapFunctions do
         end
     end
   end
+
+  defp convert_door_params(params) do
+    %{}
+    |> put_param(params, "from_room_id", &to_integer/1)
+    |> put_param(params, "to_room_id", &to_integer/1)
+    |> put_param(params, "direction")
+    |> put_param(params, "door_type")
+    |> put_param(params, "is_locked", &to_boolean/1)
+    |> put_param(params, "id", &to_integer/1)
+  end
+
+  defp put_param(acc, params, key, converter \\ fn x -> x end) do
+    case :maps.get(key, params, nil) do
+      nil -> acc
+      value -> :maps.put(String.to_atom(key), converter.(value), acc)
+    end
+  end
+
+  defp to_integer(value) when is_integer(value), do: value
+
+  defp to_integer(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, _} -> int
+      :error -> value
+    end
+  end
+
+  defp to_boolean("true"), do: true
+  defp to_boolean("false"), do: false
+  defp to_boolean(true), do: true
+  defp to_boolean(false), do: false
+  defp to_boolean(value), do: value
 end
