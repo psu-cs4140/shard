@@ -208,10 +208,13 @@ defmodule Shard.Combat do
       # Calculate stat increases (simple +2 to all stats per level)
       stat_increase = 2
       
+      # Calculate remaining experience after leveling up
+      remaining_experience = new_experience - next_level_exp
+      
       updated_stats = %{
         current_stats |
         level: new_level,
-        experience: new_experience,
+        experience: remaining_experience,
         next_level_exp: calculate_next_level_exp(new_level),
         strength: current_stats.strength + stat_increase,
         dexterity: current_stats.dexterity + stat_increase,
