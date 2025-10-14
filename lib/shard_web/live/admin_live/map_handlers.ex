@@ -281,4 +281,19 @@ defmodule ShardWeb.AdminLive.MapHandlers do
      |> assign(:doors, doors)
      |> put_flash(:info, "Default 3x3 map generated successfully!")}
   end
+
+  # Delete all map data
+  def handle_delete_all_map_data(_params, socket) do
+    Shard.Repo.delete_all(Door)
+    Shard.Repo.delete_all(Room)
+
+    rooms = Map.list_rooms()
+    doors = Map.list_doors()
+
+    {:noreply,
+     socket
+     |> assign(:rooms, rooms)
+     |> assign(:doors, doors)
+     |> put_flash(:info, "All map data deleted successfully!")}
+  end
 end

@@ -83,13 +83,23 @@ defmodule ShardWeb.AdminLive.Map do
           </button>
         </div>
 
-        <button
-          type="button"
-          class="btn btn-secondary"
-          phx-click="generate_default_map"
-        >
-          Generate Default Map
-        </button>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            phx-click="generate_default_map"
+          >
+            Generate Default Map
+          </button>
+          <button
+            type="button"
+            class="btn btn-error"
+            phx-click="delete_all_map_data"
+            data-confirm="Are you sure you want to delete all rooms and doors? This cannot be undone."
+          >
+            Delete All Map Data
+          </button>
+        </div>
       </div>
 
       <div class="mt-6">
@@ -295,4 +305,8 @@ defmodule ShardWeb.AdminLive.Map do
   # Generate default map
   def handle_event("generate_default_map", params, socket),
     do: MapHandlers.handle_generate_default_map(params, socket)
+
+  # Delete all map data
+  def handle_event("delete_all_map_data", params, socket),
+    do: MapHandlers.handle_delete_all_map_data(params, socket)
 end
