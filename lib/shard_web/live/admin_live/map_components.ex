@@ -399,11 +399,18 @@ defmodule ShardWeb.AdminLive.MapComponents do
           return_door_key = {door.to_room_id, door.from_room_id, opposite_dir}
           return_door_id = Map.get(door_lookup, return_door_key)
           
-          if return_door_id && (return_door = Map.get(door_map, return_door_id)) do
-            # Mark both doors as processed
-            new_seen = MapSet.put(seen, door.id) |> MapSet.put(return_door_id)
-            # Add both doors to the result (door first, then its return)
-            {acc ++ [door, Map.put(return_door, :is_return_door, true)], new_seen}
+          if return_door_id do
+            return_door = Map.get(door_map, return_door_id)
+            if return_door do
+              # Mark both doors as processed
+              new_seen = MapSet.put(seen, door.id) |> MapSet.put(return_door_id)
+              # Add both doors to the result (door first, then its return)
+              return_door_marked = Map.put(return_door, :is_return_door, true)
+              {acc ++ [door, return_door_marked], new_seen}
+            else
+              # No return door found, add just this door
+              {acc ++ [door], MapSet.put(seen, door.id)}
+            end
           else
             # No return door found, add just this door
             {acc ++ [door], MapSet.put(seen, door.id)}
