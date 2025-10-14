@@ -322,7 +322,8 @@ defmodule Shard.Items do
               stackable: false,
               equippable: false,
               location: "0,2,0",
-              map: "tutorial_terrain"
+              map: "tutorial_terrain",
+              is_active: true
             })
             |> Repo.insert()
           

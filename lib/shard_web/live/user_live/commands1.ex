@@ -351,8 +351,10 @@ defmodule ShardWeb.UserLive.Commands1 do
     # Debug: Log room items found
     IO.puts("DEBUG: Room items found: #{inspect(room_items)}")
     
-    # Filter for active items only
-    active_room_items = Enum.filter(room_items, fn item -> item.is_active end)
+    # Filter for active items only (treat nil as true for backwards compatibility)
+    active_room_items = Enum.filter(room_items, fn item -> 
+      is_nil(item.is_active) or item.is_active == true 
+    end)
     
     # Also check for items directly in Item table with matching location and map
     # Convert map_id to match the format stored in database
@@ -382,8 +384,10 @@ defmodule ShardWeb.UserLive.Commands1 do
     # Debug: Log direct items found
     IO.puts("DEBUG: Direct items found: #{inspect(direct_items)}")
     
-    # Filter for active items only
-    active_direct_items = Enum.filter(direct_items, fn item -> item.is_active end)
+    # Filter for active items only (treat nil as true for backwards compatibility)
+    active_direct_items = Enum.filter(direct_items, fn item -> 
+      is_nil(item.is_active) or item.is_active == true 
+    end)
     
     # Combine both results and remove duplicates based on name
     all_items = active_room_items ++ active_direct_items
