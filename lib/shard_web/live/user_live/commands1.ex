@@ -329,6 +329,8 @@ defmodule ShardWeb.UserLive.Commands1 do
     alias Shard.Items.RoomItem
     location_string = "#{x},#{y},0"
     
+    IO.puts("DEBUG: Looking for items at location #{location_string} on map #{map_id}")
+    
     # Get items from RoomItem table (items placed in world)
     room_items = from(ri in RoomItem,
       where: ri.location == ^location_string,
@@ -342,6 +344,8 @@ defmodule ShardWeb.UserLive.Commands1 do
       }
     )
     |> Repo.all()
+    
+    IO.puts("DEBUG: Found #{length(room_items)} room items: #{inspect(room_items)}")
     
     # Also check for items directly in Item table with matching location and map
     direct_items = from(i in Item,
@@ -357,9 +361,14 @@ defmodule ShardWeb.UserLive.Commands1 do
     )
     |> Repo.all()
     
+    IO.puts("DEBUG: Found #{length(direct_items)} direct items: #{inspect(direct_items)}")
+    
     # Combine both results and remove duplicates based on name
     all_items = room_items ++ direct_items
-    all_items |> Enum.uniq_by(& &1.name)
+    final_items = all_items |> Enum.uniq_by(& &1.name)
+    
+    IO.puts("DEBUG: Final items to return: #{inspect(final_items)}")
+    final_items
   end
 
   # Parse talk command to extract NPC name
