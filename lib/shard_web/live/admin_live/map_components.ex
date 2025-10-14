@@ -350,15 +350,15 @@ defmodule ShardWeb.AdminLive.MapComponents do
     |> Enum.reduce({MapSet.new(), []}, fn door, {seen_pairs, unique_doors} ->
       from_room = Enum.find(rooms, &(&1.id == door.from_room_id))
       to_room = Enum.find(rooms, &(&1.id == door.to_room_id))
-      
+
       if from_room && to_room do
         # Create a normalized pair identifier (smaller ID first)
-        pair_key = 
+        pair_key =
           case {from_room.id, to_room.id} do
             {a, b} when a < b -> {a, b}
             {a, b} -> {b, a}
           end
-        
+
         if MapSet.member?(seen_pairs, pair_key) do
           {seen_pairs, unique_doors}
         else
