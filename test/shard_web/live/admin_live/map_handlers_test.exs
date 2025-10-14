@@ -723,4 +723,14 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :error) == "Failed to generate description: AI service unavailable"
     end
   end
+
+  describe "handle_back_to_rooms/2" do
+    test "changes tab to rooms" do
+      socket = create_socket(%{tab: "room_details"})
+
+      {:noreply, updated_socket} = MapHandlers.handle_back_to_rooms(%{}, socket)
+      
+      assert updated_socket.assigns.tab == "rooms"
+    end
+  end
 end
