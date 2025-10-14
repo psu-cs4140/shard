@@ -174,13 +174,13 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
           doors: []
         })
 
-      # Convert IDs to appropriate types
+      # Convert IDs to appropriate string types to match form submission
       door_params = %{
-        "from_room_id" => room1.id,
-        "to_room_id" => room2.id,
+        "from_room_id" => "#{room1.id}",
+        "to_room_id" => "#{room2.id}",
         "direction" => "east",
         "door_type" => "standard",
-        "is_locked" => false
+        "is_locked" => "false"
       }
 
       params = %{"door" => door_params}
@@ -241,14 +241,14 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
           doors: all_doors
         })
 
-      # Use appropriate types
+      # Use appropriate string types to match form submission
       door_params = %{
-        "id" => main_door.id,
-        "from_room_id" => room1.id,
-        "to_room_id" => room2.id,
+        "id" => "#{main_door.id}",
+        "from_room_id" => "#{room1.id}",
+        "to_room_id" => "#{room2.id}",
         "direction" => "west",  # Changed direction to avoid constraint issues
         "door_type" => "standard",
-        "is_locked" => true
+        "is_locked" => "true"
       }
 
       params = %{"door" => door_params}
@@ -295,13 +295,13 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
           rooms: [room1, room2]
         })
 
-      # Use appropriate types
+      # Use appropriate string types to match form submission
       door_params = %{
-        "from_room_id" => room1.id,
-        "to_room_id" => room2.id,
+        "from_room_id" => "#{room1.id}",
+        "to_room_id" => "#{room2.id}",
         "direction" => "",
         "door_type" => "standard",
-        "is_locked" => false
+        "is_locked" => "false"
       }
 
       {:noreply, updated_socket} =
@@ -359,14 +359,14 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
           rooms: [room1, room2]
         })
 
-      # Use appropriate types
+      # Use appropriate string types to match form submission
       door_params = %{
-        "id" => main_door.id,
-        "from_room_id" => room1.id,
-        "to_room_id" => room2.id,
+        "id" => "#{main_door.id}",
+        "from_room_id" => "#{room1.id}",
+        "to_room_id" => "#{room2.id}",
         "direction" => "",
         "door_type" => "standard",
-        "is_locked" => true
+        "is_locked" => "true"
       }
 
       {:noreply, updated_socket} =
