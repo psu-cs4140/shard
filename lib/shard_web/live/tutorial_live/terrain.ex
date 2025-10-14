@@ -16,11 +16,13 @@ defmodule ShardWeb.TutorialLive.Terrain do
   @impl true
   def mount(_params, _session, socket) do
     tutorial_npcs = load_tutorial_npcs()
+    tutorial_items = load_tutorial_items()
 
     socket =
       socket
       |> assign(:page_title, "Tutorial: Terrain")
       |> assign(:tutorial_npcs, tutorial_npcs)
+      |> assign(:tutorial_items, tutorial_items)
       |> assign(:terrain_map, @tutorial_terrain_map)
 
     {:ok, socket}
@@ -38,6 +40,22 @@ defmodule ShardWeb.TutorialLive.Terrain do
       where: n.location_z == 0
     )
     |> Repo.all()
+  end
+
+  defp load_tutorial_items do
+    # For the tutorial, we'll use a static list of items
+    # In a real implementation, this would query the database
+    [
+      %{
+        name: "Tutorial Key",
+        description: "A mysterious key that might unlock something important.",
+        location_x: 0,
+        location_y: 2,
+        location_z: 0,
+        item_type: "key",
+        icon: "🗝️"
+      }
+    ]
   end
 
   @impl true
@@ -93,6 +111,11 @@ defmodule ShardWeb.TutorialLive.Terrain do
             <h3 class="text-lg font-semibold mb-2">NPCs in the Area</h3>
             <.npc_list npcs={@tutorial_npcs} />
           </div>
+
+          <div class="mt-4">
+            <h3 class="text-lg font-semibold mb-2">Items in the Area</h3>
+            <.item_list items={@tutorial_items} />
+          </div>
         </div>
       </div>
 
@@ -130,14 +153,25 @@ defmodule ShardWeb.TutorialLive.Terrain do
                 >
                 </div>
               <% end %>
+              <%= if item_at_position(@tutorial_items, col_index, row_index) do %>
+                <div
+                  class="absolute -bottom-1 -left-1 w-3 h-3 bg-blue-400 rounded-full border border-blue-600"
+                  title="Item here"
+                >
+                </div>
+              <% end %>
             </div>
           <% end %>
         <% end %>
       </div>
-      <div class="mt-2 text-xs text-gray-600 text-center">
+      <div class="mt-2 text-xs text-gray-600 text-center space-x-3">
         <span class="inline-flex items-center">
           <div class="w-2 h-2 bg-yellow-400 rounded-full mr-1"></div>
           NPC Location
+        </span>
+        <span class="inline-flex items-center">
+          <div class="w-2 h-2 bg-blue-400 rounded-full mr-1"></div>
+          Item Location
         </span>
       </div>
     </div>
@@ -171,8 +205,37 @@ defmodule ShardWeb.TutorialLive.Terrain do
     """
   end
 
+  attr :items, :list, required: true
+
+  defp item_list(assigns) do
+    ~H"""
+    <div class="space-y-2">
+      <%= for item <- @items do %>
+        <div class="flex items-start space-x-3 p-3 bg-white rounded-lg border border-gray-200">
+          <div class="flex-shrink-0">
+            {item.icon}
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="font-medium text-gray-900">{item.name}</h4>
+            <p class="text-sm text-gray-600 line-clamp-2">{item.description}</p>
+            <div class="mt-1 flex items-center space-x-2 text-xs text-gray-500">
+              <span class="capitalize">{String.replace(item.item_type, "_", " ")}</span>
+              <span>•</span>
+              <span>Position: ({item.location_x}, {item.location_y})</span>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    """
+  end
+
   defp npc_at_position(npcs, x, y) do
     Enum.any?(npcs, fn npc -> npc.location_x == x && npc.location_y == y end)
+  end
+
+  defp item_at_position(items, x, y) do
+    Enum.any?(items, fn item -> item.location_x == x && item.location_y == y end)
   end
 
   defp npc_icon("quest_giver"), do: "🧙‍♂️"
