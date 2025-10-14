@@ -20,11 +20,12 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
       flash: %{}
     }
 
-    socket = %Socket{}
     merged_assigns = Map.merge(default_assigns, assigns)
     
+    # Create socket with proper assigns
+    socket = %Socket{}
     Enum.reduce(merged_assigns, socket, fn {key, value}, acc ->
-      assign(acc, key, value)
+      Phoenix.LiveView.assign(acc, key, value)
     end)
   end
 
