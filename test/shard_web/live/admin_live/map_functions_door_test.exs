@@ -56,13 +56,13 @@ defmodule ShardWeb.AdminLive.MapFunctionsDoorTest do
           doors: []
         })
 
-      # Convert IDs to strings as they would come from form submission
+      # Use proper integer types for IDs and boolean for is_locked
       door_params = %{
-        "from_room_id" => "#{room1.id}",
-        "to_room_id" => "#{room2.id}",
+        "from_room_id" => room1.id,
+        "to_room_id" => room2.id,
         "direction" => "east",
         "door_type" => "standard",
-        "is_locked" => "false"
+        "is_locked" => false
       }
 
       assert {:ok, updated_socket} = MapFunctions.save_door(socket, door_params)
@@ -116,14 +116,14 @@ defmodule ShardWeb.AdminLive.MapFunctionsDoorTest do
           doors: [door]
         })
 
-      # Convert IDs to strings as they would come from form submission
+      # Use proper integer types for IDs and boolean for is_locked
       door_params = %{
-        "id" => "#{door.id}",
-        "from_room_id" => "#{room1.id}",
-        "to_room_id" => "#{room2.id}",
+        "id" => door.id,
+        "from_room_id" => room1.id,
+        "to_room_id" => room2.id,
         "direction" => "west",  # Changed direction to avoid constraint issues
         "door_type" => "standard",
-        "is_locked" => "true"
+        "is_locked" => true
       }
 
       assert {:ok, updated_socket} = MapFunctions.save_door(socket, door_params)
