@@ -168,9 +168,9 @@ defmodule ShardWeb.UserLive.Commands1 do
         end
 
         # Add item descriptions if any are present
-        if length(items_here) > 0 do
+        description_lines = if length(items_here) > 0 do
           # Empty line for spacing
-          description_lines = description_lines ++ [""]
+          updated_lines = description_lines ++ [""]
 
           # Add each item with their description
           item_descriptions =
@@ -179,18 +179,20 @@ defmodule ShardWeb.UserLive.Commands1 do
               "You see a #{item_name} on ground"
             end)
 
-          description_lines = description_lines ++ item_descriptions
+          updated_lines ++ item_descriptions
+        else
+          description_lines
         end
 
         # Add available exits information
         exits = get_available_exits(x, y, room)
 
-        if length(exits) > 0 do
-          description_lines = description_lines ++ [""]
+        description_lines = if length(exits) > 0 do
+          updated_lines = description_lines ++ [""]
           exit_text = "Exits: " <> Enum.join(exits, ", ")
-          description_lines = description_lines ++ [exit_text]
+          updated_lines ++ [exit_text]
         else
-          description_lines = description_lines ++ ["", "There are no obvious exits."]
+          description_lines ++ ["", "There are no obvious exits."]
         end
 
         # To see if there are monsters
@@ -201,26 +203,25 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         monster_count = Enum.count(monsters)
 
-        description_lines =
-          description_lines ++
-            case monster_count do
-              0 ->
-                [""]
+        description_lines = description_lines ++
+          case monster_count do
+            0 ->
+              [""]
 
-              1 ->
-                ["", "There is a " <> Enum.at(monsters, 0)[:name] <> "."]
+            1 ->
+              ["", "There is a " <> Enum.at(monsters, 0)[:name] <> "."]
 
-              _ ->
-                [
-                  "",
-                  "There are " <>
-                    to_string(monster_count) <>
-                    " monsters! The monsters include " <>
-                    Enum.map_join(monsters, ", ", fn monster ->
-                      "a " <> to_string(monster[:name])
-                    end) <> "."
-                ]
-            end
+            _ ->
+              [
+                "",
+                "There are " <>
+                  to_string(monster_count) <>
+                  " monsters! The monsters include " <>
+                  Enum.map_join(monsters, ", ", fn monster ->
+                    "a " <> to_string(monster[:name])
+                  end) <> "."
+              ]
+          end
 
         {description_lines, game_state}
 
