@@ -51,7 +51,20 @@ defmodule ShardWeb.AdminLive.ItemFormComponent do
         />
         <.input field={@form[:icon]} type="text" label="Icon" />
         <.input field={@form[:location]} type="text" label="Location" placeholder="e.g., 0,2,0" />
-        <.input field={@form[:map]} type="text" label="Map" placeholder="e.g., tutorial" />
+        <.input
+          field={@form[:map]}
+          type="select"
+          label="Map"
+          prompt="Choose a map"
+          options={[
+            {"Tutorial Terrain", "tutorial_terrain"},
+            {"Dark Forest", "dark_forest"},
+            {"Crystal Caves", "crystal_caves"},
+            {"Volcanic Peaks", "volcanic_peaks"},
+            {"Frozen Wastes", "frozen_wastes"},
+            {"Shadow Realm", "shadow_realm"}
+          ]}
+        />
         <.input field={@form[:is_active]} type="checkbox" label="Active" />
         <:actions>
           <.button phx-disable-with="Saving...">Save Item</.button>

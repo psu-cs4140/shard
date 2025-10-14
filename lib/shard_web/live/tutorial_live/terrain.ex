@@ -298,7 +298,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
             stackable: false,
             equippable: false,
             location: "0,2,0",
-            map: "tutorial"
+            map: "tutorial_terrain"
           })
           |> Repo.insert()
         

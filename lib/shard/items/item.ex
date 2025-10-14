@@ -34,6 +34,7 @@ defmodule Shard.Items.Item do
   @item_types ~w(weapon armor consumable material quest misc)
   @rarities ~w(common uncommon rare epic legendary)
   @equipment_slots ~w(head chest legs feet hands weapon shield ring necklace)
+  @maps ~w(tutorial_terrain dark_forest crystal_caves volcanic_peaks frozen_wastes shadow_realm)
 
   def changeset(item, attrs) do
     item
@@ -61,6 +62,7 @@ defmodule Shard.Items.Item do
     |> validate_length(:name, min: 2, max: 100)
     |> validate_inclusion(:item_type, @item_types)
     |> validate_inclusion(:rarity, @rarities)
+    |> validate_inclusion(:map, @maps, allow_nil: true)
     |> validate_number(:value, greater_than_or_equal_to: 0)
     |> validate_number(:weight, greater_than_or_equal_to: 0)
     |> validate_number(:max_stack_size, greater_than: 0)
@@ -90,4 +92,5 @@ defmodule Shard.Items.Item do
   def item_types, do: @item_types
   def rarities, do: @rarities
   def equipment_slots, do: @equipment_slots
+  def maps, do: @maps
 end
