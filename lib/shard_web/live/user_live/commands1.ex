@@ -145,7 +145,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         # Check for NPCs at current location
         npcs_here = get_npcs_at_location(x, y, game_state.map_id)
-        
+
         # Check for items at current location
         items_here = get_items_at_location(x, y, game_state.map_id)
 
@@ -322,35 +322,39 @@ defmodule ShardWeb.UserLive.Commands1 do
   defp get_items_at_location(x, y, map_id) do
     alias Shard.Items.RoomItem
     location_string = "#{x},#{y},0"
-    
+
     # Get items from RoomItem table (items placed in world)
-    room_items = from(ri in RoomItem,
-      where: ri.location == ^location_string,
-      join: i in Item, on: ri.item_id == i.id,
-      where: is_nil(i.is_active) or i.is_active == true,
-      select: %{
-        name: i.name,
-        description: i.description,
-        item_type: i.item_type,
-        quantity: ri.quantity
-      }
-    )
-    |> Repo.all()
-    
+    room_items =
+      from(ri in RoomItem,
+        where: ri.location == ^location_string,
+        join: i in Item,
+        on: ri.item_id == i.id,
+        where: is_nil(i.is_active) or i.is_active == true,
+        select: %{
+          name: i.name,
+          description: i.description,
+          item_type: i.item_type,
+          quantity: ri.quantity
+        }
+      )
+      |> Repo.all()
+
     # Also check for items directly in Item table with matching location and map
-    direct_items = from(i in Item,
-      where: i.location == ^location_string and 
-             (i.map == ^map_id or is_nil(i.map)) and
-             (is_nil(i.is_active) or i.is_active == true),
-      select: %{
-        name: i.name,
-        description: i.description,
-        item_type: i.item_type,
-        quantity: 1
-      }
-    )
-    |> Repo.all()
-    
+    direct_items =
+      from(i in Item,
+        where:
+          i.location == ^location_string and
+            (i.map == ^map_id or is_nil(i.map)) and
+            (is_nil(i.is_active) or i.is_active == true),
+        select: %{
+          name: i.name,
+          description: i.description,
+          item_type: i.item_type,
+          quantity: 1
+        }
+      )
+      |> Repo.all()
+
     # Combine both results and remove duplicates based on name
     all_items = room_items ++ direct_items
     all_items |> Enum.uniq_by(& &1.name)
@@ -378,7 +382,6 @@ defmodule ShardWeb.UserLive.Commands1 do
         :error
     end
   end
-
 
   # Parse quest command to extract NPC name
   def parse_quest_command(command) do
