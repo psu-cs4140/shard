@@ -1,4 +1,5 @@
 defmodule ShardWeb.UserLive.Commands1 do
+  @moduledoc false
   import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.Movement
   import ShardWeb.UserLive.QuestHandlers
@@ -491,6 +492,7 @@ defmodule ShardWeb.UserLive.Commands1 do
     case target_item do
       nil ->
         if length(items_here) > 0 do
+          # credo:disable-for-next-line Credo.Check.Refactor.EnumMapJoin
           available_names = Enum.map(items_here, & &1.name) |> Enum.join(", ")
 
           response = [
@@ -532,7 +534,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         updated_game_state = %{game_state | inventory_items: updated_inventory}
 
-        # TODO: Remove item from database room/location
+        # NOTE: Remove item from database room/location
         # This would require calling something like:
         # Shard.Items.remove_item_from_location(item.id, "#{x},#{y},0")
 

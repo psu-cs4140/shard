@@ -1,4 +1,5 @@
 defmodule ShardWeb.UserLive.Movement do
+  @moduledoc false
   use ShardWeb, :live_view
   alias Shard.Map, as: GameMap
   alias Shard.Repo

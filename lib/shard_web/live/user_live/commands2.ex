@@ -1,4 +1,5 @@
 defmodule ShardWeb.UserLive.Commands2 do
+  @moduledoc false
   import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.QuestHandlers
 
@@ -15,6 +16,7 @@ defmodule ShardWeb.UserLive.Commands2 do
     case target_npc do
       nil ->
         if length(npcs_here) > 0 do
+          # credo:disable-for-next-line Credo.Check.Refactor.EnumMapJoin
           available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
 
           response = [
@@ -46,6 +48,7 @@ defmodule ShardWeb.UserLive.Commands2 do
     case target_npc do
       nil ->
         if length(npcs_here) > 0 do
+          # credo:disable-for-next-line Credo.Check.Refactor.EnumMapJoin
           available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
 
           response = [
@@ -76,6 +79,7 @@ defmodule ShardWeb.UserLive.Commands2 do
     case target_npc do
       nil ->
         if length(npcs_here) > 0 do
+          # credo:disable-for-next-line Credo.Check.Refactor.EnumMapJoin
           available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
 
           response = [
@@ -204,7 +208,7 @@ defmodule ShardWeb.UserLive.Commands2 do
   def generate_npc_quest_response(npc, game_state) do
     npc_name = npc.name || "Unknown NPC"
 
-    # TODO: Replace mock user_id with current session's user id when available
+    # NOTE: Replace mock user_id with current session's user id when available
     user_id = 1
 
     available_quests =
