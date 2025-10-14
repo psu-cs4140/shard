@@ -122,24 +122,22 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
           is_locked: false
         })
 
-      # Create another door to ensure list functionality with different direction
-      {:ok, door2} =
-        Shard.Map.create_door(%{
-          from_room_id: room2.id,
-          to_room_id: room1.id,
-          direction: "south",
-          door_type: "standard",
-          is_locked: false
-        })
+      # Note: A return door is automatically created by the system
+      # We don't need to create it manually, which was causing the constraint violation
 
-      socket = create_socket(%{rooms: [room1, room2], doors: [door, door2]})
+      # Refresh the doors list to include both the created door and its automatic return door
+      all_doors = Shard.Map.list_doors()
+      created_door = Enum.find(all_doors, &(&1.direction == "north"))
+      return_door = Enum.find(all_doors, &(&1.direction == "south"))
 
-      params = %{"id" => door.id}
+      socket = create_socket(%{rooms: [room1, room2], doors: all_doors})
+
+      params = %{"id" => created_door.id}
       {:noreply, updated_socket} = MapHandlers.handle_delete_door(params, socket)
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Door deleted successfully"
       assert length(updated_socket.assigns.doors) == 1
-      assert List.first(updated_socket.assigns.doors).id == door2.id
+      assert List.first(updated_socket.assigns.doors).id == return_door.id
     end
   end
 
@@ -188,7 +186,8 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
       {:noreply, updated_socket} = MapHandlers.handle_save_door(params, socket)
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Door created successfully"
-      assert length(updated_socket.assigns.doors) == 1
+      # Should have 2 doors (created door + automatic return door)
+      assert length(updated_socket.assigns.doors) == 2
       assert updated_socket.assigns.editing == nil
       assert updated_socket.assigns.changeset == nil
     end
@@ -227,18 +226,22 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
           is_locked: false
         })
 
-      changeset = Shard.Map.change_door(door)
+      # Get all doors including the automatically created return door
+      all_doors = Shard.Map.list_doors()
+      main_door = Enum.find(all_doors, &(&1.direction == "east"))
+      
+      changeset = Shard.Map.change_door(main_door)
 
       socket =
         create_socket(%{
           editing: :door,
           changeset: changeset,
           rooms: [room1, room2],
-          doors: [door]
+          doors: all_doors
         })
 
       door_params = %{
-        "id" => door.id,
+        "id" => main_door.id,
         "from_room_id" => room1.id,
         "to_room_id" => room2.id,
         "direction" => "west",  # Changed direction to avoid constraint issues
@@ -251,7 +254,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Door updated successfully"
       # Use a more direct way to check the direction
-      updated_door = hd(updated_socket.assigns.doors)
+      updated_door = Enum.find(updated_socket.assigns.doors, &(&1.id == main_door.id))
       assert updated_door.direction == "west"
       assert updated_socket.assigns.editing == nil
       assert updated_socket.assigns.changeset == nil
@@ -340,7 +343,11 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
           is_locked: false
         })
 
-      changeset = Shard.Map.change_door(door)
+      # Get the main door (not the return door) for editing
+      all_doors = Shard.Map.list_doors()
+      main_door = Enum.find(all_doors, &(&1.direction == "east"))
+      
+      changeset = Shard.Map.change_door(main_door)
 
       socket =
         create_socket(%{
@@ -350,7 +357,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
         })
 
       door_params = %{
-        "id" => door.id,
+        "id" => main_door.id,
         "from_room_id" => room1.id,
         "to_room_id" => room2.id,
         "direction" => "",
@@ -363,7 +370,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
 
       assert updated_socket.assigns.changeset != nil
       assert updated_socket.assigns.changeset.action == :validate
-      assert updated_socket.assigns.changeset.data.id == door.id
+      assert updated_socket.assigns.changeset.data.id == main_door.id
       assert updated_socket.assigns.changeset.errors != []
     end
   end
@@ -403,7 +410,11 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
           is_locked: false
         })
 
-      changeset = Shard.Map.change_door(door)
+      # Get the main door for editing
+      all_doors = Shard.Map.list_doors()
+      main_door = Enum.find(all_doors, &(&1.direction == "east"))
+      
+      changeset = Shard.Map.change_door(main_door)
 
       socket =
         create_socket(%{
