@@ -15,7 +15,7 @@ defmodule ShardWeb.AdminLive.MapFunctionsTest do
     }
 
     merged_assigns = :maps.merge(default_assigns, assigns)
-    
+
     # Create socket with proper assigns
     %Socket{
       assigns: merged_assigns
