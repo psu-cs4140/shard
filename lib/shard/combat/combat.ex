@@ -64,6 +64,7 @@ defmodule Shard.Combat do
   # Private functions
 
   defp parse_damage(damage) when is_integer(damage), do: damage
+
   defp parse_damage(damage) when is_binary(damage) do
     case Regex.run(~r/^(\d+)d(\d+)$/, damage) do
       [_, num_dice, die_size] ->
@@ -71,6 +72,7 @@ defmodule Shard.Combat do
         num = String.to_integer(num_dice)
         size = String.to_integer(die_size)
         trunc(num * (size + 1) / 2)
+
       _ ->
         # If it's not dice notation, try to parse as integer, default to 1
         case Integer.parse(damage) do
@@ -79,6 +81,7 @@ defmodule Shard.Combat do
         end
     end
   end
+
   defp parse_damage(_), do: 1
 
   defp execute_attack(game_state, target_monster) do
