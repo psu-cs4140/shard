@@ -74,10 +74,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
   end
 
   @impl true
-  def handle_event("terrain_click", %{"x" => x, "y" => y}, socket) do
-    x = String.to_integer(x)
-    y = String.to_integer(y)
-
+  def handle_event("terrain_click", %{"x" => _x, "y" => _y}, socket) do
     {:noreply, socket}
   end
 
