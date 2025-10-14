@@ -21,6 +21,7 @@ defmodule ShardWeb.UserLive.Commands1 do
           "  stats - Show your character stats",
           "  position - Show your current position",
           "  inventory - Show your inventory (coming soon)",
+          "  pickup \"item_name\" - Pick up an item from the room",
           "  npc - Show descriptions of NPCs in this room",
           "  talk \"npc_name\" - Talk to a specific NPC",
           "  quest \"npc_name\" - Get quest from a specific NPC",
@@ -327,8 +328,15 @@ defmodule ShardWeb.UserLive.Commands1 do
                     execute_deliver_quest_command(game_state, npc_name)
 
                   :error ->
-                    {["Unknown command: '#{command}'. Type 'help' for available commands."],
-                     game_state}
+                    # Check if it's a pickup command
+                    case parse_pickup_command(command) do
+                      {:ok, item_name} ->
+                        execute_pickup_command(game_state, item_name)
+
+                      :error ->
+                        {["Unknown command: '#{command}'. Type 'help' for available commands."],
+                         game_state}
+                    end
                 end
             end
         end
@@ -443,6 +451,92 @@ defmodule ShardWeb.UserLive.Commands1 do
 
       true ->
         :error
+    end
+  end
+
+  # Parse pickup command to extract item name
+  def parse_pickup_command(command) do
+    # Match patterns like: pickup "item name", pickup 'item name', pickup item_name
+    cond do
+      # Match pickup "item name" or pickup 'item name'
+      Regex.match?(~r/^pickup\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^pickup\s+["'](.+)["']\s*$/i, command) do
+          [_, item_name] -> {:ok, String.trim(item_name)}
+          _ -> :error
+        end
+
+      # Match pickup item_name (single word, no quotes)
+      Regex.match?(~r/^pickup\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^pickup\s+(\w+)\s*$/i, command) do
+          [_, item_name] -> {:ok, String.trim(item_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
+    end
+  end
+
+  # Execute pickup command with a specific item name
+  def execute_pickup_command(game_state, item_name) do
+    {x, y} = game_state.player_position
+    items_here = get_items_at_location(x, y, game_state.map_id)
+
+    # Find the item by name (case-insensitive)
+    target_item =
+      Enum.find(items_here, fn item ->
+        String.downcase(item.name || "") == String.downcase(item_name)
+      end)
+
+    case target_item do
+      nil ->
+        if length(items_here) > 0 do
+          available_names = Enum.map(items_here, & &1.name) |> Enum.join(", ")
+
+          response = [
+            "There is no item named '#{item_name}' here.",
+            "Available items: #{available_names}"
+          ]
+
+          {response, game_state}
+        else
+          {["There are no items here to pick up."], game_state}
+        end
+
+      item ->
+        # Check if item can be picked up (assuming all items can be picked up for now)
+        # In the future, you might want to add a "pickupable" field to items
+        
+        # Add item to player's inventory
+        updated_inventory = [
+          %{
+            id: item[:id],
+            name: item.name,
+            type: item.item_type || "misc",
+            quantity: item.quantity || 1,
+            damage: item[:damage],
+            defense: item[:defense],
+            effect: item[:effect],
+            description: item[:description]
+          }
+          | game_state.inventory_items
+        ]
+
+        # Remove item from the room (this would need database implementation)
+        # For now, we'll just update the game state
+        
+        response = [
+          "You pick up #{item.name}.",
+          "#{item.name} has been added to your inventory."
+        ]
+
+        updated_game_state = %{game_state | inventory_items: updated_inventory}
+
+        # TODO: Remove item from database room/location
+        # This would require calling something like:
+        # Shard.Items.remove_item_from_location(item.id, "#{x},#{y},0")
+
+        {response, updated_game_state}
     end
   end
 end
