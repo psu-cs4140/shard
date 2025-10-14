@@ -49,7 +49,7 @@ defmodule ShardWeb.AdminLive.MapFunctions do
   def save_door(socket, door_params) do
     # Convert string parameters to proper types
     converted_params = convert_door_params(door_params)
-    
+
     case socket.assigns.editing do
       :door
       when not is_nil(socket.assigns.changeset) and
@@ -105,6 +105,7 @@ defmodule ShardWeb.AdminLive.MapFunctions do
   end
 
   defp to_integer(value) when is_integer(value), do: value
+
   defp to_integer(value) when is_binary(value) do
     case Integer.parse(value) do
       {int, _} -> int
