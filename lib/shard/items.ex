@@ -237,25 +237,23 @@ defmodule Shard.Items do
         {:error, :insufficient_quantity}
 
       true ->
-      Repo.transaction(fn ->
-        # Add to inventory
-        case add_item_to_inventory(character_id, room_item.item_id, pickup_quantity) do
-          {:ok, _} ->
-            # Remove from room
-            if room_item.quantity == pickup_quantity do
-              Repo.delete!(room_item)
-            else
-              room_item
-              |> RoomItem.changeset(%{quantity: room_item.quantity - pickup_quantity})
-              |> Repo.update!()
-            end
+        Repo.transaction(fn ->
+          # Add to inventory
+          case add_item_to_inventory(character_id, room_item.item_id, pickup_quantity) do
+            {:ok, _} ->
+              # Remove from room
+              if room_item.quantity == pickup_quantity do
+                Repo.delete!(room_item)
+              else
+                room_item
+                |> RoomItem.changeset(%{quantity: room_item.quantity - pickup_quantity})
+                |> Repo.update!()
+              end
 
-          error ->
-            Repo.rollback(error)
-        end
-      end)
-    else
-      {:error, :insufficient_quantity}
+            error ->
+              Repo.rollback(error)
+          end
+        end)
     end
   end
 
