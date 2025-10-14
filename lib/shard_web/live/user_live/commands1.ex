@@ -5,6 +5,9 @@ defmodule ShardWeb.UserLive.Commands1 do
   import ShardWeb.UserLive.Movement
   import ShardWeb.UserLive.Commands2
   alias Shard.Map, as: GameMap
+  alias Shard.Items.Item
+  alias Shard.Repo
+  import Ecto.Query
 
   # Process terminal commands
   def process_command(command, game_state) do
@@ -142,6 +145,9 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         # Check for NPCs at current location
         npcs_here = get_npcs_at_location(x, y, game_state.map_id)
+        
+        # Check for items at current location
+        items_here = get_items_at_location(x, y, game_state.map_id)
 
         description_lines = [room_description]
 
@@ -158,7 +164,23 @@ defmodule ShardWeb.UserLive.Commands1 do
               "#{npc_name} is here.\n#{npc_desc}"
             end)
 
-          _ = description_lines ++ npc_descriptions
+          description_lines = description_lines ++ npc_descriptions
+        end
+
+        # Add item descriptions if any are present
+        if length(items_here) > 0 do
+          # Empty line for spacing
+          description_lines = description_lines ++ [""]
+
+          # Add each item with their description
+          item_descriptions =
+            Enum.map(items_here, fn item ->
+              item_name = Map.get(item, :name) || "Unknown Item"
+              item_desc = Map.get(item, :description) || "A mysterious object."
+              "#{item_name} lies here.\n#{item_desc}"
+            end)
+
+          description_lines = description_lines ++ item_descriptions
         end
 
         # Add available exits information
@@ -167,9 +189,9 @@ defmodule ShardWeb.UserLive.Commands1 do
         if length(exits) > 0 do
           description_lines = description_lines ++ [""]
           exit_text = "Exits: " <> Enum.join(exits, ", ")
-          _ = description_lines ++ [exit_text]
+          description_lines = description_lines ++ [exit_text]
         else
-          _ = description_lines ++ ["", "There are no obvious exits."]
+          description_lines = description_lines ++ ["", "There are no obvious exits."]
         end
 
         # To see if there are monsters
@@ -295,6 +317,16 @@ defmodule ShardWeb.UserLive.Commands1 do
             end
         end
     end
+  end
+
+  # Get items at a specific location
+  defp get_items_at_location(x, y, map_id) do
+    location_string = "#{x},#{y},0"
+    
+    from(i in Item,
+      where: i.location == ^location_string and i.map == ^map_id and i.is_active == true
+    )
+    |> Repo.all()
   end
 
   # Parse talk command to extract NPC name
