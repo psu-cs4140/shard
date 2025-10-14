@@ -24,6 +24,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
       |> assign(:tutorial_npcs, tutorial_npcs)
       |> assign(:tutorial_items, tutorial_items)
       |> assign(:terrain_map, @tutorial_terrain_map)
+      |> assign(:tutorial_key_created, tutorial_key_exists?())
 
     {:ok, socket}
   end
@@ -43,9 +44,6 @@ defmodule ShardWeb.TutorialLive.Terrain do
   end
 
   defp load_tutorial_items do
-    # Ensure tutorial key exists in the database
-    ensure_tutorial_key_exists()
-    
     # Load items from the database in the tutorial area (coordinates 0-4, 0-4, z=0)
     alias Shard.Items.RoomItem
     
@@ -70,6 +68,32 @@ defmodule ShardWeb.TutorialLive.Terrain do
         quantity: room_item.quantity
       }
     end)
+  end
+
+  @impl true
+  def handle_event("terrain_click", %{"x" => x, "y" => y}, socket) do
+    x = String.to_integer(x)
+    y = String.to_integer(y)
+    
+    # Create tutorial key on first terrain click if it doesn't exist
+    socket = if not socket.assigns.tutorial_key_created do
+      case Shard.Items.create_tutorial_key() do
+        {:ok, _} ->
+          # Reload items to include the new key
+          tutorial_items = load_tutorial_items()
+          socket
+          |> assign(:tutorial_items, tutorial_items)
+          |> assign(:tutorial_key_created, true)
+          |> put_flash(:info, "You discovered a Tutorial Key at (0, 2)!")
+        
+        {:error, _} ->
+          socket
+      end
+    else
+      socket
+    end
+    
+    {:noreply, socket}
   end
 
   @impl true
@@ -159,7 +183,12 @@ defmodule ShardWeb.TutorialLive.Terrain do
       <div class="grid grid-cols-5 gap-1 w-fit mx-auto">
         <%= for {row, row_index} <- Enum.with_index(@terrain_map) do %>
           <%= for {cell, col_index} <- Enum.with_index(row) do %>
-            <div class="w-8 h-8 flex items-center justify-center text-lg border border-gray-300 rounded relative">
+            <div 
+              class="w-8 h-8 flex items-center justify-center text-lg border border-gray-300 rounded relative cursor-pointer hover:bg-gray-200"
+              phx-click="terrain_click"
+              phx-value-x={col_index}
+              phx-value-y={row_index}
+            >
               {cell}
               <%= if npc_at_position(@tutorial_npcs, col_index, row_index) do %>
                 <div
@@ -274,7 +303,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
     end
   end
 
-  defp ensure_tutorial_key_exists do
+  defp tutorial_key_exists? do
     alias Shard.Items.{Item, RoomItem}
     
     # Check if tutorial key already exists in the room at (0,2,0)
@@ -284,37 +313,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
       where: i.name == "Tutorial Key"
     ) |> Repo.one()
     
-    if is_nil(existing_key) do
-      # Create the tutorial key item if it doesn't exist in the items table
-      {:ok, key_item} = case Repo.get_by(Item, name: "Tutorial Key") do
-        nil ->
-          %Item{}
-          |> Item.changeset(%{
-            name: "Tutorial Key",
-            description: "A mysterious key that might unlock something important.",
-            item_type: "misc",
-            rarity: "common",
-            value: 10,
-            stackable: false,
-            equippable: false,
-            location: "0,2,0",
-            map: "tutorial_terrain"
-          })
-          |> Repo.insert()
-        
-        existing_item ->
-          {:ok, existing_item}
-      end
-      
-      # Place the key in the room at (0,2,0)
-      %RoomItem{}
-      |> RoomItem.changeset(%{
-        item_id: key_item.id,
-        location: "0,2,0",
-        quantity: 1
-      })
-      |> Repo.insert()
-    end
+    not is_nil(existing_key)
   end
 
   defp get_item_icon("weapon"), do: "⚔️"
