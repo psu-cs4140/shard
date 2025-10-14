@@ -222,16 +222,21 @@ defmodule Shard.Items do
           error -> Repo.rollback(error)
         end
       end)
-    else
-      {:error, :insufficient_quantity}
     end
   end
 
   def pick_up_item(character_id, room_item_id, quantity \\ nil) do
-    room_item = Repo.get!(RoomItem, room_item_id)
+    room_item = Repo.get!(RoomItem, room_item_id) |> Repo.preload(:item)
     pickup_quantity = quantity || room_item.quantity
 
-    if room_item.quantity >= pickup_quantity do
+    cond do
+      not room_item.item.pickup ->
+        {:error, :item_not_pickupable}
+
+      room_item.quantity < pickup_quantity ->
+        {:error, :insufficient_quantity}
+
+      true ->
       Repo.transaction(fn ->
         # Add to inventory
         case add_item_to_inventory(character_id, room_item.item_id, pickup_quantity) do

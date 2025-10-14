@@ -21,6 +21,7 @@ defmodule Shard.Items.Item do
     field :effects, :map, default: %{}
     field :icon, :string
     field :is_active, :boolean, default: true
+    field :pickup, :boolean, default: true
     field :location, :string
     field :map, :string
 
@@ -55,6 +56,7 @@ defmodule Shard.Items.Item do
       :effects,
       :icon,
       :is_active,
+      :pickup,
       :location,
       :map
     ])
