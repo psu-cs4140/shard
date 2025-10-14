@@ -51,6 +51,11 @@ defmodule ShardWeb.UserLive.Commands1 do
 
       "look" ->
         {x, y} = game_state.player_position
+        
+        # Ensure tutorial items exist if we're in tutorial terrain
+        if game_state.map_id == "tutorial_terrain" do
+          ensure_tutorial_items_exist()
+        end
 
         # Get room from database
         room = GameMap.get_room_by_coordinates(x, y)
@@ -324,9 +329,6 @@ defmodule ShardWeb.UserLive.Commands1 do
     alias Shard.Items.RoomItem
     location_string = "#{x},#{y},0"
     
-    # Debug: Log what we're looking for
-    IO.puts("Looking for items at location: #{location_string}, map_id: #{inspect(map_id)}")
-    
     # First try to get items from RoomItem table (items placed in world)
     room_items = from(ri in RoomItem,
       where: ri.location == ^location_string,
@@ -340,8 +342,6 @@ defmodule ShardWeb.UserLive.Commands1 do
       }
     )
     |> Repo.all()
-    
-    IO.puts("Found #{length(room_items)} room items")
     
     # Also check for items directly in Item table with matching location and map
     # Convert map_id to match the format stored in database
@@ -362,14 +362,8 @@ defmodule ShardWeb.UserLive.Commands1 do
     )
     |> Repo.all()
     
-    IO.puts("Found #{length(direct_items)} direct items")
-    
     # Combine both results
-    all_items = room_items ++ direct_items
-    IO.puts("Total items found: #{length(all_items)}")
-    Enum.each(all_items, fn item -> IO.puts("  - #{item.name}: #{item.description}") end)
-    
-    all_items
+    room_items ++ direct_items
   end
 
   # Parse talk command to extract NPC name
@@ -392,6 +386,50 @@ defmodule ShardWeb.UserLive.Commands1 do
 
       true ->
         :error
+    end
+  end
+
+  # Ensure tutorial items exist in the database
+  defp ensure_tutorial_items_exist do
+    alias Shard.Items.{Item, RoomItem}
+    
+    # Check if tutorial key already exists in the room at (0,2,0)
+    existing_key = from(ri in RoomItem,
+      where: ri.location == "0,2,0",
+      join: i in Item, on: ri.item_id == i.id,
+      where: i.name == "Tutorial Key"
+    ) |> Repo.one()
+    
+    if is_nil(existing_key) do
+      # Create the tutorial key item if it doesn't exist in the items table
+      {:ok, key_item} = case Repo.get_by(Item, name: "Tutorial Key") do
+        nil ->
+          %Item{}
+          |> Item.changeset(%{
+            name: "Tutorial Key",
+            description: "A mysterious key that might unlock something important.",
+            item_type: "misc",
+            rarity: "common",
+            value: 10,
+            stackable: false,
+            equippable: false,
+            location: "0,2,0",
+            map: "tutorial_terrain"
+          })
+          |> Repo.insert()
+        
+        existing_item ->
+          {:ok, existing_item}
+      end
+      
+      # Place the key in the room at (0,2,0)
+      %RoomItem{}
+      |> RoomItem.changeset(%{
+        item_id: key_item.id,
+        location: "0,2,0",
+        quantity: 1
+      })
+      |> Repo.insert()
     end
   end
 
