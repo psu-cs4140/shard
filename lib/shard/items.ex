@@ -297,6 +297,30 @@ defmodule Shard.Items do
 
   ## Tutorial Items
 
+  def test_item_creation do
+    IO.puts("🧪 Testing basic item creation...")
+    
+    attrs = %{
+      name: "Test Item #{:rand.uniform(1000)}",
+      description: "A test item",
+      item_type: "misc",
+      rarity: "common",
+      value: 1,
+      stackable: false,
+      equippable: false,
+      is_active: true
+    }
+    
+    case %Item{} |> Item.changeset(attrs) |> Repo.insert() do
+      {:ok, item} ->
+        IO.puts("✅ Test item created successfully: #{inspect(item.id)}")
+        {:ok, item}
+      {:error, changeset} ->
+        IO.puts("❌ Failed to create test item: #{inspect(changeset.errors)}")
+        {:error, changeset}
+    end
+  end
+
   def create_tutorial_key do
     alias Shard.Items.{Item, RoomItem}
 

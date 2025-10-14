@@ -15,18 +15,24 @@ defmodule ShardWeb.TutorialLive.Terrain do
 
   @impl true
   def mount(_params, _session, socket) do
-    IO.puts("=== TUTORIAL TERRAIN MOUNT CALLED ===")
+    IO.puts("🔥🔥🔥 TUTORIAL TERRAIN MOUNT CALLED 🔥🔥🔥")
+    IO.inspect(self(), label: "Process PID")
     
     # Automatically create tutorial key when entering tutorial terrain
-    case Shard.Items.create_tutorial_key() do
+    IO.puts("🔑 About to call create_tutorial_key...")
+    
+    result = Shard.Items.create_tutorial_key()
+    IO.puts("🔑 create_tutorial_key returned: #{inspect(result)}")
+    
+    case result do
       {:ok, _result} ->
-        IO.puts("=== Tutorial key created successfully ===")
+        IO.puts("✅ Tutorial key created successfully")
 
       {:error, reason} ->
-        IO.puts("=== Failed to create tutorial key: #{inspect(reason)} ===")
+        IO.puts("❌ Failed to create tutorial key: #{inspect(reason)}")
 
       other ->
-        IO.puts("=== Unexpected result from create_tutorial_key: #{inspect(other)} ===")
+        IO.puts("⚠️ Unexpected result from create_tutorial_key: #{inspect(other)}")
     end
 
     tutorial_npcs = load_tutorial_npcs()
