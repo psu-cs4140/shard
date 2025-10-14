@@ -22,11 +22,12 @@ defmodule ShardWeb.AdminLive.MapFunctionsTest do
 
   describe "save_room/2" do
     test "creates a new room when not editing" do
-      socket = create_socket(%{
-        editing: nil,
-        changeset: nil,
-        rooms: []
-      })
+      socket =
+        create_socket(%{
+          editing: nil,
+          changeset: nil,
+          rooms: []
+        })
 
       room_params = %{
         "name" => "Test Room",
