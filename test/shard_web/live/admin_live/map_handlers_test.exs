@@ -657,4 +657,70 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       assert updated_socket.assigns.changeset.data.name == "Updated Room"
     end
   end
+
+  describe "handle_generate_description/2" do
+    test "generates description and updates changeset" do
+      # Create a room for editing
+      {:ok, room} = Shard.Map.create_room(%{
+        name: "Test Room",
+        description: "A test room",
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      changeset = Shard.Map.change_room(room)
+      socket = create_socket(%{
+        viewing: room,
+        changeset: changeset
+      })
+
+      # Mock the AI module to return a successful response
+      Mox.defmock(Shard.AIMock, for: Shard.AI)
+      Application.put_env(:shard, :ai_module, Shard.AIMock)
+      
+      Shard.AIMock
+      |> Mox.expect(:generate_room_description, fn _zone_desc, _surrounding_rooms -> 
+        {:ok, "A beautifully generated description"}
+      end)
+
+      {:noreply, updated_socket} = MapHandlers.handle_generate_description(%{}, socket)
+      
+      assert updated_socket.assigns.changeset.changes.description == "A beautifully generated description"
+    end
+
+    test "handles AI generation error" do
+      # Create a room for editing
+      {:ok, room} = Shard.Map.create_room(%{
+        name: "Test Room",
+        description: "A test room",
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      changeset = Shard.Map.change_room(room)
+      socket = create_socket(%{
+        viewing: room,
+        changeset: changeset
+      })
+
+      # Mock the AI module to return an error
+      Mox.defmock(Shard.AIMock, for: Shard.AI)
+      Application.put_env(:shard, :ai_module, Shard.AIMock)
+      
+      Shard.AIMock
+      |> Mox.expect(:generate_room_description, fn _zone_desc, _surrounding_rooms -> 
+        {:error, "AI service unavailable"}
+      end)
+
+      {:noreply, updated_socket} = MapHandlers.handle_generate_description(%{}, socket)
+      
+      assert Phoenix.Flash.get(updated_socket.assigns.flash, :error) == "Failed to generate description: AI service unavailable"
+    end
+  end
 end
