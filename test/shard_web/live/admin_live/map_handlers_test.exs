@@ -48,4 +48,28 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       assert updated_socket.assigns.changeset.data.__struct__ == Shard.Map.Room
     end
   end
+
+  describe "handle_edit_room/2" do
+    test "sets up an existing room for editing" do
+      # Create a room for editing
+      {:ok, room} = Shard.Map.create_room(%{
+        name: "Test Room",
+        description: "A test room",
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      socket = create_socket(%{editing: nil, changeset: nil})
+
+      params = %{"id" => to_string(room.id)}
+      {:noreply, updated_socket} = MapHandlers.handle_edit_room(params, socket)
+      
+      assert updated_socket.assigns.editing == :room
+      assert updated_socket.assigns.changeset != nil
+      assert updated_socket.assigns.changeset.data.id == room.id
+    end
+  end
 end
