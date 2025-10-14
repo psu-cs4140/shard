@@ -65,6 +65,7 @@ defmodule ShardWeb.AdminLive.ItemFormComponent do
             {"Shadow Realm", "shadow_realm"}
           ]}
         />
+        <.input field={@form[:pickup]} type="checkbox" label="Pickup" />
         <.input field={@form[:is_active]} type="checkbox" label="Active" />
         <:actions>
           <.button phx-disable-with="Saving...">Save Item</.button>
