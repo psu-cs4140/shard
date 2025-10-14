@@ -61,8 +61,7 @@ defmodule ShardWeb.AdminLive.MapComponents do
   end
 
   def doors_tab(assigns) do
-    # Sort doors so that each door is next to its return door
-    sorted_doors = sort_doors_with_returns(@doors, @rooms)
+    assigns = assign(assigns, :sorted_doors, sort_doors_with_returns(assigns.doors, assigns.rooms))
     
     ~H"""
     <div class="overflow-x-auto">
@@ -87,7 +86,7 @@ defmodule ShardWeb.AdminLive.MapComponents do
             </tr>
           </thead>
           <tbody>
-            <%= for door <- sorted_doors do %>
+            <%= for door <- @sorted_doors do %>
               <% from_room = Enum.find(@rooms, &(&1.id == door.from_room_id)) %>
               <% to_room = Enum.find(@rooms, &(&1.id == door.to_room_id)) %>
               <tr class={if Map.get(door, :is_return_door), do: "bg-base-200", else: ""}>
@@ -376,7 +375,7 @@ defmodule ShardWeb.AdminLive.MapComponents do
   end
 
   # Sort doors so that each door is next to its return door
-  defp sort_doors_with_returns(doors, rooms) do
+  defp sort_doors_with_returns(doors, _rooms) do
     # Create a map of door_id to door for quick lookup
     door_map = Enum.into(doors, %{}, &{&1.id, &1})
     
