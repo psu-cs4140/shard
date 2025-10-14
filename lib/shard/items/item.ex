@@ -21,6 +21,8 @@ defmodule Shard.Items.Item do
     field :effects, :map, default: %{}
     field :icon, :string
     field :is_active, :boolean, default: true
+    field :location, :string
+    field :map, :string
 
     has_many :character_inventories, CharacterInventory
     has_many :room_items, RoomItem
@@ -51,7 +53,9 @@ defmodule Shard.Items.Item do
       :requirements,
       :effects,
       :icon,
-      :is_active
+      :is_active,
+      :location,
+      :map
     ])
     |> validate_required([:name, :item_type])
     |> validate_length(:name, min: 2, max: 100)

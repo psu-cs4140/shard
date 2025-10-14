@@ -65,7 +65,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
         location_x: String.to_integer(x_str),
         location_y: String.to_integer(y_str),
         location_z: String.to_integer(z_str),
-        item_type: room_item.item.type,
+        item_type: room_item.item.item_type,
         icon: get_item_icon(room_item.item.type),
         quantity: room_item.quantity
       }
@@ -292,11 +292,13 @@ defmodule ShardWeb.TutorialLive.Terrain do
           |> Item.changeset(%{
             name: "Tutorial Key",
             description: "A mysterious key that might unlock something important.",
-            type: "misc",
+            item_type: "misc",
             rarity: "common",
             value: 10,
             stackable: false,
-            equippable: false
+            equippable: false,
+            location: "0,2,0",
+            map: "tutorial"
           })
           |> Repo.insert()
         
