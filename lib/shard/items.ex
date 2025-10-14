@@ -300,29 +300,49 @@ defmodule Shard.Items do
   def create_tutorial_key do
     alias Shard.Items.{Item, RoomItem}
 
+    IO.puts("Starting tutorial key creation...")
+
     Repo.transaction(fn ->
+      IO.puts("Inside transaction...")
+
       # First, ensure the tutorial key item exists in the items table
-      {:ok, key_item} =
+      {status, key_item} =
         case Repo.get_by(Item, name: "Tutorial Key") do
           nil ->
-            %Item{}
-            |> Item.changeset(%{
-              name: "Tutorial Key",
-              description: "A mysterious key that might unlock something important.",
-              item_type: "misc",
-              rarity: "common",
-              value: 10,
-              stackable: false,
-              equippable: false,
-              location: "0,2,0",
-              map: "tutorial_terrain",
-              is_active: true
-            })
-            |> Repo.insert()
+            IO.puts("Tutorial Key item not found, creating...")
+
+            result =
+              %Item{}
+              |> Item.changeset(%{
+                name: "Tutorial Key",
+                description: "A mysterious key that might unlock something important.",
+                item_type: "misc",
+                rarity: "common",
+                value: 10,
+                stackable: false,
+                equippable: false,
+                is_active: true
+              })
+              |> Repo.insert()
+
+            case result do
+              {:ok, item} ->
+                IO.puts("Tutorial Key item created successfully: #{inspect(item.id)}")
+                {:ok, item}
+
+              {:error, changeset} ->
+                IO.puts("Failed to create Tutorial Key item: #{inspect(changeset.errors)}")
+                Repo.rollback({:item_creation_failed, changeset.errors})
+            end
 
           existing_item ->
+            IO.puts("Tutorial Key item already exists: #{inspect(existing_item.id)}")
             {:ok, existing_item}
         end
+
+      if status != :ok do
+        Repo.rollback({:item_error, key_item})
+      end
 
       # Check if tutorial key already exists in the room at (0,2,0)
       existing_room_item =
@@ -333,14 +353,25 @@ defmodule Shard.Items do
 
       # If no room item exists, create one
       if is_nil(existing_room_item) do
-        %RoomItem{}
-        |> RoomItem.changeset(%{
-          item_id: key_item.id,
-          location: "0,2,0",
-          quantity: 1
-        })
-        |> Repo.insert()
+        IO.puts("Room item not found at 0,2,0, creating...")
+
+        case %RoomItem{}
+             |> RoomItem.changeset(%{
+               item_id: key_item.id,
+               location: "0,2,0",
+               quantity: 1
+             })
+             |> Repo.insert() do
+          {:ok, room_item} ->
+            IO.puts("Room item created successfully: #{inspect(room_item.id)}")
+            {:ok, room_item}
+
+          {:error, changeset} ->
+            IO.puts("Failed to create room item: #{inspect(changeset.errors)}")
+            Repo.rollback({:room_item_creation_failed, changeset.errors})
+        end
       else
+        IO.puts("Room item already exists at 0,2,0: #{inspect(existing_room_item.id)}")
         {:ok, existing_room_item}
       end
     end)

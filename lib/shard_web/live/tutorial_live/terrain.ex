@@ -16,7 +16,16 @@ defmodule ShardWeb.TutorialLive.Terrain do
   @impl true
   def mount(_params, _session, socket) do
     # Automatically create tutorial key when entering tutorial terrain
-    Shard.Items.create_tutorial_key()
+    case Shard.Items.create_tutorial_key() do
+      {:ok, _result} ->
+        IO.puts("Tutorial key created successfully")
+
+      {:error, reason} ->
+        IO.puts("Failed to create tutorial key: #{inspect(reason)}")
+
+      other ->
+        IO.puts("Unexpected result from create_tutorial_key: #{inspect(other)}")
+    end
 
     tutorial_npcs = load_tutorial_npcs()
     tutorial_items = load_tutorial_items()
