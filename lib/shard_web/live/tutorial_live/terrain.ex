@@ -34,7 +34,7 @@ defmodule ShardWeb.TutorialLive.Terrain do
   end
 
   @impl true
-  def handle_params(params, uri, socket) do
+  def handle_params(_params, _uri, socket) do
     {:noreply, socket}
   end
 
