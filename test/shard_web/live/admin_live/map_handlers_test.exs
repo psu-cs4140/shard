@@ -35,4 +35,17 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       assert updated_socket.assigns.tab == "doors"
     end
   end
+
+  describe "handle_new_room/2" do
+    test "sets up a new room form" do
+      socket = create_socket(%{editing: nil, changeset: nil})
+
+      {:noreply, updated_socket} = MapHandlers.handle_new_room(%{}, socket)
+
+      assert updated_socket.assigns.editing == :room
+      assert updated_socket.assigns.changeset != nil
+      assert updated_socket.assigns.changeset.action == nil
+      assert updated_socket.assigns.changeset.data.__struct__ == Shard.Map.Room
+    end
+  end
 end
