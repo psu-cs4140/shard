@@ -300,42 +300,39 @@ defmodule Shard.Items do
   def create_tutorial_key do
     alias Shard.Items.{Item, RoomItem}
 
-    # Check if tutorial key already exists in the room at (0,2,0)
-    existing_key =
-      from(ri in RoomItem,
-        where: ri.location == "0,2,0",
-        join: i in Item,
-        on: ri.item_id == i.id,
-        where: i.name == "Tutorial Key"
-      )
-      |> Repo.one()
+    Repo.transaction(fn ->
+      # First, ensure the tutorial key item exists in the items table
+      {:ok, key_item} =
+        case Repo.get_by(Item, name: "Tutorial Key") do
+          nil ->
+            %Item{}
+            |> Item.changeset(%{
+              name: "Tutorial Key",
+              description: "A mysterious key that might unlock something important.",
+              item_type: "misc",
+              rarity: "common",
+              value: 10,
+              stackable: false,
+              equippable: false,
+              location: "0,2,0",
+              map: "tutorial_terrain",
+              is_active: true
+            })
+            |> Repo.insert()
 
-    if is_nil(existing_key) do
-      Repo.transaction(fn ->
-        # Create the tutorial key item if it doesn't exist in the items table
-        {:ok, key_item} =
-          case Repo.get_by(Item, name: "Tutorial Key") do
-            nil ->
-              %Item{}
-              |> Item.changeset(%{
-                name: "Tutorial Key",
-                description: "A mysterious key that might unlock something important.",
-                item_type: "misc",
-                rarity: "common",
-                value: 10,
-                stackable: false,
-                equippable: false,
-                location: "0,2,0",
-                map: "tutorial_terrain",
-                is_active: true
-              })
-              |> Repo.insert()
+          existing_item ->
+            {:ok, existing_item}
+        end
 
-            existing_item ->
-              {:ok, existing_item}
-          end
+      # Check if tutorial key already exists in the room at (0,2,0)
+      existing_room_item =
+        from(ri in RoomItem,
+          where: ri.location == "0,2,0" and ri.item_id == ^key_item.id
+        )
+        |> Repo.one()
 
-        # Place the key in the room at (0,2,0)
+      # If no room item exists, create one
+      if is_nil(existing_room_item) do
         %RoomItem{}
         |> RoomItem.changeset(%{
           item_id: key_item.id,
@@ -343,9 +340,9 @@ defmodule Shard.Items do
           quantity: 1
         })
         |> Repo.insert()
-      end)
-    else
-      {:ok, existing_key}
-    end
+      else
+        {:ok, existing_room_item}
+      end
+    end)
   end
 end
