@@ -300,80 +300,70 @@ defmodule Shard.Items do
   def create_tutorial_key do
     alias Shard.Items.{Item, RoomItem}
 
-    IO.puts("Starting tutorial key creation...")
+    IO.puts("=== Starting tutorial key creation ===")
 
-    Repo.transaction(fn ->
-      IO.puts("Inside transaction...")
-
+    try do
       # First, ensure the tutorial key item exists in the items table
-      {status, key_item} =
-        case Repo.get_by(Item, name: "Tutorial Key") do
-          nil ->
-            IO.puts("Tutorial Key item not found, creating...")
+      key_item = case Repo.get_by(Item, name: "Tutorial Key") do
+        nil ->
+          IO.puts("=== Tutorial Key item not found, creating ===")
+          
+          attrs = %{
+            name: "Tutorial Key",
+            description: "A mysterious key that might unlock something important.",
+            item_type: "misc",
+            rarity: "common",
+            value: 10,
+            stackable: false,
+            equippable: false,
+            is_active: true
+          }
+          
+          case %Item{} |> Item.changeset(attrs) |> Repo.insert() do
+            {:ok, item} ->
+              IO.puts("=== Tutorial Key item created successfully: #{inspect(item.id)} ===")
+              item
+            {:error, changeset} ->
+              IO.puts("=== Failed to create Tutorial Key item: #{inspect(changeset.errors)} ===")
+              raise "Failed to create tutorial key item"
+          end
 
-            result =
-              %Item{}
-              |> Item.changeset(%{
-                name: "Tutorial Key",
-                description: "A mysterious key that might unlock something important.",
-                item_type: "misc",
-                rarity: "common",
-                value: 10,
-                stackable: false,
-                equippable: false,
-                is_active: true
-              })
-              |> Repo.insert()
-
-            case result do
-              {:ok, item} ->
-                IO.puts("Tutorial Key item created successfully: #{inspect(item.id)}")
-                {:ok, item}
-
-              {:error, changeset} ->
-                IO.puts("Failed to create Tutorial Key item: #{inspect(changeset.errors)}")
-                Repo.rollback({:item_creation_failed, changeset.errors})
-            end
-
-          existing_item ->
-            IO.puts("Tutorial Key item already exists: #{inspect(existing_item.id)}")
-            {:ok, existing_item}
-        end
-
-      if status != :ok do
-        Repo.rollback({:item_error, key_item})
+        existing_item ->
+          IO.puts("=== Tutorial Key item already exists: #{inspect(existing_item.id)} ===")
+          existing_item
       end
 
       # Check if tutorial key already exists in the room at (0,2,0)
-      existing_room_item =
-        from(ri in RoomItem,
-          where: ri.location == "0,2,0" and ri.item_id == ^key_item.id
-        )
-        |> Repo.one()
+      existing_room_item = from(ri in RoomItem,
+        where: ri.location == "0,2,0" and ri.item_id == ^key_item.id
+      ) |> Repo.one()
 
       # If no room item exists, create one
       if is_nil(existing_room_item) do
-        IO.puts("Room item not found at 0,2,0, creating...")
+        IO.puts("=== Room item not found at 0,2,0, creating ===")
 
-        case %RoomItem{}
-             |> RoomItem.changeset(%{
-               item_id: key_item.id,
-               location: "0,2,0",
-               quantity: 1
-             })
-             |> Repo.insert() do
+        room_attrs = %{
+          item_id: key_item.id,
+          location: "0,2,0",
+          quantity: 1
+        }
+
+        case %RoomItem{} |> RoomItem.changeset(room_attrs) |> Repo.insert() do
           {:ok, room_item} ->
-            IO.puts("Room item created successfully: #{inspect(room_item.id)}")
+            IO.puts("=== Room item created successfully: #{inspect(room_item.id)} ===")
             {:ok, room_item}
-
           {:error, changeset} ->
-            IO.puts("Failed to create room item: #{inspect(changeset.errors)}")
-            Repo.rollback({:room_item_creation_failed, changeset.errors})
+            IO.puts("=== Failed to create room item: #{inspect(changeset.errors)} ===")
+            {:error, changeset}
         end
       else
-        IO.puts("Room item already exists at 0,2,0: #{inspect(existing_room_item.id)}")
+        IO.puts("=== Room item already exists at 0,2,0: #{inspect(existing_room_item.id)} ===")
         {:ok, existing_room_item}
       end
-    end)
+    rescue
+      e ->
+        IO.puts("=== Exception in create_tutorial_key: #{inspect(e)} ===")
+        {:error, e}
+    end
   end
 end
