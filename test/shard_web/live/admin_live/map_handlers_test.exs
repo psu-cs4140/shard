@@ -301,4 +301,71 @@ defmodule ShardWeb.AdminLive.MapHandlersTest do
       assert updated_socket.assigns.changeset.errors != []
     end
   end
+
+  describe "handle_save_room/2" do
+    test "creates a new room when not editing" do
+      socket = create_socket(%{
+        editing: nil,
+        changeset: nil,
+        rooms: []
+      })
+
+      room_params = %{
+        "name" => "New Room",
+        "description" => "A new room",
+        "x_coordinate" => "0",
+        "y_coordinate" => "0",
+        "z_coordinate" => "0",
+        "room_type" => "standard",
+        "is_public" => "true"
+      }
+
+      params = %{"room" => room_params}
+      {:noreply, updated_socket} = MapHandlers.handle_save_room(params, socket)
+      
+      assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Room created successfully"
+      assert length(updated_socket.assigns.rooms) == 1
+      assert updated_socket.assigns.editing == nil
+      assert updated_socket.assigns.changeset == nil
+    end
+
+    test "updates an existing room when editing" do
+      # Create a room for editing
+      {:ok, room} = Shard.Map.create_room(%{
+        name: "Test Room",
+        description: "A test room",
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard",
+        is_public: true
+      })
+
+      changeset = Shard.Map.change_room(room)
+      socket = create_socket(%{
+        editing: :room,
+        changeset: changeset,
+        rooms: [room]
+      })
+
+      room_params = %{
+        "id" => to_string(room.id),
+        "name" => "Updated Room",
+        "description" => "An updated room",
+        "x_coordinate" => "0",
+        "y_coordinate" => "0",
+        "z_coordinate" => "0",
+        "room_type" => "standard",
+        "is_public" => "true"
+      }
+
+      params = %{"room" => room_params}
+      {:noreply, updated_socket} = MapHandlers.handle_save_room(params, socket)
+      
+      assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Room updated successfully"
+      assert updated_socket.assigns.rooms |> hd |> Map.get(:name) == "Updated Room"
+      assert updated_socket.assigns.editing == nil
+      assert updated_socket.assigns.changeset == nil
+    end
+  end
 end
