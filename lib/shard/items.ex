@@ -365,26 +365,30 @@ defmodule Shard.Items do
     {:ok, from_room} = ensure_room_exists(2, 2, 0, "Entrance Hall")
     {:ok, to_room} = ensure_room_exists(2, 1, 0, "Dungeon Entrance")
 
-    # Check if the locked door already exists
+    # Check if a door already exists and delete it if it does
     existing_door = Map.get_door_in_direction(from_room.id, "north")
 
-    if is_nil(existing_door) do
-      # Create the locked door from (2,2) to (2,1) going north
-      case Map.create_door(%{
-        from_room_id: from_room.id,
-        to_room_id: to_room.id,
-        direction: "north",
-        door_type: "locked_gate",
-        is_locked: true,
-        key_required: "Tutorial Key",
-        name: "Locked Dungeon Gate",
-        description: "A heavy iron gate that blocks the entrance to the dungeon. It requires a key to open."
-      }) do
-        {:ok, door} -> {:ok, door}
-        {:error, reason} -> {:error, "Failed to create dungeon door: #{inspect(reason)}"}
+    if not is_nil(existing_door) do
+      # Delete the existing door (this will also delete the return door)
+      case Map.delete_door(existing_door) do
+        {:ok, _} -> :ok
+        {:error, reason} -> {:error, "Failed to delete existing door: #{inspect(reason)}"}
       end
-    else
-      {:ok, existing_door}
+    end
+
+    # Create the locked door from (2,2) to (2,1) going north
+    case Map.create_door(%{
+      from_room_id: from_room.id,
+      to_room_id: to_room.id,
+      direction: "north",
+      door_type: "locked_gate",
+      is_locked: true,
+      key_required: "Tutorial Key",
+      name: "Locked Dungeon Gate",
+      description: "A heavy iron gate that blocks the entrance to the dungeon. It requires a key to open."
+    }) do
+      {:ok, door} -> {:ok, door}
+      {:error, reason} -> {:error, "Failed to create dungeon door: #{inspect(reason)}"}
     end
   end
 
