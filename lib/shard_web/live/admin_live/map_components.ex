@@ -143,7 +143,8 @@ defmodule ShardWeb.AdminLive.MapComponents do
             style={"transform: translate(#{@pan_x}px, #{@pan_y}px);"}
             id="map-content"
           >
-            <%= for door <- @doors do %>
+            <!-- Render unique door connections to avoid duplication -->
+            <%= for door <- get_unique_door_connections(@doors, @rooms) do %>
               <% from_room = Enum.find(@rooms, &(&1.id == door.from_room_id)) %>
               <% to_room = Enum.find(@rooms, &(&1.id == door.to_room_id)) %>
               <%= if from_room && to_room do %>
@@ -340,5 +341,34 @@ defmodule ShardWeb.AdminLive.MapComponents do
     text_classes = "text-gray-800 dark:text-gray-200"
 
     "#{base_classes} #{type_classes} #{text_classes}"
+  end
+
+  # Helper function to get unique door connections for visualization
+  # This prevents showing duplicate lines for bidirectional doors
+  defp get_unique_door_connections(doors, rooms) do
+    doors
+    |> Enum.reduce({MapSet.new(), []}, fn door, {seen_pairs, unique_doors} ->
+      from_room = Enum.find(rooms, &(&1.id == door.from_room_id))
+      to_room = Enum.find(rooms, &(&1.id == door.to_room_id))
+      
+      if from_room && to_room do
+        # Create a normalized pair identifier (smaller ID first)
+        pair_key = 
+          case {from_room.id, to_room.id} do
+            {a, b} when a < b -> {a, b}
+            {a, b} -> {b, a}
+          end
+        
+        if MapSet.member?(seen_pairs, pair_key) do
+          {seen_pairs, unique_doors}
+        else
+          {MapSet.put(seen_pairs, pair_key), [door | unique_doors]}
+        end
+      else
+        {seen_pairs, unique_doors}
+      end
+    end)
+    |> elem(1)
+    |> Enum.reverse()
   end
 end
