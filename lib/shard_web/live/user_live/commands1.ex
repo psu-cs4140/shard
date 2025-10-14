@@ -51,11 +51,6 @@ defmodule ShardWeb.UserLive.Commands1 do
 
       "look" ->
         {x, y} = game_state.player_position
-        
-        # Ensure tutorial key exists if we're in tutorial terrain
-        if game_state.map_id == "tutorial_terrain" do
-          Shard.Items.create_tutorial_key()
-        end
 
         # Get room from database
         room = GameMap.get_room_by_coordinates(x, y)
@@ -329,36 +324,45 @@ defmodule ShardWeb.UserLive.Commands1 do
     alias Shard.Items.RoomItem
     location_string = "#{x},#{y},0"
     
-    IO.puts("DEBUG: Looking for items at #{location_string} on map #{map_id}")
-    
     # Get items from RoomItem table (items placed in world)
-    room_items_query = from(ri in RoomItem,
+    room_items = from(ri in RoomItem,
       where: ri.location == ^location_string,
       join: i in Item, on: ri.item_id == i.id,
+      where: is_nil(i.is_active) or i.is_active == true,
       select: %{
         name: i.name,
         description: i.description,
         item_type: i.item_type,
-        quantity: ri.quantity,
-        is_active: i.is_active
+        quantity: ri.quantity
       }
     )
+    |> Repo.all()
     
-    room_items = Repo.all(room_items_query)
-    IO.puts("DEBUG: Found #{length(room_items)} room items: #{inspect(room_items)}")
+    # Also check for items directly in Item table with matching location and map
+    map_name = case map_id do
+      "tutorial_terrain" -> "tutorial_terrain"
+      "tutorial" -> "tutorial_terrain"
+      other -> other
+    end
     
-    # Return items in the expected format (don't filter by is_active for now)
-    result = Enum.map(room_items, fn item ->
-      %{
-        name: item.name,
-        description: item.description,
-        item_type: item.item_type,
-        quantity: item.quantity
+    direct_items = from(i in Item,
+      where: i.location == ^location_string and 
+             (i.map == ^map_name or i.map == ^map_id or 
+              (^map_id == "tutorial_terrain" and i.map == "tutorial") or
+              (^map_id == "tutorial" and i.map == "tutorial_terrain")) and
+             (is_nil(i.is_active) or i.is_active == true),
+      select: %{
+        name: i.name,
+        description: i.description,
+        item_type: i.item_type,
+        quantity: 1
       }
-    end)
+    )
+    |> Repo.all()
     
-    IO.puts("DEBUG: Returning items: #{inspect(result)}")
-    result
+    # Combine both results and remove duplicates based on name
+    all_items = room_items ++ direct_items
+    all_items |> Enum.uniq_by(& &1.name)
   end
 
   # Parse talk command to extract NPC name
