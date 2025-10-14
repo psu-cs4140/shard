@@ -321,6 +321,11 @@ defmodule Shard.Items do
     end
   end
 
+  def force_create_tutorial_key do
+    IO.puts("🔧 FORCE creating tutorial key...")
+    create_tutorial_key()
+  end
+
   def create_tutorial_key do
     alias Shard.Items.{Item, RoomItem}
 
