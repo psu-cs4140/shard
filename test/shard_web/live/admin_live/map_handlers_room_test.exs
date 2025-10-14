@@ -21,7 +21,7 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
     }
 
     merged_assigns = :maps.merge(default_assigns, assigns)
-    
+
     # Create socket with proper assigns
     %Socket{
       assigns: merged_assigns
@@ -336,7 +336,7 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
       # Since Shard.AI is not a behaviour, we'll use a different approach
       original_ai_module = Application.get_env(:shard, :ai_module, Shard.AI)
       Application.put_env(:shard, :ai_module, TestAIStub)
-      
+
       # Define a test stub module
       defmodule TestAIStub do
         def generate_room_description(_zone_desc, _surrounding_rooms) do
@@ -345,7 +345,7 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
       end
 
       {:noreply, updated_socket} = MapHandlers.handle_generate_description(%{}, socket)
-      
+
       # Restore original AI module
       Application.put_env(:shard, :ai_module, original_ai_module)
 
@@ -379,7 +379,7 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
       # Since Shard.AI is not a behaviour, we'll use a different approach
       original_ai_module = Application.get_env(:shard, :ai_module, Shard.AI)
       Application.put_env(:shard, :ai_module, TestAIErrorStub)
-      
+
       # Define a test stub module that returns an error
       defmodule TestAIErrorStub do
         def generate_room_description(_zone_desc, _surrounding_rooms) do
@@ -388,7 +388,7 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
       end
 
       {:noreply, updated_socket} = MapHandlers.handle_generate_description(%{}, socket)
-      
+
       # Restore original AI module
       Application.put_env(:shard, :ai_module, original_ai_module)
 

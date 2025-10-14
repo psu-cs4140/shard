@@ -15,7 +15,7 @@ defmodule ShardWeb.AdminLive.MapFunctionsDoorTest do
     }
 
     merged_assigns = :maps.merge(default_assigns, assigns)
-    
+
     # Create socket with proper assigns
     %Socket{
       assigns: merged_assigns
@@ -66,7 +66,8 @@ defmodule ShardWeb.AdminLive.MapFunctionsDoorTest do
 
       assert {:ok, updated_socket} = MapFunctions.save_door(socket, door_params)
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Door created successfully"
-      assert length(updated_socket.assigns.doors) >= 1  # At least one door should be created
+      # At least one door should be created
+      assert length(updated_socket.assigns.doors) >= 1
       assert updated_socket.assigns.editing == nil
       assert updated_socket.assigns.changeset == nil
     end
@@ -120,7 +121,8 @@ defmodule ShardWeb.AdminLive.MapFunctionsDoorTest do
         "id" => "#{door.id}",
         "from_room_id" => "#{room1.id}",
         "to_room_id" => "#{room2.id}",
-        "direction" => "west",  # Changed direction to avoid constraint issues
+        # Changed direction to avoid constraint issues
+        "direction" => "west",
         "door_type" => "standard",
         "is_locked" => "true"
       }

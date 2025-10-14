@@ -21,7 +21,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
     }
 
     merged_assigns = :maps.merge(default_assigns, assigns)
-    
+
     # Create socket with proper assigns
     %Socket{
       assigns: merged_assigns
@@ -230,7 +230,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
       # Get all doors including the automatically created return door
       all_doors = Shard.Map.list_doors()
       main_door = Enum.find(all_doors, &(&1.direction == "east"))
-      
+
       changeset = Shard.Map.change_door(main_door)
 
       socket =
@@ -246,7 +246,8 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
         "id" => "#{main_door.id}",
         "from_room_id" => "#{room1.id}",
         "to_room_id" => "#{room2.id}",
-        "direction" => "west",  # Changed direction to avoid constraint issues
+        # Changed direction to avoid constraint issues
+        "direction" => "west",
         "door_type" => "standard",
         "is_locked" => "true"
       }
@@ -349,7 +350,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
       # Get the main door (not the return door) for editing
       all_doors = Shard.Map.list_doors()
       main_door = Enum.find(all_doors, &(&1.direction == "east"))
-      
+
       changeset = Shard.Map.change_door(main_door)
 
       socket =
@@ -417,7 +418,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
       # Get the main door for editing
       all_doors = Shard.Map.list_doors()
       main_door = Enum.find(all_doors, &(&1.direction == "east"))
-      
+
       changeset = Shard.Map.change_door(main_door)
 
       socket =
