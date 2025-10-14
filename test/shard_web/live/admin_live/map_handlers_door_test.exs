@@ -78,7 +78,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
 
       socket = create_socket(%{editing: nil, changeset: nil})
 
-      params = %{"id" => to_string(door.id)}
+      params = %{"id" => door.id}
       {:noreply, updated_socket} = MapHandlers.handle_edit_door(params, socket)
 
       assert updated_socket.assigns.editing == :door
@@ -134,7 +134,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
 
       socket = create_socket(%{rooms: [room1, room2], doors: [door, door2]})
 
-      params = %{"id" => to_string(door.id)}
+      params = %{"id" => door.id}
       {:noreply, updated_socket} = MapHandlers.handle_delete_door(params, socket)
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Door deleted successfully"
@@ -177,11 +177,11 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
         })
 
       door_params = %{
-        "from_room_id" => to_string(room1.id),
-        "to_room_id" => to_string(room2.id),
+        "from_room_id" => room1.id,
+        "to_room_id" => room2.id,
         "direction" => "east",
         "door_type" => "standard",
-        "is_locked" => "false"
+        "is_locked" => false
       }
 
       params = %{"door" => door_params}
@@ -238,12 +238,12 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
         })
 
       door_params = %{
-        "id" => to_string(door.id),
-        "from_room_id" => to_string(room1.id),
-        "to_room_id" => to_string(room2.id),
+        "id" => door.id,
+        "from_room_id" => room1.id,
+        "to_room_id" => room2.id,
         "direction" => "west",  # Changed direction to avoid constraint issues
         "door_type" => "standard",
-        "is_locked" => "true"
+        "is_locked" => true
       }
 
       params = %{"door" => door_params}
@@ -291,11 +291,11 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
         })
 
       door_params = %{
-        "from_room_id" => to_string(room1.id),
-        "to_room_id" => to_string(room2.id),
+        "from_room_id" => room1.id,
+        "to_room_id" => room2.id,
         "direction" => "",
         "door_type" => "standard",
-        "is_locked" => "false"
+        "is_locked" => false
       }
 
       {:noreply, updated_socket} =
@@ -350,12 +350,12 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
         })
 
       door_params = %{
-        "id" => to_string(door.id),
-        "from_room_id" => to_string(room1.id),
-        "to_room_id" => to_string(room2.id),
+        "id" => door.id,
+        "from_room_id" => room1.id,
+        "to_room_id" => room2.id,
         "direction" => "",
         "door_type" => "standard",
-        "is_locked" => "true"
+        "is_locked" => true
       }
 
       {:noreply, updated_socket} =
