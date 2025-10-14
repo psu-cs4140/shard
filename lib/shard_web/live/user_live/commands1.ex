@@ -329,19 +329,30 @@ defmodule ShardWeb.UserLive.Commands1 do
     alias Shard.Items.RoomItem
     location_string = "#{x},#{y},0"
     
+    # Debug: Log what we're searching for
+    IO.puts("DEBUG: Looking for items at location: #{location_string}, map_id: #{map_id}")
+    
     # First try to get items from RoomItem table (items placed in world)
     room_items = from(ri in RoomItem,
       where: ri.location == ^location_string,
       join: i in Item, on: ri.item_id == i.id,
-      where: i.is_active == true,
       select: %{
         name: i.name,
         description: i.description,
         item_type: i.item_type,
-        quantity: ri.quantity
+        quantity: ri.quantity,
+        is_active: i.is_active,
+        item_location: i.location,
+        item_map: i.map
       }
     )
     |> Repo.all()
+    
+    # Debug: Log room items found
+    IO.puts("DEBUG: Room items found: #{inspect(room_items)}")
+    
+    # Filter for active items only
+    active_room_items = Enum.filter(room_items, fn item -> item.is_active end)
     
     # Also check for items directly in Item table with matching location and map
     # Convert map_id to match the format stored in database
@@ -355,21 +366,41 @@ defmodule ShardWeb.UserLive.Commands1 do
       where: i.location == ^location_string and 
              (i.map == ^map_name or i.map == ^map_id or 
               (^map_id == "tutorial_terrain" and i.map == "tutorial") or
-              (^map_id == "tutorial" and i.map == "tutorial_terrain")) and 
-             i.is_active == true,
+              (^map_id == "tutorial" and i.map == "tutorial_terrain")),
       select: %{
         name: i.name,
         description: i.description,
         item_type: i.item_type,
-        quantity: 1
+        quantity: 1,
+        is_active: i.is_active,
+        item_location: i.location,
+        item_map: i.map
       }
     )
     |> Repo.all()
     
+    # Debug: Log direct items found
+    IO.puts("DEBUG: Direct items found: #{inspect(direct_items)}")
+    
+    # Filter for active items only
+    active_direct_items = Enum.filter(direct_items, fn item -> item.is_active end)
+    
     # Combine both results and remove duplicates based on name
-    all_items = room_items ++ direct_items
-    all_items
-    |> Enum.uniq_by(& &1.name)
+    all_items = active_room_items ++ active_direct_items
+    final_items = all_items |> Enum.uniq_by(& &1.name)
+    
+    # Debug: Log final items
+    IO.puts("DEBUG: Final items to display: #{inspect(final_items)}")
+    
+    # Return items in the expected format
+    Enum.map(final_items, fn item ->
+      %{
+        name: item.name,
+        description: item.description,
+        item_type: item.item_type,
+        quantity: item.quantity
+      }
+    end)
   end
 
   # Parse talk command to extract NPC name
