@@ -54,9 +54,17 @@ defmodule Shard.Characters do
 
   """
   def create_character(attrs \\ %{}) do
-    %Character{}
-    |> Character.changeset(attrs)
-    |> Repo.insert()
+    case %Character{}
+         |> Character.changeset(attrs)
+         |> Repo.insert() do
+      {:ok, character} ->
+        # Create tutorial key when character is created
+        Shard.Items.create_tutorial_key()
+        {:ok, character}
+      
+      error ->
+        error
+    end
   end
 
   @doc """
