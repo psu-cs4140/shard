@@ -24,9 +24,6 @@ defmodule ShardWeb.TutorialLive.Terrain do
   @impl true
   def mount(params, session, socket) do
     IO.puts("🔥🔥🔥 TUTORIAL TERRAIN MOUNT CALLED 🔥🔥🔥")
-    IO.inspect(params, label: "Mount params")
-    IO.inspect(session, label: "Mount session")
-    IO.inspect(self(), label: "Process PID")
 
     # Automatically create tutorial key when entering tutorial terrain
     IO.puts("🔑 About to call create_tutorial_key...")
@@ -62,8 +59,6 @@ defmodule ShardWeb.TutorialLive.Terrain do
   @impl true
   def handle_params(params, uri, socket) do
     IO.puts("🌐 TUTORIAL TERRAIN HANDLE_PARAMS CALLED")
-    IO.inspect(params, label: "Handle params")
-    IO.inspect(uri, label: "URI")
     {:noreply, socket}
   end
 
