@@ -88,7 +88,6 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
     end
   end
 
-
   # Load equipped weapon from database
   def load_equipped_weapon(character) do
     try do
