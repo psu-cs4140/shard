@@ -84,11 +84,33 @@ defmodule Shard.Map do
 
   @doc """
   Creates a door between two rooms.
+  Creates a return door automatically.
   """
   def create_door(attrs \\ %{}) do
-    %Door{}
-    |> Door.changeset(attrs)
-    |> Repo.insert()
+    Repo.transaction(fn ->
+      # Create the main door
+      {:ok, door} = 
+        %Door{}
+        |> Door.changeset(attrs)
+        |> Repo.insert()
+
+      # Create the return door with opposite direction
+      return_attrs = %{
+        from_room_id: attrs[:to_room_id],
+        to_room_id: attrs[:from_room_id],
+        direction: Door.opposite_direction(attrs[:direction]),
+        door_type: attrs[:door_type] || "standard",
+        is_locked: attrs[:is_locked] || false,
+        key_required: attrs[:key_required]
+      }
+
+      {:ok, return_door} = 
+        %Door{}
+        |> Door.changeset(return_attrs)
+        |> Repo.insert()
+
+      {door, return_door}
+    end)
   end
 
   @doc """
@@ -101,10 +123,19 @@ defmodule Shard.Map do
   end
 
   @doc """
-  Deletes a door.
+  Deletes a door and its corresponding return door.
   """
   def delete_door(%Door{} = door) do
-    Repo.delete(door)
+    Repo.transaction(fn ->
+      # Find and delete the return door
+      return_door = get_return_door(door)
+      if return_door do
+        Repo.delete!(return_door)
+      end
+      
+      # Delete the main door
+      Repo.delete!(door)
+    end)
   end
 
   @doc """
@@ -169,5 +200,17 @@ defmodule Shard.Map do
   """
   def put_action(changeset, action) do
     Map.put(changeset, :action, action)
+  end
+
+  @doc """
+  Gets the return door for a given door.
+  """
+  def get_return_door(door) do
+    Repo.one(
+      from d in Door,
+        where: d.from_room_id == ^door.to_room_id and
+               d.to_room_id == ^door.from_room_id and
+               d.direction == ^Door.opposite_direction(door.direction)
+    )
   end
 end
