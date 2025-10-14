@@ -321,10 +321,19 @@ defmodule ShardWeb.UserLive.Commands1 do
 
   # Get items at a specific location
   defp get_items_at_location(x, y, map_id) do
+    alias Shard.Items.RoomItem
     location_string = "#{x},#{y},0"
     
-    from(i in Item,
-      where: i.location == ^location_string and i.map == ^map_id and i.is_active == true
+    from(ri in RoomItem,
+      where: ri.location == ^location_string,
+      join: i in Item, on: ri.item_id == i.id,
+      where: i.is_active == true,
+      select: %{
+        name: i.name,
+        description: i.description,
+        item_type: i.item_type,
+        quantity: ri.quantity
+      }
     )
     |> Repo.all()
   end
