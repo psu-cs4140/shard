@@ -171,7 +171,7 @@ defmodule ShardWeb.UserLive.Commands1 do
         description_lines =
           if length(items_here) > 0 do
             # Empty line for spacing
-            updated_lines = description_lines ++ [""]
+            description_lines = description_lines ++ [""]
 
             # Add each item with their description
             item_descriptions =
@@ -180,7 +180,7 @@ defmodule ShardWeb.UserLive.Commands1 do
                 "You see a #{item_name} on ground"
               end)
 
-            updated_lines ++ item_descriptions
+            description_lines ++ item_descriptions
           else
             description_lines
           end
