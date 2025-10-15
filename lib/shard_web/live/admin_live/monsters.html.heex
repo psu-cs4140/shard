@@ -1,0 +1,46 @@
+<.header>
+  Listing Monsters
+  <:actions>
+    <.link patch={~p"/admin/monsters/new"}>
+      <.button>New Monster</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table
+  id="monsters"
+  rows={@streams.monsters}
+  row_click={fn {_id, monster} -> JS.navigate(~p"/admin/monsters/#{monster}") end}
+>
+  <:col :let={{_id, monster}} label="Name"><%= monster.name %></:col>
+  <:col :let={{_id, monster}} label="Race"><%= monster.race %></:col>
+  <:col :let={{_id, monster}} label="Level"><%= monster.level %></:col>
+  <:col :let={{_id, monster}} label="Health"><%= monster.health %>/<%= monster.max_health %></:col>
+  <:col :let={{_id, monster}} label="Attack Damage"><%= monster.attack_damage %></:col>
+  <:col :let={{_id, monster}} label="XP Amount"><%= monster.xp_amount %></:col>
+  <:action :let={{_id, monster}}>
+    <div class="sr-only">
+      <.link navigate={~p"/admin/monsters/#{monster}"}>Show</.link>
+    </div>
+    <.link patch={~p"/admin/monsters/#{monster}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{id, monster}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: monster.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal :if={@live_action in [:new, :edit]} id="monster-modal" show on_cancel={JS.patch(~p"/admin/monsters")}>
+  <.live_component
+    module={ShardWeb.AdminLive.MonsterFormComponent}
+    id={@monster.id || :new}
+    title={@page_title}
+    action={@live_action}
+    monster={@monster}
+    patch={~p"/admin/monsters"}
+  />
+</.modal>
