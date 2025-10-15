@@ -14,7 +14,7 @@ defmodule Shard.Monsters.Monster do
     field :description, :string
 
     # Location reference - assuming monsters are placed in rooms
-    # belongs_to :location, Shard.Map.Room, foreign_key: :location_id
+    belongs_to :location, Shard.Map.Room, foreign_key: :location_id
 
     timestamps(type: :utc_datetime)
   end
@@ -31,7 +31,8 @@ defmodule Shard.Monsters.Monster do
       :potential_loot_drops,
       :xp_amount,
       :level,
-      :description
+      :description,
+      :location_id
     ])
     |> validate_required([:name, :race, :health, :max_health, :attack_damage, :xp_amount])
     |> validate_number(:health, greater_than: 0)
