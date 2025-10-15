@@ -17,7 +17,7 @@ defmodule ShardWeb.UserLive.Commands2 do
       nil ->
         if length(npcs_here) > 0 do
           # credo:disable-for-next-line Credo.Check.Refactor.EnumMapJoin
-          available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+          available_names = Enum.map_join(npcs_here, ", ", & &1.name)
 
           response = [
             "There is no NPC named '#{npc_name}' here.",
@@ -49,7 +49,7 @@ defmodule ShardWeb.UserLive.Commands2 do
       nil ->
         if length(npcs_here) > 0 do
           # credo:disable-for-next-line Credo.Check.Refactor.EnumMapJoin
-          available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+          available_names = Enum.map_join(npcs_here, ", ", & &1.name)
 
           response = [
             "There is no NPC named '#{npc_name}' here.",
@@ -80,7 +80,7 @@ defmodule ShardWeb.UserLive.Commands2 do
       nil ->
         if length(npcs_here) > 0 do
           # credo:disable-for-next-line Credo.Check.Refactor.EnumMapJoin
-          available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+          available_names = Enum.map_join(npcs_here, ", ", & &1.name)
 
           response = [
             "There is no NPC named '#{npc_name}' here.",
