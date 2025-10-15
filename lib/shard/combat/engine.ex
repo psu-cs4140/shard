@@ -84,14 +84,12 @@ defmodule Shard.Combat.Engine do
       |> List.wrap()
       |> Enum.any?(fn m -> m[:position] == pos and alive?(m) end)
 
-    # credo:disable-for-next-line Credo.Check.Readability.CondStatements
-    cond do
       state[:combat] && !alive_here? ->
         {:ok, %{state | combat: false}, (state[:events] || []) ++ [%{type: :win}]}
 
-      true ->
+      else
         {:ok, %{state | events: state[:events] || []}, state[:events] || []}
-    end
+      end
   end
 
   defp alive?(%{is_alive: false}), do: false
