@@ -284,13 +284,22 @@ defmodule ShardWeb.UserAuth do
   defp mount_current_scope(socket, session) do
     Phoenix.Component.assign_new(socket, :current_scope, fn ->
       user =
-        if user_token = session["user_token"] do
-          case Users.get_user_by_session_token(user_token) do
-            {user, _} when not is_nil(user) -> user
-            _ -> nil
-          end
-        else
-          nil
+        cond do
+          user_token = session["user_token"] ->
+            case Users.get_user_by_session_token(user_token) do
+              {user, _} when not is_nil(user) -> user
+              _ -> nil
+            end
+          
+          # Handle string keys (from test helpers)
+          user_token = session[:user_token] ->
+            case Users.get_user_by_session_token(user_token) do
+              {user, _} when not is_nil(user) -> user
+              _ -> nil
+            end
+          
+          true ->
+            nil
         end
 
       Scope.for_user(user)
