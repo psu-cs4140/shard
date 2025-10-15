@@ -19,6 +19,7 @@ defmodule Shard.Monsters do
   """
   def list_monsters do
     Repo.all(Monster)
+    |> Repo.preload(:location)
   end
 
   @doc """
@@ -35,7 +36,10 @@ defmodule Shard.Monsters do
       ** (Ecto.NoResultsError)
 
   """
-  def get_monster!(id), do: Repo.get!(Monster, id)
+  def get_monster!(id) do
+    Repo.get!(Monster, id)
+    |> Repo.preload(:location)
+  end
 
   @doc """
   Gets monsters by location.
@@ -114,5 +118,14 @@ defmodule Shard.Monsters do
   """
   def change_monster(%Monster{} = monster, attrs \\ %{}) do
     Monster.changeset(monster, attrs)
+  end
+
+  @doc """
+  Returns the list of monsters in a specific location.
+  """
+  def list_monsters_by_location(location_id) do
+    from(m in Monster, where: m.location_id == ^location_id)
+    |> Repo.all()
+    |> Repo.preload(:location)
   end
 end
