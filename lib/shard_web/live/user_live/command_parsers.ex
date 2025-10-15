@@ -1,5 +1,4 @@
 defmodule ShardWeb.UserLive.CommandParsers do
-  import ShardWeb.UserLive.MapHelpers
   alias Shard.Map, as: GameMap
   alias Shard.Items.Item
   alias Shard.Repo
