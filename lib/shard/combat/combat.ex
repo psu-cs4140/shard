@@ -64,9 +64,12 @@ defmodule Shard.Combat do
   # Private functions
 
   defp execute_attack(game_state, target_monster) do
+    # Parse dice notation (e.g., "1d4") or use raw number
+    base_damage = parse_damage(game_state.equipped_weapon.damage)
+
     player_damage =
-      game_state.equipped_weapon.damage +
-        trunc(game_state.equipped_weapon.damage * (game_state.player_stats.strength / 100))
+      base_damage +
+        trunc(base_damage * (game_state.player_stats.strength / 100))
 
     # Apply damage to monster
     updated_monster = %{target_monster | hp: target_monster.hp - player_damage}
@@ -173,4 +176,27 @@ defmodule Shard.Combat do
     # Implement flee logic
     {["You attempt to flee..."], %{game_state | combat: false}}
   end
+
+  # Helper function to parse damage strings like "1d4" or plain numbers
+  defp parse_damage(damage) when is_integer(damage), do: damage
+
+  defp parse_damage(damage) when is_binary(damage) do
+    case String.contains?(damage, "d") do
+      true ->
+        # Parse dice notation like "1d4"
+        [num_dice, die_size] = String.split(damage, "d")
+        num_dice = String.to_integer(num_dice)
+        die_size = String.to_integer(die_size)
+
+        # Roll the dice (simple average for now)
+        trunc(num_dice * (die_size + 1) / 2)
+
+      false ->
+        # Plain number as string
+        String.to_integer(damage)
+    end
+  end
+
+  # Default fallback
+  defp parse_damage(_), do: 1
 end
