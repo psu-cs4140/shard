@@ -341,8 +341,9 @@ defmodule ShardWeb.UserLive.Commands1 do
                             execute_unlock_command(game_state, direction, item_name)
 
                           :error ->
-                            {["Unknown command: '#{command}'. Type 'help' for available commands."],
-                             game_state}
+                            {[
+                               "Unknown command: '#{command}'. Type 'help' for available commands."
+                             ], game_state}
                         end
                     end
                 end
@@ -576,7 +577,7 @@ defmodule ShardWeb.UserLive.Commands1 do
     {x, y} = game_state.player_position
 
     # Check if player has the item in inventory
-    has_item = 
+    has_item =
       Enum.any?(game_state.inventory_items, fn inv_item ->
         String.downcase(inv_item.name || "") == String.downcase(item_name)
       end)
@@ -591,7 +592,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         room ->
           # Normalize direction name
-          normalized_direction = 
+          normalized_direction =
             case String.downcase(direction) do
               dir when dir in ["n", "north"] -> "north"
               dir when dir in ["s", "south"] -> "south"
@@ -617,7 +618,9 @@ defmodule ShardWeb.UserLive.Commands1 do
                   {["The door to the #{normalized_direction} is already unlocked."], game_state}
 
                 door.key_required == nil or door.key_required == "" ->
-                  {["The door to the #{normalized_direction} is locked but doesn't require a specific key."], game_state}
+                  {[
+                     "The door to the #{normalized_direction} is locked but doesn't require a specific key."
+                   ], game_state}
 
                 String.downcase(door.key_required) == String.downcase(item_name) ->
                   # Unlock the door
@@ -625,19 +628,24 @@ defmodule ShardWeb.UserLive.Commands1 do
                     {:ok, _updated_door} ->
                       # Also unlock the return door if it exists
                       return_door = GameMap.get_return_door(door)
+
                       if return_door do
                         GameMap.update_door(return_door, %{is_locked: false})
                       end
 
-                      {["You use the #{item_name} to unlock the door to the #{normalized_direction}.", 
-                        "The door is now unlocked!"], game_state}
+                      {[
+                         "You use the #{item_name} to unlock the door to the #{normalized_direction}.",
+                         "The door is now unlocked!"
+                       ], game_state}
 
                     {:error, _changeset} ->
                       {["Failed to unlock the door. Something went wrong."], game_state}
                   end
 
                 true ->
-                  {["The #{item_name} doesn't fit this lock. This door requires: #{door.key_required}"], game_state}
+                  {[
+                     "The #{item_name} doesn't fit this lock. This door requires: #{door.key_required}"
+                   ], game_state}
               end
           end
       end
