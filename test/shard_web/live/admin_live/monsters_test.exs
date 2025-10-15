@@ -291,7 +291,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
     test "redirects non-admin users", %{conn: conn} do
       user = user_fixture(%{admin: false})
       
-      assert {:error, {:redirect, %{to: "/"}}} = 
+      assert {:error, {:live_redirect, %{to: "/"}}} = 
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters")
