@@ -143,6 +143,7 @@ defmodule ShardWeb.AdminLive.Monsters do
   def render(assigns) do
     ~H"""
     <div class="p-6">
+      <.flash_group flash={@flash} />
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Monsters Administration</h1>
         <.link
