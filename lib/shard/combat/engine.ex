@@ -30,6 +30,35 @@ defmodule Shard.Combat.Engine do
     |> resolve_deaths_and_victory()
   end
 
+  defp apply_effect_event_damage(monsters, events) do
+    Enum.reduce(events, {monsters, []}, fn ev, {mons, acc} ->
+      case ev do
+        # Bleed tick against a monster index; dmg currently stores pre-armor magnitude
+        %{type: :effect_tick, effect: "bleed", target: {:monster, i}, dmg: mag} ->
+          target = if is_integer(i), do: Enum.at(mons, i), else: nil
+          armor = if is_map(target), do: Map.get(target, :armor, 0), else: 0
+          # Use existing armor-aware damage() with zero variance for ticks
+          dmg2 = damage(%{base: mag, variance: 0}, armor)
+
+          mons2 =
+            if is_map(target) do
+              List.update_at(mons, i, fn m ->
+                hp2 = max(Map.get(m, :hp, 0) - dmg2, 0)
+                m2 = Map.put(m, :hp, hp2)
+                if hp2 <= 0, do: Map.put(m2, :is_alive, false), else: m2
+              end)
+            else
+              mons
+            end
+
+          {mons2, [Map.put(ev, :dmg, dmg2) | acc]}
+
+        _ ->
+          {mons, [ev | acc]}
+      end
+    end)
+  end
+
   defp apply_effects(state) do
     effects = Map.get(state, :effects, [])
 
@@ -72,7 +101,8 @@ defmodule Shard.Combat.Engine do
         end
       end)
 
-    %{state | monsters: monsters2, effects: Enum.reverse(effects2), events: Enum.reverse(events)}
+    {monsters3, events2} = apply_effect_event_damage(monsters2, events)
+    %{state | monsters: monsters3, effects: Enum.reverse(effects2), events: Enum.reverse(events2)}
   end
 
   defp resolve_deaths_and_victory(state) do
