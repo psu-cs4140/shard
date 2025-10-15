@@ -19,7 +19,7 @@ defmodule Shard.Npcs.Npc do
     field :experience_reward, :integer, default: 0
     field :gold_reward, :integer, default: 0
     field :npc_type, :string, default: "neutral"
-    field :dialogue, {:array, :string}
+    field :dialogue, :string
     field :inventory, :map, default: %{}
     field :location_x, :integer
     field :location_y, :integer

@@ -185,20 +185,7 @@ defmodule Shard.Npcs do
         max_mana: 50,
         level: 1,
         is_active: true,
-        dialogue: [
-          "Woof! Welcome to the tutorial, adventurer!",
-          "I'm Goldie, your faithful guide dog. Let me help you get started on your journey.",
-          "",
-          "Here are some basic commands to get you moving:",
-          "• Type 'look' to examine your surroundings",
-          "• Use 'north', 'south', 'east', 'west' (or n/s/e/w) to move around",
-          "• Try 'pickup \"item_name\"' to collect items you find",
-          "• Use 'inventory' to see what you're carrying",
-          "• Type 'help' anytime for a full list of commands",
-          "",
-          "There's a key hidden somewhere to the south that might come in handy later!",
-          "Good luck, and remember - I'll always be here at (0,0) if you need guidance!"
-        ]
+        dialogue: "Woof! Welcome to the tutorial, adventurer!\n\nI'm Goldie, your faithful guide dog. Let me help you get started on your journey.\n\nHere are some basic commands to get you moving:\n• Type 'look' to examine your surroundings\n• Use 'north', 'south', 'east', 'west' (or n/s/e/w) to move around\n• Try 'pickup \"item_name\"' to collect items you find\n• Use 'inventory' to see what you're carrying\n• Type 'help' anytime for a full list of commands\n\nThere's a key hidden somewhere to the south that might come in handy later!\nGood luck, and remember - I'll always be here at (0,0) if you need guidance!"
       })
       |> Repo.insert()
     else
