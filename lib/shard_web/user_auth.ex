@@ -226,12 +226,9 @@ defmodule ShardWeb.UserAuth do
   end
 
   def on_mount(:redirect_if_user_is_authenticated, _params, session, socket) do
-    socket =
-      Phoenix.Component.assign_new(socket, :current_scope, fn ->
-        Shard.Users.get_user_by_session_token(session["user_token"])
-      end)
+    socket = mount_current_scope(socket, session)
 
-    if socket.assigns.current_scope do
+    if socket.assigns.current_scope && socket.assigns.current_scope.user do
       {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/")}
     else
       {:cont, socket}
