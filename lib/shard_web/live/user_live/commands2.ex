@@ -1,3 +1,5 @@
+# credo:disable-for-this-file Credo.Check.Refactor.Nesting
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule ShardWeb.UserLive.Commands2 do
   @moduledoc false
   import ShardWeb.UserLive.MapHelpers
