@@ -1,4 +1,5 @@
 defmodule Shard.Quests.Quest do
+  @moduledoc false
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -6,6 +7,7 @@ defmodule Shard.Quests.Quest do
 
   # Custom type to handle list -> map conversion
   defmodule MapField do
+    @moduledoc false
     use Ecto.Type
 
     def type, do: :map

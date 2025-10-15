@@ -1,4 +1,7 @@
+# credo:disable-for-this-file Credo.Check.Refactor.Nesting
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule ShardWeb.UserLive.MapHelpers do
+  @moduledoc false
   alias Shard.Map, as: GameMap
   alias Shard.Npcs.Npc
   alias Shard.Quests.Quest
