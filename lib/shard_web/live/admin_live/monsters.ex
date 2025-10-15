@@ -7,7 +7,6 @@ defmodule ShardWeb.AdminLive.Monsters do
 
   import ShardWeb.Layouts, only: [flash_group: 1]
 
-  on_mount {ShardWeb.UserAuth, :require_admin}
 
   @impl true
   def mount(_params, _session, socket) do
