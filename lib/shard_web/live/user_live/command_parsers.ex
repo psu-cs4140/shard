@@ -241,10 +241,19 @@ defmodule ShardWeb.UserLive.CommandParsers do
                         GameMap.update_door(return_door, %{is_locked: false})
                       end
 
+                      # Remove the item from inventory
+                      updated_inventory =
+                        Enum.reject(game_state.inventory_items, fn inv_item ->
+                          String.downcase(inv_item.name || "") == String.downcase(item_name)
+                        end)
+
+                      updated_game_state = %{game_state | inventory_items: updated_inventory}
+
                       {[
                          "You use the #{item_name} to unlock the door to the #{normalized_direction}.",
+                         "The #{item_name} is consumed in the process.",
                          "The door is now unlocked!"
-                       ], game_state}
+                       ], updated_game_state}
 
                     {:error, _changeset} ->
                       {["Failed to unlock the door. Something went wrong."], game_state}

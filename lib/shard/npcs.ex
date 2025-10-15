@@ -159,4 +159,39 @@ defmodule Shard.Npcs do
     alias Shard.Map.Room
     Repo.all(Room)
   end
+
+  ## Tutorial NPCs
+
+  def create_tutorial_npc_goldie do
+    # Check if Goldie already exists at (0,0)
+    existing_goldie =
+      from(n in Npc,
+        where: n.location_x == 0 and n.location_y == 0 and n.name == "Goldie"
+      )
+      |> Repo.one()
+
+    if is_nil(existing_goldie) do
+      %Npc{}
+      |> Npc.changeset(%{
+        name: "Goldie",
+        description:
+          "A friendly golden retriever with bright, intelligent eyes and a wagging tail. She seems eager to help guide newcomers through their adventure.",
+        npc_type: "friendly",
+        location_x: 0,
+        location_y: 0,
+        location_z: 0,
+        health: 100,
+        max_health: 100,
+        mana: 50,
+        max_mana: 50,
+        level: 1,
+        is_active: true,
+        dialogue:
+          "Woof! Welcome to the tutorial, adventurer!\n\nI'm Goldie, your faithful guide dog. Let me help you get started on your journey.\n\nHere are some basic commands to get you moving:\n• Type 'look' to examine your surroundings\n• Use 'north', 'south', 'east', 'west' (or n/s/e/w) to move around\n• Try 'pickup \"item_name\"' to collect items you find\n• Use 'inventory' to see what you're carrying\n• Type 'help' anytime for a full list of commands\n\nThere's a key hidden somewhere to the south that might come in handy later!\nGood luck, and remember - I'll always be here at (0,0) if you need guidance!"
+      })
+      |> Repo.insert()
+    else
+      {:ok, existing_goldie}
+    end
+  end
 end
