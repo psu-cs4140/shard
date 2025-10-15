@@ -1,4 +1,3 @@
-# credo:disable-for-this-file Credo.Check.Readability.CondStatements
 # credo:disable-for-this-file Credo.Check.Refactor.Nesting
 # credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Shard.Combat.Engine do
@@ -84,12 +83,11 @@ defmodule Shard.Combat.Engine do
       |> List.wrap()
       |> Enum.any?(fn m -> m[:position] == pos and alive?(m) end)
 
-      state[:combat] && !alive_here? ->
-        {:ok, %{state | combat: false}, (state[:events] || []) ++ [%{type: :win}]}
-
-      else
-        {:ok, %{state | events: state[:events] || []}, state[:events] || []}
-      end
+    if state[:combat] && !alive_here? do
+      {:ok, %{state | combat: false}, (state[:events] || []) ++ [%{type: :win}]}
+    else
+      {:ok, %{state | events: state[:events] || []}, state[:events] || []}
+    end
   end
 
   defp alive?(%{is_alive: false}), do: false
