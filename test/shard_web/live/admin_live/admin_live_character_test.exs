@@ -191,7 +191,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
         |> live(~p"/admin/characters")
 
       # The first character should appear before the second in the listing
-      # since they're ordered by ascending insertion date
+      # since they're ordered by ascending insertion date (oldest first)
       character1_pos = :binary.match(html, character1.name) |> elem(0)
       character2_pos = :binary.match(html, character2.name) |> elem(0)
 

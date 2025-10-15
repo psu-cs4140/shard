@@ -120,8 +120,14 @@ defmodule ShardWeb.UserAuth do
 
   # Do not renew session if the user is already logged in
   # to prevent CSRF errors or data being lost in tabs that are still open
-  defp renew_session(conn, user) when conn.assigns.current_scope.user.id == user.id do
-    conn
+  defp renew_session(conn, user) when not is_nil(user) do
+    current_scope = conn.assigns[:current_scope]
+
+    if current_scope && current_scope.user && current_scope.user.id == user.id do
+      conn
+    else
+      do_renew_session(conn)
+    end
   end
 
   # This function renews the session ID and erases the whole
@@ -141,6 +147,10 @@ defmodule ShardWeb.UserAuth do
   #     end
   #
   defp renew_session(conn, _user) do
+    do_renew_session(conn)
+  end
+
+  defp do_renew_session(conn) do
     delete_csrf_token()
 
     conn
@@ -216,12 +226,9 @@ defmodule ShardWeb.UserAuth do
   end
 
   def on_mount(:redirect_if_user_is_authenticated, _params, session, socket) do
-    socket =
-      Phoenix.Component.assign_new(socket, :current_scope, fn ->
-        Shard.Users.get_user_by_session_token(session["user_token"])
-      end)
+    socket = mount_current_scope(socket, session)
 
-    if socket.assigns.current_scope do
+    if socket.assigns.current_scope && socket.assigns.current_scope.user do
       {:halt, Phoenix.LiveView.redirect(socket, to: ~p"/")}
     else
       {:cont, socket}
@@ -258,12 +265,43 @@ defmodule ShardWeb.UserAuth do
     end
   end
 
+  def on_mount(:require_admin, _params, session, socket) do
+    socket = mount_current_scope(socket, session)
+
+    case socket.assigns.current_scope do
+      %Scope{user: %{admin: true}} ->
+        {:cont, socket}
+
+      _ ->
+        socket =
+          socket
+          |> Phoenix.LiveView.put_flash(:error, "You must be an admin to access this page.")
+          |> Phoenix.LiveView.redirect(to: ~p"/")
+
+        {:halt, socket}
+    end
+  end
+
   defp mount_current_scope(socket, session) do
     Phoenix.Component.assign_new(socket, :current_scope, fn ->
-      {user, _} =
-        if user_token = session["user_token"] do
-          Users.get_user_by_session_token(user_token)
-        end || {nil, nil}
+      user =
+        cond do
+          user_token = session["user_token"] ->
+            case Users.get_user_by_session_token(user_token) do
+              {user, _} when not is_nil(user) -> user
+              _ -> nil
+            end
+
+          # Handle string keys (from test helpers)
+          user_token = session[:user_token] ->
+            case Users.get_user_by_session_token(user_token) do
+              {user, _} when not is_nil(user) -> user
+              _ -> nil
+            end
+
+          true ->
+            nil
+        end
 
       Scope.for_user(user)
     end)
