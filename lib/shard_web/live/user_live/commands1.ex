@@ -394,5 +394,4 @@ defmodule ShardWeb.UserLive.Commands1 do
     all_items = room_items ++ direct_items
     all_items |> Enum.uniq_by(& &1.name)
   end
-
 end
