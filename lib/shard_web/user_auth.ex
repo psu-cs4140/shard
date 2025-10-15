@@ -120,8 +120,14 @@ defmodule ShardWeb.UserAuth do
 
   # Do not renew session if the user is already logged in
   # to prevent CSRF errors or data being lost in tabs that are still open
-  defp renew_session(conn, user) when not is_nil(user) and not is_nil(conn.assigns[:current_scope]) and not is_nil(conn.assigns.current_scope.user) and conn.assigns.current_scope.user.id == user.id do
-    conn
+  defp renew_session(conn, user) when not is_nil(user) do
+    current_scope = conn.assigns[:current_scope]
+    
+    if current_scope && current_scope.user && current_scope.user.id == user.id do
+      conn
+    else
+      do_renew_session(conn)
+    end
   end
 
   # This function renews the session ID and erases the whole
@@ -141,6 +147,10 @@ defmodule ShardWeb.UserAuth do
   #     end
   #
   defp renew_session(conn, _user) do
+    do_renew_session(conn)
+  end
+
+  defp do_renew_session(conn) do
     delete_csrf_token()
 
     conn
