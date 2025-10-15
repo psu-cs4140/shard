@@ -149,13 +149,30 @@ defmodule ShardWeb.MudGameLive do
         combat: false
       }
 
+      # Check if player is at Goldie's location (0,0) and add her dialogue
+      initial_output = [
+        "Welcome to Shard!",
+        "You find yourself in a mysterious dungeon.",
+        "Type 'help' for available commands.",
+        ""
+      ]
+
+      terminal_output = 
+        if starting_position == {0, 0} and map_id == "tutorial_terrain" do
+          # Get Goldie's dialogue and add it to the output
+          goldie_dialogue = "Woof! Welcome to the tutorial, adventurer!\n\nI'm Goldie, your faithful guide dog. Let me help you get started on your journey.\n\nHere are some basic commands to get you moving:\n• Type 'look' to examine your surroundings\n• Use 'north', 'south', 'east', 'west' (or n/s/e/w) to move around\n• Try 'pickup \"item_name\"' to collect items you find\n• Use 'inventory' to see what you're carrying\n• Type 'help' anytime for a full list of commands\n\nThere's a key hidden somewhere to the south that might come in handy later!\nGood luck, and remember - I'll always be here at (0,0) if you need guidance!"
+          
+          initial_output ++ [
+            "Goldie the golden retriever wags her tail and speaks:",
+            goldie_dialogue,
+            ""
+          ]
+        else
+          initial_output
+        end
+
       terminal_state = %{
-        output: [
-          "Welcome to Shard!",
-          "You find yourself in a mysterious dungeon.",
-          "Type 'help' for available commands.",
-          ""
-        ],
+        output: terminal_output,
         command_history: [],
         current_command: ""
       }
