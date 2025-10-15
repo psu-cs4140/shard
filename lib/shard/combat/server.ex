@@ -1,4 +1,5 @@
 defmodule Shard.Combat.Server do
+  @moduledoc false
   use GenServer
 
   @tick_ms 1000
