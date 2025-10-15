@@ -63,10 +63,30 @@ defmodule Shard.Combat do
 
   # Private functions
 
+  defp parse_damage(damage) when is_integer(damage), do: damage
+
+  defp parse_damage(damage) when is_binary(damage) do
+    case Regex.run(~r/^(\d+)d(\d+)$/, damage) do
+      [_, num_dice, die_size] ->
+        # Simple average damage calculation: (num_dice * (die_size + 1)) / 2
+        num = String.to_integer(num_dice)
+        size = String.to_integer(die_size)
+        trunc(num * (size + 1) / 2)
+
+      _ ->
+        # If it's not dice notation, try to parse as integer, default to 1
+        case Integer.parse(damage) do
+          {value, _} -> value
+          :error -> 1
+        end
+    end
+  end
+
+  defp parse_damage(_), do: 1
+
   defp execute_attack(game_state, target_monster) do
-    player_damage =
-      game_state.equipped_weapon.damage +
-        trunc(game_state.equipped_weapon.damage * (game_state.player_stats.strength / 100))
+    base_damage = parse_damage(game_state.equipped_weapon.damage)
+    player_damage = base_damage + trunc(base_damage * (game_state.player_stats.strength / 100))
 
     # Apply damage to monster
     updated_monster = %{target_monster | hp: target_monster.hp - player_damage}
