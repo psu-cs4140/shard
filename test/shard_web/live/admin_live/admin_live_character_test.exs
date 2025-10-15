@@ -177,7 +177,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
   describe "Character ordering and filtering" do
     setup [:create_admin_user]
 
-    test "displays characters in ascending order by insertion date", %{conn: conn, admin: admin} do
+    test "displays characters in descending order by insertion date", %{conn: conn, admin: admin} do
       user = user_fixture()
 
       # Create characters with slight delay to ensure different timestamps
@@ -190,12 +190,12 @@ defmodule ShardWeb.AdminLive.CharactersTest do
         |> log_in_user(admin)
         |> live(~p"/admin/characters")
 
-      # The first character should appear before the second in the listing
-      # since they're ordered by ascending insertion date
+      # The second character should appear before the first in the listing
+      # since they're ordered by descending insertion date (newest first)
       character1_pos = :binary.match(html, character1.name) |> elem(0)
       character2_pos = :binary.match(html, character2.name) |> elem(0)
 
-      assert character1_pos < character2_pos
+      assert character2_pos < character1_pos
     end
 
     test "displays user information with characters", %{conn: conn, admin: admin} do
