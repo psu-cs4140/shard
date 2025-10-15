@@ -10,17 +10,21 @@ defmodule ShardWeb.AdminLive.Monsters do
 
   @impl true
   def mount(_params, _session, socket) do
-    monsters = Monsters.list_monsters()
-    rooms = Map.list_rooms()
+    if socket.assigns.current_user && socket.assigns.current_user.admin do
+      monsters = Monsters.list_monsters()
+      rooms = Map.list_rooms()
 
-    {:ok,
-     assign(socket,
-       monsters: monsters,
-       rooms: rooms,
-       show_form: false,
-       form_monster: nil,
-       form_title: "Create Monster"
-     )}
+      {:ok,
+       assign(socket,
+         monsters: monsters,
+         rooms: rooms,
+         show_form: false,
+         form_monster: nil,
+         form_title: "Create Monster"
+       )}
+    else
+      {:ok, socket |> redirect(to: "/")}
+    end
   end
 
   @impl true
