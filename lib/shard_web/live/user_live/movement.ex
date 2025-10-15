@@ -117,11 +117,12 @@ defmodule ShardWeb.UserLive.Movement do
 
       # Return completion result separately for popup handling
       final_response = response ++ combat_messages
-      
+
       case completion_result do
-        {:completed, message} -> 
+        {:completed, message} ->
           {final_response, updated_game_state, {:show_completion_popup, message}}
-        :no_completion -> 
+
+        :no_completion ->
           {final_response, updated_game_state, :no_popup}
       end
     end
