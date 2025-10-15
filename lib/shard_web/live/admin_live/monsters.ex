@@ -25,7 +25,7 @@ defmodule ShardWeb.AdminLive.Monsters do
          form_title: "Create Monster"
        )}
     else
-      {:ok, socket |> push_redirect(to: "/")}
+      {:ok, redirect(socket, to: "/")}
     end
   end
 
