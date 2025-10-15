@@ -161,7 +161,7 @@ defmodule ShardWeb.MudGameLive do
         if starting_position == {0, 0} and map_id == "tutorial_terrain" do
           # Get Goldie's dialogue and add it to the output
           goldie_dialogue =
-            "Woof! Welcome to the tutorial, adventurer!\n\nI'm Goldie, your faithful guide dog. Let me help you get started on your journey.\n\nHere are some basic commands to get you moving:\n• Type 'look' to examine your surroundings\n• Use 'north', 'south', 'east', 'west' (or n/s/e/w) to move around\n• Try 'pickup \"item_name\"' to collect items you find\n• Use 'inventory' to see what you're carrying\n• Type 'help' anytime for a full list of commands\n\nThere's a key hidden somewhere to the south that might come in handy later!\nGood luck, and remember - I'll always be here at (0,0) if you need guidance!"
+            "Woof! Welcome to the tutorial, adventurer!\n\nI'm Goldie, your faithful guide dog. Let me help you get started on your journey.\n\nHere are some basic commands to get you moving:\n• Type 'look' to examine your surroundings\n• Use 'north', 'south', 'east', 'west' (or n/s/e/w) to move around\n• Try 'pickup \"item_name\"' to collect items you find\n• Use 'inventory' to see what you're carrying\n• Type 'help' anytime for a full list of commands\n\nThere's a key hidden somewhere to the south that might come in handy later!\nExplore around and interact with npcs, complete quests, and attack monsters.\nWhen you're ready to move to the next dungeon, unlock the locked door!\nGood luck, and remember - I'll always be here at (0,0) if you need guidance!"
 
           initial_output ++
             [
@@ -182,7 +182,8 @@ defmodule ShardWeb.MudGameLive do
       # Controls what modal popup we are showing
       modal_state = %{
         show: false,
-        type: 0
+        type: 0,
+        completion_message: nil
       }
 
       PubSub.subscribe(
@@ -295,6 +296,11 @@ defmodule ShardWeb.MudGameLive do
             :if={@modal_state.show && @modal_state.type == "settings"}
             game_state={@game_state}
           />
+
+          <.dungeon_completion
+            :if={@modal_state.show && @modal_state.type == "dungeon_completion"}
+            message={@modal_state.completion_message}
+          />
         </div>
       </div>
       
@@ -312,7 +318,7 @@ defmodule ShardWeb.MudGameLive do
   end
 
   def handle_event("hide_modal", _params, socket) do
-    {:noreply, assign(socket, modal_state: %{show: false, type: ""})}
+    {:noreply, assign(socket, modal_state: %{show: false, type: "", completion_message: nil})}
   end
 
   # Handle keypresses for navigation, inventory, etc.
@@ -321,16 +327,33 @@ defmodule ShardWeb.MudGameLive do
     case key do
       arrow_key when arrow_key in ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"] ->
         # Use the same execute_movement function that terminal commands use
-        {response, updated_game_state} = execute_movement(socket.assigns.game_state, arrow_key)
+        movement_result = execute_movement(socket.assigns.game_state, arrow_key)
+
+        {response, updated_game_state, popup_result} =
+          case movement_result do
+            {resp, state, popup} -> {resp, state, popup}
+            {resp, state} -> {resp, state, :no_popup}
+          end
 
         # Add the response to terminal output
         new_output = socket.assigns.terminal_state.output ++ response ++ [""]
         terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
 
+        # Handle completion popup
+        modal_state =
+          case popup_result do
+            {:show_completion_popup, message} ->
+              %{show: true, type: "dungeon_completion", completion_message: message}
+
+            :no_popup ->
+              socket.assigns.modal_state
+          end
+
         {:noreply,
          assign(socket,
            game_state: updated_game_state,
            terminal_state: terminal_state,
+           modal_state: modal_state,
            available_exits: compute_available_exits(updated_game_state.player_position)
          )}
 

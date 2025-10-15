@@ -38,17 +38,24 @@ defmodule ShardWeb.UserLive.Movement do
           "southwest" -> "southwest"
         end
 
-      # Update game state with new position
-      # updated_game_state = %{game_state | player_position: new_pos}
+      # Get current and destination rooms for dungeon completion check
+      {curr_x, curr_y} = current_pos
+      {new_x, new_y} = new_pos
+      current_room = GameMap.get_room_by_coordinates(curr_x, curr_y)
+      destination_room = GameMap.get_room_by_coordinates(new_x, new_y)
+
+      # Check for dungeon completion
+      completion_result = GameMap.check_dungeon_completion(current_room, destination_room)
 
       # Check for NPCs at the new location
-      {new_x, new_y} = new_pos
       npcs_here = get_npcs_at_location(new_x, new_y, game_state.map_id)
 
       # Check for items at the new location
       items_here = get_items_at_location(new_x, new_y, game_state.map_id)
 
       response = ["You traversed #{direction_name}."]
+
+      # Don't add dungeon completion message to response - will be handled as popup
 
       # Add NPC presence notification if any NPCs are at the new location
       response =
@@ -108,7 +115,16 @@ defmodule ShardWeb.UserLive.Movement do
       {combat_messages, updated_game_state} =
         Shard.Combat.start_combat(updated_game_state)
 
-      {response ++ combat_messages, updated_game_state}
+      # Return completion result separately for popup handling
+      final_response = response ++ combat_messages
+
+      case completion_result do
+        {:completed, message} ->
+          {final_response, updated_game_state, {:show_completion_popup, message}}
+
+        :no_completion ->
+          {final_response, updated_game_state, :no_popup}
+      end
     end
   end
 
