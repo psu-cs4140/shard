@@ -393,6 +393,52 @@ defmodule Shard.Items do
     end
   end
 
+  def create_tutorial_npc_goldie do
+    alias Shard.Npcs.Npc
+
+    # Check if Goldie already exists at (0,0)
+    existing_goldie =
+      from(n in Npc,
+        where: n.location_x == 0 and n.location_y == 0 and n.name == "Goldie"
+      )
+      |> Repo.one()
+
+    if is_nil(existing_goldie) do
+      %Npc{}
+      |> Npc.changeset(%{
+        name: "Goldie",
+        description: "A friendly golden retriever with bright, intelligent eyes and a wagging tail. She seems eager to help guide newcomers through their adventure.",
+        npc_type: "friendly",
+        location_x: 0,
+        location_y: 0,
+        location_z: 0,
+        health: 100,
+        max_health: 100,
+        mana: 50,
+        max_mana: 50,
+        level: 1,
+        is_active: true,
+        dialogue: [
+          "Woof! Welcome to the tutorial, adventurer!",
+          "I'm Goldie, your faithful guide dog. Let me help you get started on your journey.",
+          "",
+          "Here are some basic commands to get you moving:",
+          "• Type 'look' to examine your surroundings",
+          "• Use 'north', 'south', 'east', 'west' (or n/s/e/w) to move around",
+          "• Try 'pickup \"item_name\"' to collect items you find",
+          "• Use 'inventory' to see what you're carrying",
+          "• Type 'help' anytime for a full list of commands",
+          "",
+          "There's a key hidden somewhere to the south that might come in handy later!",
+          "Good luck, and remember - I'll always be here at (0,0) if you need guidance!"
+        ]
+      })
+      |> Repo.insert()
+    else
+      {:ok, existing_goldie}
+    end
+  end
+
   defp ensure_room_exists(x, y, z, name) do
     case Shard.Map.get_room_by_coordinates(x, y, z) do
       nil ->
