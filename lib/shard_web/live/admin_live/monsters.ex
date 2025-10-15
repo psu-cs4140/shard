@@ -3,17 +3,14 @@ defmodule ShardWeb.AdminLive.Monsters do
 
   alias Shard.Monsters
   alias Shard.Monsters.Monster
-  alias Shard.Map
 
   @impl true
   def mount(_params, _session, socket) do
     monsters = Monsters.list_monsters()
-    rooms = Map.list_rooms()
 
     {:ok,
      assign(socket,
        monsters: monsters,
-       rooms: rooms,
        show_form: false,
        form_monster: nil,
        form_title: "Create Monster"
@@ -172,12 +169,6 @@ defmodule ShardWeb.AdminLive.Monsters do
                 <.input field={form[:attack_damage]} type="number" label="Attack Damage" />
 
                 <.input field={form[:xp_amount]} type="number" label="XP Amount" />
-                <.input
-                  field={form[:location_id]}
-                  type="select"
-                  label="Location"
-                  options={[{"None", nil} | Enum.map(@rooms, &{&1.name || "Room #{&1.id}", &1.id})]}
-                />
               </div>
 
               <.input field={form[:description]} type="textarea" label="Description" />
