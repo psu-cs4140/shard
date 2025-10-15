@@ -61,7 +61,7 @@ defmodule ShardWeb.AdminLive.MonsterFormComponent do
     changeset =
       socket.assigns.monster
       |> Monsters.change_monster(monster_params)
-      |> Map.put(:action, :validate)
+      |> Elixir.Map.put(:action, :validate)
 
     {:noreply, assign_form(socket, changeset)}
   end
