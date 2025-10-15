@@ -94,6 +94,16 @@ defmodule ShardWeb.AdminLive.Monsters do
   end
 
   @impl true
+  def handle_event("validate", %{"monster" => monster_params}, socket) do
+    changeset =
+      socket.assigns.form_monster
+      |> Monsters.change_monster(monster_params)
+      |> Map.put(:action, :validate)
+
+    {:noreply, assign(socket, :changeset, changeset)}
+  end
+
+  @impl true
   def handle_event("save_monster", %{"monster" => monster_params}, socket) do
     # Clean up empty string values that should be nil
     cleaned_params =
@@ -164,7 +174,7 @@ defmodule ShardWeb.AdminLive.Monsters do
           </div>
 
           <%= if assigns[:changeset] do %>
-            <.simple_form for={to_form(@changeset)} phx-submit="save_monster" id="monster-form">
+            <.simple_form for={to_form(@changeset)} phx-submit="save_monster" phx-change="validate" id="monster-form">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <% form = to_form(@changeset) %>
                 <.input field={form[:name]} label="Name" required />
