@@ -1,4 +1,5 @@
 defmodule ShardWeb.MudGameLive do
+  @moduledoc false
   use ShardWeb, :live_view
   alias Phoenix.PubSub
   alias Phoenix.LiveView.JS
@@ -14,6 +15,7 @@ defmodule ShardWeb.MudGameLive do
   import ShardWeb.UserLive.ItemHelpers
 
   @impl true
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity, Credo.Check.Refactor.Nesting
   def mount(%{"map_id" => map_id} = params, _session, socket) do
     # Get character if provided
     character =
