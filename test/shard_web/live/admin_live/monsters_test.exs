@@ -71,7 +71,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
 
       assert html =~ "Monsters Administration"
       assert html =~ monster.name
-      assert html =~ monster.race
+      assert html =~ String.capitalize(monster.race)
     end
 
     test "saves new monster", %{conn: conn, user: user} do
