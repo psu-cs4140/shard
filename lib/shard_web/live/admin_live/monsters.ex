@@ -5,6 +5,8 @@ defmodule ShardWeb.AdminLive.Monsters do
   alias Shard.Monsters.Monster
   alias Shard.Map
 
+  import ShardWeb.Layouts, only: [flash_group: 1]
+
   on_mount {ShardWeb.UserAuth, :require_admin}
 
   @impl true
