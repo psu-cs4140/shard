@@ -393,7 +393,6 @@ defmodule Shard.Items do
     end
   end
 
-
   defp ensure_room_exists(x, y, z, name) do
     case Shard.Map.get_room_by_coordinates(x, y, z) do
       nil ->

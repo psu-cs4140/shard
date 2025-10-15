@@ -242,7 +242,7 @@ defmodule ShardWeb.UserLive.CommandParsers do
                       end
 
                       # Remove the item from inventory
-                      updated_inventory = 
+                      updated_inventory =
                         Enum.reject(game_state.inventory_items, fn inv_item ->
                           String.downcase(inv_item.name || "") == String.downcase(item_name)
                         end)
