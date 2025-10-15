@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Readability.CondStatements
 # credo:disable-for-this-file Credo.Check.Refactor.Nesting
 # credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule Shard.Combat.Engine do
