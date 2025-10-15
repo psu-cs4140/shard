@@ -133,7 +133,7 @@ defmodule ShardWeb.UserLive.CommandParsers do
     case target_item do
       nil ->
         if length(items_here) > 0 do
-          available_names = Enum.map(items_here, & &1.name) |> Enum.join(", ")
+          available_names = Enum.map_join(items_here, ", ", & &1.name)
 
           response = [
             "There is no item named '#{item_name}' here.",
