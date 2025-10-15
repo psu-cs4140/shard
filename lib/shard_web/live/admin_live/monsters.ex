@@ -7,11 +7,10 @@ defmodule ShardWeb.AdminLive.Monsters do
 
   import ShardWeb.Layouts, only: [flash_group: 1]
 
-
   @impl true
   def mount(_params, _session, socket) do
     current_user = socket.assigns.current_scope && socket.assigns.current_scope.user
-    
+
     if current_user && current_user.admin do
       monsters = Monsters.list_monsters()
       rooms = Map.list_rooms()
@@ -179,7 +178,12 @@ defmodule ShardWeb.AdminLive.Monsters do
           </div>
 
           <%= if assigns[:changeset] do %>
-            <.simple_form for={to_form(@changeset)} phx-submit="save_monster" phx-change="validate" id="monster-form">
+            <.simple_form
+              for={to_form(@changeset)}
+              phx-submit="save_monster"
+              phx-change="validate"
+              id="monster-form"
+            >
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <% form = to_form(@changeset) %>
                 <.input field={form[:name]} label="Name" required />

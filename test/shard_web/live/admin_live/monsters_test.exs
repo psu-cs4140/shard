@@ -45,13 +45,15 @@ defmodule ShardWeb.AdminLive.MonstersTest do
   end
 
   defp create_room(_) do
-    {:ok, room} = Map.create_room(%{
-      name: "Test Room",
-      description: "A test room",
-      x_coordinate: 0,
-      y_coordinate: 0,
-      z_coordinate: 0
-    })
+    {:ok, room} =
+      Map.create_room(%{
+        name: "Test Room",
+        description: "A test room",
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0
+      })
+
     %{room: room}
   end
 
@@ -64,7 +66,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
     setup [:create_admin_user, :create_monster, :create_room]
 
     test "lists all monsters", %{conn: conn, user: user, monster: monster} do
-      {:ok, _index_live, html} = 
+      {:ok, _index_live, html} =
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters")
@@ -75,7 +77,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
     end
 
     test "saves new monster", %{conn: conn, user: user} do
-      {:ok, index_live, _html} = 
+      {:ok, index_live, _html} =
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters")
@@ -101,7 +103,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
     end
 
     test "updates monster in listing", %{conn: conn, user: user, monster: monster} do
-      {:ok, index_live, _html} = 
+      {:ok, index_live, _html} =
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters")
@@ -127,7 +129,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
     end
 
     test "deletes monster in listing", %{conn: conn, user: user, monster: monster} do
-      {:ok, index_live, _html} = 
+      {:ok, index_live, _html} =
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters")
@@ -137,9 +139,10 @@ defmodule ShardWeb.AdminLive.MonstersTest do
     end
 
     test "displays monster location when assigned to room", %{conn: conn, user: user, room: room} do
-      {:ok, monster} = Monsters.create_monster(Elixir.Map.put(@create_attrs, :location_id, room.id))
+      {:ok, _monster} =
+        Monsters.create_monster(Elixir.Map.put(@create_attrs, :location_id, room.id))
 
-      {:ok, _index_live, html} = 
+      {:ok, _index_live, html} =
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters")
@@ -148,7 +151,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
     end
 
     test "displays dash when monster has no location", %{conn: conn, user: user, monster: monster} do
-      {:ok, _index_live, html} = 
+      {:ok, _index_live, html} =
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters")
@@ -164,7 +167,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
     setup [:create_admin_user, :create_room]
 
     test "displays new monster form", %{conn: conn, user: user} do
-      {:ok, index_live, _html} = 
+      {:ok, index_live, _html} =
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters/new")
@@ -174,7 +177,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
     end
 
     test "redirects to index when cancel is clicked", %{conn: conn, user: user} do
-      {:ok, index_live, _html} = 
+      {:ok, index_live, _html} =
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters/new")
@@ -184,7 +187,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
     end
 
     test "includes room options in location select", %{conn: conn, user: user, room: room} do
-      {:ok, _index_live, html} = 
+      {:ok, _index_live, html} =
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters/new")
@@ -198,14 +201,14 @@ defmodule ShardWeb.AdminLive.MonstersTest do
     setup [:create_admin_user, :create_monster, :create_room]
 
     test "displays edit monster form", %{conn: conn, user: user, monster: monster} do
-      {:ok, index_live, _html} = 
+      {:ok, index_live, _html} =
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters/#{monster}/edit")
 
       assert has_element?(index_live, "h2", "Edit Monster")
       assert has_element?(index_live, "form#monster-form")
-      
+
       # Check that form is pre-populated with monster data
       html = render(index_live)
       assert html =~ monster.name
@@ -213,7 +216,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
     end
 
     test "updates existing monster", %{conn: conn, user: user, monster: monster} do
-      {:ok, index_live, _html} = 
+      {:ok, index_live, _html} =
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters/#{monster}/edit")
@@ -234,21 +237,21 @@ defmodule ShardWeb.AdminLive.MonstersTest do
     setup [:create_admin_user, :create_monster]
 
     test "handle_event edit_monster shows form", %{conn: conn, user: user, monster: monster} do
-      {:ok, index_live, _html} = 
+      {:ok, index_live, _html} =
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters")
 
       # Trigger the edit_monster event
       assert index_live |> element("#monster-#{monster.id} a", "Edit") |> render_click()
-      
+
       # Should show the form
       assert has_element?(index_live, "form#monster-form")
       assert has_element?(index_live, "h2", "Edit Monster")
     end
 
     test "handle_event cancel_form hides form", %{conn: conn, user: user} do
-      {:ok, index_live, _html} = 
+      {:ok, index_live, _html} =
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters/new")
@@ -264,7 +267,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
     end
 
     test "handle_event save_monster with empty strings converts to nil", %{conn: conn, user: user} do
-      {:ok, index_live, _html} = 
+      {:ok, index_live, _html} =
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters/new")
@@ -280,7 +283,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
 
       html = render(index_live)
       assert html =~ "Monster created successfully"
-      
+
       # Verify the monster was created with nil location_id
       monster = Monsters.list_monsters() |> List.last()
       assert monster.location_id == nil
@@ -290,11 +293,11 @@ defmodule ShardWeb.AdminLive.MonstersTest do
   describe "Authorization" do
     test "allows admin users", %{conn: conn} do
       user = user_fixture(%{admin: true})
-      
-      assert {:ok, _view, _html} = 
-        conn
-        |> log_in_user(user)
-        |> live(~p"/admin/monsters")
+
+      assert {:ok, _view, _html} =
+               conn
+               |> log_in_user(user)
+               |> live(~p"/admin/monsters")
     end
   end
 
@@ -302,7 +305,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
     setup [:create_admin_user, :create_monster]
 
     test "renders monster table with correct headers", %{conn: conn, user: user} do
-      {:ok, _index_live, html} = 
+      {:ok, _index_live, html} =
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters")
@@ -319,9 +322,11 @@ defmodule ShardWeb.AdminLive.MonstersTest do
 
     test "truncates long descriptions", %{conn: conn, user: user} do
       long_description = String.duplicate("a", 100)
-      {:ok, monster} = Monsters.create_monster(Elixir.Map.put(@create_attrs, :description, long_description))
 
-      {:ok, _index_live, html} = 
+      {:ok, _monster} =
+        Monsters.create_monster(Elixir.Map.put(@create_attrs, :description, long_description))
+
+      {:ok, _index_live, html} =
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters")
@@ -332,7 +337,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
     end
 
     test "capitalizes race names", %{conn: conn, user: user, monster: monster} do
-      {:ok, _index_live, html} = 
+      {:ok, _index_live, html} =
         conn
         |> log_in_user(user)
         |> live(~p"/admin/monsters")

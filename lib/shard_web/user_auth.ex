@@ -122,7 +122,7 @@ defmodule ShardWeb.UserAuth do
   # to prevent CSRF errors or data being lost in tabs that are still open
   defp renew_session(conn, user) when not is_nil(user) do
     current_scope = conn.assigns[:current_scope]
-    
+
     if current_scope && current_scope.user && current_scope.user.id == user.id do
       conn
     else
@@ -267,10 +267,11 @@ defmodule ShardWeb.UserAuth do
 
   def on_mount(:require_admin, _params, session, socket) do
     socket = mount_current_scope(socket, session)
-    
+
     case socket.assigns.current_scope do
       %Scope{user: %{admin: true}} ->
         {:cont, socket}
+
       _ ->
         socket =
           socket
@@ -290,14 +291,14 @@ defmodule ShardWeb.UserAuth do
               {user, _} when not is_nil(user) -> user
               _ -> nil
             end
-          
+
           # Handle string keys (from test helpers)
           user_token = session[:user_token] ->
             case Users.get_user_by_session_token(user_token) do
               {user, _} when not is_nil(user) -> user
               _ -> nil
             end
-          
+
           true ->
             nil
         end
