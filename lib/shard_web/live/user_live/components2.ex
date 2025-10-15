@@ -2,6 +2,32 @@ defmodule ShardWeb.UserLive.Components2 do
   use ShardWeb, :live_view
   import ShardWeb.UserLive.MinimapComponents
 
+  # ───────────── Dungeon Completion Popup ─────────────
+  attr :message, :string, required: true
+
+  def dungeon_completion(assigns) do
+    ~H"""
+    <div
+      class="fixed inset-0 flex items-center justify-center z-50"
+      style="background-color: rgba(0, 0, 0, 0.8);"
+    >
+      <div class="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg p-8 max-w-md w-full mx-4 text-center shadow-2xl border-4 border-yellow-300">
+        <div class="text-6xl mb-4">🎉</div>
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">Congratulations!</h2>
+        <p class="text-xl text-gray-800 mb-6 font-semibold">
+          {@message}
+        </p>
+        <button
+          phx-click="hide_modal"
+          class="bg-gray-900 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200"
+        >
+          Continue Adventure
+        </button>
+      </div>
+    </div>
+    """
+  end
+
   # ───────────── Terminal ─────────────
   attr :terminal_state, :map, required: true
 
