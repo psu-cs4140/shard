@@ -192,9 +192,7 @@ defmodule ShardWeb.UserLive.CommandParsers do
         String.downcase(inv_item.name || "") == String.downcase(item_name)
       end)
 
-    if not has_item do
-      {["You don't have '#{item_name}' in your inventory."], game_state}
-    else
+    if has_item do
       # Get current room
       case GameMap.get_room_by_coordinates(x, y) do
         nil ->
@@ -259,6 +257,8 @@ defmodule ShardWeb.UserLive.CommandParsers do
               end
           end
       end
+    else
+      {["You don't have '#{item_name}' in your inventory."], game_state}
     end
   end
 
