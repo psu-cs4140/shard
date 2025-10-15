@@ -138,6 +138,11 @@ defmodule ShardWeb.Router do
       live "/items/new", AdminLive.Items, :new
       live "/items/:id", AdminLive.Items, :show
       live "/items/:id/edit", AdminLive.Items, :edit
+
+      live "/monsters", AdminLive.Monsters, :index
+      live "/monsters/new", AdminLive.Monsters, :new
+      live "/monsters/:id", AdminLive.Monsters, :show
+      live "/monsters/:id/edit", AdminLive.Monsters, :edit
     end
   end
 
