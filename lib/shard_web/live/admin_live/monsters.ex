@@ -154,7 +154,7 @@ defmodule ShardWeb.AdminLive.Monsters do
       <%= if @show_form do %>
         <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold"><%= @form_title %></h2>
+            <h2 class="text-xl font-semibold">{@form_title}</h2>
             <button phx-click="cancel_form" class="text-gray-500 hover:text-gray-700">✕</button>
           </div>
 
@@ -236,30 +236,30 @@ defmodule ShardWeb.AdminLive.Monsters do
             <%= for monster <- @monsters do %>
               <tr>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm font-medium text-gray-900"><%= monster.name %></div>
+                  <div class="text-sm font-medium text-gray-900">{monster.name}</div>
                   <div class="text-sm text-gray-500">
-                    <%= String.slice(monster.description || "", 0, 50) %><%= if String.length(
-                                                                      monster.description || ""
-                                                                    ) > 50,
-                                                                    do: "..." %>
+                    {String.slice(monster.description || "", 0, 50)}{if String.length(
+                                                                          monster.description || ""
+                                                                        ) > 50,
+                                                                        do: "..."}
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                    <%= String.capitalize(monster.race) %>
+                    {String.capitalize(monster.race)}
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <%= monster.level %>
+                  {monster.level}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <%= monster.health %>/<%= monster.max_health %>
+                  {monster.health}/{monster.max_health}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <%= monster.attack_damage %>
+                  {monster.attack_damage}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <%= monster.xp_amount %>
+                  {monster.xp_amount}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <.link
