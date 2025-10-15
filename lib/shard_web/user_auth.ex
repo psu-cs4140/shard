@@ -268,6 +268,10 @@ defmodule ShardWeb.UserAuth do
   def on_mount(:require_admin, _params, session, socket) do
     socket = mount_current_scope(socket, session)
 
+    # Debug logging
+    IO.inspect(session, label: "session")
+    IO.inspect(socket.assigns.current_scope, label: "current_scope")
+    
     case socket.assigns.current_scope do
       %Scope{user: %{admin: true}} ->
         {:cont, socket}
