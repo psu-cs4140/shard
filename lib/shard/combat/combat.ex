@@ -64,9 +64,10 @@ defmodule Shard.Combat do
   # Private functions
 
   defp execute_attack(game_state, target_monster) do
+    base_damage = parse_damage(game_state.equipped_weapon.damage)
     player_damage =
-      game_state.equipped_weapon.damage +
-        trunc(game_state.equipped_weapon.damage * (game_state.player_stats.strength / 100))
+      base_damage +
+        trunc(base_damage * (game_state.player_stats.strength / 100))
 
     # Apply damage to monster
     updated_monster = %{target_monster | hp: target_monster.hp - player_damage}
@@ -172,5 +173,44 @@ defmodule Shard.Combat do
   defp execute_flee(game_state) do
     # Implement flee logic
     {["You attempt to flee..."], %{game_state | combat: false}}
+  end
+
+  # Parse dice notation like "1d4", "2d6+1", or plain numbers
+  defp parse_damage(damage_string) when is_binary(damage_string) do
+    case String.contains?(damage_string, "d") do
+      true -> roll_dice(damage_string)
+      false -> 
+        case Integer.parse(damage_string) do
+          {num, _} -> num
+          :error -> 1  # Default to 1 damage if parsing fails
+        end
+    end
+  end
+
+  defp parse_damage(damage) when is_integer(damage), do: damage
+  defp parse_damage(_), do: 1  # Default fallback
+
+  # Simple dice roller for basic dice notation
+  defp roll_dice(dice_string) do
+    # Handle formats like "1d4", "2d6", "1d8+2"
+    case Regex.run(~r/(\d+)d(\d+)(?:\+(\d+))?/, dice_string) do
+      [_, num_dice, die_size | modifier] ->
+        num_dice = String.to_integer(num_dice)
+        die_size = String.to_integer(die_size)
+        modifier = case modifier do
+          [mod] -> String.to_integer(mod)
+          [] -> 0
+        end
+        
+        # Roll the dice
+        total = Enum.reduce(1..num_dice, 0, fn _, acc ->
+          acc + Enum.random(1..die_size)
+        end)
+        
+        total + modifier
+      
+      nil ->
+        1  # Default to 1 damage if regex doesn't match
+    end
   end
 end
