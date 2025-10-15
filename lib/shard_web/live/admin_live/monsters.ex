@@ -5,6 +5,8 @@ defmodule ShardWeb.AdminLive.Monsters do
   alias Shard.Monsters.Monster
   alias Shard.Map
 
+  on_mount {ShardWeb.UserAuth, :require_admin}
+
   @impl true
   def mount(_params, _session, socket) do
     monsters = Monsters.list_monsters()
