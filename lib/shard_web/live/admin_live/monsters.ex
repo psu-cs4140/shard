@@ -239,7 +239,7 @@ defmodule ShardWeb.AdminLive.Monsters do
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <%= for monster <- @monsters do %>
-              <tr>
+              <tr id={"monster-#{monster.id}"}>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="text-sm font-medium text-gray-900">{monster.name}</div>
                   <div class="text-sm text-gray-500">
