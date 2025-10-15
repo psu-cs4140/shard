@@ -69,6 +69,20 @@ defmodule ShardWeb.MudGameLive do
         end
       end
 
+      # Create Goldie the golden retriever NPC if entering tutorial terrain
+      if map_id == "tutorial_terrain" do
+        case Shard.Npcs.create_tutorial_npc_goldie() do
+          {:ok, _result} ->
+            :ok
+
+          {:error, _reason} ->
+            :error
+
+          _other ->
+            :error
+        end
+      end
+
       # Create dungeon door for tutorial terrain
       if map_id == "tutorial_terrain" do
         case Shard.Items.create_dungeon_door() do
