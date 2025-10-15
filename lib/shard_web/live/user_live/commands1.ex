@@ -31,6 +31,7 @@ defmodule ShardWeb.UserLive.Commands1 do
           "  north/south/east/west - Move in cardinal directions",
           "  northeast/southeast/northwest/southwest - Move diagonally",
           "  Shortcuts: n/s/e/w/ne/se/nw/sw",
+          "  unlock [direction] with [item_name] - Unlock a door using an item",
           "  help - Show this help message"
         ]
 
@@ -334,8 +335,15 @@ defmodule ShardWeb.UserLive.Commands1 do
                         execute_pickup_command(game_state, item_name)
 
                       :error ->
-                        {["Unknown command: '#{command}'. Type 'help' for available commands."],
-                         game_state}
+                        # Check if it's an unlock command
+                        case parse_unlock_command(command) do
+                          {:ok, direction, item_name} ->
+                            execute_unlock_command(game_state, direction, item_name)
+
+                          :error ->
+                            {["Unknown command: '#{command}'. Type 'help' for available commands."],
+                             game_state}
+                        end
                     end
                 end
             end
@@ -454,6 +462,29 @@ defmodule ShardWeb.UserLive.Commands1 do
     end
   end
 
+  # Parse unlock command to extract direction and item name
+  def parse_unlock_command(command) do
+    # Match patterns like: unlock north with "key name", unlock east with key_name
+    cond do
+      # Match unlock [direction] with "item name" or unlock [direction] with 'item name'
+      Regex.match?(~r/^unlock\s+(\w+)\s+with\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^unlock\s+(\w+)\s+with\s+["'](.+)["']\s*$/i, command) do
+          [_, direction, item_name] -> {:ok, String.trim(direction), String.trim(item_name)}
+          _ -> :error
+        end
+
+      # Match unlock [direction] with item_name (single word, no quotes)
+      Regex.match?(~r/^unlock\s+(\w+)\s+with\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^unlock\s+(\w+)\s+with\s+(\w+)\s*$/i, command) do
+          [_, direction, item_name] -> {:ok, String.trim(direction), String.trim(item_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
+    end
+  end
+
   # Parse pickup command to extract item name
   def parse_pickup_command(command) do
     # Match patterns like: pickup "item name", pickup 'item name', pickup item_name
@@ -537,6 +568,79 @@ defmodule ShardWeb.UserLive.Commands1 do
         # Shard.Items.remove_item_from_location(item.id, "#{x},#{y},0")
 
         {response, updated_game_state}
+    end
+  end
+
+  # Execute unlock command with direction and item name
+  def execute_unlock_command(game_state, direction, item_name) do
+    {x, y} = game_state.player_position
+
+    # Check if player has the item in inventory
+    has_item = 
+      Enum.any?(game_state.inventory_items, fn inv_item ->
+        String.downcase(inv_item.name || "") == String.downcase(item_name)
+      end)
+
+    if not has_item do
+      {["You don't have '#{item_name}' in your inventory."], game_state}
+    else
+      # Get current room
+      case GameMap.get_room_by_coordinates(x, y) do
+        nil ->
+          {["You are not in a valid room."], game_state}
+
+        room ->
+          # Normalize direction name
+          normalized_direction = 
+            case String.downcase(direction) do
+              dir when dir in ["n", "north"] -> "north"
+              dir when dir in ["s", "south"] -> "south"
+              dir when dir in ["e", "east"] -> "east"
+              dir when dir in ["w", "west"] -> "west"
+              dir when dir in ["ne", "northeast"] -> "northeast"
+              dir when dir in ["se", "southeast"] -> "southeast"
+              dir when dir in ["nw", "northwest"] -> "northwest"
+              dir when dir in ["sw", "southwest"] -> "southwest"
+              other -> other
+            end
+
+          # Check if there's a door in that direction
+          door = GameMap.get_door_in_direction(room.id, normalized_direction)
+
+          case door do
+            nil ->
+              {["There is no door to the #{normalized_direction}."], game_state}
+
+            door ->
+              cond do
+                not door.is_locked ->
+                  {["The door to the #{normalized_direction} is already unlocked."], game_state}
+
+                door.key_required == nil or door.key_required == "" ->
+                  {["The door to the #{normalized_direction} is locked but doesn't require a specific key."], game_state}
+
+                String.downcase(door.key_required) == String.downcase(item_name) ->
+                  # Unlock the door
+                  case GameMap.update_door(door, %{is_locked: false}) do
+                    {:ok, _updated_door} ->
+                      # Also unlock the return door if it exists
+                      return_door = GameMap.get_return_door(door)
+                      if return_door do
+                        GameMap.update_door(return_door, %{is_locked: false})
+                      end
+
+                      {["You use the #{item_name} to unlock the door to the #{normalized_direction}.", 
+                        "The door is now unlocked!"], game_state}
+
+                    {:error, _changeset} ->
+                      {["Failed to unlock the door. Something went wrong."], game_state}
+                  end
+
+                true ->
+                  {["The #{item_name} doesn't fit this lock. This door requires: #{door.key_required}"], game_state}
+              end
+          end
+      end
     end
   end
 end
