@@ -268,21 +268,16 @@ defmodule ShardWeb.UserAuth do
   def on_mount(:require_admin, _params, session, socket) do
     socket = mount_current_scope(socket, session)
 
-    # Debug logging
-    IO.inspect(socket.assigns.current_scope, label: "current_scope")
-    if socket.assigns.current_scope && socket.assigns.current_scope.user do
-      IO.inspect(socket.assigns.current_scope.user.admin, label: "user.admin")
-    end
+    case socket.assigns.current_scope do
+      %Scope{user: %{admin: true}} ->
+        {:cont, socket}
+      _ ->
+        socket =
+          socket
+          |> Phoenix.LiveView.put_flash(:error, "You must be an admin to access this page.")
+          |> Phoenix.LiveView.redirect(to: ~p"/")
 
-    if socket.assigns.current_scope && socket.assigns.current_scope.user && socket.assigns.current_scope.user.admin do
-      {:cont, socket}
-    else
-      socket =
-        socket
-        |> Phoenix.LiveView.put_flash(:error, "You must be an admin to access this page.")
-        |> Phoenix.LiveView.redirect(to: ~p"/")
-
-      {:halt, socket}
+        {:halt, socket}
     end
   end
 
