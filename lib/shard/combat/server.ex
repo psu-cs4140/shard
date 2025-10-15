@@ -22,7 +22,21 @@ defmodule Shard.Combat.Server do
 
   @impl true
   def handle_info(:tick, state) do
-    {:ok, s2, _events} = Engine.step(state)
-    {:noreply, %{s2 | tick_seq: s2.tick_seq + 1}}
+    state1 = Map.put_new(state, :events, [])
+
+    result =
+      if function_exported?(Shard.Combat.Engine, :tick, 1) do
+        Shard.Combat.Engine.tick(state1)
+      else
+        {:ok, state1, state1[:events] || []}
+      end
+
+    case result do
+      {:ok, s2, _events} ->
+        {:noreply, %{s2 | tick_seq: (s2[:tick_seq] || 0) + 1}}
+
+      _ ->
+        {:noreply, %{state1 | tick_seq: (state1[:tick_seq] || 0) + 1}}
+    end
   end
 end
