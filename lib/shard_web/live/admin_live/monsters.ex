@@ -10,7 +10,9 @@ defmodule ShardWeb.AdminLive.Monsters do
 
   @impl true
   def mount(_params, _session, socket) do
-    if socket.assigns.current_user && socket.assigns.current_user.admin do
+    current_user = socket.assigns.current_scope && socket.assigns.current_scope.user
+    
+    if current_user && current_user.admin do
       monsters = Monsters.list_monsters()
       rooms = Map.list_rooms()
 
