@@ -55,11 +55,7 @@ defmodule ShardWeb.UserLive.Movement do
 
       response = ["You traversed #{direction_name}."]
 
-      # Add dungeon completion message if applicable
-      response = case completion_result do
-        {:completed, message} -> response ++ [message]
-        :no_completion -> response
-      end
+      # Don't add dungeon completion message to response - will be handled as popup
 
       # Add NPC presence notification if any NPCs are at the new location
       response =
@@ -119,7 +115,15 @@ defmodule ShardWeb.UserLive.Movement do
       {combat_messages, updated_game_state} =
         Shard.Combat.start_combat(updated_game_state)
 
-      {response ++ combat_messages, updated_game_state}
+      # Return completion result separately for popup handling
+      final_response = response ++ combat_messages
+      
+      case completion_result do
+        {:completed, message} -> 
+          {final_response, updated_game_state, {:show_completion_popup, message}}
+        :no_completion -> 
+          {final_response, updated_game_state, :no_popup}
+      end
     end
   end
 
