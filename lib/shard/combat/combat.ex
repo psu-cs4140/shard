@@ -65,6 +65,7 @@ defmodule Shard.Combat do
 
   defp execute_attack(game_state, target_monster) do
     base_damage = parse_damage(game_state.equipped_weapon.damage)
+
     player_damage =
       base_damage +
         trunc(base_damage * (game_state.player_stats.strength / 100))
@@ -178,17 +179,21 @@ defmodule Shard.Combat do
   # Parse dice notation like "1d4", "2d6+1", or plain numbers
   defp parse_damage(damage_string) when is_binary(damage_string) do
     case String.contains?(damage_string, "d") do
-      true -> roll_dice(damage_string)
-      false -> 
+      true ->
+        roll_dice(damage_string)
+
+      false ->
         case Integer.parse(damage_string) do
           {num, _} -> num
-          :error -> 1  # Default to 1 damage if parsing fails
+          # Default to 1 damage if parsing fails
+          :error -> 1
         end
     end
   end
 
   defp parse_damage(damage) when is_integer(damage), do: damage
-  defp parse_damage(_), do: 1  # Default fallback
+  # Default fallback
+  defp parse_damage(_), do: 1
 
   # Simple dice roller for basic dice notation
   defp roll_dice(dice_string) do
@@ -197,20 +202,24 @@ defmodule Shard.Combat do
       [_, num_dice, die_size | modifier] ->
         num_dice = String.to_integer(num_dice)
         die_size = String.to_integer(die_size)
-        modifier = case modifier do
-          [mod] -> String.to_integer(mod)
-          [] -> 0
-        end
-        
+
+        modifier =
+          case modifier do
+            [mod] -> String.to_integer(mod)
+            [] -> 0
+          end
+
         # Roll the dice
-        total = Enum.reduce(1..num_dice, 0, fn _, acc ->
-          acc + Enum.random(1..die_size)
-        end)
-        
+        total =
+          Enum.reduce(1..num_dice, 0, fn _, acc ->
+            acc + Enum.random(1..die_size)
+          end)
+
         total + modifier
-      
+
       nil ->
-        1  # Default to 1 damage if regex doesn't match
+        # Default to 1 damage if regex doesn't match
+        1
     end
   end
 end
