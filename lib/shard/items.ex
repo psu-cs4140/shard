@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Refactor.Nesting
 defmodule Shard.Items do
   @moduledoc """
   The Items context.
