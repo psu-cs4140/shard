@@ -4,6 +4,7 @@ defmodule ShardWeb.UserLive.Commands1 do
   import ShardWeb.UserLive.QuestHandlers
   import ShardWeb.UserLive.Movement
   import ShardWeb.UserLive.Commands2
+  import ShardWeb.UserLive.CommandParsers
   alias Shard.Map, as: GameMap
   alias Shard.Items.Item
   alias Shard.Repo
