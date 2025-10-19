@@ -9,7 +9,7 @@ defmodule Shard.Users.UserNotifier do
     email =
       new()
       |> to(recipient)
-      |> from({"Shard", "contact@example.com"})
+      |> from({"Shard", "noreply@nextgenbytes.me"})
       |> subject(subject)
       |> text_body(body)
 
