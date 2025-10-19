@@ -6,7 +6,7 @@ defmodule ShardWeb.Router do
   # ───────────────────────── Admin guard ─────────────────────────
   defp ensure_admin(conn, _opts) do
     case conn.assigns[:current_scope] do
-      %{user: %{admin: true}} ->
+      %Shard.Users.Scope{user: %{admin: true}} ->
         conn
 
       _ ->

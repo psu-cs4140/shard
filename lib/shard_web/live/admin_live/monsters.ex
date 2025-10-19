@@ -5,19 +5,27 @@ defmodule ShardWeb.AdminLive.Monsters do
   alias Shard.Monsters.Monster
   alias Shard.Map
 
+  import ShardWeb.Layouts, only: [flash_group: 1]
+
   @impl true
   def mount(_params, _session, socket) do
-    monsters = Monsters.list_monsters()
-    rooms = Map.list_rooms()
+    current_user = socket.assigns.current_scope && socket.assigns.current_scope.user
 
-    {:ok,
-     assign(socket,
-       monsters: monsters,
-       rooms: rooms,
-       show_form: false,
-       form_monster: nil,
-       form_title: "Create Monster"
-     )}
+    if current_user && current_user.admin do
+      monsters = Monsters.list_monsters()
+      rooms = Map.list_rooms()
+
+      {:ok,
+       assign(socket,
+         monsters: monsters,
+         rooms: rooms,
+         show_form: false,
+         form_monster: nil,
+         form_title: "Create Monster"
+       )}
+    else
+      {:ok, redirect(socket, to: "/")}
+    end
   end
 
   @impl true
@@ -90,6 +98,16 @@ defmodule ShardWeb.AdminLive.Monsters do
   end
 
   @impl true
+  def handle_event("validate", %{"monster" => monster_params}, socket) do
+    changeset =
+      socket.assigns.form_monster
+      |> Monsters.change_monster(monster_params)
+      |> Elixir.Map.put(:action, :validate)
+
+    {:noreply, assign(socket, :changeset, changeset)}
+  end
+
+  @impl true
   def handle_event("save_monster", %{"monster" => monster_params}, socket) do
     # Clean up empty string values that should be nil
     cleaned_params =
@@ -141,6 +159,7 @@ defmodule ShardWeb.AdminLive.Monsters do
   def render(assigns) do
     ~H"""
     <div class="p-6">
+      <.flash_group flash={@flash} />
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Monsters Administration</h1>
         <.link
@@ -159,7 +178,12 @@ defmodule ShardWeb.AdminLive.Monsters do
           </div>
 
           <%= if assigns[:changeset] do %>
-            <.simple_form for={to_form(@changeset)} phx-submit="save_monster" id="monster-form">
+            <.simple_form
+              for={to_form(@changeset)}
+              phx-submit="save_monster"
+              phx-change="validate"
+              id="monster-form"
+            >
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <% form = to_form(@changeset) %>
                 <.input field={form[:name]} label="Name" required />
@@ -228,13 +252,16 @@ defmodule ShardWeb.AdminLive.Monsters do
                 XP Reward
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Location
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <%= for monster <- @monsters do %>
-              <tr>
+              <tr id={"monster-#{monster.id}"}>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="text-sm font-medium text-gray-900">{monster.name}</div>
                   <div class="text-sm text-gray-500">
@@ -260,6 +287,14 @@ defmodule ShardWeb.AdminLive.Monsters do
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {monster.xp_amount}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <%= if monster.location_id do %>
+                    <% room = Enum.find(@rooms, &(&1.id == monster.location_id)) %>
+                    {if room, do: room.name || "Room #{room.id}", else: "Unknown Room"}
+                  <% else %>
+                    -
+                  <% end %>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <.link
