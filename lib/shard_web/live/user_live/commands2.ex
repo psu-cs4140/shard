@@ -310,14 +310,46 @@ defmodule ShardWeb.UserLive.Commands2 do
 
       objectives =
         case quest.objectives do
-          objectives when is_list(objectives) and length(objectives) > 0 ->
-            ["Objectives:"] ++ Enum.map(objectives, fn obj -> 
+          # Handle case where objectives is a list containing a single list of maps
+          [objective_list] when is_list(objective_list) ->
+            ["Objectives:"] ++ Enum.map(objective_list, fn obj -> 
               case obj do
                 %{"description" => desc} -> "  - #{desc}"
                 desc when is_binary(desc) -> "  - #{desc}"
                 _ -> "  - #{inspect(obj)}"
               end
             end)
+
+          # Handle case where objectives is directly a list of maps
+          objectives when is_list(objectives) and length(objectives) > 0 ->
+            # Check if first element is a map with description
+            case hd(objectives) do
+              %{"description" => _} ->
+                ["Objectives:"] ++ Enum.map(objectives, fn obj -> 
+                  case obj do
+                    %{"description" => desc} -> "  - #{desc}"
+                    desc when is_binary(desc) -> "  - #{desc}"
+                    _ -> "  - #{inspect(obj)}"
+                  end
+                end)
+              _ ->
+                # First element is not an objective map, might be nested
+                ["Objectives:"] ++ Enum.flat_map(objectives, fn obj -> 
+                  case obj do
+                    list when is_list(list) ->
+                      Enum.map(list, fn inner_obj ->
+                        case inner_obj do
+                          %{"description" => desc} -> "  - #{desc}"
+                          desc when is_binary(desc) -> "  - #{desc}"
+                          _ -> "  - #{inspect(inner_obj)}"
+                        end
+                      end)
+                    %{"description" => desc} -> ["  - #{desc}"]
+                    desc when is_binary(desc) -> ["  - #{desc}"]
+                    _ -> ["  - #{inspect(obj)}"]
+                  end
+                end)
+            end
 
           objectives when is_map(objectives) and map_size(objectives) > 0 ->
             ["Objectives:"] ++ Enum.map(objectives, fn {_k, v} -> 
@@ -334,14 +366,46 @@ defmodule ShardWeb.UserLive.Commands2 do
 
       prerequisites =
         case quest.prerequisites do
-          prereqs when is_list(prereqs) and length(prereqs) > 0 ->
-            ["Prerequisites:"] ++ Enum.map(prereqs, fn prereq -> 
+          # Handle case where prerequisites is a list containing a single list of maps
+          [prereq_list] when is_list(prereq_list) ->
+            ["Prerequisites:"] ++ Enum.map(prereq_list, fn prereq -> 
               case prereq do
                 %{"description" => desc} -> "  - #{desc}"
                 desc when is_binary(desc) -> "  - #{desc}"
                 _ -> "  - #{inspect(prereq)}"
               end
             end)
+
+          # Handle case where prerequisites is directly a list of maps
+          prereqs when is_list(prereqs) and length(prereqs) > 0 ->
+            # Check if first element is a map with description
+            case hd(prereqs) do
+              %{"description" => _} ->
+                ["Prerequisites:"] ++ Enum.map(prereqs, fn prereq -> 
+                  case prereq do
+                    %{"description" => desc} -> "  - #{desc}"
+                    desc when is_binary(desc) -> "  - #{desc}"
+                    _ -> "  - #{inspect(prereq)}"
+                  end
+                end)
+              _ ->
+                # First element is not a prerequisite map, might be nested
+                ["Prerequisites:"] ++ Enum.flat_map(prereqs, fn prereq -> 
+                  case prereq do
+                    list when is_list(list) ->
+                      Enum.map(list, fn inner_prereq ->
+                        case inner_prereq do
+                          %{"description" => desc} -> "  - #{desc}"
+                          desc when is_binary(desc) -> "  - #{desc}"
+                          _ -> "  - #{inspect(inner_prereq)}"
+                        end
+                      end)
+                    %{"description" => desc} -> ["  - #{desc}"]
+                    desc when is_binary(desc) -> ["  - #{desc}"]
+                    _ -> ["  - #{inspect(prereq)}"]
+                  end
+                end)
+            end
 
           prereqs when is_map(prereqs) and map_size(prereqs) > 0 ->
             ["Prerequisites:"] ++ Enum.map(prereqs, fn {_k, v} -> 
