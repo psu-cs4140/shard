@@ -290,7 +290,7 @@ defmodule ShardWeb.MudGameLive do
 
           <.quests :if={@modal_state.show && @modal_state.type == "quests"} game_state={@game_state} />
 
-          <.map :if={@modal_state.show && @modal_state.type == "map"} game_state={@game_state} available_exits={@available_exits} />
+          <.map :if={@modal_state.show && @modal_state.type == "map"} game_state={@game_state} />
 
           <.settings
             :if={@modal_state.show && @modal_state.type == "settings"}
