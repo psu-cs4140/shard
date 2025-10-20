@@ -169,12 +169,12 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
 
       Repo.insert!(room_no_coords)
 
-      # Create a room at (0,0) for the player to start in
+      # Create a unique room at (1,1) for the player to start in to avoid conflicts
       starting_room = %GameMap.Room{
         name: "Starting Room",
         description: "A starting room",
-        x_coordinate: 0,
-        y_coordinate: 0,
+        x_coordinate: 1,
+        y_coordinate: 1,
         z_coordinate: 0,
         room_type: "standard"
       }
