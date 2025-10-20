@@ -110,7 +110,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
     } do
       conn = log_in_user(conn, user)
 
-      {:ok, view, _html} = live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+      {:ok, view, _html} =
+        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -121,7 +122,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
 
       # Check for SVG map elements
       assert has_element?(view, "svg")
-      assert has_element?(view, "circle") # Should have room circles
+      # Should have room circles
+      assert has_element?(view, "circle")
 
       # Check for map statistics
       assert has_element?(view, "h4", "Map Statistics")
@@ -141,11 +143,13 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
     } do
       conn = log_in_user(conn, user)
 
-      {:ok, view, _html} = live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+      {:ok, view, _html} =
+        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
 
       # Check that minimap is displayed in the right panel
       assert has_element?(view, "h2", "Minimap")
-      assert has_element?(view, "svg") # Minimap SVG
+      # Minimap SVG
+      assert has_element?(view, "svg")
       assert has_element?(view, "p", "Player Position:")
     end
 
@@ -184,7 +188,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       conn = log_in_user(conn, user)
 
       # Since we can't create invalid doors due to DB constraints, just verify the map renders
-      {:ok, view, _html} = live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+      {:ok, view, _html} =
+        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -204,7 +209,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
 
       conn = log_in_user(conn, user)
 
-      {:ok, view, _html} = live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+      {:ok, view, _html} =
+        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -229,7 +235,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
         "standard"
       ]
 
-      Enum.with_index(room_types, 2) |> Enum.each(fn {room_type, index} ->
+      Enum.with_index(room_types, 2)
+      |> Enum.each(fn {room_type, index} ->
         room = %GameMap.Room{
           name: "#{String.capitalize(room_type)} Room",
           description: "A #{room_type} room",
@@ -243,7 +250,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
 
       conn = log_in_user(conn, user)
 
-      {:ok, view, _html} = live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+      {:ok, view, _html} =
+        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -273,7 +281,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
         %{type: "standard", locked: true, key: "iron_key"}
       ]
 
-      Enum.with_index(door_configs) |> Enum.each(fn {config, index} ->
+      Enum.with_index(door_configs)
+      |> Enum.each(fn {config, index} ->
         door = %GameMap.Door{
           from_room_id: room1.id,
           to_room_id: if(rem(index, 2) == 0, do: room2.id, else: room3.id),
@@ -288,7 +297,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
 
       conn = log_in_user(conn, user)
 
-      {:ok, view, _html} = live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+      {:ok, view, _html} =
+        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -314,11 +324,12 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
 
       conn = log_in_user(conn, user)
 
-      {:ok, view, _html} = live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+      {:ok, view, _html} =
+        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
 
       # Update the game state directly in the socket assigns instead of sending a message
       # since the handle_info for :update_game_state might not be implemented
-      
+
       # Open the map modal
       view |> element("button", "Map") |> render_click()
 
@@ -338,7 +349,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
 
       conn = log_in_user(conn, user)
 
-      {:ok, view, _html} = live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+      {:ok, view, _html} =
+        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -356,7 +368,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
     } do
       conn = log_in_user(conn, user)
 
-      {:ok, view, _html} = live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+      {:ok, view, _html} =
+        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -391,7 +404,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
 
       conn = log_in_user(conn, user)
 
-      {:ok, view, _html} = live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+      {:ok, view, _html} =
+        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -399,7 +413,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       # Should handle single room bounds calculation
       assert has_element?(view, "h3", "World Map")
       assert has_element?(view, "svg")
-      assert has_element?(view, "circle") # Should show the single room
+      # Should show the single room
+      assert has_element?(view, "circle")
     end
 
     test "diagonal door rendering", %{
@@ -425,7 +440,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
 
       conn = log_in_user(conn, user)
 
-      {:ok, view, _html} = live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+      {:ok, view, _html} =
+        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -433,7 +449,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       # Should render diagonal doors
       assert has_element?(view, "h3", "World Map")
       assert has_element?(view, "svg")
-      assert has_element?(view, "line") # Should show door lines
+      # Should show door lines
+      assert has_element?(view, "line")
 
       # Check for diagonal indication in legend
       assert has_element?(view, "span", "Diagonal")
@@ -453,7 +470,12 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       bounds = {0, 0, 10, 10}
       scale_factor = 10.0
 
-      {x, y} = ShardWeb.UserLive.MinimapComponents.calculate_minimap_position({5, 5}, bounds, scale_factor)
+      {x, y} =
+        ShardWeb.UserLive.MinimapComponents.calculate_minimap_position(
+          {5, 5},
+          bounds,
+          scale_factor
+        )
 
       # Should be within minimap bounds
       assert x >= 10 and x <= 290
@@ -530,7 +552,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
 
       conn = log_in_user(conn, user)
 
-      {:ok, view, _html} = live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+      {:ok, view, _html} =
+        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -549,7 +572,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       # but we test the component's resilience)
       conn = log_in_user(conn, user)
 
-      {:ok, view, _html} = live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+      {:ok, view, _html} =
+        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()

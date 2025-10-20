@@ -238,6 +238,7 @@ defmodule ShardWeb.MudGameLiveExtendedTest do
 
         # Should not change terminal output for non-movement keys
         assert length(result_socket.assigns.terminal_state.output) == initial_output_length
+
         assert result_socket.assigns.game_state.player_position ==
                  socket.assigns.game_state.player_position
       end
@@ -316,6 +317,7 @@ defmodule ShardWeb.MudGameLiveExtendedTest do
       # Should handle movement and potentially show completion popup
       assert is_map(updated_socket.assigns.modal_state)
       assert is_list(updated_socket.assigns.terminal_state.output)
+
       assert length(updated_socket.assigns.terminal_state.output) >=
                length(socket.assigns.terminal_state.output)
     end
