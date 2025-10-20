@@ -316,7 +316,7 @@ defmodule ShardWeb.UserLive.Commands2 do
               case obj do
                 %{"description" => desc} -> "  - #{desc}"
                 desc when is_binary(desc) -> "  - #{desc}"
-                _ -> "  - #{inspect(obj)}"
+                _ -> "  - Unknown objective"
               end
             end)
 
@@ -329,11 +329,22 @@ defmodule ShardWeb.UserLive.Commands2 do
                   case obj do
                     %{"description" => desc} -> "  - #{desc}"
                     desc when is_binary(desc) -> "  - #{desc}"
-                    _ -> "  - #{inspect(obj)}"
+                    _ -> "  - Unknown objective"
                   end
                 end)
+              
+              # Handle nested list case - flatten and extract descriptions
+              list when is_list(list) ->
+                all_objectives = List.flatten(objectives)
+                ["Objectives:"] ++ Enum.map(all_objectives, fn obj ->
+                  case obj do
+                    %{"description" => desc} -> "  - #{desc}"
+                    desc when is_binary(desc) -> "  - #{desc}"
+                    _ -> "  - Unknown objective"
+                  end
+                end)
+              
               _ ->
-                # First element is not an objective map, might be nested
                 ["Objectives:"] ++ Enum.flat_map(objectives, fn obj -> 
                   case obj do
                     list when is_list(list) ->
@@ -341,12 +352,12 @@ defmodule ShardWeb.UserLive.Commands2 do
                         case inner_obj do
                           %{"description" => desc} -> "  - #{desc}"
                           desc when is_binary(desc) -> "  - #{desc}"
-                          _ -> "  - #{inspect(inner_obj)}"
+                          _ -> "  - Unknown objective"
                         end
                       end)
                     %{"description" => desc} -> ["  - #{desc}"]
                     desc when is_binary(desc) -> ["  - #{desc}"]
-                    _ -> ["  - #{inspect(obj)}"]
+                    _ -> ["  - Unknown objective"]
                   end
                 end)
             end
@@ -356,7 +367,7 @@ defmodule ShardWeb.UserLive.Commands2 do
               case v do
                 %{"description" => desc} -> "  - #{desc}"
                 desc when is_binary(desc) -> "  - #{desc}"
-                _ -> "  - #{inspect(v)}"
+                _ -> "  - Unknown objective"
               end
             end)
 
@@ -372,7 +383,7 @@ defmodule ShardWeb.UserLive.Commands2 do
               case prereq do
                 %{"description" => desc} -> "  - #{desc}"
                 desc when is_binary(desc) -> "  - #{desc}"
-                _ -> "  - #{inspect(prereq)}"
+                _ -> "  - Unknown prerequisite"
               end
             end)
 
@@ -385,11 +396,22 @@ defmodule ShardWeb.UserLive.Commands2 do
                   case prereq do
                     %{"description" => desc} -> "  - #{desc}"
                     desc when is_binary(desc) -> "  - #{desc}"
-                    _ -> "  - #{inspect(prereq)}"
+                    _ -> "  - Unknown prerequisite"
                   end
                 end)
+              
+              # Handle nested list case - flatten and extract descriptions
+              list when is_list(list) ->
+                all_prereqs = List.flatten(prereqs)
+                ["Prerequisites:"] ++ Enum.map(all_prereqs, fn prereq ->
+                  case prereq do
+                    %{"description" => desc} -> "  - #{desc}"
+                    desc when is_binary(desc) -> "  - #{desc}"
+                    _ -> "  - Unknown prerequisite"
+                  end
+                end)
+              
               _ ->
-                # First element is not a prerequisite map, might be nested
                 ["Prerequisites:"] ++ Enum.flat_map(prereqs, fn prereq -> 
                   case prereq do
                     list when is_list(list) ->
@@ -397,12 +419,12 @@ defmodule ShardWeb.UserLive.Commands2 do
                         case inner_prereq do
                           %{"description" => desc} -> "  - #{desc}"
                           desc when is_binary(desc) -> "  - #{desc}"
-                          _ -> "  - #{inspect(inner_prereq)}"
+                          _ -> "  - Unknown prerequisite"
                         end
                       end)
                     %{"description" => desc} -> ["  - #{desc}"]
                     desc when is_binary(desc) -> ["  - #{desc}"]
-                    _ -> ["  - #{inspect(prereq)}"]
+                    _ -> ["  - Unknown prerequisite"]
                   end
                 end)
             end
@@ -412,7 +434,7 @@ defmodule ShardWeb.UserLive.Commands2 do
               case v do
                 %{"description" => desc} -> "  - #{desc}"
                 desc when is_binary(desc) -> "  - #{desc}"
-                _ -> "  - #{inspect(v)}"
+                _ -> "  - Unknown prerequisite"
               end
             end)
 
