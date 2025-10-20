@@ -68,12 +68,12 @@ defmodule ShardWeb.UserLive.MapComponents do
                   </pattern>
                 </defs>
                 <rect width="100%" height="100%" fill="url(#grid)" />
-                
+
                 <!-- Render doors as lines first (so they appear behind rooms) -->
                 <%= for door <- @doors do %>
                   <.door_line_full door={door} bounds={@bounds} scale_factor={@scale_factor} />
                 <% end %>
-                
+
                 <!-- Render rooms as circles -->
                 <%= for room <- @rooms do %>
                   <.room_circle_full
@@ -83,7 +83,7 @@ defmodule ShardWeb.UserLive.MapComponents do
                     scale_factor={@scale_factor}
                   />
                 <% end %>
-                
+
                 <!-- Show player position even if no room exists there -->
                 <%= if @game_state.player_position not in Enum.map(@rooms, &{&1.x_coordinate, &1.y_coordinate}) do %>
                   <.player_marker_full
@@ -152,7 +152,7 @@ defmodule ShardWeb.UserLive.MapComponents do
             <!-- Map Legend -->
             <div class="mt-6">
               <h4 class="text-lg font-semibold mb-4 text-center">Map Legend</h4>
-              
+
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <!-- Room Types -->
                 <div class="bg-gray-700 rounded-lg p-3">
@@ -299,7 +299,7 @@ defmodule ShardWeb.UserLive.MapComponents do
           <%= for door <- @doors do %>
             <.door_line door={door} bounds={@bounds} scale_factor={@scale_factor} />
           <% end %>
-          
+
     <!-- Render rooms as circles -->
           <%= for room <- @rooms do %>
             <.room_circle
@@ -309,7 +309,7 @@ defmodule ShardWeb.UserLive.MapComponents do
               scale_factor={@scale_factor}
             />
           <% end %>
-          
+
     <!-- Show player position even if no room exists there -->
           <%= if @player_position not in Enum.map(@rooms, &{&1.x_coordinate, &1.y_coordinate}) do %>
             <.player_marker
