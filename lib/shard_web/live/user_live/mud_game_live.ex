@@ -535,4 +535,8 @@ defmodule ShardWeb.MudGameLive do
       {:noreply, socket}
     end
   end
+
+  def handle_info({:update_game_state, new_game_state}, socket) do
+    {:noreply, assign(socket, :game_state, new_game_state)}
+  end
 end
