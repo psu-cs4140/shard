@@ -102,7 +102,7 @@ defmodule ShardWeb.UserLive.MapComponents do
                 
     <!-- Show player position even if no room exists there -->
                 <%= if @game_state.player_position not in Enum.map(@rooms, &{&1.x_coordinate, &1.y_coordinate}) do %>
-                  <.player_marker_full
+                  <PlayerComponents.player_marker_full
                     position={@game_state.player_position}
                     bounds={@bounds}
                     scale_factor={@scale_factor}
@@ -332,7 +332,7 @@ defmodule ShardWeb.UserLive.MapComponents do
           
     <!-- Show player position even if no room exists there -->
           <%= if @player_position not in Enum.map(@rooms, &{&1.x_coordinate, &1.y_coordinate}) do %>
-            <.player_marker
+            <PlayerComponents.player_marker
               position={@player_position}
               bounds={@bounds}
               scale_factor={@scale_factor}
