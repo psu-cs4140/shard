@@ -352,5 +352,4 @@ defmodule ShardWeb.UserLive.MapComponents do
     </div>
     """
   end
-
 end

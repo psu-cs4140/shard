@@ -2,7 +2,7 @@ defmodule ShardWeb.UserLive.MapComponents.RoomComponents do
   @moduledoc """
   Components for rendering rooms in maps and minimaps.
   """
-  
+
   use ShardWeb, :live_view
   import ShardWeb.UserLive.MinimapComponents
 

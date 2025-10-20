@@ -2,7 +2,7 @@ defmodule ShardWeb.UserLive.MapComponents.PlayerComponents do
   @moduledoc """
   Components for rendering player markers in maps and minimaps.
   """
-  
+
   use ShardWeb, :live_view
   import ShardWeb.UserLive.MapComponents.RoomComponents
 
