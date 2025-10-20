@@ -154,6 +154,10 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       user: user,
       game_state: game_state
     } do
+      # Clear existing rooms first to avoid conflicts
+      Repo.delete_all(GameMap.Door)
+      Repo.delete_all(GameMap.Room)
+
       # Create a room without coordinates
       room_no_coords = %GameMap.Room{
         name: "Room Without Coords",
@@ -164,6 +168,18 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       }
 
       Repo.insert!(room_no_coords)
+
+      # Create a room at (0,0) for the player to start in
+      starting_room = %GameMap.Room{
+        name: "Starting Room",
+        description: "A starting room",
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        room_type: "standard"
+      }
+
+      Repo.insert!(starting_room)
 
       conn = log_in_user(conn, user)
 
@@ -294,7 +310,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       game_state: game_state
     } do
       # Set player position to a location without a room
-      game_state_no_room = %{game_state | player_position: {5, 5}}
+      _game_state_no_room = %{game_state | player_position: {5, 5}}
 
       conn = log_in_user(conn, user)
 
@@ -446,8 +462,11 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
   end
 
   describe "component error handling" do
-    test "room_circle component with nil coordinates", context do
-      %{conn: conn, user: user, game_state: game_state} = context
+    test "room_circle component with nil coordinates", %{
+      conn: conn,
+      user: user,
+      game_state: game_state
+    } do
       # Create room with nil coordinates
       room_nil = %GameMap.Room{
         name: "Nil Room",
@@ -471,8 +490,11 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       assert has_element?(view, "svg")
     end
 
-    test "door_line component with nil room references", context do
-      %{conn: conn, user: user, game_state: game_state} = context
+    test "door_line component with nil room references", %{
+      conn: conn,
+      user: user,
+      game_state: game_state
+    } do
       # Create door with nil room references (this might not be possible with DB constraints,
       # but we test the component's resilience)
       conn = log_in_user(conn, user)
