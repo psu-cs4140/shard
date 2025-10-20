@@ -236,3 +236,98 @@ if weapon_enchantment_count == 0 do
 else
   IO.puts("Weapon enchantments already exist, skipping seeding")
 end
+
+# Seed NPCs and Quests
+alias Shard.Npcs.Npc
+alias Shard.Quests.Quest
+
+# Check if NPCs exist
+npc_count = Repo.aggregate(Npc, :count, :id)
+
+if npc_count == 0 do
+  # Create Elder Sage Throne NPC
+  elder_sage = Repo.insert!(%Npc{} |> Npc.changeset(%{
+    name: "Elder Sage Throne",
+    description: "An ancient and wise sage who has watched over these lands for centuries. His eyes hold the knowledge of ages past.",
+    level: 50,
+    health: 500,
+    max_health: 500,
+    mana: 1000,
+    max_mana: 1000,
+    strength: 15,
+    dexterity: 20,
+    intelligence: 95,
+    constitution: 30,
+    npc_type: "quest_giver",
+    dialogue: "Greetings, young adventurer. I have been expecting you. There are dark forces stirring in these lands that require a hero's attention.",
+    location_x: 1,
+    location_y: 1,
+    location_z: 0,
+    room_id: Enum.find(rooms, &(&1.x_coordinate == 1 && &1.y_coordinate == 1)).id,
+    faction: "Order of the Light",
+    aggression_level: 0,
+    movement_pattern: "stationary",
+    properties: %{"wisdom_level" => "ancient", "can_teach_spells" => true}
+  }))
+
+  IO.puts("Created Elder Sage Throne NPC")
+else
+  IO.puts("NPCs already exist, skipping NPC creation")
+end
+
+# Check if quests exist
+quest_count = Repo.aggregate(Quest, :count, :id)
+
+if quest_count == 0 do
+  # Get Elder Sage Throne NPC (either just created or existing)
+  elder_sage = Repo.get_by(Npc, name: "Elder Sage Throne") || Repo.get(Npc, 1)
+  
+  if elder_sage do
+    # Create a starter quest for Elder Sage Throne
+    Repo.insert!(%Quest{} |> Quest.changeset(%{
+      title: "The Ancient Prophecy",
+      description: "Elder Sage Throne has revealed an ancient prophecy that speaks of a great darkness approaching the realm. He believes you may be the hero foretold in the ancient texts. Your first task is to prove your worth by exploring the surrounding areas and gathering information about any strange occurrences.",
+      short_description: "Investigate strange occurrences in the surrounding areas for Elder Sage Throne.",
+      quest_type: "main",
+      difficulty: "normal",
+      min_level: 1,
+      max_level: 10,
+      experience_reward: 500,
+      gold_reward: 100,
+      item_rewards: %{
+        "items" => [
+          %{"name" => "Sage's Blessing Scroll", "quantity" => 1},
+          %{"name" => "Minor Health Potion", "quantity" => 3}
+        ]
+      },
+      prerequisites: %{},
+      objectives: %{
+        "primary" => [
+          %{"description" => "Explore 3 different rooms", "completed" => false, "progress" => 0, "target" => 3},
+          %{"description" => "Return to Elder Sage Throne", "completed" => false, "progress" => 0, "target" => 1}
+        ]
+      },
+      status: "available",
+      is_repeatable: false,
+      giver_npc_id: elder_sage.id,
+      turn_in_npc_id: elder_sage.id,
+      location_hint: "Speak with Elder Sage Throne in the central chamber",
+      faction_requirement: nil,
+      faction_reward: %{
+        "Order of the Light" => 50
+      },
+      is_active: true,
+      sort_order: 1,
+      properties: %{
+        "is_starter_quest" => true,
+        "unlocks_further_quests" => true
+      }
+    }))
+
+    IO.puts("Created starter quest 'The Ancient Prophecy' for Elder Sage Throne")
+  else
+    IO.puts("Elder Sage Throne NPC not found, skipping quest creation")
+  end
+else
+  IO.puts("Quests already exist, skipping quest creation")
+end
