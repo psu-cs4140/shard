@@ -10,8 +10,8 @@ defmodule ShardWeb.UserLive.MapComponents do
   import ShardWeb.UserLive.Components2
   import ShardWeb.UserLive.MapComponents.RoomComponents
   import ShardWeb.UserLive.MapComponents.DoorComponents
-  import ShardWeb.UserLive.MapComponents.PlayerComponents
   import ShardWeb.UserLive.MapComponents.MapUtils
+  alias ShardWeb.UserLive.MapComponents.PlayerComponents
 
   # -- Helpers ----------------------------------------------------
   defp format_position({x, y}), do: "{#{x}, #{y}}"
