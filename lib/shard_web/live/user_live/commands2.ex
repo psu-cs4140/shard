@@ -311,7 +311,13 @@ defmodule ShardWeb.UserLive.Commands2 do
       objectives =
         case quest.objectives do
           objectives when is_map(objectives) and map_size(objectives) > 0 ->
-            ["Objectives:"] ++ Enum.map(objectives, fn {_k, v} -> "  - #{v}" end)
+            ["Objectives:"] ++ Enum.map(objectives, fn {_k, v} -> 
+              case v do
+                %{"description" => desc} -> "  - #{desc}"
+                desc when is_binary(desc) -> "  - #{desc}"
+                _ -> "  - #{inspect(v)}"
+              end
+            end)
 
           _ ->
             []
@@ -320,7 +326,13 @@ defmodule ShardWeb.UserLive.Commands2 do
       prerequisites =
         case quest.prerequisites do
           prereqs when is_map(prereqs) and map_size(prereqs) > 0 ->
-            ["Prerequisites:"] ++ Enum.map(prereqs, fn {_k, v} -> "  - #{v}" end)
+            ["Prerequisites:"] ++ Enum.map(prereqs, fn {_k, v} -> 
+              case v do
+                %{"description" => desc} -> "  - #{desc}"
+                desc when is_binary(desc) -> "  - #{desc}"
+                _ -> "  - #{inspect(v)}"
+              end
+            end)
 
           _ ->
             []
