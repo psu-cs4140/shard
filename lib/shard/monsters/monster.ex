@@ -41,7 +41,6 @@ defmodule Shard.Monsters.Monster do
     |> validate_number(:xp_amount, greater_than_or_equal_to: 0)
     |> validate_number(:level, greater_than: 0)
     |> validate_health_not_exceeding_max()
-    |> foreign_key_constraint(:location_id)
   end
 
   defp validate_health_not_exceeding_max(changeset) do
