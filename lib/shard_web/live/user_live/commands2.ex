@@ -15,7 +15,7 @@ defmodule ShardWeb.UserLive.Commands2 do
     case target_npc do
       nil ->
         if length(npcs_here) > 0 do
-          available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+          available_names = Enum.map_join(npcs_here, ", ", & &1.name)
 
           response = [
             "There is no NPC named '#{npc_name}' here.",
@@ -46,7 +46,7 @@ defmodule ShardWeb.UserLive.Commands2 do
     case target_npc do
       nil ->
         if length(npcs_here) > 0 do
-          available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+          available_names = Enum.map_join(npcs_here, ", ", & &1.name)
 
           response = [
             "There is no NPC named '#{npc_name}' here.",
@@ -76,7 +76,7 @@ defmodule ShardWeb.UserLive.Commands2 do
     case target_npc do
       nil ->
         if length(npcs_here) > 0 do
-          available_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
+          available_names = Enum.map_join(npcs_here, ", ", & &1.name)
 
           response = [
             "There is no NPC named '#{npc_name}' here.",
@@ -204,7 +204,7 @@ defmodule ShardWeb.UserLive.Commands2 do
   def generate_npc_quest_response(npc, game_state) do
     npc_name = npc.name || "Unknown NPC"
 
-    # TODO: Replace mock user_id with current session's user id when available
+    # Replace with current session's user id when available
     user_id = 1
 
     available_quests =

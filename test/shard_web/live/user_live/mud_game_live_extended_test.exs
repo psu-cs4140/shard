@@ -417,7 +417,7 @@ defmodule ShardWeb.MudGameLiveExtendedTest do
       character = %Shard.Characters.Character{
         name: "HighLevelChar",
         level: 20,
-        experience: 50000,
+        experience: 50_000,
         user_id: user.id,
         class: "paladin",
         race: "human",
@@ -447,7 +447,7 @@ defmodule ShardWeb.MudGameLiveExtendedTest do
 
       # Verify high-level stat calculations
       assert stats.level == 20
-      assert stats.experience == 50000
+      assert stats.experience == 50_000
       assert stats.strength == 25
       assert stats.constitution == 22
 

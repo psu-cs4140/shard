@@ -310,7 +310,7 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
     end
   end
 
-  # TODO: These tests require an AI API key to run properly
+  # Note: These tests require an AI API key to run properly
   # describe "handle_generate_description/2" do
   #   test "generates description and updates changeset" do
   #     # Create a room for editing
