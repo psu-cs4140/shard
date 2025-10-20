@@ -314,40 +314,37 @@ defmodule ShardWeb.UserLive.Commands2 do
           nil -> []
           [] -> []
           
-          # Handle list of objective maps directly
+          # Handle list of objective maps - just get the first description
           objectives when is_list(objectives) ->
-            # Flatten any nested lists and extract all objective maps
+            # Flatten any nested lists and find the first objective with a description
             flattened_objectives = List.flatten(objectives)
             
-            objective_descriptions = Enum.map(flattened_objectives, fn obj ->
+            case Enum.find(flattened_objectives, fn obj ->
               case obj do
-                %{"description" => desc} when is_binary(desc) -> "  - #{desc}"
-                desc when is_binary(desc) -> "  - #{desc}"
-                _ -> "  - #{inspect(obj)}"  # Show the actual data for debugging
+                %{"description" => desc} when is_binary(desc) -> true
+                _ -> false
               end
-            end)
-            
-            if length(objective_descriptions) > 0 do
-              ["Objectives:"] ++ objective_descriptions
-            else
-              []
+            end) do
+              %{"description" => desc} -> ["Objectives:", "  - #{desc}"]
+              _ -> []
             end
 
-          # Handle map-based objectives (key-value pairs)
+          # Handle map-based objectives (key-value pairs) - just get the first one
           objectives when is_map(objectives) and map_size(objectives) > 0 ->
-            objective_descriptions = Enum.map(objectives, fn {_k, v} -> 
+            case Enum.find(objectives, fn {_k, v} -> 
               case v do
-                %{"description" => desc} when is_binary(desc) -> "  - #{desc}"
-                desc when is_binary(desc) -> "  - #{desc}"
-                _ -> "  - #{inspect(v)}"  # Show the actual data for debugging
+                %{"description" => desc} when is_binary(desc) -> true
+                desc when is_binary(desc) -> true
+                _ -> false
               end
-            end)
-            
-            ["Objectives:"] ++ objective_descriptions
+            end) do
+              {_k, %{"description" => desc}} -> ["Objectives:", "  - #{desc}"]
+              {_k, desc} when is_binary(desc) -> ["Objectives:", "  - #{desc}"]
+              _ -> []
+            end
 
-          # Fallback - show what we actually got for debugging
-          other ->
-            ["Objectives:", "  - DEBUG: #{inspect(other)}"]
+          # Fallback
+          _ -> []
         end
 
       prerequisites =
