@@ -314,6 +314,18 @@ defmodule ShardWeb.UserLive.Commands2 do
           nil -> []
           [] -> []
           
+          # Handle map with "primary" key containing list of objectives
+          %{"primary" => primary_objectives} when is_list(primary_objectives) ->
+            case Enum.find(primary_objectives, fn obj ->
+              case obj do
+                %{"description" => desc} when is_binary(desc) -> true
+                _ -> false
+              end
+            end) do
+              %{"description" => desc} -> ["Objectives:", "  - #{desc}"]
+              _ -> []
+            end
+          
           # Handle list of objective maps - just get the first description
           objectives when is_list(objectives) ->
             # Flatten any nested lists and find the first objective with a description
@@ -349,12 +361,13 @@ defmodule ShardWeb.UserLive.Commands2 do
 
       prerequisites =
         case quest.prerequisites do
-          # Handle empty or nil prerequisites
+          # Handle empty or nil prerequisites - don't show anything
           nil -> []
           [] -> []
+          prereqs when is_map(prereqs) and map_size(prereqs) == 0 -> []
           
           # Handle list of prerequisite maps directly
-          prereqs when is_list(prereqs) ->
+          prereqs when is_list(prereqs) and length(prereqs) > 0 ->
             # Flatten any nested lists and extract all prerequisite maps
             flattened_prereqs = List.flatten(prereqs)
             
@@ -372,7 +385,7 @@ defmodule ShardWeb.UserLive.Commands2 do
               []
             end
 
-          # Handle map-based prerequisites (key-value pairs)
+          # Handle map-based prerequisites (key-value pairs) with actual content
           prereqs when is_map(prereqs) and map_size(prereqs) > 0 ->
             prereq_descriptions = Enum.map(prereqs, fn {_k, v} -> 
               case v do
@@ -384,9 +397,8 @@ defmodule ShardWeb.UserLive.Commands2 do
             
             ["Prerequisites:"] ++ prereq_descriptions
 
-          # Fallback - show what we actually got for debugging
-          other ->
-            ["Prerequisites:", "  - DEBUG: #{inspect(other)}"]
+          # Fallback - don't show anything for unknown structures
+          _ -> []
         end
 
       full_response =
