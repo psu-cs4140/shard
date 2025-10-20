@@ -188,7 +188,8 @@ defmodule ShardWeb.UserLive.CommandParsers do
          {:ok, room} <- get_current_room(game_state),
          {:ok, normalized_direction} <- normalize_direction(direction),
          {:ok, door} <- get_door_in_direction(room, normalized_direction),
-         {:ok, updated_game_state} <- attempt_unlock_door(game_state, door, item_name, normalized_direction) do
+         {:ok, updated_game_state} <-
+           attempt_unlock_door(game_state, door, item_name, normalized_direction) do
       updated_game_state
     else
       {:error, message} -> {[message], game_state}
@@ -253,7 +254,8 @@ defmodule ShardWeb.UserLive.CommandParsers do
         unlock_door_with_key(game_state, door, item_name, direction)
 
       true ->
-        {:error, "The #{item_name} doesn't fit this lock. This door requires: #{door.key_required}"}
+        {:error,
+         "The #{item_name} doesn't fit this lock. This door requires: #{door.key_required}"}
     end
   end
 

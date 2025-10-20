@@ -1,11 +1,11 @@
 defmodule ShardWeb.UserAuth do
   @moduledoc """
   Authentication and authorization functions for user sessions.
-  
+
   This module provides plugs and functions for handling user authentication,
   session management, and authorization checks in the Shard web application.
   """
-  
+
   use ShardWeb, :verified_routes
 
   import Plug.Conn

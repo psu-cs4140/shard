@@ -399,7 +399,7 @@ defmodule ShardWeb.MudGameLive do
   defp initialize_game_state(socket, character, map_id, character_name) do
     map_data = generate_map_from_database(map_id)
     starting_position = find_valid_starting_position(map_data)
-    
+
     game_state = build_game_state(character, map_data, map_id, starting_position)
     terminal_state = build_terminal_state(starting_position, map_id)
     modal_state = build_modal_state()
@@ -423,7 +423,7 @@ defmodule ShardWeb.MudGameLive do
     base_health = 100
     base_stamina = 100
     base_mana = 50
-    
+
     max_health = base_health + (constitution - 10) * 5
     max_stamina = base_stamina + (character.dexterity || 10) * 2
     max_mana = base_mana + (character.intelligence || 10) * 3
@@ -470,7 +470,9 @@ defmodule ShardWeb.MudGameLive do
     terminal_output =
       if starting_position == {0, 0} and map_id == "tutorial_terrain" do
         goldie_dialogue = get_goldie_dialogue()
-        initial_output ++ ["Goldie the golden retriever wags her tail and speaks:", goldie_dialogue, ""]
+
+        initial_output ++
+          ["Goldie the golden retriever wags her tail and speaks:", goldie_dialogue, ""]
       else
         initial_output
       end
