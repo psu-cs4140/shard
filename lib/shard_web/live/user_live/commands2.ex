@@ -310,136 +310,86 @@ defmodule ShardWeb.UserLive.Commands2 do
 
       objectives =
         case quest.objectives do
-          # Handle case where objectives is a list containing a single list of maps
-          [objective_list] when is_list(objective_list) ->
-            ["Objectives:"] ++ Enum.map(objective_list, fn obj -> 
+          # Handle empty or nil objectives
+          nil -> []
+          [] -> []
+          
+          # Handle list of objective maps directly
+          objectives when is_list(objectives) ->
+            # Flatten any nested lists and extract all objective maps
+            flattened_objectives = List.flatten(objectives)
+            
+            objective_descriptions = Enum.map(flattened_objectives, fn obj ->
               case obj do
-                %{"description" => desc} -> "  - #{desc}"
+                %{"description" => desc} when is_binary(desc) -> "  - #{desc}"
                 desc when is_binary(desc) -> "  - #{desc}"
-                _ -> "  - Unknown objective"
+                _ -> "  - #{inspect(obj)}"  # Show the actual data for debugging
               end
             end)
-
-          # Handle case where objectives is directly a list of maps
-          objectives when is_list(objectives) and length(objectives) > 0 ->
-            # Check if first element is a map with description
-            case hd(objectives) do
-              %{"description" => _} ->
-                ["Objectives:"] ++ Enum.map(objectives, fn obj -> 
-                  case obj do
-                    %{"description" => desc} -> "  - #{desc}"
-                    desc when is_binary(desc) -> "  - #{desc}"
-                    _ -> "  - Unknown objective"
-                  end
-                end)
-              
-              # Handle nested list case - flatten and extract descriptions
-              list when is_list(list) ->
-                all_objectives = List.flatten(objectives)
-                ["Objectives:"] ++ Enum.map(all_objectives, fn obj ->
-                  case obj do
-                    %{"description" => desc} -> "  - #{desc}"
-                    desc when is_binary(desc) -> "  - #{desc}"
-                    _ -> "  - Unknown objective"
-                  end
-                end)
-              
-              _ ->
-                ["Objectives:"] ++ Enum.flat_map(objectives, fn obj -> 
-                  case obj do
-                    list when is_list(list) ->
-                      Enum.map(list, fn inner_obj ->
-                        case inner_obj do
-                          %{"description" => desc} -> "  - #{desc}"
-                          desc when is_binary(desc) -> "  - #{desc}"
-                          _ -> "  - Unknown objective"
-                        end
-                      end)
-                    %{"description" => desc} -> ["  - #{desc}"]
-                    desc when is_binary(desc) -> ["  - #{desc}"]
-                    _ -> ["  - Unknown objective"]
-                  end
-                end)
+            
+            if length(objective_descriptions) > 0 do
+              ["Objectives:"] ++ objective_descriptions
+            else
+              []
             end
 
+          # Handle map-based objectives (key-value pairs)
           objectives when is_map(objectives) and map_size(objectives) > 0 ->
-            ["Objectives:"] ++ Enum.map(objectives, fn {_k, v} -> 
+            objective_descriptions = Enum.map(objectives, fn {_k, v} -> 
               case v do
-                %{"description" => desc} -> "  - #{desc}"
+                %{"description" => desc} when is_binary(desc) -> "  - #{desc}"
                 desc when is_binary(desc) -> "  - #{desc}"
-                _ -> "  - Unknown objective"
+                _ -> "  - #{inspect(v)}"  # Show the actual data for debugging
               end
             end)
+            
+            ["Objectives:"] ++ objective_descriptions
 
-          _ ->
-            []
+          # Fallback - show what we actually got for debugging
+          other ->
+            ["Objectives:", "  - DEBUG: #{inspect(other)}"]
         end
 
       prerequisites =
         case quest.prerequisites do
-          # Handle case where prerequisites is a list containing a single list of maps
-          [prereq_list] when is_list(prereq_list) ->
-            ["Prerequisites:"] ++ Enum.map(prereq_list, fn prereq -> 
+          # Handle empty or nil prerequisites
+          nil -> []
+          [] -> []
+          
+          # Handle list of prerequisite maps directly
+          prereqs when is_list(prereqs) ->
+            # Flatten any nested lists and extract all prerequisite maps
+            flattened_prereqs = List.flatten(prereqs)
+            
+            prereq_descriptions = Enum.map(flattened_prereqs, fn prereq ->
               case prereq do
-                %{"description" => desc} -> "  - #{desc}"
+                %{"description" => desc} when is_binary(desc) -> "  - #{desc}"
                 desc when is_binary(desc) -> "  - #{desc}"
-                _ -> "  - Unknown prerequisite"
+                _ -> "  - #{inspect(prereq)}"  # Show the actual data for debugging
               end
             end)
-
-          # Handle case where prerequisites is directly a list of maps
-          prereqs when is_list(prereqs) and length(prereqs) > 0 ->
-            # Check if first element is a map with description
-            case hd(prereqs) do
-              %{"description" => _} ->
-                ["Prerequisites:"] ++ Enum.map(prereqs, fn prereq -> 
-                  case prereq do
-                    %{"description" => desc} -> "  - #{desc}"
-                    desc when is_binary(desc) -> "  - #{desc}"
-                    _ -> "  - Unknown prerequisite"
-                  end
-                end)
-              
-              # Handle nested list case - flatten and extract descriptions
-              list when is_list(list) ->
-                all_prereqs = List.flatten(prereqs)
-                ["Prerequisites:"] ++ Enum.map(all_prereqs, fn prereq ->
-                  case prereq do
-                    %{"description" => desc} -> "  - #{desc}"
-                    desc when is_binary(desc) -> "  - #{desc}"
-                    _ -> "  - Unknown prerequisite"
-                  end
-                end)
-              
-              _ ->
-                ["Prerequisites:"] ++ Enum.flat_map(prereqs, fn prereq -> 
-                  case prereq do
-                    list when is_list(list) ->
-                      Enum.map(list, fn inner_prereq ->
-                        case inner_prereq do
-                          %{"description" => desc} -> "  - #{desc}"
-                          desc when is_binary(desc) -> "  - #{desc}"
-                          _ -> "  - Unknown prerequisite"
-                        end
-                      end)
-                    %{"description" => desc} -> ["  - #{desc}"]
-                    desc when is_binary(desc) -> ["  - #{desc}"]
-                    _ -> ["  - Unknown prerequisite"]
-                  end
-                end)
+            
+            if length(prereq_descriptions) > 0 do
+              ["Prerequisites:"] ++ prereq_descriptions
+            else
+              []
             end
 
+          # Handle map-based prerequisites (key-value pairs)
           prereqs when is_map(prereqs) and map_size(prereqs) > 0 ->
-            ["Prerequisites:"] ++ Enum.map(prereqs, fn {_k, v} -> 
+            prereq_descriptions = Enum.map(prereqs, fn {_k, v} -> 
               case v do
-                %{"description" => desc} -> "  - #{desc}"
+                %{"description" => desc} when is_binary(desc) -> "  - #{desc}"
                 desc when is_binary(desc) -> "  - #{desc}"
-                _ -> "  - Unknown prerequisite"
+                _ -> "  - #{inspect(v)}"  # Show the actual data for debugging
               end
             end)
+            
+            ["Prerequisites:"] ++ prereq_descriptions
 
-          _ ->
-            []
+          # Fallback - show what we actually got for debugging
+          other ->
+            ["Prerequisites:", "  - DEBUG: #{inspect(other)}"]
         end
 
       full_response =
