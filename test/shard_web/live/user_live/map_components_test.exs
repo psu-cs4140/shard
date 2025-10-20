@@ -462,6 +462,56 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
   end
 
   describe "component error handling" do
+    setup do
+      user = user_fixture()
+
+      character = %Shard.Characters.Character{
+        name: "TestChar",
+        level: 1,
+        experience: 0,
+        user_id: user.id,
+        class: "warrior",
+        race: "human"
+      }
+
+      character = Shard.Repo.insert!(character)
+
+      game_state = %{
+        player_position: {0, 0},
+        map_data: [],
+        map_id: "test_map",
+        character: character,
+        player_stats: %{
+          health: 100,
+          max_health: 100,
+          stamina: 100,
+          max_stamina: 100,
+          mana: 50,
+          max_mana: 50,
+          level: 1,
+          experience: 0,
+          next_level_exp: 1000,
+          strength: 10,
+          dexterity: 10,
+          intelligence: 10,
+          constitution: 10
+        },
+        inventory_items: [],
+        equipped_weapon: %{name: "Fists", damage: "1d4", type: "unarmed"},
+        hotbar: %{},
+        quests: [],
+        pending_quest_offer: nil,
+        monsters: [],
+        combat: false
+      }
+
+      %{
+        user: user,
+        character: character,
+        game_state: game_state
+      }
+    end
+
     test "room_circle component with nil coordinates", %{
       conn: conn,
       user: user,
