@@ -311,74 +311,85 @@ defmodule ShardWeb.UserLive.Commands2 do
       objectives =
         case quest.objectives do
           # Handle empty or nil objectives
-          nil -> []
-          [] -> []
-          
+          nil ->
+            []
+
+          [] ->
+            []
+
           # Handle map with "primary" key containing list of objectives
           %{"primary" => primary_objectives} when is_list(primary_objectives) ->
             case Enum.find(primary_objectives, fn obj ->
-              case obj do
-                %{"description" => desc} when is_binary(desc) -> true
-                _ -> false
-              end
-            end) do
+                   case obj do
+                     %{"description" => desc} when is_binary(desc) -> true
+                     _ -> false
+                   end
+                 end) do
               %{"description" => desc} -> ["Objectives:", "  - #{desc}"]
               _ -> []
             end
-          
+
           # Handle list of objective maps - just get the first description
           objectives when is_list(objectives) ->
             # Flatten any nested lists and find the first objective with a description
             flattened_objectives = List.flatten(objectives)
-            
+
             case Enum.find(flattened_objectives, fn obj ->
-              case obj do
-                %{"description" => desc} when is_binary(desc) -> true
-                _ -> false
-              end
-            end) do
+                   case obj do
+                     %{"description" => desc} when is_binary(desc) -> true
+                     _ -> false
+                   end
+                 end) do
               %{"description" => desc} -> ["Objectives:", "  - #{desc}"]
               _ -> []
             end
 
           # Handle map-based objectives (key-value pairs) - just get the first one
           objectives when is_map(objectives) and map_size(objectives) > 0 ->
-            case Enum.find(objectives, fn {_k, v} -> 
-              case v do
-                %{"description" => desc} when is_binary(desc) -> true
-                desc when is_binary(desc) -> true
-                _ -> false
-              end
-            end) do
+            case Enum.find(objectives, fn {_k, v} ->
+                   case v do
+                     %{"description" => desc} when is_binary(desc) -> true
+                     desc when is_binary(desc) -> true
+                     _ -> false
+                   end
+                 end) do
               {_k, %{"description" => desc}} -> ["Objectives:", "  - #{desc}"]
               {_k, desc} when is_binary(desc) -> ["Objectives:", "  - #{desc}"]
               _ -> []
             end
 
           # Fallback
-          _ -> []
+          _ ->
+            []
         end
 
       prerequisites =
         case quest.prerequisites do
           # Handle empty or nil prerequisites - don't show anything
-          nil -> []
-          [] -> []
-          prereqs when is_map(prereqs) and map_size(prereqs) == 0 -> []
-          
+          nil ->
+            []
+
+          [] ->
+            []
+
+          prereqs when is_map(prereqs) and map_size(prereqs) == 0 ->
+            []
+
           # Handle list of prerequisite maps directly
           prereqs when is_list(prereqs) and length(prereqs) > 0 ->
             # Flatten any nested lists and extract all prerequisite maps
             flattened_prereqs = List.flatten(prereqs)
-            
-            prereq_descriptions = Enum.map(flattened_prereqs, fn prereq ->
-              case prereq do
-                %{"description" => desc} when is_binary(desc) -> "  - #{desc}"
-                desc when is_binary(desc) -> "  - #{desc}"
-                _ -> "  - #{inspect(prereq)}"  # Show the actual data for debugging
-              end
-            end)
-            
+
+            prereq_descriptions =
+              Enum.map(flattened_prereqs, fn prereq ->
+                case prereq do
+                  %{"description" => desc} when is_binary(desc) -> "  - #{desc}"
+                  desc when is_binary(desc) -> "  - #{desc}"
+                  # Show the actual data for debugging
+                  _ -> "  - #{inspect(prereq)}"
+                end
+              end)
+
             if length(prereq_descriptions) > 0 do
               ["Prerequisites:"] ++ prereq_descriptions
             else
@@ -387,18 +398,21 @@ defmodule ShardWeb.UserLive.Commands2 do
 
           # Handle map-based prerequisites (key-value pairs) with actual content
           prereqs when is_map(prereqs) and map_size(prereqs) > 0 ->
-            prereq_descriptions = Enum.map(prereqs, fn {_k, v} -> 
-              case v do
-                %{"description" => desc} when is_binary(desc) -> "  - #{desc}"
-                desc when is_binary(desc) -> "  - #{desc}"
-                _ -> "  - #{inspect(v)}"  # Show the actual data for debugging
-              end
-            end)
-            
+            prereq_descriptions =
+              Enum.map(prereqs, fn {_k, v} ->
+                case v do
+                  %{"description" => desc} when is_binary(desc) -> "  - #{desc}"
+                  desc when is_binary(desc) -> "  - #{desc}"
+                  # Show the actual data for debugging
+                  _ -> "  - #{inspect(v)}"
+                end
+              end)
+
             ["Prerequisites:"] ++ prereq_descriptions
 
           # Fallback - don't show anything for unknown structures
-          _ -> []
+          _ ->
+            []
         end
 
       full_response =
