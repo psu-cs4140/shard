@@ -245,32 +245,39 @@ alias Shard.Quests.Quest
 npc_count = Repo.aggregate(Npc, :count, :id)
 
 if npc_count == 0 do
-  # Create Elder Sage Throne NPC
-  elder_sage = Repo.insert!(%Npc{} |> Npc.changeset(%{
-    name: "Elder Sage Throne",
-    description: "An ancient and wise sage who has watched over these lands for centuries. His eyes hold the knowledge of ages past.",
-    level: 50,
-    health: 500,
-    max_health: 500,
-    mana: 1000,
-    max_mana: 1000,
-    strength: 15,
-    dexterity: 20,
-    intelligence: 95,
-    constitution: 30,
-    npc_type: "quest_giver",
-    dialogue: "Greetings, young adventurer. I have been expecting you. There are dark forces stirring in these lands that require a hero's attention.",
-    location_x: 1,
-    location_y: 1,
-    location_z: 0,
-    room_id: Enum.find(rooms, &(&1.x_coordinate == 1 && &1.y_coordinate == 1)).id,
-    faction: "Order of the Light",
-    aggression_level: 0,
-    movement_pattern: "stationary",
-    properties: %{"wisdom_level" => "ancient", "can_teach_spells" => true}
-  }))
+  # Get the room at coordinates (1,1) for the NPC
+  target_room = Repo.get_by(Room, x_coordinate: 1, y_coordinate: 1)
+  
+  if target_room do
+    # Create Elder Sage Throne NPC
+    elder_sage = Repo.insert!(%Npc{} |> Npc.changeset(%{
+      name: "Elder Sage Throne",
+      description: "An ancient and wise sage who has watched over these lands for centuries. His eyes hold the knowledge of ages past.",
+      level: 50,
+      health: 500,
+      max_health: 500,
+      mana: 1000,
+      max_mana: 1000,
+      strength: 15,
+      dexterity: 20,
+      intelligence: 95,
+      constitution: 30,
+      npc_type: "quest_giver",
+      dialogue: "Greetings, young adventurer. I have been expecting you. There are dark forces stirring in these lands that require a hero's attention.",
+      location_x: 1,
+      location_y: 1,
+      location_z: 0,
+      room_id: target_room.id,
+      faction: "Order of the Light",
+      aggression_level: 0,
+      movement_pattern: "stationary",
+      properties: %{"wisdom_level" => "ancient", "can_teach_spells" => true}
+    }))
 
-  IO.puts("Created Elder Sage Throne NPC")
+    IO.puts("Created Elder Sage Throne NPC")
+  else
+    IO.puts("Room at coordinates (1,1) not found, skipping NPC creation")
+  end
 else
   IO.puts("NPCs already exist, skipping NPC creation")
 end
