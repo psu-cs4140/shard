@@ -205,8 +205,8 @@ defmodule ShardWeb.CharacterSelectionComponent do
   end
 
   def handle_event("create_character", %{"character" => character_params}, socket) do
-    # Get user from parent LiveView
-    user = get_user_from_parent(socket)
+    # Get user from assigns passed by parent
+    user = socket.assigns.current_user
 
     character_params = Map.put(character_params, "user_id", user.id)
 
@@ -220,23 +220,6 @@ defmodule ShardWeb.CharacterSelectionComponent do
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, character_form: to_form(changeset))}
-    end
-  end
-
-  # Helper to get user from parent socket
-  defp get_user_from_parent(socket) do
-    # Access parent assigns through the socket
-    parent_assigns = socket.assigns
-
-    cond do
-      parent_assigns[:current_scope] && parent_assigns.current_scope.user ->
-        parent_assigns.current_scope.user
-
-      parent_assigns[:current_user] ->
-        parent_assigns.current_user
-
-      true ->
-        raise "No authenticated user found"
     end
   end
 end
