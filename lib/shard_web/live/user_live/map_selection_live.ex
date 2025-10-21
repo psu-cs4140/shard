@@ -66,7 +66,8 @@ defmodule ShardWeb.MapSelectionLive do
        maps: maps,
        characters: characters,
        show_character_modal: false,
-       selected_map: nil
+       selected_map: nil,
+       current_user: user
      )}
   end
 
@@ -173,7 +174,7 @@ defmodule ShardWeb.MapSelectionLive do
         show={@show_character_modal}
         characters={@characters}
         selected_map={@selected_map}
-        current_user={get_current_user(@socket)}
+        current_user={@current_user}
       />
     </div>
     """
