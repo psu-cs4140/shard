@@ -173,7 +173,7 @@ defmodule ShardWeb.MapSelectionLive do
         show={@show_character_modal}
         characters={@characters}
         selected_map={@selected_map}
-        current_user={get_current_user(socket)}
+        current_user={get_current_user(@socket)}
       />
     </div>
     """
