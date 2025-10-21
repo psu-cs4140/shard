@@ -24,9 +24,11 @@ defmodule ShardWeb.CharacterSelectionComponentTest do
           current_user: user
         )
 
-      assert html =~ "Choose Your Character"
-      assert html =~ "You don't have any characters yet"
-      assert html =~ "Create Your First Character"
+      # When no characters exist, component automatically switches to create mode
+      assert html =~ "Create New Character"
+      assert html =~ "Character Name"
+      assert html =~ "Class"
+      assert html =~ "Race"
     end
 
     test "does not render modal when show is false", %{user: user} do
