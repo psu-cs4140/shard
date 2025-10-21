@@ -222,5 +222,4 @@ defmodule ShardWeb.CharacterSelectionComponent do
         {:noreply, assign(socket, character_form: to_form(changeset))}
     end
   end
-
 end
