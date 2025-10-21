@@ -5,7 +5,6 @@ defmodule ShardWeb.CharacterSelectionComponentTest do
   import Shard.UsersFixtures
 
   alias Shard.Characters
-  alias Shard.Characters.Character
 
   describe "CharacterSelectionComponent" do
     setup do
