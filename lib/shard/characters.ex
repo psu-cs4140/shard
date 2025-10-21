@@ -119,6 +119,7 @@ defmodule Shard.Characters do
   """
   def get_characters_by_user(user_id) do
     from(c in Character, where: c.user_id == ^user_id)
+    |> Ecto.Query.order_by([c], asc: c.inserted_at, asc: c.id)
     |> Repo.all()
   end
 end
