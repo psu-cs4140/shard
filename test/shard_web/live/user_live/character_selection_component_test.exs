@@ -145,15 +145,23 @@ defmodule ShardWeb.CharacterSelectionComponentTest do
     end
 
     test "handles cancel selection", %{user: user} do
+      {:ok, character} =
+        Characters.create_character(%{
+          name: "Test Character",
+          class: "warrior",
+          race: "human",
+          user_id: user.id
+        })
+
       html =
         render_component(ShardWeb.CharacterSelectionComponent,
           id: "character-selection",
           show: true,
-          characters: [],
+          characters: [character],
           current_user: user
         )
 
-      # Verify cancel button is present
+      # Verify cancel button is present in select mode
       assert html =~ "Cancel"
       assert html =~ "phx-click=\"cancel_map_selection\""
     end
