@@ -174,10 +174,6 @@ defmodule ShardWeb.UserLive.CommandParsers do
 
         updated_game_state = %{game_state | inventory_items: updated_inventory}
 
-        # TODO: Remove item from database room/location
-        # This would require calling something like:
-        # Shard.Items.remove_item_from_location(item.id, "#{x},#{y},0")
-
         {response, updated_game_state}
     end
   end
