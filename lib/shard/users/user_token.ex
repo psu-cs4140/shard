@@ -1,4 +1,11 @@
 defmodule Shard.Users.UserToken do
+  @moduledoc """
+  User token schema and functions for managing authentication tokens.
+
+  This module handles various types of tokens including session tokens,
+  magic link tokens for passwordless login, and email change tokens.
+  """
+
   use Ecto.Schema
   import Ecto.Query
   alias Shard.Users.UserToken
