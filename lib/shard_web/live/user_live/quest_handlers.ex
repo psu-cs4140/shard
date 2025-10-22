@@ -189,83 +189,95 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     npc_name = npc.name || "Unknown NPC"
     quest_title = quest.title || "Untitled Quest"
 
-    # Get the full quest data from database with error handling
-    full_quest =
-      try do
-        Repo.get(Quest, quest.id)
-      rescue
-        _error ->
-          # IO.inspect(error, label: "Error getting quest #{quest.id} from database")
-          nil
-      end
+    full_quest = get_full_quest_safely(quest.id)
+    {exp_reward, gold_reward} = calculate_quest_rewards(full_quest)
+    
+    updated_stats = update_player_stats_with_experience(game_state.player_stats, exp_reward)
+    {updated_stats, level_up_message} = handle_level_up_check(updated_stats)
+    
+    updated_quests = complete_quest_in_database_and_update_state(game_state.quests, quest.id)
+    
+    response = build_quest_completion_response(npc_name, quest_title, exp_reward, gold_reward, full_quest, level_up_message)
+    
+    updated_game_state = %{game_state | player_stats: updated_stats, quests: updated_quests}
+    {response, updated_game_state}
+  end
 
-    # Calculate rewards (use database values or defaults)
+  # Helper function to safely get quest from database
+  defp get_full_quest_safely(quest_id) do
+    try do
+      Repo.get(Quest, quest_id)
+    rescue
+      _error ->
+        # IO.inspect(error, label: "Error getting quest #{quest_id} from database")
+        nil
+    end
+  end
+
+  # Helper function to calculate quest rewards
+  defp calculate_quest_rewards(full_quest) do
     exp_reward = if full_quest, do: full_quest.experience_reward || 100, else: 100
     gold_reward = if full_quest, do: full_quest.gold_reward || 50, else: 50
+    {exp_reward, gold_reward}
+  end
 
-    # Update player stats with rewards
-    updated_stats =
-      try do
-        game_state.player_stats
-        |> Map.update(:experience, 0, &(&1 + exp_reward))
-      rescue
-        _error ->
-          # IO.inspect(error, label: "Error updating player stats")
-          game_state.player_stats
-      end
+  # Helper function to update player stats with experience
+  defp update_player_stats_with_experience(player_stats, exp_reward) do
+    try do
+      player_stats
+      |> Map.update(:experience, 0, &(&1 + exp_reward))
+    rescue
+      _error ->
+        # IO.inspect(error, label: "Error updating player stats")
+        player_stats
+    end
+  end
 
-    # Check if player levels up
-    {updated_stats, level_up_message} =
-      try do
-        check_level_up(updated_stats)
-      rescue
-        _error ->
-          # IO.inspect(error, label: "Error checking level up")
-          {updated_stats, nil}
-      end
+  # Helper function to handle level up check
+  defp handle_level_up_check(updated_stats) do
+    try do
+      check_level_up(updated_stats)
+    rescue
+      _error ->
+        # IO.inspect(error, label: "Error checking level up")
+        {updated_stats, nil}
+    end
+  end
 
-    # Complete the quest in the database
+  # Helper function to complete quest in database and update game state
+  defp complete_quest_in_database_and_update_state(quests, quest_id) do
     # Mock user_id - should come from session in real implementation
     user_id = 1
 
-    updated_quests =
-      try do
-        case Shard.Quests.complete_quest(user_id, quest.id) do
-          {:ok, _quest_acceptance} ->
-            # Mark the quest as completed in player's quest list
-            Enum.map(game_state.quests, fn q ->
-              if q[:id] == quest.id do
-                %{q | status: "Completed", progress: "100% complete"}
-              else
-                q
-              end
-            end)
+    try do
+      case Shard.Quests.complete_quest(user_id, quest_id) do
+        {:ok, _quest_acceptance} ->
+          mark_quest_as_completed(quests, quest_id)
 
-          {:error, _} ->
-            # If database update fails, still update game state for consistency
-            Enum.map(game_state.quests, fn q ->
-              if q[:id] == quest.id do
-                %{q | status: "Completed", progress: "100% complete"}
-              else
-                q
-              end
-            end)
-        end
-      rescue
-        _error ->
-          # IO.inspect(error, label: "Error completing quest in database")
-          # Fallback: update game state even if database fails
-          Enum.map(game_state.quests, fn q ->
-            if q[:id] == quest.id do
-              %{q | status: "Completed", progress: "100% complete"}
-            else
-              q
-            end
-          end)
+        {:error, _} ->
+          mark_quest_as_completed(quests, quest_id)
       end
+    rescue
+      _error ->
+        # IO.inspect(error, label: "Error completing quest in database")
+        mark_quest_as_completed(quests, quest_id)
+    end
+  end
 
-    # Build response message
-    response = [
+  # Helper function to mark quest as completed in quest list
+  defp mark_quest_as_completed(quests, quest_id) do
+    Enum.map(quests, fn q ->
+      if q[:id] == quest_id do
+        %{q | status: "Completed", progress: "100% complete"}
+      else
+        q
+      end
+    end)
+  end
+
+  # Helper function to build the complete response message
+  defp build_quest_completion_response(npc_name, quest_title, exp_reward, gold_reward, full_quest, level_up_message) do
+    base_response = [
       "#{npc_name} examines your progress carefully.",
       "",
       "\"Excellent work! You have completed the quest '#{quest_title}'!\"",
@@ -274,47 +286,48 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       "Experience gained: #{exp_reward} XP"
     ]
 
-    response =
-      if gold_reward > 0 do
-        response ++ ["Gold received: #{gold_reward} gold"]
+    response_with_gold = add_gold_reward_to_response(base_response, gold_reward)
+    response_with_items = add_item_rewards_to_response(response_with_gold, full_quest)
+    response_with_level_up = add_level_up_message_to_response(response_with_items, level_up_message)
+    
+    response_with_level_up ++ [
+      "",
+      "#{npc_name} says: \"Thank you for your service. You have proven yourself worthy!\""
+    ]
+  end
+
+  # Helper function to add gold reward to response
+  defp add_gold_reward_to_response(response, gold_reward) do
+    if gold_reward > 0 do
+      response ++ ["Gold received: #{gold_reward} gold"]
+    else
+      response
+    end
+  end
+
+  # Helper function to add item rewards to response
+  defp add_item_rewards_to_response(response, full_quest) do
+    try do
+      if full_quest && full_quest.item_rewards && map_size(full_quest.item_rewards) > 0 do
+        item_list = Enum.map(full_quest.item_rewards, fn {_key, item} -> "  - #{item}" end)
+        response ++ ["Items received:"] ++ item_list
       else
         response
       end
-
-    # Add item rewards if any (with error handling)
-    response =
-      try do
-        if full_quest && full_quest.item_rewards && map_size(full_quest.item_rewards) > 0 do
-          item_list = Enum.map(full_quest.item_rewards, fn {_key, item} -> "  - #{item}" end)
-          response ++ ["Items received:"] ++ item_list
-        else
-          response
-        end
-      rescue
-        _error ->
-          # IO.inspect(error, label: "Error processing item rewards")
-          response
-      end
-
-    # Add level up message if applicable
-    response =
-      if level_up_message do
-        response ++ ["", level_up_message]
-      else
+    rescue
+      _error ->
+        # IO.inspect(error, label: "Error processing item rewards")
         response
-      end
+    end
+  end
 
-    response =
-      response ++
-        [
-          "",
-          "#{npc_name} says: \"Thank you for your service. You have proven yourself worthy!\""
-        ]
-
-    # Update game state
-    updated_game_state = %{game_state | player_stats: updated_stats, quests: updated_quests}
-
-    {response, updated_game_state}
+  # Helper function to add level up message to response
+  defp add_level_up_message_to_response(response, level_up_message) do
+    if level_up_message do
+      response ++ ["", level_up_message]
+    else
+      response
+    end
   end
 
   # Check if player should level up based on experience
