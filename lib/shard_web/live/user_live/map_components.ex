@@ -302,78 +302,91 @@ defmodule ShardWeb.UserLive.MapComponents do
     from_room = assigns.door.from_room
     to_room = assigns.door.to_room
 
-    return_early =
-      from_room == nil or to_room == nil or
-        from_room.x_coordinate == nil or from_room.y_coordinate == nil or
-        to_room.x_coordinate == nil or to_room.y_coordinate == nil
+    if should_skip_door_render?(from_room, to_room) do
+      assigns = assign(assigns, :skip_render, true)
+      render_door_line(assigns)
+    else
+      assigns = prepare_door_line_assigns(assigns, from_room, to_room)
+      render_door_line(assigns)
+    end
+  end
 
-    assigns =
-      if return_early do
-        assign(assigns, :skip_render, true)
-      else
-        {x1, y1} =
-          calculate_minimap_position(
-            {from_room.x_coordinate, from_room.y_coordinate},
-            assigns.bounds,
-            assigns.scale_factor
-          )
+  # Helper function to check if door should be skipped
+  defp should_skip_door_render?(from_room, to_room) do
+    from_room == nil or to_room == nil or
+      from_room.x_coordinate == nil or from_room.y_coordinate == nil or
+      to_room.x_coordinate == nil or to_room.y_coordinate == nil
+  end
 
-        {x2, y2} =
-          calculate_minimap_position(
-            {to_room.x_coordinate, to_room.y_coordinate},
-            assigns.bounds,
-            assigns.scale_factor
-          )
+  # Helper function to prepare all door line assigns
+  defp prepare_door_line_assigns(assigns, from_room, to_room) do
+    {x1, y1} = calculate_minimap_position(
+      {from_room.x_coordinate, from_room.y_coordinate},
+      assigns.bounds,
+      assigns.scale_factor
+    )
 
-        # Check if this is a one-way door (no return door in opposite direction)
-        is_one_way = ShardWeb.UserLive.MinimapComponents.one_way_door_check(assigns.door)
+    {x2, y2} = calculate_minimap_position(
+      {to_room.x_coordinate, to_room.y_coordinate},
+      assigns.bounds,
+      assigns.scale_factor
+    )
 
-        # Determine if this is a diagonal door
-        is_diagonal =
-          assigns.door.direction in ["northeast", "northwest", "southeast", "southwest"]
+    is_one_way = ShardWeb.UserLive.MinimapComponents.one_way_door_check(assigns.door)
+    is_diagonal = is_diagonal_door?(assigns.door)
+    stroke_color = get_door_stroke_color(assigns.door, is_one_way)
+    {stroke_width, stroke_dasharray} = get_door_stroke_style(is_diagonal)
+    door_name = get_door_name(assigns.door)
 
-        # Color scheme based on door type and status
-        stroke_color =
-          cond do
-            # Red for locked doors
-            assigns.door.is_locked -> "#dc2626"
-            # Pink for one-way doors
-            is_one_way -> "#ec4899"
-            # Purple for portals
-            assigns.door.door_type == "portal" -> "#8b5cf6"
-            # Orange for gates
-            assigns.door.door_type == "gate" -> "#d97706"
-            # Dark red for locked gates
-            assigns.door.door_type == "locked_gate" -> "#991b1b"
-            # Gray for secret doors
-            assigns.door.door_type == "secret" -> "#6b7280"
-            # Orange for doors requiring keys
-            assigns.door.key_required && assigns.door.key_required != "" -> "#f59e0b"
-            # Green for standard doors
-            true -> "#22c55e"
-          end
+    assign(assigns,
+      x1: x1,
+      y1: y1,
+      x2: x2,
+      y2: y2,
+      stroke_color: stroke_color,
+      stroke_width: stroke_width,
+      stroke_dasharray: stroke_dasharray,
+      door_name: door_name,
+      is_diagonal: is_diagonal,
+      skip_render: false
+    )
+  end
 
-        # Adjust stroke width and style for diagonal doors
-        stroke_width = if is_diagonal, do: "1.5", else: "2"
-        stroke_dasharray = if is_diagonal, do: "3,2", else: nil
+  # Helper function to check if door is diagonal
+  defp is_diagonal_door?(door) do
+    door.direction in ["northeast", "northwest", "southeast", "southwest"]
+  end
 
-        door_name =
-          assigns.door.name || "#{String.capitalize(assigns.door.door_type || "standard")} Door"
+  # Helper function to determine door stroke color
+  defp get_door_stroke_color(door, is_one_way) do
+    cond do
+      door.is_locked -> "#dc2626"
+      is_one_way -> "#ec4899"
+      door.door_type == "portal" -> "#8b5cf6"
+      door.door_type == "gate" -> "#d97706"
+      door.door_type == "locked_gate" -> "#991b1b"
+      door.door_type == "secret" -> "#6b7280"
+      door.key_required && door.key_required != "" -> "#f59e0b"
+      true -> "#22c55e"
+    end
+  end
 
-        assign(assigns,
-          x1: x1,
-          y1: y1,
-          x2: x2,
-          y2: y2,
-          stroke_color: stroke_color,
-          stroke_width: stroke_width,
-          stroke_dasharray: stroke_dasharray,
-          door_name: door_name,
-          is_diagonal: is_diagonal,
-          skip_render: false
-        )
-      end
+  # Helper function to get door stroke style
+  defp get_door_stroke_style(is_diagonal) do
+    if is_diagonal do
+      {"1.5", "3,2"}
+    else
+      {"2", nil}
+    end
+  end
 
+  # Helper function to get door name
+  defp get_door_name(door) do
+    door.name || "#{String.capitalize(door.door_type || "standard")} Door"
+  end
+
+  # Helper function to render the door line template
+  defp render_door_line(assigns) do
     ~H"""
     <%= unless @skip_render do %>
       <line
