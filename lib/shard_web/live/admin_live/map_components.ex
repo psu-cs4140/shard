@@ -377,49 +377,50 @@ defmodule ShardWeb.AdminLive.MapComponents do
 
   # Sort doors so that each door is next to its return door
   defp sort_doors_with_returns(doors, _rooms) do
-    # Create a map of door_id to door for quick lookup
-    door_map = Enum.into(doors, %{}, &{&1.id, &1})
+    door_map = build_door_map(doors)
+    door_lookup = build_door_lookup(doors)
 
-    # Create a map of {to_room_id, from_room_id, opposite_direction} to door_id for finding return doors
-    door_lookup =
-      Enum.into(doors, %{}, fn door ->
-        opposite_dir = Shard.Map.Door.opposite_direction(door.direction)
-        key = {door.to_room_id, door.from_room_id, opposite_dir}
-        {key, door.id}
-      end)
-
-    # Process doors to pair them with their return doors
     {processed_doors, _seen_ids} =
       Enum.reduce(doors, {[], MapSet.new()}, fn door, {acc, seen} ->
-        # Skip if this door was already processed
-        if MapSet.member?(seen, door.id) do
-          {acc, seen}
-        else
-          # Find the return door
-          opposite_dir = Shard.Map.Door.opposite_direction(door.direction)
-          return_door_key = {door.to_room_id, door.from_room_id, opposite_dir}
-          return_door_id = Map.get(door_lookup, return_door_key)
-
-          if return_door_id do
-            return_door = Map.get(door_map, return_door_id)
-
-            if return_door do
-              # Mark both doors as processed
-              new_seen = MapSet.put(seen, door.id) |> MapSet.put(return_door_id)
-              # Only add the main door to the result, mark it as having a return door
-              door_with_mark = Map.put(door, :has_return_door, true)
-              {acc ++ [door_with_mark], new_seen}
-            else
-              # No return door found, add just this door
-              {acc ++ [door], MapSet.put(seen, door.id)}
-            end
-          else
-            # No return door found, add just this door
-            {acc ++ [door], MapSet.put(seen, door.id)}
-          end
-        end
+        process_door_with_return(door, acc, seen, door_map, door_lookup)
       end)
 
     processed_doors
+  end
+
+  defp build_door_map(doors) do
+    Enum.into(doors, %{}, &{&1.id, &1})
+  end
+
+  defp build_door_lookup(doors) do
+    Enum.into(doors, %{}, fn door ->
+      opposite_dir = Shard.Map.Door.opposite_direction(door.direction)
+      key = {door.to_room_id, door.from_room_id, opposite_dir}
+      {key, door.id}
+    end)
+  end
+
+  defp process_door_with_return(door, acc, seen, door_map, door_lookup) do
+    if MapSet.member?(seen, door.id) do
+      {acc, seen}
+    else
+      find_and_process_return_door(door, acc, seen, door_map, door_lookup)
+    end
+  end
+
+  defp find_and_process_return_door(door, acc, seen, door_map, door_lookup) do
+    opposite_dir = Shard.Map.Door.opposite_direction(door.direction)
+    return_door_key = {door.to_room_id, door.from_room_id, opposite_dir}
+    return_door_id = Map.get(door_lookup, return_door_key)
+
+    case Map.get(door_map, return_door_id) do
+      nil ->
+        {acc ++ [door], MapSet.put(seen, door.id)}
+
+      _return_door ->
+        new_seen = MapSet.put(seen, door.id) |> MapSet.put(return_door_id)
+        door_with_mark = Map.put(door, :has_return_door, true)
+        {acc ++ [door_with_mark], new_seen}
+    end
   end
 end
