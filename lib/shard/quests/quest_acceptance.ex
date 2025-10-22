@@ -1,4 +1,8 @@
 defmodule Shard.Quests.QuestAcceptance do
+  @moduledoc """
+  This module defines the quest acceptance schema and includes
+  functions determining if a quest it accepted or not
+  """
   use Ecto.Schema
   import Ecto.Changeset
 

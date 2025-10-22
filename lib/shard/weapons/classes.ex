@@ -1,4 +1,7 @@
 defmodule Shard.Weapons.Classes do
+  @moduledoc """
+  This module defines the schema for a weapon class
+  """
   use Ecto.Schema
   import Ecto.Changeset
 

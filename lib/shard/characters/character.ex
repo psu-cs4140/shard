@@ -1,4 +1,8 @@
 defmodule Shard.Characters.Character do
+  @moduledoc """
+  This module defines the character schema and the changeset so
+  changes can be made to a character's fields
+  """
   use Ecto.Schema
   import Ecto.Changeset
 

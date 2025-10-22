@@ -8,124 +8,162 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         {["There is no quest offer to accept."], game_state}
 
       %{quest: quest, npc: npc} ->
-        npc_name = npc.name || "Unknown NPC"
-        quest_title = quest.title || "Untitled Quest"
-
-        # Check if quest has already been accepted or completed
-        # Mock user_id - should come from session in real implementation
-        user_id = 1
-
-        already_accepted =
-          try do
-            Shard.Quests.quest_ever_accepted_by_user?(user_id, quest.id)
-          rescue
-            _error ->
-              # IO.inspect(error, label: "Error checking if quest already accepted")
-              false
-          end
-
-        if already_accepted do
-          response = [
-            "#{npc_name} looks at you with confusion.",
-            "",
-            "\"You have already accepted this quest. I cannot offer it to you again.\""
-          ]
-
-          updated_game_state = %{game_state | pending_quest_offer: nil}
-          {response, updated_game_state}
-        else
-          # Accept the quest in the database
-          accept_result =
-            try do
-              Shard.Quests.accept_quest(user_id, quest.id)
-            rescue
-              _error ->
-                # IO.inspect(error, label: "Error accepting quest") 
-                {:error, :database_error}
-            end
-
-          case accept_result do
-            {:ok, _quest_acceptance} ->
-              # Add quest to player's active quests in game state
-              new_quest = %{
-                id: quest.id,
-                title: quest_title,
-                status: "In Progress",
-                progress: "0% complete",
-                npc_giver: npc_name,
-                description: quest.description
-              }
-
-              updated_quests = [new_quest | game_state.quests]
-
-              response = [
-                "You accept the quest '#{quest_title}' from #{npc_name}.",
-                "",
-                "#{npc_name} says: \"Excellent! I knew I could count on you.\"",
-                "",
-                "Quest '#{quest_title}' has been added to your quest log."
-              ]
-
-              updated_game_state = %{
-                game_state
-                | quests: updated_quests,
-                  pending_quest_offer: nil
-              }
-
-              {response, updated_game_state}
-
-            {:error, :quest_already_completed} ->
-              response = [
-                "#{npc_name} looks at you with confusion.",
-                "",
-                "\"You have already completed this quest. I cannot offer it to you again.\""
-              ]
-
-              updated_game_state = %{game_state | pending_quest_offer: nil}
-              {response, updated_game_state}
-
-            {:error, :database_error} ->
-              # Fallback: add quest to game state even if database fails
-              new_quest = %{
-                id: quest.id,
-                title: quest_title,
-                status: "In Progress",
-                progress: "0% complete",
-                npc_giver: npc_name,
-                description: quest.description
-              }
-
-              updated_quests = [new_quest | game_state.quests]
-
-              response = [
-                "You accept the quest '#{quest_title}' from #{npc_name}.",
-                "",
-                "#{npc_name} says: \"Excellent! I knew I could count on you.\"",
-                "",
-                "Quest '#{quest_title}' has been added to your quest log.",
-                "(Note: Quest saved locally due to database issue)"
-              ]
-
-              updated_game_state = %{
-                game_state
-                | quests: updated_quests,
-                  pending_quest_offer: nil
-              }
-
-              {response, updated_game_state}
-
-            {:error, _changeset} ->
-              response = [
-                "#{npc_name} looks troubled.",
-                "",
-                "\"I'm sorry, but there seems to be an issue with accepting this quest right now.\""
-              ]
-
-              updated_game_state = %{game_state | pending_quest_offer: nil}
-              {response, updated_game_state}
-          end
-        end
+        handle_quest_acceptance(game_state, quest, npc)
     end
+  end
+
+  # Handle the quest acceptance logic
+  defp handle_quest_acceptance(game_state, quest, npc) do
+    npc_name = npc.name || "Unknown NPC"
+    quest_title = quest.title || "Untitled Quest"
+    # Mock user_id - should come from session in real implementation
+    user_id = 1
+
+    already_accepted = check_quest_already_accepted(user_id, quest.id)
+
+    if already_accepted do
+      handle_already_accepted_quest(game_state, npc_name)
+    else
+      process_quest_acceptance(game_state, quest, npc_name, quest_title, user_id)
+    end
+  end
+
+  # Check if quest has already been accepted
+  defp check_quest_already_accepted(user_id, quest_id) do
+    try do
+      Shard.Quests.quest_ever_accepted_by_user?(user_id, quest_id)
+    rescue
+      _error ->
+        # IO.inspect(error, label: "Error checking if quest already accepted")
+        false
+    end
+  end
+
+  # Handle case where quest was already accepted
+  defp handle_already_accepted_quest(game_state, npc_name) do
+    response = [
+      "#{npc_name} looks at you with confusion.",
+      "",
+      "\"You have already accepted this quest. I cannot offer it to you again.\""
+    ]
+
+    updated_game_state = %{game_state | pending_quest_offer: nil}
+    {response, updated_game_state}
+  end
+
+  # Process the quest acceptance
+  defp process_quest_acceptance(game_state, quest, npc_name, quest_title, user_id) do
+    accept_result = attempt_quest_acceptance(user_id, quest.id)
+    handle_quest_acceptance_result(game_state, quest, npc_name, quest_title, accept_result)
+  end
+
+  # Attempt to accept the quest in the database
+  defp attempt_quest_acceptance(user_id, quest_id) do
+    try do
+      Shard.Quests.accept_quest(user_id, quest_id)
+    rescue
+      _error ->
+        # IO.inspect(error, label: "Error accepting quest") 
+        {:error, :database_error}
+    end
+  end
+
+  # Handle the result of quest acceptance attempt
+  defp handle_quest_acceptance_result(game_state, quest, npc_name, quest_title, accept_result) do
+    case accept_result do
+      {:ok, _quest_acceptance} ->
+        handle_successful_quest_acceptance(game_state, quest, npc_name, quest_title)
+
+      {:error, :quest_already_completed} ->
+        handle_quest_already_completed(game_state, npc_name)
+
+      {:error, :database_error} ->
+        handle_database_error_fallback(game_state, quest, npc_name, quest_title)
+
+      {:error, _changeset} ->
+        handle_quest_acceptance_error(game_state, npc_name)
+    end
+  end
+
+  # Handle successful quest acceptance
+  defp handle_successful_quest_acceptance(game_state, quest, npc_name, quest_title) do
+    new_quest = create_new_quest_entry(quest, npc_name, quest_title)
+    updated_quests = [new_quest | game_state.quests]
+
+    response = [
+      "You accept the quest '#{quest_title}' from #{npc_name}.",
+      "",
+      "#{npc_name} says: \"Excellent! I knew I could count on you.\"",
+      "",
+      "Quest '#{quest_title}' has been added to your quest log."
+    ]
+
+    updated_game_state = %{
+      game_state
+      | quests: updated_quests,
+        pending_quest_offer: nil
+    }
+
+    {response, updated_game_state}
+  end
+
+  # Handle case where quest was already completed
+  defp handle_quest_already_completed(game_state, npc_name) do
+    response = [
+      "#{npc_name} looks at you with confusion.",
+      "",
+      "\"You have already completed this quest. I cannot offer it to you again.\""
+    ]
+
+    updated_game_state = %{game_state | pending_quest_offer: nil}
+    {response, updated_game_state}
+  end
+
+  # Handle database error fallback
+  defp handle_database_error_fallback(game_state, quest, npc_name, quest_title) do
+    new_quest = create_new_quest_entry(quest, npc_name, quest_title)
+    updated_quests = [new_quest | game_state.quests]
+
+    response = [
+      "You accept the quest '#{quest_title}' from #{npc_name}.",
+      "",
+      "#{npc_name} says: \"Excellent! I knew I could count on you.\"",
+      "",
+      "Quest '#{quest_title}' has been added to your quest log.",
+      "(Note: Quest saved locally due to database issue)"
+    ]
+
+    updated_game_state = %{
+      game_state
+      | quests: updated_quests,
+        pending_quest_offer: nil
+    }
+
+    {response, updated_game_state}
+  end
+
+  # Handle general quest acceptance error
+  defp handle_quest_acceptance_error(game_state, npc_name) do
+    response = [
+      "#{npc_name} looks troubled.",
+      "",
+      "\"I'm sorry, but there seems to be an issue with accepting this quest right now.\""
+    ]
+
+    updated_game_state = %{game_state | pending_quest_offer: nil}
+    {response, updated_game_state}
+  end
+
+  # Create a new quest entry for the game state
+  defp create_new_quest_entry(quest, npc_name, quest_title) do
+    %{
+      id: quest.id,
+      title: quest_title,
+      status: "In Progress",
+      progress: "0% complete",
+      npc_giver: npc_name,
+      description: quest.description
+    }
   end
 
   # Execute quest denial
@@ -189,83 +227,110 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     npc_name = npc.name || "Unknown NPC"
     quest_title = quest.title || "Untitled Quest"
 
-    # Get the full quest data from database with error handling
-    full_quest =
-      try do
-        Repo.get(Quest, quest.id)
-      rescue
-        _error ->
-          # IO.inspect(error, label: "Error getting quest #{quest.id} from database")
-          nil
-      end
+    full_quest = get_full_quest_safely(quest.id)
+    {exp_reward, gold_reward} = calculate_quest_rewards(full_quest)
 
-    # Calculate rewards (use database values or defaults)
+    updated_stats = update_player_stats_with_experience(game_state.player_stats, exp_reward)
+    {updated_stats, level_up_message} = handle_level_up_check(updated_stats)
+
+    updated_quests = complete_quest_in_database_and_update_state(game_state.quests, quest.id)
+
+    response =
+      build_quest_completion_response(
+        npc_name,
+        quest_title,
+        exp_reward,
+        gold_reward,
+        full_quest,
+        level_up_message
+      )
+
+    updated_game_state = %{game_state | player_stats: updated_stats, quests: updated_quests}
+    {response, updated_game_state}
+  end
+
+  # Helper function to safely get quest from database
+  defp get_full_quest_safely(quest_id) do
+    try do
+      Repo.get(Quest, quest_id)
+    rescue
+      _error ->
+        # IO.inspect(error, label: "Error getting quest #{quest_id} from database")
+        nil
+    end
+  end
+
+  # Helper function to calculate quest rewards
+  defp calculate_quest_rewards(full_quest) do
     exp_reward = if full_quest, do: full_quest.experience_reward || 100, else: 100
     gold_reward = if full_quest, do: full_quest.gold_reward || 50, else: 50
+    {exp_reward, gold_reward}
+  end
 
-    # Update player stats with rewards
-    updated_stats =
-      try do
-        game_state.player_stats
-        |> Map.update(:experience, 0, &(&1 + exp_reward))
-      rescue
-        _error ->
-          # IO.inspect(error, label: "Error updating player stats")
-          game_state.player_stats
-      end
+  # Helper function to update player stats with experience
+  defp update_player_stats_with_experience(player_stats, exp_reward) do
+    try do
+      player_stats
+      |> Map.update(:experience, 0, &(&1 + exp_reward))
+    rescue
+      _error ->
+        # IO.inspect(error, label: "Error updating player stats")
+        player_stats
+    end
+  end
 
-    # Check if player levels up
-    {updated_stats, level_up_message} =
-      try do
-        check_level_up(updated_stats)
-      rescue
-        _error ->
-          # IO.inspect(error, label: "Error checking level up")
-          {updated_stats, nil}
-      end
+  # Helper function to handle level up check
+  defp handle_level_up_check(updated_stats) do
+    try do
+      check_level_up(updated_stats)
+    rescue
+      _error ->
+        # IO.inspect(error, label: "Error checking level up")
+        {updated_stats, nil}
+    end
+  end
 
-    # Complete the quest in the database
+  # Helper function to complete quest in database and update game state
+  defp complete_quest_in_database_and_update_state(quests, quest_id) do
     # Mock user_id - should come from session in real implementation
     user_id = 1
 
-    updated_quests =
-      try do
-        case Shard.Quests.complete_quest(user_id, quest.id) do
-          {:ok, _quest_acceptance} ->
-            # Mark the quest as completed in player's quest list
-            Enum.map(game_state.quests, fn q ->
-              if q[:id] == quest.id do
-                %{q | status: "Completed", progress: "100% complete"}
-              else
-                q
-              end
-            end)
+    try do
+      case Shard.Quests.complete_quest(user_id, quest_id) do
+        {:ok, _quest_acceptance} ->
+          mark_quest_as_completed(quests, quest_id)
 
-          {:error, _} ->
-            # If database update fails, still update game state for consistency
-            Enum.map(game_state.quests, fn q ->
-              if q[:id] == quest.id do
-                %{q | status: "Completed", progress: "100% complete"}
-              else
-                q
-              end
-            end)
-        end
-      rescue
-        _error ->
-          # IO.inspect(error, label: "Error completing quest in database")
-          # Fallback: update game state even if database fails
-          Enum.map(game_state.quests, fn q ->
-            if q[:id] == quest.id do
-              %{q | status: "Completed", progress: "100% complete"}
-            else
-              q
-            end
-          end)
+        {:error, _} ->
+          mark_quest_as_completed(quests, quest_id)
       end
+    rescue
+      _error ->
+        # IO.inspect(error, label: "Error completing quest in database")
+        mark_quest_as_completed(quests, quest_id)
+    end
+  end
 
-    # Build response message
-    response = [
+  # Helper function to mark quest as completed in quest list
+  defp mark_quest_as_completed(quests, quest_id) do
+    Enum.map(quests, fn q ->
+      if q[:id] == quest_id do
+        %{q | status: "Completed", progress: "100% complete"}
+      else
+        q
+      end
+    end)
+  end
+
+  # Helper function to build the complete response message
+  defp build_quest_completion_response(
+         npc_name,
+         quest_title,
+         exp_reward,
+         gold_reward,
+         full_quest,
+         level_up_message
+       ) do
+    base_response = [
       "#{npc_name} examines your progress carefully.",
       "",
       "\"Excellent work! You have completed the quest '#{quest_title}'!\"",
@@ -274,47 +339,51 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       "Experience gained: #{exp_reward} XP"
     ]
 
-    response =
-      if gold_reward > 0 do
-        response ++ ["Gold received: #{gold_reward} gold"]
+    response_with_gold = add_gold_reward_to_response(base_response, gold_reward)
+    response_with_items = add_item_rewards_to_response(response_with_gold, full_quest)
+
+    response_with_level_up =
+      add_level_up_message_to_response(response_with_items, level_up_message)
+
+    response_with_level_up ++
+      [
+        "",
+        "#{npc_name} says: \"Thank you for your service. You have proven yourself worthy!\""
+      ]
+  end
+
+  # Helper function to add gold reward to response
+  defp add_gold_reward_to_response(response, gold_reward) do
+    if gold_reward > 0 do
+      response ++ ["Gold received: #{gold_reward} gold"]
+    else
+      response
+    end
+  end
+
+  # Helper function to add item rewards to response
+  defp add_item_rewards_to_response(response, full_quest) do
+    try do
+      if full_quest && full_quest.item_rewards && map_size(full_quest.item_rewards) > 0 do
+        item_list = Enum.map(full_quest.item_rewards, fn {_key, item} -> "  - #{item}" end)
+        response ++ ["Items received:"] ++ item_list
       else
         response
       end
-
-    # Add item rewards if any (with error handling)
-    response =
-      try do
-        if full_quest && full_quest.item_rewards && map_size(full_quest.item_rewards) > 0 do
-          item_list = Enum.map(full_quest.item_rewards, fn {_key, item} -> "  - #{item}" end)
-          response ++ ["Items received:"] ++ item_list
-        else
-          response
-        end
-      rescue
-        _error ->
-          # IO.inspect(error, label: "Error processing item rewards")
-          response
-      end
-
-    # Add level up message if applicable
-    response =
-      if level_up_message do
-        response ++ ["", level_up_message]
-      else
+    rescue
+      _error ->
+        # IO.inspect(error, label: "Error processing item rewards")
         response
-      end
+    end
+  end
 
-    response =
-      response ++
-        [
-          "",
-          "#{npc_name} says: \"Thank you for your service. You have proven yourself worthy!\""
-        ]
-
-    # Update game state
-    updated_game_state = %{game_state | player_stats: updated_stats, quests: updated_quests}
-
-    {response, updated_game_state}
+  # Helper function to add level up message to response
+  defp add_level_up_message_to_response(response, level_up_message) do
+    if level_up_message do
+      response ++ ["", level_up_message]
+    else
+      response
+    end
   end
 
   # Check if player should level up based on experience

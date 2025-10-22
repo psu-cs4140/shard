@@ -1,4 +1,9 @@
 defmodule Shard.Npcs.Npc do
+  @moduledoc """
+  This module defines the npc schema and the changeset to change
+  npc fields. Also includes functions to ensure health or mana
+  does not exceed max health or mana
+  """
   use Ecto.Schema
   import Ecto.Changeset
 

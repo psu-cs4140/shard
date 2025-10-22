@@ -1,4 +1,10 @@
 defmodule Shard.Artifacts.ArtifactServer do
+  @moduledoc """
+  This module defines a GenServer that simulates the game-world
+  feature of a healing fountain, which periodically applies 
+  a healing effect to a certain area
+  """
+
   use GenServer
 
   def start_link(_) do

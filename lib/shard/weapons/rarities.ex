@@ -1,4 +1,7 @@
 defmodule Shard.Weapons.Rarities do
+  @moduledoc """
+  This module is the schema for rarities
+  """
   use Ecto.Schema
   import Ecto.Changeset
 

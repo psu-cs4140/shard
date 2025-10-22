@@ -1,4 +1,12 @@
 defmodule Shard.Map.Door do
+  @moduledoc """
+  Represents a door or connection between two rooms in the game world.
+
+  Doors define how players can move between rooms, including directional
+  movement (north, south, east, west, etc.), locked doors that require keys,
+  and special door types like portals or secret passages.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

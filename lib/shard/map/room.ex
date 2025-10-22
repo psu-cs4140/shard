@@ -1,4 +1,8 @@
 defmodule Shard.Map.Room do
+  @moduledoc """
+  This module defines room schema and the changeset that changes
+  the fields of a room.
+  """
   use Ecto.Schema
   import Ecto.Changeset
 

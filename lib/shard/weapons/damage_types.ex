@@ -1,4 +1,7 @@
 defmodule Shard.Weapons.DamageTypes do
+  @moduledoc """
+  This module defines the schema for a damage_type
+  """
   use Ecto.Schema
   import Ecto.Changeset
 

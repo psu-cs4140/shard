@@ -1,4 +1,12 @@
 defmodule Shard.Users.UserNotifier do
+  @moduledoc """
+  User notification functions for sending emails.
+
+  This module handles sending various types of emails to users including
+  magic link login instructions, email update instructions, and account
+  confirmation emails.
+  """
+
   import Swoosh.Email
 
   alias Shard.Mailer

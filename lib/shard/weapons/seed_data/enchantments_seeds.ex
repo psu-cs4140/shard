@@ -1,4 +1,8 @@
 defmodule Shard.Weapons.SeedData.EnchantmentsSeeds do
+  @moduledoc """
+  This module defines different enchantments
+  """
+
   def data do
     [
       %{name: "Flaming", modifier_type: "fire_damage", modifier_value: "+5"},
