@@ -211,17 +211,27 @@ defmodule ShardWeb.UserLive.CommandParsers do
 
   # Normalize direction name
   defp normalize_direction(direction) do
-    case String.downcase(direction) do
-      dir when dir in ["n", "north"] -> "north"
-      dir when dir in ["s", "south"] -> "south"
-      dir when dir in ["e", "east"] -> "east"
-      dir when dir in ["w", "west"] -> "west"
-      dir when dir in ["ne", "northeast"] -> "northeast"
-      dir when dir in ["se", "southeast"] -> "southeast"
-      dir when dir in ["nw", "northwest"] -> "northwest"
-      dir when dir in ["sw", "southwest"] -> "southwest"
-      other -> other
-    end
+    direction_map = %{
+      "n" => "north",
+      "north" => "north",
+      "s" => "south",
+      "south" => "south",
+      "e" => "east",
+      "east" => "east",
+      "w" => "west",
+      "west" => "west",
+      "ne" => "northeast",
+      "northeast" => "northeast",
+      "se" => "southeast",
+      "southeast" => "southeast",
+      "nw" => "northwest",
+      "northwest" => "northwest",
+      "sw" => "southwest",
+      "southwest" => "southwest"
+    }
+
+    downcased_direction = String.downcase(direction)
+    Map.get(direction_map, downcased_direction, direction)
   end
 
   # Handle door unlock logic
