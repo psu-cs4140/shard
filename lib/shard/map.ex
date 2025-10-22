@@ -272,7 +272,7 @@ defmodule Shard.Map do
   Gets realm options for dropdowns.
   """
   def get_realm_options do
-    list_realms()
+    Repo.all(from r in Realm, where: r.is_active == true, order_by: r.name)
     |> Enum.map(&{&1.name, &1.id})
   end
 

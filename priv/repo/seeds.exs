@@ -359,12 +359,10 @@ if quest_count == 0 do
 else
   IO.puts("Quests already exist, skipping quest creation")
 end
-# Seeds file for Shard
-
+# Create realms from maps page
 alias Shard.Repo
 alias Shard.Map.Realm
 
-# Create default realms
 realms = [
   %{name: "Dark Forest", description: "A mysterious forest shrouded in perpetual twilight"},
   %{name: "Crystal Caves", description: "Glittering underground caverns filled with precious gems"},
