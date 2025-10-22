@@ -180,91 +180,117 @@ defmodule ShardWeb.UserLive.CommandParsers do
 
   # Execute unlock command with direction and item name
   def execute_unlock_command(game_state, direction, item_name) do
-    {x, y} = game_state.player_position
-
-    # Check if player has the item in inventory
-    has_item =
-      Enum.any?(game_state.inventory_items, fn inv_item ->
-        String.downcase(inv_item.name || "") == String.downcase(item_name)
-      end)
-
-    if has_item do
-      # Get current room
-      case GameMap.get_room_by_coordinates(x, y) do
-        nil ->
-          {["You are not in a valid room."], game_state}
-
-        room ->
-          # Normalize direction name
-          normalized_direction =
-            case String.downcase(direction) do
-              dir when dir in ["n", "north"] -> "north"
-              dir when dir in ["s", "south"] -> "south"
-              dir when dir in ["e", "east"] -> "east"
-              dir when dir in ["w", "west"] -> "west"
-              dir when dir in ["ne", "northeast"] -> "northeast"
-              dir when dir in ["se", "southeast"] -> "southeast"
-              dir when dir in ["nw", "northwest"] -> "northwest"
-              dir when dir in ["sw", "southwest"] -> "southwest"
-              other -> other
-            end
-
-          # Check if there's a door in that direction
-          door = GameMap.get_door_in_direction(room.id, normalized_direction)
-
-          case door do
-            nil ->
-              {["There is no door to the #{normalized_direction}."], game_state}
-
-            door ->
-              cond do
-                not door.is_locked ->
-                  {["The door to the #{normalized_direction} is already unlocked."], game_state}
-
-                door.key_required == nil or door.key_required == "" ->
-                  {[
-                     "The door to the #{normalized_direction} is locked but doesn't require a specific key."
-                   ], game_state}
-
-                String.downcase(door.key_required) == String.downcase(item_name) ->
-                  # Unlock the door
-                  case GameMap.update_door(door, %{is_locked: false}) do
-                    {:ok, _updated_door} ->
-                      # Also unlock the return door if it exists
-                      return_door = GameMap.get_return_door(door)
-
-                      if return_door do
-                        GameMap.update_door(return_door, %{is_locked: false})
-                      end
-
-                      # Remove the item from inventory
-                      updated_inventory =
-                        Enum.reject(game_state.inventory_items, fn inv_item ->
-                          String.downcase(inv_item.name || "") == String.downcase(item_name)
-                        end)
-
-                      updated_game_state = %{game_state | inventory_items: updated_inventory}
-
-                      {[
-                         "You use the #{item_name} to unlock the door to the #{normalized_direction}.",
-                         "The #{item_name} is consumed in the process.",
-                         "The door is now unlocked!"
-                       ], updated_game_state}
-
-                    {:error, _changeset} ->
-                      {["Failed to unlock the door. Something went wrong."], game_state}
-                  end
-
-                true ->
-                  {[
-                     "The #{item_name} doesn't fit this lock. This door requires: #{door.key_required}"
-                   ], game_state}
-              end
-          end
-      end
+    if has_item_in_inventory?(game_state.inventory_items, item_name) do
+      unlock_door_with_item(game_state, direction, item_name)
     else
       {["You don't have '#{item_name}' in your inventory."], game_state}
     end
+  end
+
+  # Check if player has the item in inventory
+  defp has_item_in_inventory?(inventory_items, item_name) do
+    Enum.any?(inventory_items, fn inv_item ->
+      String.downcase(inv_item.name || "") == String.downcase(item_name)
+    end)
+  end
+
+  # Handle unlocking door with item
+  defp unlock_door_with_item(game_state, direction, item_name) do
+    {x, y} = game_state.player_position
+
+    case GameMap.get_room_by_coordinates(x, y) do
+      nil ->
+        {["You are not in a valid room."], game_state}
+
+      room ->
+        normalized_direction = normalize_direction(direction)
+        door = GameMap.get_door_in_direction(room.id, normalized_direction)
+        handle_door_unlock(game_state, door, normalized_direction, item_name)
+    end
+  end
+
+  # Normalize direction name
+  defp normalize_direction(direction) do
+    case String.downcase(direction) do
+      dir when dir in ["n", "north"] -> "north"
+      dir when dir in ["s", "south"] -> "south"
+      dir when dir in ["e", "east"] -> "east"
+      dir when dir in ["w", "west"] -> "west"
+      dir when dir in ["ne", "northeast"] -> "northeast"
+      dir when dir in ["se", "southeast"] -> "southeast"
+      dir when dir in ["nw", "northwest"] -> "northwest"
+      dir when dir in ["sw", "southwest"] -> "southwest"
+      other -> other
+    end
+  end
+
+  # Handle door unlock logic
+  defp handle_door_unlock(game_state, door, normalized_direction, item_name) do
+    case door do
+      nil ->
+        {["There is no door to the #{normalized_direction}."], game_state}
+
+      door ->
+        validate_and_unlock_door(game_state, door, normalized_direction, item_name)
+    end
+  end
+
+  # Validate door state and unlock if possible
+  defp validate_and_unlock_door(game_state, door, normalized_direction, item_name) do
+    cond do
+      not door.is_locked ->
+        {["The door to the #{normalized_direction} is already unlocked."], game_state}
+
+      door.key_required == nil or door.key_required == "" ->
+        {[
+           "The door to the #{normalized_direction} is locked but doesn't require a specific key."
+         ], game_state}
+
+      String.downcase(door.key_required) == String.downcase(item_name) ->
+        perform_door_unlock(game_state, door, normalized_direction, item_name)
+
+      true ->
+        {[
+           "The #{item_name} doesn't fit this lock. This door requires: #{door.key_required}"
+         ], game_state}
+    end
+  end
+
+  # Perform the actual door unlock operation
+  defp perform_door_unlock(game_state, door, normalized_direction, item_name) do
+    case GameMap.update_door(door, %{is_locked: false}) do
+      {:ok, _updated_door} ->
+        unlock_return_door(door)
+        updated_game_state = remove_item_from_inventory(game_state, item_name)
+
+        {[
+           "You use the #{item_name} to unlock the door to the #{normalized_direction}.",
+           "The #{item_name} is consumed in the process.",
+           "The door is now unlocked!"
+         ], updated_game_state}
+
+      {:error, _changeset} ->
+        {["Failed to unlock the door. Something went wrong."], game_state}
+    end
+  end
+
+  # Unlock the return door if it exists
+  defp unlock_return_door(door) do
+    return_door = GameMap.get_return_door(door)
+
+    if return_door do
+      GameMap.update_door(return_door, %{is_locked: false})
+    end
+  end
+
+  # Remove item from inventory
+  defp remove_item_from_inventory(game_state, item_name) do
+    updated_inventory =
+      Enum.reject(game_state.inventory_items, fn inv_item ->
+        String.downcase(inv_item.name || "") == String.downcase(item_name)
+      end)
+
+    %{game_state | inventory_items: updated_inventory}
   end
 
   # Get items at a specific location
