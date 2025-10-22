@@ -8,7 +8,7 @@ defmodule ShardWeb.AdminLive.DoorFormComponent do
     ~H"""
     <div>
       <.header>
-        <%= @title %>
+        {@title}
         <:subtitle>Use this form to manage door properties in your application.</:subtitle>
       </.header>
 
@@ -21,27 +21,27 @@ defmodule ShardWeb.AdminLive.DoorFormComponent do
       >
         <.input field={@form[:name]} type="text" label="Name" />
         <.input field={@form[:description]} type="textarea" label="Description" />
-        
-        <.input 
-          field={@form[:from_room_id]} 
-          type="select" 
-          label="From Room" 
+
+        <.input
+          field={@form[:from_room_id]}
+          type="select"
+          label="From Room"
           options={@room_options}
           prompt="Select a room"
         />
-        
-        <.input 
-          field={@form[:to_room_id]} 
-          type="select" 
-          label="To Room" 
+
+        <.input
+          field={@form[:to_room_id]}
+          type="select"
+          label="To Room"
           options={@room_options}
           prompt="Select a room"
         />
-        
-        <.input 
-          field={@form[:direction]} 
-          type="select" 
-          label="Direction" 
+
+        <.input
+          field={@form[:direction]}
+          type="select"
+          label="Direction"
           options={[
             {"North", "north"},
             {"South", "south"},
@@ -56,11 +56,11 @@ defmodule ShardWeb.AdminLive.DoorFormComponent do
           ]}
           prompt="Select direction"
         />
-        
-        <.input 
-          field={@form[:door_type]} 
-          type="select" 
-          label="Door Type" 
+
+        <.input
+          field={@form[:door_type]}
+          type="select"
+          label="Door Type"
           options={[
             {"Standard", "standard"},
             {"One Way", "one_way"},
@@ -68,7 +68,7 @@ defmodule ShardWeb.AdminLive.DoorFormComponent do
             {"Hidden", "hidden"}
           ]}
         />
-        
+
         <.input field={@form[:is_locked]} type="checkbox" label="Is Locked" />
         <.input field={@form[:key_required]} type="text" label="Key Required" />
 
