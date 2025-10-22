@@ -353,7 +353,7 @@ defmodule ShardWeb.UserLive.MapComponents do
       )
 
     is_one_way = ShardWeb.UserLive.MinimapComponents.one_way_door_check(assigns.door)
-    is_diagonal = is_diagonal_door?(assigns.door)
+    is_diagonal = diagonal_door?(assigns.door)
     stroke_color = get_door_stroke_color(assigns.door, is_one_way)
     {stroke_width, stroke_dasharray} = get_door_stroke_style(is_diagonal)
     door_name = get_door_name(assigns.door)
@@ -373,7 +373,7 @@ defmodule ShardWeb.UserLive.MapComponents do
   end
 
   # Helper function to check if door is diagonal
-  defp is_diagonal_door?(door) do
+  defp diagonal_door?(door) do
     door.direction in ["northeast", "northwest", "southeast", "southwest"]
   end
 
