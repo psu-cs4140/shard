@@ -232,48 +232,11 @@ defmodule ShardWeb.UserLive.MapComponents do
 
   # Component for individual room circles in the minimap
   def room_circle(assigns) do
-    return_early = assigns.room.x_coordinate == nil or assigns.room.y_coordinate == nil
-
     assigns =
-      if return_early do
+      if should_skip_room_render?(assigns.room) do
         assign(assigns, :skip_render, true)
       else
-        # Calculate position within the minimap bounds
-        {x_pos, y_pos} =
-          calculate_minimap_position(
-            {assigns.room.x_coordinate, assigns.room.y_coordinate},
-            assigns.bounds,
-            assigns.scale_factor
-          )
-
-        # Define colors for rooms based on room type
-        {fill_color, stroke_color} =
-          case assigns.room.room_type do
-            # Green for safe zones
-            "safe_zone" -> {"#10b981", "#34d399"}
-            # Orange for shops
-            "shop" -> {"#f59e0b", "#fbbf24"}
-            # Dark red for dungeons
-            "dungeon" -> {"#7c2d12", "#dc2626"}
-            # Gold for treasure rooms
-            "treasure_room" -> {"#eab308", "#facc15"}
-            # Red for trap rooms
-            "trap_room" -> {"#991b1b", "#ef4444"}
-            # Blue for standard rooms
-            _ -> {"#3b82f6", "#60a5fa"}
-          end
-
-        player_stroke = if assigns.is_player, do: "#ef4444", else: stroke_color
-        player_width = if assigns.is_player, do: "3", else: "1"
-
-        assign(assigns,
-          x_pos: x_pos,
-          y_pos: y_pos,
-          fill_color: fill_color,
-          stroke_color: player_stroke,
-          stroke_width: player_width,
-          skip_render: false
-        )
+        prepare_room_circle_assigns(assigns)
       end
 
     ~H"""
@@ -294,6 +257,61 @@ defmodule ShardWeb.UserLive.MapComponents do
       </circle>
     <% end %>
     """
+  end
+
+  # Helper function to check if room should be skipped
+  defp should_skip_room_render?(room) do
+    room.x_coordinate == nil or room.y_coordinate == nil
+  end
+
+  # Helper function to prepare all room circle assigns
+  defp prepare_room_circle_assigns(assigns) do
+    # Calculate position within the minimap bounds
+    {x_pos, y_pos} =
+      calculate_minimap_position(
+        {assigns.room.x_coordinate, assigns.room.y_coordinate},
+        assigns.bounds,
+        assigns.scale_factor
+      )
+
+    {fill_color, stroke_color} = get_room_colors(assigns.room.room_type)
+    {player_stroke, player_width} = get_player_styling(assigns.is_player, stroke_color)
+
+    assign(assigns,
+      x_pos: x_pos,
+      y_pos: y_pos,
+      fill_color: fill_color,
+      stroke_color: player_stroke,
+      stroke_width: player_width,
+      skip_render: false
+    )
+  end
+
+  # Helper function to get room colors based on type
+  defp get_room_colors(room_type) do
+    case room_type do
+      # Green for safe zones
+      "safe_zone" -> {"#10b981", "#34d399"}
+      # Orange for shops
+      "shop" -> {"#f59e0b", "#fbbf24"}
+      # Dark red for dungeons
+      "dungeon" -> {"#7c2d12", "#dc2626"}
+      # Gold for treasure rooms
+      "treasure_room" -> {"#eab308", "#facc15"}
+      # Red for trap rooms
+      "trap_room" -> {"#991b1b", "#ef4444"}
+      # Blue for standard rooms
+      _ -> {"#3b82f6", "#60a5fa"}
+    end
+  end
+
+  # Helper function to get player-specific styling
+  defp get_player_styling(is_player, default_stroke_color) do
+    if is_player do
+      {"#ef4444", "3"}
+    else
+      {default_stroke_color, "1"}
+    end
   end
 
   # Component for door lines in the minimap
