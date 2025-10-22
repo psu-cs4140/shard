@@ -6,7 +6,7 @@ defmodule Shard.Map do
   import Ecto.Query, warn: false
   alias Shard.Repo
 
-  alias Shard.Map.{Room, Door}
+  alias Shard.Map.{Room, Door, Realm}
 
   @doc """
   Returns the list of rooms.
@@ -221,13 +221,59 @@ defmodule Shard.Map do
     )
   end
 
+  # Realm functions
   @doc """
-  Gets all unique realms from rooms.
+  Returns the list of realms.
   """
   def list_realms do
-    # TODO: Add realm field to Room schema
-    # For now, return a default list of realms
-    ["Overworld", "Underworld", "Shadowlands", "Feywild", "Astral Plane"]
+    Repo.all(from r in Realm, where: r.is_active == true, order_by: r.name)
+  end
+
+  @doc """
+  Gets a single realm by ID.
+  """
+  def get_realm!(id) do
+    Repo.get!(Realm, id)
+  end
+
+  @doc """
+  Creates a realm.
+  """
+  def create_realm(attrs \\ %{}) do
+    %Realm{}
+    |> Realm.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a realm.
+  """
+  def update_realm(%Realm{} = realm, attrs) do
+    realm
+    |> Realm.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a realm.
+  """
+  def delete_realm(%Realm{} = realm) do
+    Repo.delete(realm)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking realm changes.
+  """
+  def change_realm(%Realm{} = realm, attrs \\ %{}) do
+    Realm.changeset(realm, attrs)
+  end
+
+  @doc """
+  Gets realm options for dropdowns.
+  """
+  def get_realm_options do
+    list_realms()
+    |> Enum.map(&{&1.name, &1.id})
   end
 
   @doc """

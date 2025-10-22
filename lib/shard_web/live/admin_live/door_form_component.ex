@@ -102,8 +102,7 @@ defmodule ShardWeb.AdminLive.DoorFormComponent do
     rooms = Map.list_rooms()
     room_options = Enum.map(rooms, &{&1.name || "Room #{&1.id}", &1.id})
     
-    realms = Map.list_realms()
-    realm_options = Enum.map(realms, &{&1, &1})
+    realm_options = Map.get_realm_options()
 
     {:ok,
      socket

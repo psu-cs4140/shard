@@ -359,3 +359,28 @@ if quest_count == 0 do
 else
   IO.puts("Quests already exist, skipping quest creation")
 end
+# Seeds file for Shard
+
+alias Shard.Repo
+alias Shard.Map.Realm
+
+# Create default realms
+realms = [
+  %{name: "Overworld", description: "The main realm where most adventures begin"},
+  %{name: "Underworld", description: "A dark realm beneath the surface"},
+  %{name: "Shadowlands", description: "A mysterious realm of shadows and secrets"},
+  %{name: "Feywild", description: "A magical realm of fey creatures and wonder"},
+  %{name: "Astral Plane", description: "A realm of pure thought and energy"}
+]
+
+Enum.each(realms, fn realm_attrs ->
+  case Repo.get_by(Realm, name: realm_attrs.name) do
+    nil ->
+      %Realm{}
+      |> Realm.changeset(realm_attrs)
+      |> Repo.insert!()
+      |> IO.inspect(label: "Created realm")
+    existing ->
+      IO.puts("Realm #{existing.name} already exists")
+  end
+end)
