@@ -14,6 +14,7 @@ defmodule Shard.Map.Room do
     # For extensibility: lighting, weather, etc.
     field :properties, :map, default: %{}
 
+    belongs_to :realm, Shard.Map.Realm, foreign_key: :realm_id
     has_many :doors_from, Shard.Map.Door, foreign_key: :from_room_id
     has_many :doors_to, Shard.Map.Door, foreign_key: :to_room_id
 
@@ -31,7 +32,8 @@ defmodule Shard.Map.Room do
       :z_coordinate,
       :is_public,
       :room_type,
-      :properties
+      :properties,
+      :realm_id
     ])
     |> validate_required([:name])
     |> validate_length(:name, min: 1, max: 100)

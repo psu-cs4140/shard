@@ -7,6 +7,8 @@ defmodule Shard.Map.Realm do
     field :description, :string
     field :is_active, :boolean, default: true
 
+    has_many :rooms, Shard.Map.Room
+
     timestamps()
   end
 
