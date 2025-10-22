@@ -269,11 +269,34 @@ defmodule Shard.Map do
   end
 
   @doc """
+  Cleans up realms to only keep the 5 from the maps page.
+  """
+  def cleanup_realms do
+    valid_realm_names = ["Dark Forest", "Crystal Caves", "Volcanic Peaks", "Frozen Wastes", "Shadow Realm"]
+    
+    # Delete any realms not in the valid list
+    from(r in Realm, where: r.name not in ^valid_realm_names)
+    |> Repo.delete_all()
+    
+    # Ensure all valid realms exist
+    Enum.each(valid_realm_names, fn name ->
+      case Repo.get_by(Realm, name: name) do
+        nil ->
+          %Realm{}
+          |> Realm.changeset(%{name: name, description: "A realm from the maps page"})
+          |> Repo.insert!()
+        _ -> :ok
+      end
+    end)
+  end
+
+  @doc """
   Gets realm options for dropdowns.
   """
   def get_realm_options do
-    Repo.all(from r in Realm, where: r.is_active == true, order_by: r.name)
-    |> Enum.map(&{&1.name, &1.id})
+    realms = Repo.all(from r in Realm, where: r.is_active == true, order_by: r.name)
+    IO.inspect(realms, label: "Active realms from database")
+    realms |> Enum.map(&{&1.name, &1.id})
   end
 
   @doc """
