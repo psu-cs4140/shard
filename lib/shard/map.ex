@@ -103,20 +103,23 @@ defmodule Shard.Map do
             }
 
             # Check if return door already exists
-            existing_return_door = Repo.one(
-              from d in Door,
-                where: d.from_room_id == ^return_attrs[:from_room_id] and
-                       d.to_room_id == ^return_attrs[:to_room_id] and
-                       d.direction == ^return_attrs[:direction]
-            )
+            existing_return_door =
+              Repo.one(
+                from d in Door,
+                  where:
+                    d.from_room_id == ^return_attrs[:from_room_id] and
+                      d.to_room_id == ^return_attrs[:to_room_id] and
+                      d.direction == ^return_attrs[:direction]
+              )
 
             if is_nil(existing_return_door) do
               # Create the return door with opposite direction
-              full_return_attrs = Map.merge(return_attrs, %{
-                door_type: attrs[:door_type] || "standard",
-                is_locked: attrs[:is_locked] || false,
-                key_required: attrs[:key_required]
-              })
+              full_return_attrs =
+                Map.merge(return_attrs, %{
+                  door_type: attrs[:door_type] || "standard",
+                  is_locked: attrs[:is_locked] || false,
+                  key_required: attrs[:key_required]
+                })
 
               case %Door{}
                    |> Door.changeset(full_return_attrs)
@@ -124,6 +127,7 @@ defmodule Shard.Map do
                 {:ok, _return_door} ->
                   # Return door created successfully
                   door
+
                 {:error, _changeset} ->
                   # Return door creation failed (e.g., due to unique constraint)
                   # Still return the main door since it was created successfully
