@@ -359,26 +359,29 @@ if quest_count == 0 do
 else
   IO.puts("Quests already exist, skipping quest creation")
 end
+
 # Create realms from maps page
-alias Shard.Repo
 alias Shard.Map.Realm
 
-realms = [
-  %{name: "Dark Forest", description: "A mysterious forest shrouded in perpetual twilight"},
-  %{name: "Crystal Caves", description: "Glittering underground caverns filled with precious gems"},
-  %{name: "Volcanic Peaks", description: "Towering mountains with active volcanic activity"},
-  %{name: "Frozen Wastes", description: "An endless expanse of ice and snow"},
-  %{name: "Shadow Realm", description: "A dark dimension where shadows come alive"}
-]
+realm_count = Repo.aggregate(Realm, :count, :id)
 
-Enum.each(realms, fn realm_attrs ->
-  case Repo.get_by(Realm, name: realm_attrs.name) do
-    nil ->
-      %Realm{}
-      |> Realm.changeset(realm_attrs)
-      |> Repo.insert!()
-      |> IO.inspect(label: "Created realm")
-    existing ->
-      IO.puts("Realm #{existing.name} already exists")
-  end
-end)
+if realm_count == 0 do
+  realms = [
+    %{name: "Dark Forest", description: "A mysterious forest shrouded in perpetual twilight"},
+    %{name: "Crystal Caves", description: "Glittering underground caverns filled with precious gems"},
+    %{name: "Volcanic Peaks", description: "Towering mountains with active volcanic activity"},
+    %{name: "Frozen Wastes", description: "An endless expanse of ice and snow"},
+    %{name: "Shadow Realm", description: "A dark dimension where shadows come alive"}
+  ]
+
+  Enum.each(realms, fn realm_attrs ->
+    %Realm{}
+    |> Realm.changeset(realm_attrs)
+    |> Repo.insert!()
+    |> IO.inspect(label: "Created realm")
+  end)
+
+  IO.puts("Seeded realms")
+else
+  IO.puts("Realms already exist, skipping realm creation")
+end
