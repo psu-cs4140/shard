@@ -72,7 +72,7 @@ defmodule Shard.Map do
   Returns the list of doors.
   """
   def list_doors do
-    Repo.all(Door) |> Repo.preload([:from_room, :to_room])
+    Repo.all(Door) |> Repo.preload([:from_room, :to_room, :from_realm, :to_realm])
   end
 
   @doc """
