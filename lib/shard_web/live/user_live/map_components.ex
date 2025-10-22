@@ -380,14 +380,29 @@ defmodule ShardWeb.UserLive.MapComponents do
   # Helper function to determine door stroke color
   defp get_door_stroke_color(door, is_one_way) do
     cond do
-      door.is_locked -> "#dc2626"
-      is_one_way -> "#ec4899"
-      door.door_type == "portal" -> "#8b5cf6"
-      door.door_type == "gate" -> "#d97706"
-      door.door_type == "locked_gate" -> "#991b1b"
-      door.door_type == "secret" -> "#6b7280"
-      door.key_required && door.key_required != "" -> "#f59e0b"
-      true -> "#22c55e"
+      door.is_locked -> get_locked_door_color()
+      is_one_way -> get_one_way_door_color()
+      has_key_requirement?(door) -> get_key_required_door_color()
+      true -> get_door_type_color(door.door_type)
+    end
+  end
+
+  # Helper functions for door colors
+  defp get_locked_door_color, do: "#dc2626"
+  defp get_one_way_door_color, do: "#ec4899"
+  defp get_key_required_door_color, do: "#f59e0b"
+
+  defp has_key_requirement?(door) do
+    door.key_required && door.key_required != ""
+  end
+
+  defp get_door_type_color(door_type) do
+    case door_type do
+      "portal" -> "#8b5cf6"
+      "gate" -> "#d97706"
+      "locked_gate" -> "#991b1b"
+      "secret" -> "#6b7280"
+      _ -> "#22c55e"
     end
   end
 
