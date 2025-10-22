@@ -22,49 +22,62 @@ defmodule ShardWeb.UserLive.ItemHelpers do
   def use_consumable_item(game_state, item) do
     case item.effect do
       effect when is_binary(effect) ->
-        if String.contains?(effect, "Restores") do
-          # Parse healing amount from effect string
-          healing_amount =
-            case Regex.run(~r/(\d+)/, effect) do
-              [_, amount] -> String.to_integer(amount)
-              # Default healing
-              _ -> 25
-            end
-
-          current_health = game_state.player_stats.health
-          max_health = game_state.player_stats.max_health
-
-          if current_health >= max_health do
-            response = ["You are already at full health."]
-            {response, game_state}
-          else
-            new_health = min(current_health + healing_amount, max_health)
-            updated_stats = %{game_state.player_stats | health: new_health}
-            updated_game_state = %{game_state | player_stats: updated_stats}
-
-            # Save updated stats to database
-            ShardWeb.UserLive.CharacterHelpers.save_character_stats(
-              game_state.character,
-              updated_stats
-            )
-
-            response = [
-              "You use #{item.name}.",
-              "You recover #{new_health - current_health} health points.",
-              "Health: #{new_health}/#{max_health}"
-            ]
-
-            {response, updated_game_state}
-          end
-        else
-          response = ["You use #{item.name}, but nothing happens."]
-          {response, game_state}
-        end
+        handle_string_effect(game_state, item, effect)
 
       _ ->
         response = ["You use #{item.name}, but nothing happens."]
         {response, game_state}
     end
+  end
+
+  defp handle_string_effect(game_state, item, effect) do
+    if String.contains?(effect, "Restores") do
+      apply_healing_effect(game_state, item, effect)
+    else
+      response = ["You use #{item.name}, but nothing happens."]
+      {response, game_state}
+    end
+  end
+
+  defp apply_healing_effect(game_state, item, effect) do
+    healing_amount = parse_healing_amount(effect)
+    current_health = game_state.player_stats.health
+    max_health = game_state.player_stats.max_health
+
+    if current_health >= max_health do
+      response = ["You are already at full health."]
+      {response, game_state}
+    else
+      perform_healing(game_state, item, healing_amount, current_health, max_health)
+    end
+  end
+
+  defp parse_healing_amount(effect) do
+    case Regex.run(~r/(\d+)/, effect) do
+      [_, amount] -> String.to_integer(amount)
+      # Default healing
+      _ -> 25
+    end
+  end
+
+  defp perform_healing(game_state, item, healing_amount, current_health, max_health) do
+    new_health = min(current_health + healing_amount, max_health)
+    updated_stats = %{game_state.player_stats | health: new_health}
+    updated_game_state = %{game_state | player_stats: updated_stats}
+
+    # Save updated stats to database
+    ShardWeb.UserLive.CharacterHelpers.save_character_stats(
+      game_state.character,
+      updated_stats
+    )
+
+    response = [
+      "You use #{item.name}.",
+      "You recover #{new_health - current_health} health points.",
+      "Health: #{new_health}/#{max_health}"
+    ]
+
+    {response, updated_game_state}
   end
 
   # Equip an item (weapons, armor, etc.)
