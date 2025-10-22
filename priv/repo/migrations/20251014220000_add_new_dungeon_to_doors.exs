@@ -17,7 +17,10 @@ defmodule Shard.Repo.Migrations.AddNewDungeonToDoors do
     )
     """
 
-    case Ecto.Adapters.SQL.query(Shard.Repo, query, [Atom.to_string(table_name), Atom.to_string(column_name)]) do
+    case Ecto.Adapters.SQL.query(Shard.Repo, query, [
+           Atom.to_string(table_name),
+           Atom.to_string(column_name)
+         ]) do
       {:ok, %{rows: [[true]]}} -> true
       {:ok, %{rows: [[false]]}} -> false
       _ -> false

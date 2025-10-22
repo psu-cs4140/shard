@@ -19,6 +19,9 @@ defmodule Shard.Repo.Migrations.CreateDoors do
 
     create index(:doors, [:from_room_id])
     create index(:doors, [:to_room_id])
-    create unique_index(:doors, [:from_room_id, :direction], name: :doors_from_room_id_direction_index)
+
+    create unique_index(:doors, [:from_room_id, :direction],
+             name: :doors_from_room_id_direction_index
+           )
   end
 end
