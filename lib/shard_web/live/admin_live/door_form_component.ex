@@ -98,7 +98,7 @@ defmodule ShardWeb.AdminLive.DoorFormComponent do
     changeset =
       socket.assigns.door
       |> Map.change_door(door_params)
-      |> Map.put(:action, :validate)
+      |> Elixir.Map.put(:action, :validate)
 
     {:noreply, assign_form(socket, changeset)}
   end
