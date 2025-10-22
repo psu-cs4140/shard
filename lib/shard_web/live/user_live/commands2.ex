@@ -18,7 +18,6 @@ defmodule ShardWeb.UserLive.Commands2 do
     case target_npc do
       nil ->
         if length(npcs_here) > 0 do
-          # credo:disable-for-next-line Credo.Check.Refactor.EnumMapJoin
           available_names = Enum.map_join(npcs_here, ", ", & &1.name)
 
           response = [
@@ -50,7 +49,6 @@ defmodule ShardWeb.UserLive.Commands2 do
     case target_npc do
       nil ->
         if length(npcs_here) > 0 do
-          # credo:disable-for-next-line Credo.Check.Refactor.EnumMapJoin
           available_names = Enum.map_join(npcs_here, ", ", & &1.name)
 
           response = [
@@ -81,7 +79,6 @@ defmodule ShardWeb.UserLive.Commands2 do
     case target_npc do
       nil ->
         if length(npcs_here) > 0 do
-          # credo:disable-for-next-line Credo.Check.Refactor.EnumMapJoin
           available_names = Enum.map_join(npcs_here, ", ", & &1.name)
 
           response = [
@@ -210,7 +207,7 @@ defmodule ShardWeb.UserLive.Commands2 do
   def generate_npc_quest_response(npc, game_state) do
     npc_name = npc.name || "Unknown NPC"
 
-    # NOTE: Replace mock user_id with current session's user id when available
+    # Replace with current session's user id when available
     user_id = 1
 
     available_quests =
@@ -316,18 +313,107 @@ defmodule ShardWeb.UserLive.Commands2 do
 
       objectives =
         case quest.objectives do
-          objectives when is_map(objectives) and map_size(objectives) > 0 ->
-            ["Objectives:"] ++ Enum.map(objectives, fn {_k, v} -> "  - #{v}" end)
+          # Handle empty or nil objectives
+          nil ->
+            []
 
+          [] ->
+            []
+
+          # Handle map with "primary" key containing list of objectives
+          %{"primary" => primary_objectives} when is_list(primary_objectives) ->
+            case Enum.find(primary_objectives, fn obj ->
+                   case obj do
+                     %{"description" => desc} when is_binary(desc) -> true
+                     _ -> false
+                   end
+                 end) do
+              %{"description" => desc} -> ["Objectives:", "  - #{desc}"]
+              _ -> []
+            end
+
+          # Handle list of objective maps - just get the first description
+          objectives when is_list(objectives) ->
+            # Flatten any nested lists and find the first objective with a description
+            flattened_objectives = List.flatten(objectives)
+
+            case Enum.find(flattened_objectives, fn obj ->
+                   case obj do
+                     %{"description" => desc} when is_binary(desc) -> true
+                     _ -> false
+                   end
+                 end) do
+              %{"description" => desc} -> ["Objectives:", "  - #{desc}"]
+              _ -> []
+            end
+
+          # Handle map-based objectives (key-value pairs) - just get the first one
+          objectives when is_map(objectives) and map_size(objectives) > 0 ->
+            case Enum.find(objectives, fn {_k, v} ->
+                   case v do
+                     %{"description" => desc} when is_binary(desc) -> true
+                     desc when is_binary(desc) -> true
+                     _ -> false
+                   end
+                 end) do
+              {_k, %{"description" => desc}} -> ["Objectives:", "  - #{desc}"]
+              {_k, desc} when is_binary(desc) -> ["Objectives:", "  - #{desc}"]
+              _ -> []
+            end
+
+          # Fallback
           _ ->
             []
         end
 
       prerequisites =
         case quest.prerequisites do
-          prereqs when is_map(prereqs) and map_size(prereqs) > 0 ->
-            ["Prerequisites:"] ++ Enum.map(prereqs, fn {_k, v} -> "  - #{v}" end)
+          # Handle empty or nil prerequisites - don't show anything
+          nil ->
+            []
 
+          [] ->
+            []
+
+          prereqs when is_map(prereqs) and map_size(prereqs) == 0 ->
+            []
+
+          # Handle list of prerequisite maps directly
+          prereqs when is_list(prereqs) and length(prereqs) > 0 ->
+            # Flatten any nested lists and extract all prerequisite maps
+            flattened_prereqs = List.flatten(prereqs)
+
+            prereq_descriptions =
+              Enum.map(flattened_prereqs, fn prereq ->
+                case prereq do
+                  %{"description" => desc} when is_binary(desc) -> "  - #{desc}"
+                  desc when is_binary(desc) -> "  - #{desc}"
+                  # Show the actual data for debugging
+                  _ -> "  - #{inspect(prereq)}"
+                end
+              end)
+
+            if length(prereq_descriptions) > 0 do
+              ["Prerequisites:"] ++ prereq_descriptions
+            else
+              []
+            end
+
+          # Handle map-based prerequisites (key-value pairs) with actual content
+          prereqs when is_map(prereqs) and map_size(prereqs) > 0 ->
+            prereq_descriptions =
+              Enum.map(prereqs, fn {_k, v} ->
+                case v do
+                  %{"description" => desc} when is_binary(desc) -> "  - #{desc}"
+                  desc when is_binary(desc) -> "  - #{desc}"
+                  # Show the actual data for debugging
+                  _ -> "  - #{inspect(v)}"
+                end
+              end)
+
+            ["Prerequisites:"] ++ prereq_descriptions
+
+          # Fallback - don't show anything for unknown structures
           _ ->
             []
         end
