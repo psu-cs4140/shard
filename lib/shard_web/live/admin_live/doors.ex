@@ -44,5 +44,4 @@ defmodule ShardWeb.AdminLive.Doors do
 
     {:noreply, stream_delete(socket, :doors, door)}
   end
-
 end
