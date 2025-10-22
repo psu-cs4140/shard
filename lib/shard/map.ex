@@ -225,13 +225,9 @@ defmodule Shard.Map do
   Gets all unique realms from rooms.
   """
   def list_realms do
-    Repo.all(
-      from r in Room,
-        where: not is_nil(r.realm),
-        select: r.realm,
-        distinct: true,
-        order_by: r.realm
-    )
+    # TODO: Add realm field to Room schema
+    # For now, return a default list of realms
+    ["Overworld", "Underworld", "Shadowlands", "Feywild", "Astral Plane"]
   end
 
   @doc """
