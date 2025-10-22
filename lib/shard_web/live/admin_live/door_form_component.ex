@@ -101,7 +101,7 @@ defmodule ShardWeb.AdminLive.DoorFormComponent do
     changeset = Map.change_door(door)
     rooms = Map.list_rooms()
     room_options = Enum.map(rooms, &{&1.name || "Room #{&1.id}", &1.id})
-    
+
     realm_options = Map.get_realm_options()
 
     {:ok,

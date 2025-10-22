@@ -368,7 +368,10 @@ realm_count = Repo.aggregate(Realm, :count, :id)
 if realm_count == 0 do
   realms = [
     %{name: "Dark Forest", description: "A mysterious forest shrouded in perpetual twilight"},
-    %{name: "Crystal Caves", description: "Glittering underground caverns filled with precious gems"},
+    %{
+      name: "Crystal Caves",
+      description: "Glittering underground caverns filled with precious gems"
+    },
     %{name: "Volcanic Peaks", description: "Towering mountains with active volcanic activity"},
     %{name: "Frozen Wastes", description: "An endless expanse of ice and snow"},
     %{name: "Shadow Realm", description: "A dark dimension where shadows come alive"}

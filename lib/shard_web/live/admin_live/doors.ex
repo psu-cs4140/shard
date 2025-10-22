@@ -62,17 +62,17 @@ defmodule ShardWeb.AdminLive.Doors do
       rows={@streams.doors}
       row_click={fn {_id, door} -> JS.navigate(~p"/admin/doors/#{door}/show") end}
     >
-      <:col :let={{_id, door}} label="Name"><%= door.name %></:col>
+      <:col :let={{_id, door}} label="Name">{door.name}</:col>
       <:col :let={{_id, door}} label="From Room">
-        <%= if door.from_room, do: door.from_room.name, else: "N/A" %>
+        {if door.from_room, do: door.from_room.name, else: "N/A"}
       </:col>
       <:col :let={{_id, door}} label="To Room">
-        <%= if door.to_room, do: door.to_room.name, else: "N/A" %>
+        {if door.to_room, do: door.to_room.name, else: "N/A"}
       </:col>
-      <:col :let={{_id, door}} label="Direction"><%= door.direction %></:col>
-      <:col :let={{_id, door}} label="Type"><%= door.door_type %></:col>
+      <:col :let={{_id, door}} label="Direction">{door.direction}</:col>
+      <:col :let={{_id, door}} label="Type">{door.door_type}</:col>
       <:col :let={{_id, door}} label="Locked">
-        <%= if door.is_locked, do: "Yes", else: "No" %>
+        {if door.is_locked, do: "Yes", else: "No"}
       </:col>
       <:action :let={{_id, door}}>
         <div class="sr-only">
@@ -90,7 +90,12 @@ defmodule ShardWeb.AdminLive.Doors do
       </:action>
     </.table>
 
-    <.modal :if={@live_action in [:new, :edit]} id="door-modal" show on_cancel={JS.patch(~p"/admin/doors")}>
+    <.modal
+      :if={@live_action in [:new, :edit]}
+      id="door-modal"
+      show
+      on_cancel={JS.patch(~p"/admin/doors")}
+    >
       <.live_component
         module={ShardWeb.AdminLive.DoorFormComponent}
         id={@door.id || :new}
