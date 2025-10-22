@@ -11,19 +11,13 @@ defmodule ShardWeb.UserLive.Movement do
   alias Shard.Items.Item
 
   # Execute movement command and update game state
-  def execute_movement(game_state, direction) do
+def execute_movement(game_state, direction) do
+  try do
     current_pos = game_state.player_position
     new_pos = calc_position(current_pos, direction, game_state.map_data)
 
-    PubSub.unsubscribe(
-      Shard.PubSub,
-      posn_to_room_channel(current_pos)
-    )
-
-    PubSub.subscribe(
-      Shard.PubSub,
-      posn_to_room_channel(new_pos)
-    )
+    PubSub.unsubscribe(Shard.PubSub, posn_to_room_channel(current_pos))
+    PubSub.subscribe(Shard.PubSub, posn_to_room_channel(new_pos))
 
     if new_pos == current_pos do
       response = ["You cannot move in that direction. There's no room or passage that way."]
@@ -39,88 +33,78 @@ defmodule ShardWeb.UserLive.Movement do
           "southeast" -> "southeast"
           "northwest" -> "northwest"
           "southwest" -> "southwest"
+          _ -> "unknown direction"
         end
 
-      # Get current and destination rooms for dungeon completion check
+      # Current and destination coordinates
       {curr_x, curr_y} = current_pos
       {new_x, new_y} = new_pos
+
       current_room = GameMap.get_room_by_coordinates(curr_x, curr_y)
       destination_room = GameMap.get_room_by_coordinates(new_x, new_y)
 
       # Check for dungeon completion
       completion_result = GameMap.check_dungeon_completion(current_room, destination_room)
 
-      # Check for NPCs at the new location
+      # Check for NPCs and items
       npcs_here = get_npcs_at_location(new_x, new_y, game_state.map_id)
-
-      # Check for items at the new location
       items_here = get_items_at_location(new_x, new_y, game_state.map_id)
 
+      # Basic movement feedback
       response = ["You traversed #{direction_name}."]
 
-      # Don't add dungeon completion message to response - will be handled as popup
-
-      # Add NPC presence notification if any NPCs are at the new location
+      # Add NPC presence
       response =
         response ++
           if length(npcs_here) > 0 do
             npc_names = Enum.map_join(npcs_here, ", ", & &1.name)
-            # above is more efficent
-            # npc_names = Enum.map(npcs_here, & &1.name) |> Enum.join(", ")
             ["You see #{npc_names} here."]
           else
             []
           end
 
-      # Add item descriptions if any are present
+      # Add item presence
       response =
         response ++
           if length(items_here) > 0 do
-            item_descriptions =
-              Enum.map(items_here, fn item ->
-                item_name = Map.get(item, :name) || "Unknown Item"
-                "You see a #{item_name} on ground"
-              end)
-
-            item_descriptions
+            Enum.map(items_here, fn item ->
+              item_name = Map.get(item, :name) || "Unknown Item"
+              "You see a #{item_name} on the ground."
+            end)
           else
             []
           end
 
-      # To see if there are monsters
-      monsters = Enum.filter(game_state.monsters, fn value -> value[:position] == new_pos end)
+      # Check for monsters
+      monsters = Enum.filter(game_state.monsters, fn m -> m[:position] == new_pos end)
       monster_count = Enum.count(monsters)
 
       response =
         response ++
           case monster_count do
-            0 ->
-              []
-
+            0 -> []
             1 ->
-              ["There is a " <> Enum.at(monsters, 0)[:name] <> "! It prepares to attack."]
-
+              monster = Enum.at(monsters, 0)
+              ["There is a #{monster[:name]} here! It prepares to attack."]
             _ ->
+              monster_names =
+                Enum.map_join(monsters, ", ", fn m -> "a " <> to_string(m[:name]) end)
+
               [
-                "There are " <>
-                  to_string(monster_count) <>
-                  " monsters! The monsters include " <>
-                  Enum.map_join(monsters, ", ", fn monster ->
-                    "a " <> to_string(monster[:name])
-                  end) <> ".",
+                "There are #{monster_count} monsters! The monsters include #{monster_names}.",
                 "They prepare to attack."
               ]
           end
 
+      # Update player position
       updated_game_state = %{game_state | player_position: new_pos}
 
-      # Check for combat
-      {combat_messages, updated_game_state} =
-        Shard.Combat.start_combat(updated_game_state)
+      # Handle combat
+      {combat_messages, updated_game_state} = Shard.Combat.start_combat(updated_game_state)
 
-      # Return completion result separately for popup handling
       final_response = response ++ combat_messages
 
+      # Handle dungeon completion popups
       case completion_result do
         {:completed, message} ->
           {final_response, updated_game_state, {:show_completion_popup, message}}
@@ -129,7 +113,12 @@ defmodule ShardWeb.UserLive.Movement do
           {final_response, updated_game_state, :no_popup}
       end
     end
+  rescue
+    _ ->
+      # Fallback for any unexpected movement errors
+      {["You can't move that way."], game_state}
   end
+end
 
   # To calculate new player position on map
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
