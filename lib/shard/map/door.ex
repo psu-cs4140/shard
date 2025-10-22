@@ -17,6 +17,8 @@ defmodule Shard.Map.Door do
 
     belongs_to :from_room, Shard.Map.Room, foreign_key: :from_room_id
     belongs_to :to_room, Shard.Map.Room, foreign_key: :to_room_id
+    belongs_to :from_realm, Shard.Map.Realm, foreign_key: :from_realm_id
+    belongs_to :to_realm, Shard.Map.Realm, foreign_key: :to_realm_id
 
     timestamps(type: :utc_datetime)
   end
@@ -29,6 +31,8 @@ defmodule Shard.Map.Door do
       :description,
       :from_room_id,
       :to_room_id,
+      :from_realm_id,
+      :to_realm_id,
       :direction,
       :is_locked,
       :key_required,
