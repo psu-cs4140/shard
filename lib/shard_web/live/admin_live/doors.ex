@@ -44,4 +44,62 @@ defmodule ShardWeb.AdminLive.Doors do
 
     {:noreply, stream_delete(socket, :doors, door)}
   end
+
+  @impl true
+  def render(assigns) do
+    ~H"""
+    <.header>
+      Doors
+      <:actions>
+        <.link patch={~p"/admin/doors/new"}>
+          <.button>New Door</.button>
+        </.link>
+      </:actions>
+    </.header>
+
+    <.table
+      id="doors"
+      rows={@streams.doors}
+      row_click={fn {_id, door} -> JS.navigate(~p"/admin/doors/#{door}/show") end}
+    >
+      <:col :let={{_id, door}} label="Name"><%= door.name %></:col>
+      <:col :let={{_id, door}} label="From Room">
+        <%= if door.from_room, do: door.from_room.name, else: "N/A" %>
+      </:col>
+      <:col :let={{_id, door}} label="To Room">
+        <%= if door.to_room, do: door.to_room.name, else: "N/A" %>
+      </:col>
+      <:col :let={{_id, door}} label="Direction"><%= door.direction %></:col>
+      <:col :let={{_id, door}} label="Type"><%= door.door_type %></:col>
+      <:col :let={{_id, door}} label="Locked">
+        <%= if door.is_locked, do: "Yes", else: "No" %>
+      </:col>
+      <:action :let={{_id, door}}>
+        <div class="sr-only">
+          <.link navigate={~p"/admin/doors/#{door}"}>Show</.link>
+        </div>
+        <.link patch={~p"/admin/doors/#{door}/edit"}>Edit</.link>
+      </:action>
+      <:action :let={{id, door}}>
+        <.link
+          phx-click={JS.push("delete", value: %{id: door.id}) |> hide("##{id}")}
+          data-confirm="Are you sure?"
+        >
+          Delete
+        </.link>
+      </:action>
+    </.table>
+
+    <.modal :if={@live_action in [:new, :edit]} id="door-modal" show on_cancel={JS.patch(~p"/admin/doors")}>
+      <.live_component
+        module={ShardWeb.AdminLive.DoorFormComponent}
+        id={@door.id || :new}
+        title={@page_title}
+        action={@live_action}
+        door={@door}
+        patch={~p"/admin/doors"}
+      />
+    </.modal>
+    """
+  end
 end

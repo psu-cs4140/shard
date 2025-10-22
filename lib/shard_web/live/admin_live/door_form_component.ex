@@ -23,6 +23,13 @@ defmodule ShardWeb.AdminLive.DoorFormComponent do
         <.input field={@form[:description]} type="textarea" label="Description" />
 
         <.input
+          field={@form[:from_realm]}
+          type="text"
+          label="From Realm"
+          placeholder="Enter realm name"
+        />
+
+        <.input
           field={@form[:from_room_id]}
           type="select"
           label="From Room"
@@ -36,6 +43,13 @@ defmodule ShardWeb.AdminLive.DoorFormComponent do
           label="To Room"
           options={@room_options}
           prompt="Select a room"
+        />
+
+        <.input
+          field={@form[:to_realm]}
+          type="text"
+          label="To Realm"
+          placeholder="Enter destination realm name"
         />
 
         <.input
