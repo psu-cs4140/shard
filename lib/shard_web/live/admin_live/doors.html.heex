@@ -19,7 +19,6 @@
   <:col :let={{_id, door}} label="To Room"><%= door.to_room_id %></:col>
   <:col :let={{_id, door}} label="Type"><%= door.door_type %></:col>
   <:col :let={{_id, door}} label="Locked"><%= if door.is_locked, do: "Yes", else: "No" %></:col>
-  <:col :let={{_id, door}} label="Realm"><%= door.realm %></:col>
   <:action :let={{_id, door}}>
     <div class="sr-only">
       <.link navigate={~p"/admin/doors/#{door}/edit"}>Show</.link>

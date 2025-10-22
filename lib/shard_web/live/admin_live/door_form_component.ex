@@ -71,7 +71,6 @@ defmodule ShardWeb.AdminLive.DoorFormComponent do
         
         <.input field={@form[:is_locked]} type="checkbox" label="Is Locked" />
         <.input field={@form[:key_required]} type="text" label="Key Required" />
-        <.input field={@form[:realm]} type="text" label="Realm" />
 
         <:actions>
           <.button phx-disable-with="Saving...">Save Door</.button>
