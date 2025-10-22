@@ -1,32 +1,47 @@
 defmodule Shard.Application do
-  # See https://hexdocs.pm/elixir/Application.html
-  # for more information on OTP Applications
   @moduledoc false
-
   use Application
 
   @impl true
   def start(_type, _args) do
-    children = [
-      ShardWeb.Telemetry,
-      Shard.Repo,
-      {DNSCluster, query: Application.get_env(:shard, :dns_cluster_query) || :ignore},
-      {Phoenix.PubSub, name: Shard.PubSub},
-      Shard.Artifacts.ArtifactServer,
-      # Start a worker by calling: Shard.Worker.start_link(arg)
-      # {Shard.Worker, arg},
-      # Start to serve requests, typically the last entry
-      ShardWeb.Endpoint
-    ]
+    children =
+      [
+        ShardWeb.Telemetry,
+        Shard.Repo,
+        {DNSCluster, query: Application.get_env(:shard, :dns_cluster_query) || :ignore},
+        {Phoenix.PubSub, name: Shard.PubSub},
+        {Finch, name: Shard.Finch},
+        ShardWeb.Endpoint
+      ] ++ local_mailbox_child()
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Shard.Supervisor]
     Supervisor.start_link(children, opts)
   end
 
-  # Tell Phoenix to update the endpoint configuration
-  # whenever the application is updated.
+  # Start Swoosh's in-memory mailbox when adapter is Local **and**
+  # the process isn't already running (dev usually starts it for you).
+  defp local_mailbox_child do
+    case Application.get_env(:shard, Shard.Mailer)[:adapter] do
+      Swoosh.Adapters.Local ->
+        case :global.whereis_name(Swoosh.Adapters.Local.Storage.Memory) do
+          :undefined ->
+            [
+              %{
+                id: Swoosh.Adapters.Local.Storage.Memory,
+                start: {Swoosh.Adapters.Local.Storage.Memory, :start, [[]]},
+                type: :worker
+              }
+            ]
+
+          _pid ->
+            []
+        end
+
+      _ ->
+        []
+    end
+  end
+
   @impl true
   def config_change(changed, _new, removed) do
     ShardWeb.Endpoint.config_change(changed, removed)

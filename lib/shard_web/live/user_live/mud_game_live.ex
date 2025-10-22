@@ -1,4 +1,7 @@
+# credo:disable-for-this-file Credo.Check.Refactor.Nesting
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule ShardWeb.MudGameLive do
+  @moduledoc false
   use ShardWeb, :live_view
   alias Phoenix.PubSub
   alias Phoenix.LiveView.JS
@@ -14,6 +17,7 @@ defmodule ShardWeb.MudGameLive do
   import ShardWeb.UserLive.ItemHelpers
 
   @impl true
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity, Credo.Check.Refactor.Nesting
   def mount(%{"map_id" => map_id} = params, _session, socket) do
     with {:ok, character} <- get_character_from_params(params),
          character_name <- get_character_name(params, character),

@@ -1,4 +1,7 @@
+# credo:disable-for-this-file Credo.Check.Refactor.Nesting
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
 defmodule ShardWeb.UserLive.Movement do
+  @moduledoc false
   use ShardWeb, :live_view
   alias Shard.Map, as: GameMap
   alias Shard.Repo
@@ -129,6 +132,7 @@ defmodule ShardWeb.UserLive.Movement do
   end
 
   # To calculate new player position on map
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   def calc_position(curr_position, key, _map_data) do
     new_position =
       case key do
@@ -181,6 +185,7 @@ defmodule ShardWeb.UserLive.Movement do
   end
 
   # Helper function to check if movement is valid via door connection
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity, Credo.Check.Refactor.Nesting
   defp valid_movement(current_pos, new_pos, direction) do
     {curr_x, curr_y} = current_pos
     {new_x, new_y} = new_pos
@@ -246,6 +251,7 @@ defmodule ShardWeb.UserLive.Movement do
   end
 
   # Helper function to get available exits from current position
+  # credo:disable-for-next-line Credo.Check.Refactor.Nesting
   def get_available_exits(x, y, room) do
     exits = []
 

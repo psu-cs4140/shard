@@ -121,3 +121,27 @@ if config_env() == :prod do
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
 end
+
+## ── Mailer (env-driven) ────────────────────────────────────────────────────────
+mailer_adapter =
+  case {config_env(), String.downcase(System.get_env("MAILER_ADAPTER", ""))} do
+    # Dev/test use Local unless explicitly overridden
+    {env, _} when env in [:dev, :test] -> Swoosh.Adapters.Local
+    {_, "local"} -> Swoosh.Adapters.Local
+    {_, "smtp"} -> Swoosh.Adapters.SMTP
+    _ -> Swoosh.Adapters.SMTP
+  end
+
+config :shard, Shard.Mailer,
+  adapter: mailer_adapter,
+  # SMTP settings (ignored when adapter is Local)
+  relay: System.get_env("SMTP_HOST"),
+  port: String.to_integer(System.get_env("SMTP_PORT") || "587"),
+  username: System.get_env("SMTP_USERNAME"),
+  password: System.get_env("SMTP_PASSWORD"),
+  tls: :if_available,
+  auth: :always,
+  retries: 2
+
+# Swoosh API client not needed for SMTP/Local
+config :swoosh, :api_client, false

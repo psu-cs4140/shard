@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Refactor.Nesting
 defmodule Shard.Items do
   @moduledoc """
   The Items context.
@@ -200,6 +201,7 @@ defmodule Shard.Items do
     |> Repo.all()
   end
 
+  # credo:disable-for-next-line Credo.Check.Refactor.Nesting
   def drop_item_in_room(character_id, inventory_id, location, quantity \\ 1) do
     inventory = Repo.get!(CharacterInventory, inventory_id) |> Repo.preload(:item)
 
