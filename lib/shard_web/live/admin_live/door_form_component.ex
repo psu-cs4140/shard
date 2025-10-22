@@ -24,9 +24,10 @@ defmodule ShardWeb.AdminLive.DoorFormComponent do
 
         <.input
           field={@form[:from_realm]}
-          type="text"
+          type="select"
           label="From Realm"
-          placeholder="Enter realm name"
+          options={@realm_options}
+          prompt="Select a realm"
         />
 
         <.input
@@ -47,9 +48,10 @@ defmodule ShardWeb.AdminLive.DoorFormComponent do
 
         <.input
           field={@form[:to_realm]}
-          type="text"
+          type="select"
           label="To Realm"
-          placeholder="Enter destination realm name"
+          options={@realm_options}
+          prompt="Select a realm"
         />
 
         <.input
@@ -99,11 +101,15 @@ defmodule ShardWeb.AdminLive.DoorFormComponent do
     changeset = Map.change_door(door)
     rooms = Map.list_rooms()
     room_options = Enum.map(rooms, &{&1.name || "Room #{&1.id}", &1.id})
+    
+    realms = Map.list_realms()
+    realm_options = Enum.map(realms, &{&1, &1})
 
     {:ok,
      socket
      |> assign(assigns)
      |> assign(:room_options, room_options)
+     |> assign(:realm_options, realm_options)
      |> assign_form(changeset)}
   end
 

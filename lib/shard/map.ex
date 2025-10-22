@@ -222,6 +222,19 @@ defmodule Shard.Map do
   end
 
   @doc """
+  Gets all unique realms from rooms.
+  """
+  def list_realms do
+    Repo.all(
+      from r in Room,
+        where: not is_nil(r.realm),
+        select: r.realm,
+        distinct: true,
+        order_by: r.realm
+    )
+  end
+
+  @doc """
   Checks if moving between two rooms represents completing the dungeon.
   Returns a completion message if the movement is from (2,2) to (2,1).
   """
