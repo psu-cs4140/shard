@@ -1,4 +1,7 @@
 defmodule Shard.Weapons.Effects do
+  @moduledoc """
+  This module defines the schema for an effect
+  """
   use Ecto.Schema
   import Ecto.Changeset
 

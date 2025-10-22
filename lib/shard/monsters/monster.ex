@@ -1,4 +1,9 @@
 defmodule Shard.Monsters.Monster do
+  @moduledoc """
+  This module defines the monster schema and the changeset to 
+  change monster field. Also includes functions to ensure that
+  health does not exceed max health
+  """
   use Ecto.Schema
   import Ecto.Changeset
 

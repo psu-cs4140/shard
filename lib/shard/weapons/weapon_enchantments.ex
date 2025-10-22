@@ -1,4 +1,7 @@
 defmodule Shard.Weapons.WeaponEnchantments do
+  @moduledoc """
+  The weapon enchantments module defines the scheme for a weapon enchantment
+  """
   use Ecto.Schema
   import Ecto.Changeset
 

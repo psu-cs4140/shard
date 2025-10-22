@@ -16,7 +16,8 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   defp handle_quest_acceptance(game_state, quest, npc) do
     npc_name = npc.name || "Unknown NPC"
     quest_title = quest.title || "Untitled Quest"
-    user_id = 1  # Mock user_id - should come from session in real implementation
+    # Mock user_id - should come from session in real implementation
+    user_id = 1
 
     already_accepted = check_quest_already_accepted(user_id, quest.id)
 

@@ -1,4 +1,10 @@
 defmodule Shard.Items.HotbarSlot do
+  @moduledoc """
+  This module defines the schema for a hotbarslot and the changeset
+  which allows changes to be made to a hotbarslot's fields. Also
+  includes a function to ensure inventory / item consistency
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

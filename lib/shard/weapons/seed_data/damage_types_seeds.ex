@@ -1,4 +1,7 @@
 defmodule Shard.Weapons.SeedData.DamageTypesSeeds do
+  @moduledoc """
+  This module defines some damage types for weapons
+  """
   def data do
     [
       %{name: "Slashing"},
