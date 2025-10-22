@@ -320,17 +320,19 @@ defmodule ShardWeb.UserLive.MapComponents do
 
   # Helper function to prepare all door line assigns
   defp prepare_door_line_assigns(assigns, from_room, to_room) do
-    {x1, y1} = calculate_minimap_position(
-      {from_room.x_coordinate, from_room.y_coordinate},
-      assigns.bounds,
-      assigns.scale_factor
-    )
+    {x1, y1} =
+      calculate_minimap_position(
+        {from_room.x_coordinate, from_room.y_coordinate},
+        assigns.bounds,
+        assigns.scale_factor
+      )
 
-    {x2, y2} = calculate_minimap_position(
-      {to_room.x_coordinate, to_room.y_coordinate},
-      assigns.bounds,
-      assigns.scale_factor
-    )
+    {x2, y2} =
+      calculate_minimap_position(
+        {to_room.x_coordinate, to_room.y_coordinate},
+        assigns.bounds,
+        assigns.scale_factor
+      )
 
     is_one_way = ShardWeb.UserLive.MinimapComponents.one_way_door_check(assigns.door)
     is_diagonal = is_diagonal_door?(assigns.door)
