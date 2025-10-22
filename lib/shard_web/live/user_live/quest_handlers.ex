@@ -191,14 +191,22 @@ defmodule ShardWeb.UserLive.QuestHandlers do
 
     full_quest = get_full_quest_safely(quest.id)
     {exp_reward, gold_reward} = calculate_quest_rewards(full_quest)
-    
+
     updated_stats = update_player_stats_with_experience(game_state.player_stats, exp_reward)
     {updated_stats, level_up_message} = handle_level_up_check(updated_stats)
-    
+
     updated_quests = complete_quest_in_database_and_update_state(game_state.quests, quest.id)
-    
-    response = build_quest_completion_response(npc_name, quest_title, exp_reward, gold_reward, full_quest, level_up_message)
-    
+
+    response =
+      build_quest_completion_response(
+        npc_name,
+        quest_title,
+        exp_reward,
+        gold_reward,
+        full_quest,
+        level_up_message
+      )
+
     updated_game_state = %{game_state | player_stats: updated_stats, quests: updated_quests}
     {response, updated_game_state}
   end
@@ -276,7 +284,14 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   end
 
   # Helper function to build the complete response message
-  defp build_quest_completion_response(npc_name, quest_title, exp_reward, gold_reward, full_quest, level_up_message) do
+  defp build_quest_completion_response(
+         npc_name,
+         quest_title,
+         exp_reward,
+         gold_reward,
+         full_quest,
+         level_up_message
+       ) do
     base_response = [
       "#{npc_name} examines your progress carefully.",
       "",
@@ -288,12 +303,15 @@ defmodule ShardWeb.UserLive.QuestHandlers do
 
     response_with_gold = add_gold_reward_to_response(base_response, gold_reward)
     response_with_items = add_item_rewards_to_response(response_with_gold, full_quest)
-    response_with_level_up = add_level_up_message_to_response(response_with_items, level_up_message)
-    
-    response_with_level_up ++ [
-      "",
-      "#{npc_name} says: \"Thank you for your service. You have proven yourself worthy!\""
-    ]
+
+    response_with_level_up =
+      add_level_up_message_to_response(response_with_items, level_up_message)
+
+    response_with_level_up ++
+      [
+        "",
+        "#{npc_name} says: \"Thank you for your service. You have proven yourself worthy!\""
+      ]
   end
 
   # Helper function to add gold reward to response
