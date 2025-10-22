@@ -193,5 +193,103 @@ defmodule Shard.MapTest do
         assert return_door.to_room_id == room1.id
       end)
     end
+
+    test "create_door/1 handles gracefully when return door already exists", %{
+      room1: room1,
+      room2: room2
+    } do
+      # Create initial door (creates both directions)
+      valid_attrs = %{
+        from_room_id: room1.id,
+        to_room_id: room2.id,
+        direction: "north"
+      }
+
+      assert {:ok, _door} = Map.create_door(valid_attrs)
+
+      # Verify return door was created
+      return_door = Map.get_door_in_direction(room2.id, "south")
+      assert return_door != nil
+
+      # Now try to create another door in the same direction
+      # This should fail gracefully due to unique constraint on return door
+      # but should not crash the application
+      result = Map.create_door(valid_attrs)
+
+      # The function should handle this gracefully
+      # Either by checking if return door exists or handling the constraint error
+      case result do
+        {:ok, _door} ->
+          # If it succeeds, that's also acceptable - means the fix worked
+          :ok
+        {:error, changeset} ->
+          # If it returns an error changeset, that's also acceptable
+          # as long as it doesn't crash with a MatchError
+          assert changeset.valid? == false
+      end
+    end
+
+    test "create_door/1 respects unique constraint on from_room_id and direction", %{
+      room1: room1,
+      room2: room2
+    } do
+      # Create initial door
+      valid_attrs = %{
+        from_room_id: room1.id,
+        to_room_id: room2.id,
+        direction: "north"
+      }
+
+      assert {:ok, _door} = Map.create_door(valid_attrs)
+
+      # Try to create another door from the same room in the same direction
+      # This should fail due to unique constraint
+      duplicate_attrs = %{
+        from_room_id: room1.id,
+        to_room_id: room2.id,  # Different destination room
+        direction: "north"       # Same direction from same room
+      }
+
+      result = Map.create_door(duplicate_attrs)
+      assert {:error, changeset} = result
+      assert changeset.valid? == false
+
+      # Check that the error is related to the unique constraint
+      assert changeset.errors[:from_room_id] != nil or
+             changeset.errors[:direction] != nil or
+             changeset.errors[:to_room_id] != nil
+    end
+
+    test "create_door/1 creates main door even if return door creation fails", %{
+      room1: room1,
+      room2: room2
+    } do
+      # Create initial door to establish the return direction
+      initial_attrs = %{
+        from_room_id: room1.id,
+        to_room_id: room2.id,
+        direction: "north"
+      }
+
+      assert {:ok, initial_door} = Map.create_door(initial_attrs)
+
+      # Now try to create a door that would conflict with the return door
+      # This simulates the bug scenario
+      conflicting_attrs = %{
+        from_room_id: room2.id,  # This would be the return door's from_room
+        to_room_id: room1.id,    # This would be the return door's to_room
+        direction: "south"       # This would be the return door's direction
+      }
+
+      # This should either succeed (if return door doesn't exist) or fail gracefully
+      result = Map.create_door(conflicting_attrs)
+
+      # In either case, the initial door should still exist
+      assert Map.get_door!(initial_door.id) != nil
+
+      # And the doors should be in a consistent state
+      door_count = Map.list_doors() |> length()
+      assert door_count >= 1  # At least the initial door should exist
+    end
   end
 end

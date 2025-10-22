@@ -93,24 +93,52 @@ defmodule Shard.Map do
     if changeset.valid? do
       Repo.transaction(fn ->
         # Create the main door
-        {:ok, door} = Repo.insert(changeset)
+        case Repo.insert(changeset) do
+          {:ok, door} ->
+            # Main door created successfully, now try to create return door
+            return_attrs = %{
+              from_room_id: attrs[:to_room_id],
+              to_room_id: attrs[:from_room_id],
+              direction: Door.opposite_direction(attrs[:direction])
+            }
 
-        # Create the return door with opposite direction
-        return_attrs = %{
-          from_room_id: attrs[:to_room_id],
-          to_room_id: attrs[:from_room_id],
-          direction: Door.opposite_direction(attrs[:direction]),
-          door_type: attrs[:door_type] || "standard",
-          is_locked: attrs[:is_locked] || false,
-          key_required: attrs[:key_required]
-        }
+            # Check if return door already exists
+            existing_return_door = Repo.one(
+              from d in Door,
+                where: d.from_room_id == ^return_attrs[:from_room_id] and
+                       d.to_room_id == ^return_attrs[:to_room_id] and
+                       d.direction == ^return_attrs[:direction]
+            )
 
-        {:ok, _return_door} =
-          %Door{}
-          |> Door.changeset(return_attrs)
-          |> Repo.insert()
+            if is_nil(existing_return_door) do
+              # Create the return door with opposite direction
+              full_return_attrs = Map.merge(return_attrs, %{
+                door_type: attrs[:door_type] || "standard",
+                is_locked: attrs[:is_locked] || false,
+                key_required: attrs[:key_required]
+              })
 
-        door
+              case %Door{}
+                   |> Door.changeset(full_return_attrs)
+                   |> Repo.insert() do
+                {:ok, _return_door} ->
+                  # Return door created successfully
+                  door
+                {:error, _changeset} ->
+                  # Return door creation failed (e.g., due to unique constraint)
+                  # Still return the main door since it was created successfully
+                  door
+              end
+            else
+              # Return door already exists, just return the main door
+              door
+            end
+
+          {:error, main_door_changeset} ->
+            # Main door creation failed (e.g., due to unique constraint)
+            # Return the error changeset
+            Repo.rollback(main_door_changeset)
+        end
       end)
     else
       # Return the invalid changeset if validation fails
