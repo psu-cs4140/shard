@@ -366,11 +366,11 @@ alias Shard.Map.Realm
 
 # Create default realms
 realms = [
-  %{name: "Overworld", description: "The main realm where most adventures begin"},
-  %{name: "Underworld", description: "A dark realm beneath the surface"},
-  %{name: "Shadowlands", description: "A mysterious realm of shadows and secrets"},
-  %{name: "Feywild", description: "A magical realm of fey creatures and wonder"},
-  %{name: "Astral Plane", description: "A realm of pure thought and energy"}
+  %{name: "Dark Forest", description: "A mysterious forest shrouded in perpetual twilight"},
+  %{name: "Crystal Caves", description: "Glittering underground caverns filled with precious gems"},
+  %{name: "Volcanic Peaks", description: "Towering mountains with active volcanic activity"},
+  %{name: "Frozen Wastes", description: "An endless expanse of ice and snow"},
+  %{name: "Shadow Realm", description: "A dark dimension where shadows come alive"}
 ]
 
 Enum.each(realms, fn realm_attrs ->

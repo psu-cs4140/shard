@@ -23,7 +23,7 @@ defmodule ShardWeb.AdminLive.DoorFormComponent do
         <.input field={@form[:description]} type="textarea" label="Description" />
 
         <.input
-          field={@form[:from_realm]}
+          field={@form[:from_realm_id]}
           type="select"
           label="From Realm"
           options={@realm_options}
@@ -47,7 +47,7 @@ defmodule ShardWeb.AdminLive.DoorFormComponent do
         />
 
         <.input
-          field={@form[:to_realm]}
+          field={@form[:to_realm_id]}
           type="select"
           label="To Realm"
           options={@realm_options}
