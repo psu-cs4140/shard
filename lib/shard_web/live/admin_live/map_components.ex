@@ -354,25 +354,33 @@ defmodule ShardWeb.AdminLive.MapComponents do
       from_room = Enum.find(rooms, &(&1.id == door.from_room_id))
       to_room = Enum.find(rooms, &(&1.id == door.to_room_id))
 
-      if from_room && to_room do
-        # Create a normalized pair identifier (smaller ID first)
-        pair_key =
-          case {from_room.id, to_room.id} do
-            {a, b} when a < b -> {a, b}
-            {a, b} -> {b, a}
-          end
-
-        if MapSet.member?(seen_pairs, pair_key) do
-          {seen_pairs, unique_doors}
-        else
-          {MapSet.put(seen_pairs, pair_key), [door | unique_doors]}
-        end
-      else
-        {seen_pairs, unique_doors}
-      end
+      process_door_connection(from_room, to_room, door, seen_pairs, unique_doors)
     end)
     |> elem(1)
     |> Enum.reverse()
+  end
+
+  defp process_door_connection(nil, _to_room, _door, seen_pairs, unique_doors) do
+    {seen_pairs, unique_doors}
+  end
+
+  defp process_door_connection(_from_room, nil, _door, seen_pairs, unique_doors) do
+    {seen_pairs, unique_doors}
+  end
+
+  defp process_door_connection(from_room, to_room, door, seen_pairs, unique_doors) do
+    # Create a normalized pair identifier (smaller ID first)
+    pair_key =
+      case {from_room.id, to_room.id} do
+        {a, b} when a < b -> {a, b}
+        {a, b} -> {b, a}
+      end
+
+    if MapSet.member?(seen_pairs, pair_key) do
+      {seen_pairs, unique_doors}
+    else
+      {MapSet.put(seen_pairs, pair_key), [door | unique_doors]}
+    end
   end
 
   # Sort doors so that each door is next to its return door
