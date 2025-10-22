@@ -60,7 +60,6 @@ defmodule ShardWeb.AdminLive.Doors do
     <.table
       id="doors"
       rows={@streams.doors}
-      row_click={fn {_id, door} -> JS.navigate(~p"/admin/doors/#{door}/show") end}
     >
       <:col :let={{_id, door}} label="Name">{door.name}</:col>
       <:col :let={{_id, door}} label="From Room">
@@ -75,9 +74,6 @@ defmodule ShardWeb.AdminLive.Doors do
         {if door.is_locked, do: "Yes", else: "No"}
       </:col>
       <:action :let={{_id, door}}>
-        <div class="sr-only">
-          <.link navigate={~p"/admin/doors/#{door}"}>Show</.link>
-        </div>
         <.link patch={~p"/admin/doors/#{door}/edit"}>Edit</.link>
       </:action>
       <:action :let={{id, door}}>
