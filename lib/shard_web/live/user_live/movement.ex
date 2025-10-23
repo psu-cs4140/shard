@@ -67,6 +67,7 @@ defmodule ShardWeb.UserLive.Movement do
 
               monster_count > 1 ->
                 names = Enum.map_join(monsters, ", ", fn m -> "a " <> to_string(m[:name]) end)
+
                 [
                   "There are #{monster_count} monsters! The monsters include #{names}.",
                   "They prepare to attack."
