@@ -20,8 +20,7 @@ def execute_movement(game_state, direction) do
     PubSub.subscribe(Shard.PubSub, posn_to_room_channel(new_pos))
 
     if new_pos == current_pos do
-      response = ["You cannot move in that direction. There's no room or passage that way."]
-      {response, game_state}
+      {["You cannot move in that direction. There's no room or passage that way."], game_state}
     else
       direction_name =
         case direction do
@@ -33,89 +32,58 @@ def execute_movement(game_state, direction) do
           "southeast" -> "southeast"
           "northwest" -> "northwest"
           "southwest" -> "southwest"
-          _ -> "unknown direction"
+          _ -> "unknown"
         end
 
-      # Current and destination coordinates
       {curr_x, curr_y} = current_pos
       {new_x, new_y} = new_pos
 
       current_room = GameMap.get_room_by_coordinates(curr_x, curr_y)
       destination_room = GameMap.get_room_by_coordinates(new_x, new_y)
-
-      # Check for dungeon completion
       completion_result = GameMap.check_dungeon_completion(current_room, destination_room)
 
-      # Check for NPCs and items
       npcs_here = get_npcs_at_location(new_x, new_y, game_state.map_id)
       items_here = get_items_at_location(new_x, new_y, game_state.map_id)
-
-      # Basic movement feedback
-      response = ["You traversed #{direction_name}."]
-
-      # Add NPC presence
-      response =
-        response ++
-          if length(npcs_here) > 0 do
-            npc_names = Enum.map_join(npcs_here, ", ", & &1.name)
-            ["You see #{npc_names} here."]
-          else
-            []
-          end
-
-      # Add item presence
-      response =
-        response ++
-          if length(items_here) > 0 do
-            Enum.map(items_here, fn item ->
-              item_name = Map.get(item, :name) || "Unknown Item"
-              "You see a #{item_name} on the ground."
-            end)
-          else
-            []
-          end
-
-      # Check for monsters
       monsters = Enum.filter(game_state.monsters, fn m -> m[:position] == new_pos end)
       monster_count = Enum.count(monsters)
 
       response =
-        response ++
-          case monster_count do
-            0 -> []
-            1 ->
-              monster = Enum.at(monsters, 0)
-              ["There is a #{monster[:name]} here! It prepares to attack."]
-            _ ->
-              monster_names =
-                Enum.map_join(monsters, ", ", fn m -> "a " <> to_string(m[:name]) end)
+        ["You traversed #{direction_name}."] ++
+          if length(npcs_here) > 0,
+            do: ["You see #{Enum.map_join(npcs_here, ", ", & &1.name)} here."],
+            else: [] ++
+          if length(items_here) > 0,
+            do:
+              Enum.map(items_here, fn i ->
+                "You see a #{i.name || "unknown item"} on the ground."
+              end),
+            else: [] ++
+          cond do
+            monster_count == 1 ->
+              ["There is a #{Enum.at(monsters, 0)[:name]} here! It prepares to attack."]
 
+            monster_count > 1 ->
+              names = Enum.map_join(monsters, ", ", fn m -> "a " <> to_string(m[:name]) end)
               [
-                "There are #{monster_count} monsters! The monsters include #{monster_names}.",
+                "There are #{monster_count} monsters! The monsters include #{names}.",
                 "They prepare to attack."
               ]
+
+            true ->
+              []
           end
 
-      # Update player position
       updated_game_state = %{game_state | player_position: new_pos}
+      {combat_msgs, updated_game_state} = Shard.Combat.start_combat(updated_game_state)
+      final_response = response ++ combat_msgs
 
-      # Handle combat
-      {combat_messages, updated_game_state} = Shard.Combat.start_combat(updated_game_state)
-
-      final_response = response ++ combat_messages
-
-      # Handle dungeon completion popups
       case completion_result do
-        {:completed, message} ->
-          {final_response, updated_game_state, {:show_completion_popup, message}}
-
-        :no_completion ->
-          {final_response, updated_game_state, :no_popup}
+        {:completed, msg} -> {final_response, updated_game_state, {:show_completion_popup, msg}}
+        :no_completion -> {final_response, updated_game_state, :no_popup}
       end
     end
   rescue
     _ ->
-      # Fallback for any unexpected movement errors
       {["You can't move that way."], game_state}
   end
 end
