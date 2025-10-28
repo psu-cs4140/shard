@@ -352,7 +352,6 @@ defmodule ShardWeb.UserLive.MapComponents do
     """
   end
 
-
   # Helper function to check if room should be skipped
   defp should_skip_room_render?(room) do
     room.x_coordinate == nil or room.y_coordinate == nil
