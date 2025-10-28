@@ -368,7 +368,14 @@ defmodule ShardWeb.UserLive.MapComponents do
       )
 
     {fill_color, stroke_color} = get_room_colors(assigns.room.room_type)
-    {player_stroke, player_width} = get_player_styling(assigns.is_player, stroke_color)
+    
+    # Apply player-specific styling
+    {player_stroke, player_width} = 
+      if assigns.is_player do
+        {"#ef4444", "3"}
+      else
+        {stroke_color, "1"}
+      end
 
     assign(assigns,
       x_pos: x_pos,
