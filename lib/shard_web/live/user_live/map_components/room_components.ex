@@ -22,25 +22,8 @@ defmodule ShardWeb.UserLive.MapComponents.RoomComponents do
             assigns.scale_factor
           )
 
-        # Define colors for rooms based on room type
-        {fill_color, stroke_color} =
-          case assigns.room.room_type do
-            # Green for safe zones
-            "safe_zone" -> {"#10b981", "#34d399"}
-            # Orange for shops
-            "shop" -> {"#f59e0b", "#fbbf24"}
-            # Dark red for dungeons
-            "dungeon" -> {"#7c2d12", "#dc2626"}
-            # Gold for treasure rooms
-            "treasure_room" -> {"#eab308", "#facc15"}
-            # Red for trap rooms
-            "trap_room" -> {"#991b1b", "#ef4444"}
-            # Blue for standard rooms
-            _ -> {"#3b82f6", "#60a5fa"}
-          end
-
-        player_stroke = if assigns.is_player, do: "#ef4444", else: stroke_color
-        player_width = if assigns.is_player, do: "3", else: "1"
+        {fill_color, stroke_color} = get_room_colors(assigns.room.room_type)
+        {player_stroke, player_width, _radius} = apply_minimap_player_styling(assigns.is_player, stroke_color)
 
         assign(assigns,
           x_pos: x_pos,
@@ -88,27 +71,15 @@ defmodule ShardWeb.UserLive.MapComponents.RoomComponents do
             assigns.scale_factor
           )
 
-        # Define colors for rooms based on room type
-        {fill_color, stroke_color} =
-          case assigns.room.room_type do
-            "safe_zone" -> {"#10b981", "#34d399"}
-            "shop" -> {"#f59e0b", "#fbbf24"}
-            "dungeon" -> {"#7c2d12", "#dc2626"}
-            "treasure_room" -> {"#eab308", "#facc15"}
-            "trap_room" -> {"#991b1b", "#ef4444"}
-            _ -> {"#3b82f6", "#60a5fa"}
-          end
-
-        player_stroke = if assigns.is_player, do: "#ef4444", else: stroke_color
-        player_width = if assigns.is_player, do: "4", else: "2"
-        radius = if assigns.is_player, do: "12", else: "8"
+        {fill_color, stroke_color} = get_room_colors(assigns.room.room_type)
+        {final_stroke_color, stroke_width, radius} = apply_player_styling(assigns.is_player, stroke_color)
 
         assign(assigns,
           x_pos: x_pos,
           y_pos: y_pos,
           fill_color: fill_color,
-          stroke_color: player_stroke,
-          stroke_width: player_width,
+          stroke_color: final_stroke_color,
+          stroke_width: stroke_width,
           radius: radius,
           skip_render: false
         )
@@ -132,6 +103,36 @@ defmodule ShardWeb.UserLive.MapComponents.RoomComponents do
       </circle>
     <% end %>
     """
+  end
+
+  # Get room colors based on room type
+  defp get_room_colors(room_type) do
+    case room_type do
+      "safe_zone" -> {"#10b981", "#34d399"}
+      "shop" -> {"#f59e0b", "#fbbf24"}
+      "dungeon" -> {"#7c2d12", "#dc2626"}
+      "treasure_room" -> {"#eab308", "#facc15"}
+      "trap_room" -> {"#991b1b", "#ef4444"}
+      _ -> {"#3b82f6", "#60a5fa"}
+    end
+  end
+
+  # Apply player-specific styling for full map
+  defp apply_player_styling(is_player, default_stroke_color) do
+    if is_player do
+      {"#ef4444", "4", "12"}
+    else
+      {default_stroke_color, "2", "8"}
+    end
+  end
+
+  # Apply player-specific styling for minimap
+  defp apply_minimap_player_styling(is_player, default_stroke_color) do
+    if is_player do
+      {"#ef4444", "3", "6"}
+    else
+      {default_stroke_color, "1", "6"}
+    end
   end
 
   # Calculate position within full map coordinates
