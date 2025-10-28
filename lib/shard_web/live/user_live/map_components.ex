@@ -316,7 +316,7 @@ defmodule ShardWeb.UserLive.MapComponents do
         <svg viewBox="0 0 300 200" class="w-full h-full border border-gray-600 bg-gray-800">
           <!-- Render doors as lines first (so they appear behind rooms) -->
           <%= for door <- @doors do %>
-            <.door_line door={door} bounds={@bounds} scale_factor={@scale_factor} />
+            <.minimap_door_line door={door} bounds={@bounds} scale_factor={@scale_factor} />
           <% end %>
           
     <!-- Render rooms as circles -->
@@ -349,6 +349,136 @@ defmodule ShardWeb.UserLive.MapComponents do
         <% end %>
       </div>
     </div>
+    """
+  end
+
+  # Component for door lines in the minimap
+  def minimap_door_line(assigns) do
+    # Use preloaded associations
+    from_room = assigns.door.from_room
+    to_room = assigns.door.to_room
+
+    if should_skip_door_render?(from_room, to_room) do
+      assigns = assign(assigns, :skip_render, true)
+      render_door_line(assigns)
+    else
+      assigns = prepare_door_line_assigns(assigns, from_room, to_room)
+      render_door_line(assigns)
+    end
+  end
+
+  # Helper function to check if door should be skipped
+  defp should_skip_door_render?(from_room, to_room) do
+    from_room == nil or to_room == nil or
+      from_room.x_coordinate == nil or from_room.y_coordinate == nil or
+      to_room.x_coordinate == nil or to_room.y_coordinate == nil
+  end
+
+  # Helper function to prepare all door line assigns
+  defp prepare_door_line_assigns(assigns, from_room, to_room) do
+    {x1, y1} =
+      calculate_minimap_position(
+        {from_room.x_coordinate, from_room.y_coordinate},
+        assigns.bounds,
+        assigns.scale_factor
+      )
+
+    {x2, y2} =
+      calculate_minimap_position(
+        {to_room.x_coordinate, to_room.y_coordinate},
+        assigns.bounds,
+        assigns.scale_factor
+      )
+
+    is_one_way = ShardWeb.UserLive.MinimapComponents.one_way_door_check(assigns.door)
+    is_diagonal = diagonal_door?(assigns.door)
+    stroke_color = get_door_stroke_color(assigns.door, is_one_way)
+    {stroke_width, stroke_dasharray} = get_door_stroke_style(is_diagonal)
+    door_name = get_door_name(assigns.door)
+
+    assign(assigns,
+      x1: x1,
+      y1: y1,
+      x2: x2,
+      y2: y2,
+      stroke_color: stroke_color,
+      stroke_width: stroke_width,
+      stroke_dasharray: stroke_dasharray,
+      door_name: door_name,
+      is_diagonal: is_diagonal,
+      skip_render: false
+    )
+  end
+
+  # Helper function to check if door is diagonal
+  defp diagonal_door?(door) do
+    door.direction in ["northeast", "northwest", "southeast", "southwest"]
+  end
+
+  # Helper function to determine door stroke color
+  defp get_door_stroke_color(door, is_one_way) do
+    cond do
+      door.is_locked -> get_locked_door_color()
+      is_one_way -> get_one_way_door_color()
+      has_key_requirement?(door) -> get_key_required_door_color()
+      true -> get_door_type_color(door.door_type)
+    end
+  end
+
+  # Helper functions for door colors
+  defp get_locked_door_color, do: "#dc2626"
+  defp get_one_way_door_color, do: "#ec4899"
+  defp get_key_required_door_color, do: "#f59e0b"
+
+  defp has_key_requirement?(door) do
+    door.key_required && door.key_required != ""
+  end
+
+  defp get_door_type_color(door_type) do
+    case door_type do
+      "portal" -> "#8b5cf6"
+      "gate" -> "#d97706"
+      "locked_gate" -> "#991b1b"
+      "secret" -> "#6b7280"
+      _ -> "#22c55e"
+    end
+  end
+
+  # Helper function to get door stroke style
+  defp get_door_stroke_style(is_diagonal) do
+    if is_diagonal do
+      {"1.5", "3,2"}
+    else
+      {"2", nil}
+    end
+  end
+
+  # Helper function to get door name
+  defp get_door_name(door) do
+    door.name || "#{String.capitalize(door.door_type || "standard")} Door"
+  end
+
+  # Helper function to render the door line template
+  defp render_door_line(assigns) do
+    ~H"""
+    <%= unless @skip_render do %>
+      <line
+        x1={@x1}
+        y1={@y1}
+        x2={@x2}
+        y2={@y2}
+        stroke={@stroke_color}
+        stroke-width={@stroke_width}
+        stroke-dasharray={@stroke_dasharray}
+        opacity="0.8"
+      >
+        <title>
+          {@door_name} ({@door.direction}) - {String.capitalize(@door.door_type || "standard")}{if @is_diagonal,
+            do: " (diagonal)",
+            else: ""}
+        </title>
+      </line>
+    <% end %>
     """
   end
 end

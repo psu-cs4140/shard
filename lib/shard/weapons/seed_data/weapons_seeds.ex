@@ -1,4 +1,11 @@
 defmodule Shard.Weapons.SeedData.WeaponsSeeds do
+  @moduledoc """
+  This module weapon seeds define data for four specific weapons:
+  - iron dagger
+  - steel longsword
+  - battle axe
+  - flaming sword
+  """
   def data do
     [
       %{

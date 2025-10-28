@@ -1,4 +1,12 @@
 defmodule Shard.Users.User do
+  @moduledoc """
+  User module represents an indiviual user in all of shard. 
+
+  This module defines the schema and functions related to user accounts,
+  including user registration, authentication, profile information,
+  and database interactions.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

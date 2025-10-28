@@ -1,4 +1,9 @@
 defmodule Shard.Items.CharacterInventory do
+  @moduledoc """
+  This module defines the schema for character inventory and the changeset
+  which allows changes to be made to a character inventory' fields. Also
+  includes a functon to ensure equipment consistency
+  """
   use Ecto.Schema
   import Ecto.Changeset
 

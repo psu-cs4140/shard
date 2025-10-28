@@ -231,6 +231,12 @@ defmodule Shard.Items do
     room_item = Repo.get!(RoomItem, room_item_id) |> Repo.preload(:item)
     pickup_quantity = quantity || room_item.quantity
 
+    with :ok <- validate_pickup(room_item, pickup_quantity) do
+      execute_pickup_transaction(character_id, room_item, pickup_quantity)
+    end
+  end
+
+  defp validate_pickup(room_item, pickup_quantity) do
     cond do
       not room_item.item.pickup ->
         {:error, :item_not_pickupable}
@@ -239,29 +245,43 @@ defmodule Shard.Items do
         {:error, :insufficient_quantity}
 
       true ->
-        Repo.transaction(fn ->
-          # Add to inventory
-          case add_item_to_inventory(character_id, room_item.item_id, pickup_quantity) do
-            {:ok, _} ->
-              # Remove from room
-              if room_item.quantity == pickup_quantity do
-                case Repo.delete(room_item) do
-                  {:ok, _} -> {:ok, :picked_up}
-                  error -> Repo.rollback(error)
-                end
-              else
-                case room_item
-                     |> RoomItem.changeset(%{quantity: room_item.quantity - pickup_quantity})
-                     |> Repo.update() do
-                  {:ok, _} -> {:ok, :picked_up}
-                  error -> Repo.rollback(error)
-                end
-              end
+        :ok
+    end
+  end
 
-            error ->
-              Repo.rollback(error)
-          end
-        end)
+  defp execute_pickup_transaction(character_id, room_item, pickup_quantity) do
+    Repo.transaction(fn ->
+      case add_item_to_inventory(character_id, room_item.item_id, pickup_quantity) do
+        {:ok, _} ->
+          handle_room_item_removal(room_item, pickup_quantity)
+
+        error ->
+          Repo.rollback(error)
+      end
+    end)
+  end
+
+  defp handle_room_item_removal(room_item, pickup_quantity) do
+    if room_item.quantity == pickup_quantity do
+      remove_entire_room_item(room_item)
+    else
+      update_room_item_quantity(room_item, pickup_quantity)
+    end
+  end
+
+  defp remove_entire_room_item(room_item) do
+    case Repo.delete(room_item) do
+      {:ok, _} -> {:ok, :picked_up}
+      error -> Repo.rollback(error)
+    end
+  end
+
+  defp update_room_item_quantity(room_item, pickup_quantity) do
+    case room_item
+         |> RoomItem.changeset(%{quantity: room_item.quantity - pickup_quantity})
+         |> Repo.update() do
+      {:ok, _} -> {:ok, :picked_up}
+      error -> Repo.rollback(error)
     end
   end
 

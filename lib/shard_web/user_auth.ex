@@ -291,27 +291,30 @@ defmodule ShardWeb.UserAuth do
 
   defp mount_current_scope(socket, session) do
     Phoenix.Component.assign_new(socket, :current_scope, fn ->
-      user =
-        cond do
-          user_token = session["user_token"] ->
-            case Users.get_user_by_session_token(user_token) do
-              {user, _} when not is_nil(user) -> user
-              _ -> nil
-            end
-
-          # Handle string keys (from test helpers)
-          user_token = session[:user_token] ->
-            case Users.get_user_by_session_token(user_token) do
-              {user, _} when not is_nil(user) -> user
-              _ -> nil
-            end
-
-          true ->
-            nil
-        end
-
+      user = extract_user_from_session(session)
       Scope.for_user(user)
     end)
+  end
+
+  defp extract_user_from_session(session) do
+    cond do
+      user_token = session["user_token"] ->
+        get_user_by_token(user_token)
+
+      # Handle string keys (from test helpers)
+      user_token = session[:user_token] ->
+        get_user_by_token(user_token)
+
+      true ->
+        nil
+    end
+  end
+
+  defp get_user_by_token(user_token) do
+    case Users.get_user_by_session_token(user_token) do
+      {user, _} when not is_nil(user) -> user
+      _ -> nil
+    end
   end
 
   @doc "Returns the path to redirect to after log in."

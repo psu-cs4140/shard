@@ -288,7 +288,7 @@ defmodule Shard.MapTest do
       }
 
       # This should either succeed (if return door doesn't exist) or fail gracefully
-      result = Map.create_door(conflicting_attrs)
+      _result = Map.create_door(conflicting_attrs)
 
       # In either case, the initial door should still exist
       assert Map.get_door!(initial_door.id) != nil

@@ -1,4 +1,8 @@
 defmodule Shard.Items.Item do
+  @moduledoc """
+  The item module defines the scheme and some functions related to items/
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

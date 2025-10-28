@@ -240,55 +240,8 @@ defmodule ShardWeb.AdminLive.MapHandlers do
     Shard.Repo.delete_all(Door)
     Shard.Repo.delete_all(Room)
 
-    rooms =
-      for x <- 0..2, y <- 0..2 do
-        name = "Room #{x},#{y}"
-        description = "A room in the default map at coordinates (#{x}, #{y})"
-        room_type = if x == 1 and y == 1, do: "safe_zone", else: "standard"
-
-        {:ok, room} =
-          Map.create_room(%{
-            name: name,
-            description: description,
-            x_coordinate: x,
-            y_coordinate: y,
-            z_coordinate: 0,
-            room_type: room_type,
-            is_public: true
-          })
-
-        room
-      end
-
-    for x <- 0..2, y <- 0..2 do
-      current_room = Enum.find(rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
-
-      if x < 2 do
-        east_room = Enum.find(rooms, &(&1.x_coordinate == x + 1 && &1.y_coordinate == y))
-
-        {:ok, _door} =
-          Map.create_door(%{
-            from_room_id: current_room.id,
-            to_room_id: east_room.id,
-            direction: "east",
-            door_type: "standard",
-            is_locked: false
-          })
-      end
-
-      if y < 2 do
-        south_room = Enum.find(rooms, &(&1.x_coordinate == x && &1.y_coordinate == y + 1))
-
-        {:ok, _door} =
-          Map.create_door(%{
-            from_room_id: current_room.id,
-            to_room_id: south_room.id,
-            direction: "south",
-            door_type: "standard",
-            is_locked: false
-          })
-      end
-    end
+    rooms = create_default_rooms()
+    create_default_doors(rooms)
 
     rooms = Map.list_rooms()
     doors = Map.list_doors()
@@ -298,6 +251,72 @@ defmodule ShardWeb.AdminLive.MapHandlers do
      |> assign(:rooms, rooms)
      |> assign(:doors, doors)
      |> put_flash(:info, "Default 3x3 map generated successfully!")}
+  end
+
+  defp create_default_rooms do
+    for x <- 0..2, y <- 0..2 do
+      create_room_at_coordinates(x, y)
+    end
+  end
+
+  defp create_room_at_coordinates(x, y) do
+    name = "Room #{x},#{y}"
+    description = "A room in the default map at coordinates (#{x}, #{y})"
+    room_type = if x == 1 and y == 1, do: "safe_zone", else: "standard"
+
+    {:ok, room} =
+      Map.create_room(%{
+        name: name,
+        description: description,
+        x_coordinate: x,
+        y_coordinate: y,
+        z_coordinate: 0,
+        room_type: room_type,
+        is_public: true
+      })
+
+    room
+  end
+
+  defp create_default_doors(rooms) do
+    for x <- 0..2, y <- 0..2 do
+      current_room = find_room_at_coordinates(rooms, x, y)
+      create_doors_from_room(rooms, current_room, x, y)
+    end
+  end
+
+  defp find_room_at_coordinates(rooms, x, y) do
+    Enum.find(rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
+  end
+
+  defp create_doors_from_room(rooms, current_room, x, y) do
+    create_east_door(rooms, current_room, x, y)
+    create_south_door(rooms, current_room, x, y)
+  end
+
+  defp create_east_door(rooms, current_room, x, y) when x < 2 do
+    east_room = find_room_at_coordinates(rooms, x + 1, y)
+    create_door_between_rooms(current_room, east_room, "east")
+  end
+
+  defp create_east_door(_rooms, _current_room, _x, _y), do: :ok
+
+  defp create_south_door(rooms, current_room, x, y) when y < 2 do
+    south_room = find_room_at_coordinates(rooms, x, y + 1)
+    create_door_between_rooms(current_room, south_room, "south")
+  end
+
+  defp create_south_door(_rooms, _current_room, _x, _y), do: :ok
+
+  defp create_door_between_rooms(from_room, to_room, direction) do
+    {:ok, _door} =
+      Map.create_door(%{
+        from_room_id: from_room.id,
+        to_room_id: to_room.id,
+        direction: direction,
+        door_type: "standard",
+        is_locked: false
+      })
   end
 
   # Delete all map data

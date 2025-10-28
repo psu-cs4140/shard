@@ -108,34 +108,51 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
       }
     ]
 
-    Enum.each(tutorial_npcs, fn npc_params ->
-      case Npcs.get_npc_by_name(npc_params.name) do
-        nil ->
-          case Npcs.create_npc(npc_params) do
-            {:ok, _npc} -> :ok
-            {:error, _changeset} -> :error
-          end
+    Enum.each(tutorial_npcs, &ensure_npc_exists/1)
+  end
 
-        existing_npc ->
-          # Ensure NPC is at correct tutorial location
-          expected_x = npc_params.location_x
-          expected_y = npc_params.location_y
-          expected_z = npc_params.location_z
+  defp ensure_npc_exists(npc_params) do
+    case Npcs.get_npc_by_name(npc_params.name) do
+      nil ->
+        create_new_npc(npc_params)
 
-          if existing_npc.location_x != expected_x or
-               existing_npc.location_y != expected_y or
-               existing_npc.location_z != expected_z do
-            existing_npc
-            |> Ecto.Changeset.change(%{
-              location_x: expected_x,
-              location_y: expected_y,
-              location_z: expected_z
-            })
-            |> Repo.update()
-          end
+      existing_npc ->
+        ensure_npc_location(existing_npc, npc_params)
+    end
+  end
 
-          :ok
-      end
-    end)
+  defp create_new_npc(npc_params) do
+    case Npcs.create_npc(npc_params) do
+      {:ok, _npc} -> :ok
+      {:error, _changeset} -> :error
+    end
+  end
+
+  defp ensure_npc_location(existing_npc, npc_params) do
+    expected_x = npc_params.location_x
+    expected_y = npc_params.location_y
+    expected_z = npc_params.location_z
+
+    if location_needs_update?(existing_npc, expected_x, expected_y, expected_z) do
+      update_npc_location(existing_npc, expected_x, expected_y, expected_z)
+    end
+
+    :ok
+  end
+
+  defp location_needs_update?(npc, expected_x, expected_y, expected_z) do
+    npc.location_x != expected_x or
+      npc.location_y != expected_y or
+      npc.location_z != expected_z
+  end
+
+  defp update_npc_location(npc, x, y, z) do
+    npc
+    |> Ecto.Changeset.change(%{
+      location_x: x,
+      location_y: y,
+      location_z: z
+    })
+    |> Repo.update()
   end
 end
