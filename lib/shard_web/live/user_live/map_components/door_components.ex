@@ -176,12 +176,20 @@ defmodule ShardWeb.UserLive.MapComponents.DoorComponents do
     cond do
       door.is_locked -> "#dc2626"
       is_one_way -> "#ec4899"
-      door.door_type == "portal" -> "#8b5cf6"
-      door.door_type == "gate" -> "#d97706"
-      door.door_type == "locked_gate" -> "#991b1b"
-      door.door_type == "secret" -> "#6b7280"
+      special_door_type_color(door) -> special_door_type_color(door)
       door.key_required && door.key_required != "" -> "#f59e0b"
       true -> "#22c55e"
+    end
+  end
+
+  # Helper function to get color for special door types
+  defp special_door_type_color(door) do
+    case door.door_type do
+      "portal" -> "#8b5cf6"
+      "gate" -> "#d97706"
+      "locked_gate" -> "#991b1b"
+      "secret" -> "#6b7280"
+      _ -> nil
     end
   end
 
