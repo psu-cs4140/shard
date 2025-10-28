@@ -398,14 +398,6 @@ defmodule ShardWeb.UserLive.MapComponents do
     end
   end
 
-  # Helper function to get player-specific styling
-  defp get_player_styling(is_player, default_stroke_color) do
-    if is_player do
-      {"#ef4444", "3"}
-    else
-      {default_stroke_color, "1"}
-    end
-  end
 
   # Component for door lines in the minimap
   def minimap_door_line(assigns) do
