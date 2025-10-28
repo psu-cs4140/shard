@@ -352,34 +352,6 @@ defmodule ShardWeb.UserLive.MapComponents do
     """
   end
 
-  # Component for individual room circles in the minimap
-  def room_circle(assigns) do
-    assigns =
-      if should_skip_room_render?(assigns.room) do
-        assign(assigns, :skip_render, true)
-      else
-        prepare_room_circle_assigns(assigns)
-      end
-
-    ~H"""
-    <%= unless @skip_render do %>
-      <circle
-        cx={@x_pos}
-        cy={@y_pos}
-        r="6"
-        fill={@fill_color}
-        stroke={@stroke_color}
-        stroke-width={@stroke_width}
-      >
-        <title>
-          {@room.name || "Room #{@room.id}"} ({@room.x_coordinate}, {@room.y_coordinate}) - {String.capitalize(
-            @room.room_type || "standard"
-          )}
-        </title>
-      </circle>
-    <% end %>
-    """
-  end
 
   # Helper function to check if room should be skipped
   defp should_skip_room_render?(room) do
