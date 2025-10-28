@@ -23,7 +23,9 @@ defmodule ShardWeb.UserLive.MapComponents.RoomComponents do
           )
 
         {fill_color, stroke_color} = get_room_colors(assigns.room.room_type)
-        {player_stroke, player_width, _radius} = apply_minimap_player_styling(assigns.is_player, stroke_color)
+
+        {player_stroke, player_width, _radius} =
+          apply_minimap_player_styling(assigns.is_player, stroke_color)
 
         assign(assigns,
           x_pos: x_pos,
@@ -72,7 +74,9 @@ defmodule ShardWeb.UserLive.MapComponents.RoomComponents do
           )
 
         {fill_color, stroke_color} = get_room_colors(assigns.room.room_type)
-        {final_stroke_color, stroke_width, radius} = apply_player_styling(assigns.is_player, stroke_color)
+
+        {final_stroke_color, stroke_width, radius} =
+          apply_player_styling(assigns.is_player, stroke_color)
 
         assign(assigns,
           x_pos: x_pos,
