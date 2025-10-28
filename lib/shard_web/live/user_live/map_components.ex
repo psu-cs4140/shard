@@ -316,7 +316,7 @@ defmodule ShardWeb.UserLive.MapComponents do
         <svg viewBox="0 0 300 200" class="w-full h-full border border-gray-600 bg-gray-800">
           <!-- Render doors as lines first (so they appear behind rooms) -->
           <%= for door <- @doors do %>
-            <.door_line door={door} bounds={@bounds} scale_factor={@scale_factor} />
+            <.minimap_door_line door={door} bounds={@bounds} scale_factor={@scale_factor} />
           <% end %>
           
     <!-- Render rooms as circles -->
@@ -409,7 +409,7 @@ defmodule ShardWeb.UserLive.MapComponents do
   end
 
   # Component for door lines in the minimap
-  def door_line(assigns) do
+  def minimap_door_line(assigns) do
     # Use preloaded associations
     from_room = assigns.door.from_room
     to_room = assigns.door.to_room
