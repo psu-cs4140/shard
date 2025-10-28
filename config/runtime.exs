@@ -123,7 +123,7 @@ if config_env() == :prod do
 end
 
 ## ── Mailer (env-driven) ────────────────────────────────────────────────────────
-#mailer_adapter =
+# mailer_adapter =
 #  case {config_env(), String.downcase(System.get_env("MAILER_ADAPTER", ""))} do
 #    # Dev/test use Local unless explicitly overridden
 #    {env, _} when env in [:dev, :test] -> Swoosh.Adapters.Local
@@ -132,7 +132,7 @@ end
 #    _ -> Swoosh.Adapters.SMTP
 #  end
 
-#config :shard, Shard.Mailer,
+# config :shard, Shard.Mailer,
 #  adapter: mailer_adapter,
 #  # SMTP settings (ignored when adapter is Local)
 #  relay: System.get_env("SMTP_HOST"),
