@@ -19,190 +19,18 @@ defmodule ShardWeb.MudGameLive do
   @impl true
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity, Credo.Check.Refactor.Nesting
   def mount(%{"map_id" => map_id} = params, _session, socket) do
-    # Get character if provided
-    character =
-      case Map.get(params, "character_id") do
-        nil ->
-          nil
-
-        character_id ->
-          try do
-            Shard.Characters.get_character!(character_id)
-          rescue
-            _ -> nil
-          end
-      end
-
-    # Get character name from URL parameter (fallback to character.name if available)
-    character_name =
-      case Map.get(params, "character_name") do
-        nil -> if character, do: character.name, else: "Unknown"
-        name -> URI.decode(name)
-      end
-
-    # If no character provided or character not found, redirect to character selection
-    if is_nil(character) do
-      {:ok,
-       socket
-       |> put_flash(:error, "Please select a character to play")
-       |> push_navigate(to: ~p"/maps")}
+    with {:ok, character} <- get_character_from_params(params),
+         character_name <- get_character_name(params, character),
+         {:ok, character} <- load_character_with_associations(character),
+         :ok <- setup_tutorial_content(map_id),
+         {:ok, socket} <- initialize_game_state(socket, character, map_id, character_name) do
+      {:ok, socket}
     else
-      # Load character with associations
-      character =
-        try do
-          Shard.Repo.get!(Shard.Characters.Character, character.id)
-          |> Shard.Repo.preload([:character_inventories, :hotbar_slots])
-        rescue
-          _ -> character
-        end
-
-      # Generate map data based on selected map
-      map_data = generate_map_from_database(map_id)
-
-      # Create tutorial key if entering tutorial terrain
-      if map_id == "tutorial_terrain" do
-        case Shard.Items.create_tutorial_key() do
-          {:ok, _result} ->
-            :ok
-
-          {:error, _reason} ->
-            :error
-
-          _other ->
-            :error
-        end
-      end
-
-      # Create Goldie the golden retriever NPC if entering tutorial terrain
-      if map_id == "tutorial_terrain" do
-        case Shard.Npcs.create_tutorial_npc_goldie() do
-          {:ok, _result} ->
-            :ok
-
-          {:error, _reason} ->
-            :error
-
-          _other ->
-            :error
-        end
-      end
-
-      # Create dungeon door for tutorial terrain
-      if map_id == "tutorial_terrain" do
-        case Shard.Items.create_dungeon_door() do
-          {:ok, _result} ->
-            :ok
-
-          {:error, _reason} ->
-            :error
-
-          _other ->
-            :error
-        end
-      end
-
-      # Find a valid starting position (first floor tile found)
-      starting_position = find_valid_starting_position(map_data)
-
-      # Store the map_id and character for later use
-      map_id = map_id
-
-      # Initialize game state with character stats from database
-      # Calculate max values based on character attributes
-      base_health = 100
-      base_stamina = 100
-      base_mana = 50
-
-      # Calculate max stats based on character attributes
-      constitution = character.constitution || 10
-      max_health = base_health + (constitution - 10) * 5
-      max_stamina = base_stamina + (character.dexterity || 10) * 2
-      max_mana = base_mana + (character.intelligence || 10) * 3
-
-      game_state = %{
-        player_position: starting_position,
-        map_data: map_data,
-        map_id: map_id,
-        character: character,
-        active_panel: nil,
-        player_stats: %{
-          health: character.health || max_health,
-          max_health: max_health,
-          # Always start with full stamina
-          stamina: max_stamina,
-          max_stamina: max_stamina,
-          mana: character.mana || max_mana,
-          max_mana: max_mana,
-          level: character.level || 1,
-          experience: character.experience || 0,
-          next_level_exp: calculate_next_level_exp(character.level || 1),
-          strength: character.strength || 10,
-          dexterity: character.dexterity || 10,
-          intelligence: character.intelligence || 10,
-          constitution: constitution
-        },
-        inventory_items: load_character_inventory(character),
-        equipped_weapon: load_equipped_weapon(character),
-        hotbar: load_character_hotbar(character),
-        quests: [],
-        # Stores quest offer waiting for acceptance/denial
-        pending_quest_offer: nil,
-
-        # Load monsters from database
-        monsters: load_monsters_from_database(map_id, starting_position),
-        combat: false
-      }
-
-      # Check if player is at Goldie's location (0,0) and add her dialogue
-      initial_output = [
-        "Welcome to Shard!",
-        "You find yourself in a mysterious dungeon.",
-        "Type 'help' for available commands.",
-        ""
-      ]
-
-      terminal_output =
-        if starting_position == {0, 0} and map_id == "tutorial_terrain" do
-          # Get Goldie's dialogue and add it to the output
-          goldie_dialogue =
-            "Woof! Welcome to the tutorial, adventurer!\n\nI'm Goldie, your faithful guide dog. Let me help you get started on your journey.\n\nHere are some basic commands to get you moving:\n• Type 'look' to examine your surroundings\n• Use 'north', 'south', 'east', 'west' (or n/s/e/w) to move around\n• Try 'pickup \"item_name\"' to collect items you find\n• Use 'inventory' to see what you're carrying\n• Type 'help' anytime for a full list of commands\n\nThere's a key hidden somewhere to the south that might come in handy later!\nExplore around and interact with npcs, complete quests, and attack monsters.\nWhen you're ready to move to the next dungeon, unlock the locked door!\nGood luck, and remember - I'll always be here at (0,0) if you need guidance!"
-
-          initial_output ++
-            [
-              "Goldie the golden retriever wags her tail and speaks:",
-              goldie_dialogue,
-              ""
-            ]
-        else
-          initial_output
-        end
-
-      terminal_state = %{
-        output: terminal_output,
-        command_history: [],
-        current_command: ""
-      }
-
-      # Controls what modal popup we are showing
-      modal_state = %{
-        show: false,
-        type: 0,
-        completion_message: nil
-      }
-
-      PubSub.subscribe(
-        Shard.PubSub,
-        posn_to_room_channel(game_state.player_position)
-      )
-
-      {:ok,
-       assign(socket,
-         game_state: game_state,
-         terminal_state: terminal_state,
-         modal_state: modal_state,
-         available_exits: compute_available_exits(game_state.player_position),
-         character_name: character_name
-       )}
+      {:error, :no_character} ->
+        {:ok,
+         socket
+         |> put_flash(:error, "Please select a character to play")
+         |> push_navigate(to: ~p"/maps")}
     end
   end
 
@@ -294,7 +122,11 @@ defmodule ShardWeb.MudGameLive do
 
           <.quests :if={@modal_state.show && @modal_state.type == "quests"} game_state={@game_state} />
 
-          <.map :if={@modal_state.show && @modal_state.type == "map"} game_state={@game_state} />
+          <.map
+            :if={@modal_state.show && @modal_state.type == "map"}
+            game_state={@game_state}
+            available_exits={@available_exits}
+          />
 
           <.settings
             :if={@modal_state.show && @modal_state.type == "settings"}
@@ -502,6 +334,172 @@ defmodule ShardWeb.MudGameLive do
      )}
   end
 
+  defp get_character_from_params(params) do
+    case Map.get(params, "character_id") do
+      nil ->
+        {:error, :no_character}
+
+      character_id ->
+        try do
+          character = Shard.Characters.get_character!(character_id)
+          {:ok, character}
+        rescue
+          _ -> {:error, :no_character}
+        end
+    end
+  end
+
+  defp get_character_name(params, character) do
+    case Map.get(params, "character_name") do
+      nil -> if character, do: character.name, else: "Unknown"
+      name -> URI.decode(name)
+    end
+  end
+
+  defp load_character_with_associations(character) do
+    try do
+      loaded_character =
+        Shard.Repo.get!(Shard.Characters.Character, character.id)
+        |> Shard.Repo.preload([:character_inventories, :hotbar_slots])
+
+      {:ok, loaded_character}
+    rescue
+      _ -> {:ok, character}
+    end
+  end
+
+  defp setup_tutorial_content("tutorial_terrain") do
+    setup_tutorial_key()
+    setup_tutorial_npc()
+    setup_tutorial_door()
+    :ok
+  end
+
+  defp setup_tutorial_content(_map_id), do: :ok
+
+  defp setup_tutorial_key do
+    case Shard.Items.create_tutorial_key() do
+      {:ok, _result} -> :ok
+      {:error, _reason} -> :error
+      _other -> :error
+    end
+  end
+
+  defp setup_tutorial_npc do
+    case Shard.Npcs.create_tutorial_npc_goldie() do
+      {:ok, _result} -> :ok
+      {:error, _reason} -> :error
+      _other -> :error
+    end
+  end
+
+  defp setup_tutorial_door do
+    case Shard.Items.create_dungeon_door() do
+      {:ok, _result} -> :ok
+      {:error, _reason} -> :error
+    end
+  end
+
+  defp initialize_game_state(socket, character, map_id, character_name) do
+    map_data = generate_map_from_database(map_id)
+    starting_position = find_valid_starting_position(map_data)
+
+    game_state = build_game_state(character, map_data, map_id, starting_position)
+    terminal_state = build_terminal_state(starting_position, map_id)
+    modal_state = build_modal_state()
+
+    PubSub.subscribe(Shard.PubSub, posn_to_room_channel(game_state.player_position))
+
+    socket =
+      assign(socket,
+        game_state: game_state,
+        terminal_state: terminal_state,
+        modal_state: modal_state,
+        available_exits: compute_available_exits(game_state.player_position),
+        character_name: character_name
+      )
+
+    {:ok, socket}
+  end
+
+  defp build_game_state(character, map_data, map_id, starting_position) do
+    constitution = character.constitution || 10
+    base_health = 100
+    base_stamina = 100
+    base_mana = 50
+
+    max_health = base_health + (constitution - 10) * 5
+    max_stamina = base_stamina + (character.dexterity || 10) * 2
+    max_mana = base_mana + (character.intelligence || 10) * 3
+
+    %{
+      player_position: starting_position,
+      map_data: map_data,
+      map_id: map_id,
+      character: character,
+      active_panel: nil,
+      player_stats: %{
+        health: character.health || max_health,
+        max_health: max_health,
+        stamina: max_stamina,
+        max_stamina: max_stamina,
+        mana: character.mana || max_mana,
+        max_mana: max_mana,
+        level: character.level || 1,
+        experience: character.experience || 0,
+        next_level_exp: calculate_next_level_exp(character.level || 1),
+        strength: character.strength || 10,
+        dexterity: character.dexterity || 10,
+        intelligence: character.intelligence || 10,
+        constitution: constitution
+      },
+      inventory_items: load_character_inventory(character),
+      equipped_weapon: load_equipped_weapon(character),
+      hotbar: load_character_hotbar(character),
+      quests: [],
+      pending_quest_offer: nil,
+      monsters: load_monsters_from_database(map_id, starting_position),
+      combat: false
+    }
+  end
+
+  defp build_terminal_state(starting_position, map_id) do
+    initial_output = [
+      "Welcome to Shard!",
+      "You find yourself in a mysterious dungeon.",
+      "Type 'help' for available commands.",
+      ""
+    ]
+
+    terminal_output =
+      if starting_position == {0, 0} and map_id == "tutorial_terrain" do
+        goldie_dialogue = get_goldie_dialogue()
+
+        initial_output ++
+          ["Goldie the golden retriever wags her tail and speaks:", goldie_dialogue, ""]
+      else
+        initial_output
+      end
+
+    %{
+      output: terminal_output,
+      command_history: [],
+      current_command: ""
+    }
+  end
+
+  defp build_modal_state do
+    %{
+      show: false,
+      type: 0,
+      completion_message: nil
+    }
+  end
+
+  defp get_goldie_dialogue do
+    "Woof! Welcome to the tutorial, adventurer!\n\nI'm Goldie, your faithful guide dog. Let me help you get started on your journey.\n\nHere are some basic commands to get you moving:\n• Type 'look' to examine your surroundings\n• Use 'north', 'south', 'east', 'west' (or n/s/e/w) to move around\n• Try 'pickup \"item_name\"' to collect items you find\n• Use 'inventory' to see what you're carrying\n• Type 'help' anytime for a full list of commands\n\nThere's a key hidden somewhere to the south that might come in handy later!\nExplore around and interact with npcs, complete quests, and attack monsters.\nWhen you're ready to move to the next dungeon, unlock the locked door!\nGood luck, and remember - I'll always be here at (0,0) if you need guidance!"
+  end
+
   def add_message(socket, message) do
     new_output = socket.assigns.terminal_state.output ++ [message] ++ [""]
     ts1 = Map.put(socket.assigns.terminal_state, :output, new_output)
@@ -537,5 +535,9 @@ defmodule ShardWeb.MudGameLive do
     else
       {:noreply, socket}
     end
+  end
+
+  def handle_info({:update_game_state, new_game_state}, socket) do
+    {:noreply, assign(socket, :game_state, new_game_state)}
   end
 end

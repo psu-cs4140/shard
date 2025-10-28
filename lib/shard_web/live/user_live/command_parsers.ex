@@ -174,6 +174,10 @@ defmodule ShardWeb.UserLive.CommandParsers do
 
         updated_game_state = %{game_state | inventory_items: updated_inventory}
 
+        # Remove item from database room/location
+        # This would require calling something like:
+        # Shard.Items.remove_item_from_location(item.id, "#{x},#{y},0")
+
         {response, updated_game_state}
     end
   end
@@ -301,6 +305,12 @@ defmodule ShardWeb.UserLive.CommandParsers do
       end)
 
     %{game_state | inventory_items: updated_inventory}
+  end
+
+  defp remove_item_from_inventory(inventory_items, item_name) do
+    Enum.reject(inventory_items, fn inv_item ->
+      String.downcase(inv_item.name || "") == String.downcase(item_name)
+    end)
   end
 
   # Get items at a specific location

@@ -103,7 +103,7 @@ defmodule ShardWeb.CharacterLive.Index do
         case validate_movement(character, direction) do
           {:ok, new_location} ->
             IO.puts("Player moved #{direction} to #{new_location}")
-            # NOTE: Update character location in database
+            # Update character location in database
             {:noreply, socket}
 
           {:error, reason} ->
