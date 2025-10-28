@@ -152,8 +152,5 @@ config :shard, Shard.Mailer,
   auth: :never,
   retries: 2
 
-
-
-
 # Swoosh API client not needed for SMTP/Local
 config :swoosh, :api_client, false
