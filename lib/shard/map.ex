@@ -89,16 +89,19 @@ defmodule Shard.Map do
   def create_door(attrs \\ %{}) do
     changeset = Door.changeset(%Door{}, attrs)
 
-    if changeset.valid? do
-      Repo.transaction(fn ->
-        case Repo.insert(changeset) do
-          {:ok, door} -> create_return_door_if_needed(door, attrs)
-          {:error, main_door_changeset} -> Repo.rollback(main_door_changeset)
-        end
-      end)
-    else
-      {:error, changeset}
+    case changeset.valid? do
+      true -> create_door_with_transaction(changeset, attrs)
+      false -> {:error, changeset}
     end
+  end
+
+  defp create_door_with_transaction(changeset, attrs) do
+    Repo.transaction(fn ->
+      case Repo.insert(changeset) do
+        {:ok, door} -> create_return_door_if_needed(door, attrs)
+        {:error, main_door_changeset} -> Repo.rollback(main_door_changeset)
+      end
+    end)
   end
 
   defp create_return_door_if_needed(door, attrs) do
