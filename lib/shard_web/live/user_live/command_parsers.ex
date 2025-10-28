@@ -307,11 +307,6 @@ defmodule ShardWeb.UserLive.CommandParsers do
     %{game_state | inventory_items: updated_inventory}
   end
 
-  defp remove_item_from_inventory_list(inventory_items, item_name) do
-    Enum.reject(inventory_items, fn inv_item ->
-      String.downcase(inv_item.name || "") == String.downcase(item_name)
-    end)
-  end
 
   # Get items at a specific location
   defp get_items_at_location(x, y, map_id) do
