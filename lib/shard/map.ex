@@ -92,7 +92,6 @@ defmodule Shard.Map do
     unless changeset.valid? do
       {:error, changeset}
     else
-
       Repo.transaction(fn ->
         case Repo.insert(changeset) do
           {:ok, door} -> create_return_door_if_needed(door, attrs)
@@ -104,7 +103,7 @@ defmodule Shard.Map do
 
   defp create_return_door_if_needed(door, attrs) do
     return_attrs = build_return_door_attrs(door, attrs)
-    
+
     case find_existing_return_door(return_attrs) do
       nil -> attempt_return_door_creation(door, return_attrs)
       _existing -> door

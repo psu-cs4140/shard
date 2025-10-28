@@ -307,7 +307,6 @@ defmodule ShardWeb.UserLive.CommandParsers do
     %{game_state | inventory_items: updated_inventory}
   end
 
-
   # Get items at a specific location
   defp get_items_at_location(x, y, map_id) do
     alias Shard.Items.RoomItem

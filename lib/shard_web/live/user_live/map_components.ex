@@ -352,9 +352,6 @@ defmodule ShardWeb.UserLive.MapComponents do
     """
   end
 
-
-
-
   # Component for door lines in the minimap
   def minimap_door_line(assigns) do
     # Use preloaded associations
