@@ -24,7 +24,7 @@ defmodule ShardWeb.MudGameLive do
       <div class="flex-1 bg-black p-4 font-mono text-sm overflow-y-auto border border-gray-600 rounded">
         <div class="whitespace-pre-wrap">
           <%= for message <- @chat_state.messages do %>
-            <div class="text-green-400"><%= message %></div>
+            <div class="text-blue-400"><%= message %></div>
           <% end %>
         </div>
       </div>
