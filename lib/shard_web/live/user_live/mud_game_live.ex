@@ -75,7 +75,7 @@ defmodule ShardWeb.MudGameLive do
   @spec render(any()) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col h-screen bg-gray-900 text-white overflow-hidden" phx-window-keydown="keypress" phx-hook="AutoScroll">
+    <div class="flex flex-col h-screen bg-gray-900 text-white overflow-hidden" phx-window-keydown="keypress">
       <!-- "phx-window-keydown="keypress" -->
       <!-- Header -->
       <header class="bg-gray-800 p-4 shadow-lg flex justify-between items-center">
