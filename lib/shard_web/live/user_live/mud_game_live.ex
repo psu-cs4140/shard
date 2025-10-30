@@ -586,4 +586,34 @@ defmodule ShardWeb.MudGameLive do
     socket = add_message(socket, "#{player_name} leaves the battle!")
     {:noreply, socket}
   end
+
+  def handle_info({:combat_action, event}, socket) do
+    case event do
+      {:player_attack, attacker_name, monster_name, damage, monster_alive} ->
+        # Don't show the message to the attacker themselves
+        if attacker_name != socket.assigns.character_name do
+          message = if monster_alive do
+            "#{attacker_name} attacks the #{monster_name} for #{damage} damage!"
+          else
+            "#{attacker_name} attacks the #{monster_name} for #{damage} damage! The #{monster_name} is defeated!"
+          end
+          socket = add_message(socket, message)
+          {:noreply, socket}
+        else
+          {:noreply, socket}
+        end
+
+      {:player_fled, player_name} ->
+        # Don't show the message to the fleeing player themselves
+        if player_name != socket.assigns.character_name do
+          socket = add_message(socket, "#{player_name} flees from combat!")
+          {:noreply, socket}
+        else
+          {:noreply, socket}
+        end
+
+      _other ->
+        {:noreply, socket}
+    end
+  end
 end
