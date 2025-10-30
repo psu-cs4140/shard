@@ -134,12 +134,12 @@ defmodule ShardWeb.AdminLive.Quests do
       </div>
 
       <%= if @show_form do %>
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <div class="bg-base-100 rounded-lg shadow-lg p-6 mb-6">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold">{@form_title}</h2>
             <button
               phx-click="cancel_form"
-              class="text-gray-500 hover:text-gray-700"
+              class="text-base-content/50 hover:text-base-content"
             >
               ✕
             </button>
@@ -246,45 +246,45 @@ defmodule ShardWeb.AdminLive.Quests do
             </.simple_form>
           <% else %>
             <div class="text-center py-8">
-              <p class="text-gray-500">Loading form...</p>
+              <p class="text-base-content/70">Loading form...</p>
             </div>
           <% end %>
         </div>
       <% end %>
 
-      <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+      <div class="bg-base-100 rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-base-200">
+          <thead class="bg-base-200">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Title
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Type
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Difficulty
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Level Range
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Rewards
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Status
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
+          <tbody class="bg-base-100 divide-y divide-base-200">
             <%= for quest <- @quests do %>
               <tr>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm font-medium text-gray-900">{quest.title}</div>
-                  <div class="text-sm text-gray-500">
+                  <div class="text-sm font-medium text-base-content">{quest.title}</div>
+                  <div class="text-sm text-base-content/70">
                     {String.slice(quest.short_description || quest.description || "", 0, 50)}{if String.length(
                                                                                                    quest.short_description ||
                                                                                                      quest.description ||
@@ -305,10 +305,10 @@ defmodule ShardWeb.AdminLive.Quests do
                     {String.capitalize(quest.difficulty)}
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-base-content">
                   {quest.min_level}{if quest.max_level, do: " - #{quest.max_level}", else: "+"}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-base-content">
                   {if quest.experience_reward > 0, do: "#{quest.experience_reward} XP"}
                   {if quest.gold_reward > 0, do: " #{quest.gold_reward} Gold"}
                 </td>

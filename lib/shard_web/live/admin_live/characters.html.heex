@@ -11,7 +11,7 @@
 
 <div class="mt-8">
   <%= if @live_action in [:new, :edit] do %>
-    <div class="mb-8 p-6 bg-gray-50 rounded-lg">
+    <div class="mb-8 p-6 bg-base-100 rounded-lg">
       <.simple_form
         for={@form}
         id="character-form"
@@ -77,7 +77,7 @@
   <% end %>
 
   <%= if @live_action == :show do %>
-    <div class="mb-8 p-6 bg-gray-50 rounded-lg">
+    <div class="mb-8 p-6 bg-base-100 rounded-lg">
       <h3 class="text-lg font-semibold mb-4">{@character.name}</h3>
       <div class="grid grid-cols-2 gap-4 text-sm">
         <div><strong>Owner:</strong> {@character.user.email}</div>
