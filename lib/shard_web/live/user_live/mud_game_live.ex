@@ -16,6 +16,43 @@ defmodule ShardWeb.MudGameLive do
   import ShardWeb.UserLive.CharacterHelpers
   import ShardWeb.UserLive.ItemHelpers
 
+  # Chat component
+  defp chat(assigns) do
+    ~H"""
+    <div class="flex flex-col h-full">
+      <!-- Chat Messages -->
+      <div class="flex-1 bg-black p-4 font-mono text-sm overflow-y-auto border border-gray-600 rounded">
+        <div class="whitespace-pre-wrap">
+          <%= for message <- @chat_state.messages do %>
+            <div class="text-green-400"><%= message %></div>
+          <% end %>
+        </div>
+      </div>
+      
+      <!-- Chat Input -->
+      <form phx-submit="submit_chat" class="mt-4">
+        <div class="flex">
+          <input
+            type="text"
+            name="chat[text]"
+            value={@chat_state.current_message}
+            phx-change="update_chat"
+            placeholder="Type your message..."
+            class="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-l text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+            autocomplete="off"
+          />
+          <button
+            type="submit"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-r transition-colors"
+          >
+            Send
+          </button>
+        </div>
+      </form>
+    </div>
+    """
+  end
+
   @impl true
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity, Credo.Check.Refactor.Nesting
   def mount(%{"map_id" => map_id} = params, _session, socket) do
@@ -157,6 +194,10 @@ defmodule ShardWeb.MudGameLive do
     {:noreply, assign(socket, modal_state: %{show: false, type: "", completion_message: nil})}
   end
 
+  def handle_event("switch_tab", %{"tab" => tab}, socket) do
+    {:noreply, assign(socket, active_tab: tab)}
+  end
+
   # Handle keypresses for navigation, inventory, etc.
   def handle_event("keypress", %{"key" => key}, socket) do
     # Check if it's a movement key
@@ -239,6 +280,32 @@ defmodule ShardWeb.MudGameLive do
   def handle_event("update_command", %{"command" => %{"text" => command_text}}, socket) do
     terminal_state = Map.put(socket.assigns.terminal_state, :current_command, command_text)
     {:noreply, assign(socket, terminal_state: terminal_state)}
+  end
+
+  def handle_event("submit_chat", %{"chat" => %{"text" => message_text}}, socket) do
+    trimmed_message = String.trim(message_text)
+
+    if trimmed_message != "" do
+      # Add message to chat
+      timestamp = DateTime.utc_now() |> DateTime.to_time() |> Time.to_string() |> String.slice(0, 8)
+      formatted_message = "[#{timestamp}] #{socket.assigns.character_name}: #{trimmed_message}"
+      
+      new_messages = socket.assigns.chat_state.messages ++ [formatted_message, ""]
+
+      chat_state = %{
+        messages: new_messages,
+        current_message: ""
+      }
+
+      {:noreply, assign(socket, chat_state: chat_state)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("update_chat", %{"chat" => %{"text" => message_text}}, socket) do
+    chat_state = Map.put(socket.assigns.chat_state, :current_message, message_text)
+    {:noreply, assign(socket, chat_state: chat_state)}
   end
 
   def handle_event("save_character_stats", _params, socket) do
@@ -406,6 +473,7 @@ defmodule ShardWeb.MudGameLive do
 
     game_state = build_game_state(character, map_data, map_id, starting_position)
     terminal_state = build_terminal_state(starting_position, map_id)
+    chat_state = build_chat_state()
     modal_state = build_modal_state()
 
     PubSub.subscribe(Shard.PubSub, posn_to_room_channel(game_state.player_position))
@@ -414,9 +482,11 @@ defmodule ShardWeb.MudGameLive do
       assign(socket,
         game_state: game_state,
         terminal_state: terminal_state,
+        chat_state: chat_state,
         modal_state: modal_state,
         available_exits: compute_available_exits(game_state.player_position),
-        character_name: character_name
+        character_name: character_name,
+        active_tab: "terminal"
       )
 
     {:ok, socket}
@@ -485,6 +555,17 @@ defmodule ShardWeb.MudGameLive do
       output: terminal_output,
       command_history: [],
       current_command: ""
+    }
+  end
+
+  defp build_chat_state do
+    %{
+      messages: [
+        "Welcome to the chat!",
+        "You can communicate with other players here.",
+        ""
+      ],
+      current_message: ""
     }
   end
 
