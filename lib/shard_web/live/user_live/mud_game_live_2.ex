@@ -88,13 +88,13 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
 
     socket =
       socket
-      |> Phoenix.LiveView.assign(:game_state, game_state)
-      |> Phoenix.LiveView.assign(:terminal_state, terminal_state)
-      |> Phoenix.LiveView.assign(:modal_state, modal_state)
-      |> Phoenix.LiveView.assign(:available_exits, compute_available_exits(game_state.player_position))
-      |> Phoenix.LiveView.assign(:character_name, character_name)
-      |> Phoenix.LiveView.assign(:active_tab, "terminal")
-      |> Phoenix.LiveView.assign(:chat_state, %{messages: [], current_message: ""})
+      |> assign(:game_state, game_state)
+      |> assign(:terminal_state, terminal_state)
+      |> assign(:modal_state, modal_state)
+      |> assign(:available_exits, compute_available_exits(game_state.player_position))
+      |> assign(:character_name, character_name)
+      |> assign(:active_tab, "terminal")
+      |> assign(:chat_state, %{messages: [], current_message: ""})
 
     {:ok, socket}
   end
@@ -180,6 +180,6 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
   def add_message(socket, message) do
     new_output = socket.assigns.terminal_state.output ++ [message] ++ [""]
     ts1 = Map.put(socket.assigns.terminal_state, :output, new_output)
-    Phoenix.LiveView.assign(socket, :terminal_state, ts1)
+    assign(socket, :terminal_state, ts1)
   end
 end
