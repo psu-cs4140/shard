@@ -61,11 +61,11 @@ defmodule ShardWeb.MudGameLive do
   @impl true
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity, Credo.Check.Refactor.Nesting
   def mount(%{"map_id" => map_id} = params, _session, socket) do
-    with {:ok, character} <- MudGameHelpers.get_character_from_params(params),
-         character_name <- MudGameHelpers.get_character_name(params, character),
-         {:ok, character} <- MudGameHelpers.load_character_with_associations(character),
-         :ok <- MudGameHelpers.setup_tutorial_content(map_id),
-         {:ok, socket} <- MudGameHelpers.initialize_game_state(socket, character, map_id, character_name) do
+    with {:ok, character} <- ShardWeb.UserLive.MudGameHelpers.get_character_from_params(params),
+         character_name <- ShardWeb.UserLive.MudGameHelpers.get_character_name(params, character),
+         {:ok, character} <- ShardWeb.UserLive.MudGameHelpers.load_character_with_associations(character),
+         :ok <- ShardWeb.UserLive.MudGameHelpers.setup_tutorial_content(map_id),
+         {:ok, socket} <- ShardWeb.UserLive.MudGameHelpers.initialize_game_state(socket, character, map_id, character_name) do
       # Add available_exits after initialization
       socket = assign(socket, available_exits: compute_available_exits(socket.assigns.game_state.player_position))
       {:ok, socket}
@@ -395,11 +395,11 @@ defmodule ShardWeb.MudGameLive do
            socket.assigns.game_state.player_stats
          ) do
       {:ok, _character} ->
-        socket = MudGameHelpers.add_message(socket, "Character stats saved successfully.")
+        socket = ShardWeb.UserLive.MudGameHelpers.add_message(socket, "Character stats saved successfully.")
         {:noreply, socket}
 
       {:error, _error} ->
-        socket = MudGameHelpers.add_message(socket, "Failed to save character stats.")
+        socket = ShardWeb.UserLive.MudGameHelpers.add_message(socket, "Failed to save character stats.")
         {:noreply, socket}
     end
   end
@@ -410,7 +410,7 @@ defmodule ShardWeb.MudGameLive do
 
     case item do
       nil ->
-        socket = MudGameHelpers.add_message(socket, "Hotbar slot #{slot_number} is empty.")
+        socket = ShardWeb.UserLive.MudGameHelpers.add_message(socket, "Hotbar slot #{slot_number} is empty.")
         {:noreply, socket}
 
       item ->
@@ -433,7 +433,7 @@ defmodule ShardWeb.MudGameLive do
 
     case item do
       nil ->
-        socket = MudGameHelpers.add_message(socket, "Item not found in inventory.")
+        socket = ShardWeb.UserLive.MudGameHelpers.add_message(socket, "Item not found in inventory.")
         {:noreply, socket}
 
       item ->
@@ -484,15 +484,15 @@ defmodule ShardWeb.MudGameLive do
 
   @impl true
   def handle_info({:noise, text}, socket) do
-    socket = MudGameHelpers.add_message(socket, text)
+    socket = ShardWeb.UserLive.MudGameHelpers.add_message(socket, text)
     {:noreply, socket}
   end
 
   def handle_info({:area_heal, xx, msg}, socket) do
     socket =
       socket
-      |> MudGameHelpers.add_message(msg)
-      |> MudGameHelpers.add_message("Area heal effect: #{xx} damage healed")
+      |> ShardWeb.UserLive.MudGameHelpers.add_message(msg)
+      |> ShardWeb.UserLive.MudGameHelpers.add_message("Area heal effect: #{xx} damage healed")
 
     current_stats = socket.assigns.game_state.player_stats
     max_health = current_stats.max_health
