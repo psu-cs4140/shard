@@ -45,10 +45,17 @@ defmodule Shard.Combat do
     damage_result = calculate_attack_damage(game_state.player_stats, monster)
     updated_monster = apply_damage_to_monster(monster, damage_result.final_damage)
     updated_monsters = update_monsters_list(game_state.monsters, monster, updated_monster)
-    
+
     response = create_attack_response(monster, damage_result, updated_monster)
-    broadcast_attack_event(position, game_state.character.name, monster, damage_result, updated_monster)
-    
+
+    broadcast_attack_event(
+      position,
+      game_state.character.name,
+      monster,
+      damage_result,
+      updated_monster
+    )
+
     updated_game_state = update_combat_state(game_state, updated_monsters, position)
     {response, updated_game_state}
   end
@@ -59,14 +66,14 @@ defmodule Shard.Combat do
     actual_damage = max(base_damage + :rand.uniform(variance) - div(variance, 2), 1)
     armor = monster[:armor] || 0
     final_damage = max(actual_damage - armor, 1)
-    
+
     %{actual_damage: actual_damage, final_damage: final_damage}
   end
 
   defp apply_damage_to_monster(monster, damage) do
     new_hp = max((monster[:hp] || 10) - damage, 0)
     is_alive = new_hp > 0
-    
+
     monster
     |> Map.put(:hp, new_hp)
     |> Map.put(:is_alive, is_alive)
@@ -91,7 +98,7 @@ defmodule Shard.Combat do
 
   defp broadcast_attack_event(position, player_name, monster, damage_result, updated_monster) do
     monster_name = monster[:name] || "monster"
-    
+
     broadcast_combat_event(position, {
       :player_attack,
       player_name,
@@ -102,9 +109,10 @@ defmodule Shard.Combat do
   end
 
   defp update_combat_state(game_state, updated_monsters, position) do
-    combat_active = Enum.any?(updated_monsters, fn m ->
-      m[:position] == position && m[:is_alive] != false
-    end)
+    combat_active =
+      Enum.any?(updated_monsters, fn m ->
+        m[:position] == position && m[:is_alive] != false
+      end)
 
     %{game_state | monsters: updated_monsters, combat: combat_active}
   end
