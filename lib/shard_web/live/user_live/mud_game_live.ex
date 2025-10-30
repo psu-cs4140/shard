@@ -3,19 +3,19 @@
 defmodule ShardWeb.MudGameLive do
   @moduledoc false
   use ShardWeb, :live_view
-  alias Phoenix.PubSub
+
   alias Phoenix.LiveView.JS
   import ShardWeb.UserLive.Components
   import ShardWeb.UserLive.Components2
-  import ShardWeb.UserLive.MapHelpers
+  # import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.Movement
   import ShardWeb.UserLive.Commands1
   import ShardWeb.UserLive.MapComponents
   import ShardWeb.UserLive.LegacyMap
-  import ShardWeb.UserLive.MonsterComponents
+  # import ShardWeb.UserLive.MonsterComponents
   import ShardWeb.UserLive.CharacterHelpers
   import ShardWeb.UserLive.ItemHelpers
-  import ShardWeb.UserLive.MudGameHelpers
+  # import ShardWeb.UserLive.MudGameHelpers
 
   # Chat component
   defp chat(assigns) do
@@ -63,14 +63,21 @@ defmodule ShardWeb.MudGameLive do
   def mount(%{"map_id" => map_id} = params, _session, socket) do
     with {:ok, character} <- ShardWeb.UserLive.MudGameHelpers.get_character_from_params(params),
          character_name <- ShardWeb.UserLive.MudGameHelpers.get_character_name(params, character),
-         {:ok, character} <- ShardWeb.UserLive.MudGameHelpers.load_character_with_associations(character),
+         {:ok, character} <-
+           ShardWeb.UserLive.MudGameHelpers.load_character_with_associations(character),
          :ok <- ShardWeb.UserLive.MudGameHelpers.setup_tutorial_content(map_id),
-         {:ok, assigns} <- ShardWeb.UserLive.MudGameHelpers.initialize_game_state(character, map_id, character_name) do
+         {:ok, assigns} <-
+           ShardWeb.UserLive.MudGameHelpers.initialize_game_state(
+             character,
+             map_id,
+             character_name
+           ) do
       # Apply all assigns to socket and add available_exits
-      socket = 
+      socket =
         socket
         |> assign(assigns)
         |> assign(:available_exits, compute_available_exits(assigns.game_state.player_position))
+
       {:ok, socket}
     else
       {:error, :no_character} ->
@@ -398,12 +405,22 @@ defmodule ShardWeb.MudGameLive do
            socket.assigns.game_state.player_stats
          ) do
       {:ok, _character} ->
-        terminal_state = ShardWeb.UserLive.MudGameHelpers.add_message(socket.assigns.terminal_state, "Character stats saved successfully.")
+        terminal_state =
+          ShardWeb.UserLive.MudGameHelpers.add_message(
+            socket.assigns.terminal_state,
+            "Character stats saved successfully."
+          )
+
         socket = assign(socket, :terminal_state, terminal_state)
         {:noreply, socket}
 
       {:error, _error} ->
-        terminal_state = ShardWeb.UserLive.MudGameHelpers.add_message(socket.assigns.terminal_state, "Failed to save character stats.")
+        terminal_state =
+          ShardWeb.UserLive.MudGameHelpers.add_message(
+            socket.assigns.terminal_state,
+            "Failed to save character stats."
+          )
+
         socket = assign(socket, :terminal_state, terminal_state)
         {:noreply, socket}
     end
@@ -415,7 +432,12 @@ defmodule ShardWeb.MudGameLive do
 
     case item do
       nil ->
-        terminal_state = ShardWeb.UserLive.MudGameHelpers.add_message(socket.assigns.terminal_state, "Hotbar slot #{slot_number} is empty.")
+        terminal_state =
+          ShardWeb.UserLive.MudGameHelpers.add_message(
+            socket.assigns.terminal_state,
+            "Hotbar slot #{slot_number} is empty."
+          )
+
         socket = assign(socket, :terminal_state, terminal_state)
         {:noreply, socket}
 
@@ -439,7 +461,12 @@ defmodule ShardWeb.MudGameLive do
 
     case item do
       nil ->
-        terminal_state = ShardWeb.UserLive.MudGameHelpers.add_message(socket.assigns.terminal_state, "Item not found in inventory.")
+        terminal_state =
+          ShardWeb.UserLive.MudGameHelpers.add_message(
+            socket.assigns.terminal_state,
+            "Item not found in inventory."
+          )
+
         socket = assign(socket, :terminal_state, terminal_state)
         {:noreply, socket}
 
@@ -488,16 +515,17 @@ defmodule ShardWeb.MudGameLive do
      )}
   end
 
-
   @impl true
   def handle_info({:noise, text}, socket) do
-    terminal_state = ShardWeb.UserLive.MudGameHelpers.add_message(socket.assigns.terminal_state, text)
+    terminal_state =
+      ShardWeb.UserLive.MudGameHelpers.add_message(socket.assigns.terminal_state, text)
+
     socket = assign(socket, :terminal_state, terminal_state)
     {:noreply, socket}
   end
 
   def handle_info({:area_heal, xx, msg}, socket) do
-    terminal_state = 
+    terminal_state =
       socket.assigns.terminal_state
       |> ShardWeb.UserLive.MudGameHelpers.add_message(msg)
       |> ShardWeb.UserLive.MudGameHelpers.add_message("Area heal effect: #{xx} damage healed")
