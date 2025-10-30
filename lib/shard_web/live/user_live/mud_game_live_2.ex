@@ -7,6 +7,7 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
   import ShardWeb.UserLive.CharacterHelpers
   import ShardWeb.UserLive.ItemHelpers
   import ShardWeb.UserLive.MonsterComponents
+  import ShardWeb.UserLive.Movement
   alias Phoenix.PubSub
 
   def get_character_from_params(params) do
