@@ -66,7 +66,7 @@ defmodule Shard.Combat.Server do
     room_pos = state[:room_position]
     
     if room_pos do
-      channel = "room:#{elem(room_pos, 0)}:#{elem(room_pos, 1)}"
+      channel = "room:#{elem(room_pos, 0)},#{elem(room_pos, 1)}"
       
       Enum.each(events, fn event ->
         Phoenix.PubSub.broadcast(Shard.PubSub, channel, {:combat_event, event})

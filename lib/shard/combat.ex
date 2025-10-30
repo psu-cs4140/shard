@@ -100,7 +100,7 @@ defmodule Shard.Combat do
   end
   
   defp broadcast_combat_event({x, y}, event) do
-    channel = "room:#{x}:#{y}"
+    channel = "room:#{x},#{y}"
     PubSub.broadcast(Shard.PubSub, channel, {:combat_action, event})
   end
 end
