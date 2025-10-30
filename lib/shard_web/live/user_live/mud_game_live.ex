@@ -218,6 +218,29 @@ defmodule ShardWeb.MudGameLive do
           element.scrollTop = element.scrollHeight;
         }
       });
+      
+      // Auto-scroll chat when new messages are added
+      window.addEventListener("DOMContentLoaded", function() {
+        const observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList') {
+              const chatMessages = document.getElementById('chat-messages');
+              if (chatMessages && mutation.target.closest('#chat-messages')) {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+              }
+            }
+          });
+        });
+        
+        // Start observing
+        const chatContainer = document.getElementById('chat-messages');
+        if (chatContainer) {
+          observer.observe(chatContainer, {
+            childList: true,
+            subtree: true
+          });
+        }
+      });
     </script>
     """
   end
@@ -332,7 +355,7 @@ defmodule ShardWeb.MudGameLive do
       timestamp = DateTime.utc_now() |> DateTime.to_time() |> Time.to_string() |> String.slice(0, 8)
       formatted_message = "[#{timestamp}] #{socket.assigns.character_name}: #{trimmed_message}"
       
-      new_messages = socket.assigns.chat_state.messages ++ [formatted_message, ""]
+      new_messages = socket.assigns.chat_state.messages ++ [formatted_message]
 
       chat_state = %{
         messages: new_messages,
@@ -609,8 +632,7 @@ defmodule ShardWeb.MudGameLive do
     %{
       messages: [
         "Welcome to the chat!",
-        "You can communicate with other players here.",
-        ""
+        "You can communicate with other players here."
       ],
       current_message: ""
     }
