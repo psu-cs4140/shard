@@ -183,8 +183,4 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
     ts1 = Map.put(socket.assigns.terminal_state, :output, new_output)
     Phoenix.LiveView.assign(socket, :terminal_state, ts1)
   end
-
-  def posn_to_room_channel({x, y}) do
-    "room:#{x},#{y}"
-  end
 end
