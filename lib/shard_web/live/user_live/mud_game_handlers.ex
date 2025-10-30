@@ -36,7 +36,8 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
               socket.assigns.modal_state
           end
 
-        {:noreply, socket, updated_game_state, terminal_state, modal_state, updated_game_state.player_position}
+        {:noreply, socket, updated_game_state, terminal_state, modal_state,
+         updated_game_state.player_position}
 
       _ ->
         # Non-movement key, do nothing
@@ -179,7 +180,7 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   end
 
   def handle_area_heal_info({:area_heal, xx, msg}, socket) do
-    terminal_state = 
+    terminal_state =
       socket.assigns.terminal_state
       |> add_message_to_output(msg)
       |> add_message_to_output("Area heal effect: #{xx} damage healed")
@@ -217,20 +218,34 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
           updated_stats = %{current_stats | health: new_health}
           updated_game_state = %{socket.assigns.game_state | player_stats: updated_stats}
 
-          terminal_state = add_message_to_output(socket.assigns.terminal_state, "You take #{dmg} bleed damage!")
+          terminal_state =
+            add_message_to_output(socket.assigns.terminal_state, "You take #{dmg} bleed damage!")
+
           {:noreply, socket, updated_game_state, terminal_state}
         else
-          terminal_state = add_message_to_output(socket.assigns.terminal_state, "Another player takes bleed damage!")
+          terminal_state =
+            add_message_to_output(
+              socket.assigns.terminal_state,
+              "Another player takes bleed damage!"
+            )
+
           {:noreply, socket, terminal_state}
         end
 
       %{type: :victory} ->
-        terminal_state = add_message_to_output(socket.assigns.terminal_state, "Victory! All monsters have been defeated!")
+        terminal_state =
+          add_message_to_output(
+            socket.assigns.terminal_state,
+            "Victory! All monsters have been defeated!"
+          )
+
         updated_game_state = %{socket.assigns.game_state | combat: false}
         {:noreply, socket, updated_game_state, terminal_state}
 
       %{type: :defeat} ->
-        terminal_state = add_message_to_output(socket.assigns.terminal_state, "Defeat! All players have fallen!")
+        terminal_state =
+          add_message_to_output(socket.assigns.terminal_state, "Defeat! All players have fallen!")
+
         updated_game_state = %{socket.assigns.game_state | combat: false}
         {:noreply, socket, updated_game_state, terminal_state}
 
@@ -240,12 +255,16 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   end
 
   def handle_player_joined_combat_info({:player_joined_combat, player_name}, socket) do
-    terminal_state = add_message_to_output(socket.assigns.terminal_state, "#{player_name} joins the battle!")
+    terminal_state =
+      add_message_to_output(socket.assigns.terminal_state, "#{player_name} joins the battle!")
+
     {:noreply, socket, terminal_state}
   end
 
   def handle_player_left_combat_info({:player_left_combat, player_name}, socket) do
-    terminal_state = add_message_to_output(socket.assigns.terminal_state, "#{player_name} leaves the battle!")
+    terminal_state =
+      add_message_to_output(socket.assigns.terminal_state, "#{player_name} leaves the battle!")
+
     {:noreply, socket, terminal_state}
   end
 
@@ -270,7 +289,12 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
       {:player_fled, player_name} ->
         # Don't show the message to the fleeing player themselves
         if player_name != socket.assigns.character_name do
-          terminal_state = add_message_to_output(socket.assigns.terminal_state, "#{player_name} flees from combat!")
+          terminal_state =
+            add_message_to_output(
+              socket.assigns.terminal_state,
+              "#{player_name} flees from combat!"
+            )
+
           {:noreply, socket, terminal_state}
         else
           {:noreply, socket}

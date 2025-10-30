@@ -169,7 +169,9 @@ defmodule ShardWeb.MudGameLive do
            modal_state: modal_state,
            available_exits: compute_available_exits(player_position)
          )}
-      result -> result
+
+      result ->
+        result
     end
   end
 
@@ -177,7 +179,9 @@ defmodule ShardWeb.MudGameLive do
     case handle_submit_command(params, socket) do
       {:noreply, socket, updated_game_state, terminal_state} ->
         {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
-      result -> result
+
+      result ->
+        result
     end
   end
 
@@ -185,7 +189,9 @@ defmodule ShardWeb.MudGameLive do
     case handle_update_command(params, socket) do
       {:noreply, socket, terminal_state} ->
         {:noreply, assign(socket, terminal_state: terminal_state)}
-      result -> result
+
+      result ->
+        result
     end
   end
 
@@ -194,7 +200,9 @@ defmodule ShardWeb.MudGameLive do
       {:noreply, socket, message} ->
         socket = add_message(socket, message)
         {:noreply, socket}
-      result -> result
+
+      result ->
+        result
     end
   end
 
@@ -202,10 +210,13 @@ defmodule ShardWeb.MudGameLive do
     case handle_use_hotbar_item(params, socket) do
       {:noreply, socket, updated_game_state, terminal_state} ->
         {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+
       {:noreply, socket, message} ->
         socket = add_message(socket, message)
         {:noreply, socket}
-      result -> result
+
+      result ->
+        result
     end
   end
 
@@ -213,10 +224,13 @@ defmodule ShardWeb.MudGameLive do
     case handle_equip_item(params, socket) do
       {:noreply, socket, updated_game_state, terminal_state} ->
         {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+
       {:noreply, socket, message} ->
         socket = add_message(socket, message)
         {:noreply, socket}
-      result -> result
+
+      result ->
+        result
     end
   end
 
@@ -231,7 +245,9 @@ defmodule ShardWeb.MudGameLive do
            terminal_state: terminal_state,
            available_exits: compute_available_exits(player_position)
          )}
-      result -> result
+
+      result ->
+        result
     end
   end
 
@@ -412,7 +428,9 @@ defmodule ShardWeb.MudGameLive do
     case handle_noise_info({:noise, text}, socket) do
       {:noreply, socket, terminal_state} ->
         {:noreply, assign(socket, terminal_state: terminal_state)}
-      result -> result
+
+      result ->
+        result
     end
   end
 
@@ -420,9 +438,12 @@ defmodule ShardWeb.MudGameLive do
     case handle_area_heal_info({:area_heal, xx, msg}, socket) do
       {:noreply, socket, updated_game_state, terminal_state} ->
         {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+
       {:noreply, socket, terminal_state} ->
         {:noreply, assign(socket, terminal_state: terminal_state)}
-      result -> result
+
+      result ->
+        result
     end
   end
 
@@ -430,7 +451,9 @@ defmodule ShardWeb.MudGameLive do
     case handle_update_game_state_info({:update_game_state, new_game_state}, socket) do
       {:noreply, socket, game_state} ->
         {:noreply, assign(socket, game_state: game_state)}
-      result -> result
+
+      result ->
+        result
     end
   end
 
@@ -438,9 +461,12 @@ defmodule ShardWeb.MudGameLive do
     case handle_combat_event_info({:combat_event, event}, socket) do
       {:noreply, socket, updated_game_state, terminal_state} ->
         {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+
       {:noreply, socket, terminal_state} ->
         {:noreply, assign(socket, terminal_state: terminal_state)}
-      result -> result
+
+      result ->
+        result
     end
   end
 
@@ -448,7 +474,9 @@ defmodule ShardWeb.MudGameLive do
     case handle_player_joined_combat_info({:player_joined_combat, player_name}, socket) do
       {:noreply, socket, terminal_state} ->
         {:noreply, assign(socket, terminal_state: terminal_state)}
-      result -> result
+
+      result ->
+        result
     end
   end
 
@@ -456,7 +484,9 @@ defmodule ShardWeb.MudGameLive do
     case handle_player_left_combat_info({:player_left_combat, player_name}, socket) do
       {:noreply, socket, terminal_state} ->
         {:noreply, assign(socket, terminal_state: terminal_state)}
-      result -> result
+
+      result ->
+        result
     end
   end
 
@@ -464,7 +494,9 @@ defmodule ShardWeb.MudGameLive do
     case handle_combat_action_info({:combat_action, event}, socket) do
       {:noreply, socket, terminal_state} ->
         {:noreply, assign(socket, terminal_state: terminal_state)}
-      result -> result
+
+      result ->
+        result
     end
   end
 end
