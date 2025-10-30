@@ -14,6 +14,7 @@ defmodule ShardWeb.MudGameLive do
   import ShardWeb.UserLive.MonsterComponents
   import ShardWeb.UserLive.CharacterHelpers
   import ShardWeb.UserLive.ItemHelpers
+  import ShardWeb.UserLive.MudGameHandlers
   # import ShardWeb.UserLive.MudGameHelpers
 
   # Chat component
