@@ -67,6 +67,8 @@ defmodule ShardWeb.MudGameLive do
          {:ok, character} <- load_character_with_associations(character),
          :ok <- setup_tutorial_content(map_id),
          {:ok, socket} <- initialize_game_state(socket, character, map_id, character_name) do
+      # Subscribe to the global chat topic
+      Phoenix.PubSub.subscribe(Shard.PubSub, "global_chat")
       {:ok, socket}
     else
       {:error, :no_character} ->
@@ -311,23 +313,22 @@ defmodule ShardWeb.MudGameLive do
     trimmed_message = String.trim(message_text)
 
     if trimmed_message != "" do
-      # Add message to chat
+      # Create message data
       timestamp =
         DateTime.utc_now() |> DateTime.to_time() |> Time.to_string() |> String.slice(0, 8)
 
-      formatted_message = "[#{timestamp}] #{socket.assigns.character_name}: #{trimmed_message}"
-
-      new_messages = socket.assigns.chat_state.messages ++ [formatted_message]
-
-      chat_state = %{
-        messages: new_messages,
-        current_message: ""
+      message_data = %{
+        timestamp: timestamp,
+        character_name: socket.assigns.character_name,
+        text: trimmed_message
       }
 
-      socket = assign(socket, chat_state: chat_state)
+      # Broadcast message to all subscribers
+      Phoenix.PubSub.broadcast(Shard.PubSub, "global_chat", {:chat_message, message_data})
 
-      # Auto-scroll chat to bottom
-      socket = push_event(socket, "scroll_to_bottom", %{target: "chat-messages"})
+      # Clear the input
+      chat_state = Map.put(socket.assigns.chat_state, :current_message, "")
+      socket = assign(socket, chat_state: chat_state)
 
       {:noreply, socket}
     else
@@ -480,5 +481,22 @@ defmodule ShardWeb.MudGameLive do
       result ->
         result
     end
+  end
+
+  def handle_info({:chat_message, message_data}, socket) do
+    # Format the message
+    formatted_message =
+      "[#{message_data.timestamp}] #{message_data.character_name}: #{message_data.text}"
+
+    # Add message to chat
+    new_messages = socket.assigns.chat_state.messages ++ [formatted_message]
+
+    chat_state = Map.put(socket.assigns.chat_state, :messages, new_messages)
+    socket = assign(socket, chat_state: chat_state)
+
+    # Auto-scroll chat to bottom
+    socket = push_event(socket, "scroll_to_bottom", %{target: "chat-messages"})
+
+    {:noreply, socket}
   end
 end
