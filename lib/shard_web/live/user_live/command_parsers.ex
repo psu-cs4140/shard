@@ -119,6 +119,29 @@ defmodule ShardWeb.UserLive.CommandParsers do
     end
   end
 
+  # Parse use item on player command to extract item name and player name
+  def parse_use_item_on_player_command(command) do
+    # Match patterns like: use "item name" on "player name", use item_name on player_name
+    cond do
+      # Match use "item name" on "player name" or use 'item name' on 'player name'
+      Regex.match?(~r/^use\s+["'](.+)["']\s+on\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^use\s+["'](.+)["']\s+on\s+["'](.+)["']\s*$/i, command) do
+          [_, item_name, player_name] -> {:ok, String.trim(item_name), String.trim(player_name)}
+          _ -> :error
+        end
+
+      # Match use item_name on player_name (single words, no quotes)
+      Regex.match?(~r/^use\s+(\w+)\s+on\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^use\s+(\w+)\s+on\s+(\w+)\s*$/i, command) do
+          [_, item_name, player_name] -> {:ok, String.trim(item_name), String.trim(player_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
+    end
+  end
+
   # Execute pickup command with a specific item name
   def execute_pickup_command(game_state, item_name) do
     {x, y} = game_state.player_position

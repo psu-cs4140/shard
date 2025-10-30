@@ -153,6 +153,8 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
     end
   end
 
+  # (C) Handle clicking an exit button to move rooms
+  @impl true
   def handle_click_exit(%{"dir" => dir}, socket) do
     key = dir_to_key(dir)
     player_position = socket.assigns.game_state.player_position
@@ -313,6 +315,22 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
 
       _other ->
         {:noreply, socket}
+    end
+  end
+
+  # Handle healing action info
+  def handle_healing_action_info({:healing_action, healer_name, healing_amount}, socket) do
+    # Don't show the message to the healer themselves
+    if healer_name != socket.assigns.character_name do
+      terminal_state =
+        add_message_to_output(
+          socket.assigns.terminal_state,
+          "#{healer_name} heals for #{healing_amount} health!"
+        )
+
+      {:noreply, socket, terminal_state}
+    else
+      {:noreply, socket}
     end
   end
 end

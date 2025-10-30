@@ -45,6 +45,7 @@ defmodule ShardWeb.UserLive.Commands1 do
           "  northeast/southeast/northwest/southwest - Move diagonally",
           "  Shortcuts: n/s/e/w/ne/se/nw/sw",
           "  unlock [direction] with [item_name] - Unlock a door using an item",
+          "  use \"item_name\" on \"player_name\" - Use an item on a player (if in same room)",
           "  help - Show this help message"
         ]
 
@@ -370,9 +371,16 @@ defmodule ShardWeb.UserLive.Commands1 do
                             execute_unlock_command(game_state, direction, item_name)
 
                           :error ->
-                            {[
-                               "Unknown command: '#{command}'. Type 'help' for available commands."
-                             ], game_state}
+                            # Check if it's a use item on player command
+                            case parse_use_item_on_player_command(command) do
+                              {:ok, item_name, player_name} ->
+                                execute_use_item_on_player_command(game_state, item_name, player_name)
+
+                              :error ->
+                                {[
+                                   "Unknown command: '#{command}'. Type 'help' for available commands."
+                                 ], game_state}
+                            end
                         end
                     end
                 end
@@ -515,6 +523,29 @@ defmodule ShardWeb.UserLive.Commands1 do
     end
   end
 
+  # Parse use item on player command to extract item name and player name
+  def parse_use_item_on_player_command(command) do
+    # Match patterns like: use "item name" on "player name", use item_name on player_name
+    cond do
+      # Match use "item name" on "player name" or use 'item name' on 'player name'
+      Regex.match?(~r/^use\s+["'](.+)["']\s+on\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^use\s+["'](.+)["']\s+on\s+["'](.+)["']\s*$/i, command) do
+          [_, item_name, player_name] -> {:ok, String.trim(item_name), String.trim(player_name)}
+          _ -> :error
+        end
+
+      # Match use item_name on player_name (single words, no quotes)
+      Regex.match?(~r/^use\s+(\w+)\s+on\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^use\s+(\w+)\s+on\s+(\w+)\s*$/i, command) do
+          [_, item_name, player_name] -> {:ok, String.trim(item_name), String.trim(player_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
+    end
+  end
+
   # Execute pickup command with a specific item name
   def execute_pickup_command(game_state, item_name) do
     {x, y} = game_state.player_position
@@ -577,5 +608,100 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         {response, updated_game_state}
     end
+  end
+
+  # Execute use item on player command
+  def execute_use_item_on_player_command(game_state, item_name, player_name) do
+    # Find the item in player's inventory
+    target_item =
+      Enum.find(game_state.inventory_items, fn item ->
+        String.downcase(item.name || "") == String.downcase(item_name)
+      end)
+
+    case target_item do
+      nil ->
+        {["You don't have '#{item_name}' in your inventory."], game_state}
+
+      item ->
+        # Check if it's a consumable item that can be used on players
+        if item.type == "consumable" and String.contains?(String.downcase(item.name || ""), "health potion") do
+          # Check if the target player is in the same room
+          {x, y} = game_state.player_position
+          
+          # For now, we'll assume the player is targeting themselves if the name matches
+          # In a real multiplayer implementation, we would check for other players in the room
+          if String.downcase(player_name) == String.downcase(game_state.character.name) do
+            # Use the item on self
+            use_health_potion_on_self(game_state, item)
+          else
+            # In a real implementation, we would check for other players in the room
+            # For now, we'll just say the player is not found
+            {["Player '#{player_name}' is not in the same room or not found."], game_state}
+          end
+        else
+          {["You cannot use '#{item_name}' on players."], game_state}
+        end
+    end
+  end
+
+  # Use health potion on self
+  defp use_health_potion_on_self(game_state, item) do
+    # Parse the healing amount from the item effect
+    healing_amount = parse_healing_amount(item.effect || "Restores 50 health")
+    
+    current_health = game_state.player_stats.health
+    max_health = game_state.player_stats.max_health
+    
+    if current_health >= max_health do
+      {["You are already at full health."], game_state}
+    else
+      # Calculate new health
+      new_health = min(current_health + healing_amount, max_health)
+      
+      # Update player stats
+      updated_stats = %{game_state.player_stats | health: new_health}
+      updated_game_state = %{game_state | player_stats: updated_stats}
+      
+      # Remove the used item from inventory
+      updated_inventory = 
+        Enum.reject(game_state.inventory_items, fn inv_item ->
+          inv_item.id == item.id and inv_item.name == item.name
+        end)
+      
+      updated_game_state = %{updated_game_state | inventory_items: updated_inventory}
+      
+      # Save updated stats to database
+      ShardWeb.UserLive.CharacterHelpers.save_character_stats(
+        game_state.character,
+        updated_stats
+      )
+      
+      # Broadcast the healing event
+      {x, y} = game_state.player_position
+      broadcast_healing_event({x, y}, game_state.character.name, healing_amount)
+      
+      response = [
+        "You use #{item.name} on yourself.",
+        "You recover #{new_health - current_health} health points.",
+        "Health: #{new_health}/#{max_health}"
+      ]
+      
+      {response, updated_game_state}
+    end
+  end
+
+  # Parse healing amount from effect description
+  defp parse_healing_amount(effect) do
+    case Regex.run(~r/(\d+)/, effect) do
+      [_, amount] -> String.to_integer(amount)
+      _ -> 50  # Default healing amount
+    end
+  end
+
+  # Broadcast healing event to room
+  defp broadcast_healing_event(position, healer_name, healing_amount) do
+    {x, y} = position
+    channel = "room:#{x},#{y}"
+    PubSub.broadcast(Shard.PubSub, channel, {:healing_action, healer_name, healing_amount})
   end
 end
