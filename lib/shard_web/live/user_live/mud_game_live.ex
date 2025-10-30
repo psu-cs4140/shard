@@ -21,10 +21,10 @@ defmodule ShardWeb.MudGameLive do
     ~H"""
     <div class="flex flex-col h-full min-h-0">
       <!-- Chat Messages -->
-      <div class="flex-1 bg-black p-4 font-mono text-sm overflow-y-auto border border-gray-600 rounded min-h-0" id="chat-messages">
+      <div class="flex-1 bg-black p-4 font-mono text-sm overflow-y-auto border border-gray-600 rounded min-h-0" id="chat-messages" phx-hook="ChatScroll">
         <div class="whitespace-pre-wrap">
           <%= for message <- @chat_state.messages do %>
-            <div class="text-blue-400"><%= message %></div>
+            <div class="text-blue-400 leading-tight"><%= message %></div>
           <% end %>
         </div>
       </div>
@@ -219,28 +219,20 @@ defmodule ShardWeb.MudGameLive do
         }
       });
       
-      // Auto-scroll chat when new messages are added
-      window.addEventListener("DOMContentLoaded", function() {
-        const observer = new MutationObserver(function(mutations) {
-          mutations.forEach(function(mutation) {
-            if (mutation.type === 'childList') {
-              const chatMessages = document.getElementById('chat-messages');
-              if (chatMessages && mutation.target.closest('#chat-messages')) {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-              }
-            }
-          });
-        });
-        
-        // Start observing
-        const chatContainer = document.getElementById('chat-messages');
-        if (chatContainer) {
-          observer.observe(chatContainer, {
-            childList: true,
-            subtree: true
-          });
+      // LiveView hooks
+      window.Hooks = window.Hooks || {};
+      
+      window.Hooks.ChatScroll = {
+        mounted() {
+          this.scrollToBottom();
+        },
+        updated() {
+          this.scrollToBottom();
+        },
+        scrollToBottom() {
+          this.el.scrollTop = this.el.scrollHeight;
         }
-      });
+      };
     </script>
     """
   end
