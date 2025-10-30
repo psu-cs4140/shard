@@ -155,10 +155,10 @@ defmodule ShardWeb.AdminLive.Npcs do
       </div>
 
       <%= if @show_form do %>
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <div class="bg-base-100 rounded-lg shadow-lg p-6 mb-6">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold">{@form_title}</h2>
-            <button phx-click="cancel_form" class="text-gray-500 hover:text-gray-700">✕</button>
+            <button phx-click="cancel_form" class="text-base-content/50 hover:text-base-content">✕</button>
           </div>
 
           <%= if assigns[:changeset] do %>
@@ -247,45 +247,45 @@ defmodule ShardWeb.AdminLive.Npcs do
             </.simple_form>
           <% else %>
             <div class="text-center py-8">
-              <p class="text-gray-500">Loading form...</p>
+              <p class="text-base-content/70">Loading form...</p>
             </div>
           <% end %>
         </div>
       <% end %>
 
-      <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+      <div class="bg-base-100 rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-base-200">
+          <thead class="bg-base-200">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Name
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Type
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Level
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Location
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Room
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Status
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
+          <tbody class="bg-base-100 divide-y divide-base-200">
             <%= for npc <- @npcs do %>
               <tr>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm font-medium text-gray-900">{npc.name}</div>
-                  <div class="text-sm text-gray-500">
+                  <div class="text-sm font-medium text-base-content">{npc.name}</div>
+                  <div class="text-sm text-base-content/70">
                     {String.slice(npc.description || "", 0, 50)}{if String.length(
                                                                       npc.description || ""
                                                                     ) > 50,
@@ -297,17 +297,17 @@ defmodule ShardWeb.AdminLive.Npcs do
                     {String.capitalize(npc.npc_type)}
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-base-content">
                   {npc.level}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-base-content">
                   <%= if npc.location_x && npc.location_y do %>
                     ({npc.location_x}, {npc.location_y})
                   <% else %>
                     -
                   <% end %>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-base-content">
                   <%= if npc.room do %>
                     {npc.room.name || "Room #{npc.room.id}"}
                   <% else %>
