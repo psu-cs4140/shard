@@ -103,4 +103,25 @@ defmodule Shard.Combat do
     channel = "room:#{x},#{y}"
     PubSub.broadcast(Shard.PubSub, channel, {:combat_action, event})
   end
+
+  @doc """
+  Start combat if there are monsters at the current location.
+  """
+  def start_combat(game_state) do
+    {x, y} = game_state.player_position
+    
+    # Check if there are monsters at current location
+    monsters_here = Enum.filter(game_state.monsters, fn monster ->
+      monster[:position] == {x, y} && monster[:is_alive] != false
+    end)
+    
+    if length(monsters_here) > 0 do
+      # Start combat
+      updated_game_state = %{game_state | combat: true}
+      {[], updated_game_state}
+    else
+      # No monsters, no combat
+      {[], game_state}
+    end
+  end
 end
