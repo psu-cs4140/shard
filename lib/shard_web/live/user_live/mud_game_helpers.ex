@@ -96,7 +96,6 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
         terminal_state: terminal_state,
         chat_state: chat_state,
         modal_state: modal_state,
-        available_exits: compute_available_exits(game_state.player_position),
         character_name: character_name,
         active_tab: "terminal"
       )

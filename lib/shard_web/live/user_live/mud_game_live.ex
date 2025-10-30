@@ -66,6 +66,8 @@ defmodule ShardWeb.MudGameLive do
          {:ok, character} <- MudGameHelpers.load_character_with_associations(character),
          :ok <- MudGameHelpers.setup_tutorial_content(map_id),
          {:ok, socket} <- MudGameHelpers.initialize_game_state(socket, character, map_id, character_name) do
+      # Add available_exits after initialization
+      socket = assign(socket, available_exits: compute_available_exits(socket.assigns.game_state.player_position))
       {:ok, socket}
     else
       {:error, :no_character} ->
