@@ -160,33 +160,79 @@ defmodule ShardWeb.MudGameLive do
 
   # Handle keypresses for navigation, inventory, etc.
   def handle_event("keypress", params, socket) do
-    handle_keypress(params, socket)
+    case handle_keypress(params, socket) do
+      {:noreply, socket, updated_game_state, terminal_state, modal_state, player_position} ->
+        {:noreply,
+         assign(socket,
+           game_state: updated_game_state,
+           terminal_state: terminal_state,
+           modal_state: modal_state,
+           available_exits: compute_available_exits(player_position)
+         )}
+      result -> result
+    end
   end
 
   def handle_event("submit_command", params, socket) do
-    handle_submit_command(params, socket)
+    case handle_submit_command(params, socket) do
+      {:noreply, socket, updated_game_state, terminal_state} ->
+        {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+      result -> result
+    end
   end
 
   def handle_event("update_command", params, socket) do
-    handle_update_command(params, socket)
+    case handle_update_command(params, socket) do
+      {:noreply, socket, terminal_state} ->
+        {:noreply, assign(socket, terminal_state: terminal_state)}
+      result -> result
+    end
   end
 
   def handle_event("save_character_stats", params, socket) do
-    handle_save_character_stats(params, socket)
+    case handle_save_character_stats(params, socket) do
+      {:noreply, socket, message} ->
+        socket = add_message(socket, message)
+        {:noreply, socket}
+      result -> result
+    end
   end
 
   def handle_event("use_hotbar_item", params, socket) do
-    handle_use_hotbar_item(params, socket)
+    case handle_use_hotbar_item(params, socket) do
+      {:noreply, socket, updated_game_state, terminal_state} ->
+        {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+      {:noreply, socket, message} ->
+        socket = add_message(socket, message)
+        {:noreply, socket}
+      result -> result
+    end
   end
 
   def handle_event("equip_item", params, socket) do
-    handle_equip_item(params, socket)
+    case handle_equip_item(params, socket) do
+      {:noreply, socket, updated_game_state, terminal_state} ->
+        {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+      {:noreply, socket, message} ->
+        socket = add_message(socket, message)
+        {:noreply, socket}
+      result -> result
+    end
   end
 
   # (C) Handle clicking an exit button to move rooms
   @impl true
   def handle_event("click_exit", params, socket) do
-    handle_click_exit(params, socket)
+    case handle_click_exit(params, socket) do
+      {:noreply, socket, game_state, terminal_state, player_position} ->
+        {:noreply,
+         assign(socket,
+           game_state: game_state,
+           terminal_state: terminal_state,
+           available_exits: compute_available_exits(player_position)
+         )}
+      result -> result
+    end
   end
 
   defp get_character_from_params(params) do
@@ -355,32 +401,70 @@ defmodule ShardWeb.MudGameLive do
     "Woof! Welcome to the tutorial, adventurer!\n\nI'm Goldie, your faithful guide dog. Let me help you get started on your journey.\n\nHere are some basic commands to get you moving:\n• Type 'look' to examine your surroundings\n• Use 'north', 'south', 'east', 'west' (or n/s/e/w) to move around\n• Try 'pickup \"item_name\"' to collect items you find\n• Use 'inventory' to see what you're carrying\n• Type 'help' anytime for a full list of commands\n\nThere's a key hidden somewhere to the south that might come in handy later!\nExplore around and interact with npcs, complete quests, and attack monsters.\nWhen you're ready to move to the next dungeon, unlock the locked door!\nGood luck, and remember - I'll always be here at (0,0) if you need guidance!"
   end
 
+  defp add_message(socket, message) do
+    new_output = socket.assigns.terminal_state.output ++ [message] ++ [""]
+    ts1 = Map.put(socket.assigns.terminal_state, :output, new_output)
+    assign(socket, :terminal_state, ts1)
+  end
+
   @impl true
   def handle_info({:noise, text}, socket) do
-    handle_noise_info({:noise, text}, socket)
+    case handle_noise_info({:noise, text}, socket) do
+      {:noreply, socket, terminal_state} ->
+        {:noreply, assign(socket, terminal_state: terminal_state)}
+      result -> result
+    end
   end
 
   def handle_info({:area_heal, xx, msg}, socket) do
-    handle_area_heal_info({:area_heal, xx, msg}, socket)
+    case handle_area_heal_info({:area_heal, xx, msg}, socket) do
+      {:noreply, socket, updated_game_state, terminal_state} ->
+        {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+      {:noreply, socket, terminal_state} ->
+        {:noreply, assign(socket, terminal_state: terminal_state)}
+      result -> result
+    end
   end
 
   def handle_info({:update_game_state, new_game_state}, socket) do
-    handle_update_game_state_info({:update_game_state, new_game_state}, socket)
+    case handle_update_game_state_info({:update_game_state, new_game_state}, socket) do
+      {:noreply, socket, game_state} ->
+        {:noreply, assign(socket, game_state: game_state)}
+      result -> result
+    end
   end
 
   def handle_info({:combat_event, event}, socket) do
-    handle_combat_event_info({:combat_event, event}, socket)
+    case handle_combat_event_info({:combat_event, event}, socket) do
+      {:noreply, socket, updated_game_state, terminal_state} ->
+        {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+      {:noreply, socket, terminal_state} ->
+        {:noreply, assign(socket, terminal_state: terminal_state)}
+      result -> result
+    end
   end
 
   def handle_info({:player_joined_combat, player_name}, socket) do
-    handle_player_joined_combat_info({:player_joined_combat, player_name}, socket)
+    case handle_player_joined_combat_info({:player_joined_combat, player_name}, socket) do
+      {:noreply, socket, terminal_state} ->
+        {:noreply, assign(socket, terminal_state: terminal_state)}
+      result -> result
+    end
   end
 
   def handle_info({:player_left_combat, player_name}, socket) do
-    handle_player_left_combat_info({:player_left_combat, player_name}, socket)
+    case handle_player_left_combat_info({:player_left_combat, player_name}, socket) do
+      {:noreply, socket, terminal_state} ->
+        {:noreply, assign(socket, terminal_state: terminal_state)}
+      result -> result
+    end
   end
 
   def handle_info({:combat_action, event}, socket) do
-    handle_combat_action_info({:combat_action, event}, socket)
+    case handle_combat_action_info({:combat_action, event}, socket) do
+      {:noreply, socket, terminal_state} ->
+        {:noreply, assign(socket, terminal_state: terminal_state)}
+      result -> result
+    end
   end
 end
