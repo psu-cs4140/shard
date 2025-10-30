@@ -15,6 +15,7 @@ defmodule ShardWeb.MudGameLive do
   import ShardWeb.UserLive.CharacterHelpers
   import ShardWeb.UserLive.ItemHelpers
   import ShardWeb.UserLive.MudGameHandlers
+  import ShardWeb.UserLive.MudGameLive2
   # import ShardWeb.UserLive.MudGameHelpers
 
   # Chat component
@@ -61,23 +62,11 @@ defmodule ShardWeb.MudGameLive do
   @impl true
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity, Credo.Check.Refactor.Nesting
   def mount(%{"map_id" => map_id} = params, _session, socket) do
-    with {:ok, character} <- ShardWeb.UserLive.MudGameHelpers.get_character_from_params(params),
-         character_name <- ShardWeb.UserLive.MudGameHelpers.get_character_name(params, character),
-         {:ok, character} <-
-           ShardWeb.UserLive.MudGameHelpers.load_character_with_associations(character),
-         :ok <- ShardWeb.UserLive.MudGameHelpers.setup_tutorial_content(map_id),
-         {:ok, assigns} <-
-           ShardWeb.UserLive.MudGameHelpers.initialize_game_state(
-             character,
-             map_id,
-             character_name
-           ) do
-      # Apply all assigns to socket and add available_exits
-      socket =
-        socket
-        |> assign(assigns)
-        |> assign(:available_exits, compute_available_exits(assigns.game_state.player_position))
-
+    with {:ok, character} <- get_character_from_params(params),
+         character_name <- get_character_name(params, character),
+         {:ok, character} <- load_character_with_associations(character),
+         :ok <- setup_tutorial_content(map_id),
+         {:ok, socket} <- initialize_game_state(socket, character, map_id, character_name) do
       {:ok, socket}
     else
       {:error, :no_character} ->
