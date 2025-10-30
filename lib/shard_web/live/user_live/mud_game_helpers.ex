@@ -10,6 +10,7 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
   import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.CharacterHelpers
   import ShardWeb.UserLive.ItemHelpers
+  import ShardWeb.UserLive.MonsterComponents
 
   def get_character_from_params(params) do
     case Map.get(params, "character_id") do
