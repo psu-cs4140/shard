@@ -7,13 +7,13 @@ defmodule ShardWeb.MudGameLive do
   alias Phoenix.LiveView.JS
   import ShardWeb.UserLive.Components
   import ShardWeb.UserLive.Components2
-  import ShardWeb.UserLive.MapHelpers
+  # import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.Movement
   import ShardWeb.UserLive.MapComponents
-  import ShardWeb.UserLive.LegacyMap
-  import ShardWeb.UserLive.MonsterComponents
+  # import ShardWeb.UserLive.LegacyMap
+  # import ShardWeb.UserLive.MonsterComponents
   import ShardWeb.UserLive.CharacterHelpers
-  import ShardWeb.UserLive.ItemHelpers
+  #  import ShardWeb.UserLive.ItemHelpers
   import ShardWeb.UserLive.MudGameHandlers
   import ShardWeb.UserLive.MudGameLive2
   # import ShardWeb.UserLive.MudGameHelpers
@@ -404,11 +404,6 @@ defmodule ShardWeb.MudGameLive do
         result
     end
   end
-
-
-
-
-
 
   @impl true
   def handle_info({:noise, text}, socket) do

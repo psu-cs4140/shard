@@ -9,7 +9,7 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
   alias Shard.Npcs
   import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.CharacterHelpers
-  import ShardWeb.UserLive.ItemHelpers
+  #  import ShardWeb.UserLive.ItemHelpers
   import ShardWeb.UserLive.MonsterComponents
 
   def get_character_from_params(params) do

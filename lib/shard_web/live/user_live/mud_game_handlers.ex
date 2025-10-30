@@ -107,7 +107,9 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
     case item do
       nil ->
         # Add empty slot message to terminal
-        new_output = socket.assigns.terminal_state.output ++ ["Hotbar slot #{slot_number} is empty"] ++ [""]
+        new_output =
+          socket.assigns.terminal_state.output ++ ["Hotbar slot #{slot_number} is empty"] ++ [""]
+
         terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
 
         {:noreply, socket, socket.assigns.game_state, terminal_state}
@@ -133,7 +135,9 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
     case item do
       nil ->
         # Add error message to terminal
-        new_output = socket.assigns.terminal_state.output ++ ["Item not found in inventory."] ++ [""]
+        new_output =
+          socket.assigns.terminal_state.output ++ ["Item not found in inventory."] ++ [""]
+
         terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
 
         {:noreply, socket, socket.assigns.game_state, terminal_state}

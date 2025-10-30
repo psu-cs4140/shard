@@ -6,7 +6,7 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
   import Phoenix.Component
   import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.CharacterHelpers
-  import ShardWeb.UserLive.ItemHelpers
+  #  import ShardWeb.UserLive.ItemHelpers
   import ShardWeb.UserLive.MonsterComponents
   import ShardWeb.UserLive.Movement
   alias Phoenix.PubSub
