@@ -126,5 +126,5 @@ config :shard, Shard.Mailer,
   api_key: mjet_key,
   secret: mjet_sec,
   send_from: {"Shard", "no-reply@homework.quest"}
-  
-config :swoosh, :api_client, Swoosh.ApiClient.Req 
+
+config :swoosh, :api_client, Swoosh.ApiClient.Req
