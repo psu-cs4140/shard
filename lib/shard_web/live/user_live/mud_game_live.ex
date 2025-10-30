@@ -485,7 +485,8 @@ defmodule ShardWeb.MudGameLive do
 
   def handle_info({:chat_message, message_data}, socket) do
     # Format the message
-    formatted_message = "[#{message_data.timestamp}] #{message_data.character_name}: #{message_data.text}"
+    formatted_message =
+      "[#{message_data.timestamp}] #{message_data.character_name}: #{message_data.text}"
 
     # Add message to chat
     new_messages = socket.assigns.chat_state.messages ++ [formatted_message]
