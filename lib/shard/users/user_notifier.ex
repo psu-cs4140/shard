@@ -13,7 +13,7 @@ defmodule Shard.Users.UserNotifier do
 
   # Delivers the email using the application mailer.
   defp deliver(recipient, subject, body) do
-    conf = 
+    conf =
       Application.get_env(:shard, Shard.Mailer)
       |> Enum.into(%{})
 
