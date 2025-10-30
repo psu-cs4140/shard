@@ -64,7 +64,9 @@ defmodule Shard.Combat.Engine do
     effects = Map.get(state, :effects, [])
 
     {monsters2, players2, effects2, events} =
-      Enum.reduce(effects, {state.monsters || [], state.players || [], [], []}, fn eff, {mons, plrs, keep, evs} ->
+      Enum.reduce(effects, {state.monsters || [], state.players || [], [], []}, fn eff,
+                                                                                   {mons, plrs,
+                                                                                    keep, evs} ->
         case eff do
           %{kind: "bleed", target: {:monster, i}, remaining_ticks: t, magnitude: mag}
           when t > 0 ->
@@ -76,7 +78,9 @@ defmodule Shard.Combat.Engine do
                   mons2 = List.replace_at(mons, i, m2)
                   eff2 = %{eff | remaining_ticks: t - 1}
                   ev = %{type: :effect_tick, effect: "bleed", target: {:monster, i}, dmg: mag}
-                  {mons2, plrs, if(eff2.remaining_ticks > 0, do: [eff2 | keep], else: keep), [ev | evs]}
+
+                  {mons2, plrs, if(eff2.remaining_ticks > 0, do: [eff2 | keep], else: keep),
+                   [ev | evs]}
                 else
                   # target already dead; drop effect
                   {mons, plrs, keep, evs}
@@ -96,13 +100,22 @@ defmodule Shard.Combat.Engine do
 
               i ->
                 p = Enum.at(plrs, i)
+
                 if alive_player?(p) do
                   hp = max((p[:hp] || 10) - mag, 0)
                   p2 = Map.put(p, :hp, hp)
                   plrs2 = List.replace_at(plrs, i, p2)
                   eff2 = %{eff | remaining_ticks: t - 1}
-                  ev = %{type: :effect_tick, effect: "bleed", target: {:player, player_id}, dmg: mag}
-                  {mons, plrs2, if(eff2.remaining_ticks > 0, do: [eff2 | keep], else: keep), [ev | evs]}
+
+                  ev = %{
+                    type: :effect_tick,
+                    effect: "bleed",
+                    target: {:player, player_id},
+                    dmg: mag
+                  }
+
+                  {mons, plrs2, if(eff2.remaining_ticks > 0, do: [eff2 | keep], else: keep),
+                   [ev | evs]}
                 else
                   # player already dead; drop effect
                   {mons, plrs, keep, evs}
@@ -125,7 +138,14 @@ defmodule Shard.Combat.Engine do
       end)
 
     {monsters3, events2} = apply_effect_event_damage(monsters2, events)
-    %{state | monsters: monsters3, players: players2, effects: Enum.reverse(effects2), events: Enum.reverse(events2)}
+
+    %{
+      state
+      | monsters: monsters3,
+        players: players2,
+        effects: Enum.reverse(effects2),
+        events: Enum.reverse(events2)
+    }
   end
 
   defp resolve_deaths_and_victory(state) do
@@ -167,14 +187,14 @@ defmodule Shard.Combat.Engine do
   """
   def add_player(state, player) do
     players = Map.get(state, :players, [])
-    
+
     # Check if player is already in combat
     case Enum.find(players, &(&1.id == player.id)) do
       nil ->
         # Add new player
         updated_players = [player | players]
         Map.put(state, :players, updated_players)
-      
+
       _existing ->
         # Player already in combat, don't add again
         state
@@ -195,8 +215,8 @@ defmodule Shard.Combat.Engine do
   """
   def update_player(state, player_id, updates) do
     players = Map.get(state, :players, [])
-    
-    updated_players = 
+
+    updated_players =
       Enum.map(players, fn p ->
         if p.id == player_id do
           Map.merge(p, updates)
@@ -204,7 +224,7 @@ defmodule Shard.Combat.Engine do
           p
         end
       end)
-    
+
     Map.put(state, :players, updated_players)
   end
 end

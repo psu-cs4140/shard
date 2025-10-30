@@ -550,12 +550,12 @@ defmodule ShardWeb.MudGameLive do
           new_health = max(current_stats.health - dmg, 0)
           updated_stats = %{current_stats | health: new_health}
           updated_game_state = %{socket.assigns.game_state | player_stats: updated_stats}
-          
-          socket = 
+
+          socket =
             socket
             |> add_message("You take #{dmg} bleed damage!")
             |> assign(:game_state, updated_game_state)
-          
+
           {:noreply, socket}
         else
           socket = add_message(socket, "Another player takes bleed damage!")
@@ -592,11 +592,13 @@ defmodule ShardWeb.MudGameLive do
       {:player_attack, attacker_name, monster_name, damage, monster_alive} ->
         # Don't show the message to the attacker themselves
         if attacker_name != socket.assigns.character_name do
-          message = if monster_alive do
-            "#{attacker_name} attacks the #{monster_name} for #{damage} damage!"
-          else
-            "#{attacker_name} attacks the #{monster_name} for #{damage} damage! The #{monster_name} is defeated!"
-          end
+          message =
+            if monster_alive do
+              "#{attacker_name} attacks the #{monster_name} for #{damage} damage!"
+            else
+              "#{attacker_name} attacks the #{monster_name} for #{damage} damage! The #{monster_name} is defeated!"
+            end
+
           socket = add_message(socket, message)
           {:noreply, socket}
         else
