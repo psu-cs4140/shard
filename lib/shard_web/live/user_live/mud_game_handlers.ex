@@ -3,6 +3,7 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   Event handlers and helper functions for MudGameLive
   """
   alias Phoenix.PubSub
+  import Phoenix.LiveView, only: [assign: 2, assign: 3]
   import ShardWeb.UserLive.Movement
   import ShardWeb.UserLive.Commands1
   import ShardWeb.UserLive.LegacyMap
