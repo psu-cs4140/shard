@@ -7,6 +7,7 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
   alias Shard.Characters
   alias Shard.Items
   alias Shard.Npcs
+  import Phoenix.LiveView, only: [assign: 3]
   import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.CharacterHelpers
   import ShardWeb.UserLive.ItemHelpers
