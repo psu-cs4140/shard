@@ -174,7 +174,9 @@ defmodule ShardWeb.AdminLive.Monsters do
         <div class="bg-base-100 rounded-lg shadow-lg p-6 mb-6">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold">{@form_title}</h2>
-            <button phx-click="cancel_form" class="text-base-content/50 hover:text-base-content">✕</button>
+            <button phx-click="cancel_form" class="text-base-content/50 hover:text-base-content">
+              ✕
+            </button>
           </div>
 
           <%= if assigns[:changeset] do %>
