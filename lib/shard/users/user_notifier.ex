@@ -13,10 +13,13 @@ defmodule Shard.Users.UserNotifier do
 
   # Delivers the email using the application mailer.
   defp deliver(recipient, subject, body) do
+    conf = Application.get_env(:shard, Shard.Mailer)
+    |> Enum.into(%{})
+
     email =
       new()
       |> to(recipient)
-      |> from({"Shard", "noreply@nextgenbytes.me"})
+      |> from(conf.send_from)
       |> subject(subject)
       |> text_body(body)
 
