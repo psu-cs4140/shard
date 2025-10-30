@@ -13,8 +13,9 @@ defmodule Shard.Users.UserNotifier do
 
   # Delivers the email using the application mailer.
   defp deliver(recipient, subject, body) do
-    conf = Application.get_env(:shard, Shard.Mailer)
-    |> Enum.into(%{})
+    conf = 
+      Application.get_env(:shard, Shard.Mailer)
+      |> Enum.into(%{})
 
     email =
       new()
@@ -53,6 +54,7 @@ defmodule Shard.Users.UserNotifier do
   """
   def deliver_login_instructions(user, url) do
     IO.puts("Magic link: #{url}")
+
     case user do
       %User{confirmed_at: nil} -> deliver_confirmation_instructions(user, url)
       _ -> deliver_magic_link_instructions(user, url)
