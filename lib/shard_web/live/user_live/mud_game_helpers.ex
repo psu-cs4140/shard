@@ -92,12 +92,12 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
 
     socket =
       socket
-      |> Phoenix.LiveView.assign(:game_state, game_state)
-      |> Phoenix.LiveView.assign(:terminal_state, terminal_state)
-      |> Phoenix.LiveView.assign(:chat_state, chat_state)
-      |> Phoenix.LiveView.assign(:modal_state, modal_state)
-      |> Phoenix.LiveView.assign(:character_name, character_name)
-      |> Phoenix.LiveView.assign(:active_tab, "terminal")
+      |> assign(:game_state, game_state)
+      |> assign(:terminal_state, terminal_state)
+      |> assign(:chat_state, chat_state)
+      |> assign(:modal_state, modal_state)
+      |> assign(:character_name, character_name)
+      |> assign(:active_tab, "terminal")
 
     {:ok, socket}
   end
@@ -193,7 +193,7 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
   def add_message(socket, message) do
     new_output = socket.assigns.terminal_state.output ++ [message] ++ [""]
     ts1 = Map.put(socket.assigns.terminal_state, :output, new_output)
-    Phoenix.LiveView.assign(socket, :terminal_state, ts1)
+    assign(socket, :terminal_state, ts1)
   end
 
   def posn_to_room_channel({x, y}) do
