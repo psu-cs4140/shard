@@ -21,15 +21,19 @@ defmodule ShardWeb.MudGameLive do
     ~H"""
     <div class="flex flex-col h-full min-h-0">
       <!-- Chat Messages -->
-      <div class="flex-1 bg-black p-4 font-mono text-sm overflow-y-auto border border-gray-600 rounded min-h-0" id="chat-messages" phx-hook="ChatScroll">
+      <div
+        class="flex-1 bg-black p-4 font-mono text-sm overflow-y-auto border border-gray-600 rounded min-h-0"
+        id="chat-messages"
+        phx-hook="ChatScroll"
+      >
         <div class="whitespace-pre-wrap">
           <%= for message <- @chat_state.messages do %>
-            <div class="text-blue-400 leading-tight"><%= message %></div>
+            <div class="text-blue-400 leading-tight">{message}</div>
           <% end %>
         </div>
       </div>
       
-      <!-- Chat Input -->
+    <!-- Chat Input -->
       <form phx-submit="submit_chat" class="mt-4 flex-shrink-0">
         <div class="flex">
           <input
@@ -75,7 +79,10 @@ defmodule ShardWeb.MudGameLive do
   @spec render(any()) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col h-screen bg-gray-900 text-white overflow-hidden" phx-window-keydown="keypress">
+    <div
+      class="flex flex-col h-screen bg-gray-900 text-white overflow-hidden"
+      phx-window-keydown="keypress"
+    >
       <!-- "phx-window-keydown="keypress" -->
       <!-- Header -->
       <header class="bg-gray-800 p-4 shadow-lg flex justify-between items-center">
@@ -99,7 +106,10 @@ defmodule ShardWeb.MudGameLive do
             <button
               class={[
                 "px-4 py-2 font-medium transition-colors",
-                if(@active_tab == "terminal", do: "text-blue-400 border-b-2 border-blue-400", else: "text-gray-400 hover:text-white")
+                if(@active_tab == "terminal",
+                  do: "text-blue-400 border-b-2 border-blue-400",
+                  else: "text-gray-400 hover:text-white"
+                )
               ]}
               phx-click="switch_tab"
               phx-value-tab="terminal"
@@ -109,7 +119,10 @@ defmodule ShardWeb.MudGameLive do
             <button
               class={[
                 "px-4 py-2 font-medium transition-colors",
-                if(@active_tab == "chat", do: "text-blue-400 border-b-2 border-blue-400", else: "text-gray-400 hover:text-white")
+                if(@active_tab == "chat",
+                  do: "text-blue-400 border-b-2 border-blue-400",
+                  else: "text-gray-400 hover:text-white"
+                )
               ]}
               phx-click="switch_tab"
               phx-value-tab="chat"
@@ -117,8 +130,8 @@ defmodule ShardWeb.MudGameLive do
               Chat
             </button>
           </div>
-
-          <!-- Tab Content -->
+          
+    <!-- Tab Content -->
           <div class="flex-1 flex flex-col min-h-0">
             <.terminal :if={@active_tab == "terminal"} terminal_state={@terminal_state} />
             <.chat :if={@active_tab == "chat"} chat_state={@chat_state} />
@@ -210,7 +223,7 @@ defmodule ShardWeb.MudGameLive do
         <p>MUD Game v1.0</p>
       </footer>
     </div>
-    
+
     <script>
       window.addEventListener("phx:scroll_to_bottom", (e) => {
         const element = document.getElementById(e.detail.target);
@@ -218,10 +231,10 @@ defmodule ShardWeb.MudGameLive do
           element.scrollTop = element.scrollHeight;
         }
       });
-      
+
       // LiveView hooks
       window.Hooks = window.Hooks || {};
-      
+
       window.Hooks.ChatScroll = {
         mounted() {
           this.scrollToBottom();
@@ -324,7 +337,7 @@ defmodule ShardWeb.MudGameLive do
       }
 
       socket = assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
-      
+
       # Auto-scroll terminal to bottom
       socket = push_event(socket, "scroll_to_bottom", %{target: "terminal-output"})
 
@@ -344,9 +357,11 @@ defmodule ShardWeb.MudGameLive do
 
     if trimmed_message != "" do
       # Add message to chat
-      timestamp = DateTime.utc_now() |> DateTime.to_time() |> Time.to_string() |> String.slice(0, 8)
+      timestamp =
+        DateTime.utc_now() |> DateTime.to_time() |> Time.to_string() |> String.slice(0, 8)
+
       formatted_message = "[#{timestamp}] #{socket.assigns.character_name}: #{trimmed_message}"
-      
+
       new_messages = socket.assigns.chat_state.messages ++ [formatted_message]
 
       chat_state = %{
@@ -355,7 +370,7 @@ defmodule ShardWeb.MudGameLive do
       }
 
       socket = assign(socket, chat_state: chat_state)
-      
+
       # Auto-scroll chat to bottom
       socket = push_event(socket, "scroll_to_bottom", %{target: "chat-messages"})
 
