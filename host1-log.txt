@@ -2023,3 +2023,675 @@ SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate
 [debug] HANDLE EVENT "submit_command" in ShardWeb.MudGameLive
   Parameters: %{"command" => %{"text" => "attack"}}
 [debug] Replied in 844µs
+[debug] Live reload: lib/shard_web/live/user_live/mud_game_handlers.ex
+[debug] Live reload: lib/shard_web/live/user_live/mud_game_handlers.ex
+[debug] Live reload: lib/shard_web/live/user_live/mud_game_handlers.ex
+[debug] Live reload: lib/shard_web/live/user_live/mud_game_handlers.ex
+[debug] Live reload: lib/shard_web/live/user_live/mud_game_live.ex
+[debug] Live reload: lib/shard_web/live/user_live/mud_game_live.ex
+[debug] Live reload: lib/shard_web/live/user_live/mud_game_live.ex
+[debug] Live reload: lib/shard_web/live/user_live/mud_game_live.ex
+Done in 866µs
+Done in 558µs
+Compiling 2 files (.ex)
+Generated shard app
+[info] GET /play/tutorial_terrain
+[debug] Processing with ShardWeb.MudGameLive.__live__/0
+  Parameters: %{"character_id" => "1", "character_name" => "player", "map_id" => "tutorial_terrain"}
+  Pipelines: [:browser, :require_authenticated_user]
+[debug] QUERY OK source="users_tokens" db=3.0ms queue=0.1ms idle=412.6ms
+SELECT u1."id", u1."email", u1."hashed_password", u1."confirmed_at", u1."admin", u1."inserted_at", u1."updated_at", u0."authenticated_at", u0."inserted_at" FROM "users_tokens" AS u0 INNER JOIN "users" AS u1 ON u1."id" = u0."user_id" WHERE ((u0."token" = $1) AND (u0."context" = $2)) AND (u0."inserted_at" > $3::timestamp + (-(14)::numeric * interval '1 day')) [<<64, 6, 50, 99, 57, 74, 87, 137, 131, 30, 66, 148, 156, 59, 25, 129, 230, 170, 38, 224, 183, 99, 18, 71, 27, 153, 137, 239, 38, 213, 81, 199>>, "session", ~U[2025-10-30 01:20:16.491203Z]]
+[90m↳ ShardWeb.UserAuth.fetch_current_scope_for_user/2, at: lib/shard_web/user_auth.ex:76[0m
+[debug] QUERY OK source="characters" db=1.5ms idle=415.7ms
+SELECT c0."id", c0."name", c0."level", c0."class", c0."race", c0."health", c0."mana", c0."strength", c0."dexterity", c0."intelligence", c0."constitution", c0."experience", c0."gold", c0."location", c0."description", c0."is_active", c0."user_id", c0."inserted_at", c0."updated_at" FROM "characters" AS c0 WHERE (c0."id" = $1) [1]
+[90m↳ Shard.Characters.get_character!/1, at: lib/shard/characters.ex:40[0m
+[debug] QUERY OK source="users" db=0.9ms idle=417.7ms
+SELECT u0."id", u0."email", u0."hashed_password", u0."confirmed_at", u0."admin", u0."inserted_at", u0."updated_at", u0."id" FROM "users" AS u0 WHERE (u0."id" = $1) [2]
+[90m↳ ShardWeb.MudGameLive.get_character_from_params/1, at: lib/shard_web/live/user_live/mud_game_live.ex:258[0m
+[debug] QUERY OK source="characters" db=6.1ms idle=419.2ms
+SELECT c0."id", c0."name", c0."level", c0."class", c0."race", c0."health", c0."mana", c0."strength", c0."dexterity", c0."intelligence", c0."constitution", c0."experience", c0."gold", c0."location", c0."description", c0."is_active", c0."user_id", c0."inserted_at", c0."updated_at" FROM "characters" AS c0 WHERE (c0."id" = $1) [1]
+[90m↳ ShardWeb.MudGameLive.load_character_with_associations/1, at: lib/shard_web/live/user_live/mud_game_live.ex:276[0m
+[debug] QUERY OK source="hotbar_slots" db=3.7ms idle=426.1ms
+SELECT h0."id", h0."slot_number", h0."character_id", h0."item_id", h0."inventory_id", h0."inserted_at", h0."updated_at", h0."character_id" FROM "hotbar_slots" AS h0 WHERE (h0."character_id" = $1) ORDER BY h0."character_id" [1]
+[90m↳ ShardWeb.MudGameLive.load_character_with_associations/1, at: lib/shard_web/live/user_live/mud_game_live.ex:277[0m
+[debug] QUERY OK source="character_inventories" db=0.8ms idle=429.2ms
+SELECT c0."id", c0."quantity", c0."slot_position", c0."equipped", c0."equipment_slot", c0."character_id", c0."item_id", c0."inserted_at", c0."updated_at", c0."character_id" FROM "character_inventories" AS c0 WHERE (c0."character_id" = $1) ORDER BY c0."character_id" [1]
+[90m↳ ShardWeb.MudGameLive.load_character_with_associations/1, at: lib/shard_web/live/user_live/mud_game_live.ex:277[0m
+[debug] QUERY OK source="room_items" db=2.3ms idle=431.5ms
+SELECT r0."id", r0."location", r0."quantity", r0."x_position", r0."y_position", r0."respawn_timer", r0."is_permanent", r0."item_id", r0."dropped_by_character_id", r0."inserted_at", r0."updated_at" FROM "room_items" AS r0 INNER JOIN "items" AS i1 ON r0."item_id" = i1."id" WHERE (r0."location" = '0,2,0') AND (i1."name" = 'Tutorial Key') []
+[90m↳ Shard.Items.create_tutorial_key/0, at: lib/shard/items.ex:342[0m
+[debug] QUERY OK source="npcs" db=6.4ms idle=433.5ms
+SELECT n0."id", n0."name", n0."description", n0."level", n0."health", n0."max_health", n0."mana", n0."max_mana", n0."strength", n0."dexterity", n0."intelligence", n0."constitution", n0."experience_reward", n0."gold_reward", n0."npc_type", n0."dialogue", n0."inventory", n0."location_x", n0."location_y", n0."location_z", n0."is_active", n0."respawn_time", n0."last_death_at", n0."faction", n0."aggression_level", n0."movement_pattern", n0."properties", n0."room_id", n0."inserted_at", n0."updated_at" FROM "npcs" AS n0 WHERE (((n0."location_x" = 0) AND (n0."location_y" = 0)) AND (n0."name" = 'Goldie')) []
+[90m↳ Shard.Npcs.create_tutorial_npc_goldie/0, at: lib/shard/npcs.ex:171[0m
+[debug] QUERY OK source="rooms" db=3.4ms idle=88.1ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [2, 2, 0]
+[90m↳ Shard.Items.ensure_room_exists/4, at: lib/shard/items.ex:419[0m
+[debug] QUERY OK source="rooms" db=2.8ms idle=78.2ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [2, 1, 0]
+[90m↳ Shard.Items.ensure_room_exists/4, at: lib/shard/items.ex:419[0m
+[debug] QUERY OK source="doors" db=0.9ms queue=0.9ms idle=34.0ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE ((d0."from_room_id" = $1) AND (d0."direction" = $2)) [11, "north"]
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:391[0m
+[debug] QUERY OK db=0.6ms queue=0.6ms idle=34.0ms
+begin []
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:395[0m
+[debug] QUERY OK source="doors" db=0.8ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE (((d0."from_room_id" = $1) AND (d0."to_room_id" = $2)) AND (d0."direction" = $3)) [10, 11, "south"]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK source="doors" db=2.9ms
+DELETE FROM "doors" WHERE "id" = $1 [354]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK source="doors" db=0.7ms
+DELETE FROM "doors" WHERE "id" = $1 [353]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK db=40.8ms
+commit []
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:395[0m
+[debug] QUERY OK db=0.6ms queue=0.1ms idle=81.2ms
+begin []
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:402[0m
+[debug] QUERY OK source="doors" db=1.4ms
+INSERT INTO "doors" ("name","description","direction","door_type","from_room_id","is_locked","key_required","to_room_id","properties","new_dungeon","inserted_at","updated_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING "id" ["Locked Dungeon Gate", "A heavy iron gate that blocks the entrance to the dungeon. It requires a key to open.", "north", "locked_gate", 11, true, "Tutorial Key", 10, %{}, false, ~U[2025-10-30 01:20:16Z], ~U[2025-10-30 01:20:16Z]]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK source="doors" db=2.6ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE (((d0."from_room_id" = $1) AND (d0."to_room_id" = $2)) AND (d0."direction" = $3)) [10, 11, "south"]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK source="doors" db=2.1ms
+INSERT INTO "doors" ("direction","door_type","from_room_id","is_locked","key_required","to_room_id","properties","new_dungeon","inserted_at","updated_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING "id" ["south", "locked_gate", 10, true, "Tutorial Key", 11, %{}, false, ~U[2025-10-30 01:20:16Z], ~U[2025-10-30 01:20:16Z]]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK db=6.7ms
+commit []
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:402[0m
+[debug] QUERY OK source="monsters" db=1.2ms queue=0.1ms idle=100.1ms
+SELECT m0."id", m0."name", m0."race", m0."health", m0."max_health", m0."attack_damage", m0."potential_loot_drops", m0."xp_amount", m0."level", m0."description", m0."location_id", m0."inserted_at", m0."updated_at" FROM "monsters" AS m0 []
+[90m↳ Shard.Monsters.list_monsters/0, at: lib/shard/monsters.ex:21[0m
+[debug] QUERY OK source="rooms" db=0.8ms idle=97.5ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = $1) [9]
+[90m↳ ShardWeb.UserLive.MonsterComponents.load_monsters_from_database/2, at: lib/shard_web/live/user_live/monster_components.ex:12[0m
+[debug] QUERY OK source="rooms" db=0.6ms queue=1.4ms idle=98.5ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (r0."id" = $1) [9]
+[90m↳ anonymous fn/1 in ShardWeb.UserLive.MonsterComponents.load_monsters_from_database/2, at: lib/shard_web/live/user_live/monster_components.ex:20[0m
+[debug] QUERY OK source="rooms" db=2.3ms idle=96.9ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [0, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.compute_available_exits/1, at: lib/shard_web/live/user_live/movement.ex:248[0m
+[debug] QUERY OK source="doors" db=1.4ms idle=92.7ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE (d0."from_room_id" = $1) [3]
+[90m↳ ShardWeb.UserLive.Movement.compute_available_exits/1, at: lib/shard_web/live/user_live/movement.ex:253[0m
+[debug] QUERY OK source="rooms" db=3.0ms queue=0.1ms idle=104.9ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 []
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=1.8ms queue=0.1ms idle=105.5ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at", d0."to_room_id" FROM "doors" AS d0 WHERE (d0."to_room_id" = ANY($1)) ORDER BY d0."to_room_id" [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=1.9ms queue=0.6ms idle=103.1ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at", d0."from_room_id" FROM "doors" AS d0 WHERE (d0."from_room_id" = ANY($1)) ORDER BY d0."from_room_id" [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=2.3ms queue=0.1ms idle=58.0ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 []
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] QUERY OK source="rooms" db=0.6ms idle=35.4ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = ANY($1)) [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] QUERY OK source="rooms" db=1.7ms queue=0.1ms idle=34.0ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = ANY($1)) [[10, 11, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[info] Sent 200 in 188ms
+[info] GET /play/tutorial_terrain
+[debug] Processing with ShardWeb.MudGameLive.__live__/0
+  Parameters: %{"character_id" => "2", "character_name" => "player2", "map_id" => "tutorial_terrain"}
+  Pipelines: [:browser, :require_authenticated_user]
+[debug] QUERY OK source="users_tokens" db=0.8ms queue=0.1ms idle=279.3ms
+SELECT u1."id", u1."email", u1."hashed_password", u1."confirmed_at", u1."admin", u1."inserted_at", u1."updated_at", u0."authenticated_at", u0."inserted_at" FROM "users_tokens" AS u0 INNER JOIN "users" AS u1 ON u1."id" = u0."user_id" WHERE ((u0."token" = $1) AND (u0."context" = $2)) AND (u0."inserted_at" > $3::timestamp + (-(14)::numeric * interval '1 day')) [<<252, 177, 130, 42, 52, 90, 30, 12, 236, 189, 45, 78, 245, 213, 165, 194, 80, 149, 102, 173, 163, 41, 106, 208, 151, 132, 26, 164, 79, 36, 197, 82>>, "session", ~U[2025-10-30 01:20:16.892399Z]]
+[90m↳ ShardWeb.UserAuth.fetch_current_scope_for_user/2, at: lib/shard_web/user_auth.ex:76[0m
+[debug] QUERY OK source="characters" db=1.0ms idle=279.0ms
+SELECT c0."id", c0."name", c0."level", c0."class", c0."race", c0."health", c0."mana", c0."strength", c0."dexterity", c0."intelligence", c0."constitution", c0."experience", c0."gold", c0."location", c0."description", c0."is_active", c0."user_id", c0."inserted_at", c0."updated_at" FROM "characters" AS c0 WHERE (c0."id" = $1) [2]
+[90m↳ Shard.Characters.get_character!/1, at: lib/shard/characters.ex:40[0m
+[debug] QUERY OK source="users" db=0.4ms idle=262.8ms
+SELECT u0."id", u0."email", u0."hashed_password", u0."confirmed_at", u0."admin", u0."inserted_at", u0."updated_at", u0."id" FROM "users" AS u0 WHERE (u0."id" = $1) [1]
+[90m↳ ShardWeb.MudGameLive.get_character_from_params/1, at: lib/shard_web/live/user_live/mud_game_live.ex:258[0m
+[debug] QUERY OK source="characters" db=0.3ms idle=261.0ms
+SELECT c0."id", c0."name", c0."level", c0."class", c0."race", c0."health", c0."mana", c0."strength", c0."dexterity", c0."intelligence", c0."constitution", c0."experience", c0."gold", c0."location", c0."description", c0."is_active", c0."user_id", c0."inserted_at", c0."updated_at" FROM "characters" AS c0 WHERE (c0."id" = $1) [2]
+[90m↳ ShardWeb.MudGameLive.load_character_with_associations/1, at: lib/shard_web/live/user_live/mud_game_live.ex:276[0m
+[debug] QUERY OK source="character_inventories" db=0.7ms idle=258.0ms
+SELECT c0."id", c0."quantity", c0."slot_position", c0."equipped", c0."equipment_slot", c0."character_id", c0."item_id", c0."inserted_at", c0."updated_at", c0."character_id" FROM "character_inventories" AS c0 WHERE (c0."character_id" = $1) ORDER BY c0."character_id" [2]
+[90m↳ ShardWeb.MudGameLive.load_character_with_associations/1, at: lib/shard_web/live/user_live/mud_game_live.ex:277[0m
+[debug] QUERY OK source="hotbar_slots" db=0.7ms idle=261.2ms
+SELECT h0."id", h0."slot_number", h0."character_id", h0."item_id", h0."inventory_id", h0."inserted_at", h0."updated_at", h0."character_id" FROM "hotbar_slots" AS h0 WHERE (h0."character_id" = $1) ORDER BY h0."character_id" [2]
+[90m↳ ShardWeb.MudGameLive.load_character_with_associations/1, at: lib/shard_web/live/user_live/mud_game_live.ex:277[0m
+[debug] QUERY OK source="room_items" db=0.3ms idle=257.9ms
+SELECT r0."id", r0."location", r0."quantity", r0."x_position", r0."y_position", r0."respawn_timer", r0."is_permanent", r0."item_id", r0."dropped_by_character_id", r0."inserted_at", r0."updated_at" FROM "room_items" AS r0 INNER JOIN "items" AS i1 ON r0."item_id" = i1."id" WHERE (r0."location" = '0,2,0') AND (i1."name" = 'Tutorial Key') []
+[90m↳ Shard.Items.create_tutorial_key/0, at: lib/shard/items.ex:342[0m
+[debug] QUERY OK source="npcs" db=1.2ms idle=257.0ms
+SELECT n0."id", n0."name", n0."description", n0."level", n0."health", n0."max_health", n0."mana", n0."max_mana", n0."strength", n0."dexterity", n0."intelligence", n0."constitution", n0."experience_reward", n0."gold_reward", n0."npc_type", n0."dialogue", n0."inventory", n0."location_x", n0."location_y", n0."location_z", n0."is_active", n0."respawn_time", n0."last_death_at", n0."faction", n0."aggression_level", n0."movement_pattern", n0."properties", n0."room_id", n0."inserted_at", n0."updated_at" FROM "npcs" AS n0 WHERE (((n0."location_x" = 0) AND (n0."location_y" = 0)) AND (n0."name" = 'Goldie')) []
+[90m↳ Shard.Npcs.create_tutorial_npc_goldie/0, at: lib/shard/npcs.ex:171[0m
+[debug] QUERY OK source="rooms" db=0.6ms idle=93.8ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [2, 2, 0]
+[90m↳ Shard.Items.ensure_room_exists/4, at: lib/shard/items.ex:419[0m
+[debug] QUERY OK source="rooms" db=0.3ms idle=68.5ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [2, 1, 0]
+[90m↳ Shard.Items.ensure_room_exists/4, at: lib/shard/items.ex:419[0m
+[debug] QUERY OK source="doors" db=0.4ms idle=11.9ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE ((d0."from_room_id" = $1) AND (d0."direction" = $2)) [11, "north"]
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:391[0m
+[debug] QUERY OK db=0.1ms idle=10.8ms
+begin []
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:395[0m
+[debug] QUERY OK source="doors" db=0.3ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE (((d0."from_room_id" = $1) AND (d0."to_room_id" = $2)) AND (d0."direction" = $3)) [10, 11, "south"]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK source="doors" db=0.3ms
+DELETE FROM "doors" WHERE "id" = $1 [356]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK source="doors" db=0.3ms
+DELETE FROM "doors" WHERE "id" = $1 [355]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK db=10.8ms
+commit []
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:395[0m
+[debug] QUERY OK db=0.2ms idle=23.0ms
+begin []
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:402[0m
+[debug] QUERY OK source="doors" db=0.9ms
+INSERT INTO "doors" ("name","description","direction","door_type","from_room_id","is_locked","key_required","to_room_id","properties","new_dungeon","inserted_at","updated_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING "id" ["Locked Dungeon Gate", "A heavy iron gate that blocks the entrance to the dungeon. It requires a key to open.", "north", "locked_gate", 11, true, "Tutorial Key", 10, %{}, false, ~U[2025-10-30 01:20:16Z], ~U[2025-10-30 01:20:16Z]]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK source="doors" db=0.5ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE (((d0."from_room_id" = $1) AND (d0."to_room_id" = $2)) AND (d0."direction" = $3)) [10, 11, "south"]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK source="doors" db=0.7ms
+INSERT INTO "doors" ("direction","door_type","from_room_id","is_locked","key_required","to_room_id","properties","new_dungeon","inserted_at","updated_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING "id" ["south", "locked_gate", 10, true, "Tutorial Key", 11, %{}, false, ~U[2025-10-30 01:20:16Z], ~U[2025-10-30 01:20:16Z]]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK db=1.3ms
+commit []
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:402[0m
+[debug] QUERY OK source="monsters" db=0.3ms idle=29.3ms
+SELECT m0."id", m0."name", m0."race", m0."health", m0."max_health", m0."attack_damage", m0."potential_loot_drops", m0."xp_amount", m0."level", m0."description", m0."location_id", m0."inserted_at", m0."updated_at" FROM "monsters" AS m0 []
+[90m↳ Shard.Monsters.list_monsters/0, at: lib/shard/monsters.ex:21[0m
+[debug] QUERY OK source="rooms" db=0.6ms idle=28.8ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = $1) [9]
+[90m↳ ShardWeb.UserLive.MonsterComponents.load_monsters_from_database/2, at: lib/shard_web/live/user_live/monster_components.ex:12[0m
+[debug] QUERY OK source="rooms" db=2.1ms idle=29.6ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (r0."id" = $1) [9]
+[90m↳ anonymous fn/1 in ShardWeb.UserLive.MonsterComponents.load_monsters_from_database/2, at: lib/shard_web/live/user_live/monster_components.ex:20[0m
+[debug] QUERY OK source="rooms" db=0.2ms idle=31.1ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [0, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.compute_available_exits/1, at: lib/shard_web/live/user_live/movement.ex:248[0m
+[debug] QUERY OK source="doors" db=0.4ms idle=30.1ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE (d0."from_room_id" = $1) [3]
+[90m↳ ShardWeb.UserLive.Movement.compute_available_exits/1, at: lib/shard_web/live/user_live/movement.ex:253[0m
+[debug] QUERY OK source="rooms" db=0.8ms idle=39.4ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 []
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=1.0ms queue=0.1ms idle=37.0ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at", d0."from_room_id" FROM "doors" AS d0 WHERE (d0."from_room_id" = ANY($1)) ORDER BY d0."from_room_id" [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=1.1ms queue=0.1ms idle=37.8ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at", d0."to_room_id" FROM "doors" AS d0 WHERE (d0."to_room_id" = ANY($1)) ORDER BY d0."to_room_id" [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=0.5ms queue=0.1ms idle=26.8ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 []
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] QUERY OK source="rooms" db=0.4ms idle=20.8ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = ANY($1)) [[10, 11, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] QUERY OK source="rooms" db=3.6ms idle=21.1ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = ANY($1)) [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[info] Sent 200 in 90ms
+[info] CONNECTED TO Phoenix.LiveView.Socket in 39µs
+  Transport: :websocket
+  Serializer: Phoenix.Socket.V2.JSONSerializer
+  Parameters: %{"_csrf_token" => "GwULcDYcIBoiBDUnGBJxGDAhQwZGIDgPM2IDYHsQWoBeQAGH_Ssn7Q_z", "_live_referer" => "undefined", "_mount_attempts" => "0", "_mounts" => "0", "_track_static" => %{"0" => "http://localhost:4000/assets/css/app.css", "1" => "http://localhost:4000/assets/js/app.js"}, "vsn" => "2.0.0"}
+[debug] MOUNT ShardWeb.MudGameLive
+  Parameters: %{"character_id" => "1", "character_name" => "player", "map_id" => "tutorial_terrain"}
+  Session: %{"_csrf_token" => "V7B4oTSKukwBIS6Por0hqqgu", "live_socket_id" => "users_sessions:QAYyYzlKV4mDHkKUnDsZgeaqJuC3YxJHG5mJ7ybVUcc=", "user_token" => <<64, 6, 50, 99, 57, 74, 87, 137, 131, 30, 66, 148, 156, 59, 25, 129, 230, 170, 38, 224, 183, 99, 18, 71, 27, 153, 137, 239, 38, 213, 81, 199>>}
+[debug] QUERY OK source="users_tokens" db=0.8ms idle=308.5ms
+SELECT u1."id", u1."email", u1."hashed_password", u1."confirmed_at", u1."admin", u1."inserted_at", u1."updated_at", u0."authenticated_at", u0."inserted_at" FROM "users_tokens" AS u0 INNER JOIN "users" AS u1 ON u1."id" = u0."user_id" WHERE ((u0."token" = $1) AND (u0."context" = $2)) AND (u0."inserted_at" > $3::timestamp + (-(14)::numeric * interval '1 day')) [<<64, 6, 50, 99, 57, 74, 87, 137, 131, 30, 66, 148, 156, 59, 25, 129, 230, 170, 38, 224, 183, 99, 18, 71, 27, 153, 137, 239, 38, 213, 81, 199>>, "session", ~U[2025-10-30 01:20:17.223043Z]]
+[90m↳ ShardWeb.UserAuth.get_user_by_token/1, at: lib/shard_web/user_auth.ex:314[0m
+[debug] QUERY OK source="characters" db=1.3ms idle=307.6ms
+SELECT c0."id", c0."name", c0."level", c0."class", c0."race", c0."health", c0."mana", c0."strength", c0."dexterity", c0."intelligence", c0."constitution", c0."experience", c0."gold", c0."location", c0."description", c0."is_active", c0."user_id", c0."inserted_at", c0."updated_at" FROM "characters" AS c0 WHERE (c0."id" = $1) [1]
+[90m↳ Shard.Characters.get_character!/1, at: lib/shard/characters.ex:40[0m
+[debug] QUERY OK source="users" db=0.5ms idle=309.9ms
+SELECT u0."id", u0."email", u0."hashed_password", u0."confirmed_at", u0."admin", u0."inserted_at", u0."updated_at", u0."id" FROM "users" AS u0 WHERE (u0."id" = $1) [2]
+[90m↳ ShardWeb.MudGameLive.get_character_from_params/1, at: lib/shard_web/live/user_live/mud_game_live.ex:258[0m
+[debug] QUERY OK source="characters" db=0.3ms idle=310.3ms
+SELECT c0."id", c0."name", c0."level", c0."class", c0."race", c0."health", c0."mana", c0."strength", c0."dexterity", c0."intelligence", c0."constitution", c0."experience", c0."gold", c0."location", c0."description", c0."is_active", c0."user_id", c0."inserted_at", c0."updated_at" FROM "characters" AS c0 WHERE (c0."id" = $1) [1]
+[90m↳ ShardWeb.MudGameLive.load_character_with_associations/1, at: lib/shard_web/live/user_live/mud_game_live.ex:276[0m
+[debug] QUERY OK source="character_inventories" db=0.4ms queue=0.2ms idle=300.9ms
+SELECT c0."id", c0."quantity", c0."slot_position", c0."equipped", c0."equipment_slot", c0."character_id", c0."item_id", c0."inserted_at", c0."updated_at", c0."character_id" FROM "character_inventories" AS c0 WHERE (c0."character_id" = $1) ORDER BY c0."character_id" [1]
+[90m↳ ShardWeb.MudGameLive.load_character_with_associations/1, at: lib/shard_web/live/user_live/mud_game_live.ex:277[0m
+[debug] QUERY OK source="hotbar_slots" db=0.5ms queue=0.2ms idle=302.7ms
+SELECT h0."id", h0."slot_number", h0."character_id", h0."item_id", h0."inventory_id", h0."inserted_at", h0."updated_at", h0."character_id" FROM "hotbar_slots" AS h0 WHERE (h0."character_id" = $1) ORDER BY h0."character_id" [1]
+[90m↳ ShardWeb.MudGameLive.load_character_with_associations/1, at: lib/shard_web/live/user_live/mud_game_live.ex:277[0m
+[debug] QUERY OK source="room_items" db=1.0ms idle=301.9ms
+SELECT r0."id", r0."location", r0."quantity", r0."x_position", r0."y_position", r0."respawn_timer", r0."is_permanent", r0."item_id", r0."dropped_by_character_id", r0."inserted_at", r0."updated_at" FROM "room_items" AS r0 INNER JOIN "items" AS i1 ON r0."item_id" = i1."id" WHERE (r0."location" = '0,2,0') AND (i1."name" = 'Tutorial Key') []
+[90m↳ Shard.Items.create_tutorial_key/0, at: lib/shard/items.ex:342[0m
+[debug] QUERY OK source="npcs" db=0.3ms idle=301.0ms
+SELECT n0."id", n0."name", n0."description", n0."level", n0."health", n0."max_health", n0."mana", n0."max_mana", n0."strength", n0."dexterity", n0."intelligence", n0."constitution", n0."experience_reward", n0."gold_reward", n0."npc_type", n0."dialogue", n0."inventory", n0."location_x", n0."location_y", n0."location_z", n0."is_active", n0."respawn_time", n0."last_death_at", n0."faction", n0."aggression_level", n0."movement_pattern", n0."properties", n0."room_id", n0."inserted_at", n0."updated_at" FROM "npcs" AS n0 WHERE (((n0."location_x" = 0) AND (n0."location_y" = 0)) AND (n0."name" = 'Goldie')) []
+[90m↳ Shard.Npcs.create_tutorial_npc_goldie/0, at: lib/shard/npcs.ex:171[0m
+[debug] QUERY OK source="rooms" db=0.3ms idle=300.1ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [2, 2, 0]
+[90m↳ Shard.Items.ensure_room_exists/4, at: lib/shard/items.ex:419[0m
+[debug] QUERY OK source="rooms" db=2.8ms idle=298.0ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [2, 1, 0]
+[90m↳ Shard.Items.ensure_room_exists/4, at: lib/shard/items.ex:419[0m
+[debug] QUERY OK source="doors" db=0.7ms queue=0.1ms idle=15.0ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE ((d0."from_room_id" = $1) AND (d0."direction" = $2)) [11, "north"]
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:391[0m
+[debug] QUERY OK db=0.1ms idle=14.1ms
+begin []
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:395[0m
+[debug] QUERY OK source="doors" db=0.3ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE (((d0."from_room_id" = $1) AND (d0."to_room_id" = $2)) AND (d0."direction" = $3)) [10, 11, "south"]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK source="doors" db=0.6ms
+DELETE FROM "doors" WHERE "id" = $1 [358]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK source="doors" db=0.4ms
+DELETE FROM "doors" WHERE "id" = $1 [357]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK db=10.2ms
+commit []
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:395[0m
+[debug] QUERY OK db=0.5ms idle=25.1ms
+begin []
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:402[0m
+[debug] QUERY OK source="doors" db=2.9ms
+INSERT INTO "doors" ("name","description","direction","door_type","from_room_id","is_locked","key_required","to_room_id","properties","new_dungeon","inserted_at","updated_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING "id" ["Locked Dungeon Gate", "A heavy iron gate that blocks the entrance to the dungeon. It requires a key to open.", "north", "locked_gate", 11, true, "Tutorial Key", 10, %{}, false, ~U[2025-10-30 01:20:17Z], ~U[2025-10-30 01:20:17Z]]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK source="doors" db=0.9ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE (((d0."from_room_id" = $1) AND (d0."to_room_id" = $2)) AND (d0."direction" = $3)) [10, 11, "south"]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK source="doors" db=0.4ms
+INSERT INTO "doors" ("direction","door_type","from_room_id","is_locked","key_required","to_room_id","properties","new_dungeon","inserted_at","updated_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING "id" ["south", "locked_gate", 10, true, "Tutorial Key", 11, %{}, false, ~U[2025-10-30 01:20:17Z], ~U[2025-10-30 01:20:17Z]]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK db=1.4ms
+commit []
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:402[0m
+[debug] QUERY OK source="monsters" db=1.4ms queue=0.1ms idle=33.2ms
+SELECT m0."id", m0."name", m0."race", m0."health", m0."max_health", m0."attack_damage", m0."potential_loot_drops", m0."xp_amount", m0."level", m0."description", m0."location_id", m0."inserted_at", m0."updated_at" FROM "monsters" AS m0 []
+[90m↳ Shard.Monsters.list_monsters/0, at: lib/shard/monsters.ex:21[0m
+[debug] QUERY OK source="rooms" db=0.6ms idle=31.4ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = $1) [9]
+[90m↳ ShardWeb.UserLive.MonsterComponents.load_monsters_from_database/2, at: lib/shard_web/live/user_live/monster_components.ex:12[0m
+[debug] QUERY OK source="rooms" db=0.4ms idle=32.5ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (r0."id" = $1) [9]
+[90m↳ anonymous fn/1 in ShardWeb.UserLive.MonsterComponents.load_monsters_from_database/2, at: lib/shard_web/live/user_live/monster_components.ex:20[0m
+[debug] QUERY OK source="rooms" db=0.4ms idle=31.8ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [0, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.compute_available_exits/1, at: lib/shard_web/live/user_live/movement.ex:248[0m
+[debug] QUERY OK source="doors" db=0.3ms idle=31.8ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE (d0."from_room_id" = $1) [3]
+[90m↳ ShardWeb.UserLive.Movement.compute_available_exits/1, at: lib/shard_web/live/user_live/movement.ex:253[0m
+[debug] Replied in 64ms
+[debug] QUERY OK source="rooms" db=1.2ms idle=35.7ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 []
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=1.4ms queue=0.1ms idle=33.2ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at", d0."from_room_id" FROM "doors" AS d0 WHERE (d0."from_room_id" = ANY($1)) ORDER BY d0."from_room_id" [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=3.4ms queue=0.1ms idle=34.4ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at", d0."to_room_id" FROM "doors" AS d0 WHERE (d0."to_room_id" = ANY($1)) ORDER BY d0."to_room_id" [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=0.5ms idle=24.3ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 []
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] QUERY OK source="rooms" db=0.4ms idle=16.8ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = ANY($1)) [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] QUERY OK source="rooms" db=1.2ms idle=14.9ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = ANY($1)) [[10, 11, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[info] CONNECTED TO Phoenix.LiveView.Socket in 56µs
+  Transport: :websocket
+  Serializer: Phoenix.Socket.V2.JSONSerializer
+  Parameters: %{"_csrf_token" => "Ci0qYTYALRcoHQUmOw4nGH40dA9gfzUFbjd5OYKYCxGWJ6fJ6k3XQ3SQ", "_live_referer" => "undefined", "_mount_attempts" => "0", "_mounts" => "0", "_track_static" => %{"0" => "http://localhost:4000/assets/css/app.css", "1" => "http://localhost:4000/assets/js/app.js"}, "vsn" => "2.0.0"}
+[debug] MOUNT ShardWeb.MudGameLive
+  Parameters: %{"character_id" => "2", "character_name" => "player2", "map_id" => "tutorial_terrain"}
+  Session: %{"_csrf_token" => "hGNTyYfNkeBqq8ARH_GW1LfT", "live_socket_id" => "users_sessions:_LGCKjRaHgzsvS1O9dWlwlCVZq2jKWrQl4QapE8kxVI=", "user_token" => <<252, 177, 130, 42, 52, 90, 30, 12, 236, 189, 45, 78, 245, 213, 165, 194, 80, 149, 102, 173, 163, 41, 106, 208, 151, 132, 26, 164, 79, 36, 197, 82>>}
+[debug] QUERY OK source="users_tokens" db=3.1ms queue=0.1ms idle=535.0ms
+SELECT u1."id", u1."email", u1."hashed_password", u1."confirmed_at", u1."admin", u1."inserted_at", u1."updated_at", u0."authenticated_at", u0."inserted_at" FROM "users_tokens" AS u0 INNER JOIN "users" AS u1 ON u1."id" = u0."user_id" WHERE ((u0."token" = $1) AND (u0."context" = $2)) AND (u0."inserted_at" > $3::timestamp + (-(14)::numeric * interval '1 day')) [<<252, 177, 130, 42, 52, 90, 30, 12, 236, 189, 45, 78, 245, 213, 165, 194, 80, 149, 102, 173, 163, 41, 106, 208, 151, 132, 26, 164, 79, 36, 197, 82>>, "session", ~U[2025-10-30 01:20:17.805011Z]]
+[90m↳ ShardWeb.UserAuth.get_user_by_token/1, at: lib/shard_web/user_auth.ex:314[0m
+[debug] QUERY OK source="characters" db=2.2ms queue=0.2ms idle=538.2ms
+SELECT c0."id", c0."name", c0."level", c0."class", c0."race", c0."health", c0."mana", c0."strength", c0."dexterity", c0."intelligence", c0."constitution", c0."experience", c0."gold", c0."location", c0."description", c0."is_active", c0."user_id", c0."inserted_at", c0."updated_at" FROM "characters" AS c0 WHERE (c0."id" = $1) [2]
+[90m↳ Shard.Characters.get_character!/1, at: lib/shard/characters.ex:40[0m
+[debug] QUERY OK source="users" db=1.5ms queue=0.1ms idle=541.5ms
+SELECT u0."id", u0."email", u0."hashed_password", u0."confirmed_at", u0."admin", u0."inserted_at", u0."updated_at", u0."id" FROM "users" AS u0 WHERE (u0."id" = $1) [1]
+[90m↳ ShardWeb.MudGameLive.get_character_from_params/1, at: lib/shard_web/live/user_live/mud_game_live.ex:258[0m
+[debug] QUERY OK source="characters" db=0.8ms idle=542.8ms
+SELECT c0."id", c0."name", c0."level", c0."class", c0."race", c0."health", c0."mana", c0."strength", c0."dexterity", c0."intelligence", c0."constitution", c0."experience", c0."gold", c0."location", c0."description", c0."is_active", c0."user_id", c0."inserted_at", c0."updated_at" FROM "characters" AS c0 WHERE (c0."id" = $1) [2]
+[90m↳ ShardWeb.MudGameLive.load_character_with_associations/1, at: lib/shard_web/live/user_live/mud_game_live.ex:276[0m
+[debug] QUERY OK source="character_inventories" db=3.9ms queue=0.1ms idle=538.8ms
+SELECT c0."id", c0."quantity", c0."slot_position", c0."equipped", c0."equipment_slot", c0."character_id", c0."item_id", c0."inserted_at", c0."updated_at", c0."character_id" FROM "character_inventories" AS c0 WHERE (c0."character_id" = $1) ORDER BY c0."character_id" [2]
+[90m↳ ShardWeb.MudGameLive.load_character_with_associations/1, at: lib/shard_web/live/user_live/mud_game_live.ex:277[0m
+[debug] QUERY OK source="hotbar_slots" db=3.8ms queue=0.3ms idle=537.0ms
+SELECT h0."id", h0."slot_number", h0."character_id", h0."item_id", h0."inventory_id", h0."inserted_at", h0."updated_at", h0."character_id" FROM "hotbar_slots" AS h0 WHERE (h0."character_id" = $1) ORDER BY h0."character_id" [2]
+[90m↳ ShardWeb.MudGameLive.load_character_with_associations/1, at: lib/shard_web/live/user_live/mud_game_live.ex:277[0m
+[debug] QUERY OK source="room_items" db=2.4ms idle=540.2ms
+SELECT r0."id", r0."location", r0."quantity", r0."x_position", r0."y_position", r0."respawn_timer", r0."is_permanent", r0."item_id", r0."dropped_by_character_id", r0."inserted_at", r0."updated_at" FROM "room_items" AS r0 INNER JOIN "items" AS i1 ON r0."item_id" = i1."id" WHERE (r0."location" = '0,2,0') AND (i1."name" = 'Tutorial Key') []
+[90m↳ Shard.Items.create_tutorial_key/0, at: lib/shard/items.ex:342[0m
+[debug] QUERY OK source="npcs" db=0.8ms queue=0.1ms idle=544.8ms
+SELECT n0."id", n0."name", n0."description", n0."level", n0."health", n0."max_health", n0."mana", n0."max_mana", n0."strength", n0."dexterity", n0."intelligence", n0."constitution", n0."experience_reward", n0."gold_reward", n0."npc_type", n0."dialogue", n0."inventory", n0."location_x", n0."location_y", n0."location_z", n0."is_active", n0."respawn_time", n0."last_death_at", n0."faction", n0."aggression_level", n0."movement_pattern", n0."properties", n0."room_id", n0."inserted_at", n0."updated_at" FROM "npcs" AS n0 WHERE (((n0."location_x" = 0) AND (n0."location_y" = 0)) AND (n0."name" = 'Goldie')) []
+[90m↳ Shard.Npcs.create_tutorial_npc_goldie/0, at: lib/shard/npcs.ex:171[0m
+[debug] QUERY OK source="rooms" db=0.6ms decode=0.3ms queue=0.3ms idle=545.1ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [2, 2, 0]
+[90m↳ Shard.Items.ensure_room_exists/4, at: lib/shard/items.ex:419[0m
+[debug] QUERY OK source="rooms" db=1.6ms idle=546.0ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [2, 1, 0]
+[90m↳ Shard.Items.ensure_room_exists/4, at: lib/shard/items.ex:419[0m
+[debug] QUERY OK source="doors" db=1.8ms queue=0.2ms idle=27.3ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE ((d0."from_room_id" = $1) AND (d0."direction" = $2)) [11, "north"]
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:391[0m
+[debug] QUERY OK db=0.9ms idle=26.5ms
+begin []
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:395[0m
+[debug] QUERY OK source="doors" db=1.5ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE (((d0."from_room_id" = $1) AND (d0."to_room_id" = $2)) AND (d0."direction" = $3)) [10, 11, "south"]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK source="doors" db=0.5ms
+DELETE FROM "doors" WHERE "id" = $1 [360]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK source="doors" db=0.5ms
+DELETE FROM "doors" WHERE "id" = $1 [359]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK db=12.9ms
+commit []
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:395[0m
+[debug] QUERY OK db=0.9ms queue=0.2ms idle=41.6ms
+begin []
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:402[0m
+[debug] QUERY OK source="doors" db=0.8ms
+INSERT INTO "doors" ("name","description","direction","door_type","from_room_id","is_locked","key_required","to_room_id","properties","new_dungeon","inserted_at","updated_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING "id" ["Locked Dungeon Gate", "A heavy iron gate that blocks the entrance to the dungeon. It requires a key to open.", "north", "locked_gate", 11, true, "Tutorial Key", 10, %{}, false, ~U[2025-10-30 01:20:17Z], ~U[2025-10-30 01:20:17Z]]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK source="doors" db=1.5ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE (((d0."from_room_id" = $1) AND (d0."to_room_id" = $2)) AND (d0."direction" = $3)) [10, 11, "south"]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK source="doors" db=0.7ms
+INSERT INTO "doors" ("direction","door_type","from_room_id","is_locked","key_required","to_room_id","properties","new_dungeon","inserted_at","updated_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING "id" ["south", "locked_gate", 10, true, "Tutorial Key", 11, %{}, false, ~U[2025-10-30 01:20:17Z], ~U[2025-10-30 01:20:17Z]]
+[90m↳ anonymous fn/3 in Ecto.Adapters.SQL.checkout_or_transaction/4, at: lib/ecto/adapters/sql.ex:1458[0m
+[debug] QUERY OK db=1.5ms
+commit []
+[90m↳ Shard.Items.create_dungeon_door/0, at: lib/shard/items.ex:402[0m
+[debug] QUERY OK source="monsters" db=1.4ms idle=52.1ms
+SELECT m0."id", m0."name", m0."race", m0."health", m0."max_health", m0."attack_damage", m0."potential_loot_drops", m0."xp_amount", m0."level", m0."description", m0."location_id", m0."inserted_at", m0."updated_at" FROM "monsters" AS m0 []
+[90m↳ Shard.Monsters.list_monsters/0, at: lib/shard/monsters.ex:21[0m
+[debug] QUERY OK source="rooms" db=7.6ms idle=49.4ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = $1) [9]
+[90m↳ ShardWeb.UserLive.MonsterComponents.load_monsters_from_database/2, at: lib/shard_web/live/user_live/monster_components.ex:12[0m
+[debug] QUERY OK source="rooms" db=0.5ms queue=0.2ms idle=57.1ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (r0."id" = $1) [9]
+[90m↳ anonymous fn/1 in ShardWeb.UserLive.MonsterComponents.load_monsters_from_database/2, at: lib/shard_web/live/user_live/monster_components.ex:20[0m
+[debug] QUERY OK source="rooms" db=0.9ms idle=54.8ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [0, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.compute_available_exits/1, at: lib/shard_web/live/user_live/movement.ex:248[0m
+[debug] QUERY OK source="doors" db=1.0ms idle=52.0ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE (d0."from_room_id" = $1) [3]
+[90m↳ ShardWeb.UserLive.Movement.compute_available_exits/1, at: lib/shard_web/live/user_live/movement.ex:253[0m
+[debug] Replied in 94ms
+[debug] QUERY OK source="rooms" db=1.9ms idle=64.8ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 []
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=0.9ms queue=0.2ms idle=60.8ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at", d0."from_room_id" FROM "doors" AS d0 WHERE (d0."from_room_id" = ANY($1)) ORDER BY d0."from_room_id" [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=3.9ms queue=0.2ms idle=65.7ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at", d0."to_room_id" FROM "doors" AS d0 WHERE (d0."to_room_id" = ANY($1)) ORDER BY d0."to_room_id" [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=0.6ms idle=47.2ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 []
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] QUERY OK source="rooms" db=0.6ms queue=0.2ms idle=36.8ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = ANY($1)) [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] QUERY OK source="rooms" db=3.4ms idle=36.5ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = ANY($1)) [[10, 11, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] HANDLE EVENT "keypress" in ShardWeb.MudGameLive
+  Parameters: %{"key" => "ArrowRight"}
+[debug] QUERY OK source="rooms" db=1.0ms queue=0.1ms idle=1778.4ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [0, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.valid_movement/3, at: lib/shard_web/live/user_live/movement.ex:131[0m
+[debug] QUERY OK source="doors" db=0.9ms queue=0.3ms idle=1780.3ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE ((d0."from_room_id" = $1) AND (d0."direction" = $2)) [3, "east"]
+[90m↳ ShardWeb.UserLive.Movement.valid_movement/3, at: lib/shard_web/live/user_live/movement.ex:152[0m
+Moving through standard door
+[debug] QUERY OK source="rooms" db=0.6ms idle=1782.0ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (r0."id" = $1) [6]
+[90m↳ ShardWeb.UserLive.Movement.valid_movement/3, at: lib/shard_web/live/user_live/movement.ex:169[0m
+[debug] QUERY OK source="rooms" db=0.9ms queue=0.1ms idle=1783.8ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [0, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.execute_movement/2, at: lib/shard_web/live/user_live/movement.ex:41[0m
+[debug] QUERY OK source="rooms" db=0.5ms queue=0.2ms idle=1785.2ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [1, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.execute_movement/2, at: lib/shard_web/live/user_live/movement.ex:42[0m
+[debug] QUERY OK source="npcs" db=2.7ms queue=0.1ms idle=1786.2ms
+SELECT n0."id", n0."name", n0."description", n0."level", n0."health", n0."max_health", n0."mana", n0."max_mana", n0."strength", n0."dexterity", n0."intelligence", n0."constitution", n0."experience_reward", n0."gold_reward", n0."npc_type", n0."dialogue", n0."inventory", n0."location_x", n0."location_y", n0."location_z", n0."is_active", n0."respawn_time", n0."last_death_at", n0."faction", n0."aggression_level", n0."movement_pattern", n0."properties", n0."room_id", n0."inserted_at", n0."updated_at" FROM "npcs" AS n0 WHERE (((n0."location_x" = $1) AND (n0."location_y" = $2)) AND (n0."is_active" = TRUE)) [1, 0]
+[90m↳ ShardWeb.UserLive.Movement.execute_movement/2, at: lib/shard_web/live/user_live/movement.ex:45[0m
+[debug] QUERY OK source="room_items" db=0.6ms idle=1789.9ms
+SELECT i1."name", i1."description", i1."item_type", r0."quantity" FROM "room_items" AS r0 INNER JOIN "items" AS i1 ON r0."item_id" = i1."id" WHERE (r0."location" = $1) AND ((i1."is_active" IS NULL) OR (i1."is_active" = TRUE)) ["1,0,0"]
+[90m↳ ShardWeb.UserLive.Movement.get_items_at_location/3, at: lib/shard_web/live/user_live/movement.ex:294[0m
+[debug] QUERY OK source="items" db=0.6ms queue=0.1ms idle=1790.8ms
+SELECT i0."name", i0."description", i0."item_type" FROM "items" AS i0 WHERE (((i0."location" = $1) AND ((i0."map" = $2) OR (i0."map" IS NULL))) AND ((i0."is_active" IS NULL) OR (i0."is_active" = TRUE))) ["1,0,0", "tutorial_terrain"]
+[90m↳ ShardWeb.UserLive.Movement.get_items_at_location/3, at: lib/shard_web/live/user_live/movement.ex:309[0m
+[debug] QUERY OK source="rooms" db=0.4ms queue=0.1ms idle=1791.9ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [1, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.compute_available_exits/1, at: lib/shard_web/live/user_live/movement.ex:248[0m
+[debug] QUERY OK source="doors" db=1.0ms queue=0.1ms idle=1792.6ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE (d0."from_room_id" = $1) [6]
+[90m↳ ShardWeb.UserLive.Movement.compute_available_exits/1, at: lib/shard_web/live/user_live/movement.ex:253[0m
+[debug] Replied in 36ms
+[debug] QUERY OK source="rooms" db=0.3ms queue=0.1ms idle=17.8ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 []
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=0.8ms idle=16.5ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at", d0."to_room_id" FROM "doors" AS d0 WHERE (d0."to_room_id" = ANY($1)) ORDER BY d0."to_room_id" [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=0.5ms idle=15.6ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at", d0."from_room_id" FROM "doors" AS d0 WHERE (d0."from_room_id" = ANY($1)) ORDER BY d0."from_room_id" [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=0.4ms idle=14.4ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 []
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] QUERY OK source="rooms" db=0.8ms queue=0.1ms idle=14.0ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = ANY($1)) [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] QUERY OK source="rooms" db=1.4ms idle=10.9ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = ANY($1)) [[10, 11, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] HANDLE EVENT "keypress" in ShardWeb.MudGameLive
+  Parameters: %{"key" => "ArrowRight"}
+[debug] QUERY OK source="rooms" db=0.9ms queue=0.2ms idle=325.7ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [1, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.valid_movement/3, at: lib/shard_web/live/user_live/movement.ex:131[0m
+[debug] QUERY OK source="doors" db=1.4ms queue=0.2ms idle=327.1ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE ((d0."from_room_id" = $1) AND (d0."direction" = $2)) [6, "east"]
+[90m↳ ShardWeb.UserLive.Movement.valid_movement/3, at: lib/shard_web/live/user_live/movement.ex:152[0m
+Moving through standard door
+[debug] QUERY OK source="rooms" db=1.7ms queue=0.2ms idle=329.3ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (r0."id" = $1) [9]
+[90m↳ ShardWeb.UserLive.Movement.valid_movement/3, at: lib/shard_web/live/user_live/movement.ex:169[0m
+[debug] QUERY OK source="rooms" db=1.1ms queue=0.1ms idle=332.5ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [1, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.execute_movement/2, at: lib/shard_web/live/user_live/movement.ex:41[0m
+[debug] QUERY OK source="rooms" db=0.6ms queue=0.6ms idle=331.3ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [2, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.execute_movement/2, at: lib/shard_web/live/user_live/movement.ex:42[0m
+[debug] QUERY OK source="npcs" db=0.9ms queue=0.1ms idle=331.7ms
+SELECT n0."id", n0."name", n0."description", n0."level", n0."health", n0."max_health", n0."mana", n0."max_mana", n0."strength", n0."dexterity", n0."intelligence", n0."constitution", n0."experience_reward", n0."gold_reward", n0."npc_type", n0."dialogue", n0."inventory", n0."location_x", n0."location_y", n0."location_z", n0."is_active", n0."respawn_time", n0."last_death_at", n0."faction", n0."aggression_level", n0."movement_pattern", n0."properties", n0."room_id", n0."inserted_at", n0."updated_at" FROM "npcs" AS n0 WHERE (((n0."location_x" = $1) AND (n0."location_y" = $2)) AND (n0."is_active" = TRUE)) [2, 0]
+[90m↳ ShardWeb.UserLive.Movement.execute_movement/2, at: lib/shard_web/live/user_live/movement.ex:45[0m
+[debug] QUERY OK source="room_items" db=1.6ms queue=0.2ms idle=333.2ms
+SELECT i1."name", i1."description", i1."item_type", r0."quantity" FROM "room_items" AS r0 INNER JOIN "items" AS i1 ON r0."item_id" = i1."id" WHERE (r0."location" = $1) AND ((i1."is_active" IS NULL) OR (i1."is_active" = TRUE)) ["2,0,0"]
+[90m↳ ShardWeb.UserLive.Movement.get_items_at_location/3, at: lib/shard_web/live/user_live/movement.ex:294[0m
+[debug] QUERY OK source="items" db=0.5ms queue=0.6ms idle=334.7ms
+SELECT i0."name", i0."description", i0."item_type" FROM "items" AS i0 WHERE (((i0."location" = $1) AND ((i0."map" = $2) OR (i0."map" IS NULL))) AND ((i0."is_active" IS NULL) OR (i0."is_active" = TRUE))) ["2,0,0", "tutorial_terrain"]
+[90m↳ ShardWeb.UserLive.Movement.get_items_at_location/3, at: lib/shard_web/live/user_live/movement.ex:309[0m
+[debug] QUERY OK source="rooms" db=0.5ms queue=0.1ms idle=334.8ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [2, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.compute_available_exits/1, at: lib/shard_web/live/user_live/movement.ex:248[0m
+[debug] QUERY OK source="doors" db=0.5ms queue=0.2ms idle=335.3ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE (d0."from_room_id" = $1) [9]
+[90m↳ ShardWeb.UserLive.Movement.compute_available_exits/1, at: lib/shard_web/live/user_live/movement.ex:253[0m
+[debug] Replied in 22ms
+[debug] QUERY OK source="rooms" db=0.3ms idle=20.7ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 []
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=0.6ms queue=0.4ms idle=18.7ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at", d0."to_room_id" FROM "doors" AS d0 WHERE (d0."to_room_id" = ANY($1)) ORDER BY d0."to_room_id" [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=0.5ms queue=0.4ms idle=15.4ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at", d0."from_room_id" FROM "doors" AS d0 WHERE (d0."from_room_id" = ANY($1)) ORDER BY d0."from_room_id" [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=0.5ms idle=13.1ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 []
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] QUERY OK source="rooms" db=0.3ms idle=10.9ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = ANY($1)) [[10, 11, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] QUERY OK source="rooms" db=0.4ms queue=0.1ms idle=12.4ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = ANY($1)) [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] HANDLE EVENT "keypress" in ShardWeb.MudGameLive
+  Parameters: %{"key" => "ArrowRight"}
+[debug] QUERY OK source="rooms" db=2.0ms queue=0.1ms idle=687.9ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [0, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.valid_movement/3, at: lib/shard_web/live/user_live/movement.ex:131[0m
+[debug] QUERY OK source="doors" db=3.8ms queue=0.8ms idle=691.1ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE ((d0."from_room_id" = $1) AND (d0."direction" = $2)) [3, "east"]
+[90m↳ ShardWeb.UserLive.Movement.valid_movement/3, at: lib/shard_web/live/user_live/movement.ex:152[0m
+Moving through standard door
+[debug] QUERY OK source="rooms" db=2.0ms queue=0.7ms idle=696.6ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (r0."id" = $1) [6]
+[90m↳ ShardWeb.UserLive.Movement.valid_movement/3, at: lib/shard_web/live/user_live/movement.ex:169[0m
+[debug] QUERY OK source="rooms" db=1.1ms queue=0.2ms idle=701.0ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [0, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.execute_movement/2, at: lib/shard_web/live/user_live/movement.ex:41[0m
+[debug] QUERY OK source="rooms" db=1.7ms queue=0.3ms idle=703.1ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [1, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.execute_movement/2, at: lib/shard_web/live/user_live/movement.ex:42[0m
+[debug] QUERY OK source="npcs" db=2.4ms queue=0.2ms idle=706.2ms
+SELECT n0."id", n0."name", n0."description", n0."level", n0."health", n0."max_health", n0."mana", n0."max_mana", n0."strength", n0."dexterity", n0."intelligence", n0."constitution", n0."experience_reward", n0."gold_reward", n0."npc_type", n0."dialogue", n0."inventory", n0."location_x", n0."location_y", n0."location_z", n0."is_active", n0."respawn_time", n0."last_death_at", n0."faction", n0."aggression_level", n0."movement_pattern", n0."properties", n0."room_id", n0."inserted_at", n0."updated_at" FROM "npcs" AS n0 WHERE (((n0."location_x" = $1) AND (n0."location_y" = $2)) AND (n0."is_active" = TRUE)) [1, 0]
+[90m↳ ShardWeb.UserLive.Movement.execute_movement/2, at: lib/shard_web/live/user_live/movement.ex:45[0m
+[debug] QUERY OK source="room_items" db=3.2ms queue=0.5ms idle=709.7ms
+SELECT i1."name", i1."description", i1."item_type", r0."quantity" FROM "room_items" AS r0 INNER JOIN "items" AS i1 ON r0."item_id" = i1."id" WHERE (r0."location" = $1) AND ((i1."is_active" IS NULL) OR (i1."is_active" = TRUE)) ["1,0,0"]
+[90m↳ ShardWeb.UserLive.Movement.get_items_at_location/3, at: lib/shard_web/live/user_live/movement.ex:294[0m
+[debug] QUERY OK source="items" db=0.7ms queue=0.2ms idle=714.3ms
+SELECT i0."name", i0."description", i0."item_type" FROM "items" AS i0 WHERE (((i0."location" = $1) AND ((i0."map" = $2) OR (i0."map" IS NULL))) AND ((i0."is_active" IS NULL) OR (i0."is_active" = TRUE))) ["1,0,0", "tutorial_terrain"]
+[90m↳ ShardWeb.UserLive.Movement.get_items_at_location/3, at: lib/shard_web/live/user_live/movement.ex:309[0m
+[debug] QUERY OK source="rooms" db=0.6ms idle=715.8ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [1, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.compute_available_exits/1, at: lib/shard_web/live/user_live/movement.ex:248[0m
+[debug] QUERY OK source="doors" db=0.8ms idle=717.1ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE (d0."from_room_id" = $1) [6]
+[90m↳ ShardWeb.UserLive.Movement.compute_available_exits/1, at: lib/shard_web/live/user_live/movement.ex:253[0m
+[debug] Replied in 31ms
+[debug] QUERY OK source="rooms" db=0.5ms idle=28.9ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 []
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=0.9ms idle=20.9ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at", d0."from_room_id" FROM "doors" AS d0 WHERE (d0."from_room_id" = ANY($1)) ORDER BY d0."from_room_id" [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=1.5ms idle=24.6ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at", d0."to_room_id" FROM "doors" AS d0 WHERE (d0."to_room_id" = ANY($1)) ORDER BY d0."to_room_id" [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=0.5ms idle=20.6ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 []
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] QUERY OK source="rooms" db=0.5ms idle=19.2ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = ANY($1)) [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] QUERY OK source="rooms" db=0.5ms idle=15.7ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = ANY($1)) [[10, 11, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] HANDLE EVENT "keypress" in ShardWeb.MudGameLive
+  Parameters: %{"key" => "ArrowRight"}
+[debug] QUERY OK source="rooms" db=1.1ms queue=0.5ms idle=229.3ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [1, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.valid_movement/3, at: lib/shard_web/live/user_live/movement.ex:131[0m
+[debug] QUERY OK source="doors" db=1.2ms queue=0.3ms idle=229.9ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE ((d0."from_room_id" = $1) AND (d0."direction" = $2)) [6, "east"]
+[90m↳ ShardWeb.UserLive.Movement.valid_movement/3, at: lib/shard_web/live/user_live/movement.ex:152[0m
+Moving through standard door
+[debug] QUERY OK source="rooms" db=1.4ms queue=0.9ms idle=231.9ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (r0."id" = $1) [9]
+[90m↳ ShardWeb.UserLive.Movement.valid_movement/3, at: lib/shard_web/live/user_live/movement.ex:169[0m
+[debug] QUERY OK source="rooms" db=1.1ms queue=0.1ms idle=234.7ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [1, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.execute_movement/2, at: lib/shard_web/live/user_live/movement.ex:41[0m
+[debug] QUERY OK source="rooms" db=1.0ms queue=0.1ms idle=235.6ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [2, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.execute_movement/2, at: lib/shard_web/live/user_live/movement.ex:42[0m
+[debug] QUERY OK source="npcs" db=2.8ms queue=0.1ms idle=236.0ms
+SELECT n0."id", n0."name", n0."description", n0."level", n0."health", n0."max_health", n0."mana", n0."max_mana", n0."strength", n0."dexterity", n0."intelligence", n0."constitution", n0."experience_reward", n0."gold_reward", n0."npc_type", n0."dialogue", n0."inventory", n0."location_x", n0."location_y", n0."location_z", n0."is_active", n0."respawn_time", n0."last_death_at", n0."faction", n0."aggression_level", n0."movement_pattern", n0."properties", n0."room_id", n0."inserted_at", n0."updated_at" FROM "npcs" AS n0 WHERE (((n0."location_x" = $1) AND (n0."location_y" = $2)) AND (n0."is_active" = TRUE)) [2, 0]
+[90m↳ ShardWeb.UserLive.Movement.execute_movement/2, at: lib/shard_web/live/user_live/movement.ex:45[0m
+[debug] QUERY OK source="room_items" db=2.4ms queue=0.2ms idle=239.2ms
+SELECT i1."name", i1."description", i1."item_type", r0."quantity" FROM "room_items" AS r0 INNER JOIN "items" AS i1 ON r0."item_id" = i1."id" WHERE (r0."location" = $1) AND ((i1."is_active" IS NULL) OR (i1."is_active" = TRUE)) ["2,0,0"]
+[90m↳ ShardWeb.UserLive.Movement.get_items_at_location/3, at: lib/shard_web/live/user_live/movement.ex:294[0m
+[debug] QUERY OK source="items" db=2.3ms queue=0.2ms idle=241.0ms
+SELECT i0."name", i0."description", i0."item_type" FROM "items" AS i0 WHERE (((i0."location" = $1) AND ((i0."map" = $2) OR (i0."map" IS NULL))) AND ((i0."is_active" IS NULL) OR (i0."is_active" = TRUE))) ["2,0,0", "tutorial_terrain"]
+[90m↳ ShardWeb.UserLive.Movement.get_items_at_location/3, at: lib/shard_web/live/user_live/movement.ex:309[0m
+[debug] QUERY OK source="rooms" db=1.2ms queue=0.3ms idle=242.6ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 WHERE (((r0."x_coordinate" = $1) AND (r0."y_coordinate" = $2)) AND (r0."z_coordinate" = $3)) [2, 0, 0]
+[90m↳ ShardWeb.UserLive.Movement.compute_available_exits/1, at: lib/shard_web/live/user_live/movement.ex:248[0m
+[debug] QUERY OK source="doors" db=1.1ms queue=0.2ms idle=244.5ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 WHERE (d0."from_room_id" = $1) [9]
+[90m↳ ShardWeb.UserLive.Movement.compute_available_exits/1, at: lib/shard_web/live/user_live/movement.ex:253[0m
+[debug] Replied in 29ms
+[debug] QUERY OK source="rooms" db=0.6ms queue=0.1ms idle=27.5ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at" FROM "rooms" AS r0 []
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=1.0ms queue=0.1ms idle=26.7ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at", d0."to_room_id" FROM "doors" AS d0 WHERE (d0."to_room_id" = ANY($1)) ORDER BY d0."to_room_id" [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=1.3ms idle=22.8ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at", d0."from_room_id" FROM "doors" AS d0 WHERE (d0."from_room_id" = ANY($1)) ORDER BY d0."from_room_id" [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:282[0m
+[debug] QUERY OK source="doors" db=0.5ms idle=22.0ms
+SELECT d0."id", d0."name", d0."description", d0."direction", d0."is_locked", d0."key_required", d0."door_type", d0."properties", d0."new_dungeon", d0."from_room_id", d0."to_room_id", d0."inserted_at", d0."updated_at" FROM "doors" AS d0 []
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] QUERY OK source="rooms" db=0.5ms idle=21.2ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = ANY($1)) [[11, 10, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] QUERY OK source="rooms" db=0.6ms idle=17.4ms
+SELECT r0."id", r0."name", r0."description", r0."x_coordinate", r0."y_coordinate", r0."z_coordinate", r0."is_public", r0."room_type", r0."properties", r0."inserted_at", r0."updated_at", r0."id" FROM "rooms" AS r0 WHERE (r0."id" = ANY($1)) [[10, 11, 9, 8, 7, 6, 5, 4, 3]]
+[90m↳ ShardWeb.UserLive.MapComponents.minimap/1, at: lib/shard_web/live/user_live/map_components.ex:283[0m
+[debug] HANDLE EVENT "keypress" in ShardWeb.MudGameLive
+  Parameters: %{"key" => "a"}
+[debug] Replied in 326µs
+[debug] HANDLE EVENT "update_command" in ShardWeb.MudGameLive
+  Parameters: %{"_target" => ["command", "text"], "command" => %{"text" => "a"}}
+[debug] Replied in 354µs
+[debug] HANDLE EVENT "keypress" in ShardWeb.MudGameLive
+  Parameters: %{"key" => "t"}
+[debug] Replied in 340µs
+[debug] HANDLE EVENT "update_command" in ShardWeb.MudGameLive
+  Parameters: %{"_target" => ["command", "text"], "command" => %{"text" => "at"}}
+[debug] Replied in 313µs
+[debug] HANDLE EVENT "keypress" in ShardWeb.MudGameLive
+  Parameters: %{"key" => "t"}
+[debug] Replied in 661µs
+[debug] HANDLE EVENT "update_command" in ShardWeb.MudGameLive
+  Parameters: %{"_target" => ["command", "text"], "command" => %{"text" => "att"}}
+[debug] Replied in 792µs
+[debug] HANDLE EVENT "keypress" in ShardWeb.MudGameLive
+  Parameters: %{"key" => "a"}
+[debug] Replied in 399µs
+[debug] HANDLE EVENT "update_command" in ShardWeb.MudGameLive
+  Parameters: %{"_target" => ["command", "text"], "command" => %{"text" => "atta"}}
+[debug] Replied in 451µs
+[debug] HANDLE EVENT "keypress" in ShardWeb.MudGameLive
+  Parameters: %{"key" => "c"}
+[debug] Replied in 761µs
+[debug] HANDLE EVENT "update_command" in ShardWeb.MudGameLive
+  Parameters: %{"_target" => ["command", "text"], "command" => %{"text" => "attac"}}
+[debug] Replied in 592µs
+[debug] HANDLE EVENT "keypress" in ShardWeb.MudGameLive
+  Parameters: %{"key" => "k"}
+[debug] Replied in 394µs
+[debug] HANDLE EVENT "update_command" in ShardWeb.MudGameLive
+  Parameters: %{"_target" => ["command", "text"], "command" => %{"text" => "attack"}}
+[debug] Replied in 963µs
+[debug] HANDLE EVENT "keypress" in ShardWeb.MudGameLive
+  Parameters: %{"key" => "Enter"}
+[debug] Replied in 147µs
+[debug] HANDLE EVENT "submit_command" in ShardWeb.MudGameLive
+  Parameters: %{"command" => %{"text" => "attack"}}
+[debug] Replied in 187µs
