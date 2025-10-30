@@ -92,9 +92,37 @@ defmodule ShardWeb.MudGameLive do
       
     <!-- Main Content -->
       <div class="flex flex-1 overflow-hidden">
-        <!-- Left Panel - Terminal -->
+        <!-- Left Panel - Terminal/Chat -->
         <div class="flex-1 p-4 flex flex-col">
-          <.terminal terminal_state={@terminal_state} />
+          <!-- Tab Navigation -->
+          <div class="flex mb-4 border-b border-gray-600">
+            <button
+              class={[
+                "px-4 py-2 font-medium transition-colors",
+                if(@active_tab == "terminal", do: "text-blue-400 border-b-2 border-blue-400", else: "text-gray-400 hover:text-white")
+              ]}
+              phx-click="switch_tab"
+              phx-value-tab="terminal"
+            >
+              Terminal
+            </button>
+            <button
+              class={[
+                "px-4 py-2 font-medium transition-colors",
+                if(@active_tab == "chat", do: "text-blue-400 border-b-2 border-blue-400", else: "text-gray-400 hover:text-white")
+              ]}
+              phx-click="switch_tab"
+              phx-value-tab="chat"
+            >
+              Chat
+            </button>
+          </div>
+
+          <!-- Tab Content -->
+          <div class="flex-1 flex flex-col">
+            <.terminal :if={@active_tab == "terminal"} terminal_state={@terminal_state} />
+            <.chat :if={@active_tab == "chat"} chat_state={@chat_state} />
+          </div>
         </div>
         
     <!-- Right Panel - Controls -->
