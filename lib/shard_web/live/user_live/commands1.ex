@@ -51,10 +51,26 @@ defmodule ShardWeb.UserLive.Commands1 do
         {response, game_state}
 
       "attack" ->
-        if Shard.Combat.in_combat?(game_state) do
-          Shard.Combat.execute_action(game_state, "attack")
+        {x, y} = game_state.player_position
+
+        # Check if there are monsters at current location
+        monsters_here =
+          Enum.filter(game_state.monsters, fn monster ->
+            monster[:position] == {x, y} && monster[:is_alive] != false
+          end)
+
+        if Enum.empty?(monsters_here) do
+          {["There are no monsters here to attack."], game_state}
         else
-          {["You are not in combat."], game_state}
+          # Start combat if not already in combat
+          updated_game_state =
+            if Shard.Combat.in_combat?(game_state) do
+              game_state
+            else
+              %{game_state | combat: true}
+            end
+
+          Shard.Combat.execute_action(updated_game_state, "attack")
         end
 
       "flee" ->
