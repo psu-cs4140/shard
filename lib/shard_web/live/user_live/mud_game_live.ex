@@ -19,9 +19,9 @@ defmodule ShardWeb.MudGameLive do
   # Chat component
   defp chat(assigns) do
     ~H"""
-    <div class="flex flex-col h-full">
+    <div class="flex flex-col h-full min-h-0">
       <!-- Chat Messages -->
-      <div class="flex-1 bg-black p-4 font-mono text-sm overflow-y-auto border border-gray-600 rounded">
+      <div class="flex-1 bg-black p-4 font-mono text-sm overflow-y-auto border border-gray-600 rounded min-h-0" id="chat-messages">
         <div class="whitespace-pre-wrap">
           <%= for message <- @chat_state.messages do %>
             <div class="text-blue-400"><%= message %></div>
@@ -30,7 +30,7 @@ defmodule ShardWeb.MudGameLive do
       </div>
       
       <!-- Chat Input -->
-      <form phx-submit="submit_chat" class="mt-4">
+      <form phx-submit="submit_chat" class="mt-4 flex-shrink-0">
         <div class="flex">
           <input
             type="text"
@@ -75,7 +75,7 @@ defmodule ShardWeb.MudGameLive do
   @spec render(any()) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col h-screen bg-gray-900 text-white" phx-window-keydown="keypress">
+    <div class="flex flex-col h-screen bg-gray-900 text-white overflow-hidden" phx-window-keydown="keypress" phx-hook="AutoScroll">
       <!-- "phx-window-keydown="keypress" -->
       <!-- Header -->
       <header class="bg-gray-800 p-4 shadow-lg flex justify-between items-center">
@@ -93,9 +93,9 @@ defmodule ShardWeb.MudGameLive do
     <!-- Main Content -->
       <div class="flex flex-1 overflow-hidden">
         <!-- Left Panel - Terminal/Chat -->
-        <div class="flex-1 p-4 flex flex-col">
+        <div class="flex-1 p-4 flex flex-col min-h-0">
           <!-- Tab Navigation -->
-          <div class="flex mb-4 border-b border-gray-600">
+          <div class="flex mb-4 border-b border-gray-600 flex-shrink-0">
             <button
               class={[
                 "px-4 py-2 font-medium transition-colors",
@@ -119,7 +119,7 @@ defmodule ShardWeb.MudGameLive do
           </div>
 
           <!-- Tab Content -->
-          <div class="flex-1 flex flex-col">
+          <div class="flex-1 flex flex-col min-h-0">
             <.terminal :if={@active_tab == "terminal"} terminal_state={@terminal_state} />
             <.chat :if={@active_tab == "chat"} chat_state={@chat_state} />
           </div>
@@ -210,6 +210,15 @@ defmodule ShardWeb.MudGameLive do
         <p>MUD Game v1.0</p>
       </footer>
     </div>
+    
+    <script>
+      window.addEventListener("phx:scroll_to_bottom", (e) => {
+        const element = document.getElementById(e.detail.target);
+        if (element) {
+          element.scrollTop = element.scrollHeight;
+        }
+      });
+    </script>
     """
   end
 
@@ -299,7 +308,12 @@ defmodule ShardWeb.MudGameLive do
         current_command: ""
       }
 
-      {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+      socket = assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
+      
+      # Auto-scroll terminal to bottom
+      socket = push_event(socket, "scroll_to_bottom", %{target: "terminal-output"})
+
+      {:noreply, socket}
     else
       {:noreply, socket}
     end
@@ -325,7 +339,12 @@ defmodule ShardWeb.MudGameLive do
         current_message: ""
       }
 
-      {:noreply, assign(socket, chat_state: chat_state)}
+      socket = assign(socket, chat_state: chat_state)
+      
+      # Auto-scroll chat to bottom
+      socket = push_event(socket, "scroll_to_bottom", %{target: "chat-messages"})
+
+      {:noreply, socket}
     else
       {:noreply, socket}
     end
