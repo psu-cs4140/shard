@@ -7,7 +7,6 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
   alias Shard.Characters
   alias Shard.Items
   alias Shard.Npcs
-  import Phoenix.LiveView, only: [assign: 3]
   import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.CharacterHelpers
   import ShardWeb.UserLive.ItemHelpers
@@ -80,7 +79,7 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
     end
   end
 
-  def initialize_game_state(socket, character, map_id, character_name) do
+  def initialize_game_state(character, map_id, character_name) do
     map_data = generate_map_from_database(map_id)
     starting_position = find_valid_starting_position(map_data)
 
@@ -91,16 +90,16 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
 
     PubSub.subscribe(Shard.PubSub, posn_to_room_channel(game_state.player_position))
 
-    socket =
-      socket
-      |> assign(:game_state, game_state)
-      |> assign(:terminal_state, terminal_state)
-      |> assign(:chat_state, chat_state)
-      |> assign(:modal_state, modal_state)
-      |> assign(:character_name, character_name)
-      |> assign(:active_tab, "terminal")
+    assigns = %{
+      game_state: game_state,
+      terminal_state: terminal_state,
+      chat_state: chat_state,
+      modal_state: modal_state,
+      character_name: character_name,
+      active_tab: "terminal"
+    }
 
-    {:ok, socket}
+    {:ok, assigns}
   end
 
   defp build_game_state(character, map_data, map_id, starting_position) do
@@ -191,10 +190,9 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
     "Woof! Welcome to the tutorial, adventurer!\n\nI'm Goldie, your faithful guide dog. Let me help you get started on your journey.\n\nHere are some basic commands to get you moving:\n• Type 'look' to examine your surroundings\n• Use 'north', 'south', 'east', 'west' (or n/s/e/w) to move around\n• Try 'pickup \"item_name\"' to collect items you find\n• Use 'inventory' to see what you're carrying\n• Type 'help' anytime for a full list of commands\n\nThere's a key hidden somewhere to the south that might come in handy later!\nExplore around and interact with npcs, complete quests, and attack monsters.\nWhen you're ready to move to the next dungeon, unlock the locked door!\nGood luck, and remember - I'll always be here at (0,0) if you need guidance!"
   end
 
-  def add_message(socket, message) do
-    new_output = socket.assigns.terminal_state.output ++ [message] ++ [""]
-    ts1 = Map.put(socket.assigns.terminal_state, :output, new_output)
-    assign(socket, :terminal_state, ts1)
+  def add_message(terminal_state, message) do
+    new_output = terminal_state.output ++ [message] ++ [""]
+    Map.put(terminal_state, :output, new_output)
   end
 
   def posn_to_room_channel({x, y}) do
