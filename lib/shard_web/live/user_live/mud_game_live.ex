@@ -7,7 +7,7 @@ defmodule ShardWeb.MudGameLive do
   alias Phoenix.LiveView.JS
   import ShardWeb.UserLive.Components
   import ShardWeb.UserLive.Components2
-  # import ShardWeb.UserLive.MapHelpers
+  import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.Movement
   import ShardWeb.UserLive.MapComponents
   import ShardWeb.UserLive.LegacyMap
