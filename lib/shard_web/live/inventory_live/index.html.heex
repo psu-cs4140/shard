@@ -6,8 +6,8 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
   <!-- Character Selection -->
   <div class="lg:col-span-3">
-    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Select Character</h3>
+    <div class="bg-base-100 shadow rounded-lg p-4">
+      <h3 class="text-lg font-medium text-base-content mb-4">Select Character</h3>
       <div class="flex flex-wrap gap-2">
         <%= for character <- @characters do %>
           <button
@@ -16,8 +16,8 @@
             class={[
               "px-4 py-2 rounded-md text-sm font-medium",
               if(@selected_character && @selected_character.id == character.id,
-                do: "bg-blue-600 text-white",
-                else: "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                do: "bg-primary text-primary-content",
+                else: "bg-base-200 text-base-content hover:bg-base-300"
               )
             ]}
           >
@@ -31,26 +31,26 @@
   <%= if @selected_character do %>
     <!-- Inventory -->
     <div class="lg:col-span-2">
-      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Inventory</h3>
+      <div class="bg-base-100 shadow rounded-lg p-4">
+        <h3 class="text-lg font-medium text-base-content mb-4">Inventory</h3>
         <div class="grid grid-cols-6 gap-2">
           <%= for inventory_item <- @inventory do %>
-            <div class="border border-gray-300 dark:border-gray-600 rounded p-2 hover:bg-gray-50 dark:hover:bg-gray-700">
+            <div class="border border-base-300 rounded p-2 hover:bg-base-200">
               <div class={["text-xs font-medium", rarity_class(inventory_item.item.rarity)]}>
                 {inventory_item.item.name}
               </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">
+              <div class="text-xs text-base-content/70">
                 Qty: {inventory_item.quantity}
               </div>
               <%= if inventory_item.equipped do %>
-                <div class="text-xs text-green-600 dark:text-green-400 font-medium">Equipped</div>
+                <div class="text-xs text-success font-medium">Equipped</div>
               <% end %>
               <div class="mt-2 space-y-1">
                 <%= if inventory_item.item.equippable && !inventory_item.equipped do %>
                   <button
                     phx-click="equip_item"
                     phx-value-inventory_id={inventory_item.id}
-                    class="w-full text-xs bg-green-100 dark:bg-green-900 dark:text-green-200 text-green-800 px-2 py-1 rounded hover:bg-green-200 dark:hover:bg-green-800"
+                    class="w-full text-xs bg-success/20 text-success-content px-2 py-1 rounded hover:bg-success/30"
                   >
                     Equip
                   </button>
@@ -59,7 +59,7 @@
                   <button
                     phx-click="unequip_item"
                     phx-value-inventory_id={inventory_item.id}
-                    class="w-full text-xs bg-red-100 dark:bg-red-900 dark:text-red-200 text-red-800 px-2 py-1 rounded hover:bg-red-200 dark:hover:bg-red-800"
+                    class="w-full text-xs bg-error/20 text-error-content px-2 py-1 rounded hover:bg-error/30"
                   >
                     Unequip
                   </button>
@@ -67,7 +67,7 @@
                 <button
                   phx-click="drop_item"
                   phx-value-inventory_id={inventory_item.id}
-                  class="w-full text-xs bg-gray-100 dark:bg-gray-700 dark:text-gray-200 text-gray-800 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600"
+                  class="w-full text-xs bg-base-200 text-base-content px-2 py-1 rounded hover:bg-base-300"
                 >
                   Drop
                 </button>
@@ -78,13 +78,13 @@
       </div>
       
 <!-- Hotbar -->
-      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 mt-6">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Hotbar</h3>
+      <div class="bg-base-100 shadow rounded-lg p-4 mt-6">
+        <h3 class="text-lg font-medium text-base-content mb-4">Hotbar</h3>
         <div class="grid grid-cols-12 gap-2">
           <%= for slot_num <- 1..12 do %>
             <% hotbar_item = Enum.find(@hotbar, &(&1.slot_number == slot_num)) %>
-            <div class="border-2 border-gray-300 dark:border-gray-600 rounded p-2 h-16 flex flex-col justify-center items-center">
-              <div class="text-xs font-bold text-gray-400 dark:text-gray-500">{slot_num}</div>
+            <div class="border-2 border-base-300 rounded p-2 h-16 flex flex-col justify-center items-center">
+              <div class="text-xs font-bold text-base-content/50">{slot_num}</div>
               <%= if hotbar_item && hotbar_item.item do %>
                 <div class={["text-xs text-center", rarity_class(hotbar_item.item.rarity)]}>
                   {String.slice(hotbar_item.item.name, 0..5)}
@@ -92,18 +92,18 @@
                 <button
                   phx-click="clear_hotbar"
                   phx-value-slot={slot_num}
-                  class="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                  class="text-xs text-error hover:text-error-content"
                 >
                   ×
                 </button>
               <% else %>
-                <div class="text-xs text-gray-400 dark:text-gray-500">Empty</div>
+                <div class="text-xs text-base-content/50">Empty</div>
               <% end %>
             </div>
           <% end %>
         </div>
         <div class="mt-4">
-          <p class="text-sm text-gray-600 dark:text-gray-400">
+          <p class="text-sm text-base-content/70">
             Drag items from inventory to hotbar slots, or use the buttons in inventory items.
           </p>
         </div>
@@ -112,26 +112,26 @@
     
 <!-- Room Items -->
     <div>
-      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+      <div class="bg-base-100 shadow rounded-lg p-4">
+        <h3 class="text-lg font-medium text-base-content mb-4">
           Items in {String.replace(@selected_character.location, "_", " ") |> String.capitalize()}
         </h3>
         <%= if Enum.empty?(@room_items) do %>
-          <p class="text-gray-500 dark:text-gray-400 text-sm">No items in this location.</p>
+          <p class="text-base-content/70 text-sm">No items in this location.</p>
         <% else %>
           <div class="space-y-2">
             <%= for room_item <- @room_items do %>
-              <div class="border border-gray-300 dark:border-gray-600 rounded p-3 hover:bg-gray-50 dark:hover:bg-gray-700">
+              <div class="border border-base-300 rounded p-3 hover:bg-base-200">
                 <div class="flex justify-between items-start">
                   <div>
                     <div class={["font-medium", rarity_class(room_item.item.rarity)]}>
                       {room_item.item.name}
                     </div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                    <div class="text-sm text-base-content/70">
                       Quantity: {room_item.quantity}
                     </div>
                     <%= if room_item.item.description do %>
-                      <div class="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                      <div class="text-xs text-base-content/80 mt-1">
                         {room_item.item.description}
                       </div>
                     <% end %>
@@ -139,7 +139,7 @@
                   <button
                     phx-click="pick_up_item"
                     phx-value-room_item_id={room_item.id}
-                    class="bg-blue-100 dark:bg-blue-900 dark:text-blue-200 text-blue-800 px-3 py-1 rounded text-sm hover:bg-blue-200 dark:hover:bg-blue-800"
+                    class="bg-primary/20 text-primary-content px-3 py-1 rounded text-sm hover:bg-primary/30"
                   >
                     Pick Up
                   </button>
@@ -152,8 +152,8 @@
     </div>
   <% else %>
     <div class="lg:col-span-3">
-      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-8 text-center">
-        <p class="text-gray-500 dark:text-gray-400">Select a character to view their inventory.</p>
+      <div class="bg-base-100 shadow rounded-lg p-8 text-center">
+        <p class="text-base-content/70">Select a character to view their inventory.</p>
       </div>
     </div>
   <% end %>

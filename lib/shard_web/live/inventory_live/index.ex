@@ -166,10 +166,10 @@ defmodule ShardWeb.InventoryLive.Index do
     end
   end
 
-  defp rarity_class("common"), do: "text-gray-600"
-  defp rarity_class("uncommon"), do: "text-green-600"
-  defp rarity_class("rare"), do: "text-blue-600"
-  defp rarity_class("epic"), do: "text-purple-600"
-  defp rarity_class("legendary"), do: "text-yellow-600"
-  defp rarity_class(_), do: "text-gray-600"
+  defp rarity_class("common"), do: "text-base-content"
+  defp rarity_class("uncommon"), do: "text-success"
+  defp rarity_class("rare"), do: "text-info"
+  defp rarity_class("epic"), do: "text-secondary"
+  defp rarity_class("legendary"), do: "text-warning"
+  defp rarity_class(_), do: "text-base-content"
 end
