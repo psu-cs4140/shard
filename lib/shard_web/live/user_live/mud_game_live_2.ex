@@ -3,6 +3,7 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
   Helper functions for MudGameLive split into a separate module.
   """
 
+  import Phoenix.Component
   import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.CharacterHelpers
   import ShardWeb.UserLive.ItemHelpers
