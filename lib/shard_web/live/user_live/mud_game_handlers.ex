@@ -128,7 +128,11 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
 
     case item do
       nil ->
-        {:noreply, socket, "Item not found in inventory."}
+        # Add error message to terminal
+        new_output = socket.assigns.terminal_state.output ++ ["Item not found in inventory."] ++ [""]
+        terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+
+        {:noreply, socket, socket.assigns.game_state, terminal_state}
 
       item ->
         {response, updated_game_state} = equip_item(socket.assigns.game_state, item)
