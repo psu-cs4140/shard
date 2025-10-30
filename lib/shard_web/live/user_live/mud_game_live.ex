@@ -295,16 +295,15 @@ defmodule ShardWeb.MudGameLive do
   def handle_event("submit_command", params, socket) do
     case handle_submit_command(params, socket) do
       {:noreply, socket, updated_game_state, terminal_state} ->
-        {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+        socket = assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
 
-      socket = assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
+        # Auto-scroll terminal to bottom
+        socket = push_event(socket, "scroll_to_bottom", %{target: "terminal-output"})
 
-      # Auto-scroll terminal to bottom
-      socket = push_event(socket, "scroll_to_bottom", %{target: "terminal-output"})
+        {:noreply, socket}
 
-      {:noreply, socket}
-    else
-      {:noreply, socket}
+      result ->
+        result
     end
   end
 
@@ -384,17 +383,6 @@ defmodule ShardWeb.MudGameLive do
       {:noreply, socket, updated_game_state, terminal_state} ->
         {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
 
-    case item do
-      nil ->
-        terminal_state =
-          ShardWeb.UserLive.MudGameHelpers.add_message(
-            socket.assigns.terminal_state,
-            "Hotbar slot #{slot_number} is empty."
-          )
-
-        socket = assign(socket, :terminal_state, terminal_state)
-        {:noreply, socket}
-
       result ->
         result
     end
@@ -404,17 +392,6 @@ defmodule ShardWeb.MudGameLive do
     case handle_equip_item(params, socket) do
       {:noreply, socket, updated_game_state, terminal_state} ->
         {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
-
-    case item do
-      nil ->
-        terminal_state =
-          ShardWeb.UserLive.MudGameHelpers.add_message(
-            socket.assigns.terminal_state,
-            "Item not found in inventory."
-          )
-
-        socket = assign(socket, :terminal_state, terminal_state)
-        {:noreply, socket}
 
       result ->
         result
