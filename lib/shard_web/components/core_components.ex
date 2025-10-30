@@ -502,13 +502,13 @@ defmodule ShardWeb.CoreComponents do
       ]}>
         <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
           <div class={[
-            "relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg",
+            "relative transform overflow-hidden rounded-lg bg-base-100 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg",
             @class
           ]}>
             <div class="absolute top-0 right-0 pt-4 pr-4">
               <button
                 type="button"
-                class="text-gray-400 hover:text-gray-500 focus:outline-none"
+                class="text-base-content/50 hover:text-base-content focus:outline-none"
                 phx-click={hide_modal(@id)}
                 aria-label={gettext("close")}
               >
