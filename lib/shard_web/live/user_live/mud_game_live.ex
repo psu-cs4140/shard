@@ -9,12 +9,9 @@ defmodule ShardWeb.MudGameLive do
   import ShardWeb.UserLive.Components2
   import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.Movement
-  import ShardWeb.UserLive.Commands1
   import ShardWeb.UserLive.MapComponents
-  import ShardWeb.UserLive.LegacyMap
   import ShardWeb.UserLive.MonsterComponents
   import ShardWeb.UserLive.CharacterHelpers
-  import ShardWeb.UserLive.ItemHelpers
   import ShardWeb.UserLive.MudGameHandlers
 
   @impl true

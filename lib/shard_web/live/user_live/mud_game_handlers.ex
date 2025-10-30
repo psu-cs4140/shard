@@ -2,7 +2,6 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   @moduledoc """
   Event handlers and helper functions for MudGameLive
   """
-  alias Phoenix.PubSub
   import ShardWeb.UserLive.Movement
   import ShardWeb.UserLive.Commands1
   import ShardWeb.UserLive.LegacyMap
