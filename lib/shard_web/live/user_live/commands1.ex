@@ -59,7 +59,7 @@ defmodule ShardWeb.UserLive.Commands1 do
             monster[:position] == {x, y} && monster[:is_alive] != false
           end)
 
-        if length(monsters_here) == 0 do
+        if Enum.empty?(monsters_here) do
           {["There are no monsters here to attack."], game_state}
         else
           # Start combat if not already in combat
