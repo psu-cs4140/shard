@@ -540,4 +540,50 @@ defmodule ShardWeb.MudGameLive do
   def handle_info({:update_game_state, new_game_state}, socket) do
     {:noreply, assign(socket, :game_state, new_game_state)}
   end
+
+  def handle_info({:combat_event, event}, socket) do
+    case event do
+      %{type: :effect_tick, effect: "bleed", target: {:player, player_id}, dmg: dmg} ->
+        # Check if this is our player
+        if socket.assigns.game_state.character.id == player_id do
+          current_stats = socket.assigns.game_state.player_stats
+          new_health = max(current_stats.health - dmg, 0)
+          updated_stats = %{current_stats | health: new_health}
+          updated_game_state = %{socket.assigns.game_state | player_stats: updated_stats}
+          
+          socket = 
+            socket
+            |> add_message("You take #{dmg} bleed damage!")
+            |> assign(:game_state, updated_game_state)
+          
+          {:noreply, socket}
+        else
+          socket = add_message(socket, "Another player takes bleed damage!")
+          {:noreply, socket}
+        end
+
+      %{type: :victory} ->
+        socket = add_message(socket, "Victory! All monsters have been defeated!")
+        updated_game_state = %{socket.assigns.game_state | combat: false}
+        {:noreply, assign(socket, :game_state, updated_game_state)}
+
+      %{type: :defeat} ->
+        socket = add_message(socket, "Defeat! All players have fallen!")
+        updated_game_state = %{socket.assigns.game_state | combat: false}
+        {:noreply, assign(socket, :game_state, updated_game_state)}
+
+      _other ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_info({:player_joined_combat, player_name}, socket) do
+    socket = add_message(socket, "#{player_name} joins the battle!")
+    {:noreply, socket}
+  end
+
+  def handle_info({:player_left_combat, player_name}, socket) do
+    socket = add_message(socket, "#{player_name} leaves the battle!")
+    {:noreply, socket}
+  end
 end
