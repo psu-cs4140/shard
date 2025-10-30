@@ -171,10 +171,10 @@ defmodule ShardWeb.AdminLive.Monsters do
       </div>
 
       <%= if @show_form do %>
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <div class="bg-base-100 rounded-lg shadow-lg p-6 mb-6">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold">{@form_title}</h2>
-            <button phx-click="cancel_form" class="text-gray-500 hover:text-gray-700">✕</button>
+            <button phx-click="cancel_form" class="text-base-content/50 hover:text-base-content">✕</button>
           </div>
 
           <%= if assigns[:changeset] do %>
@@ -223,48 +223,48 @@ defmodule ShardWeb.AdminLive.Monsters do
             </.simple_form>
           <% else %>
             <div class="text-center py-8">
-              <p class="text-gray-500">Loading form...</p>
+              <p class="text-base-content/70">Loading form...</p>
             </div>
           <% end %>
         </div>
       <% end %>
 
-      <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+      <div class="bg-base-100 rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-base-200">
+          <thead class="bg-base-200">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Name
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Race
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Level
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Health
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Attack
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 XP Reward
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Location
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3 text-left text-xs font-medium text-base-content/70 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
+          <tbody class="bg-base-100 divide-y divide-base-200">
             <%= for monster <- @monsters do %>
               <tr id={"monster-#{monster.id}"}>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm font-medium text-gray-900">{monster.name}</div>
-                  <div class="text-sm text-gray-500">
+                  <div class="text-sm font-medium text-base-content">{monster.name}</div>
+                  <div class="text-sm text-base-content/70">
                     {String.slice(monster.description || "", 0, 50)}{if String.length(
                                                                           monster.description || ""
                                                                         ) > 50,
@@ -276,19 +276,19 @@ defmodule ShardWeb.AdminLive.Monsters do
                     {String.capitalize(monster.race)}
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-base-content">
                   {monster.level}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-base-content">
                   {monster.health}/{monster.max_health}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-base-content">
                   {monster.attack_damage}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-base-content">
                   {monster.xp_amount}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-base-content">
                   <%= if monster.location_id do %>
                     <% room = Enum.find(@rooms, &(&1.id == monster.location_id)) %>
                     {if room, do: room.name || "Room #{room.id}", else: "Unknown Room"}
