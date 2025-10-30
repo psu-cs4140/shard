@@ -24,74 +24,89 @@ defmodule Shard.Combat do
 
   defp execute_attack(game_state) do
     {x, y} = game_state.player_position
-
-    # Find monsters at current location
-    monsters_here =
-      Enum.filter(game_state.monsters, fn monster ->
-        monster[:position] == {x, y} && monster[:is_alive] != false
-      end)
+    monsters_here = find_monsters_at_position(game_state.monsters, {x, y})
 
     case monsters_here do
       [] ->
         {["There are no monsters here to attack."], game_state}
 
       [monster | _] ->
-        # Calculate damage
-        base_damage = 10 + (game_state.player_stats.strength - 10)
-        variance = 5
-        actual_damage = max(base_damage + :rand.uniform(variance) - div(variance, 2), 1)
-
-        # Apply armor reduction
-        armor = monster[:armor] || 0
-        final_damage = max(actual_damage - armor, 1)
-
-        # Update monster health
-        new_hp = max((monster[:hp] || 10) - final_damage, 0)
-        is_alive = new_hp > 0
-
-        updated_monster =
-          monster
-          |> Map.put(:hp, new_hp)
-          |> Map.put(:is_alive, is_alive)
-
-        # Update monsters list
-        updated_monsters =
-          Enum.map(game_state.monsters, fn m ->
-            if m == monster, do: updated_monster, else: m
-          end)
-
-        # Create combat messages
-        monster_name = monster[:name] || "monster"
-        attack_msg = "You attack the #{monster_name} for #{final_damage} damage!"
-
-        response =
-          if is_alive do
-            [attack_msg, "The #{monster_name} has #{new_hp} health remaining."]
-          else
-            [attack_msg, "The #{monster_name} is defeated!"]
-          end
-
-        # Broadcast attack event to other players in the room
-        broadcast_combat_event({x, y}, {
-          :player_attack,
-          game_state.character.name,
-          monster_name,
-          final_damage,
-          is_alive
-        })
-
-        # Set combat state
-        updated_game_state = %{
-          game_state
-          | monsters: updated_monsters,
-            combat:
-              Enum.any?(updated_monsters, fn m ->
-                m[:position] == {x, y} && m[:is_alive] != false
-              end)
-        }
-
-        {response, updated_game_state}
+        perform_attack(game_state, monster, {x, y})
     end
+  end
+
+  defp find_monsters_at_position(monsters, position) do
+    Enum.filter(monsters, fn monster ->
+      monster[:position] == position && monster[:is_alive] != false
+    end)
+  end
+
+  defp perform_attack(game_state, monster, position) do
+    damage_result = calculate_attack_damage(game_state.player_stats, monster)
+    updated_monster = apply_damage_to_monster(monster, damage_result.final_damage)
+    updated_monsters = update_monsters_list(game_state.monsters, monster, updated_monster)
+    
+    response = create_attack_response(monster, damage_result, updated_monster)
+    broadcast_attack_event(position, game_state.character.name, monster, damage_result, updated_monster)
+    
+    updated_game_state = update_combat_state(game_state, updated_monsters, position)
+    {response, updated_game_state}
+  end
+
+  defp calculate_attack_damage(player_stats, monster) do
+    base_damage = 10 + (player_stats.strength - 10)
+    variance = 5
+    actual_damage = max(base_damage + :rand.uniform(variance) - div(variance, 2), 1)
+    armor = monster[:armor] || 0
+    final_damage = max(actual_damage - armor, 1)
+    
+    %{actual_damage: actual_damage, final_damage: final_damage}
+  end
+
+  defp apply_damage_to_monster(monster, damage) do
+    new_hp = max((monster[:hp] || 10) - damage, 0)
+    is_alive = new_hp > 0
+    
+    monster
+    |> Map.put(:hp, new_hp)
+    |> Map.put(:is_alive, is_alive)
+  end
+
+  defp update_monsters_list(monsters, original_monster, updated_monster) do
+    Enum.map(monsters, fn m ->
+      if m == original_monster, do: updated_monster, else: m
+    end)
+  end
+
+  defp create_attack_response(monster, damage_result, updated_monster) do
+    monster_name = monster[:name] || "monster"
+    attack_msg = "You attack the #{monster_name} for #{damage_result.final_damage} damage!"
+
+    if updated_monster[:is_alive] do
+      [attack_msg, "The #{monster_name} has #{updated_monster[:hp]} health remaining."]
+    else
+      [attack_msg, "The #{monster_name} is defeated!"]
+    end
+  end
+
+  defp broadcast_attack_event(position, player_name, monster, damage_result, updated_monster) do
+    monster_name = monster[:name] || "monster"
+    
+    broadcast_combat_event(position, {
+      :player_attack,
+      player_name,
+      monster_name,
+      damage_result.final_damage,
+      updated_monster[:is_alive]
+    })
+  end
+
+  defp update_combat_state(game_state, updated_monsters, position) do
+    combat_active = Enum.any?(updated_monsters, fn m ->
+      m[:position] == position && m[:is_alive] != false
+    end)
+
+    %{game_state | monsters: updated_monsters, combat: combat_active}
   end
 
   defp execute_flee(game_state) do

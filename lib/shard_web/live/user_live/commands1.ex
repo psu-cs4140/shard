@@ -59,18 +59,18 @@ defmodule ShardWeb.UserLive.Commands1 do
             monster[:position] == {x, y} && monster[:is_alive] != false
           end)
 
-        if length(monsters_here) > 0 do
+        if length(monsters_here) == 0 do
+          {["There are no monsters here to attack."], game_state}
+        else
           # Start combat if not already in combat
           updated_game_state =
-            if not Shard.Combat.in_combat?(game_state) do
-              %{game_state | combat: true}
-            else
+            if Shard.Combat.in_combat?(game_state) do
               game_state
+            else
+              %{game_state | combat: true}
             end
 
           Shard.Combat.execute_action(updated_game_state, "attack")
-        else
-          {["There are no monsters here to attack."], game_state}
         end
 
       "flee" ->
