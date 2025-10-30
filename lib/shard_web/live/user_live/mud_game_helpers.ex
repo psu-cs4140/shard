@@ -91,14 +91,13 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
     PubSub.subscribe(Shard.PubSub, posn_to_room_channel(game_state.player_position))
 
     socket =
-      Phoenix.LiveView.assign(socket,
-        game_state: game_state,
-        terminal_state: terminal_state,
-        chat_state: chat_state,
-        modal_state: modal_state,
-        character_name: character_name,
-        active_tab: "terminal"
-      )
+      socket
+      |> Phoenix.LiveView.assign(:game_state, game_state)
+      |> Phoenix.LiveView.assign(:terminal_state, terminal_state)
+      |> Phoenix.LiveView.assign(:chat_state, chat_state)
+      |> Phoenix.LiveView.assign(:modal_state, modal_state)
+      |> Phoenix.LiveView.assign(:character_name, character_name)
+      |> Phoenix.LiveView.assign(:active_tab, "terminal")
 
     {:ok, socket}
   end
