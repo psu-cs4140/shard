@@ -721,9 +721,9 @@ defmodule ShardWeb.UserLive.Commands1 do
     channel = "room:#{x},#{y}"
     
     if target_name do
-      PubSub.broadcast(Shard.PubSub, channel, {:healing_action, healer_name, healing_amount, target_name})
+      Phoenix.PubSub.broadcast(Shard.PubSub, channel, {:healing_action, healer_name, healing_amount, target_name})
     else
-      PubSub.broadcast(Shard.PubSub, channel, {:healing_action, healer_name, healing_amount})
+      Phoenix.PubSub.broadcast(Shard.PubSub, channel, {:healing_action, healer_name, healing_amount})
     end
   end
 end
