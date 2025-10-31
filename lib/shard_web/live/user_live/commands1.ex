@@ -381,15 +381,17 @@ defmodule ShardWeb.UserLive.Commands1 do
                                   item_name,
                                   player_name
                                 )
-                            # Check if it's a poke command
-                            case parse_poke_command(command) do
-                              {:ok, character_name} ->
-                                execute_poke_command(game_state, character_name)
 
-                              :error ->
-                                {[
-                                   "Unknown command: '#{command}'. Type 'help' for available commands."
-                                 ], game_state}
+                                # Check if it's a poke command
+                                case parse_poke_command(command) do
+                                  {:ok, character_name} ->
+                                    execute_poke_command(game_state, character_name)
+
+                                  :error ->
+                                    {[
+                                       "Unknown command: '#{command}'. Type 'help' for available commands."
+                                     ], game_state}
+                                end
                             end
                         end
                     end
@@ -852,6 +854,4 @@ defmodule ShardWeb.UserLive.Commands1 do
       )
     end
   end
-
-  # test
 end
