@@ -1,5 +1,5 @@
 defmodule ShardWeb.UserLive.MudGameHelpersTest do
-  use Shard.DataCase, async: true
+  use Shard.DataCase, async: false
   use ShardWeb.ConnCase
 
   alias ShardWeb.UserLive.MudGameHelpers
@@ -35,7 +35,7 @@ defmodule ShardWeb.UserLive.MudGameHelpersTest do
     end
 
     test "returns error when character_id does not exist" do
-      params = %{"character_id" => "non-existent-id"}
+      params = %{"character_id" => Ecto.UUID.generate()}
       assert {:error, :no_character} = MudGameHelpers.get_character_from_params(params)
     end
   end
@@ -94,7 +94,7 @@ defmodule ShardWeb.UserLive.MudGameHelpersTest do
 
     test "returns original character when loading fails" do
       # Create a character with an invalid ID to simulate failure
-      character = %{id: "invalid-id", name: "Test"}
+      character = %{id: Ecto.UUID.generate(), name: "Test"}
       
       assert {:ok, returned_character} = MudGameHelpers.load_character_with_associations(character)
       assert returned_character == character
@@ -177,10 +177,13 @@ defmodule ShardWeb.UserLive.MudGameHelpersTest do
         experience: 150
       })
 
+      # Load character with associations first
+      {:ok, loaded_character} = MudGameHelpers.load_character_with_associations(character)
+
       map_id = "test_map"
       character_name = "Test Character"
 
-      assert {:ok, assigns} = MudGameHelpers.initialize_game_state(character, map_id, character_name)
+      assert {:ok, assigns} = MudGameHelpers.initialize_game_state(loaded_character, map_id, character_name)
 
       # Verify the structure of returned assigns
       assert Map.has_key?(assigns, :game_state)
