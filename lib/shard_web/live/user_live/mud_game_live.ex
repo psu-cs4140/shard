@@ -485,9 +485,9 @@ defmodule ShardWeb.MudGameLive do
   end
 
   def handle_info({:chat_message, message_data}, socket) do
-    # Format the message
+    # Format the message with character_id embedded for color generation
     formatted_message =
-      "[#{message_data.timestamp}] #{message_data.character_name}: #{message_data.text}"
+      "[#{message_data.timestamp}] #{message_data.character_name}:#{message_data.character_id}: #{message_data.text}"
 
     # Add message to chat
     new_messages = socket.assigns.chat_state.messages ++ [formatted_message]
@@ -501,11 +501,11 @@ defmodule ShardWeb.MudGameLive do
 
   # Helper functions for chat message formatting
   defp get_message_class(message) do
-    # Extract character name from message
-    case Regex.run(~r/\[.*?\] (.*?):/, message, capture: :all_but_first) do
-      [character_name] ->
-        # Generate consistent color based on character name
-        color_class = generate_color_class(character_name)
+    # Extract character_id from message
+    case Regex.run(~r/\[.*?\] (.*?):(\d+):/, message, capture: :all_but_first) do
+      [character_name, character_id] ->
+        # Generate consistent color based on character ID
+        color_class = generate_color_class(character_id)
         "font-mono text-sm #{color_class}"
       _ ->
         "font-mono text-sm text-blue-400"
@@ -513,12 +513,18 @@ defmodule ShardWeb.MudGameLive do
   end
 
   defp format_message_text(message) do
-    message
+    # Remove the character_id from the displayed message
+    case Regex.run(~r/(\[.*?\] .*?):\d+:(.*)/, message, capture: :all_but_first) do
+      [prefix, text] ->
+        "#{prefix}: #{text}"
+      _ ->
+        message
+    end
   end
 
-  defp generate_color_class(character_name) do
-    # Generate a hash of the character name to determine color
-    hash = :erlang.phash2(character_name, 1000)
+  defp generate_color_class(character_identifier) do
+    # Generate a hash of the character identifier (ID) to determine color
+    hash = :erlang.phash2(character_identifier, 1000)
     
     # Define a set of distinct colors
     colors = [
