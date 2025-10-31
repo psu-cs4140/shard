@@ -30,7 +30,9 @@ defmodule ShardWeb.MudGameLive do
       >
         <div class="space-y-1">
           <%= for message <- @chat_state.messages do %>
-            <div class={get_message_class(message) <> " whitespace-pre-wrap break-words"}><%= format_message_text(message) %></div>
+            <div class={get_message_class(message) <> " whitespace-pre-wrap break-words"}>
+              {format_message_text(message)}
+            </div>
           <% end %>
         </div>
       </div>
@@ -251,16 +253,20 @@ defmodule ShardWeb.MudGameLive do
         }
       };
     </script>
-    
+
     <style>
       @keyframes rainbow {
         0% { background-position: 0% 50%; }
         100% { background-position: 200% 50%; }
       }
-      
+
       .animate-rainbow {
+        background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet, red);
         background-size: 200% 200%;
-        animation: rainbow 0.5s linear infinite;
+        animation: rainbow 4.0s linear infinite;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
       }
     </style>
     """
@@ -519,6 +525,7 @@ defmodule ShardWeb.MudGameLive do
         # Generate consistent color based on character name or ID
         color_class = generate_color_class(character_name, character_id)
         "font-mono text-sm #{color_class}"
+
       _ ->
         "font-mono text-sm text-blue-400"
     end
@@ -529,6 +536,7 @@ defmodule ShardWeb.MudGameLive do
     case Regex.run(~r/(\[.*?\] .*?):\d+:(.*)/, message, capture: :all_but_first) do
       [prefix, text] ->
         "#{prefix}: #{text}"
+
       _ ->
         message
     end
@@ -542,7 +550,7 @@ defmodule ShardWeb.MudGameLive do
   defp generate_color_class(_character_name, character_id) do
     # Generate a hash of the character identifier (ID) to determine color
     hash = :erlang.phash2(character_id, 1000)
-    
+
     # Define a set of distinct colors
     colors = [
       "text-blue-400",
@@ -556,7 +564,7 @@ defmodule ShardWeb.MudGameLive do
       "text-orange-400",
       "text-cyan-400"
     ]
-    
+
     # Select color based on hash
     Enum.at(colors, rem(hash, length(colors)))
   end
