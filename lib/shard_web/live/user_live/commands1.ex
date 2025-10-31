@@ -343,55 +343,62 @@ defmodule ShardWeb.UserLive.Commands1 do
         execute_deny_quest(game_state)
 
       _ ->
-        # Check if it's a talk command
-        case parse_talk_command(command) do
+        # Handle all other commands through parsers
+        handle_parsed_commands(command, game_state)
+    end
+  end
+
+  # Handle all parsed commands to avoid deep nesting
+  defp handle_parsed_commands(command, game_state) do
+    # Check if it's a talk command
+    case parse_talk_command(command) do
+      {:ok, npc_name} ->
+        execute_talk_command(game_state, npc_name)
+
+      :error ->
+        # Check if it's a quest command
+        case parse_quest_command(command) do
           {:ok, npc_name} ->
-            execute_talk_command(game_state, npc_name)
+            execute_quest_command(game_state, npc_name)
 
           :error ->
-            # Check if it's a quest command
-            case parse_quest_command(command) do
+            # Check if it's a deliver_quest command
+            case parse_deliver_quest_command(command) do
               {:ok, npc_name} ->
-                execute_quest_command(game_state, npc_name)
+                execute_deliver_quest_command(game_state, npc_name)
 
               :error ->
-                # Check if it's a deliver_quest command
-                case parse_deliver_quest_command(command) do
-                  {:ok, npc_name} ->
-                    execute_deliver_quest_command(game_state, npc_name)
+                # Check if it's a pickup command
+                case parse_pickup_command(command) do
+                  {:ok, item_name} ->
+                    execute_pickup_command(game_state, item_name)
 
                   :error ->
-                    # Check if it's a pickup command
-                    case parse_pickup_command(command) do
-                      {:ok, item_name} ->
-                        execute_pickup_command(game_state, item_name)
+                    # Check if it's an unlock command
+                    case parse_unlock_command(command) do
+                      {:ok, direction, item_name} ->
+                        execute_unlock_command(game_state, direction, item_name)
 
                       :error ->
-                        # Check if it's an unlock command
-                        case parse_unlock_command(command) do
-                          {:ok, direction, item_name} ->
-                            execute_unlock_command(game_state, direction, item_name)
+                        # Check if it's a use item on player command
+                        case parse_use_item_on_player_command(command) do
+                          {:ok, item_name, player_name} ->
+                            execute_use_item_on_player_command(
+                              game_state,
+                              item_name,
+                              player_name
+                            )
 
                           :error ->
-                            # Check if it's a use item on player command
-                            case parse_use_item_on_player_command(command) do
-                              {:ok, item_name, player_name} ->
-                                execute_use_item_on_player_command(
-                                  game_state,
-                                  item_name,
-                                  player_name
-                                )
+                            # Check if it's a poke command
+                            case parse_poke_command(command) do
+                              {:ok, character_name} ->
+                                execute_poke_command(game_state, character_name)
 
-                                # Check if it's a poke command
-                                case parse_poke_command(command) do
-                                  {:ok, character_name} ->
-                                    execute_poke_command(game_state, character_name)
-
-                                  :error ->
-                                    {[
-                                       "Unknown command: '#{command}'. Type 'help' for available commands."
-                                     ], game_state}
-                                end
+                              :error ->
+                                {[
+                                   "Unknown command: '#{command}'. Type 'help' for available commands."
+                                 ], game_state}
                             end
                         end
                     end
