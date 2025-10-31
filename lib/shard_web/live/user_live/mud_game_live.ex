@@ -513,12 +513,40 @@ defmodule ShardWeb.MudGameLive do
 
   # Handle healing action info (with target)
   def handle_info({:healing_action, healer_name, healing_amount, target_name}, socket) do
-    case handle_healing_action_info({:healing_action, healer_name, healing_amount, target_name}, socket) do
-      {:noreply, socket, terminal_state} ->
-        {:noreply, assign(socket, terminal_state: terminal_state)}
+    # Check if this healing is targeted at this player
+    if String.downcase(target_name) == String.downcase(socket.assigns.character_name) do
+      # Apply the healing to this player's health
+      current_health = socket.assigns.game_state.player_stats.health
+      max_health = socket.assigns.game_state.player_stats.max_health
+      new_health = min(current_health + healing_amount, max_health)
+      
+      # Update player stats
+      updated_stats = %{socket.assigns.game_state.player_stats | health: new_health}
+      updated_game_state = %{socket.assigns.game_state | player_stats: updated_stats}
+      
+      # Save updated stats to database
+      ShardWeb.UserLive.CharacterHelpers.save_character_stats(
+        socket.assigns.game_state.character,
+        updated_stats
+      )
+      
+      # Add message to terminal
+      terminal_state = 
+        ShardWeb.UserLive.MudGameHelpers.add_message(
+          socket.assigns.terminal_state,
+          "#{healer_name} used a health potion on you. You recover #{healing_amount} health points."
+        )
+      
+      {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+    else
+      # Not targeted at this player, just show the message
+      case handle_healing_action_info({:healing_action, healer_name, healing_amount, target_name}, socket) do
+        {:noreply, socket, terminal_state} ->
+          {:noreply, assign(socket, terminal_state: terminal_state)}
 
-      result ->
-        result
+        result ->
+          result
+      end
     end
   end
 
@@ -535,12 +563,39 @@ defmodule ShardWeb.MudGameLive do
 
   # Handle poison action info (with target)
   def handle_info({:poison_action, attacker_name, damage_amount, target_name}, socket) do
-    case handle_poison_action_info({:poison_action, attacker_name, damage_amount, target_name}, socket) do
-      {:noreply, socket, terminal_state} ->
-        {:noreply, assign(socket, terminal_state: terminal_state)}
+    # Check if this poison is targeted at this player
+    if String.downcase(target_name) == String.downcase(socket.assigns.character_name) do
+      # Apply the damage to this player's health
+      current_health = socket.assigns.game_state.player_stats.health
+      new_health = max(current_health - damage_amount, 0)
+      
+      # Update player stats
+      updated_stats = %{socket.assigns.game_state.player_stats | health: new_health}
+      updated_game_state = %{socket.assigns.game_state | player_stats: updated_stats}
+      
+      # Save updated stats to database
+      ShardWeb.UserLive.CharacterHelpers.save_character_stats(
+        socket.assigns.game_state.character,
+        updated_stats
+      )
+      
+      # Add message to terminal
+      terminal_state = 
+        ShardWeb.UserLive.MudGameHelpers.add_message(
+          socket.assigns.terminal_state,
+          "#{attacker_name} used poison on you. You take #{damage_amount} damage."
+        )
+      
+      {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+    else
+      # Not targeted at this player, just show the message
+      case handle_poison_action_info({:poison_action, attacker_name, damage_amount, target_name}, socket) do
+        {:noreply, socket, terminal_state} ->
+          {:noreply, assign(socket, terminal_state: terminal_state)}
 
-      result ->
-        result
+        result ->
+          result
+      end
     end
   end
 end
