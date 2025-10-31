@@ -246,6 +246,18 @@ defmodule ShardWeb.MudGameLive do
           });
         }
       };
+
+      // Add explicit event listener for scroll_to_bottom events
+      document.addEventListener("phx:scroll_to_bottom", (e) => {
+        if (e.detail.target === "chat-messages") {
+          const targetElement = document.getElementById("chat-messages");
+          if (targetElement) {
+            requestAnimationFrame(() => {
+              targetElement.scrollTop = targetElement.scrollHeight;
+            });
+          }
+        }
+      });
     </script>
     """
   end
