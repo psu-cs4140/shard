@@ -4,8 +4,6 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
   """
 
   import Phoenix.Component
-  import ShardWeb.UserLive.CharacterHelpers
-  import ShardWeb.UserLive.MonsterComponents
   import ShardWeb.UserLive.Movement
   import ShardWeb.UserLive.Commands3
   alias Phoenix.PubSub
