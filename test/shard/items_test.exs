@@ -185,6 +185,32 @@ defmodule Shard.ItemsTest do
       assert List.first(inventory).quantity == 5
     end
 
+    test "add_item_to_inventory/3 handles stack overflow correctly" do
+      character = character_fixture()
+      stackable_item = item_fixture(%{@valid_attrs | stackable: true, max_stack_size: 3})
+
+      {:ok, _} = Items.add_item_to_inventory(character.id, stackable_item.id, 5)
+
+      # Should create two stacks: one with max size and one with remainder
+      inventory = Items.get_character_inventory(character.id)
+      assert length(inventory) == 2
+      
+      quantities = Enum.map(inventory, &(&1.quantity)) |> Enum.sort()
+      assert quantities == [2, 3]
+    end
+
+    test "add_item_to_inventory/3 handles non-stackable items correctly" do
+      character = character_fixture()
+      non_stackable_item = item_fixture(%{@valid_attrs | stackable: false})
+
+      {:ok, result} = Items.add_item_to_inventory(character.id, non_stackable_item.id, 3)
+
+      # Should create 3 separate inventory entries
+      inventory = Items.get_character_inventory(character.id)
+      assert length(inventory) == 3
+      assert Enum.all?(inventory, &(&1.quantity == 1))
+    end
+
     test "remove_item_from_inventory/2 removes quantity from inventory" do
       character = character_fixture()
       item = item_fixture()
@@ -206,6 +232,14 @@ defmodule Shard.ItemsTest do
       assert Repo.get(CharacterInventory, inventory_item.id) == nil
     end
 
+    test "remove_item_from_inventory/2 returns error when removing more than available" do
+      character = character_fixture()
+      item = item_fixture()
+
+      {:ok, inventory_item} = Items.add_item_to_inventory(character.id, item.id, 1)
+      assert {:error, :insufficient_quantity} = Items.remove_item_from_inventory(inventory_item.id, 2)
+    end
+
     test "equip_item/1 equips an item" do
       character = character_fixture()
       equippable_item = item_fixture(%{@valid_attrs | equippable: true, equipment_slot: "weapon"})
@@ -215,6 +249,14 @@ defmodule Shard.ItemsTest do
 
       assert equipped_item.equipped == true
       assert equipped_item.equipment_slot == "weapon"
+    end
+
+    test "equip_item/1 returns error for non-equippable item" do
+      character = character_fixture()
+      item = item_fixture(%{@valid_attrs | equippable: false})
+
+      {:ok, inventory_item} = Items.add_item_to_inventory(character.id, item.id)
+      assert {:error, :not_equippable} = Items.equip_item(inventory_item.id)
     end
 
     test "unequip_item/1 unequips an item" do
@@ -229,6 +271,28 @@ defmodule Shard.ItemsTest do
 
       assert unequipped_item.equipped == false
       assert unequipped_item.equipment_slot == nil
+    end
+
+    test "equip_item/1 replaces existing equipped item in same slot" do
+      character = character_fixture()
+      equippable_item1 = item_fixture(%{@valid_attrs | equippable: true, equipment_slot: "weapon", name: "Weapon 1"})
+      equippable_item2 = item_fixture(%{@valid_attrs | equippable: true, equipment_slot: "weapon", name: "Weapon 2"})
+
+      {:ok, inventory_item1} = Items.add_item_to_inventory(character.id, equippable_item1.id)
+      {:ok, inventory_item2} = Items.add_item_to_inventory(character.id, equippable_item2.id)
+      
+      {:ok, _} = Items.equip_item(inventory_item1.id)
+      {:ok, _} = Items.equip_item(inventory_item2.id)
+
+      # First item should be unequipped
+      updated_item1 = Repo.get(CharacterInventory, inventory_item1.id)
+      assert updated_item1.equipped == false
+      assert updated_item1.equipment_slot == nil
+
+      # Second item should be equipped
+      updated_item2 = Repo.get(CharacterInventory, inventory_item2.id)
+      assert updated_item2.equipped == true
+      assert updated_item2.equipment_slot == "weapon"
     end
   end
 
@@ -278,6 +342,27 @@ defmodule Shard.ItemsTest do
       assert List.first(items).id == room_item.id
     end
 
+    test "create_room_item/1 with valid data creates a room item" do
+      item = item_fixture()
+      character = character_fixture()
+
+      attrs = %{
+        location: "0,0,0",
+        item_id: item.id,
+        quantity: 1,
+        dropped_by_character_id: character.id
+      }
+
+      assert {:ok, %RoomItem{} = room_item} = Items.create_room_item(attrs)
+      assert room_item.location == "0,0,0"
+      assert room_item.item_id == item.id
+      assert room_item.quantity == 1
+    end
+
+    test "create_room_item/1 with invalid data returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Items.create_room_item(%{quantity: -1})
+    end
+
     test "drop_item_in_room/4 moves item from inventory to room" do
       character = character_fixture()
       item = item_fixture()
@@ -295,6 +380,14 @@ defmodule Shard.ItemsTest do
       # Check that inventory was updated
       updated_inventory = Repo.get(CharacterInventory, inventory_item.id)
       assert updated_inventory.quantity == 1
+    end
+
+    test "drop_item_in_room/4 returns error when dropping more than available" do
+      character = character_fixture()
+      item = item_fixture()
+
+      {:ok, inventory_item} = Items.add_item_to_inventory(character.id, item.id, 1)
+      refute Items.drop_item_in_room(character.id, inventory_item.id, "5,5,0", 2)
     end
 
     test "pick_up_item/3 moves item from room to inventory" do
@@ -325,6 +418,36 @@ defmodule Shard.ItemsTest do
       # Check that inventory was created
       inventory = Items.get_character_inventory(character.id)
       assert length(inventory) == 1
+    end
+
+    test "pick_up_item/3 picks up all quantity when no quantity specified" do
+      character = character_fixture()
+      room_item = create_room_item_helper(%{quantity: 3})
+
+      assert {:ok, :picked_up} = Items.pick_up_item(character.id, room_item.id)
+
+      # Check that room item was deleted
+      assert Repo.get(RoomItem, room_item.id) == nil
+
+      # Check that inventory was created with full quantity
+      inventory = Items.get_character_inventory(character.id)
+      assert length(inventory) == 1
+      assert List.first(inventory).quantity == 3
+    end
+
+    test "pick_up_item/3 returns error for non-pickupable item" do
+      character = character_fixture()
+      non_pickup_item = item_fixture(%{@valid_attrs | pickup: false})
+      room_item = create_room_item_helper(%{item_id: non_pickup_item.id, quantity: 1})
+
+      assert {:error, :item_not_pickupable} = Items.pick_up_item(character.id, room_item.id, 1)
+    end
+
+    test "pick_up_item/3 returns error when picking up more than available" do
+      character = character_fixture()
+      room_item = create_room_item_helper(%{quantity: 1})
+
+      assert {:error, :insufficient_quantity} = Items.pick_up_item(character.id, room_item.id, 2)
     end
   end
 
@@ -392,6 +515,21 @@ defmodule Shard.ItemsTest do
       assert updated_slot.inventory_id == inventory_item2.id
     end
 
+    test "set_hotbar_slot/3 clears hotbar slot when inventory_id is nil" do
+      character = character_fixture()
+      item = item_fixture()
+      {:ok, inventory_item} = Items.add_item_to_inventory(character.id, item.id)
+
+      {:ok, _hotbar_slot} = Items.set_hotbar_slot(character.id, 1, inventory_item.id)
+      assert {:ok, %HotbarSlot{}} = Items.set_hotbar_slot(character.id, 1, nil)
+
+      hotbar = Items.get_character_hotbar(character.id)
+      assert length(hotbar) == 1
+      first_slot = List.first(hotbar)
+      assert first_slot.item_id == nil
+      assert first_slot.inventory_id == nil
+    end
+
     test "clear_hotbar_slot/2 removes a hotbar slot" do
       character = character_fixture()
       item = item_fixture()
@@ -402,6 +540,11 @@ defmodule Shard.ItemsTest do
 
       hotbar = Items.get_character_hotbar(character.id)
       assert hotbar == []
+    end
+
+    test "clear_hotbar_slot/2 returns ok when slot doesn't exist" do
+      character = character_fixture()
+      assert {:ok, nil} = Items.clear_hotbar_slot(character.id, 99)
     end
   end
 
@@ -428,6 +571,123 @@ defmodule Shard.ItemsTest do
       # Should still only have one key in the room
       room_items = Items.get_room_items("0,2,0")
       assert length(room_items) == 1
+    end
+
+    test "create_dungeon_door/0 creates a dungeon door" do
+      assert {:ok, _door} = Items.create_dungeon_door()
+    end
+  end
+
+  describe "item validations" do
+    test "create_item/1 validates equipment slot for equippable items" do
+      attrs = %{
+        name: "Equippable Item",
+        item_type: "weapon",
+        equippable: true
+      }
+
+      # Should fail without equipment slot
+      assert {:error, %Ecto.Changeset{errors: [equipment_slot: {"must be specified for equippable items", _}]}} = 
+               Items.create_item(attrs)
+
+      # Should succeed with equipment slot
+      attrs_with_slot = Map.put(attrs, :equipment_slot, "weapon")
+      assert {:ok, %Item{}} = Items.create_item(attrs_with_slot)
+    end
+
+    test "create_item/1 clears equipment slot for non-equippable items" do
+      attrs = %{
+        name: "Non-Equippable Item",
+        item_type: "misc",
+        equippable: false,
+        equipment_slot: "weapon"
+      }
+
+      {:ok, item} = Items.create_item(attrs)
+      assert item.equipment_slot == nil
+    end
+  end
+
+  describe "character inventory validations" do
+    def character_fixture(attrs \\ %{}) do
+      {:ok, character} =
+        attrs
+        |> Enum.into(%{name: "Test Character", level: 1, experience: 0})
+        |> Characters.create_character()
+
+      character
+    end
+
+    test "validate_equipment_consistency/1 requires equipment_slot for equipped items" do
+      character = character_fixture()
+      item = item_fixture()
+
+      attrs = %{
+        character_id: character.id,
+        item_id: item.id,
+        quantity: 1,
+        equipped: true
+      }
+
+      # Should fail without equipment slot
+      assert {:error, %Ecto.Changeset{errors: [equipment_slot: {"must be specified for equipped items", _}]}} = 
+               Repo.insert(%CharacterInventory{} |> CharacterInventory.changeset(attrs))
+
+      # Should succeed with equipment slot
+      attrs_with_slot = Map.put(attrs, :equipment_slot, "weapon")
+      assert {:ok, %CharacterInventory{}} = 
+               Repo.insert(%CharacterInventory{} |> CharacterInventory.changeset(attrs_with_slot))
+    end
+
+    test "validate_equipment_consistency/1 clears equipment_slot for unequipped items" do
+      character = character_fixture()
+      item = item_fixture()
+
+      attrs = %{
+        character_id: character.id,
+        item_id: item.id,
+        quantity: 1,
+        equipped: false,
+        equipment_slot: "weapon"
+      }
+
+      {:ok, inventory} = Repo.insert(%CharacterInventory{} |> CharacterInventory.changeset(attrs))
+      assert inventory.equipment_slot == nil
+    end
+  end
+
+  describe "hotbar slot validations" do
+    test "validate_inventory_item_consistency/1 requires both item_id and inventory_id" do
+      character = character_fixture()
+
+      # Should succeed with neither set
+      attrs_neither = %{
+        character_id: character.id,
+        slot_number: 1
+      }
+
+      assert {:ok, %HotbarSlot{}} = 
+               Repo.insert(%HotbarSlot{} |> HotbarSlot.changeset(attrs_neither))
+
+      # Should fail with only item_id
+      attrs_only_item = %{
+        character_id: character.id,
+        slot_number: 1,
+        item_id: 1
+      }
+
+      assert {:error, %Ecto.Changeset{errors: [inventory_id: {"must be specified when item is set", _}]}} = 
+               Repo.insert(%HotbarSlot{} |> HotbarSlot.changeset(attrs_only_item))
+
+      # Should fail with only inventory_id
+      attrs_only_inventory = %{
+        character_id: character.id,
+        slot_number: 1,
+        inventory_id: 1
+      }
+
+      assert {:error, %Ecto.Changeset{errors: [item_id: {"must be specified when inventory is set", _}]}} = 
+               Repo.insert(%HotbarSlot{} |> HotbarSlot.changeset(attrs_only_inventory))
     end
   end
 end
