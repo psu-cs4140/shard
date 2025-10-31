@@ -240,7 +240,10 @@ defmodule ShardWeb.MudGameLive do
           this.scrollToBottom();
         },
         scrollToBottom() {
-          this.el.scrollTop = this.el.scrollHeight;
+          // Use requestAnimationFrame to ensure DOM is updated
+          requestAnimationFrame(() => {
+            this.el.scrollTop = this.el.scrollHeight;
+          });
         }
       };
     </script>
