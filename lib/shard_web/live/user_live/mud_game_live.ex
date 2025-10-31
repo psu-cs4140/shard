@@ -18,49 +18,7 @@ defmodule ShardWeb.MudGameLive do
   import ShardWeb.UserLive.MudGameLive2
   import ShardWeb.UserLive.Commands3
   # import ShardWeb.UserLive.MudGameHelpers
-
-  # Chat component
-  defp chat(assigns) do
-    ~H"""
-    <div class="flex flex-col h-full min-h-0">
-      <!-- Chat Messages -->
-      <div
-        class="flex-1 bg-black p-4 font-mono text-sm overflow-y-auto border border-gray-600 rounded min-h-0"
-        id="chat-messages"
-        phx-hook="ChatScroll"
-      >
-        <div class="space-y-1">
-          <%= for message <- @chat_state.messages do %>
-            <div class={get_message_class(message) <> " whitespace-pre-wrap break-words"}>
-              {format_message_text(message)}
-            </div>
-          <% end %>
-        </div>
-      </div>
-      
-    <!-- Chat Input -->
-      <form phx-submit="submit_chat" class="mt-4 flex-shrink-0">
-        <div class="flex">
-          <input
-            type="text"
-            name="chat[text]"
-            value={@chat_state.current_message}
-            phx-change="update_chat"
-            placeholder="Type your message..."
-            class="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-l text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-            autocomplete="off"
-          />
-          <button
-            type="submit"
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-r transition-colors"
-          >
-            Send
-          </button>
-        </div>
-      </form>
-    </div>
-    """
-  end
+  import ShardWeb.UserLive.MudGameLiveMultiplayerComponents
 
   @impl true
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity, Credo.Check.Refactor.Nesting
@@ -72,6 +30,28 @@ defmodule ShardWeb.MudGameLive do
          {:ok, socket} <- initialize_game_state(socket, character, map_id, character_name) do
       # Subscribe to the global chat topic
       Phoenix.PubSub.subscribe(Shard.PubSub, "global_chat")
+      # Subscribe to player presence updates
+      Phoenix.PubSub.subscribe(Shard.PubSub, "player_presence")
+
+      # Initialize online players list
+      socket = assign(socket, online_players: [])
+
+      # Request current online players from existing players
+      Phoenix.PubSub.broadcast(
+        Shard.PubSub,
+        "player_presence",
+        {:request_online_players, character.id}
+      )
+
+      # Broadcast that this player has joined
+      player_data = %{
+        name: character_name,
+        level: socket.assigns.game_state.player_stats.level,
+        character_id: character.id
+      }
+
+      Phoenix.PubSub.broadcast(Shard.PubSub, "player_presence", {:player_joined, player_data})
+
       {:ok, socket}
     else
       {:error, :no_character} ->
@@ -156,6 +136,8 @@ defmodule ShardWeb.MudGameLive do
             stats={@game_state.player_stats}
             hotbar={@game_state.hotbar}
           />
+
+          <.online_players online_players={@online_players} />
 
           <h2 class="text-xl font-semibold mb-4">Game Controls</h2>
 
@@ -246,7 +228,7 @@ defmodule ShardWeb.MudGameLive do
           // Force scroll to bottom with multiple approaches
           const element = this.el;
           element.scrollTop = element.scrollHeight;
-          
+
           // Also try with a small delay to ensure DOM is fully updated
           setTimeout(() => {
             element.scrollTop = element.scrollHeight;
@@ -526,6 +508,61 @@ defmodule ShardWeb.MudGameLive do
     {:noreply, assign(socket, terminal_state: terminal_state)}
   end
 
+  def handle_info({:player_joined, player_data}, socket) do
+    # Don't add ourselves to the list
+    if player_data.character_id != socket.assigns.game_state.character.id do
+      online_players =
+        [player_data | socket.assigns.online_players]
+        |> Enum.uniq_by(& &1.character_id)
+        |> Enum.sort_by(& &1.name)
+
+      {:noreply, assign(socket, online_players: online_players)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info({:player_left, character_id}, socket) do
+    online_players =
+      Enum.reject(socket.assigns.online_players, &(&1.character_id == character_id))
+
+    {:noreply, assign(socket, online_players: online_players)}
+  end
+
+  def handle_info({:request_online_players, requesting_character_id}, socket) do
+    # Don't respond to our own request
+    if requesting_character_id != socket.assigns.game_state.character.id do
+      # Send our player data to the requesting player
+      player_data = %{
+        name: socket.assigns.character_name,
+        level: socket.assigns.game_state.player_stats.level,
+        character_id: socket.assigns.game_state.character.id
+      }
+
+      Phoenix.PubSub.broadcast(
+        Shard.PubSub,
+        "player_presence",
+        {:player_response, player_data, requesting_character_id}
+      )
+    end
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:player_response, player_data, requesting_character_id}, socket) do
+    # Only process responses meant for us
+    if requesting_character_id == socket.assigns.game_state.character.id do
+      online_players =
+        [player_data | socket.assigns.online_players]
+        |> Enum.uniq_by(& &1.character_id)
+        |> Enum.sort_by(& &1.name)
+
+      {:noreply, assign(socket, online_players: online_players)}
+    else
+      {:noreply, socket}
+    end
+  end
+
   @impl true
   def terminate(_reason, socket) do
     # Clean up PubSub subscriptions when the LiveView process ends
@@ -533,60 +570,11 @@ defmodule ShardWeb.MudGameLive do
       character = socket.assigns.game_state.character
       unsubscribe_from_character_notifications(character.id)
       unsubscribe_from_player_notifications(character.name)
+
+      # Broadcast that this player has left
+      Phoenix.PubSub.broadcast(Shard.PubSub, "player_presence", {:player_left, character.id})
     end
 
     :ok
-  end
-
-  # Helper functions for chat message formatting
-  defp get_message_class(message) do
-    # Extract character_name and character_id from message
-    case Regex.run(~r/\[.*?\] (.*?):(\d+):/, message, capture: :all_but_first) do
-      [character_name, character_id] ->
-        # Generate consistent color based on character name or ID
-        color_class = generate_color_class(character_name, character_id)
-        "font-mono text-sm #{color_class}"
-
-      _ ->
-        "font-mono text-sm text-blue-400"
-    end
-  end
-
-  defp format_message_text(message) do
-    # Remove the character_id from the displayed message
-    case Regex.run(~r/(\[.*?\] .*?):\d+:(.*)/, message, capture: :all_but_first) do
-      [prefix, text] ->
-        "#{prefix}: #{text}"
-
-      _ ->
-        message
-    end
-  end
-
-  defp generate_color_class("BOB", _character_id) do
-    # Special animated rainbow color for characters named "BOB"
-    "text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 to-purple-500 animate-rainbow"
-  end
-
-  defp generate_color_class(_character_name, character_id) do
-    # Generate a hash of the character identifier (ID) to determine color
-    hash = :erlang.phash2(character_id, 1000)
-
-    # Define a set of distinct colors
-    colors = [
-      "text-blue-400",
-      "text-green-400",
-      "text-yellow-400",
-      "text-red-400",
-      "text-purple-400",
-      "text-pink-400",
-      "text-indigo-400",
-      "text-teal-400",
-      "text-orange-400",
-      "text-cyan-400"
-    ]
-
-    # Select color based on hash
-    Enum.at(colors, rem(hash, length(colors)))
   end
 end
