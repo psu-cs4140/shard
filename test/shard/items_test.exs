@@ -49,9 +49,9 @@ defmodule Shard.ItemsTest do
     end
 
     test "list_active_items/0 returns only active items" do
-      active_item = item_fixture()
-      inactive_item = item_fixture(%{name: "Inactive Item", is_active: false})
-      assert Items.list_active_items() == [active_item]
+      item = item_fixture()
+      _inactive_item = item_fixture(%{name: "Inactive Item", is_active: false})
+      assert Items.list_active_items() == [item]
     end
 
     test "get_item!/1 returns the item with given id" do
@@ -176,7 +176,7 @@ defmodule Shard.ItemsTest do
       character = character_fixture()
       stackable_item = item_fixture(%{@valid_attrs | stackable: true, max_stack_size: 5})
 
-      {:ok, first_stack} = Items.add_item_to_inventory(character.id, stackable_item.id, 3)
+      {:ok, _first_stack} = Items.add_item_to_inventory(character.id, stackable_item.id, 3)
       {:ok, _} = Items.add_item_to_inventory(character.id, stackable_item.id, 2)
 
       # Should combine into one stack
@@ -252,7 +252,7 @@ defmodule Shard.ItemsTest do
       room_item
     end
 
-    def create_room_item(attrs \\ %{}) do
+    def create_room_item_helper(attrs \\ %{}) do
       item = item_fixture()
       character = character_fixture()
 
@@ -271,7 +271,7 @@ defmodule Shard.ItemsTest do
 
     test "get_room_items/1 returns all items in a location" do
       location = "1,2,3"
-      room_item = create_room_item(%{location: location})
+      room_item = create_room_item_helper(%{location: location})
 
       items = Items.get_room_items(location)
       assert length(items) == 1
@@ -299,7 +299,7 @@ defmodule Shard.ItemsTest do
 
     test "pick_up_item/3 moves item from room to inventory" do
       character = character_fixture()
-      room_item = create_room_item(%{quantity: 5})
+      room_item = create_room_item_helper(%{quantity: 5})
 
       assert {:ok, :picked_up} = Items.pick_up_item(character.id, room_item.id, 3)
 
@@ -315,7 +315,7 @@ defmodule Shard.ItemsTest do
 
     test "pick_up_item/3 removes room item when picking up all quantity" do
       character = character_fixture()
-      room_item = create_room_item(%{quantity: 1})
+      room_item = create_room_item_helper(%{quantity: 1})
 
       assert {:ok, :picked_up} = Items.pick_up_item(character.id, room_item.id, 1)
 
@@ -429,12 +429,5 @@ defmodule Shard.ItemsTest do
       room_items = Items.get_room_items("0,2,0")
       assert length(room_items) == 1
     end
-  end
-
-  # Helper function for room items (since it's not in the public API)
-  defp create_room_item(attrs) do
-    %RoomItem{}
-    |> RoomItem.changeset(attrs)
-    |> Repo.insert()
   end
 end
