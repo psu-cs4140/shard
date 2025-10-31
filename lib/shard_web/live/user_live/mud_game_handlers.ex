@@ -154,7 +154,6 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   end
 
   # (C) Handle clicking an exit button to move rooms
-  @impl true
   def handle_click_exit(%{"dir" => dir}, socket) do
     key = dir_to_key(dir)
     player_position = socket.assigns.game_state.player_position

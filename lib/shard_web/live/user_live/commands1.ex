@@ -617,7 +617,7 @@ defmodule ShardWeb.UserLive.Commands1 do
              (String.contains?(String.downcase(item.name || ""), "health potion") or
                 String.contains?(String.downcase(item.name || ""), "poison")) do
           # Check if the target player is in the same room
-          {x, y} = game_state.player_position
+          # {x, y} = game_state.player_position
 
           # Check if target is self
           is_target_self =
