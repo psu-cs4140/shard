@@ -99,6 +99,12 @@ defmodule ShardWeb.MudGameLive do
       # Subscribe to player presence updates
       Phoenix.PubSub.subscribe(Shard.PubSub, "player_presence")
       
+      # Initialize online players list
+      socket = assign(socket, online_players: [])
+      
+      # Request current online players from existing players
+      Phoenix.PubSub.broadcast(Shard.PubSub, "player_presence", {:request_online_players, character.id})
+      
       # Broadcast that this player has joined
       player_data = %{
         name: character_name,
@@ -106,9 +112,6 @@ defmodule ShardWeb.MudGameLive do
         character_id: character.id
       }
       Phoenix.PubSub.broadcast(Shard.PubSub, "player_presence", {:player_joined, player_data})
-      
-      # Initialize online players list (will be populated by other players' join broadcasts)
-      socket = assign(socket, online_players: [])
       
       {:ok, socket}
     else
@@ -564,6 +567,33 @@ defmodule ShardWeb.MudGameLive do
   def handle_info({:player_left, character_id}, socket) do
     online_players = Enum.reject(socket.assigns.online_players, & &1.character_id == character_id)
     {:noreply, assign(socket, online_players: online_players)}
+  end
+
+  def handle_info({:request_online_players, requesting_character_id}, socket) do
+    # Don't respond to our own request
+    if requesting_character_id != socket.assigns.game_state.character.id do
+      # Send our player data to the requesting player
+      player_data = %{
+        name: socket.assigns.character_name,
+        level: socket.assigns.game_state.player_stats.level,
+        character_id: socket.assigns.game_state.character.id
+      }
+      Phoenix.PubSub.broadcast(Shard.PubSub, "player_presence", {:player_response, player_data, requesting_character_id})
+    end
+    {:noreply, socket}
+  end
+
+  def handle_info({:player_response, player_data, requesting_character_id}, socket) do
+    # Only process responses meant for us
+    if requesting_character_id == socket.assigns.game_state.character.id do
+      online_players = [player_data | socket.assigns.online_players]
+      |> Enum.uniq_by(& &1.character_id)
+      |> Enum.sort_by(& &1.name)
+      
+      {:noreply, assign(socket, online_players: online_players)}
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl true
