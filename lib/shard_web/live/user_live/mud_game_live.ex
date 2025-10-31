@@ -487,6 +487,9 @@ defmodule ShardWeb.MudGameLive do
     chat_state = Map.put(socket.assigns.chat_state, :messages, new_messages)
     socket = assign(socket, chat_state: chat_state)
 
+    # Auto-scroll chat to bottom
+    socket = push_event(socket, "scroll_to_bottom", %{target: "chat-messages"})
+
     {:noreply, socket}
   end
 end
