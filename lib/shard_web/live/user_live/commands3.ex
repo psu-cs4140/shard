@@ -59,7 +59,7 @@ defmodule ShardWeb.UserLive.Commands3 do
   """
   def handle_poke_notification(terminal_state, poker_name) do
     poke_message = "#{poker_name} pokes you!"
-    
+
     new_output = terminal_state.output ++ [poke_message] ++ [""]
     Map.put(terminal_state, :output, new_output)
   end
@@ -70,7 +70,7 @@ defmodule ShardWeb.UserLive.Commands3 do
     # Find character by name (case-insensitive)
     try do
       characters = Characters.list_characters()
-      
+
       Enum.find(characters, fn character ->
         String.downcase(character.name) == String.downcase(character_name)
       end)
@@ -82,14 +82,14 @@ defmodule ShardWeb.UserLive.Commands3 do
   defp send_poke_notification(poker_name, target_character) do
     # Create a unique channel for the target character
     target_channel = "character:#{target_character.id}"
-    
+
     # Broadcast the poke notification to the target character's channel
     PubSub.broadcast(
       Shard.PubSub,
       target_channel,
       {:poke_notification, poker_name}
     )
-    
+
     # Also broadcast to a global player channel in case the character-specific channel isn't working
     PubSub.broadcast(
       Shard.PubSub,
@@ -115,7 +115,7 @@ defmodule ShardWeb.UserLive.Commands3 do
     channel = "character:#{character_id}"
     PubSub.unsubscribe(Shard.PubSub, channel)
   end
-  
+
   @doc """
   Unsubscribe a character from their player name-based notification channel.
   """

@@ -87,10 +87,10 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
     modal_state = build_modal_state()
 
     PubSub.subscribe(Shard.PubSub, posn_to_room_channel(game_state.player_position))
-    
+
     # Subscribe to character-specific notifications for poke commands
     subscribe_to_character_notifications(character.id)
-    
+
     # Also subscribe to player name-based channel as backup
     PubSub.subscribe(Shard.PubSub, "player:#{character.name}")
 

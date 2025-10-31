@@ -485,10 +485,10 @@ defmodule ShardWeb.MudGameLive do
 
   def handle_info({:poke_notification, poker_name}, socket) do
     terminal_state = handle_poke_notification(socket.assigns.terminal_state, poker_name)
-    
+
     # Auto-scroll terminal to bottom
     socket = push_event(socket, "scroll_to_bottom", %{target: "terminal-output"})
-    
+
     {:noreply, assign(socket, terminal_state: terminal_state)}
   end
 
@@ -500,7 +500,7 @@ defmodule ShardWeb.MudGameLive do
       unsubscribe_from_character_notifications(character.id)
       unsubscribe_from_player_notifications(character.name)
     end
-    
+
     :ok
   end
 end
