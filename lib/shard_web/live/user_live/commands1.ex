@@ -605,11 +605,27 @@ defmodule ShardWeb.UserLive.Commands1 do
           # Check if the target player is in the same room
           {x, y} = game_state.player_position
           
-          # For now, we'll assume the player is targeting themselves if the name matches
-          # In a real multiplayer implementation, we would check for other players in the room
-          if String.downcase(player_name) == String.downcase(game_state.character.name) do
-            # Use the item on self
-            use_health_potion_on_self(game_state, item)
+          # For multiplayer, we would check for other players in the room
+          # For now, we'll check if it's the current player or another player in combat
+          is_target_self = String.downcase(player_name) == String.downcase(game_state.character.name)
+          
+          # Check if target is in the same room (for now, we'll assume they are if in combat)
+          is_target_in_room = 
+            is_target_self or 
+            (game_state.combat and 
+             Enum.any?(game_state.players || [], fn p -> 
+               String.downcase(p.name) == String.downcase(player_name) and 
+               p.position == {x, y}
+             end))
+          
+          if is_target_in_room do
+            if is_target_self do
+              # Use the item on self
+              use_health_potion_on_self(game_state, item)
+            else
+              # Use the item on another player
+              use_health_potion_on_player(game_state, item, player_name)
+            end
           else
             # In a real implementation, we would check for other players in the room
             # For now, we'll just say the player is not found
@@ -667,6 +683,63 @@ defmodule ShardWeb.UserLive.Commands1 do
     end
   end
 
+  # Use health potion on another player
+  defp use_health_potion_on_player(game_state, item, player_name) do
+    # Parse the healing amount from the item effect
+    healing_amount = parse_healing_amount(item.effect || "Restores 50 health")
+    
+    # Find the target player in the game state
+    target_player = 
+      Enum.find(game_state.players || [], fn p -> 
+        String.downcase(p.name) == String.downcase(player_name)
+      end)
+    
+    if target_player do
+      current_health = target_player.hp || 100
+      max_health = target_player.max_hp || 100
+      
+      if current_health >= max_health do
+        {["#{player_name} is already at full health."], game_state}
+      else
+        # Calculate new health
+        new_health = min(current_health + healing_amount, max_health)
+        
+        # Update target player stats
+        updated_players = 
+          Enum.map(game_state.players || [], fn p ->
+            if String.downcase(p.name) == String.downcase(player_name) do
+              Map.put(p, :hp, new_health)
+            else
+              p
+            end
+          end)
+        
+        updated_game_state = %{game_state | players: updated_players}
+        
+        # Remove the used item from inventory
+        updated_inventory = 
+          Enum.reject(game_state.inventory_items, fn inv_item ->
+            inv_item.id == item.id and inv_item.name == item.name
+          end)
+        
+        updated_game_state = %{updated_game_state | inventory_items: updated_inventory}
+        
+        # Broadcast the healing event
+        {x, y} = game_state.player_position
+        broadcast_healing_event({x, y}, game_state.character.name, healing_amount, player_name)
+        
+        response = [
+          "You use #{item.name} on #{player_name}.",
+          "#{player_name} recovers #{new_health - current_health} health points."
+        ]
+        
+        {response, updated_game_state}
+      end
+    else
+      {["Player '#{player_name}' not found."], game_state}
+    end
+  end
+
   # Parse healing amount from effect description
   defp parse_healing_amount(effect) do
     case Regex.run(~r/(\d+)/, effect) do
@@ -676,9 +749,14 @@ defmodule ShardWeb.UserLive.Commands1 do
   end
 
   # Broadcast healing event to room
-  defp broadcast_healing_event(position, healer_name, healing_amount) do
+  defp broadcast_healing_event(position, healer_name, healing_amount, target_name \\ nil) do
     {x, y} = position
     channel = "room:#{x},#{y}"
-    PubSub.broadcast(Shard.PubSub, channel, {:healing_action, healer_name, healing_amount})
+    
+    if target_name do
+      PubSub.broadcast(Shard.PubSub, channel, {:healing_action, healer_name, healing_amount, target_name})
+    else
+      PubSub.broadcast(Shard.PubSub, channel, {:healing_action, healer_name, healing_amount})
+    end
   end
 end
