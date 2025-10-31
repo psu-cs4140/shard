@@ -78,14 +78,14 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
   end
 
   def initialize_game_state(socket, character, map_id, character_name) do
-    map_data = generate_map_from_database(map_id)
-    starting_position = find_valid_starting_position(map_data)
-
-    game_state = build_game_state(character, map_data, map_id, starting_position)
-    terminal_state = build_terminal_state(starting_position, map_id)
-    # FIX: Use proper chat state instead of empty one
-    chat_state = ShardWeb.UserLive.MudGameHelpers.build_chat_state()
-    modal_state = build_modal_state()
+    # Use the helper function from MudGameHelpers
+    {:ok, assigns} = ShardWeb.UserLive.MudGameHelpers.initialize_game_state(character, map_id, character_name)
+    
+    # Extract the states
+    game_state = assigns.game_state
+    terminal_state = assigns.terminal_state
+    chat_state = assigns.chat_state
+    modal_state = assigns.modal_state
 
     PubSub.subscribe(Shard.PubSub, posn_to_room_channel(game_state.player_position))
 
@@ -93,11 +93,11 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
       socket
       |> assign(:game_state, game_state)
       |> assign(:terminal_state, terminal_state)
-      |> assign(:chat_state, chat_state)  # Add this line
+      |> assign(:chat_state, chat_state)
       |> assign(:modal_state, modal_state)
       |> assign(:available_exits, compute_available_exits(game_state.player_position))
       |> assign(:character_name, character_name)
-      |> assign(:active_tab, "terminal")
+      |> assign(:active_tab, assigns.active_tab)
 
     {:ok, socket}
   end
