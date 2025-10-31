@@ -37,9 +37,9 @@ defmodule ShardWeb.UserLive.MudGameLiveMultiplayerComponents do
         id="chat-messages"
         phx-hook="ChatScroll"
       >
-        <div class="space-y-1">
+        <div class="space-y-0.5">
           <%= for message <- @chat_state.messages do %>
-            <div class={get_message_class(message) <> " whitespace-pre-wrap break-words"}>
+            <div class={get_message_class(message) <> " whitespace-pre-wrap break-words leading-tight"}>
               {format_message_text(message)}
             </div>
           <% end %>
