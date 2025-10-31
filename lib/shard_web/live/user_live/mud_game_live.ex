@@ -29,9 +29,11 @@ defmodule ShardWeb.MudGameLive do
         id="chat-messages"
         phx-hook="ChatScroll"
       >
-        <div class="whitespace-pre-wrap">
+        <div class="space-y-1">
           <%= for message <- @chat_state.messages do %>
-            <div class="text-blue-400 leading-tight">{message}</div>
+            <div class={get_message_class(message) <> " whitespace-pre-wrap break-words"}>
+              {format_message_text(message)}
+            </div>
           <% end %>
         </div>
       </div>
@@ -230,13 +232,6 @@ defmodule ShardWeb.MudGameLive do
     </div>
 
     <script>
-      window.addEventListener("phx:scroll_to_bottom", (e) => {
-        const element = document.getElementById(e.detail.target);
-        if (element) {
-          element.scrollTop = element.scrollHeight;
-        }
-      });
-
       // LiveView hooks
       window.Hooks = window.Hooks || {};
 
@@ -248,10 +243,33 @@ defmodule ShardWeb.MudGameLive do
           this.scrollToBottom();
         },
         scrollToBottom() {
-          this.el.scrollTop = this.el.scrollHeight;
+          // Force scroll to bottom with multiple approaches
+          const element = this.el;
+          element.scrollTop = element.scrollHeight;
+          
+          // Also try with a small delay to ensure DOM is fully updated
+          setTimeout(() => {
+            element.scrollTop = element.scrollHeight;
+          }, 10);
         }
       };
     </script>
+
+    <style>
+      @keyframes rainbow {
+        0% { background-position: 0% 50%; }
+        100% { background-position: 200% 50%; }
+      }
+
+      .animate-rainbow {
+        background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet, red);
+        background-size: 200% 200%;
+        animation: rainbow 4.0s linear infinite;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+    </style>
     """
   end
 
@@ -321,6 +339,7 @@ defmodule ShardWeb.MudGameLive do
       message_data = %{
         timestamp: timestamp,
         character_name: socket.assigns.character_name,
+        character_id: socket.assigns.game_state.character.id,
         text: trimmed_message
       }
 
@@ -484,6 +503,20 @@ defmodule ShardWeb.MudGameLive do
     end
   end
 
+  def handle_info({:chat_message, message_data}, socket) do
+    # Format the message with character_id embedded for color generation
+    formatted_message =
+      "[#{message_data.timestamp}] #{message_data.character_name}:#{message_data.character_id}: #{message_data.text}"
+
+    # Add the message to chat state
+    chat_state = socket.assigns.chat_state
+    updated_messages = chat_state.messages ++ [formatted_message]
+    updated_chat_state = Map.put(chat_state, :messages, updated_messages)
+
+    # Auto-scroll chat to bottom
+    {:noreply, assign(socket, chat_state: updated_chat_state)}
+  end
+
   def handle_info({:poke_notification, poker_name}, socket) do
     terminal_state = handle_poke_notification(socket.assigns.terminal_state, poker_name)
 
@@ -503,5 +536,57 @@ defmodule ShardWeb.MudGameLive do
     end
 
     :ok
+  end
+
+  # Helper functions for chat message formatting
+  defp get_message_class(message) do
+    # Extract character_name and character_id from message
+    case Regex.run(~r/\[.*?\] (.*?):(\d+):/, message, capture: :all_but_first) do
+      [character_name, character_id] ->
+        # Generate consistent color based on character name or ID
+        color_class = generate_color_class(character_name, character_id)
+        "font-mono text-sm #{color_class}"
+
+      _ ->
+        "font-mono text-sm text-blue-400"
+    end
+  end
+
+  defp format_message_text(message) do
+    # Remove the character_id from the displayed message
+    case Regex.run(~r/(\[.*?\] .*?):\d+:(.*)/, message, capture: :all_but_first) do
+      [prefix, text] ->
+        "#{prefix}: #{text}"
+
+      _ ->
+        message
+    end
+  end
+
+  defp generate_color_class("BOB", _character_id) do
+    # Special animated rainbow color for characters named "BOB"
+    "text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 to-purple-500 animate-rainbow"
+  end
+
+  defp generate_color_class(_character_name, character_id) do
+    # Generate a hash of the character identifier (ID) to determine color
+    hash = :erlang.phash2(character_id, 1000)
+
+    # Define a set of distinct colors
+    colors = [
+      "text-blue-400",
+      "text-green-400",
+      "text-yellow-400",
+      "text-red-400",
+      "text-purple-400",
+      "text-pink-400",
+      "text-indigo-400",
+      "text-teal-400",
+      "text-orange-400",
+      "text-cyan-400"
+    ]
+
+    # Select color based on hash
+    Enum.at(colors, rem(hash, length(colors)))
   end
 end
