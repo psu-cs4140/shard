@@ -304,9 +304,6 @@ defmodule ShardWeb.MudGameLive do
     case handle_update_command(params, socket) do
       {:noreply, socket, terminal_state} ->
         {:noreply, assign(socket, terminal_state: terminal_state)}
-
-      result ->
-        result
     end
   end
 
