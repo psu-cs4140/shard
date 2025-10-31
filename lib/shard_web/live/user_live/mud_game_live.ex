@@ -228,7 +228,7 @@ defmodule ShardWeb.MudGameLive do
           // Force scroll to bottom with multiple approaches
           const element = this.el;
           element.scrollTop = element.scrollHeight;
-          
+
           // Also try with a small delay to ensure DOM is fully updated
           setTimeout(() => {
             element.scrollTop = element.scrollHeight;
@@ -508,21 +508,6 @@ defmodule ShardWeb.MudGameLive do
     {:noreply, assign(socket, terminal_state: terminal_state)}
   end
 
-  def handle_info({:chat_message, message_data}, socket) do
-    # Format the chat message
-    formatted_message =
-      "[#{message_data.timestamp}] #{message_data.character_name}: #{message_data.text}"
-
-    # Add to chat messages
-    chat_state =
-      Map.update(socket.assigns.chat_state, :messages, [], fn messages ->
-        # Keep only the last 100 messages to prevent memory issues
-        (messages ++ [formatted_message]) |> Enum.take(-100)
-      end)
-
-    {:noreply, assign(socket, chat_state: chat_state)}
-  end
-
   def handle_info({:player_joined, player_data}, socket) do
     # Don't add ourselves to the list
     if player_data.character_id != socket.assigns.game_state.character.id do
@@ -591,57 +576,5 @@ defmodule ShardWeb.MudGameLive do
     end
 
     :ok
-  end
-
-  # Helper functions for chat message formatting
-  defp get_message_class(message) do
-    # Extract character_name and character_id from message
-    case Regex.run(~r/\[.*?\] (.*?):(\d+):/, message, capture: :all_but_first) do
-      [character_name, character_id] ->
-        # Generate consistent color based on character name or ID
-        color_class = generate_color_class(character_name, character_id)
-        "font-mono text-sm #{color_class}"
-
-      _ ->
-        "font-mono text-sm text-blue-400"
-    end
-  end
-
-  defp format_message_text(message) do
-    # Remove the character_id from the displayed message
-    case Regex.run(~r/(\[.*?\] .*?):\d+:(.*)/, message, capture: :all_but_first) do
-      [prefix, text] ->
-        "#{prefix}: #{text}"
-
-      _ ->
-        message
-    end
-  end
-
-  defp generate_color_class("BOB", _character_id) do
-    # Special animated rainbow color for characters named "BOB"
-    "text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 to-purple-500 animate-rainbow"
-  end
-
-  defp generate_color_class(_character_name, character_id) do
-    # Generate a hash of the character identifier (ID) to determine color
-    hash = :erlang.phash2(character_id, 1000)
-
-    # Define a set of distinct colors
-    colors = [
-      "text-blue-400",
-      "text-green-400",
-      "text-yellow-400",
-      "text-red-400",
-      "text-purple-400",
-      "text-pink-400",
-      "text-indigo-400",
-      "text-teal-400",
-      "text-orange-400",
-      "text-cyan-400"
-    ]
-
-    # Select color based on hash
-    Enum.at(colors, rem(hash, length(colors)))
   end
 end
