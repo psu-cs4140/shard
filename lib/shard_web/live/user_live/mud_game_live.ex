@@ -19,6 +19,32 @@ defmodule ShardWeb.MudGameLive do
   import ShardWeb.UserLive.Commands3
   # import ShardWeb.UserLive.MudGameHelpers
 
+  # Online players component
+  defp online_players(assigns) do
+    ~H"""
+    <div class="bg-gray-700 rounded-lg p-4 mb-4">
+      <h3 class="text-lg font-semibold mb-3 text-green-400">Online Players</h3>
+      <div class="space-y-2 max-h-32 overflow-y-auto">
+        <%= if Enum.empty?(@online_players) do %>
+          <div class="text-gray-400 text-sm">No other players online</div>
+        <% else %>
+          <%= for player <- @online_players do %>
+            <div class="flex items-center justify-between bg-gray-600 rounded px-3 py-2">
+              <div class="flex items-center space-x-2">
+                <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                <span class="text-sm font-medium"><%= player.name %></span>
+              </div>
+              <div class="text-xs text-gray-300">
+                Lvl <%= player.level %>
+              </div>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+    """
+  end
+
   # Chat component
   defp chat(assigns) do
     ~H"""
@@ -70,6 +96,20 @@ defmodule ShardWeb.MudGameLive do
          {:ok, socket} <- initialize_game_state(socket, character, map_id, character_name) do
       # Subscribe to the global chat topic
       Phoenix.PubSub.subscribe(Shard.PubSub, "global_chat")
+      # Subscribe to player presence updates
+      Phoenix.PubSub.subscribe(Shard.PubSub, "player_presence")
+      
+      # Broadcast that this player has joined
+      player_data = %{
+        name: character_name,
+        level: socket.assigns.game_state.player_stats.level,
+        character_id: character.id
+      }
+      Phoenix.PubSub.broadcast(Shard.PubSub, "player_presence", {:player_joined, player_data})
+      
+      # Initialize online players list (will be populated by other players' join broadcasts)
+      socket = assign(socket, online_players: [])
+      
       {:ok, socket}
     else
       {:error, :no_character} ->
@@ -154,6 +194,8 @@ defmodule ShardWeb.MudGameLive do
             stats={@game_state.player_stats}
             hotbar={@game_state.hotbar}
           />
+
+          <.online_players online_players={@online_players} />
 
           <h2 class="text-xl font-semibold mb-4">Game Controls</h2>
 
@@ -493,6 +535,37 @@ defmodule ShardWeb.MudGameLive do
     {:noreply, assign(socket, terminal_state: terminal_state)}
   end
 
+  def handle_info({:chat_message, message_data}, socket) do
+    # Format the chat message
+    formatted_message = "[#{message_data.timestamp}] #{message_data.character_name}: #{message_data.text}"
+    
+    # Add to chat messages
+    chat_state = Map.update(socket.assigns.chat_state, :messages, [], fn messages ->
+      # Keep only the last 100 messages to prevent memory issues
+      (messages ++ [formatted_message]) |> Enum.take(-100)
+    end)
+    
+    {:noreply, assign(socket, chat_state: chat_state)}
+  end
+
+  def handle_info({:player_joined, player_data}, socket) do
+    # Don't add ourselves to the list
+    if player_data.character_id != socket.assigns.game_state.character.id do
+      online_players = [player_data | socket.assigns.online_players]
+      |> Enum.uniq_by(& &1.character_id)
+      |> Enum.sort_by(& &1.name)
+      
+      {:noreply, assign(socket, online_players: online_players)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info({:player_left, character_id}, socket) do
+    online_players = Enum.reject(socket.assigns.online_players, & &1.character_id == character_id)
+    {:noreply, assign(socket, online_players: online_players)}
+  end
+
   @impl true
   def terminate(_reason, socket) do
     # Clean up PubSub subscriptions when the LiveView process ends
@@ -500,6 +573,9 @@ defmodule ShardWeb.MudGameLive do
       character = socket.assigns.game_state.character
       unsubscribe_from_character_notifications(character.id)
       unsubscribe_from_player_notifications(character.name)
+      
+      # Broadcast that this player has left
+      Phoenix.PubSub.broadcast(Shard.PubSub, "player_presence", {:player_left, character.id})
     end
 
     :ok
