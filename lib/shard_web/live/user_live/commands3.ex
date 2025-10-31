@@ -68,11 +68,15 @@ defmodule ShardWeb.UserLive.Commands3 do
 
   defp find_target_character(character_name) do
     # Find character by name (case-insensitive)
-    characters = Characters.list_characters()
-    
-    Enum.find(characters, fn character ->
-      String.downcase(character.name) == String.downcase(character_name)
-    end)
+    try do
+      characters = Characters.list_characters()
+      
+      Enum.find(characters, fn character ->
+        String.downcase(character.name) == String.downcase(character_name)
+      end)
+    rescue
+      _ -> nil
+    end
   end
 
   defp send_poke_notification(poker_name, target_character) do

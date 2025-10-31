@@ -16,6 +16,7 @@ defmodule ShardWeb.MudGameLive do
   #  import ShardWeb.UserLive.ItemHelpers
   import ShardWeb.UserLive.MudGameHandlers
   import ShardWeb.UserLive.MudGameLive2
+  import ShardWeb.UserLive.Commands3
   # import ShardWeb.UserLive.MudGameHelpers
 
   # Chat component
@@ -480,5 +481,25 @@ defmodule ShardWeb.MudGameLive do
       result ->
         result
     end
+  end
+
+  def handle_info({:poke_notification, poker_name}, socket) do
+    terminal_state = handle_poke_notification(socket.assigns.terminal_state, poker_name)
+    
+    # Auto-scroll terminal to bottom
+    socket = push_event(socket, "scroll_to_bottom", %{target: "terminal-output"})
+    
+    {:noreply, assign(socket, terminal_state: terminal_state)}
+  end
+
+  @impl true
+  def terminate(_reason, socket) do
+    # Clean up PubSub subscriptions when the LiveView process ends
+    if socket.assigns[:game_state] && socket.assigns.game_state[:character] do
+      character_id = socket.assigns.game_state.character.id
+      unsubscribe_from_character_notifications(character_id)
+    end
+    
+    :ok
   end
 end
