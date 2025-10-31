@@ -251,6 +251,18 @@ defmodule ShardWeb.MudGameLive do
         }
       };
     </script>
+    
+    <style>
+      @keyframes rainbow {
+        0% { background-position: 0% 50%; }
+        100% { background-position: 200% 50%; }
+      }
+      
+      .animate-rainbow {
+        background-size: 200% 200%;
+        animation: rainbow 0.5s linear infinite;
+      }
+    </style>
     """
   end
 
@@ -523,8 +535,8 @@ defmodule ShardWeb.MudGameLive do
   end
 
   defp generate_color_class("BOB", _character_id) do
-    # Special rainbow color for characters named "BOB"
-    "text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 to-purple-500"
+    # Special animated rainbow color for characters named "BOB"
+    "text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 to-purple-500 animate-rainbow"
   end
 
   defp generate_color_class(_character_name, character_id) do
