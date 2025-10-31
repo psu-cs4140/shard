@@ -77,15 +77,19 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
 
   def initialize_game_state(socket, character, map_id, character_name) do
     # Use the helper function from MudGameHelpers
-    {:ok, assigns} = ShardWeb.UserLive.MudGameHelpers.initialize_game_state(character, map_id, character_name)
-    
+    {:ok, assigns} =
+      ShardWeb.UserLive.MudGameHelpers.initialize_game_state(character, map_id, character_name)
+
     # Extract the states
     game_state = assigns.game_state
     terminal_state = assigns.terminal_state
     chat_state = assigns.chat_state
     modal_state = assigns.modal_state
 
-    PubSub.subscribe(Shard.PubSub, ShardWeb.UserLive.MudGameHelpers.posn_to_room_channel(game_state.player_position))
+    PubSub.subscribe(
+      Shard.PubSub,
+      ShardWeb.UserLive.MudGameHelpers.posn_to_room_channel(game_state.player_position)
+    )
 
     socket =
       socket
