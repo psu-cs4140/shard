@@ -21,4 +21,27 @@ defmodule ShardWeb.UserLive.MudGameHelpersTest do
       assert result.output == expected_output
     end
   end
+
+  describe "get_character_name/2" do
+    test "returns character name when no character_name in params" do
+      params = %{}
+      character = %{name: "Aragorn"}
+      
+      assert MudGameHelpers.get_character_name(params, character) == "Aragorn"
+    end
+
+    test "returns Unknown when no character_name in params and no character" do
+      params = %{}
+      character = nil
+      
+      assert MudGameHelpers.get_character_name(params, character) == "Unknown"
+    end
+
+    test "returns decoded character_name from params when present" do
+      params = %{"character_name" => "Legolas%20Greenleaf"}
+      character = %{name: "Aragorn"}
+      
+      assert MudGameHelpers.get_character_name(params, character) == "Legolas Greenleaf"
+    end
+  end
 end
