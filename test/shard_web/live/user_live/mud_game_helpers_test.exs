@@ -7,6 +7,8 @@ defmodule ShardWeb.UserLive.MudGameHelpersTest do
   alias Shard.Items
   alias Shard.Npcs
 
+  import Shard.UsersFixtures
+
   describe "get_character_from_params/1" do
     test "returns error when no character_id in params" do
       params = %{}
@@ -19,7 +21,7 @@ defmodule ShardWeb.UserLive.MudGameHelpersTest do
     end
 
     test "returns character when valid character_id provided" do
-      user = Shard.UsersFixtures.user_fixture()
+      user = user_fixture()
       {:ok, character} = Characters.create_character(%{
         user_id: user.id,
         name: "Test Character",
@@ -75,7 +77,7 @@ defmodule ShardWeb.UserLive.MudGameHelpersTest do
 
   describe "load_character_with_associations/1" do
     test "loads character with associations successfully" do
-      user = Shard.UsersFixtures.user_fixture()
+      user = user_fixture()
       {:ok, character} = Characters.create_character(%{
         user_id: user.id,
         name: "Test Character",
@@ -163,7 +165,7 @@ defmodule ShardWeb.UserLive.MudGameHelpersTest do
 
   describe "initialize_game_state/3" do
     test "initializes complete game state with valid character" do
-      user = Shard.UsersFixtures.user_fixture()
+      user = user_fixture()
       {:ok, character} = Characters.create_character(%{
         user_id: user.id,
         name: "Test Character",
