@@ -7,6 +7,7 @@ defmodule ShardWeb.UserLive.Commands1 do
   import ShardWeb.UserLive.QuestHandlers
   import ShardWeb.UserLive.Movement
   import ShardWeb.UserLive.Commands2
+  import ShardWeb.UserLive.Commands3
 
   import ShardWeb.UserLive.CommandParsers,
     except: [
@@ -41,6 +42,7 @@ defmodule ShardWeb.UserLive.Commands1 do
           "  accept - Accept a quest offer",
           "  deny - Deny a quest offer",
           "  deliver_quest \"npc_name\" - Deliver completed quest to NPC",
+          "  poke \"character_name\" - Poke another player",
           "  north/south/east/west - Move in cardinal directions",
           "  northeast/southeast/northwest/southwest - Move diagonally",
           "  Shortcuts: n/s/e/w/ne/se/nw/sw",
@@ -379,6 +381,10 @@ defmodule ShardWeb.UserLive.Commands1 do
                                   item_name,
                                   player_name
                                 )
+                            # Check if it's a poke command
+                            case parse_poke_command(command) do
+                              {:ok, character_name} ->
+                                execute_poke_command(game_state, character_name)
 
                               :error ->
                                 {[
