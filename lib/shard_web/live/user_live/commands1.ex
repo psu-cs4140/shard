@@ -601,7 +601,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
       item ->
         # Check if it's a consumable item that can be used on players
-        if item.type == "consumable" and String.contains?(String.downcase(item.name || ""), "health potion") do
+        if item.type == "consumable" and (String.contains?(String.downcase(item.name || ""), "health potion") or String.contains?(String.downcase(item.name || ""), "poison")) do
           # Check if the target player is in the same room
           {x, y} = game_state.player_position
           
@@ -619,10 +619,18 @@ defmodule ShardWeb.UserLive.Commands1 do
           if is_target_in_room do
             if is_target_self do
               # Use the item on self
-              use_health_potion_on_self(game_state, item)
+              if String.contains?(String.downcase(item.name || ""), "health potion") do
+                use_health_potion_on_self(game_state, item)
+              else
+                use_poison_on_self(game_state, item)
+              end
             else
               # Use the item on another player
-              use_health_potion_on_player(game_state, item, player_name)
+              if String.contains?(String.downcase(item.name || ""), "health potion") do
+                use_health_potion_on_player(game_state, item, player_name)
+              else
+                use_poison_on_player(game_state, item, player_name)
+              end
             end
           else
             {["Player '#{player_name}' is not in the same room or not found."], game_state}
@@ -679,6 +687,51 @@ defmodule ShardWeb.UserLive.Commands1 do
     end
   end
 
+  # Use poison on self
+  defp use_poison_on_self(game_state, item) do
+    # Parse the damage amount from the item effect
+    damage_amount = parse_damage_amount(item.effect || "Inflicts 30 damage")
+    
+    current_health = game_state.player_stats.health
+    
+    if current_health <= 0 do
+      {["You are already dead."], game_state}
+    else
+      # Calculate new health
+      new_health = max(current_health - damage_amount, 0)
+      
+      # Update player stats
+      updated_stats = %{game_state.player_stats | health: new_health}
+      updated_game_state = %{game_state | player_stats: updated_stats}
+      
+      # Remove the used item from inventory
+      updated_inventory = 
+        Enum.reject(game_state.inventory_items, fn inv_item ->
+          inv_item.id == item.id and inv_item.name == item.name
+        end)
+      
+      updated_game_state = %{updated_game_state | inventory_items: updated_inventory}
+      
+      # Save updated stats to database
+      ShardWeb.UserLive.CharacterHelpers.save_character_stats(
+        game_state.character,
+        updated_stats
+      )
+      
+      # Broadcast the poison event
+      {x, y} = game_state.player_position
+      broadcast_poison_event({x, y}, game_state.character.name, damage_amount)
+      
+      response = [
+        "You use #{item.name} on yourself.",
+        "You take #{damage_amount} damage.",
+        "Health: #{new_health}/#{game_state.player_stats.max_health}"
+      ]
+      
+      {response, updated_game_state}
+    end
+  end
+
   # Use health potion on another player
   defp use_health_potion_on_player(game_state, item, player_name) do
     # Parse the healing amount from the item effect
@@ -707,11 +760,44 @@ defmodule ShardWeb.UserLive.Commands1 do
     {response, updated_game_state}
   end
 
+  # Use poison on another player
+  defp use_poison_on_player(game_state, item, player_name) do
+    # Parse the damage amount from the item effect
+    damage_amount = parse_damage_amount(item.effect || "Inflicts 30 damage")
+    
+    # Remove the used item from inventory
+    updated_inventory = 
+      Enum.reject(game_state.inventory_items, fn inv_item ->
+        inv_item.id == item.id and inv_item.name == item.name
+      end)
+    
+    updated_game_state = %{game_state | inventory_items: updated_inventory}
+    
+    # Broadcast the poison event to the room
+    {x, y} = game_state.player_position
+    broadcast_poison_event({x, y}, game_state.character.name, damage_amount, player_name)
+    
+    response = [
+      "You use #{item.name} on #{player_name}.",
+      "#{player_name} should take #{damage_amount} damage."
+    ]
+    
+    {response, updated_game_state}
+  end
+
   # Parse healing amount from effect description
   defp parse_healing_amount(effect) do
     case Regex.run(~r/(\d+)/, effect) do
       [_, amount] -> String.to_integer(amount)
       _ -> 50  # Default healing amount
+    end
+  end
+
+  # Parse damage amount from effect description
+  defp parse_damage_amount(effect) do
+    case Regex.run(~r/(\d+)/, effect) do
+      [_, amount] -> String.to_integer(amount)
+      _ -> 30  # Default damage amount
     end
   end
 
@@ -724,6 +810,18 @@ defmodule ShardWeb.UserLive.Commands1 do
       Phoenix.PubSub.broadcast(Shard.PubSub, channel, {:healing_action, healer_name, healing_amount, target_name})
     else
       Phoenix.PubSub.broadcast(Shard.PubSub, channel, {:healing_action, healer_name, healing_amount})
+    end
+  end
+
+  # Broadcast poison event to room
+  defp broadcast_poison_event(position, attacker_name, damage_amount, target_name \\ nil) do
+    {x, y} = position
+    channel = "room:#{x},#{y}"
+    
+    if target_name do
+      Phoenix.PubSub.broadcast(Shard.PubSub, channel, {:poison_action, attacker_name, damage_amount, target_name})
+    else
+      Phoenix.PubSub.broadcast(Shard.PubSub, channel, {:poison_action, attacker_name, damage_amount})
     end
   end
 end

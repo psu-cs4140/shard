@@ -335,4 +335,22 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
     terminal_state = add_message_to_output(socket.assigns.terminal_state, message)
     {:noreply, socket, terminal_state}
   end
+
+  # Handle poison action info
+  def handle_poison_action_info({:poison_action, attacker_name, damage_amount}, socket) do
+    # Show the message to all players
+    message = "#{attacker_name} inflicts #{damage_amount} poison damage!"
+    terminal_state = add_message_to_output(socket.assigns.terminal_state, message)
+    {:noreply, socket, terminal_state}
+  end
+
+  # Handle poison action info with target
+  def handle_poison_action_info({:poison_action, attacker_name, damage_amount, target_name}, socket) do
+    # Show the message to all players
+    message = 
+      "#{attacker_name} uses poison on #{target_name}, inflicting #{damage_amount} damage!"
+    
+    terminal_state = add_message_to_output(socket.assigns.terminal_state, message)
+    {:noreply, socket, terminal_state}
+  end
 end

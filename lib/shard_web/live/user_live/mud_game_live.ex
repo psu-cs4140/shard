@@ -521,4 +521,26 @@ defmodule ShardWeb.MudGameLive do
         result
     end
   end
+
+  # Handle poison action info (without target)
+  def handle_info({:poison_action, attacker_name, damage_amount}, socket) do
+    case handle_poison_action_info({:poison_action, attacker_name, damage_amount}, socket) do
+      {:noreply, socket, terminal_state} ->
+        {:noreply, assign(socket, terminal_state: terminal_state)}
+
+      result ->
+        result
+    end
+  end
+
+  # Handle poison action info (with target)
+  def handle_info({:poison_action, attacker_name, damage_amount, target_name}, socket) do
+    case handle_poison_action_info({:poison_action, attacker_name, damage_amount, target_name}, socket) do
+      {:noreply, socket, terminal_state} ->
+        {:noreply, assign(socket, terminal_state: terminal_state)}
+
+      result ->
+        result
+    end
+  end
 end
