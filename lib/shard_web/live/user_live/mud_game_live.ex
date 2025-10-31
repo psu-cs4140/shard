@@ -500,9 +500,20 @@ defmodule ShardWeb.MudGameLive do
     {:noreply, socket}
   end
 
-  # Handle healing action info
+  # Handle healing action info (without target)
   def handle_info({:healing_action, healer_name, healing_amount}, socket) do
     case handle_healing_action_info({:healing_action, healer_name, healing_amount}, socket) do
+      {:noreply, socket, terminal_state} ->
+        {:noreply, assign(socket, terminal_state: terminal_state)}
+
+      result ->
+        result
+    end
+  end
+
+  # Handle healing action info (with target)
+  def handle_info({:healing_action, healer_name, healing_amount, target_name}, socket) do
+    case handle_healing_action_info({:healing_action, healer_name, healing_amount, target_name}, socket) do
       {:noreply, socket, terminal_state} ->
         {:noreply, assign(socket, terminal_state: terminal_state)}
 
