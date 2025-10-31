@@ -327,11 +327,14 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   end
 
   # Handle healing action info with target
-  def handle_healing_action_info({:healing_action, healer_name, healing_amount, target_name}, socket) do
+  def handle_healing_action_info(
+        {:healing_action, healer_name, healing_amount, target_name},
+        socket
+      ) do
     # Show the message to all players
-    message = 
+    message =
       "#{healer_name} uses a health potion on #{target_name}, healing #{healing_amount} health!"
-    
+
     terminal_state = add_message_to_output(socket.assigns.terminal_state, message)
     {:noreply, socket, terminal_state}
   end
@@ -345,11 +348,14 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   end
 
   # Handle poison action info with target
-  def handle_poison_action_info({:poison_action, attacker_name, damage_amount, target_name}, socket) do
+  def handle_poison_action_info(
+        {:poison_action, attacker_name, damage_amount, target_name},
+        socket
+      ) do
     # Show the message to all players
-    message = 
+    message =
       "#{attacker_name} uses poison on #{target_name}, inflicting #{damage_amount} damage!"
-    
+
     terminal_state = add_message_to_output(socket.assigns.terminal_state, message)
     {:noreply, socket, terminal_state}
   end
