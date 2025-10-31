@@ -281,12 +281,12 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
 
   def handle_combat_action_info({:combat_action, event}, socket) do
     case event do
-      {:player_attack, attacker_name, monster_name, damage, monster_alive} ->
+      {:player_attack, attacker_name, monster_name, damage, monster_alive, remaining_hp} ->
         # Don't show the message to the attacker themselves
         if attacker_name != socket.assigns.character_name do
           message =
             if monster_alive do
-              "#{attacker_name} attacks the #{monster_name} for #{damage} damage!"
+              "#{attacker_name} attacks the #{monster_name} for #{damage} damage! The #{monster_name} has #{remaining_hp} health remaining."
             else
               "#{attacker_name} attacks the #{monster_name} for #{damage} damage! The #{monster_name} is defeated!"
             end
@@ -296,6 +296,17 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
         else
           {:noreply, socket}
         end
+
+      {:monster_attack, monster_name, target_player_name, damage} ->
+        message =
+          if target_player_name == socket.assigns.character_name do
+            "The #{monster_name} attacks you for #{damage} damage!"
+          else
+            "The #{monster_name} attacks #{target_player_name} for #{damage} damage!"
+          end
+
+        terminal_state = add_message_to_output(socket.assigns.terminal_state, message)
+        {:noreply, socket, terminal_state}
 
       {:player_fled, player_name} ->
         # Don't show the message to the fleeing player themselves
