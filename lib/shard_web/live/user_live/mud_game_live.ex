@@ -507,6 +507,16 @@ defmodule ShardWeb.MudGameLive do
     # Format the message with character_id embedded for color generation
     formatted_message =
       "[#{message_data.timestamp}] #{message_data.character_name}:#{message_data.character_id}: #{message_data.text}"
+
+    # Add the message to chat state
+    chat_state = socket.assigns.chat_state
+    updated_messages = chat_state.messages ++ [formatted_message]
+    updated_chat_state = Map.put(chat_state, :messages, updated_messages)
+
+    # Auto-scroll chat to bottom
+    {:noreply, assign(socket, chat_state: updated_chat_state)}
+  end
+
   def handle_info({:poke_notification, poker_name}, socket) do
     terminal_state = handle_poke_notification(socket.assigns.terminal_state, poker_name)
 
@@ -516,8 +526,6 @@ defmodule ShardWeb.MudGameLive do
     {:noreply, assign(socket, terminal_state: terminal_state)}
   end
 
-    # Auto-scroll chat to bottom
-    {:noreply, socket}
   @impl true
   def terminate(_reason, socket) do
     # Clean up PubSub subscriptions when the LiveView process ends
