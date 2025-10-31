@@ -167,7 +167,8 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
     }
   end
 
-  defp build_chat_state do
+  # Make this public so it can be called from other modules
+  def build_chat_state do
     %{
       messages: [
         "Welcome to the chat!",
