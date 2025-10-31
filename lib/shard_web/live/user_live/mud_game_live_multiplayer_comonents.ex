@@ -33,13 +33,13 @@ defmodule ShardWeb.UserLive.MudGameLiveMultiplayerComponents do
     <div class="flex flex-col h-full min-h-0">
       <!-- Chat Messages -->
       <div
-        class="flex-1 bg-black pr-4 pb-4 font-mono text-sm overflow-y-auto border border-gray-600 rounded min-h-0"
+        class="flex-1 bg-black p-4 font-mono text-sm overflow-y-auto border border-gray-600 rounded min-h-0"
         id="chat-messages"
         phx-hook="ChatScroll"
       >
-        <div class="space-y-0.5 pt-4 pl-4">
+        <div class="space-y-1">
           <%= for message <- @chat_state.messages do %>
-            <div class={get_message_class(message) <> " whitespace-pre-wrap break-words leading-tight"}>
+            <div class={get_message_class(message) <> " whitespace-pre-wrap break-words"}>
               {format_message_text(message)}
             </div>
           <% end %>
