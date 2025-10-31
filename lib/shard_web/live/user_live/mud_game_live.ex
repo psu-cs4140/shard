@@ -229,13 +229,6 @@ defmodule ShardWeb.MudGameLive do
     </div>
 
     <script>
-      window.addEventListener("phx:scroll_to_bottom", (e) => {
-        const element = document.getElementById(e.detail.target);
-        if (element) {
-          element.scrollTop = element.scrollHeight;
-        }
-      });
-
       // LiveView hooks
       window.Hooks = window.Hooks || {};
 
@@ -493,9 +486,6 @@ defmodule ShardWeb.MudGameLive do
 
     chat_state = Map.put(socket.assigns.chat_state, :messages, new_messages)
     socket = assign(socket, chat_state: chat_state)
-
-    # Auto-scroll chat to bottom
-    socket = push_event(socket, "scroll_to_bottom", %{target: "chat-messages"})
 
     {:noreply, socket}
   end
