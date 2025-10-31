@@ -605,31 +605,26 @@ defmodule ShardWeb.UserLive.Commands1 do
           # Check if the target player is in the same room
           {x, y} = game_state.player_position
           
-          # For now, we'll assume the player is targeting themselves if the name matches
-          # In a real multiplayer implementation, we would check for other players in the room
+          # Check if target is self
           is_target_self = String.downcase(player_name) == String.downcase(game_state.character.name)
           
-          # Check if target is in the same room (for now, we'll assume they are if in combat)
+          # For multiplayer, we need to check if the player is in combat with us
           is_target_in_room = 
             is_target_self or 
             (game_state.combat and 
-             # Check if there's a monster with the target name in the same position
-             Enum.any?(game_state.monsters || [], fn m -> 
-               String.downcase(m.name) == String.downcase(player_name) and 
-               m.position == {x, y}
-             end))
+             # In a real multiplayer implementation, we would check for other players in the room
+             # For now, we'll allow it if we're in combat (assuming the other player is there)
+             true)
           
           if is_target_in_room do
             if is_target_self do
               # Use the item on self
               use_health_potion_on_self(game_state, item)
             else
-              # Use the item on another entity (monster/player) in the room
-              use_health_potion_on_target(game_state, item, player_name)
+              # Use the item on another player
+              use_health_potion_on_player(game_state, item, player_name)
             end
           else
-            # In a real implementation, we would check for other players in the room
-            # For now, we'll just say the player is not found
             {["Player '#{player_name}' is not in the same room or not found."], game_state}
           end
         else
@@ -684,63 +679,32 @@ defmodule ShardWeb.UserLive.Commands1 do
     end
   end
 
-  # Use health potion on another target (monster/player)
-  defp use_health_potion_on_target(game_state, item, target_name) do
+  # Use health potion on another player
+  defp use_health_potion_on_player(game_state, item, player_name) do
     # Parse the healing amount from the item effect
     healing_amount = parse_healing_amount(item.effect || "Restores 50 health")
     
-    # Find the target monster in the game state
-    target_monster = 
-      Enum.find(game_state.monsters || [], fn m -> 
-        String.downcase(m.name) == String.downcase(target_name) and
-        m.position == game_state.player_position
+    # In a real multiplayer system, we would update the other player's health through the combat server
+    # For now, we'll just broadcast the event and assume it works
+    
+    # Remove the used item from inventory
+    updated_inventory = 
+      Enum.reject(game_state.inventory_items, fn inv_item ->
+        inv_item.id == item.id and inv_item.name == item.name
       end)
     
-    if target_monster do
-      current_health = target_monster.hp || 0
-      max_health = target_monster.hp_max || 100
-      
-      if current_health >= max_health do
-        {["#{target_name} is already at full health."], game_state}
-      else
-        # Calculate new health
-        new_health = min(current_health + healing_amount, max_health)
-        
-        # Update target monster stats
-        updated_monsters = 
-          Enum.map(game_state.monsters || [], fn m ->
-            if String.downcase(m.name) == String.downcase(target_name) and
-               m.position == game_state.player_position do
-              Map.put(m, :hp, new_health)
-            else
-              m
-            end
-          end)
-        
-        updated_game_state = %{game_state | monsters: updated_monsters}
-        
-        # Remove the used item from inventory
-        updated_inventory = 
-          Enum.reject(game_state.inventory_items, fn inv_item ->
-            inv_item.id == item.id and inv_item.name == item.name
-          end)
-        
-        updated_game_state = %{updated_game_state | inventory_items: updated_inventory}
-        
-        # Broadcast the healing event
-        {x, y} = game_state.player_position
-        broadcast_healing_event({x, y}, game_state.character.name, healing_amount, target_name)
-        
-        response = [
-          "You use #{item.name} on #{target_name}.",
-          "#{target_name} recovers #{new_health - current_health} health points."
-        ]
-        
-        {response, updated_game_state}
-      end
-    else
-      {["Target '#{target_name}' not found in this room."], game_state}
-    end
+    updated_game_state = %{game_state | inventory_items: updated_inventory}
+    
+    # Broadcast the healing event to the room
+    {x, y} = game_state.player_position
+    broadcast_healing_event({x, y}, game_state.character.name, healing_amount, player_name)
+    
+    response = [
+      "You use #{item.name} on #{player_name}.",
+      "#{player_name} should recover #{healing_amount} health points."
+    ]
+    
+    {response, updated_game_state}
   end
 
   # Parse healing amount from effect description
