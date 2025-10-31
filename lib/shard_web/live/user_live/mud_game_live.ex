@@ -17,7 +17,6 @@ defmodule ShardWeb.MudGameLive do
   import ShardWeb.UserLive.MudGameHandlers
   import ShardWeb.UserLive.MudGameLive2
   import ShardWeb.UserLive.Commands3
-  import ShardWeb.UserLive.PresenceHandlers
   # import ShardWeb.UserLive.MudGameHelpers
 
   # Online players component
@@ -95,7 +94,29 @@ defmodule ShardWeb.MudGameLive do
          {:ok, character} <- load_character_with_associations(character),
          :ok <- setup_tutorial_content(map_id),
          {:ok, socket} <- initialize_game_state(socket, character, map_id, character_name) do
-      socket = setup_player_presence(socket, character, character_name)
+      # Subscribe to the global chat topic
+      Phoenix.PubSub.subscribe(Shard.PubSub, "global_chat")
+      # Subscribe to player presence updates
+      Phoenix.PubSub.subscribe(Shard.PubSub, "player_presence")
+
+      # Initialize online players list
+      socket = assign(socket, online_players: [])
+
+      # Request current online players from existing players
+      Phoenix.PubSub.broadcast(
+        Shard.PubSub,
+        "player_presence",
+        {:request_online_players, character.id}
+      )
+
+      # Broadcast that this player has joined
+      player_data = %{
+        name: character_name,
+        level: socket.assigns.game_state.player_stats.level,
+        character_id: character.id
+      }
+
+      Phoenix.PubSub.broadcast(Shard.PubSub, "player_presence", {:player_joined, player_data})
 
       {:ok, socket}
     else
@@ -514,31 +535,96 @@ defmodule ShardWeb.MudGameLive do
   end
 
   def handle_info({:poke_notification, poker_name}, socket) do
-    handle_poke_notification({:poke_notification, poker_name}, socket)
+    terminal_state = handle_poke_notification(socket.assigns.terminal_state, poker_name)
+
+    # Auto-scroll terminal to bottom
+    socket = push_event(socket, "scroll_to_bottom", %{target: "terminal-output"})
+
+    {:noreply, assign(socket, terminal_state: terminal_state)}
   end
 
   def handle_info({:chat_message, message_data}, socket) do
-    handle_chat_message({:chat_message, message_data}, socket)
+    # Format the chat message
+    formatted_message =
+      "[#{message_data.timestamp}] #{message_data.character_name}: #{message_data.text}"
+
+    # Add to chat messages
+    chat_state =
+      Map.update(socket.assigns.chat_state, :messages, [], fn messages ->
+        # Keep only the last 100 messages to prevent memory issues
+        (messages ++ [formatted_message]) |> Enum.take(-100)
+      end)
+
+    {:noreply, assign(socket, chat_state: chat_state)}
   end
 
   def handle_info({:player_joined, player_data}, socket) do
-    handle_player_joined({:player_joined, player_data}, socket)
+    # Don't add ourselves to the list
+    if player_data.character_id != socket.assigns.game_state.character.id do
+      online_players =
+        [player_data | socket.assigns.online_players]
+        |> Enum.uniq_by(& &1.character_id)
+        |> Enum.sort_by(& &1.name)
+
+      {:noreply, assign(socket, online_players: online_players)}
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_info({:player_left, character_id}, socket) do
-    handle_player_left({:player_left, character_id}, socket)
+    online_players =
+      Enum.reject(socket.assigns.online_players, &(&1.character_id == character_id))
+
+    {:noreply, assign(socket, online_players: online_players)}
   end
 
   def handle_info({:request_online_players, requesting_character_id}, socket) do
-    handle_request_online_players({:request_online_players, requesting_character_id}, socket)
+    # Don't respond to our own request
+    if requesting_character_id != socket.assigns.game_state.character.id do
+      # Send our player data to the requesting player
+      player_data = %{
+        name: socket.assigns.character_name,
+        level: socket.assigns.game_state.player_stats.level,
+        character_id: socket.assigns.game_state.character.id
+      }
+
+      Phoenix.PubSub.broadcast(
+        Shard.PubSub,
+        "player_presence",
+        {:player_response, player_data, requesting_character_id}
+      )
+    end
+
+    {:noreply, socket}
   end
 
   def handle_info({:player_response, player_data, requesting_character_id}, socket) do
-    handle_player_response({:player_response, player_data, requesting_character_id}, socket)
+    # Only process responses meant for us
+    if requesting_character_id == socket.assigns.game_state.character.id do
+      online_players =
+        [player_data | socket.assigns.online_players]
+        |> Enum.uniq_by(& &1.character_id)
+        |> Enum.sort_by(& &1.name)
+
+      {:noreply, assign(socket, online_players: online_players)}
+    else
+      {:noreply, socket}
+    end
   end
 
   @impl true
   def terminate(_reason, socket) do
-    cleanup_player_presence(socket)
+    # Clean up PubSub subscriptions when the LiveView process ends
+    if socket.assigns[:game_state] && socket.assigns.game_state[:character] do
+      character = socket.assigns.game_state.character
+      unsubscribe_from_character_notifications(character.id)
+      unsubscribe_from_player_notifications(character.name)
+
+      # Broadcast that this player has left
+      Phoenix.PubSub.broadcast(Shard.PubSub, "player_presence", {:player_left, character.id})
+    end
+
+    :ok
   end
 end
