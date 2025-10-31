@@ -501,11 +501,11 @@ defmodule ShardWeb.MudGameLive do
 
   # Helper functions for chat message formatting
   defp get_message_class(message) do
-    # Extract character_id from message
+    # Extract character_name and character_id from message
     case Regex.run(~r/\[.*?\] (.*?):(\d+):/, message, capture: :all_but_first) do
       [character_name, character_id] ->
-        # Generate consistent color based on character ID
-        color_class = generate_color_class(character_id)
+        # Generate consistent color based on character name or ID
+        color_class = generate_color_class(character_name, character_id)
         "font-mono text-sm #{color_class}"
       _ ->
         "font-mono text-sm text-blue-400"
@@ -522,9 +522,14 @@ defmodule ShardWeb.MudGameLive do
     end
   end
 
-  defp generate_color_class(character_identifier) do
+  defp generate_color_class("BOB", _character_id) do
+    # Special rainbow color for characters named "BOB"
+    "text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 to-purple-500"
+  end
+
+  defp generate_color_class(_character_name, character_id) do
     # Generate a hash of the character identifier (ID) to determine color
-    hash = :erlang.phash2(character_identifier, 1000)
+    hash = :erlang.phash2(character_id, 1000)
     
     # Define a set of distinct colors
     colors = [
