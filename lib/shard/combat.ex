@@ -6,7 +6,7 @@ defmodule Shard.Combat do
   alias Phoenix.PubSub
 
   def in_combat?(game_state) do
-    game_state.combat || false
+    Map.get(game_state, :combat, false)
   end
 
   def execute_action(game_state, action) do
