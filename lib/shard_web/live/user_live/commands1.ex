@@ -748,3 +748,93 @@ defmodule ShardWeb.UserLive.Commands1 do
     # Broadcast the healing event to the room with target player info
     {x, y} = game_state.player_position
     broadcast_healing_event({x, y}, game_state.character.name, healing_amount, player_name)
+    
+    response = [
+      "You use #{item.name} on #{player_name}.",
+      "#{player_name} should receive #{healing_amount} health points."
+    ]
+    
+    {response, updated_game_state}
+  end
+
+  # Use poison on another player
+  defp use_poison_on_player(game_state, item, player_name) do
+    # Parse the damage amount from the item effect
+    damage_amount = parse_damage_amount(item.effect || "Inflicts 30 damage")
+    
+    # Remove the used item from inventory
+    updated_inventory = 
+      Enum.reject(game_state.inventory_items, fn inv_item ->
+        inv_item.id == item.id and inv_item.name == item.name
+      end)
+    
+    updated_game_state = %{game_state | inventory_items: updated_inventory}
+    
+    # Broadcast the poison event to the room with target player info
+    {x, y} = game_state.player_position
+    broadcast_poison_event({x, y}, game_state.character.name, damage_amount, player_name)
+    
+    response = [
+      "You use #{item.name} on #{player_name}.",
+      "#{player_name} should take #{damage_amount} damage."
+    ]
+    
+    {response, updated_game_state}
+  end
+
+  # Parse healing amount from effect text
+  defp parse_healing_amount(effect_text) do
+    # Look for patterns like "Restores X health" or "Heals X HP"
+    case Regex.run(~r/(?:restores|heals)\s+(\d+)\s+(?:health|hp)/i, effect_text) do
+      [_, amount] -> String.to_integer(amount)
+      _ -> 50  # Default healing amount
+    end
+  end
+
+  # Parse damage amount from effect text
+  defp parse_damage_amount(effect_text) do
+    # Look for patterns like "Inflicts X damage" or "Deals X damage"
+    case Regex.run(~r/(?:inflicts|deals)\s+(\d+)\s+damage/i, effect_text) do
+      [_, amount] -> String.to_integer(amount)
+      _ -> 30  # Default damage amount
+    end
+  end
+
+  # Broadcast healing event to room
+  defp broadcast_healing_event(position, healer_name, healing_amount, target_name \\ nil) do
+    channel = "room:#{elem(position, 0)},#{elem(position, 1)}"
+    
+    if target_name do
+      Phoenix.PubSub.broadcast(
+        Shard.PubSub, 
+        channel, 
+        {:healing_action, healer_name, healing_amount, target_name}
+      )
+    else
+      Phoenix.PubSub.broadcast(
+        Shard.PubSub, 
+        channel, 
+        {:healing_action, healer_name, healing_amount}
+      )
+    end
+  end
+
+  # Broadcast poison event to room
+  defp broadcast_poison_event(position, attacker_name, damage_amount, target_name \\ nil) do
+    channel = "room:#{elem(position, 0)},#{elem(position, 1)}"
+    
+    if target_name do
+      Phoenix.PubSub.broadcast(
+        Shard.PubSub, 
+        channel, 
+        {:poison_action, attacker_name, damage_amount, target_name}
+      )
+    else
+      Phoenix.PubSub.broadcast(
+        Shard.PubSub, 
+        channel, 
+        {:poison_action, attacker_name, damage_amount}
+      )
+    end
+  end
+end
