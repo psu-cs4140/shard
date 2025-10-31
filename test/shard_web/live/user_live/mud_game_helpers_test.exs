@@ -20,7 +20,8 @@ defmodule ShardWeb.UserLive.MudGameHelpersTest do
 
     test "returns character when valid character_id provided" do
       user = Shard.UsersFixtures.user_fixture()
-      {:ok, character} = Characters.create_character(user, %{
+      {:ok, character} = Characters.create_character(%{
+        user_id: user.id,
         name: "Test Character",
         strength: 10,
         dexterity: 10,
@@ -75,7 +76,8 @@ defmodule ShardWeb.UserLive.MudGameHelpersTest do
   describe "load_character_with_associations/1" do
     test "loads character with associations successfully" do
       user = Shard.UsersFixtures.user_fixture()
-      {:ok, character} = Characters.create_character(user, %{
+      {:ok, character} = Characters.create_character(%{
+        user_id: user.id,
         name: "Test Character",
         strength: 10,
         dexterity: 10,
@@ -162,7 +164,8 @@ defmodule ShardWeb.UserLive.MudGameHelpersTest do
   describe "initialize_game_state/3" do
     test "initializes complete game state with valid character" do
       user = Shard.UsersFixtures.user_fixture()
-      {:ok, character} = Characters.create_character(user, %{
+      {:ok, character} = Characters.create_character(%{
+        user_id: user.id,
         name: "Test Character",
         strength: 15,
         dexterity: 12,
