@@ -89,6 +89,13 @@ defmodule ShardWeb.UserLive.Commands3 do
       target_channel,
       {:poke_notification, poker_name}
     )
+    
+    # Also broadcast to a global player channel in case the character-specific channel isn't working
+    PubSub.broadcast(
+      Shard.PubSub,
+      "player:#{target_character.name}",
+      {:poke_notification, poker_name}
+    )
   end
 
   @doc """
@@ -106,6 +113,14 @@ defmodule ShardWeb.UserLive.Commands3 do
   """
   def unsubscribe_from_character_notifications(character_id) do
     channel = "character:#{character_id}"
+    PubSub.unsubscribe(Shard.PubSub, channel)
+  end
+  
+  @doc """
+  Unsubscribe a character from their player name-based notification channel.
+  """
+  def unsubscribe_from_player_notifications(character_name) do
+    channel = "player:#{character_name}"
     PubSub.unsubscribe(Shard.PubSub, channel)
   end
 end

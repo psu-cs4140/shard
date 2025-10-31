@@ -496,8 +496,9 @@ defmodule ShardWeb.MudGameLive do
   def terminate(_reason, socket) do
     # Clean up PubSub subscriptions when the LiveView process ends
     if socket.assigns[:game_state] && socket.assigns.game_state[:character] do
-      character_id = socket.assigns.game_state.character.id
-      unsubscribe_from_character_notifications(character_id)
+      character = socket.assigns.game_state.character
+      unsubscribe_from_character_notifications(character.id)
+      unsubscribe_from_player_notifications(character.name)
     end
     
     :ok
