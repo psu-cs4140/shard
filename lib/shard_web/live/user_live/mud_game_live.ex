@@ -28,9 +28,9 @@ defmodule ShardWeb.MudGameLive do
         id="chat-messages"
         phx-hook="ChatScroll"
       >
-        <div class="whitespace-pre-wrap">
+        <div class="space-y-1">
           <%= for message <- @chat_state.messages do %>
-            <div class="text-blue-400 leading-tight">{message}</div>
+            <div class="text-blue-400">{message}</div>
           <% end %>
         </div>
       </div>
@@ -240,24 +240,16 @@ defmodule ShardWeb.MudGameLive do
           this.scrollToBottom();
         },
         scrollToBottom() {
-          // Use requestAnimationFrame to ensure DOM is updated
-          requestAnimationFrame(() => {
-            this.el.scrollTop = this.el.scrollHeight;
-          });
+          // Force scroll to bottom with multiple approaches
+          const element = this.el;
+          element.scrollTop = element.scrollHeight;
+          
+          // Also try with a small delay to ensure DOM is fully updated
+          setTimeout(() => {
+            element.scrollTop = element.scrollHeight;
+          }, 10);
         }
       };
-
-      // Add explicit event listener for scroll_to_bottom events
-      document.addEventListener("phx:scroll_to_bottom", (e) => {
-        if (e.detail.target === "chat-messages") {
-          const targetElement = document.getElementById("chat-messages");
-          if (targetElement) {
-            requestAnimationFrame(() => {
-              targetElement.scrollTop = targetElement.scrollHeight;
-            });
-          }
-        }
-      });
     </script>
     """
   end
@@ -503,8 +495,6 @@ defmodule ShardWeb.MudGameLive do
     socket = assign(socket, chat_state: chat_state)
 
     # Auto-scroll chat to bottom
-    socket = push_event(socket, "scroll_to_bottom", %{target: "chat-messages"})
-
     {:noreply, socket}
   end
 end
