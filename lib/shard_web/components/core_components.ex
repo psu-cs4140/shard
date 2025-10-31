@@ -146,7 +146,7 @@ defmodule ShardWeb.CoreComponents do
   def simple_form(assigns) do
     ~H"""
     <.form :let={f} for={@for} as={@as} {@rest}>
-      <div class="mt-10 space-y-8 bg-white">
+      <div class="mt-10 space-y-8 bg-base-100">
         {render_slot(@inner_block, f)}
         <div :for={action <- @actions} class="mt-2 flex items-center justify-between gap-6">
           {render_slot(action, f)}
@@ -228,7 +228,7 @@ defmodule ShardWeb.CoreComponents do
     <div class="fieldset mb-2">
       <label>
         <input type="hidden" name={@name} value="false" disabled={@rest[:disabled]} />
-        <span class="label">
+        <span class="label text-base-content">
           <input
             type="checkbox"
             id={@id}
@@ -249,7 +249,7 @@ defmodule ShardWeb.CoreComponents do
     ~H"""
     <div class="fieldset mb-2">
       <label>
-        <span :if={@label} class="label mb-1">{@label}</span>
+        <span :if={@label} class="label mb-1 text-base-content">{@label}</span>
         <select
           id={@id}
           name={@name}
@@ -270,7 +270,7 @@ defmodule ShardWeb.CoreComponents do
     ~H"""
     <div class="fieldset mb-2">
       <label>
-        <span :if={@label} class="label mb-1">{@label}</span>
+        <span :if={@label} class="label mb-1 text-base-content">{@label}</span>
         <textarea
           id={@id}
           name={@name}
@@ -291,7 +291,7 @@ defmodule ShardWeb.CoreComponents do
     ~H"""
     <div class="fieldset mb-2">
       <label>
-        <span :if={@label} class="label mb-1">{@label}</span>
+        <span :if={@label} class="label mb-1 text-base-content">{@label}</span>
         <input
           type={@type}
           name={@name}
@@ -502,13 +502,13 @@ defmodule ShardWeb.CoreComponents do
       ]}>
         <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
           <div class={[
-            "relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg",
+            "relative transform overflow-hidden rounded-lg bg-base-100 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg",
             @class
           ]}>
             <div class="absolute top-0 right-0 pt-4 pr-4">
               <button
                 type="button"
-                class="text-gray-400 hover:text-gray-500 focus:outline-none"
+                class="text-base-content/50 hover:text-base-content focus:outline-none"
                 phx-click={hide_modal(@id)}
                 aria-label={gettext("close")}
               >
