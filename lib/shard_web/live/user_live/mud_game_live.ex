@@ -16,6 +16,7 @@ defmodule ShardWeb.MudGameLive do
   #  import ShardWeb.UserLive.ItemHelpers
   import ShardWeb.UserLive.MudGameHandlers
   import ShardWeb.UserLive.MudGameLive2
+  import ShardWeb.UserLive.Commands3
   # import ShardWeb.UserLive.MudGameHelpers
 
   # Chat component
@@ -483,21 +484,25 @@ defmodule ShardWeb.MudGameLive do
     end
   end
 
-  def handle_info({:chat_message, message_data}, socket) do
-    # Format the message
-    formatted_message =
-      "[#{message_data.timestamp}] #{message_data.character_name}: #{message_data.text}"
+  def handle_info({:poke_notification, poker_name}, socket) do
+    terminal_state = handle_poke_notification(socket.assigns.terminal_state, poker_name)
 
-    # Add message to chat
-    new_messages = socket.assigns.chat_state.messages ++ [formatted_message]
+    # Auto-scroll terminal to bottom
+    socket = push_event(socket, "scroll_to_bottom", %{target: "terminal-output"})
 
-    chat_state = Map.put(socket.assigns.chat_state, :messages, new_messages)
-    socket = assign(socket, chat_state: chat_state)
+    {:noreply, assign(socket, terminal_state: terminal_state)}
+  end
 
-    # Auto-scroll chat to bottom
-    socket = push_event(socket, "scroll_to_bottom", %{target: "chat-messages"})
+  @impl true
+  def terminate(_reason, socket) do
+    # Clean up PubSub subscriptions when the LiveView process ends
+    if socket.assigns[:game_state] && socket.assigns.game_state[:character] do
+      character = socket.assigns.game_state.character
+      unsubscribe_from_character_notifications(character.id)
+      unsubscribe_from_player_notifications(character.name)
+    end
 
-    {:noreply, socket}
+    :ok
   end
 
   # Handle healing action info (without target)
