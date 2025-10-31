@@ -30,7 +30,7 @@ defmodule ShardWeb.MudGameLive do
       >
         <div class="space-y-1">
           <%= for message <- @chat_state.messages do %>
-            <div class="text-blue-400">{message}</div>
+            <div class={get_message_class(message)}><%= format_message_text(message) %></div>
           <% end %>
         </div>
       </div>
@@ -496,5 +496,44 @@ defmodule ShardWeb.MudGameLive do
 
     # Auto-scroll chat to bottom
     {:noreply, socket}
+  end
+
+  # Helper functions for chat message formatting
+  defp get_message_class(message) do
+    # Extract character name from message
+    case Regex.run(~r/\[.*?\] (.*?):/, message, capture: :all_but_first) do
+      [character_name] ->
+        # Generate consistent color based on character name
+        color_class = generate_color_class(character_name)
+        "font-mono text-sm #{color_class}"
+      _ ->
+        "font-mono text-sm text-blue-400"
+    end
+  end
+
+  defp format_message_text(message) do
+    message
+  end
+
+  defp generate_color_class(character_name) do
+    # Generate a hash of the character name to determine color
+    hash = :erlang.phash2(character_name, 1000)
+    
+    # Define a set of distinct colors
+    colors = [
+      "text-blue-400",
+      "text-green-400",
+      "text-yellow-400",
+      "text-red-400",
+      "text-purple-400",
+      "text-pink-400",
+      "text-indigo-400",
+      "text-teal-400",
+      "text-orange-400",
+      "text-cyan-400"
+    ]
+    
+    # Select color based on hash
+    Enum.at(colors, rem(hash, length(colors)))
   end
 end
