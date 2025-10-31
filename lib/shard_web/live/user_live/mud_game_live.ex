@@ -320,6 +320,7 @@ defmodule ShardWeb.MudGameLive do
       message_data = %{
         timestamp: timestamp,
         character_name: socket.assigns.character_name,
+        character_id: socket.assigns.game_state.character.id,
         text: trimmed_message
       }
 
