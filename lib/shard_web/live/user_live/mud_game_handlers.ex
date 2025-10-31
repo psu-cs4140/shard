@@ -319,14 +319,20 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   end
 
   # Handle healing action info
+  def handle_healing_action_info({:healing_action, healer_name, healing_amount}, socket) do
+    # Show the message to all players
+    message = "#{healer_name} heals for #{healing_amount} health!"
+    terminal_state = add_message_to_output(socket.assigns.terminal_state, message)
+    {:noreply, socket, terminal_state}
+  end
+
+  # Handle healing action info with target
   def handle_healing_action_info({:healing_action, healer_name, healing_amount, target_name}, socket) do
     # Show the message to all players
     message = 
-      if target_name do
-        "#{healer_name} uses a health potion on #{target_name}, healing #{healing_amount} health!"
-      else
-        "#{healer_name} heals for #{healing_amount} health!"
-      end
+      "#{healer_name} uses a health potion on #{target_name}, healing #{healing_amount} health!"
     
     terminal_state = add_message_to_output(socket.assigns.terminal_state, message)
-    {:noreply, socket
+    {:noreply, socket, terminal_state}
+  end
+end
