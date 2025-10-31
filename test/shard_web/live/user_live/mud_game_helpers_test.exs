@@ -14,9 +14,9 @@ defmodule ShardWeb.UserLive.MudGameHelpersTest do
   describe "add_message/2" do
     test "adds message to terminal output with empty line" do
       terminal_state = %{output: ["Welcome!", "Type help for commands"]}
-      
+
       result = MudGameHelpers.add_message(terminal_state, "You picked up a sword")
-      
+
       expected_output = ["Welcome!", "Type help for commands", "You picked up a sword", ""]
       assert result.output == expected_output
     end
@@ -26,21 +26,21 @@ defmodule ShardWeb.UserLive.MudGameHelpersTest do
     test "returns character name when no character_name in params" do
       params = %{}
       character = %{name: "Aragorn"}
-      
+
       assert MudGameHelpers.get_character_name(params, character) == "Aragorn"
     end
 
     test "returns Unknown when no character_name in params and no character" do
       params = %{}
       character = nil
-      
+
       assert MudGameHelpers.get_character_name(params, character) == "Unknown"
     end
 
     test "returns decoded character_name from params when present" do
       params = %{"character_name" => "Legolas%20Greenleaf"}
       character = %{name: "Aragorn"}
-      
+
       assert MudGameHelpers.get_character_name(params, character) == "Legolas Greenleaf"
     end
   end
