@@ -30,7 +30,7 @@ defmodule ShardWeb.MudGameLive do
       >
         <div class="space-y-1">
           <%= for message <- @chat_state.messages do %>
-            <div class={get_message_class(message)}><%= format_message_text(message) %></div>
+            <div class={get_message_class(message) ++ " whitespace-pre-wrap break-words"}><%= format_message_text(message) %></div>
           <% end %>
         </div>
       </div>
