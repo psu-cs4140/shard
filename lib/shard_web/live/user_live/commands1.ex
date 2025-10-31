@@ -737,9 +737,6 @@ defmodule ShardWeb.UserLive.Commands1 do
     # Parse the healing amount from the item effect
     healing_amount = parse_healing_amount(item.effect || "Restores 50 health")
     
-    # In a real multiplayer system, we would update the other player's health through the combat server
-    # For now, we'll just broadcast the event and assume it works
-    
     # Remove the used item from inventory
     updated_inventory = 
       Enum.reject(game_state.inventory_items, fn inv_item ->
