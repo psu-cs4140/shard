@@ -228,7 +228,7 @@ defmodule ShardWeb.AdminLive.MapTest do
       {:ok, view, _html} = live(conn, ~p"/admin/map")
 
       # Click generate default map
-      html = view |> element("button", "Generate Default Map") |> render_click()
+      html = view |> element("button", "Generate Sample Rooms") |> render_click()
 
       assert html =~ "Default 3x3 map generated successfully!"
 

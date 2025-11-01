@@ -17,7 +17,8 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
       pan_y: 0,
       drag_start: nil,
       flash: %{},
-      __changed__: %{}
+      __changed__: %{},
+      selected_zone_id: nil
     }
 
     merged_assigns = :maps.merge(default_assigns, assigns)

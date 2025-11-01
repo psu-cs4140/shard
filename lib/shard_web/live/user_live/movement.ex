@@ -7,7 +7,7 @@ defmodule ShardWeb.UserLive.Movement do
   alias Shard.Repo
   alias Phoenix.PubSub
   import Ecto.Query
-  import ShardWeb.UserLive.MapHelpers
+
   alias Shard.Items.Item
 
   # Execute movement command and update game state
@@ -38,16 +38,18 @@ defmodule ShardWeb.UserLive.Movement do
         {curr_x, curr_y} = current_pos
         {new_x, new_y} = new_pos
 
+        zone_id = game_state.character.current_zone_id || 1
+
         current_room =
-          GameMap.get_room_by_coordinates(game_state.character.current_zone_id, curr_x, curr_y, 0)
+          GameMap.get_room_by_coordinates(zone_id, curr_x, curr_y, 0)
 
         destination_room =
-          GameMap.get_room_by_coordinates(game_state.character.current_zone_id, new_x, new_y, 0)
+          GameMap.get_room_by_coordinates(zone_id, new_x, new_y, 0)
 
         completion_result = GameMap.check_dungeon_completion(current_room, destination_room)
 
-        npcs_here = get_npcs_at_location(new_x, new_y, game_state.character.current_zone_id)
-        items_here = get_items_at_location(new_x, new_y, game_state.character.current_zone_id)
+        npcs_here = get_npcs_at_location(new_x, new_y, zone_id)
+        items_here = get_items_at_location(new_x, new_y, zone_id)
         monsters = Enum.filter(game_state.monsters, fn m -> m[:position] == new_pos end)
         monster_count = Enum.count(monsters)
 
@@ -125,8 +127,10 @@ defmodule ShardWeb.UserLive.Movement do
     {curr_x, curr_y} = current_pos
     {new_x, new_y} = new_pos
 
+    zone_id = game_state.character.current_zone_id || 1
+
     current_room =
-      GameMap.get_room_by_coordinates(game_state.character.current_zone_id, curr_x, curr_y, 0)
+      GameMap.get_room_by_coordinates(zone_id, curr_x, curr_y, 0)
 
     case current_room do
       nil ->
@@ -238,7 +242,9 @@ defmodule ShardWeb.UserLive.Movement do
   end
 
   def compute_available_exits({x, y}, game_state) do
-    case GameMap.get_room_by_coordinates(game_state.character.current_zone_id, x, y, 0) do
+    zone_id = game_state.character.current_zone_id || 1
+
+    case GameMap.get_room_by_coordinates(zone_id, x, y, 0) do
       nil ->
         []
 
@@ -265,6 +271,11 @@ defmodule ShardWeb.UserLive.Movement do
 
   def posn_to_room_channel({xx, yy}) do
     "room:#{xx},#{yy}"
+  end
+
+  defp get_npcs_at_location(_x, _y, _zone_id) do
+    # TODO: Implement NPC location lookup
+    []
   end
 
   defp get_items_at_location(x, y, _zone_id) do

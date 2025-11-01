@@ -16,7 +16,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
         experience: 0,
         user_id: user.id,
         class: "warrior",
-        race: "human"
+        race: "human",
+        current_zone_id: 1
       }
 
       character = Shard.Repo.insert!(character)
@@ -493,7 +494,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
         experience: 0,
         user_id: user.id,
         class: "warrior",
-        race: "human"
+        race: "human",
+        current_zone_id: 1
       }
 
       character = Shard.Repo.insert!(character)

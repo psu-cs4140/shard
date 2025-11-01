@@ -13,7 +13,8 @@ defmodule ShardWeb.MudGameLiveTest do
         experience: 0,
         user_id: user.id,
         class: "warrior",
-        race: "human"
+        race: "human",
+        current_zone_id: 1
       }
 
       character = Shard.Repo.insert!(character)
@@ -47,7 +48,8 @@ defmodule ShardWeb.MudGameLiveTest do
         experience: 0,
         user_id: user.id,
         class: "warrior",
-        race: "human"
+        race: "human",
+        current_zone_id: 1
       }
 
       character = Shard.Repo.insert!(character)
@@ -97,7 +99,8 @@ defmodule ShardWeb.MudGameLiveTest do
         experience: 0,
         user_id: user.id,
         class: "warrior",
-        race: "human"
+        race: "human",
+        current_zone_id: 1
       }
 
       character = Shard.Repo.insert!(character)
@@ -150,7 +153,8 @@ defmodule ShardWeb.MudGameLiveTest do
         experience: 1000,
         user_id: user.id,
         class: "mage",
-        race: "elf"
+        race: "elf",
+        current_zone_id: 1
       }
 
       character = Shard.Repo.insert!(character)
@@ -201,7 +205,8 @@ defmodule ShardWeb.MudGameLiveTest do
         experience: 0,
         user_id: user.id,
         class: "warrior",
-        race: "human"
+        race: "human",
+        current_zone_id: 1
       }
 
       character = Shard.Repo.insert!(character)

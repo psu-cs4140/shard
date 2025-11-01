@@ -237,7 +237,7 @@ defmodule ShardWeb.AdminLive.MapHandlers do
 
   # Generate default map for current zone
   def handle_generate_default_map(_params, socket) do
-    zone_id = socket.assigns.selected_zone_id
+    zone_id = socket.assigns.selected_zone_id || 1
 
     if zone_id do
       # Delete existing rooms and doors in this zone

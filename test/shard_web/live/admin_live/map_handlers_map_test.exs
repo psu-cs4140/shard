@@ -17,7 +17,8 @@ defmodule ShardWeb.AdminLive.MapHandlersMapTest do
       pan_y: 0,
       drag_start: nil,
       flash: %{},
-      __changed__: %{}
+      __changed__: %{},
+      selected_zone_id: nil
     }
 
     merged_assigns = :maps.merge(default_assigns, assigns)
@@ -39,7 +40,7 @@ defmodule ShardWeb.AdminLive.MapHandlersMapTest do
       {:noreply, updated_socket} = MapHandlers.handle_generate_default_map(%{}, socket)
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) ==
-               "Default 3x3 map generated successfully!"
+               "Sample 3x3 map generated for this zone successfully!"
 
       assert length(updated_socket.assigns.rooms) == 9
       # In a 3x3 grid, each connection creates two doors (one in each direction)
