@@ -55,9 +55,14 @@ defmodule ShardWeb.UserLive.CommandParsersTest do
 
   describe "parse_deliver_quest_command/1" do
     test "parses quoted NPC names" do
-      assert {:ok, "Goldie"} = CommandParsers.parse_deliver_quest_command(~s(deliver_quest "Goldie"))
-      assert {:ok, "Goldie"} = CommandParsers.parse_deliver_quest_command(~s(deliver_quest 'Goldie'))
-      assert {:ok, "Quest NPC"} = CommandParsers.parse_deliver_quest_command(~s(deliver_quest "Quest NPC"))
+      assert {:ok, "Goldie"} =
+               CommandParsers.parse_deliver_quest_command(~s(deliver_quest "Goldie"))
+
+      assert {:ok, "Goldie"} =
+               CommandParsers.parse_deliver_quest_command(~s(deliver_quest 'Goldie'))
+
+      assert {:ok, "Quest NPC"} =
+               CommandParsers.parse_deliver_quest_command(~s(deliver_quest "Quest NPC"))
     end
 
     test "parses unquoted single-word NPC names" do
@@ -74,19 +79,26 @@ defmodule ShardWeb.UserLive.CommandParsersTest do
 
     test "is case insensitive" do
       assert {:ok, "Goldie"} = CommandParsers.parse_deliver_quest_command("DELIVER_QUEST Goldie")
-      assert {:ok, "Goldie"} = CommandParsers.parse_deliver_quest_command(~s(DELIVER_QUEST "Goldie"))
+
+      assert {:ok, "Goldie"} =
+               CommandParsers.parse_deliver_quest_command(~s(DELIVER_QUEST "Goldie"))
     end
   end
 
   describe "parse_unlock_command/1" do
     test "parses quoted item names" do
-      assert {:ok, "north", "Tutorial Key"} = CommandParsers.parse_unlock_command(~s(unlock north with "Tutorial Key"))
-      assert {:ok, "east", "Magic Key"} = CommandParsers.parse_unlock_command(~s(unlock east with 'Magic Key'))
+      assert {:ok, "north", "Tutorial Key"} =
+               CommandParsers.parse_unlock_command(~s(unlock north with "Tutorial Key"))
+
+      assert {:ok, "east", "Magic Key"} =
+               CommandParsers.parse_unlock_command(~s(unlock east with 'Magic Key'))
     end
 
     test "parses unquoted single-word item names" do
       assert {:ok, "north", "Key"} = CommandParsers.parse_unlock_command("unlock north with Key")
-      assert {:ok, "south", "Lockpick"} = CommandParsers.parse_unlock_command("unlock south with Lockpick")
+
+      assert {:ok, "south", "Lockpick"} =
+               CommandParsers.parse_unlock_command("unlock south with Lockpick")
     end
 
     test "supports direction abbreviations" do
@@ -106,13 +118,17 @@ defmodule ShardWeb.UserLive.CommandParsersTest do
 
     test "is case insensitive" do
       assert {:ok, "north", "Key"} = CommandParsers.parse_unlock_command("UNLOCK north WITH Key")
-      assert {:ok, "north", "Key"} = CommandParsers.parse_unlock_command(~s(UNLOCK north WITH "Key"))
+
+      assert {:ok, "north", "Key"} =
+               CommandParsers.parse_unlock_command(~s(UNLOCK north WITH "Key"))
     end
   end
 
   describe "parse_pickup_command/1" do
     test "parses quoted item names" do
-      assert {:ok, "Tutorial Key"} = CommandParsers.parse_pickup_command(~s(pickup "Tutorial Key"))
+      assert {:ok, "Tutorial Key"} =
+               CommandParsers.parse_pickup_command(~s(pickup "Tutorial Key"))
+
       assert {:ok, "Magic Sword"} = CommandParsers.parse_pickup_command(~s(pickup 'Magic Sword'))
     end
 

@@ -138,6 +138,7 @@ defmodule Shard.Map.ZoneTest do
         is_active: true,
         display_order: 1
       }
+
       changeset = Zone.changeset(%Zone{}, attrs)
       assert changeset.valid?
     end
