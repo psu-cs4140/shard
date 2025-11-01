@@ -83,7 +83,7 @@ defmodule ShardWeb.MudGameLive do
           </div>
         </div>
       </header>
-
+      
     <!-- Main Content -->
       <div class="flex flex-1 overflow-hidden">
         <!-- Left Panel - Terminal/Chat -->
@@ -117,14 +117,14 @@ defmodule ShardWeb.MudGameLive do
               Chat
             </button>
           </div>
-
+          
     <!-- Tab Content -->
           <div class="flex-1 flex flex-col min-h-0">
             <.terminal :if={@active_tab == "terminal"} terminal_state={@terminal_state} />
             <.chat :if={@active_tab == "chat"} chat_state={@chat_state} />
           </div>
         </div>
-
+        
     <!-- Right Panel - Controls -->
         <div class="w-100 bg-gray-800 px-4 py-4 flex flex-col space-y-4 overflow-y-auto">
           <.minimap
@@ -206,7 +206,7 @@ defmodule ShardWeb.MudGameLive do
           />
         </div>
       </div>
-
+      
     <!-- Footer -->
       <footer class="bg-gray-800 p-2 text-center text-sm">
         <p>MUD Game v1.0</p>

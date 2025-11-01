@@ -38,8 +38,12 @@ defmodule ShardWeb.UserLive.Movement do
         {curr_x, curr_y} = current_pos
         {new_x, new_y} = new_pos
 
-        current_room = GameMap.get_room_by_coordinates(game_state.character.current_zone_id, curr_x, curr_y, 0)
-        destination_room = GameMap.get_room_by_coordinates(game_state.character.current_zone_id, new_x, new_y, 0)
+        current_room =
+          GameMap.get_room_by_coordinates(game_state.character.current_zone_id, curr_x, curr_y, 0)
+
+        destination_room =
+          GameMap.get_room_by_coordinates(game_state.character.current_zone_id, new_x, new_y, 0)
+
         completion_result = GameMap.check_dungeon_completion(current_room, destination_room)
 
         npcs_here = get_npcs_at_location(new_x, new_y, game_state.character.current_zone_id)
@@ -117,13 +121,12 @@ defmodule ShardWeb.UserLive.Movement do
     end
   end
 
-
-
   defp valid_movement(current_pos, new_pos, direction, game_state) do
     {curr_x, curr_y} = current_pos
     {new_x, new_y} = new_pos
 
-    current_room = GameMap.get_room_by_coordinates(game_state.character.current_zone_id, curr_x, curr_y, 0)
+    current_room =
+      GameMap.get_room_by_coordinates(game_state.character.current_zone_id, curr_x, curr_y, 0)
 
     case current_room do
       nil ->
@@ -207,11 +210,13 @@ defmodule ShardWeb.UserLive.Movement do
       "southwest"
     ]
 
-        tutorial_exits =
-          Enum.filter(basic_directions, fn direction ->
-            test_pos = calc_position({x, y}, direction_to_key(direction), game_state)
-            test_pos != {x, y} and valid_movement({x, y}, test_pos, direction_to_key(direction), game_state)
-          end)
+    tutorial_exits =
+      Enum.filter(basic_directions, fn direction ->
+        test_pos = calc_position({x, y}, direction_to_key(direction), game_state)
+
+        test_pos != {x, y} and
+          valid_movement({x, y}, test_pos, direction_to_key(direction), game_state)
+      end)
 
     (exits ++ tutorial_exits)
     |> Enum.uniq()

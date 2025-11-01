@@ -139,6 +139,7 @@ defmodule ShardWeb.AdminLive.MapFunctions do
 
       # Get only doors that connect rooms within this zone
       all_doors = Map.list_doors()
+
       Enum.filter(all_doors, fn door ->
         door.from_room_id in room_ids && door.to_room_id in room_ids
       end)

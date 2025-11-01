@@ -41,28 +41,28 @@ defmodule ShardWeb.AdminLive.Zones do
               <div class="flex justify-between items-start">
                 <div class="flex-1">
                   <h2 class="card-title">
-                    <%= zone.name %>
+                    {zone.name}
                     <div class={[
                       "badge",
-                      zone.is_active && "badge-success" || "badge-error"
+                      (zone.is_active && "badge-success") || "badge-error"
                     ]}>
-                      <%= if zone.is_active, do: "Active", else: "Inactive" %>
+                      {if zone.is_active, do: "Active", else: "Inactive"}
                     </div>
-                    <div class="badge badge-info"><%= zone.zone_type %></div>
+                    <div class="badge badge-info">{zone.zone_type}</div>
                   </h2>
-                  <p class="text-sm opacity-70 mt-2"><%= zone.description %></p>
+                  <p class="text-sm opacity-70 mt-2">{zone.description}</p>
                   <div class="mt-3 flex gap-3 text-sm">
                     <span>
                       <strong>Slug:</strong>
-                      <%= zone.slug %>
+                      {zone.slug}
                     </span>
                     <span>
                       <strong>Level Range:</strong>
-                      <%= zone.min_level %>-<%= zone.max_level || "∞" %>
+                      {zone.min_level}-{zone.max_level || "∞"}
                     </span>
                     <span>
                       <strong>Rooms:</strong>
-                      <%= length(Map.list_rooms_by_zone(zone.id)) %>
+                      {length(Map.list_rooms_by_zone(zone.id))}
                     </span>
                   </div>
                 </div>
@@ -99,7 +99,7 @@ defmodule ShardWeb.AdminLive.Zones do
 
     <.modal :if={@editing} id="zone-modal" show on_cancel={JS.push("cancel_zone")}>
       <.header>
-        <%= if @changeset.data.id, do: "Edit Zone", else: "New Zone" %>
+        {if @changeset.data.id, do: "Edit Zone", else: "New Zone"}
         <:subtitle>Configure zone details</:subtitle>
       </.header>
 

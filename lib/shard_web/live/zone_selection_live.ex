@@ -39,7 +39,7 @@ defmodule ShardWeb.ZoneSelectionLive do
         Select a Zone to Explore
         <:subtitle>
           <%= if @character do %>
-            Playing as: <%= @character.name %> (Level <%= @character.level %> <%= @character.class %>)
+            Playing as: {@character.name} (Level {@character.level} {@character.class})
           <% else %>
             Choose a zone to begin your adventure
           <% end %>
@@ -51,16 +51,16 @@ defmodule ShardWeb.ZoneSelectionLive do
           <div class="card bg-base-200 shadow-xl hover:shadow-2xl transition-shadow">
             <div class="card-body">
               <h2 class="card-title">
-                <%= zone.name %>
+                {zone.name}
                 <div class={[
                   "badge",
                   get_zone_type_color(zone.zone_type)
                 ]}>
-                  <%= String.capitalize(zone.zone_type) %>
+                  {String.capitalize(zone.zone_type)}
                 </div>
               </h2>
 
-              <p class="text-sm opacity-80 min-h-[4rem]"><%= zone.description %></p>
+              <p class="text-sm opacity-80 min-h-[4rem]">{zone.description}</p>
 
               <div class="divider my-2"></div>
 
@@ -68,12 +68,12 @@ defmodule ShardWeb.ZoneSelectionLive do
                 <div>
                   <span class="font-semibold">Level Range:</span>
                   <br />
-                  <%= zone.min_level %>-<%= zone.max_level || "∞" %>
+                  {zone.min_level}-{zone.max_level || "∞"}
                 </div>
                 <div>
                   <span class="font-semibold">Rooms:</span>
                   <br />
-                  <%= length(Map.list_rooms_by_zone(zone.id)) %>
+                  {length(Map.list_rooms_by_zone(zone.id))}
                 </div>
               </div>
 
@@ -134,9 +134,15 @@ defmodule ShardWeb.ZoneSelectionLive do
       {:ok, updated_character} ->
         # Get the first room in the zone to start at
         rooms = Map.list_rooms_by_zone(zone_id)
-        starting_room = Enum.min_by(rooms, fn room ->
-          {room.x_coordinate, room.y_coordinate, room.z_coordinate}
-        end, fn -> nil end)
+
+        starting_room =
+          Enum.min_by(
+            rooms,
+            fn room ->
+              {room.x_coordinate, room.y_coordinate, room.z_coordinate}
+            end,
+            fn -> nil end
+          )
 
         if starting_room do
           # Redirect to play interface with zone context

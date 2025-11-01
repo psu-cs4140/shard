@@ -12,17 +12,18 @@ defmodule ShardWeb.UserLive.MonsterComponents do
       all_monsters = Shard.Monsters.list_monsters()
 
       # Filter monsters to only those in rooms within the specified zone
-      monsters = Enum.filter(all_monsters, fn monster ->
-        if monster.location_id do
-          # Check if the monster's room belongs to the specified zone
-          case Shard.Map.get_room!(monster.location_id) do
-            room -> room.zone_id == zone_id
-            _ -> false
+      monsters =
+        Enum.filter(all_monsters, fn monster ->
+          if monster.location_id do
+            # Check if the monster's room belongs to the specified zone
+            case Shard.Map.get_room!(monster.location_id) do
+              room -> room.zone_id == zone_id
+              _ -> false
+            end
+          else
+            false
           end
-        else
-          false
-        end
-      end)
+        end)
 
       # Convert database monsters to game format
       Enum.map(monsters, fn monster ->

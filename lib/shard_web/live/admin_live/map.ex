@@ -17,25 +17,27 @@ defmodule ShardWeb.AdminLive.Map do
     # Auto-select the first zone if available
     selected_zone_id = if Enum.any?(zones), do: List.first(zones).id, else: nil
 
-    socket = socket
-    |> assign(:zones, zones)
-    |> assign(:selected_zone_id, selected_zone_id)
-    |> assign(:page_title, "Map Management")
-    |> assign(:tab, "rooms")
-    |> assign(:changeset, nil)
-    |> assign(:editing, nil)
-    |> assign(:viewing, nil)
-    |> assign(:zoom, 1.0)
-    |> assign(:pan_x, 0)
-    |> assign(:pan_y, 0)
-    |> assign(:drag_start, nil)
+    socket =
+      socket
+      |> assign(:zones, zones)
+      |> assign(:selected_zone_id, selected_zone_id)
+      |> assign(:page_title, "Map Management")
+      |> assign(:tab, "rooms")
+      |> assign(:changeset, nil)
+      |> assign(:editing, nil)
+      |> assign(:viewing, nil)
+      |> assign(:zoom, 1.0)
+      |> assign(:pan_x, 0)
+      |> assign(:pan_y, 0)
+      |> assign(:drag_start, nil)
 
     # Load data for the selected zone
-    socket = if selected_zone_id do
-      load_zone_data(socket, selected_zone_id)
-    else
-      socket |> assign(:rooms, []) |> assign(:doors, [])
-    end
+    socket =
+      if selected_zone_id do
+        load_zone_data(socket, selected_zone_id)
+      else
+        socket |> assign(:rooms, []) |> assign(:doors, [])
+      end
 
     {:ok, socket}
   end
@@ -68,9 +70,11 @@ defmodule ShardWeb.AdminLive.Map do
 
     # Get doors that connect rooms within this zone
     all_doors = Map.list_doors()
-    doors = Enum.filter(all_doors, fn door ->
-      door.from_room_id in room_ids && door.to_room_id in room_ids
-    end)
+
+    doors =
+      Enum.filter(all_doors, fn door ->
+        door.from_room_id in room_ids && door.to_room_id in room_ids
+      end)
 
     socket
     |> assign(:selected_zone_id, zone_id)
@@ -104,7 +108,7 @@ defmodule ShardWeb.AdminLive.Map do
             </option>
             <%= for zone <- @zones do %>
               <option value={zone.id} selected={@selected_zone_id == zone.id}>
-                <%= zone.name %> (<%= length(Map.list_rooms_by_zone(zone.id)) %> rooms)
+                {zone.name} ({length(Map.list_rooms_by_zone(zone.id))} rooms)
               </option>
             <% end %>
           </select>
@@ -119,50 +123,50 @@ defmodule ShardWeb.AdminLive.Map do
 
       <%= if @selected_zone_id do %>
         <div class="flex justify-between items-center mb-4">
-        <div class="tabs tabs-lifted">
-          <button
-            type="button"
-            class={["tab", @tab == "rooms" && "tab-active"]}
-            phx-click="change_tab"
-            phx-value-tab="rooms"
-          >
-            Rooms
-          </button>
-          <button
-            type="button"
-            class={["tab", @tab == "doors" && "tab-active"]}
-            phx-click="change_tab"
-            phx-value-tab="doors"
-          >
-            Doors
-          </button>
-          <button
-            type="button"
-            class={["tab", @tab == "map" && "tab-active"]}
-            phx-click="change_tab"
-            phx-value-tab="map"
-          >
-            Map Visualization
-          </button>
-          <button
-            :if={@tab == "room_details"}
-            type="button"
-            class={["tab", @tab == "room_details" && "tab-active"]}
-          >
-            Room Details
-          </button>
-        </div>
+          <div class="tabs tabs-lifted">
+            <button
+              type="button"
+              class={["tab", @tab == "rooms" && "tab-active"]}
+              phx-click="change_tab"
+              phx-value-tab="rooms"
+            >
+              Rooms
+            </button>
+            <button
+              type="button"
+              class={["tab", @tab == "doors" && "tab-active"]}
+              phx-click="change_tab"
+              phx-value-tab="doors"
+            >
+              Doors
+            </button>
+            <button
+              type="button"
+              class={["tab", @tab == "map" && "tab-active"]}
+              phx-click="change_tab"
+              phx-value-tab="map"
+            >
+              Map Visualization
+            </button>
+            <button
+              :if={@tab == "room_details"}
+              type="button"
+              class={["tab", @tab == "room_details" && "tab-active"]}
+            >
+              Room Details
+            </button>
+          </div>
 
-        <div class="flex gap-2">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            phx-click="generate_default_map"
-          >
-            Generate Sample Rooms
-          </button>
+          <div class="flex gap-2">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              phx-click="generate_default_map"
+            >
+              Generate Sample Rooms
+            </button>
+          </div>
         </div>
-      </div>
       <% end %>
 
       <div class="mt-6">

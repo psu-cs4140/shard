@@ -112,7 +112,11 @@ defmodule Shard.Map do
   Returns the first match if multiple zones have rooms at the same coordinates.
   """
   def get_room_by_coordinates_legacy(x, y, z \\ 0) do
-    Repo.one(from r in Room, where: r.x_coordinate == ^x and r.y_coordinate == ^y and r.z_coordinate == ^z, limit: 1)
+    Repo.one(
+      from r in Room,
+        where: r.x_coordinate == ^x and r.y_coordinate == ^y and r.z_coordinate == ^z,
+        limit: 1
+    )
   end
 
   @doc """

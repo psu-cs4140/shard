@@ -245,7 +245,9 @@ defmodule ShardWeb.AdminLive.MapHandlers do
       # Delete doors that connect rooms in this zone
       rooms_in_zone = Map.list_rooms_by_zone(zone_id)
       room_ids = Enum.map(rooms_in_zone, & &1.id)
-      from(d in Door, where: d.from_room_id in ^room_ids or d.to_room_id in ^room_ids) |> Repo.delete_all()
+
+      from(d in Door, where: d.from_room_id in ^room_ids or d.to_room_id in ^room_ids)
+      |> Repo.delete_all()
 
       # Create new sample rooms for this zone
       rooms = create_default_rooms_for_zone(zone_id)
@@ -363,6 +365,7 @@ defmodule ShardWeb.AdminLive.MapHandlers do
 
       # Get only doors that connect rooms within this zone
       all_doors = Map.list_doors()
+
       Enum.filter(all_doors, fn door ->
         door.from_room_id in room_ids && door.to_room_id in room_ids
       end)

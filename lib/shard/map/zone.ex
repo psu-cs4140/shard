@@ -45,7 +45,9 @@ defmodule Shard.Map.Zone do
     |> validate_required([:name, :slug])
     |> validate_length(:name, min: 2, max: 100)
     |> validate_length(:slug, min: 2, max: 100)
-    |> validate_format(:slug, ~r/^[a-z0-9-]+$/, message: "must be lowercase alphanumeric with hyphens")
+    |> validate_format(:slug, ~r/^[a-z0-9-]+$/,
+      message: "must be lowercase alphanumeric with hyphens"
+    )
     |> validate_length(:description, max: 1000)
     |> validate_inclusion(:zone_type, @zone_types)
     |> validate_number(:min_level, greater_than_or_equal_to: 1)
