@@ -16,8 +16,10 @@ defmodule ShardWeb.UserLive.MonsterComponents do
         Enum.filter(all_monsters, fn monster ->
           if monster.location_id do
             # Check if the monster's room belongs to the specified zone
-            case Shard.Map.get_room!(monster.location_id) do
-              room -> room.zone_id == zone_id
+            try do
+              room = Shard.Map.get_room!(monster.location_id)
+              room.zone_id == zone_id
+            rescue
               _ -> false
             end
           else
@@ -31,13 +33,16 @@ defmodule ShardWeb.UserLive.MonsterComponents do
         position =
           if monster.location_id do
             # Try to get room coordinates from location_id
-            case Shard.Map.get_room!(monster.location_id) do
-              room when not is_nil(room.x_coordinate) and not is_nil(room.y_coordinate) ->
-                {room.x_coordinate, room.y_coordinate}
+            try do
+              room = Shard.Map.get_room!(monster.location_id)
 
-              _ ->
-                # Fallback to a default position if room has no coordinates
+              if not is_nil(room.x_coordinate) and not is_nil(room.y_coordinate) do
+                {room.x_coordinate, room.y_coordinate}
+              else
                 {1, 1}
+              end
+            rescue
+              _ -> {1, 1}
             end
           else
             # Place at a default location if no location_id

@@ -104,14 +104,7 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
   end
 
   defp build_game_state(character, map_data, map_id, starting_position) do
-    constitution = character.constitution || 10
-    base_health = 100
-    base_stamina = 100
-    base_mana = 50
-
-    max_health = base_health + (constitution - 10) * 5
-    max_stamina = base_stamina + (character.dexterity || 10) * 2
-    max_mana = base_mana + (character.intelligence || 10) * 3
+    player_stats = build_player_stats(character)
 
     %{
       player_position: starting_position,
@@ -119,21 +112,7 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
       map_id: map_id,
       character: character,
       active_panel: nil,
-      player_stats: %{
-        health: character.health || max_health,
-        max_health: max_health,
-        stamina: max_stamina,
-        max_stamina: max_stamina,
-        mana: character.mana || max_mana,
-        max_mana: max_mana,
-        level: character.level || 1,
-        experience: character.experience || 0,
-        next_level_exp: calculate_next_level_exp(character.level || 1),
-        strength: character.strength || 10,
-        dexterity: character.dexterity || 10,
-        intelligence: character.intelligence || 10,
-        constitution: constitution
-      },
+      player_stats: player_stats,
       inventory_items: load_character_inventory(character),
       equipped_weapon: load_equipped_weapon(character),
       hotbar: load_character_hotbar(character),
@@ -142,6 +121,48 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
       monsters: load_monsters_from_database(character.current_zone_id || 1, starting_position),
       combat: false
     }
+  end
+
+  defp build_player_stats(character) do
+    constitution = character.constitution || 10
+    dexterity = character.dexterity || 10
+    intelligence = character.intelligence || 10
+    level = character.level || 1
+
+    max_health = calculate_max_health(constitution)
+    max_stamina = calculate_max_stamina(dexterity)
+    max_mana = calculate_max_mana(intelligence)
+
+    %{
+      health: character.health || max_health,
+      max_health: max_health,
+      stamina: max_stamina,
+      max_stamina: max_stamina,
+      mana: character.mana || max_mana,
+      max_mana: max_mana,
+      level: level,
+      experience: character.experience || 0,
+      next_level_exp: calculate_next_level_exp(level),
+      strength: character.strength || 10,
+      dexterity: dexterity,
+      intelligence: intelligence,
+      constitution: constitution
+    }
+  end
+
+  defp calculate_max_health(constitution) do
+    base_health = 100
+    base_health + (constitution - 10) * 5
+  end
+
+  defp calculate_max_stamina(dexterity) do
+    base_stamina = 100
+    base_stamina + dexterity * 2
+  end
+
+  defp calculate_max_mana(intelligence) do
+    base_mana = 50
+    base_mana + intelligence * 3
   end
 
   defp build_terminal_state(starting_position, map_id) do

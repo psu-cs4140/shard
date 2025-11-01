@@ -279,36 +279,9 @@ defmodule ShardWeb.UserLive.MapComponents do
 
   # Component for the minimap
   def minimap(assigns) do
-    # Get rooms and doors from database for the current zone
-    zone_id = assigns[:zone_id] || assigns.game_state.character.current_zone_id || 1
-    rooms = GameMap.list_rooms_by_zone(zone_id) |> Repo.preload([:doors_from, :doors_to])
-
-    # Get doors that connect rooms within this zone
-    room_ids = Enum.map(rooms, & &1.id)
-
-    doors =
-      Repo.all(
-        from(d in GameMap.Door,
-          where: d.from_room_id in ^room_ids and d.to_room_id in ^room_ids,
-          preload: [:from_room, :to_room]
-        )
-      )
-
-    # Filter out rooms without coordinates
-    valid_rooms =
-      Enum.filter(rooms, fn room ->
-        room.x_coordinate != nil and room.y_coordinate != nil
-      end)
-
-    # Filter out doors without valid room connections
-    valid_doors =
-      Enum.filter(doors, fn door ->
-        door.from_room && door.to_room &&
-          door.from_room.x_coordinate != nil && door.from_room.y_coordinate != nil &&
-          door.to_room.x_coordinate != nil && door.to_room.y_coordinate != nil
-      end)
-
-    # Calculate bounds and scaling for the minimap
+    zone_id = get_zone_id(assigns)
+    {rooms, doors} = load_zone_data(zone_id)
+    {valid_rooms, valid_doors} = filter_valid_entities(rooms, doors)
     {bounds, scale_factor} = calculate_minimap_bounds(valid_rooms)
 
     assigns =
@@ -362,6 +335,42 @@ defmodule ShardWeb.UserLive.MapComponents do
       </div>
     </div>
     """
+  end
+
+  # Helper functions for minimap data loading
+  defp get_zone_id(assigns) do
+    assigns[:zone_id] || assigns.game_state.character.current_zone_id || 1
+  end
+
+  defp load_zone_data(zone_id) do
+    rooms = GameMap.list_rooms_by_zone(zone_id) |> Repo.preload([:doors_from, :doors_to])
+    room_ids = Enum.map(rooms, & &1.id)
+
+    doors =
+      Repo.all(
+        from(d in GameMap.Door,
+          where: d.from_room_id in ^room_ids and d.to_room_id in ^room_ids,
+          preload: [:from_room, :to_room]
+        )
+      )
+
+    {rooms, doors}
+  end
+
+  defp filter_valid_entities(rooms, doors) do
+    valid_rooms =
+      Enum.filter(rooms, fn room ->
+        room.x_coordinate != nil and room.y_coordinate != nil
+      end)
+
+    valid_doors =
+      Enum.filter(doors, fn door ->
+        door.from_room && door.to_room &&
+          door.from_room.x_coordinate != nil && door.from_room.y_coordinate != nil &&
+          door.to_room.x_coordinate != nil && door.to_room.y_coordinate != nil
+      end)
+
+    {valid_rooms, valid_doors}
   end
 
   # Component for door lines in the minimap

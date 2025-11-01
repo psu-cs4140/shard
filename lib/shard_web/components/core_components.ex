@@ -202,6 +202,7 @@ defmodule ShardWeb.CoreComponents do
   attr :multiple, :boolean, default: false, doc: "the multiple flag for select inputs"
   attr :class, :string, default: nil, doc: "the input class to use over defaults"
   attr :error_class, :string, default: nil, doc: "the input error class to use over defaults"
+  attr :help, :string, default: nil, doc: "help text to display below the input"
 
   attr :rest, :global,
     include: ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
@@ -240,6 +241,7 @@ defmodule ShardWeb.CoreComponents do
           />{@label}
         </span>
       </label>
+      <p :if={@help} class="text-xs text-base-content/60 mt-1">{@help}</p>
       <.error :for={msg <- @errors}>{msg}</.error>
     </div>
     """
@@ -261,6 +263,7 @@ defmodule ShardWeb.CoreComponents do
           {Phoenix.HTML.Form.options_for_select(@options, @value)}
         </select>
       </label>
+      <p :if={@help} class="text-xs text-base-content/60 mt-1">{@help}</p>
       <.error :for={msg <- @errors}>{msg}</.error>
     </div>
     """
@@ -281,6 +284,7 @@ defmodule ShardWeb.CoreComponents do
           {@rest}
         >{Phoenix.HTML.Form.normalize_value("textarea", @value)}</textarea>
       </label>
+      <p :if={@help} class="text-xs text-base-content/60 mt-1">{@help}</p>
       <.error :for={msg <- @errors}>{msg}</.error>
     </div>
     """
@@ -304,6 +308,7 @@ defmodule ShardWeb.CoreComponents do
           {@rest}
         />
       </label>
+      <p :if={@help} class="text-xs text-base-content/60 mt-1">{@help}</p>
       <.error :for={msg <- @errors}>{msg}</.error>
     </div>
     """
