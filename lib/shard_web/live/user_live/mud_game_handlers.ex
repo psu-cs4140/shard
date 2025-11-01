@@ -156,12 +156,12 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   def handle_click_exit(%{"dir" => dir}, socket) do
     key = dir_to_key(dir)
     player_position = socket.assigns.game_state.player_position
-    map_data = socket.assigns.game_state.map_data
+    game_state = socket.assigns.game_state
 
     new_position =
       case key do
         nil -> player_position
-        _ -> calc_position(player_position, key, map_data)
+        _ -> calc_position(player_position, key, game_state)
       end
 
     terminal_state =
@@ -280,50 +280,62 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   end
 
   def handle_combat_action_info({:combat_action, event}, socket) do
-    case event do
-      {:player_attack, attacker_name, monster_name, damage, monster_alive, remaining_hp} ->
-        # Don't show the message to the attacker themselves
-        if attacker_name != socket.assigns.character_name do
-          message =
-            if monster_alive do
-              "#{attacker_name} attacks the #{monster_name} for #{damage} damage! The #{monster_name} has #{remaining_hp} health remaining."
-            else
-              "#{attacker_name} attacks the #{monster_name} for #{damage} damage! The #{monster_name} is defeated!"
-            end
+    handle_player_attack(event, socket) ||
+      handle_monster_attack(event, socket) ||
+      handle_player_fled(event, socket) ||
+      {:noreply, socket}
+  end
 
-          terminal_state = add_message_to_output(socket.assigns.terminal_state, message)
-          {:noreply, socket, terminal_state}
+  defp handle_player_attack(
+         {:player_attack, attacker_name, monster_name, damage, monster_alive, remaining_hp},
+         socket
+       ) do
+    if attacker_name == socket.assigns.character_name do
+      # Don't show message to attacker themselves
+      nil
+    else
+      message =
+        if monster_alive do
+          "#{attacker_name} attacks the #{monster_name} for #{damage} damage! The #{monster_name} has #{remaining_hp} health remaining."
         else
-          {:noreply, socket}
+          "#{attacker_name} attacks the #{monster_name} for #{damage} damage! The #{monster_name} is defeated!"
         end
 
-      {:monster_attack, monster_name, target_player_name, damage} ->
-        message =
-          if target_player_name == socket.assigns.character_name do
-            "The #{monster_name} attacks you for #{damage} damage!"
-          else
-            "The #{monster_name} attacks #{target_player_name} for #{damage} damage!"
-          end
-
-        terminal_state = add_message_to_output(socket.assigns.terminal_state, message)
-        {:noreply, socket, terminal_state}
-
-      {:player_fled, player_name} ->
-        # Don't show the message to the fleeing player themselves
-        if player_name != socket.assigns.character_name do
-          terminal_state =
-            add_message_to_output(
-              socket.assigns.terminal_state,
-              "#{player_name} flees from combat!"
-            )
-
-          {:noreply, socket, terminal_state}
-        else
-          {:noreply, socket}
-        end
-
-      _other ->
-        {:noreply, socket}
+      terminal_state = add_message_to_output(socket.assigns.terminal_state, message)
+      {:noreply, socket, terminal_state}
     end
   end
+
+  defp handle_player_attack(_event, _socket), do: nil
+
+  defp handle_monster_attack({:monster_attack, monster_name, target_player_name, damage}, socket) do
+    message =
+      if target_player_name == socket.assigns.character_name do
+        "The #{monster_name} attacks you for #{damage} damage!"
+      else
+        "The #{monster_name} attacks #{target_player_name} for #{damage} damage!"
+      end
+
+    terminal_state = add_message_to_output(socket.assigns.terminal_state, message)
+    {:noreply, socket, terminal_state}
+  end
+
+  defp handle_monster_attack(_event, _socket), do: nil
+
+  defp handle_player_fled({:player_fled, player_name}, socket) do
+    if player_name == socket.assigns.character_name do
+      # Don't show message to fleeing player themselves
+      nil
+    else
+      terminal_state =
+        add_message_to_output(
+          socket.assigns.terminal_state,
+          "#{player_name} flees from combat!"
+        )
+
+      {:noreply, socket, terminal_state}
+    end
+  end
+
+  defp handle_player_fled(_event, _socket), do: nil
 end

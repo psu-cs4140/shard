@@ -15,7 +15,7 @@ defmodule ShardWeb.AdminLive.MapFunctions do
              not is_nil(socket.assigns.changeset.data.id) ->
         case Map.update_room(socket.assigns.changeset.data, room_params) do
           {:ok, _room} ->
-            rooms = Map.list_rooms()
+            rooms = reload_rooms(socket)
 
             {:ok,
              socket
@@ -31,7 +31,7 @@ defmodule ShardWeb.AdminLive.MapFunctions do
       _ ->
         case Map.create_room(room_params) do
           {:ok, _room} ->
-            rooms = Map.list_rooms()
+            rooms = reload_rooms(socket)
 
             {:ok,
              socket
@@ -56,7 +56,7 @@ defmodule ShardWeb.AdminLive.MapFunctions do
              not is_nil(socket.assigns.changeset.data.id) ->
         case Map.update_door(socket.assigns.changeset.data, converted_params) do
           {:ok, _door} ->
-            doors = Map.list_doors()
+            doors = reload_doors(socket)
 
             {:ok,
              socket
@@ -72,7 +72,7 @@ defmodule ShardWeb.AdminLive.MapFunctions do
       _ ->
         case Map.create_door(converted_params) do
           {:ok, _door} ->
-            doors = Map.list_doors()
+            doors = reload_doors(socket)
 
             {:ok,
              socket
@@ -122,4 +122,29 @@ defmodule ShardWeb.AdminLive.MapFunctions do
   defp to_boolean(true), do: true
   defp to_boolean(false), do: false
   defp to_boolean(value), do: value
+
+  # Helper functions to reload rooms/doors with zone filtering
+  defp reload_rooms(socket) do
+    if socket.assigns.selected_zone_id do
+      Map.list_rooms_by_zone(socket.assigns.selected_zone_id)
+    else
+      Map.list_rooms()
+    end
+  end
+
+  defp reload_doors(socket) do
+    if socket.assigns.selected_zone_id do
+      rooms = Map.list_rooms_by_zone(socket.assigns.selected_zone_id)
+      room_ids = Enum.map(rooms, & &1.id)
+
+      # Get only doors that connect rooms within this zone
+      all_doors = Map.list_doors()
+
+      Enum.filter(all_doors, fn door ->
+        door.from_room_id in room_ids && door.to_room_id in room_ids
+      end)
+    else
+      Map.list_doors()
+    end
+  end
 end

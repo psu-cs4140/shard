@@ -202,7 +202,7 @@ defmodule ShardWeb.UserLive.CommandParsers do
   defp unlock_door_with_item(game_state, direction, item_name) do
     {x, y} = game_state.player_position
 
-    case GameMap.get_room_by_coordinates(x, y) do
+    case GameMap.get_room_by_coordinates(game_state.character.current_zone_id, x, y, 0) do
       nil ->
         {["You are not in a valid room."], game_state}
 

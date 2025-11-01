@@ -86,7 +86,7 @@ defmodule ShardWeb.UserLive.Commands1 do
         {x, y} = game_state.player_position
 
         # Get room from database
-        room = GameMap.get_room_by_coordinates(x, y)
+        room = GameMap.get_room_by_coordinates(game_state.character.current_zone_id, x, y, 0)
         # Build room description - always use predetermined descriptions for tutorial terrain
         room_description =
           if game_state.map_id == "tutorial_terrain" do
@@ -177,10 +177,10 @@ defmodule ShardWeb.UserLive.Commands1 do
           end
 
         # Check for NPCs at current location
-        npcs_here = get_npcs_at_location(x, y, game_state.map_id)
+        npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
 
         # Check for items at current location
-        items_here = get_items_at_location(x, y, game_state.map_id)
+        items_here = get_items_at_location(x, y, game_state.character.current_zone_id)
 
         description_lines = [room_description]
 
@@ -222,7 +222,7 @@ defmodule ShardWeb.UserLive.Commands1 do
           end
 
         # Add available exits information
-        exits = get_available_exits(x, y, room)
+        exits = get_available_exits(x, y, room, game_state)
 
         description_lines =
           if length(exits) > 0 do
@@ -295,7 +295,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
       "npc" ->
         {x, y} = game_state.player_position
-        npcs_here = get_npcs_at_location(x, y, game_state.map_id)
+        npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
 
         if length(npcs_here) > 0 do
           response =
@@ -391,7 +391,7 @@ defmodule ShardWeb.UserLive.Commands1 do
   end
 
   # Get items at a specific location
-  defp get_items_at_location(x, y, map_id) do
+  defp get_items_at_location(x, y, _zone_id) do
     alias Shard.Items.RoomItem
     location_string = "#{x},#{y},0"
 
@@ -411,12 +411,11 @@ defmodule ShardWeb.UserLive.Commands1 do
       )
       |> Repo.all()
 
-    # Also check for items directly in Item table with matching location and map
+    # Also check for items directly in Item table with matching location
     direct_items =
       from(i in Item,
         where:
           i.location == ^location_string and
-            (i.map == ^map_id or is_nil(i.map)) and
             (is_nil(i.is_active) or i.is_active == true),
         select: %{
           name: i.name,
@@ -527,7 +526,7 @@ defmodule ShardWeb.UserLive.Commands1 do
   # Execute pickup command with a specific item name
   def execute_pickup_command(game_state, item_name) do
     {x, y} = game_state.player_position
-    items_here = get_items_at_location(x, y, game_state.map_id)
+    items_here = get_items_at_location(x, y, game_state.character.current_zone_id)
 
     # Find the item by name (case-insensitive)
     target_item =

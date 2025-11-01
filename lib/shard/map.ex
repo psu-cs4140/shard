@@ -6,13 +6,84 @@ defmodule Shard.Map do
   import Ecto.Query, warn: false
   alias Shard.Repo
 
-  alias Shard.Map.{Room, Door}
+  alias Shard.Map.{Room, Door, Zone}
+
+  # Zone functions
+
+  @doc """
+  Returns the list of zones.
+  """
+  def list_zones do
+    Repo.all(Zone)
+  end
+
+  @doc """
+  Returns all active zones ordered by display_order.
+  """
+  def list_active_zones do
+    Repo.all(from z in Zone, where: z.is_active == true, order_by: [asc: z.display_order])
+  end
+
+  @doc """
+  Gets a single zone by ID.
+  """
+  def get_zone!(id) do
+    Repo.get!(Zone, id)
+  end
+
+  @doc """
+  Gets a zone by slug.
+  """
+  def get_zone_by_slug(slug) do
+    Repo.get_by(Zone, slug: slug)
+  end
+
+  @doc """
+  Creates a zone.
+  """
+  def create_zone(attrs \\ %{}) do
+    %Zone{}
+    |> Zone.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a zone.
+  """
+  def update_zone(%Zone{} = zone, attrs) do
+    zone
+    |> Zone.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a zone.
+  """
+  def delete_zone(%Zone{} = zone) do
+    Repo.delete(zone)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking zone changes.
+  """
+  def change_zone(%Zone{} = zone, attrs \\ %{}) do
+    Zone.changeset(zone, attrs)
+  end
+
+  # Room functions
 
   @doc """
   Returns the list of rooms.
   """
   def list_rooms do
     Repo.all(Room)
+  end
+
+  @doc """
+  Returns all rooms in a specific zone.
+  """
+  def list_rooms_by_zone(zone_id) do
+    Repo.all(from r in Room, where: r.zone_id == ^zone_id)
   end
 
   @doc """
@@ -30,10 +101,22 @@ defmodule Shard.Map do
   end
 
   @doc """
-  Gets a room by coordinates.
+  Gets a room by coordinates within a specific zone.
   """
-  def get_room_by_coordinates(x, y, z \\ 0) do
-    Repo.get_by(Room, x_coordinate: x, y_coordinate: y, z_coordinate: z)
+  def get_room_by_coordinates(zone_id, x, y, z \\ 0) do
+    Repo.get_by(Room, zone_id: zone_id, x_coordinate: x, y_coordinate: y, z_coordinate: z)
+  end
+
+  @doc """
+  Gets a room by coordinates (legacy function for backwards compatibility).
+  Returns the first match if multiple zones have rooms at the same coordinates.
+  """
+  def get_room_by_coordinates_legacy(x, y, z \\ 0) do
+    Repo.one(
+      from r in Room,
+        where: r.x_coordinate == ^x and r.y_coordinate == ^y and r.z_coordinate == ^z,
+        limit: 1
+    )
   end
 
   @doc """

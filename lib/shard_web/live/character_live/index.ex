@@ -122,34 +122,34 @@ defmodule ShardWeb.CharacterLive.Index do
   end
 
   defp validate_movement(character, direction) do
-    # Get current room based on character location
-    current_room =
-      case character.location do
-        # Default starting position
-        nil ->
-          GameMap.get_room_by_coordinates(0, 0)
-
-        location_string ->
-          # Try to parse coordinates from location string or find by name
-          case parse_location_coordinates(location_string) do
-            {x, y} -> GameMap.get_room_by_coordinates(x, y)
-            # Fallback
-            nil -> GameMap.get_room_by_coordinates(0, 0)
-          end
-      end
+    current_room = get_current_room(character)
 
     case current_room do
-      nil ->
-        {:error, "You are in an unknown location"}
+      nil -> {:error, "You are in an unknown location"}
+      room -> validate_room_movement(room, direction)
+    end
+  end
 
-      room ->
-        # Check if there's a door in the specified direction
-        door = GameMap.get_door_in_direction(room.id, direction)
+  defp get_current_room(character) do
+    zone_id = character.current_zone_id || 1
 
-        case door do
-          nil -> {:error, "There is no passage in that direction"}
-          door -> validate_door_passage(door, room)
-        end
+    case character.location do
+      nil -> GameMap.get_room_by_coordinates(zone_id, 0, 0, 0)
+      location_string -> parse_and_get_room(location_string, zone_id)
+    end
+  end
+
+  defp parse_and_get_room(location_string, zone_id) do
+    case parse_location_coordinates(location_string) do
+      {x, y} -> GameMap.get_room_by_coordinates(zone_id, x, y, 0)
+      nil -> GameMap.get_room_by_coordinates(zone_id, 0, 0, 0)
+    end
+  end
+
+  defp validate_room_movement(room, direction) do
+    case GameMap.get_door_in_direction(room.id, direction) do
+      nil -> {:error, "There is no passage in that direction"}
+      door -> validate_door_passage(door, room)
     end
   end
 

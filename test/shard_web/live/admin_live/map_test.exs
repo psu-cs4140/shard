@@ -30,6 +30,7 @@ defmodule ShardWeb.AdminLive.MapTest do
           x_coordinate: 0,
           y_coordinate: 0,
           z_coordinate: 0,
+          zone_id: 1,
           room_type: "standard",
           is_public: true
         })
@@ -41,6 +42,7 @@ defmodule ShardWeb.AdminLive.MapTest do
           x_coordinate: 1,
           y_coordinate: 0,
           z_coordinate: 0,
+          zone_id: 1,
           room_type: "safe_zone",
           is_public: true
         })
@@ -228,9 +230,9 @@ defmodule ShardWeb.AdminLive.MapTest do
       {:ok, view, _html} = live(conn, ~p"/admin/map")
 
       # Click generate default map
-      html = view |> element("button", "Generate Default Map") |> render_click()
+      html = view |> element("button", "Generate Sample Rooms") |> render_click()
 
-      assert html =~ "Default 3x3 map generated successfully!"
+      assert html =~ "Sample 3x3 map generated for this zone successfully!"
 
       # Verify 9 rooms were created (3x3 grid)
       rooms = Map.list_rooms()

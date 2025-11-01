@@ -8,6 +8,7 @@ defmodule Shard.Characters.Character do
 
   alias Shard.Users.User
   alias Shard.Items.{CharacterInventory, HotbarSlot}
+  alias Shard.Map.Zone
 
   schema "characters" do
     field :name, :string
@@ -27,6 +28,7 @@ defmodule Shard.Characters.Character do
     field :is_active, :boolean, default: true
 
     belongs_to :user, User
+    belongs_to :current_zone, Zone
     has_many :character_inventories, CharacterInventory
     has_many :hotbar_slots, HotbarSlot
 
@@ -52,7 +54,8 @@ defmodule Shard.Characters.Character do
       :location,
       :description,
       :is_active,
-      :user_id
+      :user_id,
+      :current_zone_id
     ])
     |> validate_required([:name, :class, :race])
     |> validate_length(:name, min: 2, max: 50)

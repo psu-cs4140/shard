@@ -22,12 +22,12 @@ defmodule ShardWeb.MudGameLive do
 
   @impl true
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity, Credo.Check.Refactor.Nesting
-  def mount(%{"map_id" => map_id} = params, _session, socket) do
+  def mount(%{"character_id" => character_id} = params, _session, socket) do
     with {:ok, character} <- get_character_from_params(params),
          character_name <- get_character_name(params, character),
          {:ok, character} <- load_character_with_associations(character),
-         :ok <- setup_tutorial_content(map_id),
-         {:ok, socket} <- initialize_game_state(socket, character, map_id, character_name) do
+         :ok <- setup_tutorial_content(character_id),
+         {:ok, socket} <- initialize_game_state(socket, character, character_id, character_name) do
       # Subscribe to the global chat topic
       Phoenix.PubSub.subscribe(Shard.PubSub, "global_chat")
       # Subscribe to player presence updates
@@ -58,7 +58,7 @@ defmodule ShardWeb.MudGameLive do
         {:ok,
          socket
          |> put_flash(:error, "Please select a character to play")
-         |> push_navigate(to: ~p"/maps")}
+         |> push_navigate(to: ~p"/zones")}
     end
   end
 
@@ -128,7 +128,7 @@ defmodule ShardWeb.MudGameLive do
     <!-- Right Panel - Controls -->
         <div class="w-100 bg-gray-800 px-4 py-4 flex flex-col space-y-4 overflow-y-auto">
           <.minimap
-            map_data={@game_state.map_data}
+            game_state={@game_state}
             player_position={@game_state.player_position}
           />
 
@@ -277,7 +277,7 @@ defmodule ShardWeb.MudGameLive do
            game_state: updated_game_state,
            terminal_state: terminal_state,
            modal_state: modal_state,
-           available_exits: compute_available_exits(player_position)
+           available_exits: compute_available_exits(player_position, updated_game_state)
          )}
 
       result ->
@@ -400,7 +400,7 @@ defmodule ShardWeb.MudGameLive do
          assign(socket,
            game_state: game_state,
            terminal_state: terminal_state,
-           available_exits: compute_available_exits(player_position)
+           available_exits: compute_available_exits(player_position, game_state)
          )}
 
       result ->

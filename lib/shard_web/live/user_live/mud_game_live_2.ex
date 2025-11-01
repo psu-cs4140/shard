@@ -102,7 +102,7 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
       |> assign(:terminal_state, terminal_state)
       |> assign(:chat_state, chat_state)
       |> assign(:modal_state, modal_state)
-      |> assign(:available_exits, compute_available_exits(game_state.player_position))
+      |> assign(:available_exits, compute_available_exits(game_state.player_position, game_state))
       |> assign(:character_name, character_name)
       |> assign(:active_tab, assigns.active_tab)
 

@@ -11,7 +11,8 @@ defmodule ShardWeb.AdminLive.MapFunctionsTest do
       editing: nil,
       changeset: nil,
       flash: %{},
-      __changed__: %{}
+      __changed__: %{},
+      selected_zone_id: nil
     }
 
     merged_assigns = :maps.merge(default_assigns, assigns)

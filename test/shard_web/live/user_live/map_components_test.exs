@@ -16,7 +16,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
         experience: 0,
         user_id: user.id,
         class: "warrior",
-        race: "human"
+        race: "human",
+        current_zone_id: 1
       }
 
       character = Shard.Repo.insert!(character)
@@ -111,7 +112,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       conn = log_in_user(conn, user)
 
       {:ok, view, _html} =
-        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+        live(conn, ~p"/play/#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -144,7 +145,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       conn = log_in_user(conn, user)
 
       {:ok, view, _html} =
-        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+        live(conn, ~p"/play/#{game_state.character.id}")
 
       # Check that minimap is displayed in the right panel
       assert has_element?(view, "h2", "Minimap")
@@ -189,7 +190,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
 
       # Since we can't create invalid doors due to DB constraints, just verify the map renders
       {:ok, view, _html} =
-        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+        live(conn, ~p"/play/#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -210,7 +211,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       conn = log_in_user(conn, user)
 
       {:ok, view, _html} =
-        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+        live(conn, ~p"/play/#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -251,7 +252,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       conn = log_in_user(conn, user)
 
       {:ok, view, _html} =
-        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+        live(conn, ~p"/play/#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -298,7 +299,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       conn = log_in_user(conn, user)
 
       {:ok, view, _html} =
-        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+        live(conn, ~p"/play/#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -325,7 +326,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       conn = log_in_user(conn, user)
 
       {:ok, view, _html} =
-        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+        live(conn, ~p"/play/#{game_state.character.id}")
 
       # Update the game state directly in the socket assigns instead of sending a message
       # since the handle_info for :update_game_state might not be implemented
@@ -350,7 +351,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       conn = log_in_user(conn, user)
 
       {:ok, view, _html} =
-        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+        live(conn, ~p"/play/#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -369,7 +370,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       conn = log_in_user(conn, user)
 
       {:ok, view, _html} =
-        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+        live(conn, ~p"/play/#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -405,7 +406,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       conn = log_in_user(conn, user)
 
       {:ok, view, _html} =
-        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+        live(conn, ~p"/play/#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -441,7 +442,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       conn = log_in_user(conn, user)
 
       {:ok, view, _html} =
-        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+        live(conn, ~p"/play/#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -493,7 +494,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
         experience: 0,
         user_id: user.id,
         class: "warrior",
-        race: "human"
+        race: "human",
+        current_zone_id: 1
       }
 
       character = Shard.Repo.insert!(character)
@@ -553,7 +555,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       conn = log_in_user(conn, user)
 
       {:ok, view, _html} =
-        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+        live(conn, ~p"/play/#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
@@ -573,7 +575,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       conn = log_in_user(conn, user)
 
       {:ok, view, _html} =
-        live(conn, ~p"/play/tutorial_terrain?character_id=#{game_state.character.id}")
+        live(conn, ~p"/play/#{game_state.character.id}")
 
       # Open the map modal
       view |> element("button", "Map") |> render_click()
