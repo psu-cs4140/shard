@@ -12,32 +12,70 @@ defmodule ShardWeb.AdminLive.Map do
 
   @impl true
   def mount(_params, _session, socket) do
-    rooms = Map.list_rooms()
-    doors = Map.list_doors()
+    zones = Map.list_zones()
 
-    {:ok,
-     socket
-     |> assign(:rooms, rooms)
-     |> assign(:doors, doors)
-     |> assign(:page_title, "Map Management")
-     |> assign(:tab, "rooms")
-     |> assign(:changeset, nil)
-     |> assign(:editing, nil)
-     |> assign(:viewing, nil)
-     |> assign(:zoom, 1.0)
-     |> assign(:pan_x, 0)
-     |> assign(:pan_y, 0)
-     |> assign(:drag_start, nil)}
+    # Auto-select the first zone if available
+    selected_zone_id = if Enum.any?(zones), do: List.first(zones).id, else: nil
+
+    socket = socket
+    |> assign(:zones, zones)
+    |> assign(:selected_zone_id, selected_zone_id)
+    |> assign(:page_title, "Map Management")
+    |> assign(:tab, "rooms")
+    |> assign(:changeset, nil)
+    |> assign(:editing, nil)
+    |> assign(:viewing, nil)
+    |> assign(:zoom, 1.0)
+    |> assign(:pan_x, 0)
+    |> assign(:pan_y, 0)
+    |> assign(:drag_start, nil)
+
+    # Load data for the selected zone
+    socket = if selected_zone_id do
+      load_zone_data(socket, selected_zone_id)
+    else
+      socket |> assign(:rooms, []) |> assign(:doors, [])
+    end
+
+    {:ok, socket}
   end
 
   @impl true
   def handle_params(params, _url, socket) do
+    zone_id = params["zone_id"]
+
+    socket =
+      if zone_id do
+        load_zone_data(socket, zone_id)
+      else
+        socket
+      end
+
     {:noreply, apply_action(socket, socket.assigns.live_action, params)}
   end
 
   defp apply_action(socket, :index, _params) do
     socket
     |> assign(:page_title, "Map Management")
+  end
+
+  defp load_zone_data(socket, zone_id) do
+    # Ensure zone_id is an integer
+    zone_id = if is_binary(zone_id), do: String.to_integer(zone_id), else: zone_id
+
+    rooms = Map.list_rooms_by_zone(zone_id)
+    room_ids = Enum.map(rooms, & &1.id)
+
+    # Get doors that connect rooms within this zone
+    all_doors = Map.list_doors()
+    doors = Enum.filter(all_doors, fn door ->
+      door.from_room_id in room_ids && door.to_room_id in room_ids
+    end)
+
+    socket
+    |> assign(:selected_zone_id, zone_id)
+    |> assign(:rooms, rooms)
+    |> assign(:doors, doors)
   end
 
   @impl true
@@ -51,7 +89,36 @@ defmodule ShardWeb.AdminLive.Map do
     <.flash_group flash={@flash} />
 
     <div class="mt-8">
-      <div class="flex justify-between items-center mb-4">
+      <div class="mb-4 flex items-center gap-4">
+        <div class="flex-1">
+          <label class="label">
+            <span class="label-text font-semibold">Select Zone</span>
+          </label>
+          <select
+            class="select select-bordered w-full max-w-md"
+            phx-change="select_zone"
+            name="zone_id"
+          >
+            <option value="" selected={is_nil(@selected_zone_id)}>
+              Choose a zone to edit...
+            </option>
+            <%= for zone <- @zones do %>
+              <option value={zone.id} selected={@selected_zone_id == zone.id}>
+                <%= zone.name %> (<%= length(Map.list_rooms_by_zone(zone.id)) %> rooms)
+              </option>
+            <% end %>
+          </select>
+        </div>
+
+        <div class="mt-auto">
+          <.link navigate={~p"/admin/zones"} class="btn btn-secondary">
+            <.icon name="hero-cog-6-tooth" class="w-4 h-4 mr-1" /> Manage Zones
+          </.link>
+        </div>
+      </div>
+
+      <%= if @selected_zone_id do %>
+        <div class="flex justify-between items-center mb-4">
         <div class="tabs tabs-lifted">
           <button
             type="button"
@@ -92,18 +159,11 @@ defmodule ShardWeb.AdminLive.Map do
             class="btn btn-secondary"
             phx-click="generate_default_map"
           >
-            Generate Default Map
-          </button>
-          <button
-            type="button"
-            class="btn btn-error"
-            phx-click="delete_all_map_data"
-            data-confirm="Are you sure you want to delete all rooms and doors? This cannot be undone."
-          >
-            Delete All Map Data
+            Generate Sample Rooms
           </button>
         </div>
       </div>
+      <% end %>
 
       <div class="mt-6">
         <%= case @tab do %>
@@ -143,6 +203,7 @@ defmodule ShardWeb.AdminLive.Map do
         phx-change="validate_room"
         phx-submit="save_room"
       >
+        <input type="hidden" name="room[zone_id]" value={@selected_zone_id} />
         <.input field={f[:name]} type="text" label="Name" required />
         <.input field={f[:description]} type="textarea" label="Description" />
         <div class="grid grid-cols-3 gap-4">
@@ -313,4 +374,23 @@ defmodule ShardWeb.AdminLive.Map do
   # Delete all map data
   def handle_event("delete_all_map_data", params, socket),
     do: MapHandlers.handle_delete_all_map_data(params, socket)
+
+  # Zone selection
+  def handle_event("select_zone", %{"zone_id" => zone_id}, socket) do
+    if zone_id == "" do
+      {:noreply,
+       socket
+       |> assign(:selected_zone_id, nil)
+       |> assign(:rooms, [])
+       |> assign(:doors, [])
+       |> push_patch(to: ~p"/admin/map")}
+    else
+      updated_socket = load_zone_data(socket, zone_id)
+
+      # Update URL to reflect selected zone
+      {:noreply,
+       updated_socket
+       |> push_patch(to: ~p"/admin/map?zone_id=#{zone_id}")}
+    end
+  end
 end

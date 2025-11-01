@@ -2,6 +2,11 @@
   {@character.name}
   <:subtitle>Character Details</:subtitle>
   <:actions>
+    <.link navigate={~p"/zones?character_id=#{@character.id}"}>
+      <.button class="btn-primary">
+        <.icon name="hero-play" class="w-4 h-4 mr-1" /> Enter Game World
+      </.button>
+    </.link>
     <.link navigate={~p"/characters"}>
       <.button>Back to Characters</.button>
     </.link>
@@ -16,3 +21,26 @@
   <:item title="Location">{@character.location || "Starting Area"}</:item>
   <:item title="Description">{@character.description || "No description"}</:item>
 </.list>
+
+<div class="mt-8 alert alert-info">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    class="stroke-current shrink-0 w-6 h-6"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+    >
+    </path>
+  </svg>
+  <div>
+    <h3 class="font-bold">Ready to play?</h3>
+    <div class="text-sm">
+      Click "Enter Game World" above to choose a zone and begin your adventure!
+    </div>
+  </div>
+</div>

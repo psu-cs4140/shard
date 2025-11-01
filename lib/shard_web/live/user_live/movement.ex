@@ -14,7 +14,7 @@ defmodule ShardWeb.UserLive.Movement do
   def execute_movement(game_state, direction) do
     try do
       current_pos = game_state.player_position
-      new_pos = calc_position(current_pos, direction, game_state.map_data)
+      new_pos = calc_position(current_pos, direction, game_state)
 
       PubSub.unsubscribe(Shard.PubSub, posn_to_room_channel(current_pos))
       PubSub.subscribe(Shard.PubSub, posn_to_room_channel(new_pos))
@@ -38,12 +38,12 @@ defmodule ShardWeb.UserLive.Movement do
         {curr_x, curr_y} = current_pos
         {new_x, new_y} = new_pos
 
-        current_room = GameMap.get_room_by_coordinates(curr_x, curr_y)
-        destination_room = GameMap.get_room_by_coordinates(new_x, new_y)
+        current_room = GameMap.get_room_by_coordinates(game_state.character.current_zone_id, curr_x, curr_y, 0)
+        destination_room = GameMap.get_room_by_coordinates(game_state.character.current_zone_id, new_x, new_y, 0)
         completion_result = GameMap.check_dungeon_completion(current_room, destination_room)
 
-        npcs_here = get_npcs_at_location(new_x, new_y, game_state.map_id)
-        items_here = get_items_at_location(new_x, new_y, game_state.map_id)
+        npcs_here = get_npcs_at_location(new_x, new_y, game_state.character.current_zone_id)
+        items_here = get_items_at_location(new_x, new_y, game_state.character.current_zone_id)
         monsters = Enum.filter(game_state.monsters, fn m -> m[:position] == new_pos end)
         monster_count = Enum.count(monsters)
 
@@ -96,7 +96,7 @@ defmodule ShardWeb.UserLive.Movement do
   end
 
   # To calculate new player position on map
-  def calc_position(curr_position, key, _map_data) do
+  def calc_position(curr_position, key, game_state) do
     new_position =
       case key do
         "ArrowUp" -> {elem(curr_position, 0), elem(curr_position, 1) - 1}
@@ -110,25 +110,20 @@ defmodule ShardWeb.UserLive.Movement do
         _ -> curr_position
       end
 
-    if valid_movement(curr_position, new_position, key) do
+    if valid_movement(curr_position, new_position, key, game_state) do
       new_position
     else
       curr_position
     end
   end
 
-  defp valid_position({x, y}, _map_data) do
-    case GameMap.get_room_by_coordinates(x, y) do
-      nil -> false
-      _room -> true
-    end
-  end
 
-  defp valid_movement(current_pos, new_pos, direction) do
+
+  defp valid_movement(current_pos, new_pos, direction, game_state) do
     {curr_x, curr_y} = current_pos
     {new_x, new_y} = new_pos
 
-    current_room = GameMap.get_room_by_coordinates(curr_x, curr_y)
+    current_room = GameMap.get_room_by_coordinates(game_state.character.current_zone_id, curr_x, curr_y, 0)
 
     case current_room do
       nil ->
@@ -153,28 +148,21 @@ defmodule ShardWeb.UserLive.Movement do
 
           case door do
             nil ->
-              valid_position(new_pos, nil)
+              false
 
             door ->
               cond do
                 door.is_locked ->
-                  IO.puts("Movement blocked: The #{door.door_type} is locked")
                   false
 
                 door.door_type == "secret" ->
-                  IO.puts("Movement blocked: Secret passage not discovered")
                   false
 
                 true ->
                   target_room = GameMap.get_room!(door.to_room_id)
 
-                  if target_room.x_coordinate == new_x and
-                       target_room.y_coordinate == new_y do
-                    IO.puts("Moving through #{door.door_type} door")
-                    true
-                  else
-                    false
-                  end
+                  target_room.x_coordinate == new_x and
+                    target_room.y_coordinate == new_y
               end
           end
         else
@@ -183,7 +171,7 @@ defmodule ShardWeb.UserLive.Movement do
     end
   end
 
-  def get_available_exits(x, y, room) do
+  def get_available_exits(x, y, room, game_state) do
     exits = []
 
     exits =
@@ -219,11 +207,11 @@ defmodule ShardWeb.UserLive.Movement do
       "southwest"
     ]
 
-    tutorial_exits =
-      Enum.filter(basic_directions, fn direction ->
-        test_pos = calc_position({x, y}, direction_to_key(direction), nil)
-        test_pos != {x, y} and valid_movement({x, y}, test_pos, direction_to_key(direction))
-      end)
+        tutorial_exits =
+          Enum.filter(basic_directions, fn direction ->
+            test_pos = calc_position({x, y}, direction_to_key(direction), game_state)
+            test_pos != {x, y} and valid_movement({x, y}, test_pos, direction_to_key(direction), game_state)
+          end)
 
     (exits ++ tutorial_exits)
     |> Enum.uniq()
@@ -244,8 +232,8 @@ defmodule ShardWeb.UserLive.Movement do
     end
   end
 
-  def compute_available_exits({x, y}) do
-    case GameMap.get_room_by_coordinates(x, y) do
+  def compute_available_exits({x, y}, game_state) do
+    case GameMap.get_room_by_coordinates(game_state.character.current_zone_id, x, y, 0) do
       nil ->
         []
 
@@ -274,7 +262,7 @@ defmodule ShardWeb.UserLive.Movement do
     "room:#{xx},#{yy}"
   end
 
-  defp get_items_at_location(x, y, map_id) do
+  defp get_items_at_location(x, y, _zone_id) do
     alias Shard.Items.RoomItem
     location_string = "#{x},#{y},0"
 
@@ -297,7 +285,6 @@ defmodule ShardWeb.UserLive.Movement do
       from(i in Item,
         where:
           i.location == ^location_string and
-            (i.map == ^map_id or is_nil(i.map)) and
             (is_nil(i.is_active) or i.is_active == true),
         select: %{
           name: i.name,

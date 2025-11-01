@@ -127,14 +127,14 @@ defmodule ShardWeb.CharacterLive.Index do
       case character.location do
         # Default starting position
         nil ->
-          GameMap.get_room_by_coordinates(0, 0)
+          GameMap.get_room_by_coordinates(character.current_zone_id || 1, 0, 0, 0)
 
         location_string ->
           # Try to parse coordinates from location string or find by name
           case parse_location_coordinates(location_string) do
-            {x, y} -> GameMap.get_room_by_coordinates(x, y)
+            {x, y} -> GameMap.get_room_by_coordinates(character.current_zone_id || 1, x, y, 0)
             # Fallback
-            nil -> GameMap.get_room_by_coordinates(0, 0)
+            nil -> GameMap.get_room_by_coordinates(character.current_zone_id || 1, 0, 0, 0)
           end
       end
 

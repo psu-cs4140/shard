@@ -41,7 +41,7 @@ defmodule ShardWeb.Router do
   scope "/", ShardWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", HomeLive, :index
 
     # Auth pages that should be reachable even if already logged-in (sudo mode, confirmation)
     live_session :auth_public,
@@ -100,8 +100,8 @@ defmodule ShardWeb.Router do
       live "/characters/new", CharacterLive.New, :new
       live "/characters/:id", CharacterLive.Show, :show
       live "/inventory", InventoryLive.Index, :index
-      live "/maps", MapSelectionLive
-      live "/play/:map_id", MudGameLive
+      live "/zones", ZoneSelectionLive, :index
+      live "/play/:character_id", MudGameLive
     end
 
     post "/users/update-password", UserSessionController, :update_password
@@ -117,6 +117,7 @@ defmodule ShardWeb.Router do
         {ShardWeb.UserAuth, :require_authenticated}
       ] do
       live "/", AdminLive.Index, :index
+      live "/zones", AdminLive.Zones, :index
       live "/map", AdminLive.Map, :index
 
       live "/characters", AdminLive.Characters, :index

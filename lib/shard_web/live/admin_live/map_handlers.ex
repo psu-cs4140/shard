@@ -47,8 +47,8 @@ defmodule ShardWeb.AdminLive.MapHandlers do
     room = Map.get_room!(id)
     {:ok, _} = Map.delete_room(room)
 
-    rooms = Map.list_rooms()
-    doors = Map.list_doors()
+    rooms = reload_rooms(socket)
+    doors = reload_doors(socket)
 
     {:noreply,
      socket
@@ -79,7 +79,7 @@ defmodule ShardWeb.AdminLive.MapHandlers do
   def handle_apply_and_save(%{"room" => room_params}, socket) do
     case Map.update_room(socket.assigns.viewing, room_params) do
       {:ok, updated_room} ->
-        rooms = Map.list_rooms()
+        rooms = reload_rooms(socket)
 
         {:noreply,
          socket
@@ -134,8 +134,8 @@ defmodule ShardWeb.AdminLive.MapHandlers do
     door = Map.get_door!(id)
     {:ok, _} = Map.delete_door(door)
 
-    rooms = Map.list_rooms()
-    doors = Map.list_doors()
+    rooms = reload_rooms(socket)
+    doors = reload_doors(socket)
 
     {:noreply,
      socket
@@ -235,33 +235,45 @@ defmodule ShardWeb.AdminLive.MapHandlers do
     Enum.uniq_by(adjacent_rooms, & &1.id)
   end
 
-  # Generate default map
+  # Generate default map for current zone
   def handle_generate_default_map(_params, socket) do
-    Shard.Repo.delete_all(Door)
-    Shard.Repo.delete_all(Room)
+    zone_id = socket.assigns.selected_zone_id
 
-    rooms = create_default_rooms()
-    create_default_doors(rooms)
+    if zone_id do
+      # Delete existing rooms and doors in this zone
+      from(r in Room, where: r.zone_id == ^zone_id) |> Repo.delete_all()
+      # Delete doors that connect rooms in this zone
+      rooms_in_zone = Map.list_rooms_by_zone(zone_id)
+      room_ids = Enum.map(rooms_in_zone, & &1.id)
+      from(d in Door, where: d.from_room_id in ^room_ids or d.to_room_id in ^room_ids) |> Repo.delete_all()
 
-    rooms = Map.list_rooms()
-    doors = Map.list_doors()
+      # Create new sample rooms for this zone
+      rooms = create_default_rooms_for_zone(zone_id)
+      create_default_doors(rooms)
 
-    {:noreply,
-     socket
-     |> assign(:rooms, rooms)
-     |> assign(:doors, doors)
-     |> put_flash(:info, "Default 3x3 map generated successfully!")}
-  end
+      rooms = reload_rooms(socket)
+      doors = reload_doors(socket)
 
-  defp create_default_rooms do
-    for x <- 0..2, y <- 0..2 do
-      create_room_at_coordinates(x, y)
+      {:noreply,
+       socket
+       |> assign(:rooms, rooms)
+       |> assign(:doors, doors)
+       |> put_flash(:info, "Sample 3x3 map generated for this zone successfully!")}
+    else
+      {:noreply, put_flash(socket, :error, "Please select a zone first")}
     end
   end
 
-  defp create_room_at_coordinates(x, y) do
-    name = "Room #{x},#{y}"
-    description = "A room in the default map at coordinates (#{x}, #{y})"
+  defp create_default_rooms_for_zone(zone_id) do
+    for x <- 0..2, y <- 0..2 do
+      create_room_at_coordinates_for_zone(x, y, zone_id)
+    end
+  end
+
+  defp create_room_at_coordinates_for_zone(x, y, zone_id) do
+    zone = Map.get_zone!(zone_id)
+    name = "#{zone.name} - Room #{x},#{y}"
+    description = "A room in #{zone.name} at coordinates (#{x}, #{y})"
     room_type = if x == 1 and y == 1, do: "safe_zone", else: "standard"
 
     {:ok, room} =
@@ -271,6 +283,7 @@ defmodule ShardWeb.AdminLive.MapHandlers do
         x_coordinate: x,
         y_coordinate: y,
         z_coordinate: 0,
+        zone_id: zone_id,
         room_type: room_type,
         is_public: true
       })
@@ -324,13 +337,37 @@ defmodule ShardWeb.AdminLive.MapHandlers do
     Shard.Repo.delete_all(Door)
     Shard.Repo.delete_all(Room)
 
-    rooms = Map.list_rooms()
-    doors = Map.list_doors()
+    rooms = reload_rooms(socket)
+    doors = reload_doors(socket)
 
     {:noreply,
      socket
      |> assign(:rooms, rooms)
      |> assign(:doors, doors)
      |> put_flash(:info, "All map data deleted successfully!")}
+  end
+
+  # Helper functions to reload rooms/doors with zone filtering
+  defp reload_rooms(socket) do
+    if socket.assigns.selected_zone_id do
+      Map.list_rooms_by_zone(socket.assigns.selected_zone_id)
+    else
+      Map.list_rooms()
+    end
+  end
+
+  defp reload_doors(socket) do
+    if socket.assigns.selected_zone_id do
+      rooms = Map.list_rooms_by_zone(socket.assigns.selected_zone_id)
+      room_ids = Enum.map(rooms, & &1.id)
+
+      # Get only doors that connect rooms within this zone
+      all_doors = Map.list_doors()
+      Enum.filter(all_doors, fn door ->
+        door.from_room_id in room_ids && door.to_room_id in room_ids
+      end)
+    else
+      Map.list_doors()
+    end
   end
 end

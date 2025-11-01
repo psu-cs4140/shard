@@ -78,12 +78,14 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
     end
   end
 
-  def initialize_game_state(character, map_id, character_name) do
-    map_data = generate_map_from_database(map_id)
+  def initialize_game_state(character, _map_id, character_name) do
+    # Use the character's current zone for map generation and monster loading
+    zone_id = character.current_zone_id || 1
+    map_data = generate_map_from_database(zone_id)
     starting_position = find_valid_starting_position(map_data)
 
-    game_state = build_game_state(character, map_data, map_id, starting_position)
-    terminal_state = build_terminal_state(starting_position, map_id)
+    game_state = build_game_state(character, map_data, zone_id, starting_position)
+    terminal_state = build_terminal_state(starting_position, zone_id)
     chat_state = build_chat_state()
     modal_state = build_modal_state()
 
@@ -137,7 +139,7 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
       hotbar: load_character_hotbar(character),
       quests: [],
       pending_quest_offer: nil,
-      monsters: load_monsters_from_database(map_id, starting_position),
+      monsters: load_monsters_from_database(character.current_zone_id || 1, starting_position),
       combat: false
     }
   end

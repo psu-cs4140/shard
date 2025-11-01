@@ -18,6 +18,7 @@ defmodule Shard.Map.Room do
     # For extensibility: lighting, weather, etc.
     field :properties, :map, default: %{}
 
+    belongs_to :zone, Shard.Map.Zone
     has_many :doors_from, Shard.Map.Door, foreign_key: :from_room_id
     has_many :doors_to, Shard.Map.Door, foreign_key: :to_room_id
 
@@ -35,7 +36,8 @@ defmodule Shard.Map.Room do
       :z_coordinate,
       :is_public,
       :room_type,
-      :properties
+      :properties,
+      :zone_id
     ])
     |> validate_required([:name])
     |> validate_length(:name, min: 1, max: 100)
@@ -48,7 +50,8 @@ defmodule Shard.Map.Room do
       "treasure_room",
       "trap_room"
     ])
+    |> foreign_key_constraint(:zone_id)
     |> unique_constraint(:name)
-    |> unique_constraint([:x_coordinate, :y_coordinate, :z_coordinate])
+    |> unique_constraint([:zone_id, :x_coordinate, :y_coordinate, :z_coordinate])
   end
 end

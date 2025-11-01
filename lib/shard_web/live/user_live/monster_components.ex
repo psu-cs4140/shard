@@ -6,10 +6,23 @@ defmodule ShardWeb.UserLive.MonsterComponents do
   @doc """
   Load monsters from database and convert them to game format.
   """
-  def load_monsters_from_database(_map_id, _starting_position) do
+  def load_monsters_from_database(zone_id, _starting_position) do
     try do
       # Get all monsters from database
-      monsters = Shard.Monsters.list_monsters()
+      all_monsters = Shard.Monsters.list_monsters()
+
+      # Filter monsters to only those in rooms within the specified zone
+      monsters = Enum.filter(all_monsters, fn monster ->
+        if monster.location_id do
+          # Check if the monster's room belongs to the specified zone
+          case Shard.Map.get_room!(monster.location_id) do
+            room -> room.zone_id == zone_id
+            _ -> false
+          end
+        else
+          false
+        end
+      end)
 
       # Convert database monsters to game format
       Enum.map(monsters, fn monster ->
