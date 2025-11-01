@@ -178,8 +178,8 @@ defmodule ShardWeb.MudGameLiveTest do
       assert socket.assigns.game_state.character.race == "elf"
       assert socket.assigns.game_state.character.level == 5
 
-      # Verify map_id parameter is handled
-      assert socket.assigns.game_state.map_id == "2"
+      # Verify map_id parameter is handled (now uses zone_id)
+      assert socket.assigns.game_state.map_id == 1
 
       # Verify terminal state is initialized with welcome messages
       assert is_list(socket.assigns.terminal_state.output)

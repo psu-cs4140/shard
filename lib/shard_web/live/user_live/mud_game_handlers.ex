@@ -156,12 +156,12 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   def handle_click_exit(%{"dir" => dir}, socket) do
     key = dir_to_key(dir)
     player_position = socket.assigns.game_state.player_position
-    map_data = socket.assigns.game_state.map_data
+    game_state = socket.assigns.game_state
 
     new_position =
       case key do
         nil -> player_position
-        _ -> calc_position(player_position, key, map_data)
+        _ -> calc_position(player_position, key, game_state)
       end
 
     terminal_state =
