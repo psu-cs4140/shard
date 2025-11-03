@@ -23,47 +23,46 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       character = Shard.Repo.insert!(character)
 
       # Create some test rooms with unique coordinates
-      room1 = %GameMap.Room{
-        name: "Map Test Room 1",
+      unique_id = System.unique_integer([:positive])
+      
+      {:ok, room1} = Shard.Map.create_room(%{
+        name: "Map Test Room 1 #{unique_id}",
         description: "A test room",
-        x_coordinate: 100,
-        y_coordinate: 100,
+        x_coordinate: 100 + rem(unique_id, 100),
+        y_coordinate: 100 + div(unique_id, 100),
         z_coordinate: 0,
-        room_type: "standard"
-      }
+        room_type: "standard",
+        is_public: true
+      })
 
-      room2 = %GameMap.Room{
-        name: "Map Test Room 2",
+      {:ok, room2} = Shard.Map.create_room(%{
+        name: "Map Test Room 2 #{unique_id}",
         description: "Another test room",
-        x_coordinate: 101,
-        y_coordinate: 100,
+        x_coordinate: 101 + rem(unique_id, 100),
+        y_coordinate: 100 + div(unique_id, 100),
         z_coordinate: 0,
-        room_type: "treasure_room"
-      }
+        room_type: "treasure_room",
+        is_public: true
+      })
 
-      room3 = %GameMap.Room{
-        name: "Map Test Room 3",
+      {:ok, room3} = Shard.Map.create_room(%{
+        name: "Map Test Room 3 #{unique_id}",
         description: "A third test room",
-        x_coordinate: 100,
-        y_coordinate: 101,
+        x_coordinate: 100 + rem(unique_id, 100),
+        y_coordinate: 101 + div(unique_id, 100),
         z_coordinate: 0,
-        room_type: "safe_zone"
-      }
+        room_type: "safe_zone",
+        is_public: true
+      })
 
-      room1 = Repo.insert!(room1)
-      room2 = Repo.insert!(room2)
-      room3 = Repo.insert!(room3)
-
-      # Create a test door
-      door = %GameMap.Door{
+      # Create a test door using the Map context
+      {:ok, door} = Shard.Map.create_door(%{
         from_room_id: room1.id,
         to_room_id: room2.id,
         direction: "east",
         door_type: "standard",
         is_locked: false
-      }
-
-      door = Repo.insert!(door)
+      })
 
       game_state = %{
         player_position: {0, 0},
@@ -167,27 +166,27 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       Repo.delete_all(GameMap.Room)
 
       # Create a room without coordinates
-      room_no_coords = %GameMap.Room{
-        name: "Room Without Coords",
+      unique_id = System.unique_integer([:positive])
+      
+      {:ok, _room_no_coords} = Shard.Map.create_room(%{
+        name: "Room Without Coords #{unique_id}",
         description: "A room with no coordinates",
         x_coordinate: nil,
         y_coordinate: nil,
-        room_type: "standard"
-      }
+        room_type: "standard",
+        is_public: true
+      })
 
-      Repo.insert!(room_no_coords)
-
-      # Create a unique room at (1,1) for the player to start in to avoid conflicts
-      starting_room = %GameMap.Room{
-        name: "Starting Room",
+      # Create a unique room for the player to start in to avoid conflicts
+      {:ok, _starting_room} = Shard.Map.create_room(%{
+        name: "Starting Room #{unique_id}",
         description: "A starting room",
-        x_coordinate: 1,
-        y_coordinate: 1,
+        x_coordinate: 1 + rem(unique_id, 100),
+        y_coordinate: 1 + div(unique_id, 100),
         z_coordinate: 0,
-        room_type: "standard"
-      }
-
-      Repo.insert!(starting_room)
+        room_type: "standard",
+        is_public: true
+      })
 
       conn = log_in_user(conn, user)
 
@@ -239,17 +238,18 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
         "standard"
       ]
 
+      unique_id = System.unique_integer([:positive])
+      
       Enum.with_index(room_types, 2)
       |> Enum.each(fn {room_type, index} ->
-        room = %GameMap.Room{
-          name: "#{String.capitalize(room_type)} Room",
+        {:ok, _room} = Shard.Map.create_room(%{
+          name: "#{String.capitalize(room_type)} Room #{unique_id}",
           description: "A #{room_type} room",
-          x_coordinate: index,
-          y_coordinate: 2,
-          room_type: room_type
-        }
-
-        Repo.insert!(room)
+          x_coordinate: index + rem(unique_id, 100),
+          y_coordinate: 2 + div(unique_id, 100),
+          room_type: room_type,
+          is_public: true
+        })
       end)
 
       conn = log_in_user(conn, user)
@@ -287,16 +287,14 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
 
       Enum.with_index(door_configs)
       |> Enum.each(fn {config, index} ->
-        door = %GameMap.Door{
+        {:ok, _door} = Shard.Map.create_door(%{
           from_room_id: room1.id,
           to_room_id: if(rem(index, 2) == 0, do: room2.id, else: room3.id),
           direction: ["north", "south", "northeast", "northwest"] |> Enum.at(index),
           door_type: config.type,
           is_locked: config.locked,
           key_required: config.key
-        }
-
-        Repo.insert!(door)
+        })
       end)
 
       conn = log_in_user(conn, user)
@@ -396,15 +394,16 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       Repo.delete_all(GameMap.Door)
       Repo.delete_all(GameMap.Room)
 
-      single_room = %GameMap.Room{
-        name: "Single Room",
+      unique_id = System.unique_integer([:positive])
+      
+      {:ok, _single_room} = Shard.Map.create_room(%{
+        name: "Single Room #{unique_id}",
         description: "The only room",
-        x_coordinate: 10,
-        y_coordinate: 10,
-        room_type: "standard"
-      }
-
-      Repo.insert!(single_room)
+        x_coordinate: 10 + rem(unique_id, 100),
+        y_coordinate: 10 + div(unique_id, 100),
+        room_type: "standard",
+        is_public: true
+      })
 
       conn = log_in_user(conn, user)
 
@@ -431,15 +430,13 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       diagonal_directions = ["northeast", "southeast", "northwest", "southwest"]
 
       Enum.each(diagonal_directions, fn direction ->
-        door = %GameMap.Door{
+        {:ok, _door} = Shard.Map.create_door(%{
           from_room_id: room1.id,
           to_room_id: room2.id,
           direction: direction,
           door_type: "standard",
           is_locked: false
-        }
-
-        Repo.insert!(door)
+        })
       end)
 
       conn = log_in_user(conn, user)
@@ -545,15 +542,16 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       game_state: game_state
     } do
       # Create room with nil coordinates
-      room_nil = %GameMap.Room{
-        name: "Nil Room",
+      unique_id = System.unique_integer([:positive])
+      
+      {:ok, _room_nil} = Shard.Map.create_room(%{
+        name: "Nil Room #{unique_id}",
         description: "Room with nil coordinates",
         x_coordinate: nil,
         y_coordinate: nil,
-        room_type: "standard"
-      }
-
-      Repo.insert!(room_nil)
+        room_type: "standard",
+        is_public: true
+      })
 
       conn = log_in_user(conn, user)
 
