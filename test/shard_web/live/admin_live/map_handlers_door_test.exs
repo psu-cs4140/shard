@@ -92,7 +92,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
     test "deletes a door successfully" do
       # Create rooms for the door with unique names and coordinates
       unique_id = System.unique_integer([:positive])
-      
+
       {:ok, room1} =
         Shard.Map.create_room(%{
           name: "Delete Test Room 1 #{unique_id}",
@@ -157,7 +157,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
     test "creates a new door when not editing" do
       # Create rooms for the door with unique names and coordinates
       unique_id = System.unique_integer([:positive])
-      
+
       {:ok, room1} =
         Shard.Map.create_room(%{
           name: "Create Test Room 1 #{unique_id}",
@@ -210,7 +210,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
     test "updates an existing door when editing" do
       # Create rooms for the door with unique names and coordinates
       unique_id = System.unique_integer([:positive])
-      
+
       {:ok, room1} =
         Shard.Map.create_room(%{
           name: "Update Test Room 1 #{unique_id}",
