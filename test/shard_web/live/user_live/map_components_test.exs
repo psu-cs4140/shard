@@ -58,9 +58,11 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
           is_public: true
         })
 
-      # Create a test door using the Map context
+      # Create a test door using the Map context with explicit ID >= 500
+      door_id = 500 + System.unique_integer([:positive]) |> rem(100000)
       {:ok, door} =
-        Shard.Map.create_door(%{
+        Shard.Map.create_door_with_id(%{
+          id: door_id,
           from_room_id: room1.id,
           to_room_id: room2.id,
           direction: "east",
@@ -294,8 +296,10 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
 
       Enum.with_index(door_configs)
       |> Enum.each(fn {config, index} ->
+        door_id = 600 + index + System.unique_integer([:positive]) |> rem(100000)
         {:ok, _door} =
-          Shard.Map.create_door(%{
+          Shard.Map.create_door_with_id(%{
+            id: door_id,
             from_room_id: room1.id,
             to_room_id: if(rem(index, 2) == 0, do: room2.id, else: room3.id),
             direction: ["north", "south", "northeast", "northwest"] |> Enum.at(index),
@@ -438,9 +442,12 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       # Create diagonal doors
       diagonal_directions = ["northeast", "southeast", "northwest", "southwest"]
 
-      Enum.each(diagonal_directions, fn direction ->
+      Enum.with_index(diagonal_directions)
+      |> Enum.each(fn {direction, index} ->
+        door_id = 700 + index + System.unique_integer([:positive]) |> rem(100000)
         {:ok, _door} =
-          Shard.Map.create_door(%{
+          Shard.Map.create_door_with_id(%{
+            id: door_id,
             from_room_id: room1.id,
             to_room_id: room2.id,
             direction: direction,
