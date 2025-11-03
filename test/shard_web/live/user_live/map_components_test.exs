@@ -24,7 +24,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
 
       # Create some test rooms with unique coordinates
       # Use IDs starting from 1000 to avoid conflicts with migration data (rooms 19-47)
-      unique_id = 1000 + System.unique_integer([:positive]) |> rem(100000)
+      unique_id = (1000 + System.unique_integer([:positive])) |> rem(100_000)
 
       {:ok, room1} =
         Shard.Map.create_room(%{
@@ -60,7 +60,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
         })
 
       # Create a test door using the Map context with explicit ID >= 10000 to avoid conflicts with migration data (doors 49-113)
-      door_id = 10000 + System.unique_integer([:positive]) |> rem(100000)
+      door_id = (10000 + System.unique_integer([:positive])) |> rem(100_000)
+
       {:ok, door} =
         Shard.Map.create_door_with_id(%{
           id: door_id,
@@ -174,7 +175,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
 
       # Create a room without coordinates
       # Use IDs starting from 2000 to avoid conflicts with migration data
-      unique_id = 2000 + System.unique_integer([:positive]) |> rem(100000)
+      unique_id = (2000 + System.unique_integer([:positive])) |> rem(100_000)
 
       {:ok, _room_no_coords} =
         Shard.Map.create_room(%{
@@ -249,7 +250,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       ]
 
       # Use IDs starting from 3000 to avoid conflicts with migration data
-      unique_id = 3000 + System.unique_integer([:positive]) |> rem(100000)
+      unique_id = (3000 + System.unique_integer([:positive])) |> rem(100_000)
 
       Enum.with_index(room_types, 2)
       |> Enum.each(fn {room_type, index} ->
@@ -300,7 +301,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       Enum.with_index(door_configs)
       |> Enum.each(fn {config, index} ->
         # Use IDs starting from 20000 to avoid conflicts with migration data (doors 49-113)
-        door_id = 20000 + index + System.unique_integer([:positive]) |> rem(100000)
+        door_id = (20000 + index + System.unique_integer([:positive])) |> rem(100_000)
+
         {:ok, _door} =
           Shard.Map.create_door_with_id(%{
             id: door_id,
@@ -411,7 +413,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       Repo.delete_all(GameMap.Room)
 
       # Use IDs starting from 4000 to avoid conflicts with migration data
-      unique_id = 4000 + System.unique_integer([:positive]) |> rem(100000)
+      unique_id = (4000 + System.unique_integer([:positive])) |> rem(100_000)
 
       {:ok, _single_room} =
         Shard.Map.create_room(%{
@@ -450,7 +452,8 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
       Enum.with_index(diagonal_directions)
       |> Enum.each(fn {direction, index} ->
         # Use IDs starting from 30000 to avoid conflicts with migration data (doors 49-113)
-        door_id = 30000 + index + System.unique_integer([:positive]) |> rem(100000)
+        door_id = (30000 + index + System.unique_integer([:positive])) |> rem(100_000)
+
         {:ok, _door} =
           Shard.Map.create_door_with_id(%{
             id: door_id,
@@ -566,7 +569,7 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
     } do
       # Create room with nil coordinates
       # Use IDs starting from 5000 to avoid conflicts with migration data
-      unique_id = 5000 + System.unique_integer([:positive]) |> rem(100000)
+      unique_id = (5000 + System.unique_integer([:positive])) |> rem(100_000)
 
       {:ok, _room_nil} =
         Shard.Map.create_room(%{

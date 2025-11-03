@@ -178,6 +178,32 @@ defmodule Shard.Map do
     end
   end
 
+  @doc """
+  Creates a door with an explicit ID (for testing purposes).
+  Ensures the ID is >= 500 to avoid conflicts with production data.
+  """
+  def create_door_with_id(attrs \\ %{}) do
+    id = attrs[:id] || generate_test_door_id()
+
+    if id < 500 do
+      {:error, "Door ID must be >= 500"}
+    else
+      attrs_with_id = Map.put(attrs, :id, id)
+      changeset = Door.changeset(%Door{}, attrs_with_id)
+
+      case changeset.valid? do
+        true -> create_door_with_transaction_and_id(changeset, attrs_with_id)
+        false -> {:error, changeset}
+      end
+    end
+  end
+
+  defp generate_test_door_id do
+    # Generate a unique ID >= 500 based on current time and random number
+    base_id = 500 + :rand.uniform(100_000)
+    (base_id + System.unique_integer([:positive])) |> rem(1000)
+  end
+
   defp create_door_with_transaction(changeset, attrs) do
     Repo.transaction(fn ->
       case Repo.insert(changeset) do
@@ -193,6 +219,33 @@ defmodule Shard.Map do
           Repo.rollback(main_door_changeset)
       end
     end)
+  end
+
+  defp create_door_with_transaction_and_id(changeset, attrs) do
+    Repo.transaction(fn ->
+      case Repo.insert(changeset) do
+        {:ok, door} ->
+          case create_return_door_if_needed_with_id(door, attrs) do
+            {:ok, _return_door} -> door
+            {:error, error} -> Repo.rollback(error)
+            # When no return door is created or existing one found
+            door -> door
+          end
+
+        {:error, main_door_changeset} ->
+          Repo.rollback(main_door_changeset)
+      end
+    end)
+  end
+
+  defp create_return_door_if_needed_with_id(door, attrs) do
+    return_id = generate_test_door_id()
+    return_attrs = build_return_door_attrs(door, attrs) |> Map.put(:id, return_id)
+
+    case find_existing_return_door(return_attrs) do
+      nil -> attempt_return_door_creation(return_attrs)
+      _existing -> door
+    end
   end
 
   defp create_return_door_if_needed(door, attrs) do
