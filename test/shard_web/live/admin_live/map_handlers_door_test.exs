@@ -90,13 +90,13 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
 
   describe "handle_delete_door/2" do
     test "deletes a door successfully" do
-      # Create rooms for the door
+      # Create rooms for the door with unique names and coordinates
       {:ok, room1} =
         Shard.Map.create_room(%{
-          name: "Room 1",
-          description: "First room",
-          x_coordinate: 0,
-          y_coordinate: 0,
+          name: "Delete Test Room 1",
+          description: "First room for delete test",
+          x_coordinate: 10,
+          y_coordinate: 10,
           z_coordinate: 0,
           room_type: "standard",
           is_public: true
@@ -104,10 +104,10 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
 
       {:ok, room2} =
         Shard.Map.create_room(%{
-          name: "Room 2",
-          description: "Second room",
-          x_coordinate: 1,
-          y_coordinate: 0,
+          name: "Delete Test Room 2",
+          description: "Second room for delete test",
+          x_coordinate: 11,
+          y_coordinate: 10,
           z_coordinate: 0,
           room_type: "standard",
           is_public: true
@@ -153,13 +153,13 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
 
   describe "handle_save_door/2" do
     test "creates a new door when not editing" do
-      # Create rooms for the door
+      # Create rooms for the door with unique names and coordinates
       {:ok, room1} =
         Shard.Map.create_room(%{
-          name: "Room 1",
-          description: "First room",
-          x_coordinate: 0,
-          y_coordinate: 0,
+          name: "Create Test Room 1",
+          description: "First room for create test",
+          x_coordinate: 20,
+          y_coordinate: 20,
           z_coordinate: 0,
           room_type: "standard",
           is_public: true
@@ -167,10 +167,10 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
 
       {:ok, room2} =
         Shard.Map.create_room(%{
-          name: "Room 2",
-          description: "Second room",
-          x_coordinate: 1,
-          y_coordinate: 0,
+          name: "Create Test Room 2",
+          description: "Second room for create test",
+          x_coordinate: 21,
+          y_coordinate: 20,
           z_coordinate: 0,
           room_type: "standard",
           is_public: true
@@ -204,13 +204,13 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
     end
 
     test "updates an existing door when editing" do
-      # Create rooms for the door
+      # Create rooms for the door with unique names and coordinates
       {:ok, room1} =
         Shard.Map.create_room(%{
-          name: "Room 1",
-          description: "First room",
-          x_coordinate: 0,
-          y_coordinate: 0,
+          name: "Update Test Room 1",
+          description: "First room for update test",
+          x_coordinate: 30,
+          y_coordinate: 30,
           z_coordinate: 0,
           room_type: "standard",
           is_public: true
@@ -218,10 +218,10 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
 
       {:ok, room2} =
         Shard.Map.create_room(%{
-          name: "Room 2",
-          description: "Second room",
-          x_coordinate: 1,
-          y_coordinate: 0,
+          name: "Update Test Room 2",
+          description: "Second room for update test",
+          x_coordinate: 31,
+          y_coordinate: 30,
           z_coordinate: 0,
           room_type: "standard",
           is_public: true

@@ -69,9 +69,9 @@ defmodule Shard.MapTest do
     @invalid_attrs %{from_room_id: nil, to_room_id: nil, direction: nil}
 
     setup do
-      # Create two rooms for door testing
-      room1 = room_fixture(%{name: "Room 1", x_coordinate: 0, y_coordinate: 0})
-      room2 = room_fixture(%{name: "Room 2", x_coordinate: 1, y_coordinate: 0})
+      # Create two rooms for door testing with unique coordinates
+      room1 = room_fixture(%{name: "Door Test Room 1", x_coordinate: 50, y_coordinate: 50, z_coordinate: 0})
+      room2 = room_fixture(%{name: "Door Test Room 2", x_coordinate: 51, y_coordinate: 50, z_coordinate: 0})
       %{room1: room1, room2: room2}
     end
 
@@ -171,27 +171,41 @@ defmodule Shard.MapTest do
         {"southwest", "northeast"}
       ]
 
-      Enum.each(direction_tests, fn {main_direction, return_direction} ->
-        # Clean up any existing doors
-        Shard.Repo.delete_all(Door)
+      Enum.with_index(direction_tests, fn {main_direction, return_direction}, index ->
+        # Create unique rooms for each direction test to avoid conflicts
+        {:ok, test_room1} = Map.create_room(%{
+          name: "Direction Test Room 1-#{index}",
+          x_coordinate: 60 + index,
+          y_coordinate: 60,
+          z_coordinate: 0,
+          room_type: "standard"
+        })
+        
+        {:ok, test_room2} = Map.create_room(%{
+          name: "Direction Test Room 2-#{index}",
+          x_coordinate: 60 + index,
+          y_coordinate: 61,
+          z_coordinate: 0,
+          room_type: "standard"
+        })
 
         valid_attrs = %{
-          from_room_id: room1.id,
-          to_room_id: room2.id,
+          from_room_id: test_room1.id,
+          to_room_id: test_room2.id,
           direction: main_direction
         }
 
         assert {:ok, _door} = Map.create_door(valid_attrs)
 
         # Check that the return door has the correct opposite direction
-        return_door = Map.get_door_in_direction(room2.id, return_direction)
+        return_door = Map.get_door_in_direction(test_room2.id, return_direction)
 
         assert return_door != nil,
                "No return door found for direction #{main_direction} (expected #{return_direction})"
 
         assert return_door.direction == return_direction
-        assert return_door.from_room_id == room2.id
-        assert return_door.to_room_id == room1.id
+        assert return_door.from_room_id == test_room2.id
+        assert return_door.to_room_id == test_room1.id
       end)
     end
 

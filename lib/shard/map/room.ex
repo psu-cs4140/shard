@@ -53,5 +53,6 @@ defmodule Shard.Map.Room do
     |> foreign_key_constraint(:zone_id)
     |> unique_constraint(:name)
     |> unique_constraint([:zone_id, :x_coordinate, :y_coordinate, :z_coordinate])
+    |> unique_constraint(:id, name: :rooms_pkey)
   end
 end

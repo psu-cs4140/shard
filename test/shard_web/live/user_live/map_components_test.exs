@@ -22,28 +22,31 @@ defmodule ShardWeb.UserLive.MapComponentsTest do
 
       character = Shard.Repo.insert!(character)
 
-      # Create some test rooms
+      # Create some test rooms with unique coordinates
       room1 = %GameMap.Room{
-        name: "Test Room 1",
+        name: "Map Test Room 1",
         description: "A test room",
-        x_coordinate: 0,
-        y_coordinate: 0,
+        x_coordinate: 100,
+        y_coordinate: 100,
+        z_coordinate: 0,
         room_type: "standard"
       }
 
       room2 = %GameMap.Room{
-        name: "Test Room 2",
+        name: "Map Test Room 2",
         description: "Another test room",
-        x_coordinate: 1,
-        y_coordinate: 0,
+        x_coordinate: 101,
+        y_coordinate: 100,
+        z_coordinate: 0,
         room_type: "treasure_room"
       }
 
       room3 = %GameMap.Room{
-        name: "Test Room 3",
+        name: "Map Test Room 3",
         description: "A third test room",
-        x_coordinate: 0,
-        y_coordinate: 1,
+        x_coordinate: 100,
+        y_coordinate: 101,
+        z_coordinate: 0,
         room_type: "safe_zone"
       }
 

@@ -69,6 +69,7 @@ defmodule Shard.Map.Door do
     ])
     |> validate_different_rooms()
     |> unique_constraint(:from_room_id, name: :doors_from_room_id_direction_index)
+    |> unique_constraint(:id, name: :doors_pkey)
   end
 
   defp validate_different_rooms(changeset) do
