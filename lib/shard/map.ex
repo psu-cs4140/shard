@@ -185,8 +185,8 @@ defmodule Shard.Map do
   def create_door_with_id(attrs \\ %{}) do
     id = attrs[:id] || generate_test_door_id()
 
-    if id < 500 do
-      {:error, "Door ID must be >= 500"}
+    if id < 1000 do
+      {:error, "Door ID must be >= 1000 to avoid conflicts with migration data"}
     else
       attrs_with_id = Map.put(attrs, :id, id)
       changeset = Door.changeset(%Door{}, attrs_with_id)
@@ -199,9 +199,10 @@ defmodule Shard.Map do
   end
 
   defp generate_test_door_id do
-    # Generate a unique ID >= 500 based on current time and random number
-    base_id = 500 + :rand.uniform(100_000)
-    (base_id + System.unique_integer([:positive])) |> rem(1000)
+    # Generate a unique ID >= 1000 to avoid conflicts with migration data
+    # Migration doors use IDs 49-113, so we start at 1000 for safety
+    base_id = 1000 + :rand.uniform(100_000)
+    base_id + System.unique_integer([:positive])
   end
 
   defp create_door_with_transaction(changeset, attrs) do
