@@ -181,7 +181,12 @@ defmodule Shard.Map do
   defp create_door_with_transaction(changeset, attrs) do
     Repo.transaction(fn ->
       case Repo.insert(changeset) do
-        {:ok, door} -> create_return_door_if_needed(door, attrs)
+        {:ok, door} -> 
+          case create_return_door_if_needed(door, attrs) do
+            {:ok, _return_door} -> door
+            {:error, error} -> Repo.rollback(error)
+            door -> door  # When no return door is created or existing one found
+          end
         {:error, main_door_changeset} -> Repo.rollback(main_door_changeset)
       end
     end)
@@ -191,7 +196,7 @@ defmodule Shard.Map do
     return_attrs = build_return_door_attrs(door, attrs)
 
     case find_existing_return_door(return_attrs) do
-      nil -> attempt_return_door_creation(door, return_attrs)
+      nil -> attempt_return_door_creation(return_attrs)
       _existing -> door
     end
   end
@@ -217,10 +222,10 @@ defmodule Shard.Map do
     )
   end
 
-  defp attempt_return_door_creation(door, return_attrs) do
+  defp attempt_return_door_creation(return_attrs) do
     case %Door{} |> Door.changeset(return_attrs) |> Repo.insert() do
-      {:ok, _return_door} -> door
-      {:error, _changeset} -> door
+      {:ok, return_door} -> {:ok, return_door}
+      {:error, changeset} -> {:error, changeset}
     end
   end
 
