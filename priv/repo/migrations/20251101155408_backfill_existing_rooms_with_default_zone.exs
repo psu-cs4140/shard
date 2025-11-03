@@ -1,6 +1,5 @@
 defmodule Shard.Repo.Migrations.BackfillExistingRoomsWithDefaultZone do
   use Ecto.Migration
-  import Ecto.Query
 
   def up do
     # Create a default "Legacy Map" zone for existing rooms

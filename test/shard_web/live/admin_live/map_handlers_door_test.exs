@@ -140,12 +140,12 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
       # Check that the specific door we created is no longer in the list
       remaining_doors = updated_socket.assigns.doors
       assert Enum.find(remaining_doors, &(&1.id == created_door.id)) == nil
-      
+
       # The return door may or may not be automatically deleted depending on the Map.delete_door implementation
       # We should test what actually happens rather than assuming behavior
       remaining_door_count = length(remaining_doors)
       initial_door_count = length(all_doors)
-      
+
       # At minimum, one door should be deleted
       assert remaining_door_count < initial_door_count
     end

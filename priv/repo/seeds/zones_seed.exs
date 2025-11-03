@@ -62,7 +62,7 @@ if zone_count == 0 do
       max_level: 20,
       is_public: true,
       is_active: true,
-      display_order: 2,
+      display_order: 4,
       properties: %{
         "atmosphere" => "dark",
         "has_boss" => true,
