@@ -181,13 +181,16 @@ defmodule Shard.Map do
   defp create_door_with_transaction(changeset, attrs) do
     Repo.transaction(fn ->
       case Repo.insert(changeset) do
-        {:ok, door} -> 
+        {:ok, door} ->
           case create_return_door_if_needed(door, attrs) do
             {:ok, _return_door} -> door
             {:error, error} -> Repo.rollback(error)
-            door -> door  # When no return door is created or existing one found
+            # When no return door is created or existing one found
+            door -> door
           end
-        {:error, main_door_changeset} -> Repo.rollback(main_door_changeset)
+
+        {:error, main_door_changeset} ->
+          Repo.rollback(main_door_changeset)
       end
     end)
   end
