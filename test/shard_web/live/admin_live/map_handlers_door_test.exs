@@ -92,13 +92,14 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
     test "deletes a door successfully" do
       # Create rooms for the door with unique names and coordinates
       unique_id = System.unique_integer([:positive])
+      timestamp = System.system_time(:millisecond)
 
       {:ok, room1} =
         Shard.Map.create_room(%{
-          name: "Delete Test Room 1 #{unique_id}",
+          name: "Delete Test Room 1 #{unique_id}_#{timestamp}",
           description: "First room for delete test",
-          x_coordinate: 10 + rem(unique_id, 100),
-          y_coordinate: 10 + div(unique_id, 100),
+          x_coordinate: 100 + rem(unique_id, 1000),
+          y_coordinate: 100 + div(unique_id, 1000),
           z_coordinate: 0,
           room_type: "standard",
           is_public: true
@@ -106,21 +107,28 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
 
       {:ok, room2} =
         Shard.Map.create_room(%{
-          name: "Delete Test Room 2 #{unique_id}",
+          name: "Delete Test Room 2 #{unique_id}_#{timestamp}",
           description: "Second room for delete test",
-          x_coordinate: 11 + rem(unique_id, 100),
-          y_coordinate: 10 + div(unique_id, 100),
+          x_coordinate: 101 + rem(unique_id, 1000),
+          y_coordinate: 100 + div(unique_id, 1000),
           z_coordinate: 0,
           room_type: "standard",
           is_public: true
         })
 
-      # Create a door to delete - use unique direction
+      # Create a door to delete - use unique direction based on timestamp
+      direction = case rem(timestamp, 4) do
+        0 -> "north"
+        1 -> "south" 
+        2 -> "east"
+        _ -> "west"
+      end
+
       {:ok, _door} =
         Shard.Map.create_door(%{
           from_room_id: room1.id,
           to_room_id: room2.id,
-          direction: "north",
+          direction: direction,
           door_type: "standard",
           is_locked: false
         })
@@ -131,7 +139,7 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
 
       # Refresh the doors list to include both the created door and its automatic return door
       all_doors = Shard.Map.list_doors()
-      created_door = Enum.find(all_doors, &(&1.direction == "north"))
+      created_door = Enum.find(all_doors, &(&1.direction == direction && &1.from_room_id == room1.id))
 
       socket = create_socket(%{rooms: [room1, room2], doors: all_doors})
 
@@ -157,13 +165,14 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
     test "creates a new door when not editing" do
       # Create rooms for the door with unique names and coordinates
       unique_id = System.unique_integer([:positive])
+      timestamp = System.system_time(:millisecond)
 
       {:ok, room1} =
         Shard.Map.create_room(%{
-          name: "Create Test Room 1 #{unique_id}",
+          name: "Create Test Room 1 #{unique_id}_#{timestamp}",
           description: "First room for create test",
-          x_coordinate: 20 + rem(unique_id, 100),
-          y_coordinate: 20 + div(unique_id, 100),
+          x_coordinate: 200 + rem(unique_id, 1000),
+          y_coordinate: 200 + div(unique_id, 1000),
           z_coordinate: 0,
           room_type: "standard",
           is_public: true
@@ -171,10 +180,10 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
 
       {:ok, room2} =
         Shard.Map.create_room(%{
-          name: "Create Test Room 2 #{unique_id}",
+          name: "Create Test Room 2 #{unique_id}_#{timestamp}",
           description: "Second room for create test",
-          x_coordinate: 21 + rem(unique_id, 100),
-          y_coordinate: 20 + div(unique_id, 100),
+          x_coordinate: 201 + rem(unique_id, 1000),
+          y_coordinate: 200 + div(unique_id, 1000),
           z_coordinate: 0,
           room_type: "standard",
           is_public: true
@@ -210,13 +219,14 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
     test "updates an existing door when editing" do
       # Create rooms for the door with unique names and coordinates
       unique_id = System.unique_integer([:positive])
+      timestamp = System.system_time(:millisecond)
 
       {:ok, room1} =
         Shard.Map.create_room(%{
-          name: "Update Test Room 1 #{unique_id}",
+          name: "Update Test Room 1 #{unique_id}_#{timestamp}",
           description: "First room for update test",
-          x_coordinate: 30 + rem(unique_id, 100),
-          y_coordinate: 30 + div(unique_id, 100),
+          x_coordinate: 300 + rem(unique_id, 1000),
+          y_coordinate: 300 + div(unique_id, 1000),
           z_coordinate: 0,
           room_type: "standard",
           is_public: true
@@ -224,10 +234,10 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
 
       {:ok, room2} =
         Shard.Map.create_room(%{
-          name: "Update Test Room 2 #{unique_id}",
+          name: "Update Test Room 2 #{unique_id}_#{timestamp}",
           description: "Second room for update test",
-          x_coordinate: 31 + rem(unique_id, 100),
-          y_coordinate: 30 + div(unique_id, 100),
+          x_coordinate: 301 + rem(unique_id, 1000),
+          y_coordinate: 300 + div(unique_id, 1000),
           z_coordinate: 0,
           room_type: "standard",
           is_public: true
