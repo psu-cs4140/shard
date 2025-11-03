@@ -117,12 +117,13 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
         })
 
       # Create a door to delete - use unique direction based on timestamp
-      direction = case rem(timestamp, 4) do
-        0 -> "north"
-        1 -> "south" 
-        2 -> "east"
-        _ -> "west"
-      end
+      direction =
+        case rem(timestamp, 4) do
+          0 -> "north"
+          1 -> "south"
+          2 -> "east"
+          _ -> "west"
+        end
 
       {:ok, _door} =
         Shard.Map.create_door(%{
@@ -139,7 +140,9 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
 
       # Refresh the doors list to include both the created door and its automatic return door
       all_doors = Shard.Map.list_doors()
-      created_door = Enum.find(all_doors, &(&1.direction == direction && &1.from_room_id == room1.id))
+
+      created_door =
+        Enum.find(all_doors, &(&1.direction == direction && &1.from_room_id == room1.id))
 
       socket = create_socket(%{rooms: [room1, room2], doors: all_doors})
 
