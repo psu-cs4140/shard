@@ -25,11 +25,14 @@ defmodule ShardWeb.AdminLive.MapFunctionsTest do
 
   describe "save_room/2" do
     test "creates a new room when not editing" do
+      initial_rooms = Shard.Map.list_rooms()
+      initial_count = length(initial_rooms)
+
       socket =
         create_socket(%{
           editing: nil,
           changeset: nil,
-          rooms: []
+          rooms: initial_rooms
         })
 
       room_params = %{
@@ -44,7 +47,10 @@ defmodule ShardWeb.AdminLive.MapFunctionsTest do
 
       assert {:ok, updated_socket} = MapFunctions.save_room(socket, room_params)
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Room created successfully"
-      assert length(updated_socket.assigns.rooms) == 1
+      assert length(updated_socket.assigns.rooms) == initial_count + 1
+      # Check that our specific room was created
+      created_room = Enum.find(updated_socket.assigns.rooms, &(&1.name == "Test Room"))
+      assert created_room != nil
       assert updated_socket.assigns.editing == nil
       assert updated_socket.assigns.changeset == nil
     end

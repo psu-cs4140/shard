@@ -93,14 +93,20 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
           is_public: true
         })
 
-      socket = create_socket(%{rooms: [room, room2], doors: []})
+      all_rooms = Shard.Map.list_rooms()
+      initial_count = length(all_rooms)
+
+      socket = create_socket(%{rooms: all_rooms, doors: []})
 
       params = %{"id" => to_string(room.id)}
       {:noreply, updated_socket} = MapHandlers.handle_delete_room(params, socket)
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Room deleted successfully"
-      assert length(updated_socket.assigns.rooms) == 1
-      assert List.first(updated_socket.assigns.rooms).id == room2.id
+      assert length(updated_socket.assigns.rooms) == initial_count - 1
+      # Check that the specific room was deleted
+      assert Enum.find(updated_socket.assigns.rooms, &(&1.id == room.id)) == nil
+      # Check that room2 still exists
+      assert Enum.find(updated_socket.assigns.rooms, &(&1.id == room2.id)) != nil
     end
   end
 
@@ -199,11 +205,14 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
 
   describe "handle_save_room/2" do
     test "creates a new room when not editing" do
+      initial_rooms = Shard.Map.list_rooms()
+      initial_count = length(initial_rooms)
+
       socket =
         create_socket(%{
           editing: nil,
           changeset: nil,
-          rooms: []
+          rooms: initial_rooms
         })
 
       room_params = %{
@@ -220,7 +229,10 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
       {:noreply, updated_socket} = MapHandlers.handle_save_room(params, socket)
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Room created successfully"
-      assert length(updated_socket.assigns.rooms) == 1
+      assert length(updated_socket.assigns.rooms) == initial_count + 1
+      # Check that our specific room was created
+      created_room = Enum.find(updated_socket.assigns.rooms, &(&1.name == "New Room"))
+      assert created_room != nil
       assert updated_socket.assigns.editing == nil
       assert updated_socket.assigns.changeset == nil
     end
@@ -239,12 +251,13 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
         })
 
       changeset = Shard.Map.change_room(room)
+      all_rooms = Shard.Map.list_rooms()
 
       socket =
         create_socket(%{
           editing: :room,
           changeset: changeset,
-          rooms: [room]
+          rooms: all_rooms
         })
 
       room_params = %{
@@ -262,7 +275,9 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
       {:noreply, updated_socket} = MapHandlers.handle_save_room(params, socket)
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Room updated successfully"
-      assert updated_socket.assigns.rooms |> hd |> Map.get(:name) == "Updated Room"
+      # Find the specific room that was updated
+      updated_room = Enum.find(updated_socket.assigns.rooms, &(&1.id == room.id))
+      assert updated_room.name == "Updated Room"
       assert updated_socket.assigns.editing == nil
       assert updated_socket.assigns.changeset == nil
     end
@@ -283,12 +298,13 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
         })
 
       changeset = Shard.Map.change_room(room)
+      all_rooms = Shard.Map.list_rooms()
 
       socket =
         create_socket(%{
           viewing: room,
           changeset: changeset,
-          rooms: [room]
+          rooms: all_rooms
         })
 
       room_params = %{
@@ -305,7 +321,9 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
       {:noreply, updated_socket} = MapHandlers.handle_apply_and_save(params, socket)
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Room updated successfully"
-      assert updated_socket.assigns.rooms |> hd |> Map.get(:name) == "Updated Room"
+      # Find the specific room that was updated
+      updated_room = Enum.find(updated_socket.assigns.rooms, &(&1.id == room.id))
+      assert updated_room.name == "Updated Room"
       assert updated_socket.assigns.viewing.name == "Updated Room"
       assert updated_socket.assigns.changeset.data.name == "Updated Room"
     end

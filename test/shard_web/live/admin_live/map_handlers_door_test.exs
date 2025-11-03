@@ -142,8 +142,11 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
       remaining_doors = updated_socket.assigns.doors
       assert Enum.find(remaining_doors, &(&1.id == created_door.id)) == nil
       # Also check that its return door is deleted (should not find any door with opposite direction between same rooms)
+      # Note: We need to be more specific about which return door we're looking for since there may be seeded doors
       return_door_exists = Enum.any?(remaining_doors, fn door ->
-        door.from_room_id == room2.id && door.to_room_id == room1.id && door.direction == "south"
+        door.from_room_id == room2.id && door.to_room_id == room1.id && door.direction == "south" &&
+        # Make sure this is specifically the return door for our created door, not a seeded door
+        door.inserted_at >= created_door.inserted_at
       end)
       assert return_door_exists == false
     end
