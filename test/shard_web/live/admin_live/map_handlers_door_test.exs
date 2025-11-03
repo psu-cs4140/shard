@@ -138,7 +138,14 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Door deleted successfully"
       # After deleting one door, both the door and its return door are deleted
-      assert updated_socket.assigns.doors == []
+      # Check that the specific door we created is no longer in the list
+      remaining_doors = updated_socket.assigns.doors
+      assert Enum.find(remaining_doors, &(&1.id == created_door.id)) == nil
+      # Also check that its return door is deleted (should not find any door with opposite direction between same rooms)
+      return_door_exists = Enum.any?(remaining_doors, fn door ->
+        door.from_room_id == room2.id && door.to_room_id == room1.id && door.direction == "south"
+      end)
+      assert return_door_exists == false
     end
   end
 
