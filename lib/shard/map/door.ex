@@ -68,7 +68,6 @@ defmodule Shard.Map.Door do
       "locked_gate"
     ])
     |> validate_different_rooms()
-    |> unique_constraint(:from_room_id, name: :doors_from_room_id_direction_index)
     |> unique_constraint([:from_room_id, :direction], name: :doors_from_room_id_direction_index)
   end
 
