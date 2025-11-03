@@ -70,8 +70,22 @@ defmodule Shard.MapTest do
 
     setup do
       # Create two rooms for door testing with unique coordinates
-      room1 = room_fixture(%{name: "Door Test Room 1", x_coordinate: 50, y_coordinate: 50, z_coordinate: 0})
-      room2 = room_fixture(%{name: "Door Test Room 2", x_coordinate: 51, y_coordinate: 50, z_coordinate: 0})
+      room1 =
+        room_fixture(%{
+          name: "Door Test Room 1",
+          x_coordinate: 50,
+          y_coordinate: 50,
+          z_coordinate: 0
+        })
+
+      room2 =
+        room_fixture(%{
+          name: "Door Test Room 2",
+          x_coordinate: 51,
+          y_coordinate: 50,
+          z_coordinate: 0
+        })
+
       %{room1: room1, room2: room2}
     end
 
@@ -157,8 +171,8 @@ defmodule Shard.MapTest do
     end
 
     test "create_door/1 creates return door with correct opposite directions", %{
-      room1: room1,
-      room2: room2
+      room1: _room1,
+      room2: _room2
     } do
       direction_tests = [
         {"north", "south"},
@@ -173,21 +187,23 @@ defmodule Shard.MapTest do
 
       Enum.with_index(direction_tests, fn {main_direction, return_direction}, index ->
         # Create unique rooms for each direction test to avoid conflicts
-        {:ok, test_room1} = Map.create_room(%{
-          name: "Direction Test Room 1-#{index}",
-          x_coordinate: 60 + index,
-          y_coordinate: 60,
-          z_coordinate: 0,
-          room_type: "standard"
-        })
-        
-        {:ok, test_room2} = Map.create_room(%{
-          name: "Direction Test Room 2-#{index}",
-          x_coordinate: 60 + index,
-          y_coordinate: 61,
-          z_coordinate: 0,
-          room_type: "standard"
-        })
+        {:ok, test_room1} =
+          Map.create_room(%{
+            name: "Direction Test Room 1-#{index}",
+            x_coordinate: 60 + index,
+            y_coordinate: 60,
+            z_coordinate: 0,
+            room_type: "standard"
+          })
+
+        {:ok, test_room2} =
+          Map.create_room(%{
+            name: "Direction Test Room 2-#{index}",
+            x_coordinate: 60 + index,
+            y_coordinate: 61,
+            z_coordinate: 0,
+            room_type: "standard"
+          })
 
         valid_attrs = %{
           from_room_id: test_room1.id,
