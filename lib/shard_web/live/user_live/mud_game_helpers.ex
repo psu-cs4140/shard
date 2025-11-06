@@ -187,35 +187,19 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
 
   defp get_zone_welcome_message(zone_id) do
     case zone_id do
-      1 ->
+      "bone_zone" ->
         [
           "Welcome to Shard!",
-          "You find yourself in the Tutorial Grounds, a safe place to learn the basics.",
-          "Type 'help' for available commands.",
+          "You enter the Bone Zone, where ancient skeletons guard forgotten treasures.",
+          "The air is thick with the scent of decay. Type 'help' for available commands.",
           ""
         ]
 
-      "tutorial_terrain" ->
+      "vampire_castle" ->
         [
           "Welcome to Shard!",
-          "You find yourself in the Tutorial Grounds, a safe place to learn the basics.",
-          "Type 'help' for available commands.",
-          ""
-        ]
-
-      2 ->
-        [
-          "Welcome to Shard!",
-          "You enter the Dark Forest, where shadows dance between ancient trees.",
-          "Danger lurks in every corner. Type 'help' for available commands.",
-          ""
-        ]
-
-      3 ->
-        [
-          "Welcome to Shard!",
-          "You stand at the entrance of the Crystal Caves, where gems glimmer in the darkness.",
-          "The air is cold and mysterious. Type 'help' for available commands.",
+          "You step into the Vampire Castle, where darkness reigns eternal.",
+          "Blood-red tapestries line the walls and danger lurks in every shadow. Type 'help' for available commands.",
           ""
         ]
 
