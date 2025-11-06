@@ -231,9 +231,6 @@ defmodule Shard.Quests do
     end
   end
 
-  @doc """
-  Unlocks quests that have their prerequisites satisfied.
-  """
   defp unlock_eligible_quests(user_id) do
     # Get completed quest titles for this user
     completed_quest_titles =
