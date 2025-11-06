@@ -101,6 +101,77 @@
           <p class="mt-1">{@character.description}</p>
         </div>
       <% end %>
+      
+      <!-- Spell Management Section -->
+      <div class="mt-6 border-t pt-4">
+        <h4 class="text-md font-semibold mb-3">Known Spells</h4>
+        <%= if @character_spells == [] do %>
+          <p class="text-gray-500 mb-4">This character doesn't know any spells yet.</p>
+        <% else %>
+          <div class="grid grid-cols-1 gap-2 mb-4">
+            <%= for spell <- @character_spells do %>
+              <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <div class="flex-1">
+                  <span class="font-medium">{spell.name}</span>
+                  <%= if spell.spell_type do %>
+                    <span class="text-xs text-gray-600">({spell.spell_type})</span>
+                  <% end %>
+                  <span class="text-sm text-gray-500 ml-2">
+                    Mana: {spell.mana_cost}, Level: {spell.level_required}
+                  </span>
+                  <%= if spell.damage do %>
+                    <span class="text-sm text-red-600 ml-2">Damage: {spell.damage}</span>
+                  <% end %>
+                  <%= if spell.healing do %>
+                    <span class="text-sm text-green-600 ml-2">Healing: {spell.healing}</span>
+                  <% end %>
+                </div>
+                <button
+                  phx-click="remove_spell"
+                  phx-value-spell_id={spell.id}
+                  data-confirm="Remove this spell from the character?"
+                  class="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                >
+                  Remove
+                </button>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+        
+        <div class="mt-4">
+          <h5 class="text-sm font-semibold mb-2">Add Spell</h5>
+          <div class="flex gap-2">
+            <select
+              id="spell-select"
+              class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            >
+              <option value="">Select a spell to add...</option>
+              <%= for spell <- @all_spells do %>
+                <% already_known = Enum.any?(@character_spells, fn cs -> cs.id == spell.id end) %>
+                <%= if not already_known do %>
+                  <option value={spell.id}>
+                    {spell.name} - Level {spell.level_required} (Mana: {spell.mana_cost})
+                  </option>
+                <% end %>
+              <% end %>
+            </select>
+            <button
+              phx-click="add_spell"
+              phx-value-spell_id={Phoenix.LiveView.JS.exec("value", to: "#spell-select")}
+              onclick="
+                const select = document.getElementById('spell-select');
+                if (!select.value) { alert('Please select a spell first'); return false; }
+                this.setAttribute('phx-value-spell_id', select.value);
+              "
+              class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+            >
+              Add Spell
+            </button>
+          </div>
+        </div>
+      </div>
+      
       <div class="mt-4 flex gap-2">
         <.link patch={~p"/admin/characters/#{@character.id}/edit"}>
           <.button>Edit</.button>

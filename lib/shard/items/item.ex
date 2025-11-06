@@ -7,6 +7,7 @@ defmodule Shard.Items.Item do
   import Ecto.Changeset
 
   alias Shard.Items.{CharacterInventory, RoomItem, HotbarSlot}
+  alias Shard.Spells.Spells
 
   schema "items" do
     field :name, :string
@@ -28,6 +29,8 @@ defmodule Shard.Items.Item do
     field :pickup, :boolean, default: true
     field :location, :string
     field :map, :string
+
+    belongs_to :spell, Spells
 
     has_many :character_inventories, CharacterInventory
     has_many :room_items, RoomItem
@@ -62,7 +65,8 @@ defmodule Shard.Items.Item do
       :is_active,
       :pickup,
       :location,
-      :map
+      :map,
+      :spell_id
     ])
     |> validate_required([:name, :item_type])
     |> validate_length(:name, min: 2, max: 100)
@@ -73,6 +77,7 @@ defmodule Shard.Items.Item do
     |> validate_number(:weight, greater_than_or_equal_to: 0)
     |> validate_number(:max_stack_size, greater_than: 0)
     |> validate_equipment_slot()
+    |> foreign_key_constraint(:spell_id)
     |> unique_constraint(:name)
   end
 

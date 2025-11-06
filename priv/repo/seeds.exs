@@ -10,6 +10,8 @@
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
 
+import Ecto.Query
+
 alias Shard.Repo
 alias Shard.Map.{Room, Door}
 
@@ -250,7 +252,7 @@ if npc_count == 0 do
 
   if target_room do
     # Create Elder Sage Throne NPC
-    elder_sage =
+    _elder_sage =
       Repo.insert!(
         %Npc{}
         |> Npc.changeset(%{
@@ -358,4 +360,284 @@ if quest_count == 0 do
   end
 else
   IO.puts("Quests already exist, skipping quest creation")
+end
+
+# Spell-related seed data
+alias Shard.Spells
+alias Shard.Spells.{SpellTypes, SpellEffects, Spells}
+
+# Check if spell types exist
+spell_type_count = Repo.aggregate(SpellTypes, :count, :id)
+
+if spell_type_count == 0 do
+  spell_types_data = [
+    %{name: "Holy", description: "Divine magic that channels the power of light and righteousness"},
+    %{name: "Fire", description: "Destructive flames that burn enemies"},
+    %{name: "Ice", description: "Freezing cold that slows and damages enemies"},
+    %{name: "Shadow", description: "Dark magic that drains and corrupts"},
+    %{name: "Nature", description: "Magic of the natural world, healing and protecting"},
+    %{name: "Arcane", description: "Pure magical energy, raw and powerful"}
+  ]
+
+  spell_types_data
+  |> Enum.each(fn spell_type ->
+    Repo.insert!(%SpellTypes{} |> SpellTypes.changeset(spell_type))
+  end)
+
+  IO.puts("Seeded spell types")
+else
+  IO.puts("Spell types already exist, skipping seeding")
+end
+
+# Check if spell effects exist
+spell_effect_count = Repo.aggregate(SpellEffects, :count, :id)
+
+if spell_effect_count == 0 do
+  spell_effects_data = [
+    %{name: "Damage", description: "Deals damage to an enemy"},
+    %{name: "Heal", description: "Restores health to an ally"},
+    %{name: "Buff", description: "Temporarily increases stats or abilities"},
+    %{name: "Debuff", description: "Temporarily decreases enemy stats or abilities"},
+    %{name: "Stun", description: "Temporarily prevents the target from acting"},
+    %{name: "Drain", description: "Steals health or mana from the target"}
+  ]
+
+  spell_effects_data
+  |> Enum.each(fn spell_effect ->
+    Repo.insert!(%SpellEffects{} |> SpellEffects.changeset(spell_effect))
+  end)
+
+  IO.puts("Seeded spell effects")
+else
+  IO.puts("Spell effects already exist, skipping seeding")
+end
+
+# Check if spells exist
+spell_count = Repo.aggregate(Spells, :count, :id)
+
+if spell_count == 0 do
+  # Get spell types and effects for reference
+  holy_type = Repo.get_by(SpellTypes, name: "Holy")
+  fire_type = Repo.get_by(SpellTypes, name: "Fire")
+  ice_type = Repo.get_by(SpellTypes, name: "Ice")
+  nature_type = Repo.get_by(SpellTypes, name: "Nature")
+  arcane_type = Repo.get_by(SpellTypes, name: "Arcane")
+  shadow_type = Repo.get_by(SpellTypes, name: "Shadow")
+
+  damage_effect = Repo.get_by(SpellEffects, name: "Damage")
+  heal_effect = Repo.get_by(SpellEffects, name: "Heal")
+  buff_effect = Repo.get_by(SpellEffects, name: "Buff")
+  debuff_effect = Repo.get_by(SpellEffects, name: "Debuff")
+  stun_effect = Repo.get_by(SpellEffects, name: "Stun")
+
+  spells_data = [
+    %{
+      name: "Holy Incantation",
+      description: "A powerful holy spell that channels divine light to smite enemies with righteous damage.",
+      mana_cost: 25,
+      damage: 40,
+      healing: nil,
+      level_required: 1,
+      spell_type_id: holy_type.id,
+      spell_effect_id: damage_effect.id
+    },
+    %{
+      name: "Fireball",
+      description: "Hurls a blazing sphere of fire at the enemy, dealing significant fire damage.",
+      mana_cost: 30,
+      damage: 50,
+      healing: nil,
+      level_required: 3,
+      spell_type_id: fire_type.id,
+      spell_effect_id: damage_effect.id
+    },
+    %{
+      name: "Healing Light",
+      description: "Channels holy energy to restore health to the caster or an ally.",
+      mana_cost: 20,
+      damage: nil,
+      healing: 45,
+      level_required: 1,
+      spell_type_id: holy_type.id,
+      spell_effect_id: heal_effect.id
+    },
+    %{
+      name: "Ice Shard",
+      description: "Launches a sharp projectile of ice that damages and may slow the target.",
+      mana_cost: 20,
+      damage: 35,
+      healing: nil,
+      level_required: 2,
+      spell_type_id: ice_type.id,
+      spell_effect_id: damage_effect.id
+    },
+    %{
+      name: "Nature's Blessing",
+      description: "Calls upon the forces of nature to restore health over time.",
+      mana_cost: 25,
+      damage: nil,
+      healing: 60,
+      level_required: 4,
+      spell_type_id: nature_type.id,
+      spell_effect_id: heal_effect.id
+    },
+    %{
+      name: "Arcane Missiles",
+      description: "Fires multiple bolts of pure arcane energy at the target.",
+      mana_cost: 35,
+      damage: 55,
+      healing: nil,
+      level_required: 5,
+      spell_type_id: arcane_type.id,
+      spell_effect_id: damage_effect.id
+    },
+    %{
+      name: "Shadow Bolt",
+      description: "Hurls a bolt of shadow energy that damages and may weaken the enemy.",
+      mana_cost: 28,
+      damage: 42,
+      healing: nil,
+      level_required: 3,
+      spell_type_id: shadow_type.id,
+      spell_effect_id: damage_effect.id
+    },
+    %{
+      name: "Divine Shield",
+      description: "Surrounds the caster with a protective holy barrier.",
+      mana_cost: 40,
+      damage: nil,
+      healing: nil,
+      level_required: 6,
+      spell_type_id: holy_type.id,
+      spell_effect_id: buff_effect.id
+    },
+    %{
+      name: "Frost Nova",
+      description: "Releases a burst of freezing energy that damages and stuns nearby enemies.",
+      mana_cost: 45,
+      damage: 38,
+      healing: nil,
+      level_required: 7,
+      spell_type_id: ice_type.id,
+      spell_effect_id: stun_effect.id
+    },
+    %{
+      name: "Curse of Weakness",
+      description: "Curses the target with shadow magic, reducing their combat effectiveness.",
+      mana_cost: 30,
+      damage: nil,
+      healing: nil,
+      level_required: 4,
+      spell_type_id: shadow_type.id,
+      spell_effect_id: debuff_effect.id
+    }
+  ]
+
+  spells_data
+  |> Enum.each(fn spell ->
+    Repo.insert!(%Spells{} |> Shard.Spells.Spells.changeset(spell))
+  end)
+
+  IO.puts("Seeded spells including 'Holy Incantation'")
+else
+  IO.puts("Spells already exist, skipping seeding")
+end
+
+# Seed spell scroll items
+alias Shard.Items.Item
+
+# Check if spell scrolls exist
+spell_scroll_count = Repo.one(from i in Item, where: i.item_type == "consumable" and not is_nil(i.spell_id), select: count(i.id))
+
+if spell_scroll_count == 0 do
+  # Get some spells for the scrolls
+  holy_incantation = Repo.get_by(Spells, name: "Holy Incantation")
+  fireball = Repo.get_by(Spells, name: "Fireball")
+  healing_light = Repo.get_by(Spells, name: "Healing Light")
+  ice_shard = Repo.get_by(Spells, name: "Ice Shard")
+  arcane_missiles = Repo.get_by(Spells, name: "Arcane Missiles")
+
+  spell_scrolls = [
+    %{
+      name: "Scroll of Holy Incantation",
+      description: "A sacred scroll inscribed with divine words. Reading it will teach you the Holy Incantation spell.",
+      item_type: "consumable",
+      rarity: "uncommon",
+      value: 100,
+      weight: Decimal.new("0.1"),
+      stackable: false,
+      usable: true,
+      equippable: false,
+      is_active: true,
+      pickup: true,
+      spell_id: holy_incantation && holy_incantation.id
+    },
+    %{
+      name: "Scroll of Fireball",
+      description: "An ancient scroll containing the secrets of fire magic. Reading it will teach you the Fireball spell.",
+      item_type: "consumable",
+      rarity: "rare",
+      value: 250,
+      weight: Decimal.new("0.1"),
+      stackable: false,
+      usable: true,
+      equippable: false,
+      is_active: true,
+      pickup: true,
+      spell_id: fireball && fireball.id
+    },
+    %{
+      name: "Scroll of Healing Light",
+      description: "A blessed scroll that glows with gentle radiance. Reading it will teach you the Healing Light spell.",
+      item_type: "consumable",
+      rarity: "uncommon",
+      value: 150,
+      weight: Decimal.new("0.1"),
+      stackable: false,
+      usable: true,
+      equippable: false,
+      is_active: true,
+      pickup: true,
+      spell_id: healing_light && healing_light.id
+    },
+    %{
+      name: "Scroll of Ice Shard",
+      description: "A frost-covered scroll that feels cold to the touch. Reading it will teach you the Ice Shard spell.",
+      item_type: "consumable",
+      rarity: "uncommon",
+      value: 120,
+      weight: Decimal.new("0.1"),
+      stackable: false,
+      usable: true,
+      equippable: false,
+      is_active: true,
+      pickup: true,
+      spell_id: ice_shard && ice_shard.id
+    },
+    %{
+      name: "Scroll of Arcane Missiles",
+      description: "A scroll crackling with arcane power. Reading it will teach you the Arcane Missiles spell.",
+      item_type: "consumable",
+      rarity: "epic",
+      value: 400,
+      weight: Decimal.new("0.1"),
+      stackable: false,
+      usable: true,
+      equippable: false,
+      is_active: true,
+      pickup: true,
+      spell_id: arcane_missiles && arcane_missiles.id
+    }
+  ]
+
+  spell_scrolls
+  |> Enum.each(fn scroll ->
+    if scroll.spell_id do
+      Repo.insert!(%Item{} |> Item.changeset(scroll))
+    end
+  end)
+
+  IO.puts("Seeded spell scroll items")
+else
+  IO.puts("Spell scrolls already exist, skipping seeding")
 end

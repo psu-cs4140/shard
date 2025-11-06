@@ -3,7 +3,7 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   Event handlers and helper functions for MudGameLive
   """
   import ShardWeb.UserLive.Movement
-  import ShardWeb.UserLive.Commands1
+  import ShardWeb.UserLive.CommandsWithSpells
   import ShardWeb.UserLive.LegacyMap
   import ShardWeb.UserLive.CharacterHelpers
   import ShardWeb.UserLive.ItemHelpers
@@ -123,6 +123,18 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
 
         {:noreply, socket, updated_game_state, terminal_state}
     end
+  end
+
+  # Handle use from inventory (when value is empty or not a slot number)
+  def handle_use_hotbar_item(%{"value" => _}, socket) do
+    # Inventory item use - just show a message since we can't determine which item
+    new_output =
+      socket.assigns.terminal_state.output ++
+      ["Use items by typing commands in the terminal.", "Spell scrolls auto-learn when picked up!"] ++ [""]
+
+    terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+
+    {:noreply, socket, socket.assigns.game_state, terminal_state}
   end
 
   def handle_equip_item(%{"item_id" => item_id}, socket) do
