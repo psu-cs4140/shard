@@ -214,10 +214,46 @@ defmodule Shard.Quests do
         {:error, :quest_not_found}
 
       quest_acceptance ->
-        quest_acceptance
-        |> QuestAcceptance.changeset(%{status: "completed"})
-        |> Repo.update()
+        result =
+          quest_acceptance
+          |> QuestAcceptance.changeset(%{status: "completed", completed_at: DateTime.utc_now()})
+          |> Repo.update()
+
+        # After completing a quest, check if any locked quests should be unlocked
+        case result do
+          {:ok, _} ->
+            unlock_eligible_quests(user_id)
+            result
+
+          error ->
+            error
+        end
     end
+  end
+
+  defp unlock_eligible_quests(user_id) do
+    # Get completed quest titles for this user
+    completed_quest_titles =
+      from(qa in QuestAcceptance,
+        join: q in Quest,
+        on: qa.quest_id == q.id,
+        where: qa.user_id == ^user_id and qa.status == "completed",
+        select: q.title
+      )
+      |> Repo.all()
+
+    # Find locked quests that should be unlocked
+    locked_quests =
+      from(q in Quest,
+        where: q.status == "locked" and q.is_active == true
+      )
+      |> Repo.all()
+
+    Enum.each(locked_quests, fn quest ->
+      if check_quest_prerequisites(quest, completed_quest_titles) do
+        update_quest(quest, %{status: "available"})
+      end
+    end)
   end
 
   @doc """
@@ -321,15 +357,57 @@ defmodule Shard.Quests do
         select: qa.quest_id
       )
 
-    from(q in Quest,
-      where:
-        q.giver_npc_id == ^npc_id and
-          q.is_active == true and
-          q.status == "available" and
-          q.id not in subquery(ever_accepted_quest_ids),
-      order_by: [asc: q.sort_order, asc: q.id]
-    )
-    |> Repo.all()
+    # Get completed quest titles for prerequisite checking
+    completed_quest_titles =
+      from(qa in QuestAcceptance,
+        join: q in Quest,
+        on: qa.quest_id == q.id,
+        where: qa.user_id == ^user_id and qa.status == "completed",
+        select: q.title
+      )
+      |> Repo.all()
+
+    # Get all quests from this NPC
+    all_npc_quests =
+      from(q in Quest,
+        where:
+          q.giver_npc_id == ^npc_id and
+            q.is_active == true and
+            q.id not in subquery(ever_accepted_quest_ids),
+        order_by: [asc: q.sort_order, asc: q.id]
+      )
+      |> Repo.all()
+
+    # Filter quests based on prerequisites and status
+    Enum.filter(all_npc_quests, fn quest ->
+      case quest.status do
+        "available" ->
+          true
+
+        "locked" ->
+          # Check if prerequisites are met
+          check_quest_prerequisites(quest, completed_quest_titles)
+
+        _ ->
+          false
+      end
+    end)
+  end
+
+  defp check_quest_prerequisites(quest, completed_quest_titles) do
+    case quest.prerequisites do
+      %{"completed_quests" => required_quests} when is_list(required_quests) ->
+        Enum.all?(required_quests, fn required_quest ->
+          required_quest in completed_quest_titles
+        end)
+
+      %{} ->
+        # No prerequisites
+        true
+
+      _ ->
+        false
+    end
   end
 
   @doc """
