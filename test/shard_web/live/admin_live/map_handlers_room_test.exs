@@ -74,6 +74,7 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
         Shard.Map.create_zone(%{
           name: "Test Zone",
           description: "A test zone",
+          slug: "test-zone",
           min_level: 1,
           max_level: 10
         })
