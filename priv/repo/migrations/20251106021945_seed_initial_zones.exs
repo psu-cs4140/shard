@@ -34,23 +34,7 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
 
     IO.puts("Created Beginner Bone Zone")
 
-    # Create Beginner Bone Zone rooms (3x3 grid)
-    # bone_zone_rooms =
-    #  for x <- 0..2, y <- 0..2 do
-    #   {:ok, room} =
-    #    Map.create_room(%{
-    #     name: "Bone Zone (#{x},#{y})",
-    #    description: "A training room in the tutorial area at coordinates (#{x},#{y})",
-    #   zone_id: bone_zone.id,
-    #  x_coordinate: x,
-    # y_coordinate: y,
-    #      z_coordinate: 0,
-    #      is_public: true,
-    #      room_type: "dungeon"
-    #   })
-
-    #  room
-    # end
+    # Create Beginner Bone Zone rooms using the specified coordinates
 
     bone_room_specs = [
       {0, 3, "Spider Dungeon", "dungeon"},
@@ -79,19 +63,21 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
 
     bone_rooms =
       Enum.map(bone_room_specs, fn {x, y, room_name, room_type} ->
-        {:ok, room} =
-          Map.create_room(%{
-            name: "#{room_name} (Bone Zone)",
-            description: "#{room_name} in the Bone Zone",
-            zone_id: bone_zone.id,
-            x_coordinate: x,
-            y_coordinate: y,
-            z_coordinate: 0,
-            is_public: true,
-            room_type: room_type
-          })
-
-        room
+        case Map.create_room(%{
+          name: "#{room_name} (Bone Zone)",
+          description: "#{room_name} in the Bone Zone",
+          zone_id: bone_zone.id,
+          x_coordinate: x,
+          y_coordinate: y,
+          z_coordinate: 0,
+          is_public: true,
+          room_type: room_type
+        }) do
+          {:ok, room} -> room
+          {:error, changeset} -> 
+            IO.puts("Failed to create room #{room_name}: #{inspect(changeset.errors)}")
+            raise "Room creation failed"
+        end
       end)
 
     IO.puts("Created #{length(bone_rooms)} bone rooms")
@@ -148,19 +134,21 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
             _ -> "standard"
           end
 
-        {:ok, room} =
-          Map.create_room(%{
-            name: "#{room_name} (Vampire Castle)",
-            description: "#{room_name} in the Vampire Castle",
-            zone_id: vampire_zone.id,
-            x_coordinate: x,
-            y_coordinate: y,
-            z_coordinate: 0,
-            is_public: true,
-            room_type: room_type
-          })
-
-        room
+        case Map.create_room(%{
+          name: "#{room_name} (Vampire Castle)",
+          description: "#{room_name} in the Vampire Castle",
+          zone_id: vampire_zone.id,
+          x_coordinate: x,
+          y_coordinate: y,
+          z_coordinate: 0,
+          is_public: true,
+          room_type: room_type
+        }) do
+          {:ok, room} -> room
+          {:error, changeset} -> 
+            IO.puts("Failed to create vampire room #{room_name}: #{inspect(changeset.errors)}")
+            raise "Room creation failed"
+        end
       end
 
     IO.puts("Created #{length(vampire_rooms)} vampire castle rooms")
@@ -210,19 +198,21 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
             _ -> "standard"
           end
 
-        {:ok, room} =
-          Map.create_room(%{
-            name: "#{room_name} (Elven Forest)",
-            description: "#{room_name} in the Elven Forest",
-            zone_id: forest_zone.id,
-            x_coordinate: x,
-            y_coordinate: y,
-            z_coordinate: 0,
-            is_public: true,
-            room_type: room_type
-          })
-
-        room
+        case Map.create_room(%{
+          name: "#{room_name} (Elven Forest)",
+          description: "#{room_name} in the Elven Forest",
+          zone_id: forest_zone.id,
+          x_coordinate: x,
+          y_coordinate: y,
+          z_coordinate: 0,
+          is_public: true,
+          room_type: room_type
+        }) do
+          {:ok, room} -> room
+          {:error, changeset} -> 
+            IO.puts("Failed to create forest room #{room_name}: #{inspect(changeset.errors)}")
+            raise "Room creation failed"
+        end
       end
 
     IO.puts("Created #{length(forest_rooms)} elven forest rooms")
