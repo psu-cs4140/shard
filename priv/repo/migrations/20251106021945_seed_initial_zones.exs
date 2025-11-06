@@ -226,40 +226,40 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
     # Create doors for bone zone based on actual room coordinates
     bone_door_connections = [
       # Connect Spider Dungeon (0,3) to Hallway1 (0,4)
-      {{0, 3}, {0, 4}, "north"},
+      {{0, 3}, {0, 4}, "south"},
       # Connect Hallway1 (0,4) to Hallway2 (1,4)
       {{0, 4}, {1, 4}, "east"},
       # Connect Hallway2 (1,4) to Hallway6 (2,4)
       {{1, 4}, {2, 4}, "east"},
       # Connect Bone Yard (2,0) to Hallway3 (2,1)
-      {{2, 0}, {2, 1}, "north"},
+      {{2, 0}, {2, 1}, "south"},
       # Connect Hallway3 (2,1) to Hallway4 (2,2)
-      {{2, 1}, {2, 2}, "north"},
+      {{2, 1}, {2, 2}, "south"},
       # Connect Hallway4 (2,2) to Hallway5 (2,3)
-      {{2, 2}, {2, 3}, "north"},
+      {{2, 2}, {2, 3}, "south"},
       # Connect Hallway5 (2,3) to Hallway6 (2,4)
-      {{2, 3}, {2, 4}, "north"},
+      {{2, 3}, {2, 4}, "south"},
       # Connect Hallway6 (2,4) to Tomb (2,5)
-      {{2, 4}, {2, 5}, "north"},
+      {{2, 4}, {2, 5}, "south"},
       #{{2, 5}, {2, 4}, "south"},
       # Connect Hallway6 (2,4) to Hallway7 (3,4)
       {{2, 4}, {3, 4}, "east"},
       # Connect Hallway7 (3,4) to Hallway8 (4,4)
       {{3, 4}, {4, 4}, "east"},
       # Connect Hallway8 (4,4) to Hallway9 (4,5)
-      {{4, 4}, {4, 5}, "north"},
+      {{4, 4}, {4, 5}, "south"},
       # Connect Hallway8 (4,4) to Hallway14 (5,4)
       {{4, 4}, {5, 4}, "east"},
       # Connect Hallway10 (5,0) to Hallway11 (5,1)
-      {{5, 0}, {5, 1}, "north"},
+      {{5, 0}, {5, 1}, "south"},
       # Connect Hallway11 (5,1) to Hallway12 (5,2)
-      {{5, 1}, {5, 2}, "north"},
+      {{5, 1}, {5, 2}, "south"},
       # Connect Hallway12 (5,2) to Hallway13 (5,3)
-      {{5, 2}, {5, 3}, "north"},
+      {{5, 2}, {5, 3}, "south"},
       # Connect Hallway13 (5,3) to Hallway14 (5,4)
-      {{5, 3}, {5, 4}, "north"},
+      {{5, 3}, {5, 4}, "south"},
       # Connect Hallway14 (5,4) to Grand Statue (5,5)
-      {{5, 4}, {5, 5}, "north"},
+      {{5, 4}, {5, 5}, "south"},
       # Connect Hallway9 (4,5) to Grand Statue (5,5)
       {{4, 5}, {5, 5}, "east"},
       # Connect Treasure Room (6,0) to Exit (7,0)
@@ -329,20 +329,20 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
         # Lock the door to vampire lord's chamber
         is_locked = x == 1 && y == 2
 
-        IO.puts("Creating north door from (#{x},#{y}) to (#{x},#{y+1}) - locked: #{is_locked}")
-        # Create north door (Map.create_door automatically creates the return door)
+        IO.puts("Creating south door from (#{x},#{y}) to (#{x},#{y+1}) - locked: #{is_locked}")
+        # Create south door (Map.create_door automatically creates the return door)
         case Map.create_door(%{
           from_room_id: from_room.id,
           to_room_id: to_room.id,
-          direction: "north",
+          direction: "south",
           door_type: if(is_locked, do: "locked_gate", else: "standard"),
           is_locked: is_locked,
           key_required: if(is_locked, do: "Vampire Lord's Key", else: nil)
         }) do
           {:ok, _door} -> :ok
           {:error, changeset} -> 
-            IO.puts("Failed to create vampire castle north door (#{x},#{y}) -> (#{x},#{y+1}): #{inspect(changeset.errors)}")
-            raise "Door creation failed for north door at (#{x},#{y})"
+            IO.puts("Failed to create vampire castle south door (#{x},#{y}) -> (#{x},#{y+1}): #{inspect(changeset.errors)}")
+            raise "Door creation failed for south door at (#{x},#{y})"
         end
       end
     end
@@ -376,17 +376,17 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
       to_room = Enum.find(forest_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y + 1))
 
       if from_room && to_room do
-        # Create north door (Map.create_door automatically creates the return door)
+        # Create south door (Map.create_door automatically creates the return door)
         case Map.create_door(%{
           from_room_id: from_room.id,
           to_room_id: to_room.id,
-          direction: "north",
+          direction: "south",
           door_type: "standard",
           is_locked: false
         }) do
           {:ok, _door} -> :ok
           {:error, changeset} -> 
-            IO.puts("Failed to create forest north door (#{x},#{y}): #{inspect(changeset.errors)}")
+            IO.puts("Failed to create forest south door (#{x},#{y}): #{inspect(changeset.errors)}")
             raise "Door creation failed"
         end
       end
