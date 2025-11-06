@@ -188,11 +188,7 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
   defp get_zone_welcome_message(zone_id) do
     case zone_id do
       1 ->
-        [
-          "Dim torchlight flickers along the walls of a vast underground chamber — The Tomb, the heart of the Bone Zone.",
-          "Type 'help' for available commands.",
-          ""
-        ]
+        read_bone_zone_text()
 
       2 ->
         [
@@ -206,6 +202,24 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
         [
           "Welcome to Shard!",
           "You find yourself in an unknown realm, filled with mystery and adventure.",
+          "Type 'help' for available commands.",
+          ""
+        ]
+    end
+  end
+
+  defp read_bone_zone_text do
+    case File.read("notes/bonezonetext.md") do
+      {:ok, content} ->
+        content
+        |> String.split("\n")
+        |> Enum.map(&String.trim/1)
+        |> Kernel.++([""]) # Add empty line at the end
+
+      {:error, _reason} ->
+        # Fallback if file can't be read
+        [
+          "Dim torchlight flickers along the walls of a vast underground chamber — The Tomb, the heart of the Bone Zone.",
           "Type 'help' for available commands.",
           ""
         ]
