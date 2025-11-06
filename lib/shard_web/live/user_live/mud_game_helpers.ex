@@ -189,7 +189,7 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
     case zone_id do
       1 ->
         [
-          "You awaken to the cold bite of stone beneath your back, the scent of decay thick in the air.",
+          "Dim torchlight flickers along the walls of a vast underground chamber — The Tomb, the heart of the Bone Zone.",
           "Type 'help' for available commands.",
           ""
         ]
