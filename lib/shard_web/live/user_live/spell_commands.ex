@@ -156,7 +156,7 @@ defmodule ShardWeb.UserLive.SpellCommands do
           ]
 
       # Update monster health
-      updated_target = nil
+      _updated_target = nil
 
       updated_monsters =
         Enum.map(game_state.monsters, fn monster ->
@@ -223,7 +223,7 @@ defmodule ShardWeb.UserLive.SpellCommands do
     {updated_response, game_state}
   end
 
-  defp handle_debuff_spell(game_state, spell_result, response, monsters_here) do
+  defp handle_debuff_spell(game_state, _spell_result, response, monsters_here) do
     if length(monsters_here) > 0 do
       target = hd(monsters_here)
 

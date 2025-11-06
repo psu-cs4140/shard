@@ -256,7 +256,7 @@ defmodule Shard.Spells do
     # Deduct mana cost
     new_mana = max(0, character.mana - spell.mana_cost)
 
-    {:ok, updated_character} =
+    {:ok, _updated_character} =
       character
       |> Shard.Characters.Character.changeset(%{mana: new_mana})
       |> Repo.update()
