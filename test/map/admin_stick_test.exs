@@ -60,8 +60,9 @@ defmodule Shard.Map.AdminStickTest do
     setup do
       # Create a user and character for testing
       user = UsersFixtures.user_fixture()
+      unique_name = "Test Character #{System.system_time(:millisecond)}"
       {:ok, character} = Characters.create_character(%{
-        name: "Test Character", 
+        name: unique_name, 
         user_id: user.id,
         class: "warrior",
         race: "human",
@@ -152,8 +153,9 @@ defmodule Shard.Map.AdminStickTest do
       
       # Create a character
       user = UsersFixtures.user_fixture()
+      unique_name = "Test Character #{System.system_time(:millisecond) + 1}"
       {:ok, character} = Characters.create_character(%{
-        name: "Test Character", 
+        name: unique_name, 
         user_id: user.id,
         class: "warrior",
         race: "human",
