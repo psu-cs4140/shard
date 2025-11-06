@@ -12,7 +12,9 @@ defmodule Shard.Items do
   ## Items
 
   def list_items do
-    Repo.all(Item)
+    Item
+    |> Repo.all()
+    |> Repo.preload(:spell)
   end
 
   def list_active_items do

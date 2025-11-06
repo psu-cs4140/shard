@@ -1,0 +1,56 @@
+<div style="padding-left: 3rem;">
+  <.header>
+    Spell Effects
+    <:actions>
+      <.link patch={~p"/admin/spell_effects/new"}>
+        <.button>New Spell Effect</.button>
+      </.link>
+    </:actions>
+  </.header>
+</div>
+
+<.table
+  id="spell_effects"
+  rows={@streams.spell_effects}
+  row_click={fn {_id, spell_effect} -> JS.navigate(~p"/admin/spell_effects/#{spell_effect}") end}
+>
+  <:col :let={{_id, spell_effect}} label="Name">{spell_effect.name}</:col>
+  <:col :let={{_id, spell_effect}} label="Description">{spell_effect.description}</:col>
+  <:col :let={{_id, spell_effect}} label="Effect Type">{spell_effect.effect_type}</:col>
+  <:col :let={{_id, spell_effect}} label="Value">{spell_effect.value}</:col>
+  <:col :let={{_id, spell_effect}} label="Duration">{spell_effect.duration}</:col>
+  <:col :let={{_id, spell_effect}} label="Target Type">{spell_effect.target_type}</:col>
+  <:action :let={{_id, spell_effect}}>
+    <div class="sr-only">
+      <.link navigate={~p"/admin/spell_effects/#{spell_effect}"}>Show</.link>
+    </div>
+    <.link patch={~p"/admin/spell_effects/#{spell_effect}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{id, spell_effect}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: spell_effect.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<%= if @live_action in [:new, :edit] do %>
+  <div class="fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75" phx-click={JS.patch(~p"/admin/spell_effects")}>
+      </div>
+      <div class="relative bg-base-100 rounded-lg shadow-xl max-w-lg w-full p-6">
+        <.live_component
+          module={ShardWeb.AdminLive.SpellEffectFormComponent}
+          id={@spell_effect.id || :new}
+          title={@page_title}
+          action={@live_action}
+          spell_effect={@spell_effect}
+          patch={~p"/admin/spell_effects"}
+        />
+      </div>
+    </div>
+  </div>
+<% end %>

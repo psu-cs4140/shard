@@ -53,6 +53,29 @@ defmodule Shard.Spells do
     |> Repo.insert()
   end
 
+  @doc """
+  Updates a spell effect.
+  """
+  def update_spell_effect(%SpellEffects{} = spell_effect, attrs) do
+    spell_effect
+    |> SpellEffects.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a spell effect.
+  """
+  def delete_spell_effect(%SpellEffects{} = spell_effect) do
+    Repo.delete(spell_effect)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking spell effect changes.
+  """
+  def change_spell_effect(%SpellEffects{} = spell_effect, attrs \\ %{}) do
+    SpellEffects.changeset(spell_effect, attrs)
+  end
+
   # Spell functions
 
   @doc """
@@ -105,6 +128,29 @@ defmodule Shard.Spells do
     %Spells{}
     |> Spells.changeset(attrs)
     |> Repo.insert()
+  end
+
+  @doc """
+  Updates a spell.
+  """
+  def update_spell(%Spells{} = spell, attrs) do
+    spell
+    |> Spells.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a spell.
+  """
+  def delete_spell(%Spells{} = spell) do
+    Repo.delete(spell)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking spell changes.
+  """
+  def change_spell(%Spells{} = spell, attrs \\ %{}) do
+    Spells.changeset(spell, attrs)
   end
 
   # Character Spell functions
