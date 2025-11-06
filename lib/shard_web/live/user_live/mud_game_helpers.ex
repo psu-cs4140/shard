@@ -166,12 +166,7 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
   end
 
   defp build_terminal_state(starting_position, map_id) do
-    initial_output = [
-      "Welcome to Shard!",
-      "You find yourself in a mysterious dungeon.",
-      "Type 'help' for available commands.",
-      ""
-    ]
+    initial_output = get_zone_welcome_message(map_id)
 
     terminal_output =
       if starting_position == {0, 0} and map_id == "tutorial_terrain" do
@@ -188,6 +183,47 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
       command_history: [],
       current_command: ""
     }
+  end
+
+  defp get_zone_welcome_message(zone_id) do
+    case zone_id do
+      1 ->
+        read_bone_zone_text()
+
+      2 ->
+        [
+          "Welcome to Shard!",
+          "You step into the Vampire Castle, where darkness reigns eternal.",
+          "Blood-red tapestries line the walls and danger lurks in every shadow. Type 'help' for available commands.",
+          ""
+        ]
+
+      _ ->
+        [
+          "Welcome to Shard!",
+          "You find yourself in an unknown realm, filled with mystery and adventure.",
+          "Type 'help' for available commands.",
+          ""
+        ]
+    end
+  end
+
+  defp read_bone_zone_text do
+    case File.read("notes/bonezonetext.md") do
+      {:ok, content} ->
+        content
+        |> String.split("\n")
+        # Add empty line at the end
+        |> Kernel.++([""])
+
+      {:error, _reason} ->
+        # Fallback if file can't be read
+        [
+          "Dim torchlight flickers along the walls of a vast underground chamber — The Tomb, the heart of the Bone Zone.",
+          "Type 'help' for available commands.",
+          ""
+        ]
+    end
   end
 
   # Make this public so it can be called from other modules
