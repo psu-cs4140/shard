@@ -69,6 +69,15 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
 
   describe "handle_delete_room/2" do
     test "deletes a room successfully" do
+      # Create a zone first
+      {:ok, zone} =
+        Shard.Map.create_zone(%{
+          name: "Test Zone",
+          description: "A test zone",
+          min_level: 1,
+          max_level: 10
+        })
+
       # Create a room to delete
       {:ok, room} =
         Shard.Map.create_room(%{
@@ -77,6 +86,7 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
           x_coordinate: 0,
           y_coordinate: 0,
           z_coordinate: 0,
+          zone_id: zone.id,
           room_type: "standard",
           is_public: true
         })
@@ -89,11 +99,12 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
           x_coordinate: 1,
           y_coordinate: 0,
           z_coordinate: 0,
+          zone_id: zone.id,
           room_type: "standard",
           is_public: true
         })
 
-      socket = create_socket(%{rooms: [room, room2], doors: []})
+      socket = create_socket(%{rooms: [room, room2], doors: [], selected_zone_id: zone.id})
 
       params = %{"id" => to_string(room.id)}
       {:noreply, updated_socket} = MapHandlers.handle_delete_room(params, socket)
