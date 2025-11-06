@@ -189,7 +189,7 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
     case zone_id do
       1 ->
         [
-          "Darkness presses against your mind like a heavy shroud.",
+          "You awaken to the cold bite of stone beneath your back, the scent of decay thick in the air.",
           "Type 'help' for available commands.",
           ""
         ]
