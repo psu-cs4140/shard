@@ -526,19 +526,39 @@ defmodule ShardWeb.UserLive.Commands1 do
   # Execute pickup command with a specific item name
   def execute_pickup_command(game_state, item_name) do
     {x, y} = game_state.player_position
-    items_here = get_items_at_location(x, y, game_state.character.current_zone_id)
+    location_string = "#{x},#{y},0"
+    
+    # Find room items at this location
+    alias Shard.Items.RoomItem
+    
+    room_items =
+      from(ri in RoomItem,
+        where: ri.location == ^location_string,
+        join: i in Item,
+        on: ri.item_id == i.id,
+        where: is_nil(i.is_active) or i.is_active == true,
+        select: %{
+          room_item_id: ri.id,
+          name: i.name,
+          description: i.description,
+          item_type: i.item_type,
+          quantity: ri.quantity,
+          pickup: i.pickup
+        }
+      )
+      |> Repo.all()
 
     # Find the item by name (case-insensitive)
-    target_item =
-      Enum.find(items_here, fn item ->
+    target_room_item =
+      Enum.find(room_items, fn item ->
         String.downcase(item.name || "") == String.downcase(item_name)
       end)
 
-    case target_item do
+    case target_room_item do
       nil ->
-        if length(items_here) > 0 do
+        if length(room_items) > 0 do
           # credo:disable-for-next-line Credo.Check.Refactor.EnumMapJoin
-          available_names = Enum.map_join(items_here, ", ", & &1.name)
+          available_names = Enum.map_join(room_items, ", ", & &1.name)
 
           response = [
             "There is no item named '#{item_name}' here.",
@@ -551,39 +571,33 @@ defmodule ShardWeb.UserLive.Commands1 do
         end
 
       item ->
-        # Check if item can be picked up (assuming all items can be picked up for now)
-        # In the future, you might want to add a "pickupable" field to items
+        # Check if item can be picked up
+        if not item.pickup do
+          response = ["You cannot pick up #{item.name}."]
+          {response, game_state}
+        else
+          # Use the Items context to properly pick up the item
+          case Shard.Items.pick_up_item(game_state.character.id, item.room_item_id) do
+            {:ok, _} ->
+              response = [
+                "You pick up #{item.name}.",
+                "#{item.name} has been added to your inventory."
+              ]
+              {response, game_state}
 
-        # Add item to player's inventory
-        updated_inventory = [
-          %{
-            id: item[:id],
-            name: item.name,
-            type: item.item_type || "misc",
-            quantity: item.quantity || 1,
-            damage: item[:damage],
-            defense: item[:defense],
-            effect: item[:effect],
-            description: item[:description]
-          }
-          | game_state.inventory_items
-        ]
+            {:error, :item_not_pickupable} ->
+              response = ["You cannot pick up #{item.name}."]
+              {response, game_state}
 
-        # Remove item from the room (this would need database implementation)
-        # For now, we'll just update the game state
+            {:error, :insufficient_quantity} ->
+              response = ["There isn't enough #{item.name} here to pick up."]
+              {response, game_state}
 
-        response = [
-          "You pick up #{item.name}.",
-          "#{item.name} has been added to your inventory."
-        ]
-
-        updated_game_state = %{game_state | inventory_items: updated_inventory}
-
-        # NOTE: Remove item from database room/location
-        # This would require calling something like:
-        # Shard.Items.remove_item_from_location(item.id, "#{x},#{y},0")
-
-        {response, updated_game_state}
+            {:error, _reason} ->
+              response = ["You failed to pick up #{item.name}."]
+              {response, game_state}
+          end
+        end
     end
   end
 end
