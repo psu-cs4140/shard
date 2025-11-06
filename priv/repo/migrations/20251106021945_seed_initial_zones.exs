@@ -12,6 +12,9 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
 
     IO.puts("Creating zones and their rooms...")
 
+    # Clean up any existing data first
+    seed_zones_down()
+
     # Create Tutorial Zone
     {:ok, bone_zone} =
       Map.create_zone(%{
@@ -27,29 +30,14 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
         display_order: 1,
         properties: %{
           "has_tutorial_npcs" => true,
-          "respawn_point" => true
+          "respawn_point" => true,
+          "starting_room" => %{"x" => 2, "y" => 5, "z" => 0}
         }
       })
 
     IO.puts("Created Beginner Bone Zone")
 
-    # Create Beginner Bone Zone rooms (3x3 grid)
-    # bone_zone_rooms =
-    #  for x <- 0..2, y <- 0..2 do
-    #   {:ok, room} =
-    #    Map.create_room(%{
-    #     name: "Bone Zone (#{x},#{y})",
-    #    description: "A training room in the tutorial area at coordinates (#{x},#{y})",
-    #   zone_id: bone_zone.id,
-    #  x_coordinate: x,
-    # y_coordinate: y,
-    #      z_coordinate: 0,
-    #      is_public: true,
-    #      room_type: "dungeon"
-    #   })
-
-    #  room
-    # end
+    # Create Beginner Bone Zone rooms using the specified coordinates
 
     bone_room_specs = [
       {0, 3, "Spider Dungeon", "dungeon"},
@@ -78,19 +66,23 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
 
     bone_rooms =
       Enum.map(bone_room_specs, fn {x, y, room_name, room_type} ->
-        {:ok, room} =
-          Map.create_room(%{
-            name: "#{room_name} (Bone Zone)",
-            description: "#{room_name} in the Bone Zone",
-            zone_id: bone_zone.id,
-            x_coordinate: x,
-            y_coordinate: y,
-            z_coordinate: 0,
-            is_public: true,
-            room_type: room_type
-          })
+        case Map.create_room(%{
+               name: "#{room_name} (Bone Zone)",
+               description: "#{room_name} in the Bone Zone",
+               zone_id: bone_zone.id,
+               x_coordinate: x,
+               y_coordinate: y,
+               z_coordinate: 0,
+               is_public: true,
+               room_type: room_type
+             }) do
+          {:ok, room} ->
+            room
 
-        room
+          {:error, changeset} ->
+            IO.puts("Failed to create room #{room_name}: #{inspect(changeset.errors)}")
+            raise "Room creation failed for #{room_name}"
+        end
       end)
 
     IO.puts("Created #{length(bone_rooms)} bone rooms")
@@ -147,19 +139,23 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
             _ -> "standard"
           end
 
-        {:ok, room} =
-          Map.create_room(%{
-            name: "#{room_name} (Vampire Castle)",
-            description: "#{room_name} in the Vampire Castle",
-            zone_id: vampire_zone.id,
-            x_coordinate: x,
-            y_coordinate: y,
-            z_coordinate: 0,
-            is_public: true,
-            room_type: room_type
-          })
+        case Map.create_room(%{
+               name: "#{room_name} (Vampire Castle)",
+               description: "#{room_name} in the Vampire Castle",
+               zone_id: vampire_zone.id,
+               x_coordinate: x,
+               y_coordinate: y,
+               z_coordinate: 0,
+               is_public: true,
+               room_type: room_type
+             }) do
+          {:ok, room} ->
+            room
 
-        room
+          {:error, changeset} ->
+            IO.puts("Failed to create vampire room #{room_name}: #{inspect(changeset.errors)}")
+            raise "Room creation failed for #{room_name}"
+        end
       end
 
     IO.puts("Created #{length(vampire_rooms)} vampire castle rooms")
@@ -209,71 +205,148 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
             _ -> "standard"
           end
 
-        {:ok, room} =
-          Map.create_room(%{
-            name: "#{room_name} (Elven Forest)",
-            description: "#{room_name} in the Elven Forest",
-            zone_id: forest_zone.id,
-            x_coordinate: x,
-            y_coordinate: y,
-            z_coordinate: 0,
-            is_public: true,
-            room_type: room_type
-          })
+        case Map.create_room(%{
+               name: "#{room_name} (Elven Forest)",
+               description: "#{room_name} in the Elven Forest",
+               zone_id: forest_zone.id,
+               x_coordinate: x,
+               y_coordinate: y,
+               z_coordinate: 0,
+               is_public: true,
+               room_type: room_type
+             }) do
+          {:ok, room} ->
+            room
 
-        room
+          {:error, changeset} ->
+            IO.puts("Failed to create forest room #{room_name}: #{inspect(changeset.errors)}")
+            raise "Room creation failed for #{room_name}"
+        end
       end
 
     IO.puts("Created #{length(forest_rooms)} elven forest rooms")
 
-    # Create doors for tutorial zone (connect horizontally and vertically)
-    for x <- 0..1, y <- 0..2 do
-      from_room = Enum.find(bone_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
-      to_room = Enum.find(bone_rooms, &(&1.x_coordinate == x + 1 && &1.y_coordinate == y))
+    # Create doors for bone zone based on actual room coordinates
+    bone_door_connections = [
+      # Connect Spider Dungeon (0,3) to Hallway1 (0,4)
+      {{0, 3}, {0, 4}, "south"},
+      # Connect Hallway1 (0,4) to Hallway2 (1,4)
+      {{0, 4}, {1, 4}, "east"},
+      # Connect Hallway2 (1,4) to Hallway6 (2,4)
+      {{1, 4}, {2, 4}, "east"},
+      # Connect Bone Yard (2,0) to Hallway3 (2,1)
+      {{2, 0}, {2, 1}, "south"},
+      # Connect Hallway3 (2,1) to Hallway4 (2,2)
+      {{2, 1}, {2, 2}, "south"},
+      # Connect Hallway4 (2,2) to Hallway5 (2,3)
+      {{2, 2}, {2, 3}, "south"},
+      # Connect Hallway5 (2,3) to Hallway6 (2,4)
+      {{2, 3}, {2, 4}, "south"},
+      # Connect Hallway6 (2,4) to Tomb (2,5)
+      {{2, 4}, {2, 5}, "south"},
+      # {{2, 5}, {2, 4}, "south"},
+      # Connect Hallway6 (2,4) to Hallway7 (3,4)
+      {{2, 4}, {3, 4}, "east"},
+      # Connect Hallway7 (3,4) to Hallway8 (4,4)
+      {{3, 4}, {4, 4}, "east"},
+      # Connect Hallway8 (4,4) to Hallway9 (4,5)
+      {{4, 4}, {4, 5}, "south"},
+      # Connect Hallway8 (4,4) to Hallway14 (5,4)
+      {{4, 4}, {5, 4}, "east"},
+      # Connect Hallway10 (5,0) to Hallway11 (5,1)
+      {{5, 0}, {5, 1}, "south"},
+      # Connect Hallway11 (5,1) to Hallway12 (5,2)
+      {{5, 1}, {5, 2}, "south"},
+      # Connect Hallway12 (5,2) to Hallway13 (5,3)
+      {{5, 2}, {5, 3}, "south"},
+      # Connect Hallway13 (5,3) to Hallway14 (5,4)
+      {{5, 3}, {5, 4}, "south"},
+      # Connect Hallway14 (5,4) to Grand Statue (5,5)
+      {{5, 4}, {5, 5}, "south"},
+      # Connect Hallway9 (4,5) to Grand Statue (5,5)
+      {{4, 5}, {5, 5}, "east"},
+      # Connect Treasure Room (6,0) to Exit (7,0)
+      {{6, 0}, {7, 0}, "east"},
+      # Connect Hallway16 (6,3) to Barracks (7,3)
+      {{6, 3}, {7, 3}, "east"},
+      # Connect Hallway10 (5,0) to Treasure Room (6,0)
+      {{5, 0}, {6, 0}, "east"},
+      # Connect Hallway13 (5,3) to Hallway16 (6,3)
+      {{5, 3}, {6, 3}, "east"}
+    ]
+
+    Enum.each(bone_door_connections, fn {{from_x, from_y}, {to_x, to_y}, direction} ->
+      from_room = Enum.find(bone_rooms, &(&1.x_coordinate == from_x && &1.y_coordinate == from_y))
+      to_room = Enum.find(bone_rooms, &(&1.x_coordinate == to_x && &1.y_coordinate == to_y))
 
       if from_room && to_room do
-        Map.create_door(%{
-          from_room_id: from_room.id,
-          to_room_id: to_room.id,
-          direction: "east",
-          door_type: "standard",
-          is_locked: false
-        })
-      end
-    end
+        # Determine if this door should be locked
+        is_locked =
+          (from_x == 2 && from_y == 3 && to_x == 2 && to_y == 4) ||
+            (from_x == 5 && from_y == 0 && to_x == 5 && to_y == 1)
 
-    for x <- 0..2, y <- 0..1 do
-      from_room = Enum.find(bone_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
-      to_room = Enum.find(bone_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y + 1))
+        door_type = if is_locked, do: "locked_gate", else: "standard"
 
-      if from_room && to_room do
-        Map.create_door(%{
-          from_room_id: from_room.id,
-          to_room_id: to_room.id,
-          direction: "north",
-          door_type: "standard",
-          is_locked: false
-        })
+        key_required =
+          cond do
+            from_x == 2 && from_y == 3 && to_x == 2 && to_y == 4 -> "Tomb Key"
+            from_x == 5 && from_y == 0 && to_x == 5 && to_y == 1 -> "Treasure Room Key"
+            true -> nil
+          end
+
+        # Create door (Map.create_door automatically creates the return door)
+        case Map.create_door(%{
+               from_room_id: from_room.id,
+               to_room_id: to_room.id,
+               direction: direction,
+               door_type: door_type,
+               is_locked: is_locked,
+               key_required: key_required
+             }) do
+          {:ok, _door} ->
+            :ok
+
+          {:error, changeset} ->
+            IO.puts("Failed to create door #{direction}: #{inspect(changeset.errors)}")
+            raise "Door creation failed"
+        end
       end
-    end
+    end)
 
     IO.puts("Created doors for tutorial zone")
 
-    # Create doors for vampire castle (4x4 grid)
+    # Create doors for vampire castle (4x4 grid) - East/West connections
+    IO.puts("Creating vampire castle east/west doors...")
+
     for x <- 0..2, y <- 0..3 do
       from_room = Enum.find(vampire_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
       to_room = Enum.find(vampire_rooms, &(&1.x_coordinate == x + 1 && &1.y_coordinate == y))
 
       if from_room && to_room do
-        Map.create_door(%{
-          from_room_id: from_room.id,
-          to_room_id: to_room.id,
-          direction: "east",
-          door_type: "standard",
-          is_locked: false
-        })
+        IO.puts("Creating east door from (#{x},#{y}) to (#{x + 1},#{y})")
+        # Create east door (Map.create_door automatically creates the return door)
+        case Map.create_door(%{
+               from_room_id: from_room.id,
+               to_room_id: to_room.id,
+               direction: "east",
+               door_type: "standard",
+               is_locked: false
+             }) do
+          {:ok, _door} ->
+            :ok
+
+          {:error, changeset} ->
+            IO.puts(
+              "Failed to create vampire castle east door (#{x},#{y}) -> (#{x + 1},#{y}): #{inspect(changeset.errors)}"
+            )
+
+            raise "Door creation failed for east door at (#{x},#{y})"
+        end
       end
     end
+
+    # Create doors for vampire castle (4x4 grid) - North/South connections
+    IO.puts("Creating vampire castle north/south doors...")
 
     for x <- 0..3, y <- 0..2 do
       from_room = Enum.find(vampire_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
@@ -283,14 +356,26 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
         # Lock the door to vampire lord's chamber
         is_locked = x == 1 && y == 2
 
-        Map.create_door(%{
-          from_room_id: from_room.id,
-          to_room_id: to_room.id,
-          direction: "north",
-          door_type: if(is_locked, do: "locked_gate", else: "standard"),
-          is_locked: is_locked,
-          key_required: if(is_locked, do: "Vampire Lord's Key", else: nil)
-        })
+        IO.puts("Creating south door from (#{x},#{y}) to (#{x},#{y + 1}) - locked: #{is_locked}")
+        # Create south door (Map.create_door automatically creates the return door)
+        case Map.create_door(%{
+               from_room_id: from_room.id,
+               to_room_id: to_room.id,
+               direction: "south",
+               door_type: if(is_locked, do: "locked_gate", else: "standard"),
+               is_locked: is_locked,
+               key_required: if(is_locked, do: "Vampire Lord's Key", else: nil)
+             }) do
+          {:ok, _door} ->
+            :ok
+
+          {:error, changeset} ->
+            IO.puts(
+              "Failed to create vampire castle south door (#{x},#{y}) -> (#{x},#{y + 1}): #{inspect(changeset.errors)}"
+            )
+
+            raise "Door creation failed for south door at (#{x},#{y})"
+        end
       end
     end
 
@@ -302,13 +387,21 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
       to_room = Enum.find(forest_rooms, &(&1.x_coordinate == x + 1 && &1.y_coordinate == y))
 
       if from_room && to_room do
-        Map.create_door(%{
-          from_room_id: from_room.id,
-          to_room_id: to_room.id,
-          direction: "east",
-          door_type: "standard",
-          is_locked: false
-        })
+        # Create east door (Map.create_door automatically creates the return door)
+        case Map.create_door(%{
+               from_room_id: from_room.id,
+               to_room_id: to_room.id,
+               direction: "east",
+               door_type: "standard",
+               is_locked: false
+             }) do
+          {:ok, _door} ->
+            :ok
+
+          {:error, changeset} ->
+            IO.puts("Failed to create forest east door (#{x},#{y}): #{inspect(changeset.errors)}")
+            raise "Door creation failed"
+        end
       end
     end
 
@@ -317,13 +410,24 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
       to_room = Enum.find(forest_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y + 1))
 
       if from_room && to_room do
-        Map.create_door(%{
-          from_room_id: from_room.id,
-          to_room_id: to_room.id,
-          direction: "north",
-          door_type: "standard",
-          is_locked: false
-        })
+        # Create south door (Map.create_door automatically creates the return door)
+        case Map.create_door(%{
+               from_room_id: from_room.id,
+               to_room_id: to_room.id,
+               direction: "south",
+               door_type: "standard",
+               is_locked: false
+             }) do
+          {:ok, _door} ->
+            :ok
+
+          {:error, changeset} ->
+            IO.puts(
+              "Failed to create forest south door (#{x},#{y}): #{inspect(changeset.errors)}"
+            )
+
+            raise "Door creation failed"
+        end
       end
     end
 
