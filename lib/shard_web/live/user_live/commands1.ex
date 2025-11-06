@@ -499,14 +499,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         case existing_room do
           nil ->
-            # Room doesn't exist, prompt for description
-            prompt_message = [
-              "Creating a new room to the #{direction}.",
-              "Please provide a description for the new room:",
-              "(For now, using default description)"
-            ]
-
-            # Create the new room with default description
+            # Room doesn't exist, create the new room with default description
             case GameMap.create_room(%{
                    name: "New Room",
                    description: "A newly created room",

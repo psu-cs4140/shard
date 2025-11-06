@@ -1,7 +1,6 @@
 defmodule ShardWeb.UserLive.CommandParsers do
   alias Shard.Map, as: GameMap
   alias Shard.Items.Item
-  alias Shard.Items.AdminStick
   alias Shard.Repo
   import Ecto.Query
 

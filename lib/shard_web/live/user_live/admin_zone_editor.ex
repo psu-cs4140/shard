@@ -4,7 +4,6 @@ defmodule ShardWeb.UserLive.AdminZoneEditor do
   """
 
   alias Shard.Map, as: GameMap
-  alias Shard.Items.AdminStick
 
   # Create a room in the specified direction
   def create_room_in_direction(game_state, direction) do
