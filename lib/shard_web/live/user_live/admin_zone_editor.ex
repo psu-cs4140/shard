@@ -195,7 +195,8 @@ defmodule ShardWeb.UserLive.AdminZoneEditor do
       "northwest" -> {x - 1, y + 1}
       "southeast" -> {x + 1, y - 1}
       "southwest" -> {x - 1, y - 1}
-      _ -> {x, y} # Default to current position for invalid directions
+      # Default to current position for invalid directions
+      _ -> {x, y}
     end
   end
 end

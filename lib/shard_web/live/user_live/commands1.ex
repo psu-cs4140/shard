@@ -27,7 +27,7 @@ defmodule ShardWeb.UserLive.Commands1 do
   # Process terminal commands
   def process_command(command, game_state) do
     downcased_command = String.downcase(command)
-    
+
     cond do
       downcased_command == "help" ->
         response = [
@@ -418,7 +418,8 @@ defmodule ShardWeb.UserLive.Commands1 do
         if AdminStick.has_admin_stick?(game_state.character.id) do
           create_room_in_direction(game_state, direction)
         else
-          {["you do not wield powerful enough magic to change the very earth you stand on"], game_state}
+          {["you do not wield powerful enough magic to change the very earth you stand on"],
+           game_state}
         end
 
       :error ->
@@ -434,7 +435,8 @@ defmodule ShardWeb.UserLive.Commands1 do
         if AdminStick.has_admin_stick?(game_state.character.id) do
           delete_room_in_direction(game_state, direction)
         else
-          {["you do not wield powerful enough magic to change the very earth you stand on"], game_state}
+          {["you do not wield powerful enough magic to change the very earth you stand on"],
+           game_state}
         end
 
       :error ->
@@ -450,7 +452,8 @@ defmodule ShardWeb.UserLive.Commands1 do
         if AdminStick.has_admin_stick?(game_state.character.id) do
           create_door_in_direction(game_state, direction)
         else
-          {["you do not wield powerful enough magic to change the very earth you stand on"], game_state}
+          {["you do not wield powerful enough magic to change the very earth you stand on"],
+           game_state}
         end
 
       :error ->
@@ -466,7 +469,8 @@ defmodule ShardWeb.UserLive.Commands1 do
         if AdminStick.has_admin_stick?(game_state.character.id) do
           delete_door_in_direction(game_state, direction)
         else
-          {["you do not wield powerful enough magic to change the very earth you stand on"], game_state}
+          {["you do not wield powerful enough magic to change the very earth you stand on"],
+           game_state}
         end
 
       :error ->
@@ -670,7 +674,8 @@ defmodule ShardWeb.UserLive.Commands1 do
       "northwest" -> {x - 1, y + 1}
       "southeast" -> {x + 1, y - 1}
       "southwest" -> {x - 1, y - 1}
-      _ -> {x, y} # Default to current position for invalid directions
+      # Default to current position for invalid directions
+      _ -> {x, y}
     end
   end
 
