@@ -127,7 +127,7 @@ defmodule ShardWeb.UserLive.CommandParsers do
       # Match create room [direction] (with or without quotes)
       Regex.match?(~r/^create\s+room\s+["']?(\w+)["']?\s*$/i, command) ->
         case Regex.run(~r/^create\s+room\s+["']?(\w+)["']?\s*$/i, command) do
-          [_, direction] -> {:ok, String.trim(direction)}
+          [_, direction] -> {:ok, String.trim(direction) |> String.downcase()}
           _ -> :error
         end
 
@@ -143,7 +143,7 @@ defmodule ShardWeb.UserLive.CommandParsers do
       # Match delete room [direction] (with or without quotes)
       Regex.match?(~r/^delete\s+room\s+["']?(\w+)["']?\s*$/i, command) ->
         case Regex.run(~r/^delete\s+room\s+["']?(\w+)["']?\s*$/i, command) do
-          [_, direction] -> {:ok, String.trim(direction)}
+          [_, direction] -> {:ok, String.trim(direction) |> String.downcase()}
           _ -> :error
         end
 
@@ -159,7 +159,7 @@ defmodule ShardWeb.UserLive.CommandParsers do
       # Match create door [direction] (with or without quotes)
       Regex.match?(~r/^create\s+door\s+["']?(\w+)["']?\s*$/i, command) ->
         case Regex.run(~r/^create\s+door\s+["']?(\w+)["']?\s*$/i, command) do
-          [_, direction] -> {:ok, String.trim(direction)}
+          [_, direction] -> {:ok, String.trim(direction) |> String.downcase()}
           _ -> :error
         end
 
@@ -175,7 +175,7 @@ defmodule ShardWeb.UserLive.CommandParsers do
       # Match delete door [direction] (with or without quotes)
       Regex.match?(~r/^delete\s+door\s+["']?(\w+)["']?\s*$/i, command) ->
         case Regex.run(~r/^delete\s+door\s+["']?(\w+)["']?\s*$/i, command) do
-          [_, direction] -> {:ok, String.trim(direction)}
+          [_, direction] -> {:ok, String.trim(direction) |> String.downcase()}
           _ -> :error
         end
 
