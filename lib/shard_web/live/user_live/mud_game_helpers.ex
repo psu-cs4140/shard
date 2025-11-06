@@ -187,15 +187,14 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
 
   defp get_zone_welcome_message(zone_id) do
     case zone_id do
-      "bone_zone" ->
+      1 ->
         [
-          "Welcome to Shard!",
           "You enter the Bone Zone, where ancient skeletons guard forgotten treasures.",
           "The air is thick with the scent of decay. Type 'help' for available commands.",
           ""
         ]
 
-      "vampire_castle" ->
+      2 ->
         [
           "Welcome to Shard!",
           "You step into the Vampire Castle, where darkness reigns eternal.",
