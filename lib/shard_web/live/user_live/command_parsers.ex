@@ -7,179 +7,142 @@ defmodule ShardWeb.UserLive.CommandParsers do
   # Parse talk command to extract NPC name
   def parse_talk_command(command) do
     # Match patterns like: talk "npc name", talk 'npc name', talk npc_name
-    cond do
-      # Match talk "npc name" or talk 'npc name'
-      Regex.match?(~r/^talk\s+["'](.+)["']\s*$/i, command) ->
-        case Regex.run(~r/^talk\s+["'](.+)["']\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
-
-      # Match talk npc_name (single word, no quotes)
-      Regex.match?(~r/^talk\s+(\w+)\s*$/i, command) ->
-        case Regex.run(~r/^talk\s+(\w+)\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
-
-      true ->
-        :error
+    if Regex.match?(~r/^talk\s+["'](.+)["']\s*$/i, command) do
+      case Regex.run(~r/^talk\s+["'](.+)["']\s*$/i, command) do
+        [_, npc_name] -> {:ok, String.trim(npc_name)}
+        _ -> :error
+      end
+    else if Regex.match?(~r/^talk\s+(\w+)\s*$/i, command) do
+      case Regex.run(~r/^talk\s+(\w+)\s*$/i, command) do
+        [_, npc_name] -> {:ok, String.trim(npc_name)}
+        _ -> :error
+      end
+    else
+      :error
     end
   end
 
   # Parse quest command to extract NPC name
   def parse_quest_command(command) do
     # Match patterns like: quest "npc name", quest 'npc name', quest npc_name
-    cond do
-      # Match quest "npc name" or quest 'npc name'
-      Regex.match?(~r/^quest\s+["'](.+)["']\s*$/i, command) ->
-        case Regex.run(~r/^quest\s+["'](.+)["']\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
-
-      # Match quest npc_name (single word, no quotes)
-      Regex.match?(~r/^quest\s+(\w+)\s*$/i, command) ->
-        case Regex.run(~r/^quest\s+(\w+)\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
-
-      true ->
-        :error
+    if Regex.match?(~r/^quest\s+["'](.+)["']\s*$/i, command) do
+      case Regex.run(~r/^quest\s+["'](.+)["']\s*$/i, command) do
+        [_, npc_name] -> {:ok, String.trim(npc_name)}
+        _ -> :error
+      end
+    else if Regex.match?(~r/^quest\s+(\w+)\s*$/i, command) do
+      case Regex.run(~r/^quest\s+(\w+)\s*$/i, command) do
+        [_, npc_name] -> {:ok, String.trim(npc_name)}
+        _ -> :error
+      end
+    else
+      :error
     end
   end
 
   # Parse deliver_quest command to extract NPC name
   def parse_deliver_quest_command(command) do
     # Match patterns like: deliver_quest "npc name", deliver_quest 'npc name', deliver_quest npc_name
-    cond do
-      # Match deliver_quest "npc name" or deliver_quest 'npc name'
-      Regex.match?(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) ->
-        case Regex.run(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
-
-      # Match deliver_quest npc_name (single word, no quotes)
-      Regex.match?(~r/^deliver_quest\s+(\w+)\s*$/i, command) ->
-        case Regex.run(~r/^deliver_quest\s+(\w+)\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
-
-      true ->
-        :error
+    if Regex.match?(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) do
+      case Regex.run(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) do
+        [_, npc_name] -> {:ok, String.trim(npc_name)}
+        _ -> :error
+      end
+    else if Regex.match?(~r/^deliver_quest\s+(\w+)\s*$/i, command) do
+      case Regex.run(~r/^deliver_quest\s+(\w+)\s*$/i, command) do
+        [_, npc_name] -> {:ok, String.trim(npc_name)}
+        _ -> :error
+      end
+    else
+      :error
     end
   end
 
   # Parse unlock command to extract direction and item name
   def parse_unlock_command(command) do
     # Match patterns like: unlock north with "key name", unlock east with key_name
-    cond do
-      # Match unlock [direction] with "item name" or unlock [direction] with 'item name'
-      Regex.match?(~r/^unlock\s+(\w+)\s+with\s+["'](.+)["']\s*$/i, command) ->
-        case Regex.run(~r/^unlock\s+(\w+)\s+with\s+["'](.+)["']\s*$/i, command) do
-          [_, direction, item_name] -> {:ok, String.trim(direction), String.trim(item_name)}
-          _ -> :error
-        end
-
-      # Match unlock [direction] with item_name (single word, no quotes)
-      Regex.match?(~r/^unlock\s+(\w+)\s+with\s+(\w+)\s*$/i, command) ->
-        case Regex.run(~r/^unlock\s+(\w+)\s+with\s+(\w+)\s*$/i, command) do
-          [_, direction, item_name] -> {:ok, String.trim(direction), String.trim(item_name)}
-          _ -> :error
-        end
-
-      true ->
-        :error
+    if Regex.match?(~r/^unlock\s+(\w+)\s+with\s+["'](.+)["']\s*$/i, command) do
+      case Regex.run(~r/^unlock\s+(\w+)\s+with\s+["'](.+)["']\s*$/i, command) do
+        [_, direction, item_name] -> {:ok, String.trim(direction), String.trim(item_name)}
+        _ -> :error
+      end
+    else if Regex.match?(~r/^unlock\s+(\w+)\s+with\s+(\w+)\s*$/i, command) do
+      case Regex.run(~r/^unlock\s+(\w+)\s+with\s+(\w+)\s*$/i, command) do
+        [_, direction, item_name] -> {:ok, String.trim(direction), String.trim(item_name)}
+        _ -> :error
+      end
+    else
+      :error
     end
   end
 
   # Parse pickup command to extract item name
   def parse_pickup_command(command) do
     # Match patterns like: pickup "item name", pickup 'item name', pickup item_name
-    cond do
-      # Match pickup "item name" or pickup 'item name'
-      Regex.match?(~r/^pickup\s+["'](.+)["']\s*$/i, command) ->
-        case Regex.run(~r/^pickup\s+["'](.+)["']\s*$/i, command) do
-          [_, item_name] -> {:ok, String.trim(item_name)}
-          _ -> :error
-        end
-
-      # Match pickup item_name (single word, no quotes)
-      Regex.match?(~r/^pickup\s+(\w+)\s*$/i, command) ->
-        case Regex.run(~r/^pickup\s+(\w+)\s*$/i, command) do
-          [_, item_name] -> {:ok, String.trim(item_name)}
-          _ -> :error
-        end
-
-      true ->
-        :error
+    if Regex.match?(~r/^pickup\s+["'](.+)["']\s*$/i, command) do
+      case Regex.run(~r/^pickup\s+["'](.+)["']\s*$/i, command) do
+        [_, item_name] -> {:ok, String.trim(item_name)}
+        _ -> :error
+      end
+    else if Regex.match?(~r/^pickup\s+(\w+)\s*$/i, command) do
+      case Regex.run(~r/^pickup\s+(\w+)\s*$/i, command) do
+        [_, item_name] -> {:ok, String.trim(item_name)}
+        _ -> :error
+      end
+    else
+      :error
     end
   end
 
   # Parse create room command: "create room <direction>"
   def parse_create_room_command(command) do
     # Match patterns like: create room north, create room "north"
-    cond do
-      # Match create room [direction] (with or without quotes)
-      Regex.match?(~r/^create\s+room\s+["']?(\w+)["']?\s*$/i, command) ->
-        case Regex.run(~r/^create\s+room\s+["']?(\w+)["']?\s*$/i, command) do
-          [_, direction] -> {:ok, String.trim(direction) |> String.downcase()}
-          _ -> :error
-        end
-
-      true ->
-        :error
+    if Regex.match?(~r/^create\s+room\s+["']?(\w+)["']?\s*$/i, command) do
+      case Regex.run(~r/^create\s+room\s+["']?(\w+)["']?\s*$/i, command) do
+        [_, direction] -> {:ok, String.trim(direction) |> String.downcase()}
+        _ -> :error
+      end
+    else
+      :error
     end
   end
 
   # Parse delete room command: "delete room <direction>"
   def parse_delete_room_command(command) do
     # Match patterns like: delete room north, delete room "north"
-    cond do
-      # Match delete room [direction] (with or without quotes)
-      Regex.match?(~r/^delete\s+room\s+["']?(\w+)["']?\s*$/i, command) ->
-        case Regex.run(~r/^delete\s+room\s+["']?(\w+)["']?\s*$/i, command) do
-          [_, direction] -> {:ok, String.trim(direction) |> String.downcase()}
-          _ -> :error
-        end
-
-      true ->
-        :error
+    if Regex.match?(~r/^delete\s+room\s+["']?(\w+)["']?\s*$/i, command) do
+      case Regex.run(~r/^delete\s+room\s+["']?(\w+)["']?\s*$/i, command) do
+        [_, direction] -> {:ok, String.trim(direction) |> String.downcase()}
+        _ -> :error
+      end
+    else
+      :error
     end
   end
 
   # Parse create door command: "create door <direction>"
   def parse_create_door_command(command) do
     # Match patterns like: create door north, create door "north"
-    cond do
-      # Match create door [direction] (with or without quotes)
-      Regex.match?(~r/^create\s+door\s+["']?(\w+)["']?\s*$/i, command) ->
-        case Regex.run(~r/^create\s+door\s+["']?(\w+)["']?\s*$/i, command) do
-          [_, direction] -> {:ok, String.trim(direction) |> String.downcase()}
-          _ -> :error
-        end
-
-      true ->
-        :error
+    if Regex.match?(~r/^create\s+door\s+["']?(\w+)["']?\s*$/i, command) do
+      case Regex.run(~r/^create\s+door\s+["']?(\w+)["']?\s*$/i, command) do
+        [_, direction] -> {:ok, String.trim(direction) |> String.downcase()}
+        _ -> :error
+      end
+    else
+      :error
     end
   end
 
   # Parse delete door command: "delete door <direction>"
   def parse_delete_door_command(command) do
     # Match patterns like: delete door north, delete door "north"
-    cond do
-      # Match delete door [direction] (with or without quotes)
-      Regex.match?(~r/^delete\s+door\s+["']?(\w+)["']?\s*$/i, command) ->
-        case Regex.run(~r/^delete\s+door\s+["']?(\w+)["']?\s*$/i, command) do
-          [_, direction] -> {:ok, String.trim(direction) |> String.downcase()}
-          _ -> :error
-        end
-
-      true ->
-        :error
+    if Regex.match?(~r/^delete\s+door\s+["']?(\w+)["']?\s*$/i, command) do
+      case Regex.run(~r/^delete\s+door\s+["']?(\w+)["']?\s*$/i, command) do
+        [_, direction] -> {:ok, String.trim(direction) |> String.downcase()}
+        _ -> :error
+      end
+    else
+      :error
     end
   end
 
