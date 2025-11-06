@@ -226,36 +226,68 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
 
     IO.puts("Created #{length(forest_rooms)} elven forest rooms")
 
-    # Create doors for bone zone (connect horizontally and vertically)
-    for x <- 0..1, y <- 0..2 do
-      from_room = Enum.find(bone_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
-      to_room = Enum.find(bone_rooms, &(&1.x_coordinate == x + 1 && &1.y_coordinate == y))
+    # Create doors for bone zone based on actual room coordinates
+    bone_door_connections = [
+      # Connect Spider Dungeon (0,3) to Hallway1 (0,4)
+      {{0, 3}, {0, 4}, "north"},
+      # Connect Hallway1 (0,4) to Hallway2 (1,4)
+      {{0, 4}, {1, 4}, "east"},
+      # Connect Hallway2 (1,4) to Hallway6 (2,4)
+      {{1, 4}, {2, 4}, "east"},
+      # Connect Bone Yard (2,0) to Hallway3 (2,1)
+      {{2, 0}, {2, 1}, "north"},
+      # Connect Hallway3 (2,1) to Hallway4 (2,2)
+      {{2, 1}, {2, 2}, "north"},
+      # Connect Hallway4 (2,2) to Hallway5 (2,3)
+      {{2, 2}, {2, 3}, "north"},
+      # Connect Hallway5 (2,3) to Hallway6 (2,4)
+      {{2, 3}, {2, 4}, "north"},
+      # Connect Hallway6 (2,4) to Tomb (2,5)
+      {{2, 4}, {2, 5}, "north"},
+      # Connect Hallway6 (2,4) to Hallway7 (3,4)
+      {{2, 4}, {3, 4}, "east"},
+      # Connect Hallway7 (3,4) to Hallway8 (4,4)
+      {{3, 4}, {4, 4}, "east"},
+      # Connect Hallway8 (4,4) to Hallway9 (4,5)
+      {{4, 4}, {4, 5}, "north"},
+      # Connect Hallway8 (4,4) to Hallway14 (5,4)
+      {{4, 4}, {5, 4}, "east"},
+      # Connect Hallway10 (5,0) to Hallway11 (5,1)
+      {{5, 0}, {5, 1}, "north"},
+      # Connect Hallway11 (5,1) to Hallway12 (5,2)
+      {{5, 1}, {5, 2}, "north"},
+      # Connect Hallway12 (5,2) to Hallway13 (5,3)
+      {{5, 2}, {5, 3}, "north"},
+      # Connect Hallway13 (5,3) to Hallway14 (5,4)
+      {{5, 3}, {5, 4}, "north"},
+      # Connect Hallway14 (5,4) to Grand Statue (5,5)
+      {{5, 4}, {5, 5}, "north"},
+      # Connect Hallway9 (4,5) to Grand Statue (5,5)
+      {{4, 5}, {5, 5}, "east"},
+      # Connect Treasure Room (6,0) to Exit (7,0)
+      {{6, 0}, {7, 0}, "east"},
+      # Connect Hallway16 (6,3) to Barracks (7,3)
+      {{6, 3}, {7, 3}, "east"},
+      # Connect Hallway10 (5,0) to Treasure Room (6,0)
+      {{5, 0}, {6, 0}, "east"},
+      # Connect Hallway13 (5,3) to Hallway16 (6,3)
+      {{5, 3}, {6, 3}, "east"}
+    ]
+
+    Enum.each(bone_door_connections, fn {{from_x, from_y}, {to_x, to_y}, direction} ->
+      from_room = Enum.find(bone_rooms, &(&1.x_coordinate == from_x && &1.y_coordinate == from_y))
+      to_room = Enum.find(bone_rooms, &(&1.x_coordinate == to_x && &1.y_coordinate == to_y))
 
       if from_room && to_room do
         Map.create_door(%{
           from_room_id: from_room.id,
           to_room_id: to_room.id,
-          direction: "east",
+          direction: direction,
           door_type: "standard",
           is_locked: false
         })
       end
-    end
-
-    for x <- 0..2, y <- 0..1 do
-      from_room = Enum.find(bone_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
-      to_room = Enum.find(bone_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y + 1))
-
-      if from_room && to_room do
-        Map.create_door(%{
-          from_room_id: from_room.id,
-          to_room_id: to_room.id,
-          direction: "north",
-          door_type: "standard",
-          is_locked: false
-        })
-      end
-    end
+    end)
 
     IO.puts("Created doors for tutorial zone")
 
