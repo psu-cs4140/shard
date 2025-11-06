@@ -7,90 +7,113 @@ defmodule ShardWeb.UserLive.CommandParsers do
   # Parse talk command to extract NPC name
   def parse_talk_command(command) do
     # Match patterns like: talk "npc name", talk 'npc name', talk npc_name
-    if Regex.match?(~r/^talk\s+["'](.+)["']\s*$/i, command) do
-      case Regex.run(~r/^talk\s+["'](.+)["']\s*$/i, command) do
-        [_, npc_name] -> {:ok, String.trim(npc_name)}
-        _ -> :error
-      end
-    else if Regex.match?(~r/^talk\s+(\w+)\s*$/i, command) do
-      case Regex.run(~r/^talk\s+(\w+)\s*$/i, command) do
-        [_, npc_name] -> {:ok, String.trim(npc_name)}
-        _ -> :error
-      end
-    else
-      :error
+    cond do
+      # Match talk "npc name" or talk 'npc name'
+      Regex.match?(~r/^talk\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^talk\s+["'](.+)["']\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+
+      # Match talk npc_name (single word, no quotes)
+      Regex.match?(~r/^talk\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^talk\s+(\w+)\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
     end
   end
 
   # Parse quest command to extract NPC name
   def parse_quest_command(command) do
     # Match patterns like: quest "npc name", quest 'npc name', quest npc_name
-    if Regex.match?(~r/^quest\s+["'](.+)["']\s*$/i, command) do
-      case Regex.run(~r/^quest\s+["'](.+)["']\s*$/i, command) do
-        [_, npc_name] -> {:ok, String.trim(npc_name)}
-        _ -> :error
-      end
-    else if Regex.match?(~r/^quest\s+(\w+)\s*$/i, command) do
-      case Regex.run(~r/^quest\s+(\w+)\s*$/i, command) do
-        [_, npc_name] -> {:ok, String.trim(npc_name)}
-        _ -> :error
-      end
-    else
-      :error
+    cond do
+      # Match quest "npc name" or quest 'npc name'
+      Regex.match?(~r/^quest\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^quest\s+["'](.+)["']\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+
+      # Match quest npc_name (single word, no quotes)
+      Regex.match?(~r/^quest\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^quest\s+(\w+)\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
     end
   end
 
   # Parse deliver_quest command to extract NPC name
   def parse_deliver_quest_command(command) do
     # Match patterns like: deliver_quest "npc name", deliver_quest 'npc name', deliver_quest npc_name
-    if Regex.match?(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) do
-      case Regex.run(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) do
-        [_, npc_name] -> {:ok, String.trim(npc_name)}
-        _ -> :error
-      end
-    else if Regex.match?(~r/^deliver_quest\s+(\w+)\s*$/i, command) do
-      case Regex.run(~r/^deliver_quest\s+(\w+)\s*$/i, command) do
-        [_, npc_name] -> {:ok, String.trim(npc_name)}
-        _ -> :error
-      end
-    else
-      :error
+    cond do
+      # Match deliver_quest "npc name" or deliver_quest 'npc name'
+      Regex.match?(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+
+      # Match deliver_quest npc_name (single word, no quotes)
+      Regex.match?(~r/^deliver_quest\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^deliver_quest\s+(\w+)\s*$/i, command) do
+          [_, npc_name] -> {:ok, String.trim(npc_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
     end
   end
 
   # Parse unlock command to extract direction and item name
   def parse_unlock_command(command) do
     # Match patterns like: unlock north with "key name", unlock east with key_name
-    if Regex.match?(~r/^unlock\s+(\w+)\s+with\s+["'](.+)["']\s*$/i, command) do
-      case Regex.run(~r/^unlock\s+(\w+)\s+with\s+["'](.+)["']\s*$/i, command) do
-        [_, direction, item_name] -> {:ok, String.trim(direction), String.trim(item_name)}
-        _ -> :error
-      end
-    else if Regex.match?(~r/^unlock\s+(\w+)\s+with\s+(\w+)\s*$/i, command) do
-      case Regex.run(~r/^unlock\s+(\w+)\s+with\s+(\w+)\s*$/i, command) do
-        [_, direction, item_name] -> {:ok, String.trim(direction), String.trim(item_name)}
-        _ -> :error
-      end
-    else
-      :error
+    cond do
+      Regex.match?(~r/^unlock\s+(\w+)\s+with\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^unlock\s+(\w+)\s+with\s+["'](.+)["']\s*$/i, command) do
+          [_, direction, item_name] -> {:ok, String.trim(direction), String.trim(item_name)}
+          _ -> :error
+        end
+
+      Regex.match?(~r/^unlock\s+(\w+)\s+with\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^unlock\s+(\w+)\s+with\s+(\w+)\s*$/i, command) do
+          [_, direction, item_name] -> {:ok, String.trim(direction), String.trim(item_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
     end
   end
 
   # Parse pickup command to extract item name
   def parse_pickup_command(command) do
     # Match patterns like: pickup "item name", pickup 'item name', pickup item_name
-    if Regex.match?(~r/^pickup\s+["'](.+)["']\s*$/i, command) do
-      case Regex.run(~r/^pickup\s+["'](.+)["']\s*$/i, command) do
-        [_, item_name] -> {:ok, String.trim(item_name)}
-        _ -> :error
-      end
-    else if Regex.match?(~r/^pickup\s+(\w+)\s*$/i, command) do
-      case Regex.run(~r/^pickup\s+(\w+)\s*$/i, command) do
-        [_, item_name] -> {:ok, String.trim(item_name)}
-        _ -> :error
-      end
-    else
-      :error
+    cond do
+      # Match pickup "item name" or pickup 'item name'
+      Regex.match?(~r/^pickup\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^pickup\s+["'](.+)["']\s*$/i, command) do
+          [_, item_name] -> {:ok, String.trim(item_name)}
+          _ -> :error
+        end
+
+      # Match pickup item_name (single word, no quotes)
+      Regex.match?(~r/^pickup\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^pickup\s+(\w+)\s*$/i, command) do
+          [_, item_name] -> {:ok, String.trim(item_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
     end
   end
 
