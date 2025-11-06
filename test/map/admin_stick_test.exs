@@ -134,8 +134,7 @@ defmodule Shard.Map.AdminStickTest do
 
       admin_stick_count =
         inventory
-        |> Enum.filter(fn ci -> ci.item_id == admin_stick.id end)
-        |> Enum.count()
+        |> Enum.count(fn ci -> ci.item_id == admin_stick.id end)
 
       assert admin_stick_count == 1
     end
