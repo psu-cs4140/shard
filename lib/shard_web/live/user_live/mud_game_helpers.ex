@@ -213,7 +213,8 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
       {:ok, content} ->
         content
         |> String.split("\n")
-        |> Kernel.++([""]) # Add empty line at the end
+        # Add empty line at the end
+        |> Kernel.++([""])
 
       {:error, _reason} ->
         # Fallback if file can't be read

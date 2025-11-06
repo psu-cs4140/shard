@@ -25,3 +25,11 @@ To seek guidance or purpose, quest [npc name].
 To defend yourself, attack.
 To take what the dead no longer need, pickup [item].
 To see what burdens or blessings you carry, whisper inventory.”
+ 
+He plants the butt of his halberd into the stone floor, the sound echoing like a drumbeat in the tomb.
+ 
+“Before you face the Bone Zone beyond, you must arm yourself. A blade once rested beside your coffin — your blade — but the lesser dead have claimed it for themselves. They skulk in the lower chambers, drawn to its lingering power.”
+ 
+The Tombguard steps aside, his gaze fixed upon you.
+ 
+“Speak to me with the command "quest Tombguard", and I will mark the first step of your path: reclaim your sword from the tomb’s depths. Only then will your true journey begin.”
