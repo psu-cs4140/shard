@@ -27,7 +27,8 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
         display_order: 1,
         properties: %{
           "has_tutorial_npcs" => true,
-          "respawn_point" => true
+          "respawn_point" => true,
+          "starting_room" => %{"x" => 2, "y" => 5, "z" => 0}
         }
       })
 
