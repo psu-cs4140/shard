@@ -5,11 +5,8 @@ defmodule Shard.Map.AdminStickTest do
   alias Shard.Items.AdminStick
 
   describe "admin stick item" do
-    test "creates admin stick item through migration" do
-      # Run the migration up
-      Ecto.Migrator.up(Shard.Repo, 20251102000000, Shard.Repo.Migrations.CreateAdminStickItem)
-
-      # Check that the admin stick item was created
+    test "admin stick item exists in database" do
+      # Check that the admin stick item was created by migration
       admin_stick = AdminStick.get_admin_stick_item()
       assert admin_stick != nil
       assert admin_stick.name == "Admin Zone Editing Stick"
@@ -20,18 +17,25 @@ defmodule Shard.Map.AdminStickTest do
       assert admin_stick.stackable == false
     end
 
-    test "does not create duplicate admin stick item" do
-      # Run the migration twice
-      Ecto.Migrator.up(Shard.Repo, 20251102000000, Shard.Repo.Migrations.CreateAdminStickItem)
-      Ecto.Migrator.up(Shard.Repo, 20251102000000, Shard.Repo.Migrations.CreateAdminStickItem)
+    test "admin stick item is unique" do
+      # Try to create another admin stick item with the same name
+      attrs = %{
+        name: "Admin Zone Editing Stick",
+        description: "Duplicate admin stick",
+        item_type: "tool",
+        rarity: "common",
+        equippable: true,
+        stackable: true
+      }
 
-      # Count how many admin stick items exist
-      admin_sticks =
-        from(i in Items.Item, where: i.name == "Admin Zone Editing Stick")
-        |> Shard.Repo.all()
-
-      # Should only have one
-      assert length(admin_sticks) == 1
+      # This should fail due to unique constraint on name
+      case Items.create_item(attrs) do
+        {:error, changeset} ->
+          assert changeset.errors[:name] != nil
+        {:ok, _item} ->
+          # If it somehow succeeds, fail the test
+          flunk("Should not be able to create duplicate admin stick")
+      end
     end
   end
 end
