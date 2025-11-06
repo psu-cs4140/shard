@@ -66,11 +66,12 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
       %{
         zone: zone,
         room1: room1,
-        _room2: room2,
+        room2: room2,
         character: character,
         game_state: %{
           character: character,
-          player_position: {0, 0}
+          player_position: {0, 0},
+          room1: room1
         }
       }
     end
@@ -98,17 +99,27 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
       assert door != nil
     end
 
-    test "create_room_in_direction handles existing room", %{game_state: game_state} do
-      # Try to create a room where one already exists (north)
-      {response, _updated_game_state} = AdminZoneEditor.create_room_in_direction(game_state, "north")
+    test "create_room_in_direction handles existing room", %{game_state: game_state, room1: room1, room2: room2} do
+      # Create a game state that includes room2 in the north position
+      game_state_with_north_room = %{
+        game_state | 
+        player_position: {0, 1},
+        room1: room2
+      }
+      
+      # Try to create a room where one already exists (south from room2 which leads back to room1)
+      {response, _updated_game_state} = AdminZoneEditor.create_room_in_direction(game_state_with_north_room, "south")
       
       assert is_list(response)
       assert Enum.any?(response, fn msg -> String.contains?(msg, "A room already exists") end)
     end
 
-    test "delete_room_in_direction removes a room", %{game_state: game_state, _room2: _room2} do
+    test "delete_room_in_direction removes a room", %{game_state: game_state, room1: room1, room2: room2} do
+      # Update game_state to include room1 for proper access
+      game_state_with_room = %{game_state | room1: room1}
+      
       # Test deleting the room to the north
-      {response, _updated_game_state} = AdminZoneEditor.delete_room_in_direction(game_state, "north")
+      {response, _updated_game_state} = AdminZoneEditor.delete_room_in_direction(game_state_with_room, "north")
       
       assert is_list(response)
       assert Enum.any?(response, fn msg -> String.contains?(msg, "Successfully deleted the room") end)
@@ -124,33 +135,39 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
       assert deleted_room == nil
     end
 
-    test "create_door_in_direction creates a door to existing room", %{game_state: game_state, _room2: _room2} do
+    test "create_door_in_direction creates a door to existing room", %{game_state: game_state, room1: room1, room2: room2} do
       # First delete the existing door to test creating a new one
-      existing_door = Map.get_door_in_direction(game_state.room1.id, "north")
+      existing_door = Map.get_door_in_direction(room1.id, "north")
       if existing_door do
         {:ok, _} = Map.delete_door(existing_door)
       end
       
+      # Update game_state to include room1 for proper access
+      game_state_with_room = %{game_state | room1: room1}
+      
       # Test creating a door to the north room
-      {response, _updated_game_state} = AdminZoneEditor.create_door_in_direction(game_state, "north")
+      {response, _updated_game_state} = AdminZoneEditor.create_door_in_direction(game_state_with_room, "north")
       
       assert is_list(response)
       assert Enum.any?(response, fn msg -> String.contains?(msg, "Successfully created a door") end)
       
       # Verify door was created
-      door = Map.get_door_in_direction(game_state.room1.id, "north")
+      door = Map.get_door_in_direction(room1.id, "north")
       assert door != nil
     end
 
-    test "delete_door_in_direction removes a door", %{game_state: game_state} do
+    test "delete_door_in_direction removes a door", %{game_state: game_state, room1: room1} do
+      # Update game_state to include room1 for proper access
+      game_state_with_room = %{game_state | room1: room1}
+      
       # Test deleting the door to the north
-      {response, _updated_game_state} = AdminZoneEditor.delete_door_in_direction(game_state, "north")
+      {response, _updated_game_state} = AdminZoneEditor.delete_door_in_direction(game_state_with_room, "north")
       
       assert is_list(response)
       assert Enum.any?(response, fn msg -> String.contains?(msg, "Successfully deleted the door") end)
       
       # Verify the door was deleted
-      door = Map.get_door_in_direction(game_state.room1.id, "north")
+      door = Map.get_door_in_direction(room1.id, "north")
       assert door == nil
     end
   end
