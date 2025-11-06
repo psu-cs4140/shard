@@ -50,45 +50,33 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
       #  room
      # end
 
+    bone_room_specs = [
+      {0, 3, "Spider Dungeon", "dungeon"},
+      {0, 4, "Hallway1", "standard"},
+      {1, 4, "Hallway2", "standard"},
+      {2, 0, "Bone Yard", "standard"},
+      {2, 1, "Hallway3", "standard"},
+      {2, 2, "Hallway4", "standard"},
+      {2, 3, "Hallway5", "standard"},
+      {2, 4, "Hallway6", "standard"},
+      {2, 5, "Tomb", "standard"},
+      {3, 4, "Hallway7", "standard"},
+      {4, 4, "Hallway8", "standard"},
+      {4, 5, "Hallway9", "standard"},
+      {5, 0, "Hallway10", "standard"},
+      {5, 1, "Hallway11", "standard"},
+      {5, 2, "Hallway12", "standard"},
+      {5, 3, "Hallway13", "standard"},
+      {5, 4, "Hallway14", "standard"},
+      {5, 5, "Grand Statue", "standard"},
+      {6, 0, "Treasure Room", "treasure_room"},
+      {7, 0, "Exit", "standard"},
+      {6, 3, "Hallway16", "standard"},
+      {7, 3, "Barracks", "standard"}
+    ]
+
     bone_rooms =
-      for x <- 0..7, y <- 0..5 do
-        room_name =
-          case {x, y} do
-            {0, 0} -> " "
-            {0, 1} -> " "
-            {0, 2} -> " "
-            {0, 3} -> "Spider Dungeon"
-            {0, 4} -> "Hallway1"
-            {0, 5} -> " "
-            {1, 4} -> "Hallway2"
-            {2, 0} -> "Bone Yard"
-            {2, 1} -> "Hallway3"
-            {2, 2} -> "Hallway4"
-            {2, 3} -> "Hallway5"
-            {2, 4} -> "Hallway6"
-            {2, 5} -> "Tomb"
-            {3, 4} -> "Hallway7"
-            {4, 4} -> "Hallway8"
-            {4, 5} -> "Hallway9"
-            {5, 0} -> "Hallway10"
-            {5, 1} -> "Hallway11"
-            {5, 2} -> "Hallway12"
-            {5, 3} -> "Hallway13"
-            {5, 4} -> "Hallway14"
-            {5, 5} -> "Grand Statue"
-            {6, 0} -> "Treasure Room"
-            {7, 0} -> "Exit"
-            {6, 3} -> "Hallway16"
-            {7, 3} -> "Barracks"
-          end
-
-        room_type =
-          case {x, y} do
-            {6, 0} -> "treasure_room"
-            {0, 3} -> "dungeon"
-            _ -> "standard"
-          end
-
+      Enum.map(bone_room_specs, fn {x, y, room_name, room_type} ->
         {:ok, room} =
           Map.create_room(%{
             name: room_name,
@@ -102,7 +90,7 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
           })
 
         room
-      end
+      end)
 
     IO.puts("Created #{length(bone_rooms)} bone rooms")
 
