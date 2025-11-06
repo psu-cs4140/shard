@@ -276,7 +276,7 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
       to_room = Enum.find(bone_rooms, &(&1.x_coordinate == to_x && &1.y_coordinate == to_y))
 
       if from_room && to_room do
-        # Create door in the specified direction
+        # Create door (Map.create_door automatically creates the return door)
         case Map.create_door(%{
           from_room_id: from_room.id,
           to_room_id: to_room.id,
@@ -287,21 +287,6 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
           {:ok, _door} -> :ok
           {:error, changeset} -> 
             IO.puts("Failed to create door #{direction}: #{inspect(changeset.errors)}")
-            raise "Door creation failed"
-        end
-        
-        # Create door in the opposite direction
-        opposite_direction = Shard.Map.Door.opposite_direction(direction)
-        case Map.create_door(%{
-          from_room_id: to_room.id,
-          to_room_id: from_room.id,
-          direction: opposite_direction,
-          door_type: "standard",
-          is_locked: false
-        }) do
-          {:ok, _door} -> :ok
-          {:error, changeset} -> 
-            IO.puts("Failed to create door #{opposite_direction}: #{inspect(changeset.errors)}")
             raise "Door creation failed"
         end
       end
@@ -317,7 +302,7 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
 
       if from_room && to_room do
         IO.puts("Creating east door from (#{x},#{y}) to (#{x+1},#{y})")
-        # Create east door
+        # Create east door (Map.create_door automatically creates the return door)
         case Map.create_door(%{
           from_room_id: from_room.id,
           to_room_id: to_room.id,
@@ -329,21 +314,6 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
           {:error, changeset} -> 
             IO.puts("Failed to create vampire castle east door (#{x},#{y}) -> (#{x+1},#{y}): #{inspect(changeset.errors)}")
             raise "Door creation failed for east door at (#{x},#{y})"
-        end
-        
-        IO.puts("Creating west door from (#{x+1},#{y}) to (#{x},#{y})")
-        # Create west door
-        case Map.create_door(%{
-          from_room_id: to_room.id,
-          to_room_id: from_room.id,
-          direction: "west",
-          door_type: "standard",
-          is_locked: false
-        }) do
-          {:ok, _door} -> :ok
-          {:error, changeset} -> 
-            IO.puts("Failed to create vampire castle west door (#{x+1},#{y}) -> (#{x},#{y}): #{inspect(changeset.errors)}")
-            raise "Door creation failed for west door at (#{x+1},#{y})"
         end
       end
     end
@@ -359,7 +329,7 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
         is_locked = x == 1 && y == 2
 
         IO.puts("Creating north door from (#{x},#{y}) to (#{x},#{y+1}) - locked: #{is_locked}")
-        # Create north door
+        # Create north door (Map.create_door automatically creates the return door)
         case Map.create_door(%{
           from_room_id: from_room.id,
           to_room_id: to_room.id,
@@ -373,22 +343,6 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
             IO.puts("Failed to create vampire castle north door (#{x},#{y}) -> (#{x},#{y+1}): #{inspect(changeset.errors)}")
             raise "Door creation failed for north door at (#{x},#{y})"
         end
-        
-        IO.puts("Creating south door from (#{x},#{y+1}) to (#{x},#{y}) - locked: #{is_locked}")
-        # Create south door (with same lock status)
-        case Map.create_door(%{
-          from_room_id: to_room.id,
-          to_room_id: from_room.id,
-          direction: "south",
-          door_type: if(is_locked, do: "locked_gate", else: "standard"),
-          is_locked: is_locked,
-          key_required: if(is_locked, do: "Vampire Lord's Key", else: nil)
-        }) do
-          {:ok, _door} -> :ok
-          {:error, changeset} -> 
-            IO.puts("Failed to create vampire castle south door (#{x},#{y+1}) -> (#{x},#{y}): #{inspect(changeset.errors)}")
-            raise "Door creation failed for south door at (#{x},#{y+1})"
-        end
       end
     end
 
@@ -400,7 +354,7 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
       to_room = Enum.find(forest_rooms, &(&1.x_coordinate == x + 1 && &1.y_coordinate == y))
 
       if from_room && to_room do
-        # Create east door
+        # Create east door (Map.create_door automatically creates the return door)
         case Map.create_door(%{
           from_room_id: from_room.id,
           to_room_id: to_room.id,
@@ -413,20 +367,6 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
             IO.puts("Failed to create forest east door (#{x},#{y}): #{inspect(changeset.errors)}")
             raise "Door creation failed"
         end
-        
-        # Create west door
-        case Map.create_door(%{
-          from_room_id: to_room.id,
-          to_room_id: from_room.id,
-          direction: "west",
-          door_type: "standard",
-          is_locked: false
-        }) do
-          {:ok, _door} -> :ok
-          {:error, changeset} -> 
-            IO.puts("Failed to create forest west door (#{x},#{y}): #{inspect(changeset.errors)}")
-            raise "Door creation failed"
-        end
       end
     end
 
@@ -435,7 +375,7 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
       to_room = Enum.find(forest_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y + 1))
 
       if from_room && to_room do
-        # Create north door
+        # Create north door (Map.create_door automatically creates the return door)
         case Map.create_door(%{
           from_room_id: from_room.id,
           to_room_id: to_room.id,
@@ -446,20 +386,6 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
           {:ok, _door} -> :ok
           {:error, changeset} -> 
             IO.puts("Failed to create forest north door (#{x},#{y}): #{inspect(changeset.errors)}")
-            raise "Door creation failed"
-        end
-        
-        # Create south door
-        case Map.create_door(%{
-          from_room_id: to_room.id,
-          to_room_id: from_room.id,
-          direction: "south",
-          door_type: "standard",
-          is_locked: false
-        }) do
-          {:ok, _door} -> :ok
-          {:error, changeset} -> 
-            IO.puts("Failed to create forest south door (#{x},#{y}): #{inspect(changeset.errors)}")
             raise "Door creation failed"
         end
       end
