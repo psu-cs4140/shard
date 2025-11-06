@@ -192,17 +192,17 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
 
       2 ->
         [
-          "Welcome to Shard!",
-          "You step into the Vampire Castle, where darkness reigns eternal.",
-          "Blood-red tapestries line the walls and danger lurks in every shadow. Type 'help' for available commands.",
+          "<span style=\"color: white;\">Welcome to Shard!</span>",
+          "<span style=\"color: white;\">You step into the Vampire Castle, where darkness reigns eternal.</span>",
+          "<span style=\"color: white;\">Blood-red tapestries line the walls and danger lurks in every shadow. Type 'help' for available commands.</span>",
           ""
         ]
 
       _ ->
         [
-          "Welcome to Shard!",
-          "You find yourself in an unknown realm, filled with mystery and adventure.",
-          "Type 'help' for available commands.",
+          "<span style=\"color: white;\">Welcome to Shard!</span>",
+          "<span style=\"color: white;\">You find yourself in an unknown realm, filled with mystery and adventure.</span>",
+          "<span style=\"color: white;\">Type 'help' for available commands.</span>",
           ""
         ]
     end
@@ -213,13 +213,20 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
       {:ok, content} ->
         content
         |> String.split("\n")
+        |> Enum.map(fn line -> 
+          if String.trim(line) == "" do
+            line
+          else
+            "<span style=\"color: white;\">#{line}</span>"
+          end
+        end)
         |> Kernel.++([""]) # Add empty line at the end
 
       {:error, _reason} ->
         # Fallback if file can't be read
         [
-          "Dim torchlight flickers along the walls of a vast underground chamber — The Tomb, the heart of the Bone Zone.",
-          "Type 'help' for available commands.",
+          "<span style=\"color: white;\">Dim torchlight flickers along the walls of a vast underground chamber — The Tomb, the heart of the Bone Zone.</span>",
+          "<span style=\"color: white;\">Type 'help' for available commands.</span>",
           ""
         ]
     end
@@ -245,7 +252,7 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
   end
 
   defp get_goldie_dialogue do
-    "Woof! Welcome to the tutorial, adventurer!\n\nI'm Goldie, your faithful guide dog. Let me help you get started on your journey.\n\nHere are some basic commands to get you moving:\n• Type 'look' to examine your surroundings\n• Use 'north', 'south', 'east', 'west' (or n/s/e/w) to move around\n• Try 'pickup \"item_name\"' to collect items you find\n• Use 'inventory' to see what you're carrying\n• Type 'help' anytime for a full list of commands\n\nThere's a key hidden somewhere to the south that might come in handy later!\nExplore around and interact with npcs, complete quests, and attack monsters.\nWhen you're ready to move to the next dungeon, unlock the locked door!\nGood luck, and remember - I'll always be here at (0,0) if you need guidance!"
+    "<span style=\"color: white;\">Woof! Welcome to the tutorial, adventurer!\n\nI'm Goldie, your faithful guide dog. Let me help you get started on your journey.\n\nHere are some basic commands to get you moving:\n• Type 'look' to examine your surroundings\n• Use 'north', 'south', 'east', 'west' (or n/s/e/w) to move around\n• Try 'pickup \"item_name\"' to collect items you find\n• Use 'inventory' to see what you're carrying\n• Type 'help' anytime for a full list of commands\n\nThere's a key hidden somewhere to the south that might come in handy later!\nExplore around and interact with npcs, complete quests, and attack monsters.\nWhen you're ready to move to the next dungeon, unlock the locked door!\nGood luck, and remember - I'll always be here at (0,0) if you need guidance!</span>"
   end
 
   def add_message(terminal_state, message) do
