@@ -280,10 +280,21 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
       to_room = Enum.find(bone_rooms, &(&1.x_coordinate == to_x && &1.y_coordinate == to_y))
 
       if from_room && to_room do
+        # Create door in the specified direction
         Map.create_door(%{
           from_room_id: from_room.id,
           to_room_id: to_room.id,
           direction: direction,
+          door_type: "standard",
+          is_locked: false
+        })
+        
+        # Create door in the opposite direction
+        opposite_direction = Shard.Map.Door.opposite_direction(direction)
+        Map.create_door(%{
+          from_room_id: to_room.id,
+          to_room_id: from_room.id,
+          direction: opposite_direction,
           door_type: "standard",
           is_locked: false
         })
@@ -298,10 +309,20 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
       to_room = Enum.find(vampire_rooms, &(&1.x_coordinate == x + 1 && &1.y_coordinate == y))
 
       if from_room && to_room do
+        # Create east door
         Map.create_door(%{
           from_room_id: from_room.id,
           to_room_id: to_room.id,
           direction: "east",
+          door_type: "standard",
+          is_locked: false
+        })
+        
+        # Create west door
+        Map.create_door(%{
+          from_room_id: to_room.id,
+          to_room_id: from_room.id,
+          direction: "west",
           door_type: "standard",
           is_locked: false
         })
@@ -316,10 +337,21 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
         # Lock the door to vampire lord's chamber
         is_locked = x == 1 && y == 2
 
+        # Create north door
         Map.create_door(%{
           from_room_id: from_room.id,
           to_room_id: to_room.id,
           direction: "north",
+          door_type: if(is_locked, do: "locked_gate", else: "standard"),
+          is_locked: is_locked,
+          key_required: if(is_locked, do: "Vampire Lord's Key", else: nil)
+        })
+        
+        # Create south door (with same lock status)
+        Map.create_door(%{
+          from_room_id: to_room.id,
+          to_room_id: from_room.id,
+          direction: "south",
           door_type: if(is_locked, do: "locked_gate", else: "standard"),
           is_locked: is_locked,
           key_required: if(is_locked, do: "Vampire Lord's Key", else: nil)
@@ -335,10 +367,20 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
       to_room = Enum.find(forest_rooms, &(&1.x_coordinate == x + 1 && &1.y_coordinate == y))
 
       if from_room && to_room do
+        # Create east door
         Map.create_door(%{
           from_room_id: from_room.id,
           to_room_id: to_room.id,
           direction: "east",
+          door_type: "standard",
+          is_locked: false
+        })
+        
+        # Create west door
+        Map.create_door(%{
+          from_room_id: to_room.id,
+          to_room_id: from_room.id,
+          direction: "west",
           door_type: "standard",
           is_locked: false
         })
@@ -350,10 +392,20 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
       to_room = Enum.find(forest_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y + 1))
 
       if from_room && to_room do
+        # Create north door
         Map.create_door(%{
           from_room_id: from_room.id,
           to_room_id: to_room.id,
           direction: "north",
+          door_type: "standard",
+          is_locked: false
+        })
+        
+        # Create south door
+        Map.create_door(%{
+          from_room_id: to_room.id,
+          to_room_id: from_room.id,
+          direction: "south",
           door_type: "standard",
           is_locked: false
         })
