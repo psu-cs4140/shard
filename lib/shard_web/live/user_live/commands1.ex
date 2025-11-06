@@ -8,7 +8,6 @@ defmodule ShardWeb.UserLive.Commands1 do
   import ShardWeb.UserLive.Movement
   import ShardWeb.UserLive.Commands2
   import ShardWeb.UserLive.Commands3
-
   import ShardWeb.UserLive.CommandParsers,
     except: [
       parse_talk_command: 1,
@@ -344,16 +343,16 @@ defmodule ShardWeb.UserLive.Commands1 do
 
       # Admin zone editing commands
       downcased_command == "create room" or String.starts_with?(downcased_command, "create room ") ->
-        handle_create_room_command(command, game_state)
+        ShardWeb.UserLive.AdminCommands.handle_create_room_command(command, game_state)
 
       downcased_command == "delete room" or String.starts_with?(downcased_command, "delete room ") ->
-        handle_delete_room_command(command, game_state)
+        ShardWeb.UserLive.AdminCommands.handle_delete_room_command(command, game_state)
 
       downcased_command == "create door" or String.starts_with?(downcased_command, "create door ") ->
-        handle_create_door_command(command, game_state)
+        ShardWeb.UserLive.AdminCommands.handle_create_door_command(command, game_state)
 
       downcased_command == "delete door" or String.starts_with?(downcased_command, "delete door ") ->
-        handle_delete_door_command(command, game_state)
+        ShardWeb.UserLive.AdminCommands.handle_delete_door_command(command, game_state)
 
       downcased_command == "accept" ->
         execute_accept_quest(game_state)
@@ -407,74 +406,6 @@ defmodule ShardWeb.UserLive.Commands1 do
                 end
             end
         end
-    end
-  end
-
-  # Handle create room command
-  defp handle_create_room_command(command, game_state) do
-    case parse_create_room_command(command) do
-      {:ok, direction} ->
-        # Check if character has admin stick
-        if AdminStick.has_admin_stick?(game_state.character.id) do
-          ShardWeb.UserLive.AdminZoneEditor.create_room_in_direction(game_state, direction)
-        else
-          {["you do not wield powerful enough magic to change the very earth you stand on"],
-           game_state}
-        end
-
-      :error ->
-        {["Invalid create room command. Usage: create room [direction]"], game_state}
-    end
-  end
-
-  # Handle delete room command
-  defp handle_delete_room_command(command, game_state) do
-    case parse_delete_room_command(command) do
-      {:ok, direction} ->
-        # Check if character has admin stick
-        if AdminStick.has_admin_stick?(game_state.character.id) do
-          ShardWeb.UserLive.AdminZoneEditor.delete_room_in_direction(game_state, direction)
-        else
-          {["you do not wield powerful enough magic to change the very earth you stand on"],
-           game_state}
-        end
-
-      :error ->
-        {["Invalid delete room command. Usage: delete room [direction]"], game_state}
-    end
-  end
-
-  # Handle create door command
-  defp handle_create_door_command(command, game_state) do
-    case parse_create_door_command(command) do
-      {:ok, direction} ->
-        # Check if character has admin stick
-        if AdminStick.has_admin_stick?(game_state.character.id) do
-          ShardWeb.UserLive.AdminZoneEditor.create_door_in_direction(game_state, direction)
-        else
-          {["you do not wield powerful enough magic to change the very earth you stand on"],
-           game_state}
-        end
-
-      :error ->
-        {["Invalid create door command. Usage: create door [direction]"], game_state}
-    end
-  end
-
-  # Handle delete door command
-  defp handle_delete_door_command(command, game_state) do
-    case parse_delete_door_command(command) do
-      {:ok, direction} ->
-        # Check if character has admin stick
-        if AdminStick.has_admin_stick?(game_state.character.id) do
-          ShardWeb.UserLive.AdminZoneEditor.delete_door_in_direction(game_state, direction)
-        else
-          {["you do not wield powerful enough magic to change the very earth you stand on"],
-           game_state}
-        end
-
-      :error ->
-        {["Invalid delete door command. Usage: delete door [direction]"], game_state}
     end
   end
 
