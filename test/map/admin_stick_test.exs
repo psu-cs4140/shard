@@ -63,8 +63,8 @@ defmodule Shard.Map.AdminStickTest do
       {:ok, character} = Characters.create_character(%{
         name: "Test Character", 
         user_id: user.id,
-        class: "Warrior",
-        race: "Human",
+        class: "warrior",
+        race: "human",
         level: 1,
         health: 100,
         mana: 50,
@@ -155,8 +155,8 @@ defmodule Shard.Map.AdminStickTest do
       {:ok, character} = Characters.create_character(%{
         name: "Test Character", 
         user_id: user.id,
-        class: "Warrior",
-        race: "Human",
+        class: "warrior",
+        race: "human",
         level: 1,
         health: 100,
         mana: 50,
