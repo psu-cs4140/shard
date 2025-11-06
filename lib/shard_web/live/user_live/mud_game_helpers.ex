@@ -222,6 +222,7 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
     case Shard.Map.get_zone!(zone_id) do
       %{properties: %{"starting_room" => %{"x" => x, "y" => y}}} ->
         {x, y}
+
       _ ->
         # Default fallback position
         {0, 0}
