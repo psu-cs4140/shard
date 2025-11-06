@@ -136,7 +136,14 @@ defmodule ShardWeb.ZoneSelectionLive do
         # Check if user is admin and grant admin stick if so
         user = Users.get_user_by_character_id(character.id)
         if user && user.admin do
-          AdminStick.grant_admin_stick(character.id)
+          case AdminStick.grant_admin_stick(character.id) do
+            {:ok, _} ->
+              # Admin stick granted successfully
+              :ok
+            {:error, reason} ->
+              # Log the error but don't prevent zone entry
+              IO.warn("Failed to grant admin stick: #{reason}")
+          end
         end
 
         # Get the first room in the zone to start at
@@ -156,7 +163,7 @@ defmodule ShardWeb.ZoneSelectionLive do
           {:noreply,
            socket
            |> put_flash(:info, "Entering #{Map.get_zone!(zone_id).name}...")
-           |> push_navigate(to: ~p"/play/#{updated_character.id}?zone_id=#{zone_id}")}
+           |> push_navigate(to: ~p"/play/#{updated_character.id}?zone_id=#{zone_id}&refresh_inventory=true")}
         else
           {:noreply,
            socket
