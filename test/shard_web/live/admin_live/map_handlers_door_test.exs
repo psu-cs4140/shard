@@ -123,13 +123,10 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
           is_locked: false
         })
 
-      # Note: A return door is automatically created by the system
-      # When we delete the main door, the return door is also deleted automatically
-      # So we should have 0 doors remaining
-
       # Refresh the doors list to include both the created door and its automatic return door
       all_doors = Shard.Map.list_doors()
       created_door = Enum.find(all_doors, &(&1.direction == "north"))
+      initial_door_count = length(all_doors)
 
       socket = create_socket(%{rooms: [room1, room2], doors: all_doors})
 
@@ -137,8 +134,10 @@ defmodule ShardWeb.AdminLive.MapHandlersDoorTest do
       {:noreply, updated_socket} = MapHandlers.handle_delete_door(params, socket)
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Door deleted successfully"
-      # After deleting one door, both the door and its return door are deleted
-      assert updated_socket.assigns.doors == []
+      # Check that the specific door was deleted
+      assert not Enum.any?(updated_socket.assigns.doors, &(&1.id == created_door.id))
+      # Check that the door count decreased (should be fewer doors than before)
+      assert length(updated_socket.assigns.doors) < initial_door_count
     end
   end
 

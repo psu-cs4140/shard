@@ -82,7 +82,7 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
     # Use the character's current zone for map generation and monster loading
     zone_id = character.current_zone_id || 1
     map_data = generate_map_from_database(zone_id)
-    starting_position = find_valid_starting_position(map_data)
+    starting_position = get_zone_starting_position(zone_id)
 
     game_state = build_game_state(character, map_data, zone_id, starting_position)
     terminal_state = build_terminal_state(starting_position, zone_id)
@@ -216,6 +216,17 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
   def add_message(terminal_state, message) do
     new_output = terminal_state.output ++ [message] ++ [""]
     Map.put(terminal_state, :output, new_output)
+  end
+
+  defp get_zone_starting_position(zone_id) do
+    case Shard.Map.get_zone!(zone_id) do
+      %{properties: %{"starting_room" => %{"x" => x, "y" => y}}} ->
+        {x, y}
+
+      _ ->
+        # Default fallback position
+        {0, 0}
+    end
   end
 
   def posn_to_room_channel({x, y}) do
