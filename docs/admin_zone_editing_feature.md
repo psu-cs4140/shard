@@ -3,6 +3,93 @@
 ## Overview
 This feature allows admin players to create and remove rooms and doors in real-time while playing the game using a special "Admin Stick" item. The feature includes commands for creating/deleting rooms and doors with appropriate prompts and confirmations.
 
+## The Magic Admin Stick
+
+The Admin Stick is a special legendary item that grants zone editing powers to administrators. When an admin character is created or logs in, the system automatically grants them the Admin Stick if they don't already have it.
+
+### Admin Stick Properties
+- Name: "Admin Zone Editing Stick"
+- Description: "A magical stick that allows admins to modify zones"
+- Item type: "tool"
+- Rarity: "legendary"
+- Equippable: false
+- Stackable: false
+- Cannot be dropped or destroyed by players
+
+## In-Game Room and Door Editing
+
+Admins can modify the game world in real-time by using specific commands while wielding the Admin Stick. All editing commands follow a simple pattern and provide immediate feedback.
+
+### Available Commands
+
+1. `create room <direction>` - Creates a new room in the specified direction
+2. `delete room <direction>` - Deletes the room in the specified direction
+3. `create door <direction>` - Creates a door to an existing adjacent room
+4. `delete door <direction>` - Deletes the door in the specified direction
+
+### Supported Directions
+- Cardinal directions: north, south, east, west
+- Diagonal directions: northeast, northwest, southeast, southwest
+- Short forms: n, s, e, w, ne, nw, se, sw
+
+### Usage Instructions
+
+#### Creating a Room
+1. Ensure you're in a valid room (not in empty space)
+2. Type: `create room [direction]` (e.g., `create room north`)
+3. The system will:
+   - Verify you have the Admin Stick
+   - Calculate coordinates in the specified direction
+   - Check that no room already exists there
+   - Create a new room with a coordinate-based name
+   - Automatically create a door connecting your current room to the new room
+   - Create a return door in the opposite direction
+
+#### Deleting a Room
+1. Ensure you're in a valid room
+2. Type: `delete room [direction]` (e.g., `delete room south`)
+3. The system will:
+   - Verify you have the Admin Stick
+   - Check if a room exists in that direction
+   - Delete the room and all doors connected to it
+   - Note: Any players or items in the deleted room will need to be handled separately
+
+#### Creating a Door
+1. Ensure you're in a valid room
+2. Type: `create door [direction]` (e.g., `create door east`)
+3. The system will:
+   - Verify you have the Admin Stick
+   - Check if a room exists in that direction
+   - Verify no door already exists in that direction
+   - Create a door to the adjacent room
+   - Create a return door in the opposite direction
+
+#### Deleting a Door
+1. Ensure you're in a valid room
+2. Type: `delete door [direction]` (e.g., `delete door west`)
+3. The system will:
+   - Verify you have the Admin Stick
+   - Check if a door exists in that direction
+   - Delete the door and its corresponding return door
+
+### Room Properties
+
+When a room is created, it automatically gets the following properties:
+- Name: "Room (X, Y)" where X and Y are the coordinates
+- Description: "A newly created room at coordinates (X, Y)."
+- Room Type: "standard"
+- Public: true
+- Properties: Empty map (%{})
+- Z-coordinate: 0 (all rooms are on the ground floor by default)
+
+### Door Properties
+
+When a door is created, it automatically gets the following properties:
+- Direction: The specified direction
+- Door Type: "standard"
+- Locked: false
+- Return door is automatically created in the opposite direction
+
 ## Functions Needed
 
 ### 1. Item Creation Functions
