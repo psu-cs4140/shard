@@ -10,11 +10,11 @@ defmodule ShardWeb.UserLive.AdminZoneEditor do
     {x, y} = game_state.player_position
     zone_id = game_state.character.current_zone_id
 
-    with {:ok, current_room} <- get_current_room(zone_id, x, y),
+    with {:ok, _current_room} <- get_current_room(zone_id, x, y),  # Fixed: added underscore to unused variable
          {:ok, new_coordinates} <- calculate_new_coordinates({x, y}, direction),
          nil <- get_existing_room(zone_id, new_coordinates),
          {:ok, new_room} <- create_new_room(zone_id, new_coordinates) do
-      create_door_connection(current_room, new_room, direction, game_state)
+      create_door_connection(new_room, direction, game_state)
     else
       {:error, reason} -> handle_error(reason, game_state)
       room when not is_nil(room) -> handle_existing_room(game_state)
@@ -26,7 +26,7 @@ defmodule ShardWeb.UserLive.AdminZoneEditor do
     {x, y} = game_state.player_position
     zone_id = game_state.character.current_zone_id
 
-    with {:ok, current_room} <- get_current_room(zone_id, x, y),
+    with {:ok, _current_room} <- get_current_room(zone_id, x, y),  # Fixed: added underscore to unused variable
          {:ok, target_coordinates} <- calculate_new_coordinates({x, y}, direction),
          {:ok, target_room} <- get_target_room(zone_id, target_coordinates) do
       delete_target_room(target_room, direction, game_state)
@@ -98,22 +98,35 @@ defmodule ShardWeb.UserLive.AdminZoneEditor do
     })
   end
 
-  defp create_door_connection(current_room, new_room, direction, game_state) do
-    case GameMap.create_door(%{
-           from_room_id: current_room.id,
-           to_room_id: new_room.id,
-           direction: direction
-         }) do
-      {:ok, _door} ->
-        {[
-           "Successfully created a new room to the #{direction}.",
-           "A door has been created connecting the rooms."
-         ], game_state}
-
-      {:error, _changeset} ->
-        # Clean up the room if door creation fails
+  defp create_door_connection(new_room, direction, game_state) do
+    # Get the current room again since we need it for door creation
+    {x, y} = game_state.player_position
+    zone_id = game_state.character.current_zone_id
+    
+    case GameMap.get_room_by_coordinates(zone_id, x, y, 0) do
+      nil -> 
+        # Clean up the room if we can't find the current room
         GameMap.delete_room(new_room)
-        {["Failed to create door to new room."], game_state}
+        {["Failed to create door to new room - current room not found."], game_state}
+        
+      current_room ->
+        # Create door from current room to new room
+        case GameMap.create_door(%{
+               from_room_id: current_room.id,
+               to_room_id: new_room.id,
+               direction: direction
+             }) do
+          {:ok, _door} ->
+            {[
+               "Successfully created a new room to the #{direction}.",
+               "A door has been created connecting the rooms."
+             ], game_state}
+
+          {:error, _changeset} ->
+            # Clean up the room if door creation fails
+            GameMap.delete_room(new_room)
+            {["Failed to create door to new room."], game_state}
+        end
     end
   end
 

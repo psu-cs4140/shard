@@ -19,7 +19,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
   alias Shard.Map, as: GameMap
   alias Shard.Items.Item
-  alias Shard.Items.AdminStick
+  # Fixed: removed unused AdminStick alias
   alias Shard.Repo
   import Ecto.Query
 
