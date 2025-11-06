@@ -371,7 +371,10 @@ spell_type_count = Repo.aggregate(SpellTypes, :count, :id)
 
 if spell_type_count == 0 do
   spell_types_data = [
-    %{name: "Holy", description: "Divine magic that channels the power of light and righteousness"},
+    %{
+      name: "Holy",
+      description: "Divine magic that channels the power of light and righteousness"
+    },
     %{name: "Fire", description: "Destructive flames that burn enemies"},
     %{name: "Ice", description: "Freezing cold that slows and damages enemies"},
     %{name: "Shadow", description: "Dark magic that drains and corrupts"},
@@ -433,7 +436,8 @@ if spell_count == 0 do
   spells_data = [
     %{
       name: "Holy Incantation",
-      description: "A powerful holy spell that channels divine light to smite enemies with righteous damage.",
+      description:
+        "A powerful holy spell that channels divine light to smite enemies with righteous damage.",
       mana_cost: 25,
       damage: 40,
       healing: nil,
@@ -443,7 +447,8 @@ if spell_count == 0 do
     },
     %{
       name: "Fireball",
-      description: "Hurls a blazing sphere of fire at the enemy, dealing significant fire damage.",
+      description:
+        "Hurls a blazing sphere of fire at the enemy, dealing significant fire damage.",
       mana_cost: 30,
       damage: 50,
       healing: nil,
@@ -547,7 +552,12 @@ end
 alias Shard.Items.Item
 
 # Check if spell scrolls exist
-spell_scroll_count = Repo.one(from i in Item, where: i.item_type == "consumable" and not is_nil(i.spell_id), select: count(i.id))
+spell_scroll_count =
+  Repo.one(
+    from i in Item,
+      where: i.item_type == "consumable" and not is_nil(i.spell_id),
+      select: count(i.id)
+  )
 
 if spell_scroll_count == 0 do
   # Get some spells for the scrolls
@@ -560,7 +570,8 @@ if spell_scroll_count == 0 do
   spell_scrolls = [
     %{
       name: "Scroll of Holy Incantation",
-      description: "A sacred scroll inscribed with divine words. Reading it will teach you the Holy Incantation spell.",
+      description:
+        "A sacred scroll inscribed with divine words. Reading it will teach you the Holy Incantation spell.",
       item_type: "consumable",
       rarity: "uncommon",
       value: 100,
@@ -574,7 +585,8 @@ if spell_scroll_count == 0 do
     },
     %{
       name: "Scroll of Fireball",
-      description: "An ancient scroll containing the secrets of fire magic. Reading it will teach you the Fireball spell.",
+      description:
+        "An ancient scroll containing the secrets of fire magic. Reading it will teach you the Fireball spell.",
       item_type: "consumable",
       rarity: "rare",
       value: 250,
@@ -588,7 +600,8 @@ if spell_scroll_count == 0 do
     },
     %{
       name: "Scroll of Healing Light",
-      description: "A blessed scroll that glows with gentle radiance. Reading it will teach you the Healing Light spell.",
+      description:
+        "A blessed scroll that glows with gentle radiance. Reading it will teach you the Healing Light spell.",
       item_type: "consumable",
       rarity: "uncommon",
       value: 150,
@@ -602,7 +615,8 @@ if spell_scroll_count == 0 do
     },
     %{
       name: "Scroll of Ice Shard",
-      description: "A frost-covered scroll that feels cold to the touch. Reading it will teach you the Ice Shard spell.",
+      description:
+        "A frost-covered scroll that feels cold to the touch. Reading it will teach you the Ice Shard spell.",
       item_type: "consumable",
       rarity: "uncommon",
       value: 120,
@@ -616,7 +630,8 @@ if spell_scroll_count == 0 do
     },
     %{
       name: "Scroll of Arcane Missiles",
-      description: "A scroll crackling with arcane power. Reading it will teach you the Arcane Missiles spell.",
+      description:
+        "A scroll crackling with arcane power. Reading it will teach you the Arcane Missiles spell.",
       item_type: "consumable",
       rarity: "epic",
       value: 400,

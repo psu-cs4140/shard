@@ -25,7 +25,16 @@ defmodule Shard.Spells.Spells do
   @doc false
   def changeset(spell, attrs) do
     spell
-    |> cast(attrs, [:name, :description, :mana_cost, :damage, :healing, :level_required, :spell_type_id, :spell_effect_id])
+    |> cast(attrs, [
+      :name,
+      :description,
+      :mana_cost,
+      :damage,
+      :healing,
+      :level_required,
+      :spell_type_id,
+      :spell_effect_id
+    ])
     |> validate_required([:name])
     |> validate_number(:mana_cost, greater_than_or_equal_to: 0)
     |> validate_number(:level_required, greater_than: 0, less_than_or_equal_to: 100)

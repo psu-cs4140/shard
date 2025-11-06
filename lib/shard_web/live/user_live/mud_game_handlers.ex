@@ -130,7 +130,10 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
     # Inventory item use - just show a message since we can't determine which item
     new_output =
       socket.assigns.terminal_state.output ++
-      ["Use items by typing commands in the terminal.", "Spell scrolls auto-learn when picked up!"] ++ [""]
+        [
+          "Use items by typing commands in the terminal.",
+          "Spell scrolls auto-learn when picked up!"
+        ] ++ [""]
 
     terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
 

@@ -360,37 +360,37 @@ defmodule ShardWeb.UserLive.Commands1 do
                     execute_deliver_quest_command(game_state, npc_name)
 
                   :error ->
-                        # Check if it's a pickup command
-                        case parse_pickup_command(command) do
+                    # Check if it's a pickup command
+                    case parse_pickup_command(command) do
+                      {:ok, item_name} ->
+                        execute_pickup_command(game_state, item_name)
+
+                      :error ->
+                        # Check if it's a use command
+                        case parse_use_command(command) do
                           {:ok, item_name} ->
-                            execute_pickup_command(game_state, item_name)
+                            execute_use_command(game_state, item_name)
 
                           :error ->
-                            # Check if it's a use command
-                            case parse_use_command(command) do
-                              {:ok, item_name} ->
-                                execute_use_command(game_state, item_name)
+                            # Check if it's an unlock command
+                            case parse_unlock_command(command) do
+                              {:ok, direction, item_name} ->
+                                execute_unlock_command(game_state, direction, item_name)
 
                               :error ->
-                                # Check if it's an unlock command
-                                case parse_unlock_command(command) do
-                                  {:ok, direction, item_name} ->
-                                    execute_unlock_command(game_state, direction, item_name)
+                                # Check if it's a poke command
+                                case parse_poke_command(command) do
+                                  {:ok, character_name} ->
+                                    execute_poke_command(game_state, character_name)
 
                                   :error ->
-                                    # Check if it's a poke command
-                                    case parse_poke_command(command) do
-                                      {:ok, character_name} ->
-                                        execute_poke_command(game_state, character_name)
-
-                                      :error ->
-                                        {[
-                                           "Unknown command: '#{command}'. Type 'help' for available commands."
-                                         ], game_state}
-                                    end
+                                    {[
+                                       "Unknown command: '#{command}'. Type 'help' for available commands."
+                                     ], game_state}
                                 end
                             end
                         end
+                    end
                 end
             end
         end
@@ -658,6 +658,7 @@ defmodule ShardWeb.UserLive.Commands1 do
                 "The scroll crumbles to dust as its magic is absorbed.",
                 "Use 'spells' to see your known spells."
               ]
+
               {response, game_state}
 
             {:ok, :already_known, spell} ->
@@ -666,6 +667,7 @@ defmodule ShardWeb.UserLive.Commands1 do
                 "You already know the spell: #{spell.name}",
                 "The scroll crumbles to dust, its magic already within you."
               ]
+
               {response, game_state}
 
             {:error, :not_a_spell_scroll} ->
@@ -682,6 +684,7 @@ defmodule ShardWeb.UserLive.Commands1 do
             "You cannot use #{item.name} from the terminal yet.",
             "Try using it from the inventory UI or hotbar."
           ]
+
           {response, game_state}
         end
     end

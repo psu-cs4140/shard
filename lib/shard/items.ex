@@ -310,22 +310,25 @@ defmodule Shard.Items do
 
         already_known = Shard.Spells.character_knows_spell?(character_id, item.spell_id)
 
-        result = if already_known do
-          {:ok, :already_known, spell}
-        else
-          case Shard.Spells.add_spell_to_character(character_id, item.spell_id) do
-            {:ok, _character_spell} ->
-              {:ok, :learned, spell}
-            {:error, changeset} ->
-              {:error, changeset}
+        result =
+          if already_known do
+            {:ok, :already_known, spell}
+          else
+            case Shard.Spells.add_spell_to_character(character_id, item.spell_id) do
+              {:ok, _character_spell} ->
+                {:ok, :learned, spell}
+
+              {:error, changeset} ->
+                {:error, changeset}
+            end
           end
-        end
 
         # Remove scroll from inventory (consume it)
         case result do
           {:ok, status, spell} ->
             remove_item_from_inventory(inventory_id, 1)
             {:ok, status, spell}
+
           error ->
             error
         end

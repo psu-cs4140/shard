@@ -51,6 +51,7 @@ defmodule ShardWeb.UserLive.ItemHelpers do
           "The scroll crumbles to dust as its magic is absorbed.",
           "Use 'spells' to see your known spells."
         ]
+
         {response, game_state}
 
       {:ok, :already_known, spell} ->
@@ -59,6 +60,7 @@ defmodule ShardWeb.UserLive.ItemHelpers do
           "You already know the spell: #{spell.name}",
           "The scroll crumbles to dust, its magic already within you."
         ]
+
         {response, game_state}
 
       {:error, :not_a_spell_scroll} ->

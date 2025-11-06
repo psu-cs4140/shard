@@ -18,7 +18,8 @@ defmodule Shard.SpellsTest do
       {:ok, damage_effect} =
         Spells.create_spell_effect(%{name: "Damage", description: "Deals damage"})
 
-      {:ok, _heal_effect} = Spells.create_spell_effect(%{name: "Heal", description: "Heals target"})
+      {:ok, _heal_effect} =
+        Spells.create_spell_effect(%{name: "Heal", description: "Heals target"})
 
       # Create test spells
       Spells.create_spell(%{

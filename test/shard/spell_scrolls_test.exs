@@ -9,55 +9,66 @@ defmodule Shard.SpellScrollsTest do
     setup do
       # Create spell types and effects first
       {:ok, holy_type} = Spells.create_spell_type(%{name: "Holy", description: "Holy magic"})
-      {:ok, damage_effect} = Spells.create_spell_effect(%{name: "Damage", description: "Deals damage"})
+
+      {:ok, damage_effect} =
+        Spells.create_spell_effect(%{name: "Damage", description: "Deals damage"})
 
       # Create a spell
-      {:ok, spell} = Spells.create_spell(%{
-        name: "Test Spell",
-        description: "A test spell",
-        mana_cost: 10,
-        damage: 20,
-        level_required: 1,
-        spell_type_id: holy_type.id,
-        spell_effect_id: damage_effect.id
-      })
+      {:ok, spell} =
+        Spells.create_spell(%{
+          name: "Test Spell",
+          description: "A test spell",
+          mana_cost: 10,
+          damage: 20,
+          level_required: 1,
+          spell_type_id: holy_type.id,
+          spell_effect_id: damage_effect.id
+        })
 
       # Create a spell scroll item
-      {:ok, scroll} = Items.create_item(%{
-        name: "Scroll of Test Spell",
-        description: "Learn Test Spell by picking up this scroll",
-        item_type: "consumable",
-        rarity: "common",
-        value: 50,
-        spell_id: spell.id,
-        pickup: true,
-        usable: true
-      })
+      {:ok, scroll} =
+        Items.create_item(%{
+          name: "Scroll of Test Spell",
+          description: "Learn Test Spell by picking up this scroll",
+          item_type: "consumable",
+          rarity: "common",
+          value: 50,
+          spell_id: spell.id,
+          pickup: true,
+          usable: true
+        })
 
       # Create a character
-      character = %Character{
-        name: "Test Character",
-        class: "warrior",
-        race: "human",
-        level: 1,
-        health: 100,
-        mana: 50,
-        experience: 0,
-        location: "0,0,0"
-      } |> Repo.insert!()
+      character =
+        %Character{
+          name: "Test Character",
+          class: "warrior",
+          race: "human",
+          level: 1,
+          health: 100,
+          mana: 50,
+          experience: 0,
+          location: "0,0,0"
+        }
+        |> Repo.insert!()
 
       %{spell: spell, scroll: scroll, character: character}
     end
 
-    test "using a spell scroll teaches the spell to the character", %{spell: spell, scroll: scroll, character: character} do
+    test "using a spell scroll teaches the spell to the character", %{
+      spell: spell,
+      scroll: scroll,
+      character: character
+    } do
       # Place the scroll in a room
-      {:ok, room_item} = %RoomItem{}
-      |> RoomItem.changeset(%{
-        location: "0,0,0",
-        item_id: scroll.id,
-        quantity: 1
-      })
-      |> Repo.insert()
+      {:ok, room_item} =
+        %RoomItem{}
+        |> RoomItem.changeset(%{
+          location: "0,0,0",
+          item_id: scroll.id,
+          quantity: 1
+        })
+        |> Repo.insert()
 
       # Character should not know the spell initially
       refute Spells.character_knows_spell?(character.id, spell.id)
@@ -90,18 +101,23 @@ defmodule Shard.SpellScrollsTest do
       assert length(inventory_items_after) == 0
     end
 
-    test "picking up a spell scroll when already knowing the spell doesn't duplicate", %{spell: spell, scroll: scroll, character: character} do
+    test "picking up a spell scroll when already knowing the spell doesn't duplicate", %{
+      spell: spell,
+      scroll: scroll,
+      character: character
+    } do
       # Teach the spell to the character first
       {:ok, _} = Spells.add_spell_to_character(character.id, spell.id)
 
       # Place the scroll in a room
-      {:ok, room_item} = %RoomItem{}
-      |> RoomItem.changeset(%{
-        location: "0,0,0",
-        item_id: scroll.id,
-        quantity: 1
-      })
-      |> Repo.insert()
+      {:ok, room_item} =
+        %RoomItem{}
+        |> RoomItem.changeset(%{
+          location: "0,0,0",
+          item_id: scroll.id,
+          quantity: 1
+        })
+        |> Repo.insert()
 
       # Pick up the scroll
       {:ok, {:ok, :picked_up}} = Items.pick_up_item(character.id, room_item.id)
@@ -113,23 +129,25 @@ defmodule Shard.SpellScrollsTest do
 
     test "picking up a regular item (non-scroll) doesn't affect spells", %{character: character} do
       # Create a regular item (no spell_id)
-      {:ok, regular_item} = Items.create_item(%{
-        name: "Health Potion",
-        description: "Restores health",
-        item_type: "consumable",
-        rarity: "common",
-        value: 10,
-        pickup: true
-      })
+      {:ok, regular_item} =
+        Items.create_item(%{
+          name: "Health Potion",
+          description: "Restores health",
+          item_type: "consumable",
+          rarity: "common",
+          value: 10,
+          pickup: true
+        })
 
       # Place the item in a room
-      {:ok, room_item} = %RoomItem{}
-      |> RoomItem.changeset(%{
-        location: "0,0,0",
-        item_id: regular_item.id,
-        quantity: 1
-      })
-      |> Repo.insert()
+      {:ok, room_item} =
+        %RoomItem{}
+        |> RoomItem.changeset(%{
+          location: "0,0,0",
+          item_id: regular_item.id,
+          quantity: 1
+        })
+        |> Repo.insert()
 
       # Pick up the regular item
       {:ok, {:ok, :picked_up}} = Items.pick_up_item(character.id, room_item.id)
