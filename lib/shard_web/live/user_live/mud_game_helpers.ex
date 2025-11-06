@@ -213,7 +213,7 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
       {:ok, content} ->
         content
         |> String.split("\n")
-        |> Enum.map(&String.trim/1)
+        |> Enum.map(&String.trim_trailing/1)
         |> Kernel.++([""]) # Add empty line at the end
 
       {:error, _reason} ->
