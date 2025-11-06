@@ -226,7 +226,7 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
 
     IO.puts("Created #{length(forest_rooms)} elven forest rooms")
 
-    # Create doors for tutorial zone (connect horizontally and vertically)
+    # Create doors for bone zone (connect horizontally and vertically)
     for x <- 0..1, y <- 0..2 do
       from_room = Enum.find(bone_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
       to_room = Enum.find(bone_rooms, &(&1.x_coordinate == x + 1 && &1.y_coordinate == y))
