@@ -26,14 +26,20 @@ defmodule ShardWeb.UserLive.AdminZoneEditor do
 
         case existing_room do
           nil ->
-            # Room doesn't exist, create the new room with default description
+            # Room doesn't exist, create the new room with coordinate-based name and explicit properties
+            new_room_name = "Room (#{new_x}, #{new_y})"
+            new_room_description = "A newly created room at coordinates (#{new_x}, #{new_y})."
+
             case GameMap.create_room(%{
-                   name: "New Room",
-                   description: "A newly created room",
+                   name: new_room_name,
+                   description: new_room_description,
                    x_coordinate: new_x,
                    y_coordinate: new_y,
                    z_coordinate: 0,
-                   zone_id: zone_id
+                   zone_id: zone_id,
+                   is_public: true,        # Explicitly set default
+                   room_type: "standard",  # Explicitly set default
+                   properties: %{}         # Explicitly set default
                  }) do
               {:ok, new_room} ->
                 # Create door from current room to new room
@@ -54,8 +60,10 @@ defmodule ShardWeb.UserLive.AdminZoneEditor do
                     {["Failed to create door to new room."], game_state}
                 end
 
-              {:error, _changeset} ->
-                {["Failed to create new room."], game_state}
+              {:error, changeset} ->
+                # Log or inspect the changeset error for debugging if needed
+                # IO.inspect(changeset.errors, label: "Room creation errors")
+                {["Failed to create new room: #{inspect(changeset.errors)}"], game_state}
             end
 
           _ ->
