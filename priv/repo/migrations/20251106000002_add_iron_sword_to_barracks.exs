@@ -46,7 +46,7 @@ defmodule Shard.Repo.Migrations.AddIronSwordToBarracks do
       updated_at
     ) VALUES (
       (SELECT id FROM items WHERE name = 'Iron Sword' LIMIT 1),
-      (SELECT id FROM rooms WHERE x_coordinate = 7 AND y_coordinate = 4 LIMIT 1),
+      (SELECT id FROM rooms WHERE x_coordinate = 7 AND y_coordinate = 3 LIMIT 1),
       1,
       3,
       2,
@@ -63,7 +63,7 @@ defmodule Shard.Repo.Migrations.AddIronSwordToBarracks do
     execute """
     DELETE FROM room_items 
     WHERE item_id = (SELECT id FROM items WHERE name = 'Iron Sword' LIMIT 1)
-    AND room_id = (SELECT id FROM rooms WHERE x_coordinate = 7 AND y_coordinate = 4 LIMIT 1);
+    AND room_id = (SELECT id FROM rooms WHERE x_coordinate = 7 AND y_coordinate = 3 LIMIT 1);
     """
 
     # Optionally remove the Iron Sword item entirely (uncomment if desired)
