@@ -14,6 +14,7 @@ defmodule Shard.Repo.Migrations.AddIronSwordToBarracks do
       equippable,
       equipment_slot,
       is_active,
+      pickup,
       inserted_at,
       updated_at
     ) VALUES (
@@ -24,7 +25,8 @@ defmodule Shard.Repo.Migrations.AddIronSwordToBarracks do
       50,
       3.5,
       true,
-      'main_hand',
+      'weapon',
+      true,
       true,
       NOW(),
       NOW()
@@ -32,26 +34,18 @@ defmodule Shard.Repo.Migrations.AddIronSwordToBarracks do
     ON CONFLICT (name) DO NOTHING;
     """
 
-    # Then, place the Iron Sword in the barracks room at (7,4)
+    # Then, place the Iron Sword in the barracks room at (7,3)
     execute """
     INSERT INTO room_items (
       item_id,
-      room_id,
+      location,
       quantity,
-      position_x,
-      position_y,
-      is_hidden,
-      respawn_time,
       inserted_at,
       updated_at
     ) VALUES (
       (SELECT id FROM items WHERE name = 'Iron Sword' LIMIT 1),
-      (SELECT id FROM rooms WHERE x_coordinate = 7 AND y_coordinate = 3 LIMIT 1),
+      '7,3,0',
       1,
-      3,
-      2,
-      false,
-      0,
       NOW(),
       NOW()
     );
@@ -63,7 +57,7 @@ defmodule Shard.Repo.Migrations.AddIronSwordToBarracks do
     execute """
     DELETE FROM room_items 
     WHERE item_id = (SELECT id FROM items WHERE name = 'Iron Sword' LIMIT 1)
-    AND room_id = (SELECT id FROM rooms WHERE x_coordinate = 7 AND y_coordinate = 3 LIMIT 1);
+    AND location = '7,3,0';
     """
 
     # Optionally remove the Iron Sword item entirely (uncomment if desired)
