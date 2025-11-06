@@ -166,12 +166,7 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
   end
 
   defp build_terminal_state(starting_position, map_id) do
-    initial_output = [
-      "Welcome to Shard!",
-      "You find yourself in a mysterious dungeon.",
-      "Type 'help' for available commands.",
-      ""
-    ]
+    initial_output = get_zone_welcome_message(map_id)
 
     terminal_output =
       if starting_position == {0, 0} and map_id == "tutorial_terrain" do
@@ -188,6 +183,50 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
       command_history: [],
       current_command: ""
     }
+  end
+
+  defp get_zone_welcome_message(zone_id) do
+    case zone_id do
+      1 ->
+        [
+          "Welcome to Shard!",
+          "You find yourself in the Tutorial Grounds, a safe place to learn the basics.",
+          "Type 'help' for available commands.",
+          ""
+        ]
+
+      "tutorial_terrain" ->
+        [
+          "Welcome to Shard!",
+          "You find yourself in the Tutorial Grounds, a safe place to learn the basics.",
+          "Type 'help' for available commands.",
+          ""
+        ]
+
+      2 ->
+        [
+          "Welcome to Shard!",
+          "You enter the Dark Forest, where shadows dance between ancient trees.",
+          "Danger lurks in every corner. Type 'help' for available commands.",
+          ""
+        ]
+
+      3 ->
+        [
+          "Welcome to Shard!",
+          "You stand at the entrance of the Crystal Caves, where gems glimmer in the darkness.",
+          "The air is cold and mysterious. Type 'help' for available commands.",
+          ""
+        ]
+
+      _ ->
+        [
+          "Welcome to Shard!",
+          "You find yourself in an unknown realm, filled with mystery and adventure.",
+          "Type 'help' for available commands.",
+          ""
+        ]
+    end
   end
 
   # Make this public so it can be called from other modules
