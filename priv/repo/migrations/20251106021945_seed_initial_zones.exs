@@ -15,7 +15,7 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
     # Clean up any existing data first
     seed_zones_down()
 
-    # Create Tutorial Zone
+    # Create Bone Zone
     {:ok, bone_zone} =
       Map.create_zone(%{
         name: "Beginner Bone Zone",
