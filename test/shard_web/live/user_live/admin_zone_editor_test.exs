@@ -92,7 +92,7 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
 
     test "create_room_in_direction handles existing room", %{
       game_state: game_state,
-      room1: room1
+      room1: _room1
     } do
       # First create a room to the north
       AdminZoneEditor.create_room_in_direction(game_state, "north")
@@ -143,7 +143,8 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
     end
 
     test "create_door_in_direction creates a door to existing room", %{
-      game_state: game_state
+      game_state: game_state,
+      room1: room1
     } do
       # First create a room to the north
       AdminZoneEditor.create_room_in_direction(game_state, "north")
@@ -176,7 +177,7 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
              end)
 
       # Verify door was created
-      door = Map.get_door_in_direction(game_state.room1.id, "northeast")
+      door = Map.get_door_in_direction(room1.id, "northeast")
       assert door != nil
     end
 
