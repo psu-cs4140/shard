@@ -10,7 +10,8 @@ defmodule ShardWeb.UserLive.AdminZoneEditor do
     {x, y} = game_state.player_position
     zone_id = game_state.character.current_zone_id
 
-    with {:ok, _current_room} <- get_current_room(zone_id, x, y),  # Fixed: added underscore to unused variable
+    # Fixed: added underscore to unused variable
+    with {:ok, _current_room} <- get_current_room(zone_id, x, y),
          {:ok, new_coordinates} <- calculate_new_coordinates({x, y}, direction),
          nil <- get_existing_room(zone_id, new_coordinates),
          {:ok, new_room} <- create_new_room(zone_id, new_coordinates) do
@@ -26,7 +27,8 @@ defmodule ShardWeb.UserLive.AdminZoneEditor do
     {x, y} = game_state.player_position
     zone_id = game_state.character.current_zone_id
 
-    with {:ok, _current_room} <- get_current_room(zone_id, x, y),  # Fixed: added underscore to unused variable
+    # Fixed: added underscore to unused variable
+    with {:ok, _current_room} <- get_current_room(zone_id, x, y),
          {:ok, target_coordinates} <- calculate_new_coordinates({x, y}, direction),
          {:ok, target_room} <- get_target_room(zone_id, target_coordinates) do
       delete_target_room(target_room, direction, game_state)
@@ -102,13 +104,13 @@ defmodule ShardWeb.UserLive.AdminZoneEditor do
     # Get the current room again since we need it for door creation
     {x, y} = game_state.player_position
     zone_id = game_state.character.current_zone_id
-    
+
     case GameMap.get_room_by_coordinates(zone_id, x, y, 0) do
-      nil -> 
+      nil ->
         # Clean up the room if we can't find the current room
         GameMap.delete_room(new_room)
         {["Failed to create door to new room - current room not found."], game_state}
-        
+
       current_room ->
         # Create door from current room to new room
         case GameMap.create_door(%{
@@ -209,7 +211,7 @@ defmodule ShardWeb.UserLive.AdminZoneEditor do
       "southeast" => {x + 1, y + 1},
       "southwest" => {x - 1, y + 1}
     }
-    
+
     Map.get(coordinate_map, String.downcase(direction), {x, y})
   end
 end

@@ -65,13 +65,13 @@ defmodule Shard.Users do
   Gets a user by character ID.
   """
   def get_user_by_character_id(character_id) do
-    query = 
+    query =
       from u in User,
-      join: c in Character,
-      on: c.user_id == u.id,
-      where: c.id == ^character_id,
-      select: u
-    
+        join: c in Character,
+        on: c.user_id == u.id,
+        where: c.id == ^character_id,
+        select: u
+
     Repo.one(query)
   end
 

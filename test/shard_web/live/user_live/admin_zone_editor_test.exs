@@ -62,7 +62,10 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
       }
     end
 
-    test "create_room_in_direction creates a new room and door", %{game_state: game_state, room1: room1} do
+    test "create_room_in_direction creates a new room and door", %{
+      game_state: game_state,
+      room1: room1
+    } do
       # Test creating a room to the north (no existing room there)
       {response, _updated_game_state} =
         AdminZoneEditor.create_room_in_direction(game_state, "north")
@@ -96,7 +99,7 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
     } do
       # First create a room to the north
       AdminZoneEditor.create_room_in_direction(game_state, "north")
-      
+
       # Try to create another room in the same direction
       {response, _updated_game_state} =
         AdminZoneEditor.create_room_in_direction(game_state, "north")
@@ -110,14 +113,16 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
     } do
       # First create a room to the north
       AdminZoneEditor.create_room_in_direction(game_state, "north")
-      
+
       # Verify it exists
-      created_room = Map.get_room_by_coordinates(
-        game_state.character.current_zone_id,
-        0,
-        -1,
-        0
-      )
+      created_room =
+        Map.get_room_by_coordinates(
+          game_state.character.current_zone_id,
+          0,
+          -1,
+          0
+        )
+
       assert created_room != nil
 
       # Test deleting the room to the north
@@ -148,24 +153,25 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
     } do
       # First create a room to the north
       AdminZoneEditor.create_room_in_direction(game_state, "north")
-      
+
       # Get the created room (prefixing with underscore as it's not used)
-      _target_room = Map.get_room_by_coordinates(
-        game_state.character.current_zone_id,
-        0,
-        -1,
-        0
-      )
-      
+      _target_room =
+        Map.get_room_by_coordinates(
+          game_state.character.current_zone_id,
+          0,
+          -1,
+          0
+        )
+
       # Create a new game state positioned in the north room
       north_game_state = %{
         player_position: {0, -1},
         character: game_state.character
       }
-      
+
       # Create a room to the east from the north room
       AdminZoneEditor.create_room_in_direction(north_game_state, "east")
-      
+
       # Now create a door from starting room to the northeast room
       {response, _updated_game_state} =
         AdminZoneEditor.create_door_in_direction(game_state, "northeast")
@@ -184,7 +190,7 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
     test "delete_door_in_direction removes a door", %{game_state: game_state, room1: room1} do
       # First create a room to the north to have a door to delete
       AdminZoneEditor.create_room_in_direction(game_state, "north")
-      
+
       # Verify door exists
       door = Map.get_door_in_direction(room1.id, "north")
       assert door != nil

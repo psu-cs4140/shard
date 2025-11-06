@@ -8,6 +8,7 @@ defmodule ShardWeb.UserLive.Commands1 do
   import ShardWeb.UserLive.Movement
   import ShardWeb.UserLive.Commands2
   import ShardWeb.UserLive.Commands3
+
   import ShardWeb.UserLive.CommandParsers,
     except: [
       parse_talk_command: 1,

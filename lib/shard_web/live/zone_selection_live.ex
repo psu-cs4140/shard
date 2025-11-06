@@ -171,7 +171,8 @@ defmodule ShardWeb.ZoneSelectionLive do
   # Helper function to handle admin stick granting
   defp handle_admin_stick_granting(character) do
     case Users.get_user_by_character_id(character.id) do
-      %{admin: true} ->  # Fixed: removed unused variable assignment
+      # Fixed: removed unused variable assignment
+      %{admin: true} ->
         case AdminStick.grant_admin_stick(character.id) do
           {:ok, _} ->
             :ok
