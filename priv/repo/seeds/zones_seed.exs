@@ -5,11 +5,7 @@ alias Shard.Repo
 alias Shard.Map
 alias Shard.Map.{Zone, Room, Door}
 
-# Check if zones already exist
-zone_count = Repo.aggregate(Zone, :count, :id)
-
-if zone_count == 0 do
-  IO.puts("Creating zones and their rooms...")
+IO.puts("Creating zones and their rooms...")
 
   # Create Tutorial Zone
   {:ok, tutorial_zone} =
@@ -283,18 +279,15 @@ if zone_count == 0 do
 
   IO.puts("Created doors for elven forest")
 
-  IO.puts("""
+IO.puts("""
 
-  ✓ Zone system successfully seeded!
+✓ Zone system successfully seeded!
 
-  Created 3 zones:
-  - Tutorial Area (3x3 grid, coordinates 0,0 to 2,2)
-  - Vampire Castle (4x4 grid, coordinates 0,0 to 3,3)
-  - Elven Forest (3x3 grid, coordinates 0,0 to 2,2)
+Created 3 zones:
+- Tutorial Area (3x3 grid, coordinates 0,0 to 2,2)
+- Vampire Castle (4x4 grid, coordinates 0,0 to 3,3)
+- Elven Forest (3x3 grid, coordinates 0,0 to 2,2)
 
-  Notice: Multiple zones can now use the same coordinates!
-  For example, all three zones have a room at (0,0).
-  """)
-else
-  IO.puts("Zones already exist in the database, skipping zone seeding")
-end
+Notice: Multiple zones can now use the same coordinates!
+For example, all three zones have a room at (0,0).
+""")

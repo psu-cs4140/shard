@@ -130,8 +130,9 @@ defmodule ShardWeb.AdminLive.MapFunctionsDoorTest do
 
       assert {:ok, updated_socket} = MapFunctions.save_door(socket, door_params)
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Door updated successfully"
-      # Use a more direct way to check the direction
-      updated_door = hd(updated_socket.assigns.doors)
+      # Find the specific door we updated by ID
+      updated_door = Enum.find(updated_socket.assigns.doors, &(&1.id == door.id))
+      assert updated_door != nil
       assert updated_door.direction == "west"
       assert updated_socket.assigns.editing == nil
       assert updated_socket.assigns.changeset == nil
