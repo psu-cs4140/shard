@@ -60,7 +60,19 @@ defmodule Shard.Map.AdminStickTest do
     setup do
       # Create a user and character for testing
       user = UsersFixtures.user_fixture()
-      {:ok, character} = Characters.create_character(%{name: "Test Character", user_id: user.id})
+      {:ok, character} = Characters.create_character(%{
+        name: "Test Character", 
+        user_id: user.id,
+        class: "Warrior",
+        race: "Human",
+        level: 1,
+        health: 100,
+        mana: 50,
+        strength: 10,
+        dexterity: 10,
+        intelligence: 10,
+        constitution: 10
+      })
       
       # Make sure the admin stick exists
       case AdminStick.get_admin_stick_item() do
@@ -140,7 +152,19 @@ defmodule Shard.Map.AdminStickTest do
       
       # Create a character
       user = UsersFixtures.user_fixture()
-      {:ok, character} = Characters.create_character(%{name: "Test Character", user_id: user.id})
+      {:ok, character} = Characters.create_character(%{
+        name: "Test Character", 
+        user_id: user.id,
+        class: "Warrior",
+        race: "Human",
+        level: 1,
+        health: 100,
+        mana: 50,
+        strength: 10,
+        dexterity: 10,
+        intelligence: 10,
+        constitution: 10
+      })
       
       # Check that has_admin_stick? returns false when item doesn't exist
       assert AdminStick.has_admin_stick?(character.id) == false
