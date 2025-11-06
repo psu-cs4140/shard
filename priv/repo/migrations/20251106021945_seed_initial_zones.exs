@@ -12,6 +12,9 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
 
     IO.puts("Creating zones and their rooms...")
 
+    # Clean up any existing data first
+    seed_zones_down()
+
     # Create Tutorial Zone
     {:ok, bone_zone} =
       Map.create_zone(%{
@@ -73,10 +76,11 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
           is_public: true,
           room_type: room_type
         }) do
-          {:ok, room} -> room
+          {:ok, room} -> 
+            room
           {:error, changeset} -> 
             IO.puts("Failed to create room #{room_name}: #{inspect(changeset.errors)}")
-            raise "Room creation failed"
+            raise "Room creation failed for #{room_name}"
         end
       end)
 
@@ -144,10 +148,11 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
           is_public: true,
           room_type: room_type
         }) do
-          {:ok, room} -> room
+          {:ok, room} -> 
+            room
           {:error, changeset} -> 
             IO.puts("Failed to create vampire room #{room_name}: #{inspect(changeset.errors)}")
-            raise "Room creation failed"
+            raise "Room creation failed for #{room_name}"
         end
       end
 
@@ -208,10 +213,11 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
           is_public: true,
           room_type: room_type
         }) do
-          {:ok, room} -> room
+          {:ok, room} -> 
+            room
           {:error, changeset} -> 
             IO.puts("Failed to create forest room #{room_name}: #{inspect(changeset.errors)}")
-            raise "Room creation failed"
+            raise "Room creation failed for #{room_name}"
         end
       end
 
@@ -271,23 +277,33 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
 
       if from_room && to_room do
         # Create door in the specified direction
-        Map.create_door(%{
+        case Map.create_door(%{
           from_room_id: from_room.id,
           to_room_id: to_room.id,
           direction: direction,
           door_type: "standard",
           is_locked: false
-        })
+        }) do
+          {:ok, _door} -> :ok
+          {:error, changeset} -> 
+            IO.puts("Failed to create door #{direction}: #{inspect(changeset.errors)}")
+            raise "Door creation failed"
+        end
         
         # Create door in the opposite direction
         opposite_direction = Shard.Map.Door.opposite_direction(direction)
-        Map.create_door(%{
+        case Map.create_door(%{
           from_room_id: to_room.id,
           to_room_id: from_room.id,
           direction: opposite_direction,
           door_type: "standard",
           is_locked: false
-        })
+        }) do
+          {:ok, _door} -> :ok
+          {:error, changeset} -> 
+            IO.puts("Failed to create door #{opposite_direction}: #{inspect(changeset.errors)}")
+            raise "Door creation failed"
+        end
       end
     end)
 
