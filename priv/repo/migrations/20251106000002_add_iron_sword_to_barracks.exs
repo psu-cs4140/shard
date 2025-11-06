@@ -13,7 +13,6 @@ defmodule Shard.Repo.Migrations.AddIronSwordToBarracks do
       weight,
       equippable,
       equipment_slot,
-      properties,
       is_active,
       inserted_at,
       updated_at
@@ -26,7 +25,6 @@ defmodule Shard.Repo.Migrations.AddIronSwordToBarracks do
       3.5,
       true,
       'main_hand',
-      '{"damage": {"base": 8, "variance": 2}, "weapon_type": "sword", "material": "iron"}',
       true,
       NOW(),
       NOW()
@@ -48,7 +46,7 @@ defmodule Shard.Repo.Migrations.AddIronSwordToBarracks do
       updated_at
     ) VALUES (
       (SELECT id FROM items WHERE name = 'Iron Sword' LIMIT 1),
-      (SELECT id FROM rooms WHERE x_coordinate = 7 AND y_coordinate = 3 LIMIT 1),
+      (SELECT id FROM rooms WHERE x_coordinate = 7 AND y_coordinate = 4 LIMIT 1),
       1,
       3,
       2,
