@@ -69,6 +69,16 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
 
   describe "handle_delete_room/2" do
     test "deletes a room successfully" do
+      # Create a zone first
+      {:ok, zone} =
+        Shard.Map.create_zone(%{
+          name: "Test Zone",
+          description: "A test zone",
+          slug: "test-zone",
+          min_level: 1,
+          max_level: 10
+        })
+
       # Create a room to delete
       {:ok, room} =
         Shard.Map.create_room(%{
@@ -77,6 +87,7 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
           x_coordinate: 0,
           y_coordinate: 0,
           z_coordinate: 0,
+          zone_id: zone.id,
           room_type: "standard",
           is_public: true
         })
@@ -89,11 +100,12 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
           x_coordinate: 1,
           y_coordinate: 0,
           z_coordinate: 0,
+          zone_id: zone.id,
           room_type: "standard",
           is_public: true
         })
 
-      socket = create_socket(%{rooms: [room, room2], doors: []})
+      socket = create_socket(%{rooms: [room, room2], doors: [], selected_zone_id: zone.id})
 
       params = %{"id" => to_string(room.id)}
       {:noreply, updated_socket} = MapHandlers.handle_delete_room(params, socket)
@@ -199,6 +211,8 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
 
   describe "handle_save_room/2" do
     test "creates a new room when not editing" do
+      initial_room_count = length(Shard.Map.list_rooms())
+
       socket =
         create_socket(%{
           editing: nil,
@@ -220,9 +234,14 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
       {:noreply, updated_socket} = MapHandlers.handle_save_room(params, socket)
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Room created successfully"
-      assert length(updated_socket.assigns.rooms) == 1
+      assert length(updated_socket.assigns.rooms) == initial_room_count + 1
       assert updated_socket.assigns.editing == nil
       assert updated_socket.assigns.changeset == nil
+
+      # Verify the room was actually created with the correct name
+      created_room = Enum.find(updated_socket.assigns.rooms, &(&1.name == "New Room"))
+      assert created_room != nil
+      assert created_room.description == "A new room"
     end
 
     test "updates an existing room when editing" do
@@ -262,7 +281,8 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
       {:noreply, updated_socket} = MapHandlers.handle_save_room(params, socket)
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Room updated successfully"
-      assert updated_socket.assigns.rooms |> hd |> Map.get(:name) == "Updated Room"
+      updated_room = Enum.find(updated_socket.assigns.rooms, &(&1.id == room.id))
+      assert updated_room.name == "Updated Room"
       assert updated_socket.assigns.editing == nil
       assert updated_socket.assigns.changeset == nil
     end
@@ -305,7 +325,8 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
       {:noreply, updated_socket} = MapHandlers.handle_apply_and_save(params, socket)
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Room updated successfully"
-      assert updated_socket.assigns.rooms |> hd |> Map.get(:name) == "Updated Room"
+      updated_room = Enum.find(updated_socket.assigns.rooms, &(&1.id == room.id))
+      assert updated_room.name == "Updated Room"
       assert updated_socket.assigns.viewing.name == "Updated Room"
       assert updated_socket.assigns.changeset.data.name == "Updated Room"
     end

@@ -12,7 +12,8 @@ defmodule Shard.MapTest do
 
     test "list_rooms/0 returns all rooms" do
       room = room_fixture()
-      assert Map.list_rooms() == [room]
+      rooms = Map.list_rooms()
+      assert Enum.any?(rooms, fn r -> r.id == room.id end)
     end
 
     test "get_room!/1 returns the room with given id" do

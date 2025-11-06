@@ -1,7 +1,8 @@
 defmodule ShardWeb.AdminLive.MapFunctionsTest do
-  use ShardWeb.ConnCase, async: true
+  use Shard.DataCase, async: true
   alias ShardWeb.AdminLive.MapFunctions
   alias Phoenix.LiveView.Socket
+  alias Shard.Map
 
   # Helper function to create a socket with required assigns
   defp create_socket(assigns) do
@@ -25,6 +26,9 @@ defmodule ShardWeb.AdminLive.MapFunctionsTest do
 
   describe "save_room/2" do
     test "creates a new room when not editing" do
+      # Get initial room count
+      initial_room_count = length(Map.list_rooms())
+
       socket =
         create_socket(%{
           editing: nil,
@@ -44,7 +48,9 @@ defmodule ShardWeb.AdminLive.MapFunctionsTest do
 
       assert {:ok, updated_socket} = MapFunctions.save_room(socket, room_params)
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Room created successfully"
-      assert length(updated_socket.assigns.rooms) == 1
+
+      # Check that one more room was created
+      assert length(updated_socket.assigns.rooms) == initial_room_count + 1
       assert updated_socket.assigns.editing == nil
       assert updated_socket.assigns.changeset == nil
     end
