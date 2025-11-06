@@ -79,7 +79,7 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
       Enum.map(bone_room_specs, fn {x, y, room_name, room_type} ->
         {:ok, room} =
           Map.create_room(%{
-            name: room_name,
+            name: "#{room_name} (Bone Zone)",
             description: "#{room_name} in the Bone Zone",
             zone_id: bone_zone.id,
             x_coordinate: x,
@@ -147,7 +147,7 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
 
         {:ok, room} =
           Map.create_room(%{
-            name: room_name,
+            name: "#{room_name} (Vampire Castle)",
             description: "#{room_name} in the Vampire Castle",
             zone_id: vampire_zone.id,
             x_coordinate: x,
@@ -208,7 +208,7 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
 
         {:ok, room} =
           Map.create_room(%{
-            name: room_name,
+            name: "#{room_name} (Elven Forest)",
             description: "#{room_name} in the Elven Forest",
             zone_id: forest_zone.id,
             x_coordinate: x,
@@ -347,7 +347,7 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
     IO.puts("Removing seeded zones and their rooms...")
 
     # Delete zones by slug (this will cascade to rooms and doors)
-    ["tutorial-area", "vampire-castle", "elven-forest"]
+    ["bone-zone", "vampire-castle", "elven-forest"]
     |> Enum.each(fn slug ->
       case Repo.get_by(Zone, slug: slug) do
         nil -> IO.puts("Zone #{slug} not found")
