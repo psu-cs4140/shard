@@ -213,10 +213,6 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
       {:ok, content} ->
         content
         |> String.split("\n")
-        |> Enum.map(fn line ->
-          # Preserve empty lines as empty strings, but trim trailing whitespace from non-empty lines
-          if String.trim(line) == "", do: "", else: String.trim_trailing(line)
-        end)
         |> Kernel.++([""]) # Add empty line at the end
 
       {:error, _reason} ->
