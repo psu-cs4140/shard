@@ -17,7 +17,8 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
       Map.create_zone(%{
         name: "Beginner Bone Zone",
         slug: "bone-zone",
-        description: "A quiet cavern lined with old bones — eerie but safe enough for a first adventure.",
+        description:
+          "A quiet cavern lined with old bones — eerie but safe enough for a first adventure.",
         zone_type: "dungeon",
         min_level: 1,
         max_level: 5,
@@ -33,22 +34,22 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
     IO.puts("Created Beginner Bone Zone")
 
     # Create Beginner Bone Zone rooms (3x3 grid)
-   # bone_zone_rooms =
+    # bone_zone_rooms =
     #  for x <- 0..2, y <- 0..2 do
-     #   {:ok, room} =
-      #    Map.create_room(%{
-       #     name: "Bone Zone (#{x},#{y})",
-        #    description: "A training room in the tutorial area at coordinates (#{x},#{y})",
-         #   zone_id: bone_zone.id,
-          #  x_coordinate: x,
-           # y_coordinate: y,
-      #      z_coordinate: 0,
-      #      is_public: true,
-      #      room_type: "dungeon"
-       #   })
+    #   {:ok, room} =
+    #    Map.create_room(%{
+    #     name: "Bone Zone (#{x},#{y})",
+    #    description: "A training room in the tutorial area at coordinates (#{x},#{y})",
+    #   zone_id: bone_zone.id,
+    #  x_coordinate: x,
+    # y_coordinate: y,
+    #      z_coordinate: 0,
+    #      is_public: true,
+    #      room_type: "dungeon"
+    #   })
 
-      #  room
-     # end
+    #  room
+    # end
 
     bone_room_specs = [
       {0, 3, "Spider Dungeon", "dungeon"},
@@ -99,7 +100,8 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
       Map.create_zone(%{
         name: "Vampire Castle",
         slug: "vampire-castle",
-        description: "A dark and foreboding castle ruled by ancient vampires. Danger lurks in every shadow.",
+        description:
+          "A dark and foreboding castle ruled by ancient vampires. Danger lurks in every shadow.",
         zone_type: "dungeon",
         min_level: 10,
         max_level: 20,
@@ -167,7 +169,8 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
       Map.create_zone(%{
         name: "Elven Forest",
         slug: "elven-forest",
-        description: "An ancient forest inhabited by elves. The trees whisper secrets of old magic.",
+        description:
+          "An ancient forest inhabited by elves. The trees whisper secrets of old magic.",
         zone_type: "wilderness",
         min_level: 5,
         max_level: 15,
@@ -350,8 +353,10 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
     ["bone-zone", "vampire-castle", "elven-forest"]
     |> Enum.each(fn slug ->
       case Repo.get_by(Zone, slug: slug) do
-        nil -> IO.puts("Zone #{slug} not found")
-        zone -> 
+        nil ->
+          IO.puts("Zone #{slug} not found")
+
+        zone ->
           Repo.delete!(zone)
           IO.puts("Deleted zone: #{zone.name}")
       end

@@ -28,7 +28,7 @@ defmodule ShardWeb.AdminLive.MapFunctionsTest do
     test "creates a new room when not editing" do
       # Get initial room count
       initial_room_count = length(Map.list_rooms())
-      
+
       socket =
         create_socket(%{
           editing: nil,
@@ -48,7 +48,7 @@ defmodule ShardWeb.AdminLive.MapFunctionsTest do
 
       assert {:ok, updated_socket} = MapFunctions.save_room(socket, room_params)
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Room created successfully"
-      
+
       # Check that one more room was created
       assert length(updated_socket.assigns.rooms) == initial_room_count + 1
       assert updated_socket.assigns.editing == nil
