@@ -309,12 +309,14 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
 
     IO.puts("Created doors for tutorial zone")
 
-    # Create doors for vampire castle (4x4 grid)
+    # Create doors for vampire castle (4x4 grid) - East/West connections
+    IO.puts("Creating vampire castle east/west doors...")
     for x <- 0..2, y <- 0..3 do
       from_room = Enum.find(vampire_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
       to_room = Enum.find(vampire_rooms, &(&1.x_coordinate == x + 1 && &1.y_coordinate == y))
 
       if from_room && to_room do
+        IO.puts("Creating east door from (#{x},#{y}) to (#{x+1},#{y})")
         # Create east door
         case Map.create_door(%{
           from_room_id: from_room.id,
@@ -325,10 +327,11 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
         }) do
           {:ok, _door} -> :ok
           {:error, changeset} -> 
-            IO.puts("Failed to create vampire castle east door (#{x},#{y}): #{inspect(changeset.errors)}")
-            raise "Door creation failed"
+            IO.puts("Failed to create vampire castle east door (#{x},#{y}) -> (#{x+1},#{y}): #{inspect(changeset.errors)}")
+            raise "Door creation failed for east door at (#{x},#{y})"
         end
         
+        IO.puts("Creating west door from (#{x+1},#{y}) to (#{x},#{y})")
         # Create west door
         case Map.create_door(%{
           from_room_id: to_room.id,
@@ -339,12 +342,14 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
         }) do
           {:ok, _door} -> :ok
           {:error, changeset} -> 
-            IO.puts("Failed to create vampire castle west door (#{x},#{y}): #{inspect(changeset.errors)}")
-            raise "Door creation failed"
+            IO.puts("Failed to create vampire castle west door (#{x+1},#{y}) -> (#{x},#{y}): #{inspect(changeset.errors)}")
+            raise "Door creation failed for west door at (#{x+1},#{y})"
         end
       end
     end
 
+    # Create doors for vampire castle (4x4 grid) - North/South connections
+    IO.puts("Creating vampire castle north/south doors...")
     for x <- 0..3, y <- 0..2 do
       from_room = Enum.find(vampire_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
       to_room = Enum.find(vampire_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y + 1))
@@ -353,6 +358,7 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
         # Lock the door to vampire lord's chamber
         is_locked = x == 1 && y == 2
 
+        IO.puts("Creating north door from (#{x},#{y}) to (#{x},#{y+1}) - locked: #{is_locked}")
         # Create north door
         case Map.create_door(%{
           from_room_id: from_room.id,
@@ -364,10 +370,11 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
         }) do
           {:ok, _door} -> :ok
           {:error, changeset} -> 
-            IO.puts("Failed to create vampire castle north door (#{x},#{y}): #{inspect(changeset.errors)}")
-            raise "Door creation failed"
+            IO.puts("Failed to create vampire castle north door (#{x},#{y}) -> (#{x},#{y+1}): #{inspect(changeset.errors)}")
+            raise "Door creation failed for north door at (#{x},#{y})"
         end
         
+        IO.puts("Creating south door from (#{x},#{y+1}) to (#{x},#{y}) - locked: #{is_locked}")
         # Create south door (with same lock status)
         case Map.create_door(%{
           from_room_id: to_room.id,
@@ -379,8 +386,8 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
         }) do
           {:ok, _door} -> :ok
           {:error, changeset} -> 
-            IO.puts("Failed to create vampire castle south door (#{x},#{y}): #{inspect(changeset.errors)}")
-            raise "Door creation failed"
+            IO.puts("Failed to create vampire castle south door (#{x},#{y+1}) -> (#{x},#{y}): #{inspect(changeset.errors)}")
+            raise "Door creation failed for south door at (#{x},#{y+1})"
         end
       end
     end
