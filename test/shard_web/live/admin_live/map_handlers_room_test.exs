@@ -274,7 +274,8 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
       {:noreply, updated_socket} = MapHandlers.handle_save_room(params, socket)
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Room updated successfully"
-      assert updated_socket.assigns.rooms |> hd |> Map.get(:name) == "Updated Room"
+      updated_room = Enum.find(updated_socket.assigns.rooms, &(&1.id == room.id))
+      assert updated_room.name == "Updated Room"
       assert updated_socket.assigns.editing == nil
       assert updated_socket.assigns.changeset == nil
     end
@@ -317,7 +318,8 @@ defmodule ShardWeb.AdminLive.MapHandlersRoomTest do
       {:noreply, updated_socket} = MapHandlers.handle_apply_and_save(params, socket)
 
       assert Phoenix.Flash.get(updated_socket.assigns.flash, :info) == "Room updated successfully"
-      assert updated_socket.assigns.rooms |> hd |> Map.get(:name) == "Updated Room"
+      updated_room = Enum.find(updated_socket.assigns.rooms, &(&1.id == room.id))
+      assert updated_room.name == "Updated Room"
       assert updated_socket.assigns.viewing.name == "Updated Room"
       assert updated_socket.assigns.changeset.data.name == "Updated Room"
     end
