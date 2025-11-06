@@ -186,14 +186,14 @@ defmodule ShardWeb.UserLive.AdminZoneEditor do
   # Calculate coordinates based on direction
   defp calculate_coordinates_from_direction({x, y}, direction) do
     case String.downcase(direction) do
-      "north" -> {x, y + 1}
-      "south" -> {x, y - 1}
+      "north" -> {x, y - 1}
+      "south" -> {x, y + 1}
       "east" -> {x + 1, y}
       "west" -> {x - 1, y}
-      "northeast" -> {x + 1, y + 1}
-      "northwest" -> {x - 1, y + 1}
-      "southeast" -> {x + 1, y - 1}
-      "southwest" -> {x - 1, y - 1}
+      "northeast" -> {x + 1, y - 1}
+      "northwest" -> {x - 1, y - 1}
+      "southeast" -> {x + 1, y + 1}
+      "southwest" -> {x - 1, y + 1}
       # Default to current position for invalid directions
       _ -> {x, y}
     end
