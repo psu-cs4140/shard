@@ -121,86 +121,66 @@ defmodule ShardWeb.UserLive.CommandParsers do
   end
 
   # Parse create room command: "create room <direction>"
-  def parse_create_room_command(command, character_id) do
-    # First check if character has admin stick
-    if AdminStick.has_admin_stick?(character_id) do
-      # Match patterns like: create room north, create room "north"
-      cond do
-        # Match create room [direction] (with or without quotes)
-        Regex.match?(~r/^create\s+room\s+["']?(\w+)["']?\s*$/i, command) ->
-          case Regex.run(~r/^create\s+room\s+["']?(\w+)["']?\s*$/i, command) do
-            [_, direction] -> {:ok, String.trim(direction)}
-            _ -> :error
-          end
+  def parse_create_room_command(command) do
+    # Match patterns like: create room north, create room "north"
+    cond do
+      # Match create room [direction] (with or without quotes)
+      Regex.match?(~r/^create\s+room\s+["']?(\w+)["']?\s*$/i, command) ->
+        case Regex.run(~r/^create\s+room\s+["']?(\w+)["']?\s*$/i, command) do
+          [_, direction] -> {:ok, String.trim(direction)}
+          _ -> :error
+        end
 
-        true ->
-          :error
-      end
-    else
-      {:error, "you do not wield powerful enough magic to change the very earth you stand on"}
+      true ->
+        :error
     end
   end
 
   # Parse delete room command: "delete room <direction>"
-  def parse_delete_room_command(command, character_id) do
-    # First check if character has admin stick
-    if AdminStick.has_admin_stick?(character_id) do
-      # Match patterns like: delete room north, delete room "north"
-      cond do
-        # Match delete room [direction] (with or without quotes)
-        Regex.match?(~r/^delete\s+room\s+["']?(\w+)["']?\s*$/i, command) ->
-          case Regex.run(~r/^delete\s+room\s+["']?(\w+)["']?\s*$/i, command) do
-            [_, direction] -> {:ok, String.trim(direction)}
-            _ -> :error
-          end
+  def parse_delete_room_command(command) do
+    # Match patterns like: delete room north, delete room "north"
+    cond do
+      # Match delete room [direction] (with or without quotes)
+      Regex.match?(~r/^delete\s+room\s+["']?(\w+)["']?\s*$/i, command) ->
+        case Regex.run(~r/^delete\s+room\s+["']?(\w+)["']?\s*$/i, command) do
+          [_, direction] -> {:ok, String.trim(direction)}
+          _ -> :error
+        end
 
-        true ->
-          :error
-      end
-    else
-      {:error, "you do not wield powerful enough magic to change the very earth you stand on"}
+      true ->
+        :error
     end
   end
 
   # Parse create door command: "create door <direction>"
-  def parse_create_door_command(command, character_id) do
-    # First check if character has admin stick
-    if AdminStick.has_admin_stick?(character_id) do
-      # Match patterns like: create door north, create door "north"
-      cond do
-        # Match create door [direction] (with or without quotes)
-        Regex.match?(~r/^create\s+door\s+["']?(\w+)["']?\s*$/i, command) ->
-          case Regex.run(~r/^create\s+door\s+["']?(\w+)["']?\s*$/i, command) do
-            [_, direction] -> {:ok, String.trim(direction)}
-            _ -> :error
-          end
+  def parse_create_door_command(command) do
+    # Match patterns like: create door north, create door "north"
+    cond do
+      # Match create door [direction] (with or without quotes)
+      Regex.match?(~r/^create\s+door\s+["']?(\w+)["']?\s*$/i, command) ->
+        case Regex.run(~r/^create\s+door\s+["']?(\w+)["']?\s*$/i, command) do
+          [_, direction] -> {:ok, String.trim(direction)}
+          _ -> :error
+        end
 
-        true ->
-          :error
-      end
-    else
-      {:error, "you do not wield powerful enough magic to change the very earth you stand on"}
+      true ->
+        :error
     end
   end
 
   # Parse delete door command: "delete door <direction>"
-  def parse_delete_door_command(command, character_id) do
-    # First check if character has admin stick
-    if AdminStick.has_admin_stick?(character_id) do
-      # Match patterns like: delete door north, delete door "north"
-      cond do
-        # Match delete door [direction] (with or without quotes)
-        Regex.match?(~r/^delete\s+door\s+["']?(\w+)["']?\s*$/i, command) ->
-          case Regex.run(~r/^delete\s+door\s+["']?(\w+)["']?\s*$/i, command) do
-            [_, direction] -> {:ok, String.trim(direction)}
-            _ -> :error
-          end
+  def parse_delete_door_command(command) do
+    # Match patterns like: delete door north, delete door "north"
+    cond do
+      # Match delete door [direction] (with or without quotes)
+      Regex.match?(~r/^delete\s+door\s+["']?(\w+)["']?\s*$/i, command) ->
+        case Regex.run(~r/^delete\s+door\s+["']?(\w+)["']?\s*$/i, command) do
+          [_, direction] -> {:ok, String.trim(direction)}
+          _ -> :error
+        end
 
-        true ->
-          :error
-      end
-    else
-      {:error, "you do not wield powerful enough magic to change the very earth you stand on"}
+      true ->
+        :error
     end
   end
 
