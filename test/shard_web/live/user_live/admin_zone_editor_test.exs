@@ -149,8 +149,8 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
       # First create a room to the north
       AdminZoneEditor.create_room_in_direction(game_state, "north")
       
-      # Get the created room
-      target_room = Map.get_room_by_coordinates(
+      # Get the created room (prefixing with underscore as it's not used)
+      _target_room = Map.get_room_by_coordinates(
         game_state.character.current_zone_id,
         0,
         -1,
