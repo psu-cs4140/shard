@@ -241,6 +241,7 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
       {{2, 3}, {2, 4}, "north"},
       # Connect Hallway6 (2,4) to Tomb (2,5)
       {{2, 4}, {2, 5}, "north"},
+      #{{2, 5}, {2, 4}, "south"},
       # Connect Hallway6 (2,4) to Hallway7 (3,4)
       {{2, 4}, {3, 4}, "east"},
       # Connect Hallway7 (3,4) to Hallway8 (4,4)
