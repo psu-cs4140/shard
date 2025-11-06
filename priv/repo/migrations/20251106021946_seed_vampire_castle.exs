@@ -63,7 +63,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
       {5, -3, "Kitchen", "standard"},
       {4, -3, "Freezer", "standard"},
       {-1, -3, "Study", "standard"},
-      {-1, -4, "Master Chambers", "standard"}
+      {-1, -4, "Master Chamber", "standard"}
     ]
 
     manor_rooms =
@@ -87,11 +87,109 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
         end
       end)
 
-    IO.puts("Created #{length(manor_rooms)} bone rooms")
+    IO.puts("Created #{length(manor_rooms)} manor rooms")
+
+    # Create doors for vampire's manor zone based on actual room coordinates
+    manor_door_connections = [
+      # Connect Courtyard NE (0,0) to Garden N (1,0)
+      {{0, 0}, {1, 0}, "east"},
+      # Connect Courtyard NE (0,0) to Courtyard SE (0,1)
+      {{0, 0}, {0, 1}, "south"},
+      # Connect Courtyard NE (0,0) to Courtyard NW (-1,0)
+      {{0, 0}, {0, -1}, "west"},
+      # Connect Garden N (1,0) to Garden S (1,1)
+      {{1, 0}, {1, 1}, "south"},
+      # Connect Courtyard SE (0,1) to Courtyard SW (-1,1)
+      {{0, 1}, {-1, 1}, "west"},
+      # Connect Courtyard SW (-1,1) to Courtyard NW (-1,0)
+      {{-1, 1}, {-1, 0}, "north"},
+      # Connect Courtyard NW (-1,0) to Sewer Pipe Entrance (-2,0)
+      {{-1, 0}, {-2, 0}, "west"},
+      # Connect Sewer Pipe Entrance (-2,0) to Sewer Tunnel 1 (-3,0)
+      {{-2, 0}, {-3, 0}, "west"},
+      # Connect Sewer Tunnel 1 (-3,0) to Sewer Tunnel 2 (-3,1)
+      {{-3, 0}, {-3, 1}, "south"},
+      # Connect Sewer Tunnel 2 (-3,1) to Sewer Lair (-4,1)
+      {{-3, 1}, {-4, 1}, "west"},
+      # Connect Courtyard NE (0,0) to Manor Doorstep (0,-1)
+      {{0, 0}, {0, -1}, "north"},
+      # Connect Manor Doorstep (0,-1) to Manor Lobby SW (0,-2)
+      {{0, -1}, {0, -2}, "north"},
+      # Connect Manor Lobby SW (0,-2) to Library (-1,-2)
+      {{0, -2}, {-1, -2}, "west"},
+      # Connect Library (-1,-2) to Study (-1,-3)
+      {{-1, -2}, {-1, -3}, "north"},
+      # Connect Manor Lobby SW (0,-2) to Manor Lobby CW (0,-3)
+      {{0, -2}, {0, -3}, "north"},
+      # Connect Manor Lobby CW (0,-3) to Manor Lobby NW (0,-4)
+      {{0, -3}, {0, -4}, "north"},
+      # Connect Manor Lobby NW (0,-4) to Master Chamber (-1,-4)
+      {{0, -4}, {-1, -4}, "west"},
+      # Connect Manor Lobby CW (0,-3) to Hallway W (1,-3)
+      {{0, -3}, {1, -3}, "east"},
+      # Connect Hallway W (1,-3) to Hallway E (2,-3)
+      {{1, -3}, {2, -3}, "east"},
+      # Connect Hallway E (2,-3) to Manor Lobby CE (3,-3)
+      {{2, -3}, {3, -3}, "east"},
+      # Connect Manor Lobby CE (3,-3) to Manor Lobby SE (3,-2)
+      {{3, -3}, {3, -2}, "south"},
+      # Connect Manor Lobby CE (3,-3) to Manor Lobby NE (3,-4)
+      {{3, -3}, {3, -4}, "north"},
+      # Connect Manor Lobby NE (3,-4) to Dining Hall W (4,-4)
+      {{3, -4}, {4, -4}, "east"},
+      # Connect Dining Hall W (4,-4) to Dining Hall E (5,-4)
+      {{4, -4}, {5, -4}, "east"},
+      # Connect Dining Hall E (5,-4) to Kitchen (5,-3)
+      {{5, -4}, {5, -3}, "south"},
+      # Connect Kitchen (5,-3) to Freezer (4,-3)
+      {{5, -3}, {4, -3}, "west"}
+    ]
+
+    Enum.each(manor_door_connections, fn {{from_x, from_y}, {to_x, to_y}, direction} ->
+      from_room =
+        Enum.find(manor_rooms, &(&1.x_coordinate == from_x && &1.y_coordinate == from_y))
+
+      to_room = Enum.find(manor_rooms, &(&1.x_coordinate == to_x && &1.y_coordinate == to_y))
+
+      if from_room && to_room do
+        # Determine if this door should be locked
+        is_locked =
+          (from_x == 2 && from_y == 3 && to_x == 2 && to_y == 4) ||
+            (from_x == 5 && from_y == 0 && to_x == 5 && to_y == 1)
+
+        door_type = if is_locked, do: "locked_gate", else: "standard"
+
+        key_required =
+          cond do
+            from_x == 2 && from_y == 3 && to_x == 2 && to_y == 4 -> "Tomb Key"
+            from_x == 5 && from_y == 0 && to_x == 5 && to_y == 1 -> "Treasure Room Key"
+            true -> nil
+          end
+
+        # Create door (Map.create_door automatically creates the return door)
+        case Map.create_door(%{
+               from_room_id: from_room.id,
+               to_room_id: to_room.id,
+               direction: direction,
+               door_type: door_type,
+               is_locked: is_locked,
+               key_required: key_required
+             }) do
+          {:ok, _door} ->
+            :ok
+
+          {:error, changeset} ->
+            IO.puts("Failed to create door #{direction}: #{inspect(changeset.errors)}")
+            raise "Door creation failed"
+        end
+      end
+    end)
+
+    IO.puts("Created doors for vampire manor zone")
 
     IO.puts("""
 
-    ✓ Vampire Castle successfully seeded!
+    ✓ Vampire's Manor successfully seeded!
 
     Created 1 zone:
     - Vampire Castle (4x4 grid, coordinates 0,0 to 3,3)
