@@ -13,12 +13,12 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
     IO.puts("Creating zones and their rooms...")
 
     # Create Tutorial Zone
-    {:ok, tutorial_zone} =
+    {:ok, bone_zone} =
       Map.create_zone(%{
-        name: "Tutorial Area",
-        slug: "tutorial-area",
-        description: "A safe area for new adventurers to learn the basics of the game.",
-        zone_type: "safe_zone",
+        name: "Beginner Bone Zone",
+        slug: "bone-zone",
+        description: "A quiet cavern lined with old bones — eerie but safe enough for a first adventure.",
+        zone_type: "dungeon",
         min_level: 1,
         max_level: 5,
         is_public: true,
@@ -30,27 +30,81 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
         }
       })
 
-    IO.puts("Created Tutorial Area zone")
+    IO.puts("Created Beginner Bone Zone")
 
-    # Create tutorial rooms (3x3 grid)
-    tutorial_rooms =
-      for x <- 0..2, y <- 0..2 do
+    # Create Beginner Bone Zone rooms (3x3 grid)
+   # bone_zone_rooms =
+    #  for x <- 0..2, y <- 0..2 do
+     #   {:ok, room} =
+      #    Map.create_room(%{
+       #     name: "Bone Zone (#{x},#{y})",
+        #    description: "A training room in the tutorial area at coordinates (#{x},#{y})",
+         #   zone_id: bone_zone.id,
+          #  x_coordinate: x,
+           # y_coordinate: y,
+      #      z_coordinate: 0,
+      #      is_public: true,
+      #      room_type: "dungeon"
+       #   })
+
+      #  room
+     # end
+
+    bone_rooms =
+      for x <- 0..7, y <- 0..5 do
+        room_name =
+          case {x, y} do
+            {0, 0} -> " "
+            {0, 1} -> " "
+            {0, 2} -> " "
+            {0, 3} -> "Spider Dungeon"
+            {0, 4} -> "Hallway1"
+            {0, 5} -> " "
+            {1, 4} -> "Hallway2"
+            {2, 0} -> "Bone Yard"
+            {2, 1} -> "Hallway3"
+            {2, 2} -> "Hallway4"
+            {2, 3} -> "Hallway5"
+            {2, 4} -> "Hallway6"
+            {2, 5} -> "Tomb"
+            {3, 4} -> "Hallway7"
+            {4, 4} -> "Hallway8"
+            {4, 5} -> "Hallway9"
+            {5, 0} -> "Hallway10"
+            {5, 1} -> "Hallway11"
+            {5, 2} -> "Hallway12"
+            {5, 3} -> "Hallway13"
+            {5, 4} -> "Hallway14"
+            {5, 5} -> "Grand Statue"
+            {6, 0} -> "Treasure Room"
+            {7, 0} -> "Exit"
+            {6, 3} -> "Hallway16"
+            {7, 3} -> "Barracks"
+          end
+
+        room_type =
+          case {x, y} do
+            {6, 0} -> "treasure_room"
+            {0, 3} -> "dungeon"
+            _ -> "standard"
+          end
+
         {:ok, room} =
           Map.create_room(%{
-            name: "Tutorial Room (#{x},#{y})",
-            description: "A training room in the tutorial area at coordinates (#{x},#{y})",
-            zone_id: tutorial_zone.id,
+            name: room_name,
+            description: "#{room_name} in the Bone Zone",
+            zone_id: bone_zone.id,
             x_coordinate: x,
             y_coordinate: y,
             z_coordinate: 0,
             is_public: true,
-            room_type: "safe_zone"
+            room_type: room_type
           })
 
         room
       end
 
-    IO.puts("Created #{length(tutorial_rooms)} tutorial rooms")
+    IO.puts("Created #{length(bone_rooms)} bone rooms")
 
     # Create Vampire Castle Zone
     {:ok, vampire_zone} =
@@ -183,8 +237,8 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
 
     # Create doors for tutorial zone (connect horizontally and vertically)
     for x <- 0..1, y <- 0..2 do
-      from_room = Enum.find(tutorial_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
-      to_room = Enum.find(tutorial_rooms, &(&1.x_coordinate == x + 1 && &1.y_coordinate == y))
+      from_room = Enum.find(bone_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
+      to_room = Enum.find(bone_rooms, &(&1.x_coordinate == x + 1 && &1.y_coordinate == y))
 
       if from_room && to_room do
         Map.create_door(%{
@@ -198,8 +252,8 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
     end
 
     for x <- 0..2, y <- 0..1 do
-      from_room = Enum.find(tutorial_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
-      to_room = Enum.find(tutorial_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y + 1))
+      from_room = Enum.find(bone_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y))
+      to_room = Enum.find(bone_rooms, &(&1.x_coordinate == x && &1.y_coordinate == y + 1))
 
       if from_room && to_room do
         Map.create_door(%{
