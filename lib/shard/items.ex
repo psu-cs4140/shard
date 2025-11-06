@@ -90,18 +90,25 @@ defmodule Shard.Items do
           with {:ok, _} <- update_inventory_quantity(existing, item.max_stack_size),
                {:ok, _} <- add_stackable_item(character_id, item, remaining, opts) do
             {:ok, :split_stack}
+          else
+            error -> error
           end
         end
     end
   end
 
   defp add_non_stackable_item(character_id, item, quantity, opts) do
-    Enum.reduce_while(1..quantity, {:ok, []}, fn _, {:ok, acc} ->
+    result = Enum.reduce_while(1..quantity, {:ok, []}, fn _, {:ok, acc} ->
       case create_inventory_entry(character_id, item, 1, opts) do
         {:ok, entry} -> {:cont, {:ok, [entry | acc]}}
         error -> {:halt, error}
       end
     end)
+    
+    case result do
+      {:ok, entries} -> {:ok, entries}
+      error -> error
+    end
   end
 
   defp find_existing_stack(character_id, item_id) do
@@ -253,7 +260,10 @@ defmodule Shard.Items do
     Repo.transaction(fn ->
       case add_item_to_inventory(character_id, room_item.item_id, pickup_quantity) do
         {:ok, _} ->
-          handle_room_item_removal(room_item, pickup_quantity)
+          case handle_room_item_removal(room_item, pickup_quantity) do
+            {:ok, result} -> result
+            error -> Repo.rollback(error)
+          end
 
         error ->
           Repo.rollback(error)
