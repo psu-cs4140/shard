@@ -394,9 +394,6 @@ defmodule Shard.Quests do
     end)
   end
 
-  @doc """
-  Checks if quest prerequisites are satisfied.
-  """
   defp check_quest_prerequisites(quest, completed_quest_titles) do
     case quest.prerequisites do
       %{"completed_quests" => required_quests} when is_list(required_quests) ->
