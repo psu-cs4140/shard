@@ -189,8 +189,8 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
     case zone_id do
       1 ->
         [
-          "You enter the Bone Zone, where ancient skeletons guard forgotten treasures.",
-          "The air is thick with the scent of decay. Type 'help' for available commands.",
+          "Darkness presses against your mind like a heavy shroud.",
+          "Type 'help' for available commands.",
           ""
         ]
 
