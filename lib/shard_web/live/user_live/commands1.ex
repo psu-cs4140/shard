@@ -341,16 +341,16 @@ defmodule ShardWeb.UserLive.Commands1 do
         execute_movement(game_state, "southwest")
 
       # Admin zone editing commands
-      cmd when cmd =~ ~r/^create\s+room/i ->
+      cmd when cmd == "create room" or String.starts_with?(cmd, "create room ") ->
         handle_create_room_command(command, game_state)
 
-      cmd when cmd =~ ~r/^delete\s+room/i ->
+      cmd when cmd == "delete room" or String.starts_with?(cmd, "delete room ") ->
         handle_delete_room_command(command, game_state)
 
-      cmd when cmd =~ ~r/^create\s+door/i ->
+      cmd when cmd == "create door" or String.starts_with?(cmd, "create door ") ->
         handle_create_door_command(command, game_state)
 
-      cmd when cmd =~ ~r/^delete\s+door/i ->
+      cmd when cmd == "delete door" or String.starts_with?(cmd, "delete door ") ->
         handle_delete_door_command(command, game_state)
 
       "accept" ->
