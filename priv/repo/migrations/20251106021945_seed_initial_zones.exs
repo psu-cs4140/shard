@@ -277,13 +277,27 @@ defmodule Shard.Repo.Migrations.SeedInitialZones do
       to_room = Enum.find(bone_rooms, &(&1.x_coordinate == to_x && &1.y_coordinate == to_y))
 
       if from_room && to_room do
+        # Determine if this door should be locked
+        is_locked = 
+          (from_x == 2 && from_y == 4 && to_x == 2 && to_y == 5) ||
+          (from_x == 5 && from_y == 1 && to_x == 5 && to_y == 0)
+
+        door_type = if is_locked, do: "locked_gate", else: "standard"
+        key_required = 
+          cond do
+            from_x == 2 && from_y == 4 && to_x == 2 && to_y == 5 -> "Tomb Key"
+            from_x == 5 && from_y == 1 && to_x == 5 && to_y == 0 -> "Treasure Room Key"
+            true -> nil
+          end
+
         # Create door (Map.create_door automatically creates the return door)
         case Map.create_door(%{
           from_room_id: from_room.id,
           to_room_id: to_room.id,
           direction: direction,
-          door_type: "standard",
-          is_locked: false
+          door_type: door_type,
+          is_locked: is_locked,
+          key_required: key_required
         }) do
           {:ok, _door} -> :ok
           {:error, changeset} -> 
