@@ -4,7 +4,7 @@ defmodule Shard.Repo.Migrations.CreateAdminStickItem do
   def up do
     # Insert the Admin Stick item
     execute """
-    INSERT INTO items (name, description, item_type, rarity, equippable, stackable, usable, attributes, is_active, inserted_at, updated_at)
+    INSERT INTO items (name, description, item_type, rarity, equippable, stackable, usable, is_active, inserted_at, updated_at)
     VALUES (
       'Admin Zone Editing Stick',
       'A magical stick that allows admins to modify zones',
@@ -13,7 +13,6 @@ defmodule Shard.Repo.Migrations.CreateAdminStickItem do
       false,
       false,
       true,
-      '{"zone_editing": true}',
       true,
       NOW(),
       NOW()
