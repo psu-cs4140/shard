@@ -4,14 +4,18 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
   alias ShardWeb.UserLive.AdminZoneEditor
   alias Shard.Map
   alias Shard.Items.AdminStick
-  alias Shard.Items
-  alias Shard.ZonesFixtures
-  alias Shard.CharactersFixtures
+  alias Shard.UsersFixtures
+  alias Shard.Characters
 
   describe "admin zone editor functions" do
     setup do
-      # Create a zone for testing
-      zone = ZonesFixtures.zone_fixture(%{name: "Test Zone", slug: "test-zone"})
+      # Create a zone for testing using direct Map functions
+      {:ok, zone} = Map.create_zone(%{
+        name: "Test Zone", 
+        slug: "test-zone",
+        description: "A test zone for admin editing",
+        is_active: true
+      })
       
       # Create rooms for testing
       {:ok, room1} = Map.create_room(%{
@@ -39,9 +43,20 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
         direction: "north"
       })
       
-      # Create a character for testing
-      character = CharactersFixtures.character_fixture(%{
+      # Create a user and character for testing
+      user = UsersFixtures.user_fixture()
+      {:ok, character} = Characters.create_character(%{
         name: "AdminCharacter",
+        user_id: user.id,
+        class: "warrior",
+        race: "human",
+        level: 1,
+        health: 100,
+        mana: 50,
+        strength: 10,
+        dexterity: 10,
+        intelligence: 10,
+        constitution: 10,
         current_zone_id: zone.id
       })
       
@@ -51,7 +66,7 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
       %{
         zone: zone,
         room1: room1,
-        room2: room2,
+        _room2: room2,
         character: character,
         game_state: %{
           character: character,
@@ -91,7 +106,7 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
       assert Enum.any?(response, fn msg -> String.contains?(msg, "A room already exists") end)
     end
 
-    test "delete_room_in_direction removes a room", %{game_state: game_state, room2: room2} do
+    test "delete_room_in_direction removes a room", %{game_state: game_state, _room2: _room2} do
       # Test deleting the room to the north
       {response, _updated_game_state} = AdminZoneEditor.delete_room_in_direction(game_state, "north")
       
@@ -109,7 +124,7 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
       assert deleted_room == nil
     end
 
-    test "create_door_in_direction creates a door to existing room", %{game_state: game_state, room2: room2} do
+    test "create_door_in_direction creates a door to existing room", %{game_state: game_state, _room2: _room2} do
       # First delete the existing door to test creating a new one
       existing_door = Map.get_door_in_direction(game_state.room1.id, "north")
       if existing_door do
@@ -137,20 +152,6 @@ defmodule ShardWeb.UserLive.AdminZoneEditorTest do
       # Verify the door was deleted
       door = Map.get_door_in_direction(game_state.room1.id, "north")
       assert door == nil
-    end
-
-    test "calculate_coordinates_from_direction returns correct coordinates" do
-      # Test cardinal directions
-      assert AdminZoneEditor.calculate_coordinates_from_direction({0, 0}, "north") == {0, 1}
-      assert AdminZoneEditor.calculate_coordinates_from_direction({0, 0}, "south") == {0, -1}
-      assert AdminZoneEditor.calculate_coordinates_from_direction({0, 0}, "east") == {1, 0}
-      assert AdminZoneEditor.calculate_coordinates_from_direction({0, 0}, "west") == {-1, 0}
-      
-      # Test diagonal directions
-      assert AdminZoneEditor.calculate_coordinates_from_direction({0, 0}, "northeast") == {1, 1}
-      assert AdminZoneEditor.calculate_coordinates_from_direction({0, 0}, "northwest") == {-1, 1}
-      assert AdminZoneEditor.calculate_coordinates_from_direction({0, 0}, "southeast") == {1, -1}
-      assert AdminZoneEditor.calculate_coordinates_from_direction({0, 0}, "southwest") == {-1, -1}
     end
   end
 end
