@@ -20,11 +20,11 @@ defmodule Shard.Items.AdminStick do
   @doc """
   Checks if an item is the Admin Stick.
   """
-  def is_admin_stick?(%Item{name: name}) do
+  def admin_stick?(%Item{name: name}) do
     name == @admin_stick_name
   end
 
-  def is_admin_stick?(_), do: false
+  def admin_stick?(_), do: false
 
   @doc """
   Grants the Admin Stick to a character if they don't already have it.
