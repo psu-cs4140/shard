@@ -206,31 +206,36 @@ defmodule Shard.Quests do
 
   """
   def accept_quest(user_id, quest_id) do
-    # Check if the user has already accepted this quest (any status)
-    if quest_ever_accepted_by_user?(user_id, quest_id) do
-      {:error, :quest_already_accepted}
-    else
-      # Log the attempt for debugging
-      IO.inspect(%{user_id: user_id, quest_id: quest_id}, label: "Attempting to accept quest")
+    # Check if the user has already completed this quest
+    cond do
+      quest_completed_by_user?(user_id, quest_id) ->
+        {:error, :quest_already_completed}
       
-      changeset = %QuestAcceptance{}
-      |> QuestAcceptance.accept_changeset(%{user_id: user_id, quest_id: quest_id})
+      quest_in_progress_by_user?(user_id, quest_id) ->
+        {:error, :quest_already_accepted}
       
-      # Log the changeset before insertion
-      IO.inspect(changeset.valid?, label: "Changeset valid?")
-      if not changeset.valid? do
-        IO.inspect(changeset.errors, label: "Changeset errors")
-      end
-      
-      case Repo.insert(changeset) do
-        {:ok, quest_acceptance} ->
-          IO.inspect("Quest acceptance successful", label: "Success")
-          {:ok, quest_acceptance}
+      true ->
+        # Log the attempt for debugging
+        IO.inspect(%{user_id: user_id, quest_id: quest_id}, label: "Attempting to accept quest")
         
-        {:error, changeset} ->
-          IO.inspect(changeset.errors, label: "Database insertion failed")
-          {:error, changeset}
-      end
+        changeset = %QuestAcceptance{}
+        |> QuestAcceptance.accept_changeset(%{user_id: user_id, quest_id: quest_id})
+        
+        # Log the changeset before insertion
+        IO.inspect(changeset.valid?, label: "Changeset valid?")
+        if not changeset.valid? do
+          IO.inspect(changeset.errors, label: "Changeset errors")
+        end
+        
+        case Repo.insert(changeset) do
+          {:ok, quest_acceptance} ->
+            IO.inspect("Quest acceptance successful", label: "Success")
+            {:ok, quest_acceptance}
+          
+          {:error, changeset} ->
+            IO.inspect(changeset.errors, label: "Database insertion failed")
+            {:error, changeset}
+        end
     end
   end
 

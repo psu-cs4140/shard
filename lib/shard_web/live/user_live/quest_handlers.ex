@@ -87,11 +87,11 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   # Check if quest has already been accepted
   defp check_quest_already_accepted(user_id, quest_id) do
     try do
-      # Check both if quest was ever accepted AND if it's currently in progress
-      ever_accepted = Shard.Quests.quest_ever_accepted_by_user?(user_id, quest_id)
+      # Check if quest is currently in progress or completed
       in_progress = Shard.Quests.quest_in_progress_by_user?(user_id, quest_id)
+      completed = Shard.Quests.quest_completed_by_user?(user_id, quest_id)
       
-      ever_accepted || in_progress
+      in_progress || completed
     rescue
       _error ->
         # IO.inspect(error, label: "Error checking if quest already accepted")
@@ -104,7 +104,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     response = [
       "#{npc_name} looks at you with confusion.",
       "",
-      "\"You have already accepted this quest. I cannot offer it to you again.\""
+      "\"You have already accepted this quest or completed it. Check your quest log.\""
     ]
 
     updated_game_state = %{game_state | pending_quest_offer: nil}
@@ -218,7 +218,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     response = [
       "#{npc_name} looks at you with confusion.",
       "",
-      "\"You have already accepted this quest. Check your quest log.\""
+      "\"You have already accepted this quest or it's in progress. Check your quest log.\""
     ]
 
     updated_game_state = %{game_state | pending_quest_offer: nil}
