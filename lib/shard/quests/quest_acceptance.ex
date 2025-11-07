@@ -63,23 +63,25 @@ defmodule Shard.Quests.QuestAcceptance do
     user_id = get_field(changeset, :user_id)
     quest_id = get_field(changeset, :quest_id)
 
-    if user_id && quest_id do
-      # Get the quest to check its type
-      case Shard.Repo.get(Shard.Quests.Quest, quest_id) do
-        nil ->
-          changeset
+    # Early return if missing required fields
+    unless user_id && quest_id do
+      return changeset
+    end
 
-        quest ->
-          if Shard.Quests.user_has_active_quest_of_type?(user_id, quest.quest_type) do
-            add_error(
-              changeset,
-              :quest_id,
-              "you already have an active quest of type '#{quest.quest_type}'"
-            )
-          else
-            changeset
-          end
-      end
+    # Get the quest to check its type
+    case Shard.Repo.get(Shard.Quests.Quest, quest_id) do
+      nil -> changeset
+      quest -> validate_quest_type_conflict(changeset, user_id, quest)
+    end
+  end
+
+  defp validate_quest_type_conflict(changeset, user_id, quest) do
+    if Shard.Quests.user_has_active_quest_of_type?(user_id, quest.quest_type) do
+      add_error(
+        changeset,
+        :quest_id,
+        "you already have an active quest of type '#{quest.quest_type}'"
+      )
     else
       changeset
     end
