@@ -587,16 +587,21 @@ defmodule ShardWeb.UserLive.Commands1 do
               case Shard.Items.add_item_to_inventory(game_state.character.id, item.item_id, 1) do
                 {:ok, _} ->
                   # Remove the item from the world by setting is_active to false
-                  Shard.Items.update_item(Shard.Items.get_item!(item.item_id), %{is_active: false})
-                  
-                  response = [
-                    "You pick up #{item.name}.",
-                    "#{item.name} has been added to your inventory."
-                  ]
-                  {response, game_state}
+                  case Shard.Items.update_item(Shard.Items.get_item!(item.item_id), %{is_active: false}) do
+                    {:ok, _} ->
+                      response = [
+                        "You pick up #{item.name}.",
+                        "#{item.name} has been added to your inventory."
+                      ]
+                      {response, game_state}
+                    
+                    {:error, _reason} ->
+                      response = ["You failed to pick up #{item.name} - could not remove from world."]
+                      {response, game_state}
+                  end
 
-                {:error, _reason} ->
-                  response = ["You failed to pick up #{item.name}."]
+                {:error, reason} ->
+                  response = ["You failed to pick up #{item.name}. Error: #{inspect(reason)}"]
                   {response, game_state}
               end
 

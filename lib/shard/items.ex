@@ -122,14 +122,24 @@ defmodule Shard.Items do
   defp create_inventory_entry(character_id, item, quantity, opts) do
     slot_position = Keyword.get(opts, :slot_position) || find_next_available_slot(character_id)
 
-    %CharacterInventory{}
-    |> CharacterInventory.changeset(%{
+    changeset_attrs = %{
       character_id: character_id,
       item_id: item.id,
       quantity: quantity,
       slot_position: slot_position
-    })
+    }
+
+    result = %CharacterInventory{}
+    |> CharacterInventory.changeset(changeset_attrs)
     |> Repo.insert()
+
+    case result do
+      {:ok, inventory} -> {:ok, inventory}
+      {:error, changeset} -> 
+        # Log the error for debugging
+        IO.inspect(changeset.errors, label: "Inventory creation error")
+        {:error, changeset}
+    end
   end
 
   defp update_inventory_quantity(inventory, new_quantity) do
