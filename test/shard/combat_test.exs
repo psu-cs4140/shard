@@ -3,6 +3,8 @@ defmodule Shard.CombatTest do
 
   alias Shard.Combat
   alias Shard.Combat.Engine
+  alias Shard.Repo
+  alias Shard.Weapons.DamageTypes
 
   describe "in_combat?/1" do
     test "returns false when combat is not set" do
@@ -27,7 +29,7 @@ defmodule Shard.CombatTest do
         player_position: {0, 0},
         player_stats: %{strength: 10},
         equipped_weapon: %{damage: 5},
-        character: %{name: "TestPlayer"},
+        character: %{name: "TestPlayer", id: "player1"},
         monsters: []
       }
 
@@ -145,6 +147,74 @@ defmodule Shard.CombatTest do
       assert new_state.players == [player]
       assert events == []
     end
+
+    test "applies special damage effects to monsters" do
+      monster = %{position: {0, 0}, hp: 10, is_alive: true}
+      player = %{id: "player1", position: {0, 0}, hp: 10}
+
+      # Create a poison effect
+      effect = %{
+        kind: "special_damage",
+        target: {:monster, 0},
+        remaining_ticks: 3,
+        magnitude: 2,
+        damage_type: "poison"
+      }
+
+      state = %{
+        monsters: [monster],
+        players: [player],
+        effects: [effect],
+        events: [],
+        combat: true,
+        room_position: {0, 0}
+      }
+
+      {:ok, new_state, events} = Engine.step(state)
+
+      # Monster should have taken 2 damage
+      assert hd(new_state.monsters).hp == 8
+      # Effect should have one less tick
+      assert hd(new_state.effects).remaining_ticks == 2
+      # Should have an event for the effect tick
+      assert length(events) == 1
+      assert hd(events).type == :effect_tick
+      assert hd(events).effect == "poison"
+    end
+
+    test "applies special damage effects to players" do
+      monster = %{position: {0, 0}, hp: 10, is_alive: true}
+      player = %{id: "player1", position: {0, 0}, hp: 10}
+
+      # Create a poison effect targeting the player
+      effect = %{
+        kind: "special_damage",
+        target: {:player, "player1"},
+        remaining_ticks: 3,
+        magnitude: 2,
+        damage_type: "poison"
+      }
+
+      state = %{
+        monsters: [monster],
+        players: [player],
+        effects: [effect],
+        events: [],
+        combat: true,
+        room_position: {0, 0}
+      }
+
+      {:ok, new_state, events} = Engine.step(state)
+
+      # Player should have taken 2 damage
+      assert hd(new_state.players).hp == 8
+      # Effect should have one less tick
+      assert hd(new_state.effects).remaining_ticks == 2
+      # Should have an event for the effect tick
+      assert length(events) == 1
+      assert hd(events).type == :effect_tick
+      assert hd(events).effect == "poison"
+    end
   end
 
   describe "Engine.add_player/2" do
@@ -194,6 +264,81 @@ defmodule Shard.CombatTest do
     end
   end
 
+  describe "Engine.apply_special_damage_effect/5" do
+    test "adds special damage effect to combat state" do
+      state = %{effects: []}
+      
+      new_state = Engine.apply_special_damage_effect(state, {:player, "player1"}, "poison", 2, 3)
+      
+      assert length(new_state.effects) == 1
+      effect = hd(new_state.effects)
+      assert effect.kind == "special_damage"
+      assert effect.target == {:player, "player1"}
+      assert effect.magnitude == 2
+      assert effect.remaining_ticks == 3
+      assert effect.damage_type == "poison"
+    end
+  end
+
+  describe "special damage monsters" do
+    setup do
+      # Create a poison damage type for testing
+      {:ok, poison_type} = 
+        %DamageTypes{}
+        |> DamageTypes.changeset(%{name: "Poison"})
+        |> Repo.insert()
+
+      %{
+        poison_type: poison_type
+      }
+    end
+
+    test "creates monster with special damage attributes", %{poison_type: poison_type} do
+      attrs = %{
+        name: "Poison Spider",
+        race: "Arachnid",
+        health: 20,
+        max_health: 20,
+        attack_damage: 3,
+        xp_amount: 10,
+        level: 2,
+        description: "A venomous spider",
+        special_damage_type_id: poison_type.id,
+        special_damage_amount: 2,
+        special_damage_duration: 3,
+        special_damage_chance: 50
+      }
+
+      {:ok, monster} = Shard.Monsters.create_monster(attrs)
+      
+      assert monster.name == "Poison Spider"
+      assert monster.special_damage_type_id == poison_type.id
+      assert monster.special_damage_amount == 2
+      assert monster.special_damage_duration == 3
+      assert monster.special_damage_chance == 50
+    end
+
+    test "validates special damage attributes", %{poison_type: poison_type} do
+      attrs = %{
+        name: "Invalid Spider",
+        race: "Arachnid",
+        health: 20,
+        max_health: 20,
+        attack_damage: 3,
+        xp_amount: 10,
+        special_damage_type_id: poison_type.id,
+        special_damage_amount: -1,  # Invalid: negative amount
+        special_damage_duration: 3,
+        special_damage_chance: 150  # Invalid: over 100
+      }
+
+      {:error, changeset} = Shard.Monsters.create_monster(attrs)
+      
+      assert changeset.errors[:special_damage_amount] != nil
+      assert changeset.errors[:special_damage_chance] != nil
+    end
+  end
+
   describe "private functions" do
     test "parse_damage handles integers" do
       # This tests the private parse_damage function indirectly through execute_action
@@ -201,7 +346,7 @@ defmodule Shard.CombatTest do
         player_position: {0, 0},
         player_stats: %{strength: 10, health: 100},
         equipped_weapon: %{damage: 5},
-        character: %{name: "TestPlayer"},
+        character: %{name: "TestPlayer", id: "player1"},
         combat: false,
         monsters: [
           %{position: {0, 0}, is_alive: true, name: "TestMonster", hp: 10, armor: 0}
