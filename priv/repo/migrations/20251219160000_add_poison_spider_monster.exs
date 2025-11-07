@@ -46,7 +46,7 @@ defmodule Shard.Repo.Migrations.AddPoisonSpiderMonster do
                 |> Item.changeset(%{
                   name: "Spider Silk",
                   description: "Fine, strong silk harvested from a giant spider.",
-                  item_type: "crafting",
+                  item_type: "material",  # Changed from "crafting" to "material"
                   rarity: "common",
                   value: 5,
                   stackable: true,
