@@ -180,7 +180,7 @@ defmodule ShardWeb.UserLive.Components do
                   </div>
                   <div class="flex-1">
                     <div class="flex justify-between items-start">
-                      <div class="font-semibold">{item.name}</div>
+                      <div class="font-semibold">{item.item.name}</div>
                       <%= if item[:quantity] && item.quantity > 1 do %>
                         <span class="text-sm bg-gray-600 px-2 py-1 rounded">x{item.quantity}</span>
                       <% end %>
