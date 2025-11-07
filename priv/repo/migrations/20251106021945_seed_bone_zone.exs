@@ -306,7 +306,7 @@ defmodule Shard.Repo.Migrations.SeedBoneZone do
 
   defp seed_bone_zone_down do
     alias Shard.Repo
-    alias Shard.Map.{Zone, Room, Door}
+    alias Shard.Map.Zone
 
     IO.puts("Removing Bone Zone and Elven Forest...")
 
