@@ -101,6 +101,7 @@ defmodule Shard.Quests.Quest do
     |> validate_optional_number(:cooldown_hours, greater_than: 0)
     |> validate_optional_number(:time_limit, greater_than: 0)
     |> validate_level_range()
+    |> unique_constraint([:title, :giver_npc_id], name: :quests_title_giver_npc_id_index)
   end
 
   defp cast_map_fields(changeset) do

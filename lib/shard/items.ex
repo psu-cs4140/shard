@@ -459,4 +459,79 @@ defmodule Shard.Items do
         {:ok, room}
     end
   end
+
+  @doc """
+  Checks if a character has a specific item in their inventory.
+
+  ## Examples
+
+      iex> character_has_item?(character_id, "Tutorial Key")
+      true
+
+      iex> character_has_item?(character_id, "Nonexistent Item")
+      false
+
+  """
+  def character_has_item?(character_id, item_name) do
+    from(ci in CharacterInventory,
+      join: i in Item,
+      on: ci.item_id == i.id,
+      where: ci.character_id == ^character_id and ilike(i.name, ^item_name) and ci.quantity > 0
+    )
+    |> Repo.exists?()
+  end
+
+  @doc """
+  Gets the quantity of a specific item in a character's inventory.
+
+  ## Examples
+
+      iex> get_character_item_quantity(character_id, "Tutorial Key")
+      1
+
+      iex> get_character_item_quantity(character_id, "Nonexistent Item")
+      0
+
+  """
+  def get_character_item_quantity(character_id, item_name) do
+    result =
+      from(ci in CharacterInventory,
+        join: i in Item,
+        on: ci.item_id == i.id,
+        where: ci.character_id == ^character_id and ilike(i.name, ^item_name),
+        select: sum(ci.quantity)
+      )
+      |> Repo.one()
+
+    result || 0
+  end
+
+  @doc """
+  Checks if a character has the required items for quest objectives.
+
+  ## Examples
+
+      iex> character_has_quest_items?(character_id, %{"retrieve_items" => [%{"item_name" => "Tutorial Key", "quantity" => 1}]})
+      true
+
+      iex> character_has_quest_items?(character_id, %{"retrieve_items" => [%{"item_name" => "Missing Item", "quantity" => 1}]})
+      false
+
+  """
+  def character_has_quest_items?(character_id, objectives) when is_map(objectives) do
+    case objectives do
+      %{"retrieve_items" => items} when is_list(items) ->
+        Enum.all?(items, fn item ->
+          required_quantity = Map.get(item, "quantity", 1)
+          actual_quantity = get_character_item_quantity(character_id, item["item_name"])
+          actual_quantity >= required_quantity
+        end)
+
+      _ ->
+        # No retrieve_items objective, so consider it satisfied
+        true
+    end
+  end
+
+  def character_has_quest_items?(_character_id, _objectives), do: true
 end
