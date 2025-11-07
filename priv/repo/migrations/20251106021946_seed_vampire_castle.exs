@@ -296,7 +296,8 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
           attack_damage: 4,
           xp_amount: 20,
           level: 3,
-          description: "An ancient suit of armor animated by dark magic, its empty helmet glowing with malevolent eyes.",
+          description:
+            "An ancient suit of armor animated by dark magic, its empty helmet glowing with malevolent eyes.",
           location_id: freezer.id,
           potential_loot_drops: %{
             "#{chainmail_item.id}" => %{chance: 0.7, min_quantity: 1, max_quantity: 1}
@@ -350,7 +351,8 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
           attack_damage: 8,
           xp_amount: 50,
           level: 5,
-          description: "The ancient master of this manor, a powerful vampire lord with centuries of dark knowledge and supernatural strength.",
+          description:
+            "The ancient master of this manor, a powerful vampire lord with centuries of dark knowledge and supernatural strength.",
           location_id: master_chamber.id,
           potential_loot_drops: %{
             "#{vampire_cloak_item.id}" => %{chance: 1.0, min_quantity: 1, max_quantity: 1}
@@ -380,37 +382,40 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
 
     # Find and delete the sewage slime using raw SQL to avoid schema field issues
     result = Repo.query("SELECT id FROM monsters WHERE name = $1", ["Sewage Slime"])
-    
+
     case result do
       {:ok, %{rows: [[slime_id]]}} ->
         Repo.query("DELETE FROM monsters WHERE id = $1", [slime_id])
         IO.puts("Deleted Sewage Slime")
+
       _ ->
         IO.puts("Sewage Slime not found")
     end
 
     # Find and delete the possessed suit of armor using raw SQL
-    armor_result = Repo.query("SELECT id FROM monsters WHERE name = $1", ["Possessed Suit of Armor"])
-    
+    armor_result =
+      Repo.query("SELECT id FROM monsters WHERE name = $1", ["Possessed Suit of Armor"])
+
     case armor_result do
       {:ok, %{rows: [[armor_id]]}} ->
         Repo.query("DELETE FROM monsters WHERE id = $1", [armor_id])
         IO.puts("Deleted Possessed Suit of Armor")
+
       _ ->
         IO.puts("Possessed Suit of Armor not found")
     end
 
     # Find and delete The Count using raw SQL
     count_result = Repo.query("SELECT id FROM monsters WHERE name = $1", ["The Count"])
-    
+
     case count_result do
       {:ok, %{rows: [[count_id]]}} ->
         Repo.query("DELETE FROM monsters WHERE id = $1", [count_id])
         IO.puts("Deleted The Count")
+
       _ ->
         IO.puts("The Count not found")
     end
-
 
     # Delete zone by slug (this will cascade to rooms and doors)
     case Repo.get_by(Zone, slug: "vampires-manor") do
