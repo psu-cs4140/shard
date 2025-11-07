@@ -124,16 +124,18 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         {:ok, quest_acceptance}
       
       {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
-        # This is a validation error, not a database connection error
+        # Log the changeset errors for debugging
+        IO.inspect(changeset.errors, label: "Quest acceptance validation errors")
         {:error, changeset}
       
       {:error, reason} ->
-        # This is some other kind of error
+        # Log the specific error reason
+        IO.inspect(reason, label: "Quest acceptance error reason")
         {:error, reason}
     end
   rescue
     error ->
-      # IO.inspect(error, label: "Error accepting quest") 
+      IO.inspect(error, label: "Quest acceptance database error")
       {:error, :database_error}
   end
 
@@ -224,14 +226,23 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   end
 
   # Handle database error fallback
-  defp handle_database_error_fallback(game_state, _quest, npc_name, quest_title) do
+  defp handle_database_error_fallback(game_state, quest, npc_name, quest_title) do
+    # Log more details about the quest and user for debugging
+    IO.inspect(%{
+      user_id: game_state.character.user_id,
+      quest_id: quest.id,
+      quest_title: quest_title,
+      npc_name: npc_name
+    }, label: "Quest acceptance failed - details")
+
     response = [
       "#{npc_name} looks troubled.",
       "",
       "\"I'm sorry, but there seems to be an issue with accepting this quest right now.\"",
       "\"Please try again later when the connection is more stable.\"",
       "",
-      "Quest '#{quest_title}' could not be accepted due to a database error."
+      "Quest '#{quest_title}' could not be accepted due to a database error.",
+      "(Check server logs for more details)"
     ]
 
     updated_game_state = %{game_state | pending_quest_offer: nil}
