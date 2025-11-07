@@ -66,9 +66,9 @@ defmodule Shard.Repo.Migrations.CreateBoneZoneNpcs do
           "available_quests": ["retrieve_sword", "kill_spider", "receive_key"]
         },
         "quest_retrieve_sword": {
-          "name": "Retrieve the Ancient Sword",
-          "description": "Travel to the barracks and retrieve the ancient sword that lies within. Bring it back to me as proof of your courage.",
-          "objective": "Find and retrieve the ancient sword from the barracks",
+          "name": "Retrieve the Iron Sword",
+          "description": "Travel to the barracks and retrieve the iron sword that lies within. Bring it back to me as proof of your courage.",
+          "objective": "Find and retrieve the iron sword from the barracks",
           "reward": "Access to the next trial",
           "status": "available"
         },
