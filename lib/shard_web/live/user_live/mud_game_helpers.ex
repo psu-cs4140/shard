@@ -198,6 +198,21 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
           ""
         ]
 
+      3 ->
+        [
+          "Welcome to the Vampire's Manor!",
+          "You stand before the imposing entrance of an ancient vampire's estate.",
+          "The air is thick with the scent of decay and forgotten secrets.",
+          "",
+          "To get started on your adventure:",
+          "• Look around to see what's here",
+          "• Talk to any NPCs you encounter - they may have quests for you",
+          "• Use 'help' anytime to see all available commands",
+          "",
+          "The path to the manor doors lies ahead, but gaining entry may require some effort...",
+          ""
+        ]
+
       _ ->
         [
           "Welcome to Shard!",
