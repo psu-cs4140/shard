@@ -507,4 +507,145 @@ defmodule ShardWeb.UserLive.Commands1 do
         :error
     end
   end
+
+  # Execute talk command
+  defp execute_talk_command(game_state, npc_name) do
+    {x, y} = game_state.player_position
+    npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
+
+    # Find the NPC by name (case-insensitive)
+    target_npc =
+      Enum.find(npcs_here, fn npc ->
+        npc_name_lower = String.downcase(npc.name || "")
+        target_name_lower = String.downcase(npc_name)
+        npc_name_lower == target_name_lower
+      end)
+
+    case target_npc do
+      nil ->
+        {["There is no NPC named '#{npc_name}' here."], game_state}
+
+      npc ->
+        user_id = game_state.character.user_id
+        npc_name = npc.name || "Unknown NPC"
+        
+        # Check for available quests from this NPC
+        available_quests = Shard.Quests.get_available_quests_by_giver_excluding_completed(user_id, npc.id)
+        
+        # Check for quests that can be turned in to this NPC
+        turn_in_quests = Shard.Quests.get_turn_in_quests_by_npc(user_id, npc.id)
+        
+        # Build dialogue based on quest status
+        dialogue_lines = []
+        
+        # Start with basic greeting
+        base_dialogue = npc.dialogue || "Hello there, traveler!"
+        dialogue_lines = dialogue_lines ++ ["#{npc_name} says: \"#{base_dialogue}\""]
+        
+        # Check for quest turn-ins first (higher priority)
+        dialogue_lines = 
+          if length(turn_in_quests) > 0 do
+            quest_names = Enum.map(turn_in_quests, & &1.title)
+            quest_list = Enum.join(quest_names, ", ")
+            
+            dialogue_lines ++ [
+              "",
+              "#{npc_name} notices you have completed some tasks:",
+              "\"I see you have completed: #{quest_list}\"",
+              "\"Use 'deliver_quest \"#{npc_name}\"' to turn in your completed quests.\""
+            ]
+          else
+            dialogue_lines
+          end
+        
+        # Check for available quests
+        dialogue_lines = 
+          if length(available_quests) > 0 do
+            quest_names = Enum.map(available_quests, & &1.title)
+            quest_list = Enum.join(quest_names, ", ")
+            
+            dialogue_lines ++ [
+              "",
+              "#{npc_name} has tasks available for you:",
+              "\"I have some work that needs doing: #{quest_list}\"",
+              "\"Use 'quest \"#{npc_name}\"' to learn more about these tasks.\""
+            ]
+          else
+            dialogue_lines
+          end
+        
+        # If no quests available and none to turn in, just show basic dialogue
+        dialogue_lines = 
+          if length(available_quests) == 0 and length(turn_in_quests) == 0 do
+            dialogue_lines ++ [
+              "",
+              "#{npc_name} has no tasks for you at this time."
+            ]
+          else
+            dialogue_lines
+          end
+
+        {dialogue_lines, game_state}
+    end
+  end
+
+  # Execute deliver_quest command
+  defp execute_deliver_quest_command(game_state, npc_name) do
+    {x, y} = game_state.player_position
+    npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
+
+    # Find the NPC by name (case-insensitive)
+    target_npc =
+      Enum.find(npcs_here, fn npc ->
+        npc_name_lower = String.downcase(npc.name || "")
+        target_name_lower = String.downcase(npc_name)
+        npc_name_lower == target_name_lower
+      end)
+
+    case target_npc do
+      nil ->
+        {["There is no NPC named '#{npc_name}' here."], game_state}
+
+      npc ->
+        user_id = game_state.character.user_id
+        
+        # Get quests that can be turned in to this NPC
+        turn_in_quests = Shard.Quests.get_turn_in_quests_by_npc(user_id, npc.id)
+        
+        if length(turn_in_quests) == 0 do
+          {["#{npc.name || "The NPC"} says: \"You don't have any completed quests for me.\""], game_state}
+        else
+          # Process each quest that can be turned in
+          results = 
+            Enum.map(turn_in_quests, fn quest ->
+              case Shard.Quests.turn_in_quest_with_items(user_id, quest.id) do
+                {:ok, _quest_acceptance} ->
+                  "Successfully turned in '#{quest.title}'"
+                
+                {:error, :missing_items} ->
+                  "Cannot turn in '#{quest.title}' - you don't have the required items"
+                
+                {:error, reason} ->
+                  "Failed to turn in '#{quest.title}': #{inspect(reason)}"
+              end
+            end)
+          
+          # Build response message
+          npc_name = npc.name || "The NPC"
+          response_lines = ["#{npc_name} examines your completed tasks:"] ++ results
+          
+          # Reload inventory to reflect any item changes
+          updated_game_state = 
+            if Enum.any?(results, &String.starts_with?(&1, "Successfully")) do
+              # Reload character inventory
+              inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
+              %{game_state | inventory_items: inventory_items}
+            else
+              game_state
+            end
+          
+          {response_lines, updated_game_state}
+        end
+    end
+  end
 end
