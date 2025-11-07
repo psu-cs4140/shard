@@ -82,7 +82,6 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
             room
 
           {:error, changeset} ->
-
             IO.puts("Failed to create room #{room_name}: #{inspect(changeset.errors)}")
             raise "Room creation failed for #{room_name}"
         end
@@ -175,13 +174,11 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
                door_type: door_type,
                is_locked: is_locked,
                key_required: key_required
-
              }) do
           {:ok, _door} ->
             :ok
 
           {:error, changeset} ->
-
             IO.puts("Failed to create door #{direction}: #{inspect(changeset.errors)}")
             raise "Door creation failed"
         end

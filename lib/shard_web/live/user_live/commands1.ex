@@ -18,12 +18,12 @@ defmodule ShardWeb.UserLive.Commands1 do
       execute_pickup_command: 2
     ]
 
-  import ShardWeb.UserLive.ItemCommands
+  #  import ShardWeb.UserLive.ItemCommands
 
   alias Shard.Map, as: GameMap
-  alias Shard.Items.Item
-  alias Shard.Repo
-  import Ecto.Query
+  # alias Shard.Items.Item
+  # alias Shard.Repo
+  # import Ecto.Query
 
   # Process terminal commands
   def process_command(command, game_state) do
@@ -182,7 +182,12 @@ defmodule ShardWeb.UserLive.Commands1 do
         npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
 
         # Check for items at current location
-        items_here = ShardWeb.UserLive.ItemCommands.get_items_at_location(x, y, game_state.character.current_zone_id)
+        items_here =
+          ShardWeb.UserLive.ItemCommands.get_items_at_location(
+            x,
+            y,
+            game_state.character.current_zone_id
+          )
 
         description_lines = [room_description]
 
@@ -385,7 +390,10 @@ defmodule ShardWeb.UserLive.Commands1 do
                     # Check if it's a pickup command
                     case ShardWeb.UserLive.ItemCommands.parse_pickup_command(command) do
                       {:ok, item_name} ->
-                        ShardWeb.UserLive.ItemCommands.execute_pickup_command(game_state, item_name)
+                        ShardWeb.UserLive.ItemCommands.execute_pickup_command(
+                          game_state,
+                          item_name
+                        )
 
                       :error ->
                         # Check if it's an unlock command
@@ -411,7 +419,6 @@ defmodule ShardWeb.UserLive.Commands1 do
         end
     end
   end
-
 
   # Parse talk command to extract NPC name
   def parse_talk_command(command) do
@@ -481,5 +488,4 @@ defmodule ShardWeb.UserLive.Commands1 do
         :error
     end
   end
-
 end
