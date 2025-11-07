@@ -587,7 +587,8 @@ defmodule ShardWeb.UserLive.Commands1 do
               case Shard.Items.add_item_to_inventory(game_state.character.id, item.item_id, 1) do
                 {:ok, _} ->
                   # Remove the item from the world by setting is_active to false
-                  case Shard.Items.update_item(Shard.Items.get_item!(item.item_id), %{is_active: false}) do
+                  item_struct = Shard.Items.get_item!(item.item_id)
+                  case Shard.Items.update_item(item_struct, %{is_active: false}) do
                     {:ok, _} ->
                       response = [
                         "You pick up #{item.name}.",
