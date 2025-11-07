@@ -1,6 +1,8 @@
 defmodule ShardWeb.AdminLive.ItemFormComponent do
   use ShardWeb, :live_component
 
+  import Ecto.Changeset, only: [get_field: 2]
+  
   alias Shard.Items
   alias Shard.Map
 
