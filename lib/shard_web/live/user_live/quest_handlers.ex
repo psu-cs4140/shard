@@ -87,7 +87,11 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   # Check if quest has already been accepted
   defp check_quest_already_accepted(user_id, quest_id) do
     try do
-      Shard.Quests.quest_ever_accepted_by_user?(user_id, quest_id)
+      # Check both if quest was ever accepted AND if it's currently in progress
+      ever_accepted = Shard.Quests.quest_ever_accepted_by_user?(user_id, quest_id)
+      in_progress = Shard.Quests.quest_in_progress_by_user?(user_id, quest_id)
+      
+      ever_accepted || in_progress
     rescue
       _error ->
         # IO.inspect(error, label: "Error checking if quest already accepted")
@@ -150,13 +154,33 @@ defmodule ShardWeb.UserLive.QuestHandlers do
 
       {:error, changeset} ->
         handle_quest_acceptance_validation_error(game_state, npc_name, changeset)
+
+      {:error, _other_error} ->
+        handle_quest_acceptance_error(game_state, npc_name)
     end
   end
 
   # Handle successful quest acceptance
   defp handle_successful_quest_acceptance(game_state, quest, npc_name, quest_title) do
-    new_quest = create_new_quest_entry(quest, npc_name, quest_title)
-    updated_quests = [new_quest | game_state.quests]
+    # Only add to local quest list if successfully added to database
+    # Load the quest acceptance from database to get the current status
+    user_id = game_state.character.user_id
+    
+    # Get the quest acceptance from database to confirm it was created
+    quest_acceptance = 
+      case Shard.Quests.get_user_active_quests(user_id) do
+        active_quests ->
+          Enum.find(active_quests, fn qa -> qa.quest_id == quest.id end)
+      end
+    
+    # Only add to local state if we can confirm it's in the database
+    updated_quests = 
+      if quest_acceptance do
+        new_quest = create_new_quest_entry(quest, npc_name, quest_title)
+        [new_quest | game_state.quests]
+      else
+        game_state.quests
+      end
 
     response = [
       "You accept the quest '#{quest_title}' from #{npc_name}.",
@@ -200,25 +224,17 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   end
 
   # Handle database error fallback
-  defp handle_database_error_fallback(game_state, quest, npc_name, quest_title) do
-    new_quest = create_new_quest_entry(quest, npc_name, quest_title)
-    updated_quests = [new_quest | game_state.quests]
-
+  defp handle_database_error_fallback(game_state, _quest, npc_name, quest_title) do
     response = [
-      "You accept the quest '#{quest_title}' from #{npc_name}.",
+      "#{npc_name} looks troubled.",
       "",
-      "#{npc_name} says: \"Excellent! I knew I could count on you.\"",
+      "\"I'm sorry, but there seems to be an issue with accepting this quest right now.\"",
+      "\"Please try again later when the connection is more stable.\"",
       "",
-      "Quest '#{quest_title}' has been added to your quest log.",
-      "(Note: Quest saved locally due to database issue)"
+      "Quest '#{quest_title}' could not be accepted due to a database error."
     ]
 
-    updated_game_state = %{
-      game_state
-      | quests: updated_quests,
-        pending_quest_offer: nil
-    }
-
+    updated_game_state = %{game_state | pending_quest_offer: nil}
     {response, updated_game_state}
   end
 
