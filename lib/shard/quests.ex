@@ -294,7 +294,10 @@ defmodule Shard.Quests do
 
     Enum.each(locked_quests, fn quest ->
       if check_quest_prerequisites(quest, completed_quest_titles) do
-        update_quest(quest, %{status: "available"})
+        case update_quest(quest, %{status: "available"}) do
+          {:ok, _updated_quest} -> :ok
+          {:error, _changeset} -> :error
+        end
       end
     end)
   end
