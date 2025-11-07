@@ -122,6 +122,61 @@ defmodule Shard.Combat.Engine do
                 end
             end
 
+          # NEW: Special damage effects (poison, burn, etc.)
+          %{kind: "special_damage", target: {:monster, i}, remaining_ticks: t, magnitude: mag, damage_type: type}
+          when t > 0 ->
+            case Enum.fetch(mons, i) do
+              {:ok, m} ->
+                if alive?(m) do
+                  hp = max((m[:hp] || 10) - mag, 0)
+                  m2 = m |> Map.put(:hp, hp) |> Map.put(:is_alive, hp > 0)
+                  mons2 = List.replace_at(mons, i, m2)
+                  eff2 = %{eff | remaining_ticks: t - 1}
+                  ev = %{type: :effect_tick, effect: type, target: {:monster, i}, dmg: mag}
+
+                  {mons2, plrs, if(eff2.remaining_ticks > 0, do: [eff2 | keep], else: keep),
+                   [ev | evs]}
+                else
+                  # target already dead; drop effect
+                  {mons, plrs, keep, evs}
+                end
+
+              :error ->
+                # target index out of range; drop effect
+                {mons, plrs, keep, evs}
+            end
+
+          %{kind: "special_damage", target: {:player, player_id}, remaining_ticks: t, magnitude: mag, damage_type: type}
+          when t > 0 ->
+            case Enum.find_index(plrs, &(&1.id == player_id)) do
+              nil ->
+                # player not found; drop effect
+                {mons, plrs, keep, evs}
+
+              i ->
+                p = Enum.at(plrs, i)
+
+                if alive_player?(p) do
+                  hp = max((p[:hp] || 10) - mag, 0)
+                  p2 = Map.put(p, :hp, hp)
+                  plrs2 = List.replace_at(plrs, i, p2)
+                  eff2 = %{eff | remaining_ticks: t - 1}
+
+                  ev = %{
+                    type: :effect_tick,
+                    effect: type,
+                    target: {:player, player_id},
+                    dmg: mag
+                  }
+
+                  {mons, plrs2, if(eff2.remaining_ticks > 0, do: [eff2 | keep], else: keep),
+                   [ev | evs]}
+                else
+                  # player already dead; drop effect
+                  {mons, plrs, keep, evs}
+                end
+            end
+
           _other ->
             # unknown effect; keep it but decrement if it has remaining_ticks
             eff2 =
@@ -226,5 +281,21 @@ defmodule Shard.Combat.Engine do
       end)
 
     Map.put(state, :players, updated_players)
+  end
+
+  @doc """
+  Apply a special damage effect to the combat state.
+  """
+  def apply_special_damage_effect(combat_state, target, damage_type, amount, duration) do
+    effect = %{
+      kind: "special_damage",
+      target: target,
+      remaining_ticks: duration,
+      magnitude: amount,
+      damage_type: damage_type
+    }
+
+    effects = Map.get(combat_state, :effects, [])
+    %{combat_state | effects: [effect | effects]}
   end
 end
