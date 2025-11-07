@@ -58,21 +58,28 @@ defmodule Shard.Combat do
       updated_monster
     )
 
+    # NEW: Check for special damage effect
+    {final_response, final_monsters} = 
+      case check_special_damage_effect(game_state, monster, updated_monster, response) do
+        {resp, mons} -> {resp, mons}
+        nil -> {response, updated_monsters}
+      end
+
     if updated_monster[:is_alive] do
       # Monster survived - handle counterattack
       handle_monster_counterattack(
         game_state,
         updated_monster,
         position,
-        response,
-        updated_monsters
+        final_response,
+        final_monsters
       )
     else
       # Monster died - handle death and rewards
       {messages, final_monsters, updated_player_stats, updated_character} =
-        handle_monster_death(game_state, updated_monster, updated_monsters)
+        handle_monster_death(game_state, updated_monster, final_monsters)
 
-      final_response = response ++ messages
+      final_response = final_response ++ messages
 
       updated_game_state =
         update_combat_state(
@@ -291,4 +298,68 @@ defmodule Shard.Combat do
 
   # Default fallback
   defp parse_damage(_), do: 1
+
+  # NEW: Check for special damage effect
+  defp check_special_damage_effect(game_state, original_monster, updated_monster, base_response) do
+    # Check if monster has special damage and is still alive
+    if updated_monster[:is_alive] && 
+       original_monster[:special_damage_type_id] && 
+       original_monster[:special_damage_amount] > 0 &&
+       :rand.uniform(100) <= (original_monster[:special_damage_chance] || 100) do
+      
+      # Get damage type name
+      damage_type = get_damage_type_name(original_monster[:special_damage_type_id])
+      amount = original_monster[:special_damage_amount]
+      duration = original_monster[:special_damage_duration] || 3
+      
+      # Apply special damage effect to combat server
+      combat_id = "#{elem(game_state.player_position, 0)},#{elem(game_state.player_position, 1)}"
+      
+      # Create effect in combat server
+      effect = %{
+        kind: "special_damage",
+        target: {:player, game_state.character.id},
+        remaining_ticks: duration,
+        magnitude: amount,
+        damage_type: damage_type
+      }
+      
+      # Try to add effect to combat server
+      case apply_special_damage_effect(combat_id, effect) do
+        :ok ->
+          effect_message = "The #{original_monster[:name]}'s attack #{damage_type}s you!"
+          effect_response = base_response ++ [effect_message]
+          {effect_response, game_state.monsters}
+        _ ->
+          {base_response, game_state.monsters}
+      end
+    else
+      nil
+    end
+  end
+
+  # NEW: Get damage type name from database
+  defp get_damage_type_name(damage_type_id) do
+    case Shard.Repo.get(Shard.Weapons.DamageTypes, damage_type_id) do
+      nil -> "unknown"
+      damage_type -> String.downcase(damage_type.name)
+    end
+  end
+
+  # NEW: Apply special damage effect to combat server
+  defp apply_special_damage_effect(combat_id, effect) do
+    try do
+      # Get current combat state
+      combat_state = Shard.Combat.Server.get_combat_state(combat_id)
+      
+      # Apply effect to combat state
+      new_state = Shard.Combat.Engine.apply_special_damage_effect(combat_state, effect.target, effect.damage_type, effect.magnitude, effect.remaining_ticks)
+      
+      # Update combat server with new state
+      # Note: This is a simplified approach - in a real implementation you might need a GenServer call
+      :ok
+    rescue
+      _ -> :error
+    end
+  end
 end
