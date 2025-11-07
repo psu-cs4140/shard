@@ -68,7 +68,7 @@ defmodule Shard.Items.Item do
     |> validate_length(:name, min: 2, max: 100)
     |> validate_inclusion(:item_type, @item_types)
     |> validate_inclusion(:rarity, @rarities)
-    |> validate_inclusion(:map, @maps, allow_nil: true)
+    |> validate_inclusion(:map, @maps)
     |> validate_number(:value, greater_than_or_equal_to: 0)
     |> validate_number(:weight, greater_than_or_equal_to: 0)
     |> validate_number(:max_stack_size, greater_than: 0)
