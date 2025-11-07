@@ -8,7 +8,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
   defp seed_manor_up do
     alias Shard.Repo
     alias Shard.Map
-    alias Shard.Map.{Zone, Room, Door}
+    alias Shard.Map.Zone
 
     IO.puts("Creating Vampire's Manor...")
 
