@@ -644,7 +644,9 @@ defmodule ShardWeb.UserLive.Commands1 do
 
           # Update game state to reflect changes
           updated_game_state =
-            if not Enum.empty?(completed_quest_ids) do
+            if Enum.empty?(completed_quest_ids) do
+              game_state
+            else
               # Reload character inventory to reflect item removal
               inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
 
@@ -659,8 +661,6 @@ defmodule ShardWeb.UserLive.Commands1 do
                 end)
 
               %{game_state | inventory_items: inventory_items, quests: updated_quests}
-            else
-              game_state
             end
 
           {response_lines, updated_game_state}
