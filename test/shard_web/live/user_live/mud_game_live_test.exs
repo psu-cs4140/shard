@@ -137,8 +137,8 @@ defmodule ShardWeb.MudGameLiveTest do
       assert output_text =~ "> invalidcommand"
 
       # Debug: Print the actual output to see what error message is returned
-      IO.inspect(output_text, label: "Actual output for invalid command")
-      
+      # IO.inspect(output_text, label: "Actual output for invalid command")
+
       # Verify error message appears in response (check for any common error patterns)
       assert output_text =~ "Unknown command" or output_text =~ "Invalid command" or
                output_text =~ "Command not found" or output_text =~ "not recognized" or
