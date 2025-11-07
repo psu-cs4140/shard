@@ -291,7 +291,26 @@ defmodule ShardWeb.UserLive.Commands1 do
         {["You are at position (#{x}, #{y})."], game_state}
 
       "inventory" ->
-        {["Your inventory is empty. (Feature coming soon!)"], game_state}
+        inventory_items = game_state.inventory_items
+
+        if Enum.empty?(inventory_items) do
+          {["Your inventory is empty."], game_state}
+        else
+          response = ["Your inventory contains:"] ++
+            Enum.map(inventory_items, fn inv_item ->
+              item_name = inv_item.item.name
+              quantity = inv_item.quantity
+              equipped_text = if inv_item.equipped, do: " (equipped)", else: ""
+              
+              if quantity > 1 do
+                "  #{item_name} x#{quantity}#{equipped_text}"
+              else
+                "  #{item_name}#{equipped_text}"
+              end
+            end)
+          
+          {response, game_state}
+        end
 
       "npc" ->
         {x, y} = game_state.player_position
