@@ -244,7 +244,7 @@ defmodule ShardWeb.UserLive.CommandParsers do
   # Check if player has the item in inventory
   defp has_item_in_inventory?(inventory_items, item_name) do
     Enum.any?(inventory_items, fn inv_item ->
-      String.downcase(inv_item.name || "") == String.downcase(item_name)
+      String.downcase(inv_item.item.name || "") == String.downcase(item_name)
     end)
   end
 
@@ -351,7 +351,7 @@ defmodule ShardWeb.UserLive.CommandParsers do
   defp remove_item_from_inventory(game_state, item_name) do
     updated_inventory =
       Enum.reject(game_state.inventory_items, fn inv_item ->
-        String.downcase(inv_item.name || "") == String.downcase(item_name)
+        String.downcase(inv_item.item.name || "") == String.downcase(item_name)
       end)
 
     %{game_state | inventory_items: updated_inventory}
