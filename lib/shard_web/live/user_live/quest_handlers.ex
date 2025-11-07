@@ -267,7 +267,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   end
 
   # Handle database error fallback
-  defp handle_database_error_fallback(game_state, quest, npc_name, quest_title) do
+  defp handle_database_error_fallback(game_state, _quest, npc_name, quest_title) do
     # Log more details about the quest and user for debugging
 
     response = [

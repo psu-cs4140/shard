@@ -362,6 +362,4 @@ defmodule ShardWeb.UserLive.Commands1 do
         end
     end
   end
-
-
 end

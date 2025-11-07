@@ -32,14 +32,23 @@ defmodule ShardWeb.UserLive.NpcCommands do
     turn_in_quests = Shard.Quests.get_turn_in_quests_by_npc(user_id, npc.id)
 
     # Build dialogue based on quest status
-    dialogue_lines = build_npc_dialogue(npc, npc_name, available_quests, turn_in_quests, user_id, game_state.character.id)
+    dialogue_lines =
+      build_npc_dialogue(
+        npc,
+        npc_name,
+        available_quests,
+        turn_in_quests,
+        user_id,
+        game_state.character.id
+      )
 
     {dialogue_lines, game_state}
   end
 
   # Helper function to get filtered available quests
   defp get_filtered_available_quests(user_id, npc_id, player_quests) do
-    available_quests = Shard.Quests.get_available_quests_by_giver_excluding_completed(user_id, npc_id)
+    available_quests =
+      Shard.Quests.get_available_quests_by_giver_excluding_completed(user_id, npc_id)
 
     # Additional filter to ensure we don't show quests that are in the local game state as accepted
     # This helps catch timing issues where the database query might not reflect recent changes
@@ -116,7 +125,12 @@ defmodule ShardWeb.UserLive.NpcCommands do
   end
 
   # Helper function to process a single quest turn-in
-  defp process_single_quest_turn_in(quest, user_id, character_id, {results_acc, completed_ids_acc}) do
+  defp process_single_quest_turn_in(
+         quest,
+         user_id,
+         character_id,
+         {results_acc, completed_ids_acc}
+       ) do
     case Shard.Quests.turn_in_quest_with_character_id(user_id, character_id, quest.id) do
       {:ok, _quest_acceptance} ->
         result = "Successfully turned in '#{quest.title}'"
@@ -164,7 +178,8 @@ defmodule ShardWeb.UserLive.NpcCommands do
     dialogue_lines = ["#{npc_name} says: \"#{base_dialogue}\""]
 
     # Add quest turn-in dialogue
-    dialogue_lines = add_turn_in_dialogue(dialogue_lines, turn_in_quests, npc_name, user_id, character_id)
+    dialogue_lines =
+      add_turn_in_dialogue(dialogue_lines, turn_in_quests, npc_name, user_id, character_id)
 
     # Add available quest dialogue
     dialogue_lines = add_available_quest_dialogue(dialogue_lines, available_quests, npc_name)
@@ -176,8 +191,9 @@ defmodule ShardWeb.UserLive.NpcCommands do
   # Helper function to add turn-in quest dialogue
   defp add_turn_in_dialogue(dialogue_lines, turn_in_quests, npc_name, user_id, character_id) do
     if Enum.any?(turn_in_quests) do
-      {completable_quests, in_progress_quests} = categorize_turn_in_quests(turn_in_quests, user_id, character_id)
-      
+      {completable_quests, in_progress_quests} =
+        categorize_turn_in_quests(turn_in_quests, user_id, character_id)
+
       dialogue_lines
       |> add_completable_quest_dialogue(completable_quests, npc_name)
       |> add_in_progress_quest_dialogue(in_progress_quests, npc_name)
