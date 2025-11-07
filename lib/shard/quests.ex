@@ -205,9 +205,9 @@ defmodule Shard.Quests do
 
   """
   def accept_quest(user_id, quest_id) do
-    # Check if the user has already completed this quest
-    if quest_completed_by_user?(user_id, quest_id) do
-      {:error, :quest_already_completed}
+    # Check if the user has already accepted this quest (any status)
+    if quest_ever_accepted_by_user?(user_id, quest_id) do
+      {:error, :quest_already_accepted}
     else
       %QuestAcceptance{}
       |> QuestAcceptance.accept_changeset(%{user_id: user_id, quest_id: quest_id})

@@ -142,6 +142,9 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       {:error, :quest_already_completed} ->
         handle_quest_already_completed(game_state, npc_name)
 
+      {:error, :quest_already_accepted} ->
+        handle_quest_already_accepted(game_state, npc_name)
+
       {:error, :database_error} ->
         handle_database_error_fallback(game_state, quest, npc_name, quest_title)
 
@@ -178,6 +181,18 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       "#{npc_name} looks at you with confusion.",
       "",
       "\"You have already completed this quest. I cannot offer it to you again.\""
+    ]
+
+    updated_game_state = %{game_state | pending_quest_offer: nil}
+    {response, updated_game_state}
+  end
+
+  # Handle case where quest was already accepted
+  defp handle_quest_already_accepted(game_state, npc_name) do
+    response = [
+      "#{npc_name} looks at you with confusion.",
+      "",
+      "\"You have already accepted this quest. Check your quest log.\""
     ]
 
     updated_game_state = %{game_state | pending_quest_offer: nil}
