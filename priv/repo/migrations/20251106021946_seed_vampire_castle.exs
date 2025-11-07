@@ -270,14 +270,15 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
 
     IO.puts("Removing Vampire's Manor...")
 
-    # Find and delete the sewage slime
-    slime = Repo.get_by(Shard.Monsters.Monster, name: "Sewage Slime")
-
-    if slime do
-      Monsters.delete_monster(slime)
-      IO.puts("Deleted Sewage Slime")
-    else
-      IO.puts("Sewage Slime not found")
+    # Find and delete the sewage slime using raw SQL to avoid schema field issues
+    result = Repo.query("SELECT id FROM monsters WHERE name = $1", ["Sewage Slime"])
+    
+    case result do
+      {:ok, %{rows: [[slime_id]]}} ->
+        Repo.query("DELETE FROM monsters WHERE id = $1", [slime_id])
+        IO.puts("Deleted Sewage Slime")
+      _ ->
+        IO.puts("Sewage Slime not found")
     end
 
     # Find and delete the slippers item
