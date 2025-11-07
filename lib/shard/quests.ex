@@ -522,10 +522,10 @@ defmodule Shard.Quests do
           qa.user_id == ^user_id and
             qa.status in ["accepted", "in_progress"] and
             q.turn_in_npc_id == ^npc_id,
-        select: q,
-        preload: [:turn_in_npc]
+        select: q
       )
       |> Repo.all()
+      |> Repo.preload([:turn_in_npc])
 
     # Filter quests that can actually be turned in (objectives met)
     character_id = user_id
