@@ -65,7 +65,7 @@ defmodule Shard.Quests.QuestAcceptance do
 
     # Early return if missing required fields
     unless user_id && quest_id do
-      return changeset
+      return(changeset)
     end
 
     # Get the quest to check its type
