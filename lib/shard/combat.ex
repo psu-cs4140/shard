@@ -315,7 +315,7 @@ defmodule Shard.Combat do
       # Apply special damage effect to combat server
       combat_id = "#{elem(game_state.player_position, 0)},#{elem(game_state.player_position, 1)}"
       
-      # Create effect in combat server
+      # Create effect
       effect = %{
         kind: "special_damage",
         target: {:player, game_state.character.id},
@@ -349,14 +349,8 @@ defmodule Shard.Combat do
   # NEW: Apply special damage effect to combat server
   defp apply_special_damage_effect(combat_id, effect) do
     try do
-      # Get current combat state
-      combat_state = Shard.Combat.Server.get_combat_state(combat_id)
-      
-      # Apply effect to combat state
-      new_state = Shard.Combat.Engine.apply_special_damage_effect(combat_state, effect.target, effect.damage_type, effect.magnitude, effect.remaining_ticks)
-      
-      # Update combat server with new state
-      # Note: This is a simplified approach - in a real implementation you might need a GenServer call
+      # Add the effect to the combat server
+      Shard.Combat.Server.add_effect(combat_id, effect)
       :ok
     rescue
       _ -> :error
