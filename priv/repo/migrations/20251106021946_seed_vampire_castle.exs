@@ -281,15 +281,6 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
         IO.puts("Sewage Slime not found")
     end
 
-    # Find and delete the slippers item
-    slippers = Repo.get_by(Item, name: "Slippers")
-
-    if slippers do
-      Repo.delete(slippers)
-      IO.puts("Deleted Slippers item")
-    else
-      IO.puts("Slippers item not found")
-    end
 
     # Delete zone by slug (this will cascade to rooms and doors)
     case Repo.get_by(Zone, slug: "vampires-manor") do
