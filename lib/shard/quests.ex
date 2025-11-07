@@ -420,6 +420,7 @@ defmodule Shard.Quests do
         where: qa.user_id == ^user_id and qa.status == "completed",
         select: qa.quest_id
       )
+      |> Repo.all()
 
     # Get quest IDs that the user currently has active (accepted/in_progress)
     active_quest_ids =
@@ -427,6 +428,7 @@ defmodule Shard.Quests do
         where: qa.user_id == ^user_id and qa.status in ["accepted", "in_progress"],
         select: qa.quest_id
       )
+      |> Repo.all()
 
     # Get completed quest titles for prerequisite checking
     completed_quest_titles =
@@ -450,14 +452,12 @@ defmodule Shard.Quests do
       )
       |> Repo.all()
 
-    # Get all quests from this NPC, excluding completed and active quests
+    # Get all quests from this NPC that are active
     all_npc_quests =
       from(q in Quest,
         where:
           q.giver_npc_id == ^npc_id and
-            q.is_active == true and
-            q.id not in subquery(completed_quest_ids) and
-            q.id not in subquery(active_quest_ids),
+            q.is_active == true,
         order_by: [asc: q.sort_order, asc: q.id]
       )
       |> Repo.all()
@@ -465,16 +465,22 @@ defmodule Shard.Quests do
     IO.inspect(%{
       user_id: user_id,
       npc_id: npc_id,
+      completed_quest_ids: completed_quest_ids,
+      active_quest_ids: active_quest_ids,
       completed_quest_titles: completed_quest_titles,
-      all_npc_quests: Enum.map(all_npc_quests, &{&1.title, &1.status, &1.prerequisites})
+      active_quest_types: active_quest_types,
+      all_npc_quests: Enum.map(all_npc_quests, &{&1.id, &1.title, &1.status, &1.prerequisites})
     }, label: "Available quests debug")
 
-    # Filter quests based on prerequisites, status, and quest type restrictions
+    # Filter quests based on all conditions
     available_quests = Enum.filter(all_npc_quests, fn quest ->
-      # First check if user already has an active quest of this type
+      # Check if quest is already completed or active
+      quest_not_taken = quest.id not in completed_quest_ids and quest.id not in active_quest_ids
+      
+      # Check if user already has an active quest of this type
       quest_type_available = quest.quest_type not in active_quest_types
 
-      # Then check status and prerequisites
+      # Check status and prerequisites
       status_available =
         case quest.status do
           "available" ->
@@ -488,10 +494,12 @@ defmodule Shard.Quests do
             false
         end
 
-      # Quest is only available if both conditions are met
-      result = quest_type_available and status_available
+      # Quest is only available if ALL conditions are met
+      result = quest_not_taken and quest_type_available and status_available
       IO.inspect(%{
         quest: quest.title,
+        quest_id: quest.id,
+        quest_not_taken: quest_not_taken,
         quest_type_available: quest_type_available,
         status_available: status_available,
         final_result: result
