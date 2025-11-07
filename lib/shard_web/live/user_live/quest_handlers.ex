@@ -173,7 +173,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       {:error, :database_error} ->
         handle_database_error_fallback(game_state, quest, npc_name, quest_title)
 
-      {:error, changeset} ->
+      {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
         handle_quest_acceptance_validation_error(game_state, npc_name, changeset)
 
       {:error, _other_error} ->
