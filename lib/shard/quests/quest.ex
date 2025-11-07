@@ -95,11 +95,11 @@ defmodule Shard.Quests.Quest do
     |> validate_inclusion(:difficulty, ["easy", "normal", "hard", "epic", "legendary"])
     |> validate_inclusion(:status, ["available", "in_progress", "completed", "failed", "locked"])
     |> validate_number(:min_level, greater_than: 0, less_than_or_equal_to: 100)
-    |> validate_number(:max_level, greater_than: 0, less_than_or_equal_to: 100)
+    |> validate_optional_number(:max_level, greater_than: 0, less_than_or_equal_to: 100)
     |> validate_number(:experience_reward, greater_than_or_equal_to: 0)
     |> validate_number(:gold_reward, greater_than_or_equal_to: 0)
-    |> validate_number(:cooldown_hours, greater_than: 0)
-    |> validate_number(:time_limit, greater_than: 0)
+    |> validate_optional_number(:cooldown_hours, greater_than: 0)
+    |> validate_optional_number(:time_limit, greater_than: 0)
     |> validate_level_range()
   end
 
@@ -117,6 +117,13 @@ defmodule Shard.Quests.Quest do
       [] -> put_change(changeset, field, %{})
       list when is_list(list) -> put_change(changeset, field, %{})
       _other -> changeset
+    end
+  end
+
+  defp validate_optional_number(changeset, field, opts) do
+    case get_field(changeset, field) do
+      nil -> changeset
+      _value -> validate_number(changeset, field, opts)
     end
   end
 
