@@ -118,7 +118,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     try do
       Shard.Quests.accept_quest(user_id, quest_id)
     rescue
-      _error ->
+      error ->
         # IO.inspect(error, label: "Error accepting quest") 
         {:error, :database_error}
     end
