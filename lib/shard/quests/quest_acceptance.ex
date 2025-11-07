@@ -65,13 +65,14 @@ defmodule Shard.Quests.QuestAcceptance do
 
     # Early return if missing required fields
     unless user_id && quest_id do
-      return(changeset)
-    end
+      changeset
+    else
 
-    # Get the quest to check its type
-    case Shard.Repo.get(Shard.Quests.Quest, quest_id) do
-      nil -> changeset
-      quest -> validate_quest_type_conflict(changeset, user_id, quest)
+      # Get the quest to check its type
+      case Shard.Repo.get(Shard.Quests.Quest, quest_id) do
+        nil -> changeset
+        quest -> validate_quest_type_conflict(changeset, user_id, quest)
+      end
     end
   end
 
