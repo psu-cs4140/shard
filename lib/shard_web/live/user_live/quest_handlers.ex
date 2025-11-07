@@ -184,11 +184,22 @@ defmodule ShardWeb.UserLive.QuestHandlers do
           Enum.find(active_quests, fn qa -> qa.quest_id == quest.id end)
       end
     
-    # Only add to local state if we can confirm it's in the database
+    # Only add to local state if we can confirm it's in the database AND it's not already in local state
     updated_quests = 
       if quest_acceptance do
-        new_quest = create_new_quest_entry(quest, npc_name, quest_title)
-        [new_quest | game_state.quests]
+        # Check if quest is already in local game state
+        quest_already_in_local = Enum.any?(game_state.quests, fn local_quest ->
+          local_quest[:id] == quest.id
+        end)
+        
+        if quest_already_in_local do
+          # Quest is already in local state, don't add duplicate
+          game_state.quests
+        else
+          # Quest is not in local state, add it
+          new_quest = create_new_quest_entry(quest, npc_name, quest_title)
+          [new_quest | game_state.quests]
+        end
       else
         game_state.quests
       end

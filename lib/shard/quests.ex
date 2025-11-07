@@ -206,12 +206,16 @@ defmodule Shard.Quests do
 
   """
   def accept_quest(user_id, quest_id) do
-    # Check if the user has already completed this quest
+    # Check if the user has already completed this quest or has it in progress
     cond do
       quest_completed_by_user?(user_id, quest_id) ->
         {:error, :quest_already_completed}
       
       quest_in_progress_by_user?(user_id, quest_id) ->
+        {:error, :quest_already_accepted}
+      
+      quest_ever_accepted_by_user?(user_id, quest_id) ->
+        # Additional safety check - if quest was ever accepted, don't allow duplicate
         {:error, :quest_already_accepted}
       
       true ->
