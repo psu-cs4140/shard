@@ -1,6 +1,62 @@
 defmodule ShardWeb.UserLive.QuestHandlers do
   alias Shard.Repo
   alias Shard.Quests.Quest
+
+  # Execute quest command to get quest details from an NPC
+  def execute_quest_command(game_state, npc_name) do
+    {x, y} = game_state.player_position
+    npcs_here = ShardWeb.UserLive.MapHelpers.get_npcs_at_location(x, y, game_state.character.current_zone_id)
+
+    # Find the NPC by name (case-insensitive)
+    target_npc =
+      Enum.find(npcs_here, fn npc ->
+        npc_name_lower = String.downcase(npc.name || "")
+        target_name_lower = String.downcase(npc_name)
+        npc_name_lower == target_name_lower
+      end)
+
+    case target_npc do
+      nil ->
+        {["There is no NPC named '#{npc_name}' here."], game_state}
+
+      npc ->
+        user_id = game_state.character.user_id
+        
+        # Get available quests from this NPC
+        available_quests = Shard.Quests.get_available_quests_by_giver_excluding_completed(user_id, npc.id)
+        
+        if length(available_quests) == 0 do
+          npc_name = npc.name || "Unknown NPC"
+          {["#{npc_name} has no quests available for you at this time."], game_state}
+        else
+          # Show the first available quest
+          quest = List.first(available_quests)
+          npc_name = npc.name || "Unknown NPC"
+          
+          response = [
+            "#{npc_name} offers you a quest:",
+            "",
+            "Quest: #{quest.title}",
+            "Description: #{quest.description}",
+            "",
+            "Rewards:",
+            "  Experience: #{quest.experience_reward || 0} XP",
+            "  Gold: #{quest.gold_reward || 0} gold",
+            "",
+            "Do you want to accept this quest?",
+            "Type 'accept' to accept or 'deny' to decline."
+          ]
+          
+          # Store the quest offer in game state
+          updated_game_state = %{
+            game_state | 
+            pending_quest_offer: %{quest: quest, npc: npc}
+          }
+          
+          {response, updated_game_state}
+        end
+    end
+  end
   # Execute quest acceptance
   def execute_accept_quest(game_state) do
     case game_state.pending_quest_offer do
@@ -16,8 +72,8 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   defp handle_quest_acceptance(game_state, quest, npc) do
     npc_name = npc.name || "Unknown NPC"
     quest_title = quest.title || "Untitled Quest"
-    # Mock user_id - should come from session in real implementation
-    user_id = 1
+    # Get the actual user_id from the game state
+    user_id = game_state.character.user_id
 
     already_accepted = check_quest_already_accepted(user_id, quest.id)
 
@@ -226,6 +282,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   def complete_quest_and_give_rewards(game_state, quest, npc) do
     npc_name = npc.name || "Unknown NPC"
     quest_title = quest.title || "Untitled Quest"
+    user_id = game_state.character.user_id
 
     full_quest = get_full_quest_safely(quest.id)
     {exp_reward, gold_reward} = calculate_quest_rewards(full_quest)
@@ -233,7 +290,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     updated_stats = update_player_stats_with_experience(game_state.player_stats, exp_reward)
     {updated_stats, level_up_message} = handle_level_up_check(updated_stats)
 
-    updated_quests = complete_quest_in_database_and_update_state(game_state.quests, quest.id)
+    updated_quests = complete_quest_in_database_and_update_state(game_state.quests, quest.id, user_id)
 
     response =
       build_quest_completion_response(
@@ -291,10 +348,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   end
 
   # Helper function to complete quest in database and update game state
-  defp complete_quest_in_database_and_update_state(quests, quest_id) do
-    # Mock user_id - should come from session in real implementation
-    user_id = 1
-
+  defp complete_quest_in_database_and_update_state(quests, quest_id, user_id) do
     try do
       case Shard.Quests.complete_quest(user_id, quest_id) do
         {:ok, _quest_acceptance} ->
