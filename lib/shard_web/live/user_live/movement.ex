@@ -274,7 +274,6 @@ defmodule ShardWeb.UserLive.Movement do
   end
 
   defp get_npcs_at_location(_x, _y, _zone_id) do
-    # TODO: Implement NPC location lookup
     []
   end
 

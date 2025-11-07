@@ -163,10 +163,17 @@ defmodule ShardWeb.UserLive.ItemCommands do
   # Handle pickup of room items
   defp pickup_room_item(item, room_item_id, game_state) do
     case Shard.Items.pick_up_item(game_state.character.id, room_item_id) do
-      {:ok, _} -> update_inventory_after_pickup(item, game_state)
-      {:error, :item_not_pickupable} -> {["You cannot pick up #{item.name}."], game_state}
-      {:error, :insufficient_quantity} -> {["There isn't enough #{item.name} here to pick up."], game_state}
-      {:error, _reason} -> {["You failed to pick up #{item.name}."], game_state}
+      {:ok, _} ->
+        update_inventory_after_pickup(item, game_state)
+
+      {:error, :item_not_pickupable} ->
+        {["You cannot pick up #{item.name}."], game_state}
+
+      {:error, :insufficient_quantity} ->
+        {["There isn't enough #{item.name} here to pick up."], game_state}
+
+      {:error, _reason} ->
+        {["You failed to pick up #{item.name}."], game_state}
     end
   end
 
@@ -175,8 +182,11 @@ defmodule ShardWeb.UserLive.ItemCommands do
     item_struct = Shard.Items.get_item!(item.item_id)
 
     case Shard.Items.update_item(item_struct, %{is_active: false}) do
-      {:ok, _} -> update_inventory_after_pickup(item, game_state)
-      {:error, _reason} -> {["You failed to pick up #{item.name} - could not remove from world."], game_state}
+      {:ok, _} ->
+        update_inventory_after_pickup(item, game_state)
+
+      {:error, _reason} ->
+        {["You failed to pick up #{item.name} - could not remove from world."], game_state}
     end
   end
 
