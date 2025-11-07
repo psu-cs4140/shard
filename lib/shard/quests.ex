@@ -503,22 +503,7 @@ defmodule Shard.Quests do
   def turn_in_quest_with_character_id(user_id, character_id, quest_id) do
     case can_turn_in_quest_with_character_id?(user_id, character_id, quest_id) do
       {:ok, true} ->
-        quest = get_quest!(quest_id)
-
-        Repo.transaction(fn ->
-          # Remove required items from inventory
-          case remove_quest_items_from_inventory(character_id, quest.objectives) do
-            :ok ->
-              # Complete the quest
-              case complete_quest(user_id, quest_id) do
-                {:ok, quest_acceptance} -> quest_acceptance
-                {:error, reason} -> Repo.rollback(reason)
-              end
-
-            {:error, reason} ->
-              Repo.rollback(reason)
-          end
-        end)
+        execute_quest_turn_in_with_character(user_id, character_id, quest_id)
 
       error ->
         error
@@ -533,6 +518,20 @@ defmodule Shard.Quests do
       error ->
         error
     end
+  end
+
+  defp execute_quest_turn_in_with_character(user_id, character_id, quest_id) do
+    quest = get_quest!(quest_id)
+
+    Repo.transaction(fn ->
+      case remove_quest_items_from_inventory(character_id, quest.objectives) do
+        :ok ->
+          complete_quest_or_rollback(user_id, quest_id)
+
+        {:error, reason} ->
+          Repo.rollback(reason)
+      end
+    end)
   end
 
   defp execute_quest_turn_in_transaction(user_id, character_id, quest_id) do
