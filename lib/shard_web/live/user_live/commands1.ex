@@ -296,19 +296,20 @@ defmodule ShardWeb.UserLive.Commands1 do
         if Enum.empty?(inventory_items) do
           {["Your inventory is empty."], game_state}
         else
-          response = ["Your inventory contains:"] ++
-            Enum.map(inventory_items, fn inv_item ->
-              item_name = inv_item.item.name
-              quantity = inv_item.quantity
-              equipped_text = if inv_item.equipped, do: " (equipped)", else: ""
-              
-              if quantity > 1 do
-                "  #{item_name} x#{quantity}#{equipped_text}"
-              else
-                "  #{item_name}#{equipped_text}"
-              end
-            end)
-          
+          response =
+            ["Your inventory contains:"] ++
+              Enum.map(inventory_items, fn inv_item ->
+                item_name = inv_item.item.name
+                quantity = inv_item.quantity
+                equipped_text = if inv_item.equipped, do: " (equipped)", else: ""
+
+                if quantity > 1 do
+                  "  #{item_name} x#{quantity}#{equipped_text}"
+                else
+                  "  #{item_name}#{equipped_text}"
+                end
+              end)
+
           {response, game_state}
         end
 
@@ -552,10 +553,10 @@ defmodule ShardWeb.UserLive.Commands1 do
   def execute_pickup_command(game_state, item_name) do
     {x, y} = game_state.player_position
     location_string = "#{x},#{y},0"
-    
+
     # Find room items at this location
     alias Shard.Items.RoomItem
-    
+
     room_items =
       from(ri in RoomItem,
         where: ri.location == ^location_string,
@@ -610,20 +611,27 @@ defmodule ShardWeb.UserLive.Commands1 do
                 {:ok, _} ->
                   # Remove the item from the world by setting is_active to false
                   item_struct = Shard.Items.get_item!(item.item_id)
+
                   case Shard.Items.update_item(item_struct, %{is_active: false}) do
                     {:ok, _} ->
                       # Reload the character's inventory to reflect the change
-                      updated_inventory = Shard.Items.get_character_inventory(game_state.character.id)
+                      updated_inventory =
+                        Shard.Items.get_character_inventory(game_state.character.id)
+
                       updated_game_state = %{game_state | inventory_items: updated_inventory}
-                      
+
                       response = [
                         "You pick up #{item.name}.",
                         "#{item.name} has been added to your inventory."
                       ]
+
                       {response, updated_game_state}
-                    
+
                     {:error, _reason} ->
-                      response = ["You failed to pick up #{item.name} - could not remove from world."]
+                      response = [
+                        "You failed to pick up #{item.name} - could not remove from world."
+                      ]
+
                       {response, game_state}
                   end
 
@@ -639,11 +647,12 @@ defmodule ShardWeb.UserLive.Commands1 do
                   # Reload the character's inventory to reflect the change
                   updated_inventory = Shard.Items.get_character_inventory(game_state.character.id)
                   updated_game_state = %{game_state | inventory_items: updated_inventory}
-                  
+
                   response = [
                     "You pick up #{item.name}.",
                     "#{item.name} has been added to your inventory."
                   ]
+
                   {response, updated_game_state}
 
                 {:error, :item_not_pickupable} ->
