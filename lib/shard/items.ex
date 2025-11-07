@@ -98,13 +98,14 @@ defmodule Shard.Items do
   end
 
   defp add_non_stackable_item(character_id, item, quantity, opts) do
-    result = Enum.reduce_while(1..quantity, {:ok, []}, fn _, {:ok, acc} ->
-      case create_inventory_entry(character_id, item, 1, opts) do
-        {:ok, entry} -> {:cont, {:ok, [entry | acc]}}
-        error -> {:halt, error}
-      end
-    end)
-    
+    result =
+      Enum.reduce_while(1..quantity, {:ok, []}, fn _, {:ok, acc} ->
+        case create_inventory_entry(character_id, item, 1, opts) do
+          {:ok, entry} -> {:cont, {:ok, [entry | acc]}}
+          error -> {:halt, error}
+        end
+      end)
+
     case result do
       {:ok, entries} -> {:ok, entries}
       error -> error
@@ -129,13 +130,16 @@ defmodule Shard.Items do
       slot_position: slot_position
     }
 
-    result = %CharacterInventory{}
-    |> CharacterInventory.changeset(changeset_attrs)
-    |> Repo.insert()
+    result =
+      %CharacterInventory{}
+      |> CharacterInventory.changeset(changeset_attrs)
+      |> Repo.insert()
 
     case result do
-      {:ok, inventory} -> {:ok, inventory}
-      {:error, changeset} -> 
+      {:ok, inventory} ->
+        {:ok, inventory}
+
+      {:error, changeset} ->
         # Log the error for debugging
         IO.inspect(changeset.errors, label: "Inventory creation error")
         {:error, changeset}
