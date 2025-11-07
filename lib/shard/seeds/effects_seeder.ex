@@ -1,4 +1,8 @@
 defmodule Shard.Seeds.EffectsSeeder do
+  @moduledoc """
+  This module handles seeding effects data into the database.
+  """
+
   alias Shard.Weapons.Effects
   alias Shard.Repo
 

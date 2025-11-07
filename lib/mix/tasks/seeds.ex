@@ -1,4 +1,8 @@
 defmodule Mix.Tasks.Seeds do
+  @moduledoc """
+  This module defines a mix task to run all seed files.
+  """
+
   use Mix.Task
 
   @shortdoc "Run all seed files"

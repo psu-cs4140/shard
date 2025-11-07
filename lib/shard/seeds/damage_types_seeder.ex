@@ -1,4 +1,8 @@
 defmodule Shard.Seeds.DamageTypesSeeder do
+  @moduledoc """
+  This module handles seeding damage types data into the database.
+  """
+
   alias Shard.Weapons.DamageTypes
   alias Shard.Repo
 
