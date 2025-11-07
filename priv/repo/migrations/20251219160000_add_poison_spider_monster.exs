@@ -7,7 +7,6 @@ defmodule Shard.Repo.Migrations.AddPoisonSpiderMonster do
 
   defp up do
     alias Shard.Repo
-    alias Shard.Map
     alias Shard.Monsters
     alias Shard.Weapons.DamageTypes
     alias Shard.Items.Item
