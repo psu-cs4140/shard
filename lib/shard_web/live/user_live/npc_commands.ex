@@ -160,76 +160,99 @@ defmodule ShardWeb.UserLive.NpcCommands do
     npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
 
     # Find the NPC by name (case-insensitive)
-    target_npc =
-      Enum.find(npcs_here, fn npc ->
-        npc_name_lower = String.downcase(npc.name || "")
-        target_name_lower = String.downcase(npc_name)
-        npc_name_lower == target_name_lower
-      end)
+    target_npc = find_npc_by_name(npcs_here, npc_name)
 
     case target_npc do
       nil ->
         {["There is no NPC named '#{npc_name}' here."], game_state}
 
       npc ->
-        user_id = game_state.character.user_id
-        character_id = game_state.character.id
+        process_quest_delivery(game_state, npc)
+    end
+  end
 
-        # Get quests that can be turned in to this NPC
-        turn_in_quests = Shard.Quests.get_turn_in_quests_by_npc(user_id, npc.id)
+  # Helper function to find NPC by name
+  defp find_npc_by_name(npcs, npc_name) do
+    Enum.find(npcs, fn npc ->
+      npc_name_lower = String.downcase(npc.name || "")
+      target_name_lower = String.downcase(npc_name)
+      npc_name_lower == target_name_lower
+    end)
+  end
 
-        if Enum.empty?(turn_in_quests) do
-          {["#{npc.name || "The NPC"} says: \"You don't have any completed quests for me.\""],
-           game_state}
-        else
-          # Process each quest that can be turned in
-          {results, completed_quest_ids} =
-            Enum.reduce(turn_in_quests, {[], []}, fn quest, {results_acc, completed_ids_acc} ->
-              case Shard.Quests.turn_in_quest_with_character_id(user_id, character_id, quest.id) do
-                {:ok, _quest_acceptance} ->
-                  result = "Successfully turned in '#{quest.title}'"
-                  {[result | results_acc], [quest.id | completed_ids_acc]}
+  # Helper function to process quest delivery
+  defp process_quest_delivery(game_state, npc) do
+    user_id = game_state.character.user_id
+    turn_in_quests = Shard.Quests.get_turn_in_quests_by_npc(user_id, npc.id)
 
-                {:error, :missing_items} ->
-                  result = "Cannot turn in '#{quest.title}' - you don't have the required items"
-                  {[result | results_acc], completed_ids_acc}
+    if Enum.empty?(turn_in_quests) do
+      {["#{npc.name || "The NPC"} says: \"You don't have any completed quests for me.\""],
+       game_state}
+    else
+      handle_quest_turn_ins(game_state, npc, turn_in_quests)
+    end
+  end
 
-                {:error, reason} ->
-                  result = "Failed to turn in '#{quest.title}': #{inspect(reason)}"
-                  {[result | results_acc], completed_ids_acc}
-              end
-            end)
+  # Helper function to handle quest turn-ins
+  defp handle_quest_turn_ins(game_state, npc, turn_in_quests) do
+    user_id = game_state.character.user_id
+    character_id = game_state.character.id
 
-          # Reverse results to maintain original order
-          results = Enum.reverse(results)
+    # Process each quest that can be turned in
+    {results, completed_quest_ids} =
+      Enum.reduce(turn_in_quests, {[], []}, fn quest, acc ->
+        process_single_quest_turn_in(quest, user_id, character_id, acc)
+      end)
 
-          # Build response message
-          npc_name = npc.name || "The NPC"
-          response_lines = ["#{npc_name} examines your completed tasks:"] ++ results
+    # Reverse results to maintain original order
+    results = Enum.reverse(results)
 
-          # Update game state to reflect changes
-          updated_game_state =
-            if Enum.empty?(completed_quest_ids) do
-              game_state
-            else
-              # Reload character inventory to reflect item removal
-              inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
+    # Build response message
+    npc_name = npc.name || "The NPC"
+    response_lines = ["#{npc_name} examines your completed tasks:"] ++ results
 
-              # Update quest status in local game state
-              updated_quests =
-                Enum.map(game_state.quests, fn quest ->
-                  if quest[:id] in completed_quest_ids do
-                    %{quest | status: "Completed", progress: "100% complete"}
-                  else
-                    quest
-                  end
-                end)
+    # Update game state to reflect changes
+    updated_game_state = update_game_state_after_delivery(game_state, completed_quest_ids)
 
-              %{game_state | inventory_items: inventory_items, quests: updated_quests}
-            end
+    {response_lines, updated_game_state}
+  end
 
-          {response_lines, updated_game_state}
-        end
+  # Helper function to process a single quest turn-in
+  defp process_single_quest_turn_in(quest, user_id, character_id, {results_acc, completed_ids_acc}) do
+    case Shard.Quests.turn_in_quest_with_character_id(user_id, character_id, quest.id) do
+      {:ok, _quest_acceptance} ->
+        result = "Successfully turned in '#{quest.title}'"
+        {[result | results_acc], [quest.id | completed_ids_acc]}
+
+      {:error, :missing_items} ->
+        result = "Cannot turn in '#{quest.title}' - you don't have the required items"
+        {[result | results_acc], completed_ids_acc}
+
+      {:error, reason} ->
+        result = "Failed to turn in '#{quest.title}': #{inspect(reason)}"
+        {[result | results_acc], completed_ids_acc}
+    end
+  end
+
+  # Helper function to update game state after quest delivery
+  defp update_game_state_after_delivery(game_state, completed_quest_ids) do
+    if Enum.empty?(completed_quest_ids) do
+      game_state
+    else
+      # Reload character inventory to reflect item removal
+      inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
+
+      # Update quest status in local game state
+      updated_quests =
+        Enum.map(game_state.quests, fn quest ->
+          if quest[:id] in completed_quest_ids do
+            %{quest | status: "Completed", progress: "100% complete"}
+          else
+            quest
+          end
+        end)
+
+      %{game_state | inventory_items: inventory_items, quests: updated_quests}
     end
   end
 end
