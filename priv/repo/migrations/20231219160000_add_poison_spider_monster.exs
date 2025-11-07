@@ -10,6 +10,7 @@ defmodule Shard.Repo.Migrations.AddPoisonSpiderMonster do
     alias Shard.Map
     alias Shard.Monsters
     alias Shard.Weapons.DamageTypes
+    alias Shard.Items.Item
 
     # Find the Bone Zone
     bone_zone = Repo.get_by(Shard.Map.Zone, slug: "bone-zone")
@@ -36,6 +37,30 @@ defmodule Shard.Repo.Migrations.AddPoisonSpiderMonster do
               existing
           end
 
+        # Create the Spider Silk item if it doesn't exist
+        spider_silk_item =
+          case Repo.get_by(Item, name: "Spider Silk") do
+            nil ->
+              {:ok, new_item} =
+                %Item{}
+                |> Item.changeset(%{
+                  name: "Spider Silk",
+                  description: "Fine, strong silk harvested from a giant spider.",
+                  item_type: "crafting",
+                  rarity: "common",
+                  value: 5,
+                  stackable: true,
+                  max_stack_size: 10,
+                  is_active: true
+                })
+                |> Repo.insert()
+
+              new_item
+
+            existing ->
+              existing
+          end
+
         # Create the poison spider monster
         {:ok, _spider} =
           Monsters.create_monster(%{
@@ -51,7 +76,10 @@ defmodule Shard.Repo.Migrations.AddPoisonSpiderMonster do
             special_damage_type_id: poison_type.id,
             special_damage_amount: 1,
             special_damage_duration: 5,
-            special_damage_chance: 25
+            special_damage_chance: 25,
+            potential_loot_drops: %{
+              "#{spider_silk_item.id}" => %{chance: 0.8, min_quantity: 1, max_quantity: 2}
+            }
           })
 
         IO.puts("Successfully created Giant Poison Spider in Spider Dungeon")
@@ -66,6 +94,7 @@ defmodule Shard.Repo.Migrations.AddPoisonSpiderMonster do
   defp down do
     alias Shard.Repo
     alias Shard.Monsters
+    alias Shard.Items.Item
 
     # Find and delete the poison spider
     spider = Repo.get_by(Shard.Monsters.Monster, name: "Giant Poison Spider")
@@ -75,6 +104,16 @@ defmodule Shard.Repo.Migrations.AddPoisonSpiderMonster do
       IO.puts("Deleted Giant Poison Spider")
     else
       IO.puts("Poison spider not found")
+    end
+
+    # Find and delete the spider silk item
+    spider_silk = Repo.get_by(Item, name: "Spider Silk")
+
+    if spider_silk do
+      Repo.delete(spider_silk)
+      IO.puts("Deleted Spider Silk item")
+    else
+      IO.puts("Spider Silk item not found")
     end
   end
 end
