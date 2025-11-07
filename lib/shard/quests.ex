@@ -393,10 +393,10 @@ defmodule Shard.Quests do
 
   """
   def get_available_quests_by_giver_excluding_completed(user_id, npc_id) do
-    # Get quest IDs that the user currently has active (accepted or in_progress)
-    active_quest_ids =
+    # Get quest IDs that the user has ever accepted (any status)
+    ever_accepted_quest_ids =
       from(qa in QuestAcceptance,
-        where: qa.user_id == ^user_id and qa.status in ["accepted", "in_progress"],
+        where: qa.user_id == ^user_id,
         select: qa.quest_id
       )
 
@@ -422,13 +422,13 @@ defmodule Shard.Quests do
       )
       |> Repo.all()
 
-    # Get all quests from this NPC, excluding only currently active quests
+    # Get all quests from this NPC, excluding any quest the user has ever accepted
     all_npc_quests =
       from(q in Quest,
         where:
           q.giver_npc_id == ^npc_id and
             q.is_active == true and
-            q.id not in subquery(active_quest_ids),
+            q.id not in subquery(ever_accepted_quest_ids),
         order_by: [asc: q.sort_order, asc: q.id]
       )
       |> Repo.all()
