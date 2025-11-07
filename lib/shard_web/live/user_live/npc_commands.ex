@@ -45,110 +45,7 @@ defmodule ShardWeb.UserLive.NpcCommands do
         turn_in_quests = Shard.Quests.get_turn_in_quests_by_npc(user_id, npc.id)
 
         # Build dialogue based on quest status
-        dialogue_lines = []
-
-        # Start with basic greeting
-        base_dialogue = npc.dialogue || "Hello there, traveler!"
-        dialogue_lines = dialogue_lines ++ ["#{npc_name} says: \"#{base_dialogue}\""]
-
-        # Check for quest turn-ins first (higher priority)
-        dialogue_lines =
-          if Enum.any?(turn_in_quests) do
-            # Check which quests can actually be turned in (objectives completed)
-            completable_quests =
-              Enum.filter(turn_in_quests, fn quest ->
-                case Shard.Quests.can_turn_in_quest_with_character_id?(
-                       user_id,
-                       game_state.character.id,
-                       quest.id
-                     ) do
-                  {:ok, true} -> true
-                  _ -> false
-                end
-              end)
-
-            # Check which quests are in progress but not yet completable
-            in_progress_quests =
-              Enum.filter(turn_in_quests, fn quest ->
-                case Shard.Quests.can_turn_in_quest_with_character_id?(
-                       user_id,
-                       game_state.character.id,
-                       quest.id
-                     ) do
-                  {:error, :missing_items} -> true
-                  _ -> false
-                end
-              end)
-
-            updated_lines = dialogue_lines
-
-            # Show completable quests first
-            updated_lines =
-              if Enum.empty?(completable_quests) do
-                updated_lines
-              else
-                quest_names = Enum.map(completable_quests, & &1.title)
-                quest_list = Enum.join(quest_names, ", ")
-
-                updated_lines ++
-                  [
-                    "",
-                    "#{npc_name} notices you have completed some tasks:",
-                    "\"Excellent! I see you have completed: #{quest_list}\"",
-                    "\"Use 'deliver_quest \"#{npc_name}\"' to turn in your completed quests.\""
-                  ]
-              end
-
-            # Show in-progress quests that need more work
-            updated_lines =
-              if Enum.empty?(in_progress_quests) do
-                updated_lines
-              else
-                quest_names = Enum.map(in_progress_quests, & &1.title)
-                quest_list = Enum.join(quest_names, ", ")
-
-                updated_lines ++
-                  [
-                    "",
-                    "#{npc_name} checks on your progress:",
-                    "\"I see you're still working on: #{quest_list}\"",
-                    "\"Come back when you have everything I need.\""
-                  ]
-              end
-
-            updated_lines
-          else
-            dialogue_lines
-          end
-
-        # Check for available quests
-        dialogue_lines =
-          if Enum.empty?(available_quests) do
-            dialogue_lines
-          else
-            quest_names = Enum.map(available_quests, & &1.title)
-            quest_list = Enum.join(quest_names, ", ")
-
-            dialogue_lines ++
-              [
-                "",
-                "#{npc_name} has tasks available for you:",
-                "\"I have some work that needs doing: #{quest_list}\"",
-                "\"Use 'quest \"#{npc_name}\"' to learn more about these tasks.\""
-              ]
-          end
-
-        # If no quests available and none to turn in, just show basic dialogue
-        dialogue_lines =
-          if Enum.any?(available_quests) or Enum.any?(turn_in_quests) do
-            dialogue_lines
-          else
-            dialogue_lines ++
-              [
-                "",
-                "#{npc_name} has no tasks for you at this time."
-              ]
-          end
+        dialogue_lines = build_npc_dialogue(npc, npc_name, available_quests, turn_in_quests, user_id, game_state.character.id)
 
         {dialogue_lines, game_state}
     end
@@ -253,6 +150,113 @@ defmodule ShardWeb.UserLive.NpcCommands do
         end)
 
       %{game_state | inventory_items: inventory_items, quests: updated_quests}
+    end
+  end
+
+  # Helper function to build NPC dialogue
+  defp build_npc_dialogue(npc, npc_name, available_quests, turn_in_quests, user_id, character_id) do
+    # Start with basic greeting
+    base_dialogue = npc.dialogue || "Hello there, traveler!"
+    dialogue_lines = ["#{npc_name} says: \"#{base_dialogue}\""]
+
+    # Add quest turn-in dialogue
+    dialogue_lines = add_turn_in_dialogue(dialogue_lines, turn_in_quests, npc_name, user_id, character_id)
+
+    # Add available quest dialogue
+    dialogue_lines = add_available_quest_dialogue(dialogue_lines, available_quests, npc_name)
+
+    # Add fallback dialogue if no quests
+    add_fallback_dialogue(dialogue_lines, available_quests, turn_in_quests, npc_name)
+  end
+
+  # Helper function to add turn-in quest dialogue
+  defp add_turn_in_dialogue(dialogue_lines, turn_in_quests, npc_name, user_id, character_id) do
+    if Enum.any?(turn_in_quests) do
+      {completable_quests, in_progress_quests} = categorize_turn_in_quests(turn_in_quests, user_id, character_id)
+      
+      dialogue_lines
+      |> add_completable_quest_dialogue(completable_quests, npc_name)
+      |> add_in_progress_quest_dialogue(in_progress_quests, npc_name)
+    else
+      dialogue_lines
+    end
+  end
+
+  # Helper function to categorize turn-in quests
+  defp categorize_turn_in_quests(turn_in_quests, user_id, character_id) do
+    Enum.reduce(turn_in_quests, {[], []}, fn quest, {completable, in_progress} ->
+      case Shard.Quests.can_turn_in_quest_with_character_id?(user_id, character_id, quest.id) do
+        {:ok, true} -> {[quest | completable], in_progress}
+        {:error, :missing_items} -> {completable, [quest | in_progress]}
+        _ -> {completable, in_progress}
+      end
+    end)
+  end
+
+  # Helper function to add completable quest dialogue
+  defp add_completable_quest_dialogue(dialogue_lines, completable_quests, npc_name) do
+    if Enum.empty?(completable_quests) do
+      dialogue_lines
+    else
+      quest_names = Enum.map(completable_quests, & &1.title)
+      quest_list = Enum.join(quest_names, ", ")
+
+      dialogue_lines ++
+        [
+          "",
+          "#{npc_name} notices you have completed some tasks:",
+          "\"Excellent! I see you have completed: #{quest_list}\"",
+          "\"Use 'deliver_quest \"#{npc_name}\"' to turn in your completed quests.\""
+        ]
+    end
+  end
+
+  # Helper function to add in-progress quest dialogue
+  defp add_in_progress_quest_dialogue(dialogue_lines, in_progress_quests, npc_name) do
+    if Enum.empty?(in_progress_quests) do
+      dialogue_lines
+    else
+      quest_names = Enum.map(in_progress_quests, & &1.title)
+      quest_list = Enum.join(quest_names, ", ")
+
+      dialogue_lines ++
+        [
+          "",
+          "#{npc_name} checks on your progress:",
+          "\"I see you're still working on: #{quest_list}\"",
+          "\"Come back when you have everything I need.\""
+        ]
+    end
+  end
+
+  # Helper function to add available quest dialogue
+  defp add_available_quest_dialogue(dialogue_lines, available_quests, npc_name) do
+    if Enum.empty?(available_quests) do
+      dialogue_lines
+    else
+      quest_names = Enum.map(available_quests, & &1.title)
+      quest_list = Enum.join(quest_names, ", ")
+
+      dialogue_lines ++
+        [
+          "",
+          "#{npc_name} has tasks available for you:",
+          "\"I have some work that needs doing: #{quest_list}\"",
+          "\"Use 'quest \"#{npc_name}\"' to learn more about these tasks.\""
+        ]
+    end
+  end
+
+  # Helper function to add fallback dialogue
+  defp add_fallback_dialogue(dialogue_lines, available_quests, turn_in_quests, npc_name) do
+    if Enum.any?(available_quests) or Enum.any?(turn_in_quests) do
+      dialogue_lines
+    else
+      dialogue_lines ++
+        [
+          "",
+          "#{npc_name} has no tasks for you at this time."
+        ]
     end
   end
 end
