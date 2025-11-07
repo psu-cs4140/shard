@@ -71,7 +71,11 @@ defmodule Shard.Quests.QuestAcceptance do
 
         quest ->
           if Shard.Quests.user_has_active_quest_of_type?(user_id, quest.quest_type) do
-            add_error(changeset, :quest_id, "you already have an active quest of type '#{quest.quest_type}'")
+            add_error(
+              changeset,
+              :quest_id,
+              "you already have an active quest of type '#{quest.quest_type}'"
+            )
           else
             changeset
           end
