@@ -140,8 +140,6 @@ defmodule Shard.Items do
         {:ok, inventory}
 
       {:error, changeset} ->
-        # Log the error for debugging
-        IO.inspect(changeset.errors, label: "Inventory creation error")
         {:error, changeset}
     end
   end
