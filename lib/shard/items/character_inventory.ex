@@ -36,7 +36,7 @@ defmodule Shard.Items.CharacterInventory do
     ])
     |> validate_required([:character_id, :item_id, :quantity])
     |> validate_number(:quantity, greater_than: 0)
-    |> validate_number(:slot_position, greater_than_or_equal_to: 0, allow_nil: true)
+    |> validate_optional_number(:slot_position, greater_than_or_equal_to: 0)
     |> validate_equipment_consistency()
     |> foreign_key_constraint(:character_id)
     |> foreign_key_constraint(:item_id)
@@ -44,6 +44,13 @@ defmodule Shard.Items.CharacterInventory do
     |> unique_constraint([:character_id, :equipment_slot],
       name: :character_inventories_character_id_equipment_slot_index
     )
+  end
+
+  defp validate_optional_number(changeset, field, opts) do
+    case get_field(changeset, field) do
+      nil -> changeset
+      _value -> validate_number(changeset, field, opts)
+    end
   end
 
   defp validate_equipment_consistency(changeset) do
