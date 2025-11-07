@@ -198,6 +198,172 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
 
     IO.puts("Created doors for vampire manor zone")
 
+    # Create sewage slime monster in the Sewer Lair
+    sewer_lair = Enum.find(manor_rooms, &(&1.x_coordinate == -4 && &1.y_coordinate == 1))
+
+    if sewer_lair do
+      alias Shard.Monsters
+
+      # Create the Slippers item if it doesn't exist
+      slippers_item =
+        case Repo.query("SELECT * FROM items WHERE name = $1", ["Slippers"]) do
+          {:ok, %{rows: []}} ->
+            {:ok, %{rows: [[item_id | _]]}} =
+              Repo.query(
+                "INSERT INTO items (name, description, item_type, rarity, value, stackable, equippable, equipment_slot, is_active, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id",
+                [
+                  "Slippers",
+                  "Comfortable cloth slippers, slightly damp from the sewers.",
+                  "armor",
+                  "common",
+                  3,
+                  false,
+                  true,
+                  "feet",
+                  true,
+                  DateTime.utc_now(),
+                  DateTime.utc_now()
+                ]
+              )
+
+            %{id: item_id}
+
+          {:ok, %{rows: [[item_id | _]]}} ->
+            %{id: item_id}
+        end
+
+      # Create the sewage slime monster with item drops
+      {:ok, _slime} =
+        Shard.Monsters.create_monster(%{
+          name: "Sewage Slime",
+          race: "Ooze",
+          health: 20,
+          max_health: 20,
+          attack_damage: 2,
+          xp_amount: 12,
+          level: 2,
+          description: "A disgusting blob of sewage and filth that has gained sentience.",
+          location_id: sewer_lair.id,
+          potential_loot_drops: %{
+            "#{slippers_item.id}" => %{chance: 0.9, min_quantity: 1, max_quantity: 1}
+          }
+        })
+
+      IO.puts("Successfully created Sewage Slime in Sewer Lair")
+    else
+      IO.puts("Warning: Sewer Lair room not found at (-4,1) in Vampire's Manor")
+    end
+
+    # Create possessed suit of armor monster in the Freezer
+    freezer = Enum.find(manor_rooms, &(&1.x_coordinate == 4 && &1.y_coordinate == -3))
+
+    if freezer do
+      # Create the Chainmail item if it doesn't exist
+      chainmail_item =
+        case Repo.query("SELECT * FROM items WHERE name = $1", ["Chainmail"]) do
+          {:ok, %{rows: []}} ->
+            {:ok, %{rows: [[item_id | _]]}} =
+              Repo.query(
+                "INSERT INTO items (name, description, item_type, rarity, value, stackable, equippable, equipment_slot, is_active, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id",
+                [
+                  "Chainmail",
+                  "A suit of interlocking metal rings, cold to the touch and emanating dark energy.",
+                  "armor",
+                  "uncommon",
+                  25,
+                  false,
+                  true,
+                  "chest",
+                  true,
+                  DateTime.utc_now(),
+                  DateTime.utc_now()
+                ]
+              )
+
+            %{id: item_id}
+
+          {:ok, %{rows: [[item_id | _]]}} ->
+            %{id: item_id}
+        end
+
+      # Create the possessed suit of armor monster with item drops
+      {:ok, _armor} =
+        Shard.Monsters.create_monster(%{
+          name: "Possessed Suit of Armor",
+          race: "Undead",
+          health: 35,
+          max_health: 35,
+          attack_damage: 4,
+          xp_amount: 20,
+          level: 3,
+          description:
+            "An ancient suit of armor animated by dark magic, its empty helmet glowing with malevolent eyes.",
+          location_id: freezer.id,
+          potential_loot_drops: %{
+            "#{chainmail_item.id}" => %{chance: 0.7, min_quantity: 1, max_quantity: 1}
+          }
+        })
+
+      IO.puts("Successfully created Possessed Suit of Armor in Freezer")
+    else
+      IO.puts("Warning: Freezer room not found at (4,-3) in Vampire's Manor")
+    end
+
+    # Create The Count monster in the Master Chamber
+    master_chamber = Enum.find(manor_rooms, &(&1.x_coordinate == -1 && &1.y_coordinate == -4))
+
+    if master_chamber do
+      # Create the Vampire Cloak item if it doesn't exist
+      vampire_cloak_item =
+        case Repo.query("SELECT * FROM items WHERE name = $1", ["Vampire Cloak"]) do
+          {:ok, %{rows: []}} ->
+            {:ok, %{rows: [[item_id | _]]}} =
+              Repo.query(
+                "INSERT INTO items (name, description, item_type, rarity, value, stackable, equippable, equipment_slot, is_active, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id",
+                [
+                  "Vampire Cloak",
+                  "A magnificent black cloak lined with crimson silk, radiating an aura of ancient power and nobility.",
+                  "armor",
+                  "rare",
+                  100,
+                  false,
+                  true,
+                  "back",
+                  true,
+                  DateTime.utc_now(),
+                  DateTime.utc_now()
+                ]
+              )
+
+            %{id: item_id}
+
+          {:ok, %{rows: [[item_id | _]]}} ->
+            %{id: item_id}
+        end
+
+      # Create The Count monster with item drops
+      {:ok, _count} =
+        Shard.Monsters.create_monster(%{
+          name: "The Count",
+          race: "Vampire",
+          health: 80,
+          max_health: 80,
+          attack_damage: 8,
+          xp_amount: 50,
+          level: 5,
+          description:
+            "The ancient master of this manor, a powerful vampire lord with centuries of dark knowledge and supernatural strength.",
+          location_id: master_chamber.id,
+          potential_loot_drops: %{
+            "#{vampire_cloak_item.id}" => %{chance: 1.0, min_quantity: 1, max_quantity: 1}
+          }
+        })
+
+      IO.puts("Successfully created The Count in Master Chamber")
+    else
+      IO.puts("Warning: Master Chamber room not found at (-1,-4) in Vampire's Manor")
+    end
+
     IO.puts("""
 
     ✓ Vampire's Manor successfully seeded!
@@ -210,9 +376,46 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
 
   defp seed_manor_down do
     alias Shard.Repo
-    alias Shard.Map.{Zone, Room, Door}
+    alias Shard.Map.Zone
 
     IO.puts("Removing Vampire's Manor...")
+
+    # Find and delete the sewage slime using raw SQL to avoid schema field issues
+    result = Repo.query("SELECT id FROM monsters WHERE name = $1", ["Sewage Slime"])
+
+    case result do
+      {:ok, %{rows: [[slime_id]]}} ->
+        Repo.query("DELETE FROM monsters WHERE id = $1", [slime_id])
+        IO.puts("Deleted Sewage Slime")
+
+      _ ->
+        IO.puts("Sewage Slime not found")
+    end
+
+    # Find and delete the possessed suit of armor using raw SQL
+    armor_result =
+      Repo.query("SELECT id FROM monsters WHERE name = $1", ["Possessed Suit of Armor"])
+
+    case armor_result do
+      {:ok, %{rows: [[armor_id]]}} ->
+        Repo.query("DELETE FROM monsters WHERE id = $1", [armor_id])
+        IO.puts("Deleted Possessed Suit of Armor")
+
+      _ ->
+        IO.puts("Possessed Suit of Armor not found")
+    end
+
+    # Find and delete The Count using raw SQL
+    count_result = Repo.query("SELECT id FROM monsters WHERE name = $1", ["The Count"])
+
+    case count_result do
+      {:ok, %{rows: [[count_id]]}} ->
+        Repo.query("DELETE FROM monsters WHERE id = $1", [count_id])
+        IO.puts("Deleted The Count")
+
+      _ ->
+        IO.puts("The Count not found")
+    end
 
     # Delete zone by slug (this will cascade to rooms and doors)
     case Repo.get_by(Zone, slug: "vampires-manor") do

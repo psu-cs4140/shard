@@ -324,9 +324,10 @@ defmodule Shard.Combat do
     # Convert item_id string back to integer
     case Integer.parse(item_id_str) do
       {item_id, ""} ->
-        chance = Map.get(drop_info, :chance, 1.0)
-        min_qty = Map.get(drop_info, :min_quantity, 1)
-        max_qty = Map.get(drop_info, :max_quantity, 1)
+        # Use string keys since data comes from database
+        chance = Map.get(drop_info, "chance", 1.0)
+        min_qty = Map.get(drop_info, "min_quantity", 1)
+        max_qty = Map.get(drop_info, "max_quantity", 1)
 
         IO.puts(
           "DEBUG: Parsed item_id: #{item_id}, chance: #{chance}, min_qty: #{min_qty}, max_qty: #{max_qty}"
@@ -356,24 +357,31 @@ defmodule Shard.Combat do
     quantity = calculate_drop_quantity(min_qty, max_qty)
 
     IO.puts("DEBUG: Calculated drop quantity: #{quantity}")
+    IO.puts("DEBUG: Character ID: #{game_state.character.id}")
+    IO.puts("DEBUG: Item ID: #{item_id}")
 
-    # Add item to player inventory
-    case Shard.Items.add_item_to_inventory(
-           game_state.character.id,
-           item_id,
-           quantity
-         ) do
-      {:ok, _} ->
-        IO.puts("DEBUG: Successfully added #{quantity} of item ID #{item_id} to inventory.")
-        create_loot_message(item_id, quantity, acc)
-
-      {:error, reason} ->
-        IO.puts(
-          "DEBUG: Failed to add item ID #{item_id} to inventory. Reason: #{inspect(reason)}"
-        )
-
-        # Handle error (log it, maybe drop in room instead)
+    # Verify the item exists first
+    case Shard.Items.get_item(item_id) do
+      nil ->
+        IO.puts("DEBUG: Item with ID #{item_id} does not exist in database")
         acc
+
+      item ->
+        IO.puts("DEBUG: Found item: #{item.name}")
+
+        # Add item to player inventory using the exact same pattern as pickup
+        case add_item_to_character_inventory(game_state.character.id, item_id, quantity) do
+          {:ok, _} ->
+            IO.puts("DEBUG: Successfully added #{quantity} of item ID #{item_id} to inventory.")
+            create_loot_message(item_id, quantity, acc)
+
+          {:error, reason} ->
+            IO.puts(
+              "DEBUG: Failed to add item ID #{item_id} to inventory. Reason: #{inspect(reason)}"
+            )
+
+            acc
+        end
     end
   end
 
@@ -419,6 +427,32 @@ defmodule Shard.Combat do
 
   # Default fallback
   defp parse_damage(_), do: 1
+
+  # Helper function to add items to character inventory
+  defp add_item_to_character_inventory(character_id, item_id, quantity) do
+    IO.puts(
+      "DEBUG: Attempting to add item #{item_id} (qty: #{quantity}) to character #{character_id}"
+    )
+
+    # Use the exact same pattern as the pickup logic in Items context
+    result = Shard.Items.add_item_to_inventory(character_id, item_id, quantity)
+
+    IO.puts("DEBUG: add_item_to_inventory result: #{inspect(result)}")
+
+    case result do
+      {:ok, _} = success ->
+        IO.puts("DEBUG: Successfully added item to inventory")
+        success
+
+      {:error, reason} = error ->
+        IO.puts("DEBUG: Failed to add item to inventory: #{inspect(reason)}")
+        error
+
+      other ->
+        IO.puts("DEBUG: Unexpected result from add_item_to_inventory: #{inspect(other)}")
+        {:error, :unexpected_result}
+    end
+  end
 
   # NEW: Check for special damage effect
   defp check_special_damage_effect(game_state, original_monster, updated_monster, base_response) do

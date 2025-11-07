@@ -112,8 +112,12 @@ defmodule ShardWeb.AdminLive.Monsters do
     # Clean up empty string values that should be nil
     cleaned_params =
       monster_params
-      |> Enum.map(fn {k, v} -> if v == "", do: {k, nil}, else: {k, v} end)
-      |> Enum.into(%{})
+      |> Enum.reduce(%{}, fn
+        {"location_id", ""}, acc -> Elixir.Map.put(acc, "location_id", nil)
+        {"location_id", nil}, acc -> Elixir.Map.put(acc, "location_id", nil)
+        {k, ""}, acc -> Elixir.Map.put(acc, k, nil)
+        {k, v}, acc -> Elixir.Map.put(acc, k, v)
+      end)
 
     case socket.assigns.form_monster.id do
       nil -> create_monster(socket, cleaned_params)
