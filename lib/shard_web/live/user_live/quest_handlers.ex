@@ -26,54 +26,66 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         {["There is no NPC named '#{npc_name}' here."], game_state}
 
       npc ->
-        user_id = game_state.character.user_id
-
-        # Get available quests from this NPC
-        available_quests =
-          Shard.Quests.get_available_quests_by_giver_excluding_completed(user_id, npc.id)
-
-        # Additional filter to ensure we don't show quests that are in the local game state as accepted
-        # This helps catch timing issues where the database query might not reflect recent changes
-        available_quests =
-          Enum.filter(available_quests, fn quest ->
-            # Check if this quest is already in the player's quest log
-            not Enum.any?(game_state.quests, fn player_quest ->
-              player_quest[:id] == quest.id and
-                player_quest[:status] in ["In Progress", "Completed"]
-            end)
-          end)
-
-        if Enum.empty?(available_quests) do
-          npc_name = npc.name || "Unknown NPC"
-          {["#{npc_name} has no quests available for you at this time."], game_state}
-        else
-          # Show the first available quest
-          quest = List.first(available_quests)
-          npc_name = npc.name || "Unknown NPC"
-
-          response = [
-            "#{npc_name} offers you a quest:",
-            "",
-            "Quest: #{quest.title}",
-            "Description: #{quest.description}",
-            "",
-            "Rewards:",
-            "  Experience: #{quest.experience_reward || 0} XP",
-            "  Gold: #{quest.gold_reward || 0} gold",
-            "",
-            "Do you want to accept this quest?",
-            "Type 'accept' to accept or 'deny' to decline."
-          ]
-
-          # Store the quest offer in game state
-          updated_game_state = %{
-            game_state
-            | pending_quest_offer: %{quest: quest, npc: npc}
-          }
-
-          {response, updated_game_state}
-        end
+        handle_npc_quest_interaction(game_state, npc)
     end
+  end
+
+  # Handle NPC quest interaction
+  defp handle_npc_quest_interaction(game_state, npc) do
+    user_id = game_state.character.user_id
+    available_quests = get_filtered_available_quests(user_id, npc.id, game_state.quests)
+    
+    case available_quests do
+      [] ->
+        npc_name = npc.name || "Unknown NPC"
+        {["#{npc_name} has no quests available for you at this time."], game_state}
+      
+      [quest | _] ->
+        present_quest_offer(game_state, quest, npc)
+    end
+  end
+
+  # Get available quests filtered by local game state
+  defp get_filtered_available_quests(user_id, npc_id, local_quests) do
+    available_quests =
+      Shard.Quests.get_available_quests_by_giver_excluding_completed(user_id, npc_id)
+
+    # Additional filter to ensure we don't show quests that are in the local game state as accepted
+    # This helps catch timing issues where the database query might not reflect recent changes
+    Enum.filter(available_quests, fn quest ->
+      # Check if this quest is already in the player's quest log
+      not Enum.any?(local_quests, fn player_quest ->
+        player_quest[:id] == quest.id and
+          player_quest[:status] in ["In Progress", "Completed"]
+      end)
+    end)
+  end
+
+  # Present a quest offer to the player
+  defp present_quest_offer(game_state, quest, npc) do
+    npc_name = npc.name || "Unknown NPC"
+
+    response = [
+      "#{npc_name} offers you a quest:",
+      "",
+      "Quest: #{quest.title}",
+      "Description: #{quest.description}",
+      "",
+      "Rewards:",
+      "  Experience: #{quest.experience_reward || 0} XP",
+      "  Gold: #{quest.gold_reward || 0} gold",
+      "",
+      "Do you want to accept this quest?",
+      "Type 'accept' to accept or 'deny' to decline."
+    ]
+
+    # Store the quest offer in game state
+    updated_game_state = %{
+      game_state
+      | pending_quest_offer: %{quest: quest, npc: npc}
+    }
+
+    {response, updated_game_state}
   end
 
   # Execute quest acceptance
