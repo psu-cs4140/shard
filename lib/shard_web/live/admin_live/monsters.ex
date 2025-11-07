@@ -109,10 +109,15 @@ defmodule ShardWeb.AdminLive.Monsters do
 
   @impl true
   def handle_event("save_monster", %{"monster" => monster_params}, socket) do
-    # Clean up empty string values that should be nil
+    # Clean up empty string values that should be nil, especially for location_id
     cleaned_params =
       monster_params
-      |> Enum.map(fn {k, v} -> if v == "", do: {k, nil}, else: {k, v} end)
+      |> Enum.map(fn 
+        {"location_id", ""} -> {"location_id", nil}
+        {"location_id", nil} -> {"location_id", nil}
+        {k, v} when v == "" -> {k, nil}
+        {k, v} -> {k, v}
+      end)
       |> Enum.into(%{})
 
     case socket.assigns.form_monster.id do
