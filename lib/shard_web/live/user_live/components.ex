@@ -163,7 +163,7 @@ defmodule ShardWeb.UserLive.Components do
               <%= for item <- @game_state.inventory_items do %>
                 <div class="bg-gray-800 rounded-lg p-4 flex items-center">
                   <div class="mr-4">
-                    <%= case item.type do %>
+                    <%= case item.item.item_type do %>
                       <% "weapon" -> %>
                         <.icon name="hero-sword" class="w-10 h-10 text-red-400" />
                       <% "armor" -> %>
@@ -180,40 +180,40 @@ defmodule ShardWeb.UserLive.Components do
                   </div>
                   <div class="flex-1">
                     <div class="flex justify-between items-start">
-                      <div class="font-semibold">{item.name}</div>
-                      <%= if item[:quantity] && item.quantity > 1 do %>
+                      <div class="font-semibold">{item.item.name}</div>
+                      <%= if item.quantity && item.quantity > 1 do %>
                         <span class="text-sm bg-gray-600 px-2 py-1 rounded">x{item.quantity}</span>
                       <% end %>
                     </div>
-                    <div class="text-sm text-gray-300 capitalize">{item.type}</div>
-                    <%= if item[:damage] do %>
+                    <div class="text-sm text-gray-300 capitalize">{item.item.item_type}</div>
+                    <%= if Map.get(item, :damage) do %>
                       <div class="text-sm text-red-300">Damage: {item.damage}</div>
                     <% end %>
-                    <%= if item[:defense] do %>
+                    <%= if Map.get(item, :defense) do %>
                       <div class="text-sm text-blue-300">Defense: {item.defense}</div>
                     <% end %>
-                    <%= if item[:effect] do %>
+                    <%= if Map.get(item, :effect) do %>
                       <div class="text-sm text-green-300">Effect: {item.effect}</div>
                     <% end %>
-                    <%= if item[:description] do %>
+                    <%= if Map.get(item, :description) do %>
                       <div class="text-xs text-gray-400 mt-1">{item.description}</div>
                     <% end %>
                     
     <!-- Action buttons -->
                     <div class="flex gap-2 mt-2">
-                      <%= if item.type in ["weapon", "armor"] do %>
+                      <%= if item.item.item_type in ["weapon", "armor"] do %>
                         <button
                           phx-click="equip_item"
-                          phx-value-item_id={item[:id]}
+                          phx-value-item_id={item.id}
                           class="text-xs bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded transition-colors"
                         >
                           Equip
                         </button>
                       <% end %>
-                      <%= if item.type == "consumable" do %>
+                      <%= if item.item.item_type == "consumable" do %>
                         <button
                           phx-click="use_hotbar_item"
-                          phx-value-item_id={item[:id]}
+                          phx-value-item_id={item.id}
                           class="text-xs bg-green-600 hover:bg-green-700 px-2 py-1 rounded transition-colors"
                         >
                           Use

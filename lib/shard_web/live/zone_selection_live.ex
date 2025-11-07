@@ -4,7 +4,8 @@ defmodule ShardWeb.ZoneSelectionLive do
   """
   use ShardWeb, :live_view
 
-  alias Shard.{Map, Characters}
+  alias Shard.{Map, Characters, Users}
+  alias Shard.Items.AdminStick
 
   @impl true
   def mount(_params, _session, socket) do
@@ -132,6 +133,8 @@ defmodule ShardWeb.ZoneSelectionLive do
     # Update character's current zone
     case Characters.update_character(character, %{current_zone_id: zone_id}) do
       {:ok, updated_character} ->
+        handle_admin_stick_granting(character)
+
         # Get the first room in the zone to start at
         rooms = Map.list_rooms_by_zone(zone_id)
 
@@ -149,7 +152,9 @@ defmodule ShardWeb.ZoneSelectionLive do
           {:noreply,
            socket
            |> put_flash(:info, "Entering #{Map.get_zone!(zone_id).name}...")
-           |> push_navigate(to: ~p"/play/#{updated_character.id}?zone_id=#{zone_id}")}
+           |> push_navigate(
+             to: ~p"/play/#{updated_character.id}?zone_id=#{zone_id}&refresh_inventory=true"
+           )}
         else
           {:noreply,
            socket
@@ -160,6 +165,25 @@ defmodule ShardWeb.ZoneSelectionLive do
         {:noreply,
          socket
          |> put_flash(:error, "Failed to enter zone. Please try again.")}
+    end
+  end
+
+  # Helper function to handle admin stick granting
+  defp handle_admin_stick_granting(character) do
+    case Users.get_user_by_character_id(character.id) do
+      # Fixed: removed unused variable assignment
+      %{admin: true} ->
+        case AdminStick.grant_admin_stick(character.id) do
+          {:ok, _} ->
+            :ok
+
+          {:error, reason} ->
+            # Log the error but don't prevent zone entry
+            IO.warn("Failed to grant admin stick: #{reason}")
+        end
+
+      _ ->
+        :ok
     end
   end
 

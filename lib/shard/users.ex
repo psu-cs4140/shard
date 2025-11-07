@@ -7,6 +7,7 @@ defmodule Shard.Users do
   alias Shard.Repo
 
   alias Shard.Users.{User, UserToken, UserNotifier}
+  alias Shard.Characters.Character
 
   ## Database getters
 
@@ -59,6 +60,20 @@ defmodule Shard.Users do
 
   """
   def get_user!(id), do: Repo.get!(User, id)
+
+  @doc """
+  Gets a user by character ID.
+  """
+  def get_user_by_character_id(character_id) do
+    query =
+      from u in User,
+        join: c in Character,
+        on: c.user_id == u.id,
+        where: c.id == ^character_id,
+        select: u
+
+    Repo.one(query)
+  end
 
   @doc """
   Returns the list of users.

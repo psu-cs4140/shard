@@ -1,5 +1,5 @@
 defmodule ShardWeb.AdminLive.MapTest do
-  use ShardWeb.ConnCase, async: true
+  use ShardWeb.ConnCase
   import Phoenix.LiveViewTest
 
   alias Shard.Map
