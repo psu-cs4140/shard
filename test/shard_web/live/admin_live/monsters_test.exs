@@ -265,6 +265,10 @@ defmodule ShardWeb.AdminLive.MonstersTest do
       # Should redirect to index
       assert_patch(index_live, ~p"/admin/monsters")
     end
+  end
+
+  describe "Event Handlers - Empty String Handling" do
+    setup [:create_admin_user]
 
     test "handle_event save_monster with empty strings converts to nil", %{conn: conn, user: user} do
       {:ok, index_live, _html} =
