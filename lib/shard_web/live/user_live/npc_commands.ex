@@ -9,46 +9,47 @@ defmodule ShardWeb.UserLive.NpcCommands do
   def execute_talk_command(game_state, npc_name) do
     {x, y} = game_state.player_position
     npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
-
-    # Find the NPC by name (case-insensitive)
-    target_npc =
-      Enum.find(npcs_here, fn npc ->
-        npc_name_lower = String.downcase(npc.name || "")
-        target_name_lower = String.downcase(npc_name)
-        npc_name_lower == target_name_lower
-      end)
+    target_npc = find_npc_by_name(npcs_here, npc_name)
 
     case target_npc do
       nil ->
         {["There is no NPC named '#{npc_name}' here."], game_state}
 
       npc ->
-        user_id = game_state.character.user_id
-        npc_name = npc.name || "Unknown NPC"
-
-        # Check for available quests from this NPC
-        available_quests =
-          Shard.Quests.get_available_quests_by_giver_excluding_completed(user_id, npc.id)
-
-        # Additional filter to ensure we don't show quests that are in the local game state as accepted
-        # This helps catch timing issues where the database query might not reflect recent changes
-        available_quests =
-          Enum.filter(available_quests, fn quest ->
-            # Check if this quest is already in the player's quest log
-            not Enum.any?(game_state.quests, fn player_quest ->
-              player_quest[:id] == quest.id and
-                player_quest[:status] in ["In Progress", "Completed"]
-            end)
-          end)
-
-        # Check for quests that can be turned in to this NPC
-        turn_in_quests = Shard.Quests.get_turn_in_quests_by_npc(user_id, npc.id)
-
-        # Build dialogue based on quest status
-        dialogue_lines = build_npc_dialogue(npc, npc_name, available_quests, turn_in_quests, user_id, game_state.character.id)
-
-        {dialogue_lines, game_state}
+        handle_npc_talk(game_state, npc)
     end
+  end
+
+  # Helper function to handle talking to an NPC
+  defp handle_npc_talk(game_state, npc) do
+    user_id = game_state.character.user_id
+    npc_name = npc.name || "Unknown NPC"
+
+    # Check for available quests from this NPC
+    available_quests = get_filtered_available_quests(user_id, npc.id, game_state.quests)
+
+    # Check for quests that can be turned in to this NPC
+    turn_in_quests = Shard.Quests.get_turn_in_quests_by_npc(user_id, npc.id)
+
+    # Build dialogue based on quest status
+    dialogue_lines = build_npc_dialogue(npc, npc_name, available_quests, turn_in_quests, user_id, game_state.character.id)
+
+    {dialogue_lines, game_state}
+  end
+
+  # Helper function to get filtered available quests
+  defp get_filtered_available_quests(user_id, npc_id, player_quests) do
+    available_quests = Shard.Quests.get_available_quests_by_giver_excluding_completed(user_id, npc_id)
+
+    # Additional filter to ensure we don't show quests that are in the local game state as accepted
+    # This helps catch timing issues where the database query might not reflect recent changes
+    Enum.filter(available_quests, fn quest ->
+      # Check if this quest is already in the player's quest log
+      not Enum.any?(player_quests, fn player_quest ->
+        player_quest[:id] == quest.id and
+          player_quest[:status] in ["In Progress", "Completed"]
+      end)
+    end)
   end
 
   # Execute deliver_quest command
