@@ -25,6 +25,15 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         # Get available quests from this NPC
         available_quests = Shard.Quests.get_available_quests_by_giver_excluding_completed(user_id, npc.id)
         
+        # Additional filter to ensure we don't show quests that are in the local game state as accepted
+        # This helps catch timing issues where the database query might not reflect recent changes
+        available_quests = Enum.filter(available_quests, fn quest ->
+          # Check if this quest is already in the player's quest log
+          not Enum.any?(game_state.quests, fn player_quest ->
+            player_quest[:id] == quest.id and player_quest[:status] in ["In Progress", "Completed"]
+          end)
+        end)
+        
         if length(available_quests) == 0 do
           npc_name = npc.name || "Unknown NPC"
           {["#{npc_name} has no quests available for you at this time."], game_state}
