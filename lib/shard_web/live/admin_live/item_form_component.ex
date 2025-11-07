@@ -2,7 +2,7 @@ defmodule ShardWeb.AdminLive.ItemFormComponent do
   use ShardWeb, :live_component
 
   import Ecto.Changeset, only: [get_field: 2]
-  
+
   alias Shard.Items
   alias Shard.Map, as: GameMap
 
@@ -83,15 +83,21 @@ defmodule ShardWeb.AdminLive.ItemFormComponent do
     changeset = Items.change_item(item)
     zones = GameMap.list_zones()
     zone_options = Enum.map(zones, &{&1.name, &1.id})
-    
+
     # Get rooms for the selected zone if one exists
     selected_zone_id = get_field(changeset, :zone_id)
-    room_options = if selected_zone_id do
-      rooms = GameMap.list_rooms_by_zone(selected_zone_id)
-      Enum.map(rooms, &{"#{&1.name} (#{&1.x_coordinate},#{&1.y_coordinate},#{&1.z_coordinate})", &1.id})
-    else
-      []
-    end
+
+    room_options =
+      if selected_zone_id do
+        rooms = GameMap.list_rooms_by_zone(selected_zone_id)
+
+        Enum.map(
+          rooms,
+          &{"#{&1.name} (#{&1.x_coordinate},#{&1.y_coordinate},#{&1.z_coordinate})", &1.id}
+        )
+      else
+        []
+      end
 
     {:ok,
      socket
@@ -112,12 +118,17 @@ defmodule ShardWeb.AdminLive.ItemFormComponent do
   end
 
   def handle_event("zone_changed", %{"item" => %{"zone_id" => zone_id}}, socket) do
-    room_options = if zone_id != "" do
-      rooms = GameMap.list_rooms_by_zone(String.to_integer(zone_id))
-      Enum.map(rooms, &{"#{&1.name} (#{&1.x_coordinate},#{&1.y_coordinate},#{&1.z_coordinate})", &1.id})
-    else
-      []
-    end
+    room_options =
+      if zone_id != "" do
+        rooms = GameMap.list_rooms_by_zone(String.to_integer(zone_id))
+
+        Enum.map(
+          rooms,
+          &{"#{&1.name} (#{&1.x_coordinate},#{&1.y_coordinate},#{&1.z_coordinate})", &1.id}
+        )
+      else
+        []
+      end
 
     {:noreply, assign(socket, :room_options, room_options)}
   end

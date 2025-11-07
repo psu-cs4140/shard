@@ -43,7 +43,7 @@ defmodule Shard.Repo.Migrations.AddVampireManorKeys do
       updated_at
     ) VALUES (
       (SELECT id FROM items WHERE name = 'Rusty Sewer Key' LIMIT 1),
-      '-1,1,0',
+      '1,1,0',
       1,
       NOW(),
       NOW()
@@ -98,7 +98,7 @@ defmodule Shard.Repo.Migrations.AddVampireManorKeys do
     );
     """
 
-    # Create the Library Key item and place it in the Garden S (1,1)
+    # Create the Library Key item and place it in the Freezer (4,-3)
     execute """
     INSERT INTO items (
       name,
@@ -139,14 +139,14 @@ defmodule Shard.Repo.Migrations.AddVampireManorKeys do
       updated_at
     ) VALUES (
       (SELECT id FROM items WHERE name = 'Library Key' LIMIT 1),
-      '1,1,0',
+      '4,-3,0',
       1,
       NOW(),
       NOW()
     );
     """
 
-    # Create the Study Key item and place it in the Kitchen (5,-3)
+    # Create the Study Key item and place it in the Library (-1,-2)
     execute """
     INSERT INTO items (
       name,
@@ -187,14 +187,14 @@ defmodule Shard.Repo.Migrations.AddVampireManorKeys do
       updated_at
     ) VALUES (
       (SELECT id FROM items WHERE name = 'Study Key' LIMIT 1),
-      '5,-3,0',
+      '-1,-2,0',
       1,
       NOW(),
       NOW()
     );
     """
 
-    # Create the Master Key item and place it in the Freezer (4,-3)
+    # Create the Master Key item and place it in the Freezer (-1,-3)
     execute """
     INSERT INTO items (
       name,
@@ -235,7 +235,7 @@ defmodule Shard.Repo.Migrations.AddVampireManorKeys do
       updated_at
     ) VALUES (
       (SELECT id FROM items WHERE name = 'Master Key' LIMIT 1),
-      '4,-3,0',
+      '-1,-3,0',
       1,
       NOW(),
       NOW()
