@@ -312,18 +312,13 @@ defmodule Shard.Quests do
    
     Enum.each(locked_quests, fn quest ->
       if check_quest_prerequisites(quest, completed_quest_titles) do
-       
         case update_quest(quest, %{status: "available"}) do
           {:ok, updated_quest} ->
-           
             :ok
 
           {:error, changeset} ->
-           
             :error
         end
-      else
-        
       end
     end)
   end
@@ -516,37 +511,30 @@ defmodule Shard.Quests do
         # Quest is only available if ALL conditions are met
         result = quest_not_taken and quest_type_available and status_available
 
-       
         result
       end)
 
-          label: "Final available quests"
-    )
+    IO.inspect(available_quests, label: "Final available quests")
 
     available_quests
   end
 
   defp check_quest_prerequisites(quest, completed_quest_titles) do
-    
-
     case quest.prerequisites do
       %{"completed_quests" => required_quests} when is_list(required_quests) ->
         result =
           Enum.all?(required_quests, fn required_quest ->
             match = required_quest in completed_quest_titles
-           
             match
           end)
 
-                result
+        result
 
       %{} ->
         # No prerequisites
-        
         true
 
       _ ->
-        
         false
     end
   end
