@@ -474,4 +474,169 @@ defmodule Shard.Quests do
   def change_quest(%Quest{} = quest, attrs \\ %{}) do
     Quest.changeset(quest, attrs)
   end
+
+  @doc """
+  Checks if a user can turn in a quest based on quest objectives.
+
+  ## Examples
+
+      iex> can_turn_in_quest?(user_id, quest_id)
+      {:ok, true}
+
+      iex> can_turn_in_quest?(user_id, quest_id)
+      {:error, :missing_items}
+
+  """
+  def can_turn_in_quest?(user_id, quest_id) do
+    # Get the user's character (assuming user_id maps to character_id for now)
+    character_id = user_id
+
+    with quest when not is_nil(quest) <- get_quest!(quest_id),
+         true <- quest_in_progress_by_user?(user_id, quest_id) do
+      case Shard.Items.character_has_quest_items?(character_id, quest.objectives) do
+        true -> {:ok, true}
+        false -> {:error, :missing_items}
+      end
+    else
+      nil -> {:error, :quest_not_found}
+      false -> {:error, :quest_not_in_progress}
+    end
+  end
+
+  @doc """
+  Gets quests that can be turned in to a specific NPC by a user.
+
+  ## Examples
+
+      iex> get_turn_in_quests_by_npc(user_id, npc_id)
+      [%Quest{}, ...]
+
+  """
+  def get_turn_in_quests_by_npc(user_id, npc_id) do
+    # Get all active quests for this user that can be turned in to this NPC
+    active_quests =
+      from(qa in QuestAcceptance,
+        join: q in Quest,
+        on: qa.quest_id == q.id,
+        where:
+          qa.user_id == ^user_id and
+            qa.status in ["accepted", "in_progress"] and
+            q.turn_in_npc_id == ^npc_id,
+        select: q,
+        preload: [:turn_in_npc]
+      )
+      |> Repo.all()
+
+    # Filter quests that can actually be turned in (objectives met)
+    character_id = user_id
+
+    Enum.filter(active_quests, fn quest ->
+      case can_turn_in_quest?(user_id, quest.id) do
+        {:ok, true} -> true
+        _ -> false
+      end
+    end)
+  end
+
+  @doc """
+  Processes quest turn-in, removing required items from inventory.
+
+  ## Examples
+
+      iex> turn_in_quest_with_items(user_id, quest_id)
+      {:ok, %QuestAcceptance{}}
+
+      iex> turn_in_quest_with_items(user_id, quest_id)
+      {:error, :missing_items}
+
+  """
+  def turn_in_quest_with_items(user_id, quest_id) do
+    character_id = user_id
+
+    case can_turn_in_quest?(user_id, quest_id) do
+      {:ok, true} ->
+        quest = get_quest!(quest_id)
+
+        Repo.transaction(fn ->
+          # Remove required items from inventory
+          case remove_quest_items_from_inventory(character_id, quest.objectives) do
+            :ok ->
+              # Complete the quest
+              case complete_quest(user_id, quest_id) do
+                {:ok, quest_acceptance} -> quest_acceptance
+                {:error, reason} -> Repo.rollback(reason)
+              end
+
+            {:error, reason} ->
+              Repo.rollback(reason)
+          end
+        end)
+
+      error ->
+        error
+    end
+  end
+
+  defp remove_quest_items_from_inventory(character_id, objectives) when is_map(objectives) do
+    case objectives do
+      %{"retrieve_items" => items} when is_list(items) ->
+        Enum.reduce_while(items, :ok, fn item, :ok ->
+          required_quantity = Map.get(item, "quantity", 1)
+
+          case remove_items_by_name(character_id, item["item_name"], required_quantity) do
+            :ok -> {:cont, :ok}
+            error -> {:halt, error}
+          end
+        end)
+
+      _ ->
+        # No items to remove
+        :ok
+    end
+  end
+
+  defp remove_quest_items_from_inventory(_character_id, _objectives), do: :ok
+
+  defp remove_items_by_name(character_id, item_name, quantity) do
+    # Get all inventory entries for this item
+    inventory_entries =
+      from(ci in CharacterInventory,
+        join: i in Item,
+        on: ci.item_id == i.id,
+        where: ci.character_id == ^character_id and i.name == ^item_name and ci.quantity > 0,
+        order_by: [asc: ci.id]
+      )
+      |> Repo.all()
+
+    total_available = Enum.sum(Enum.map(inventory_entries, & &1.quantity))
+
+    if total_available >= quantity do
+      remove_items_from_entries(inventory_entries, quantity)
+    else
+      {:error, :insufficient_items}
+    end
+  end
+
+  defp remove_items_from_entries([], 0), do: :ok
+  defp remove_items_from_entries([], _remaining), do: {:error, :insufficient_items}
+
+  defp remove_items_from_entries([entry | rest], remaining) when remaining > 0 do
+    cond do
+      entry.quantity >= remaining ->
+        # This entry has enough items
+        case Shard.Items.remove_item_from_inventory(entry.id, remaining) do
+          {:ok, _} -> :ok
+          error -> error
+        end
+
+      entry.quantity < remaining ->
+        # Remove all from this entry and continue
+        case Shard.Items.remove_item_from_inventory(entry.id, entry.quantity) do
+          {:ok, _} -> remove_items_from_entries(rest, remaining - entry.quantity)
+          error -> error
+        end
+    end
+  end
+
+  defp remove_items_from_entries(_entries, 0), do: :ok
 end
