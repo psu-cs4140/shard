@@ -250,6 +250,9 @@ defmodule Shard.Combat do
   end
 
   defp handle_monster_death(game_state, dead_monster, monsters_list) do
+    IO.puts("DEBUG: handle_monster_death called for monster: #{inspect(dead_monster[:name])}")
+    IO.puts("DEBUG: Full dead_monster data in handle_monster_death: #{inspect(dead_monster)}")
+    
     # Remove the monster from the list
     updated_monsters =
       Enum.reject(monsters_list, fn m ->
@@ -283,6 +286,7 @@ defmodule Shard.Combat do
   # NEW: Process loot drops when monster dies
   defp process_loot_drops(game_state, dead_monster) do
     IO.puts("DEBUG: Processing loot drops for monster: #{inspect(dead_monster[:name])}")
+    IO.puts("DEBUG: Full dead_monster data in process_loot_drops: #{inspect(dead_monster)}")
     IO.puts("DEBUG: Monster's potential_loot_drops: #{inspect(dead_monster[:potential_loot_drops])}")
     
     case dead_monster[:potential_loot_drops] do
