@@ -234,7 +234,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
 
       # Create the sewage slime monster with item drops
       {:ok, _slime} =
-        Monsters.create_monster(%{
+        Shard.Monsters.create_monster(%{
           name: "Sewage Slime",
           race: "Ooze",
           health: 20,
@@ -288,7 +288,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
 
       # Create the possessed suit of armor monster with item drops
       {:ok, _armor} =
-        Monsters.create_monster(%{
+        Shard.Monsters.create_monster(%{
           name: "Possessed Suit of Armor",
           race: "Undead",
           health: 35,
@@ -342,7 +342,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
 
       # Create The Count monster with item drops
       {:ok, _count} =
-        Monsters.create_monster(%{
+        Shard.Monsters.create_monster(%{
           name: "The Count",
           race: "Vampire",
           health: 80,
