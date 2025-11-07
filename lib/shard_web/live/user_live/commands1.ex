@@ -6,7 +6,10 @@ defmodule ShardWeb.UserLive.Commands1 do
   import ShardWeb.UserLive.Movement
   import ShardWeb.UserLive.QuestHandlers
   import ShardWeb.UserLive.Movement
-  import ShardWeb.UserLive.Commands2, except: [execute_talk_command: 2, execute_deliver_quest_command: 2, execute_quest_command: 2]
+
+  # import ShardWeb.UserLive.Commands2,
+  #   except: [execute_talk_command: 2, execute_deliver_quest_command: 2, execute_quest_command: 2]
+
   import ShardWeb.UserLive.Commands3
 
   import ShardWeb.UserLive.CommandParsers,
@@ -528,123 +531,129 @@ defmodule ShardWeb.UserLive.Commands1 do
       npc ->
         user_id = game_state.character.user_id
         npc_name = npc.name || "Unknown NPC"
-        
+
         # Check for available quests from this NPC
-        available_quests = Shard.Quests.get_available_quests_by_giver_excluding_completed(user_id, npc.id)
-        
+        available_quests =
+          Shard.Quests.get_available_quests_by_giver_excluding_completed(user_id, npc.id)
+
         # Additional filter to ensure we don't show quests that are in the local game state as accepted
         # This helps catch timing issues where the database query might not reflect recent changes
-        available_quests = Enum.filter(available_quests, fn quest ->
-          # Check if this quest is already in the player's quest log
-          not Enum.any?(game_state.quests, fn player_quest ->
-            player_quest[:id] == quest.id and player_quest[:status] in ["In Progress", "Completed"]
+        available_quests =
+          Enum.filter(available_quests, fn quest ->
+            # Check if this quest is already in the player's quest log
+            not Enum.any?(game_state.quests, fn player_quest ->
+              player_quest[:id] == quest.id and
+                player_quest[:status] in ["In Progress", "Completed"]
+            end)
           end)
-        end)
-        
+
         # Check for quests that can be turned in to this NPC
         turn_in_quests = Shard.Quests.get_turn_in_quests_by_npc(user_id, npc.id)
-        
+
         # Debug logging to see what's happening
-        IO.inspect(%{
-          npc_id: npc.id,
-          user_id: user_id,
-          available_quests_count: length(available_quests),
-          turn_in_quests_count: length(turn_in_quests),
-          available_quest_titles: Enum.map(available_quests, & &1.title),
-          turn_in_quest_titles: Enum.map(turn_in_quests, & &1.title),
-          player_quest_titles: Enum.map(game_state.quests, & &1[:title])
-        }, label: "Talk command quest check")
-        
+
         # Build dialogue based on quest status
         dialogue_lines = []
-        
+
         # Start with basic greeting
         base_dialogue = npc.dialogue || "Hello there, traveler!"
         dialogue_lines = dialogue_lines ++ ["#{npc_name} says: \"#{base_dialogue}\""]
-        
+
         # Check for quest turn-ins first (higher priority)
-        dialogue_lines = 
+        dialogue_lines =
           if length(turn_in_quests) > 0 do
             # Check which quests can actually be turned in (objectives completed)
-            completable_quests = 
+            completable_quests =
               Enum.filter(turn_in_quests, fn quest ->
-                case Shard.Quests.can_turn_in_quest_with_character_id?(user_id, game_state.character.id, quest.id) do
+                case Shard.Quests.can_turn_in_quest_with_character_id?(
+                       user_id,
+                       game_state.character.id,
+                       quest.id
+                     ) do
                   {:ok, true} -> true
                   _ -> false
                 end
               end)
-            
+
             # Check which quests are in progress but not yet completable
-            in_progress_quests = 
+            in_progress_quests =
               Enum.filter(turn_in_quests, fn quest ->
-                case Shard.Quests.can_turn_in_quest_with_character_id?(user_id, game_state.character.id, quest.id) do
+                case Shard.Quests.can_turn_in_quest_with_character_id?(
+                       user_id,
+                       game_state.character.id,
+                       quest.id
+                     ) do
                   {:error, :missing_items} -> true
                   _ -> false
                 end
               end)
-            
+
             updated_lines = dialogue_lines
-            
+
             # Show completable quests first
-            updated_lines = 
+            updated_lines =
               if length(completable_quests) > 0 do
                 quest_names = Enum.map(completable_quests, & &1.title)
                 quest_list = Enum.join(quest_names, ", ")
-                
-                updated_lines ++ [
-                  "",
-                  "#{npc_name} notices you have completed some tasks:",
-                  "\"Excellent! I see you have completed: #{quest_list}\"",
-                  "\"Use 'deliver_quest \"#{npc_name}\"' to turn in your completed quests.\""
-                ]
+
+                updated_lines ++
+                  [
+                    "",
+                    "#{npc_name} notices you have completed some tasks:",
+                    "\"Excellent! I see you have completed: #{quest_list}\"",
+                    "\"Use 'deliver_quest \"#{npc_name}\"' to turn in your completed quests.\""
+                  ]
               else
                 updated_lines
               end
-            
+
             # Show in-progress quests that need more work
-            updated_lines = 
+            updated_lines =
               if length(in_progress_quests) > 0 do
                 quest_names = Enum.map(in_progress_quests, & &1.title)
                 quest_list = Enum.join(quest_names, ", ")
-                
-                updated_lines ++ [
-                  "",
-                  "#{npc_name} checks on your progress:",
-                  "\"I see you're still working on: #{quest_list}\"",
-                  "\"Come back when you have everything I need.\""
-                ]
+
+                updated_lines ++
+                  [
+                    "",
+                    "#{npc_name} checks on your progress:",
+                    "\"I see you're still working on: #{quest_list}\"",
+                    "\"Come back when you have everything I need.\""
+                  ]
               else
                 updated_lines
               end
-            
+
             updated_lines
           else
             dialogue_lines
           end
-        
+
         # Check for available quests
-        dialogue_lines = 
+        dialogue_lines =
           if length(available_quests) > 0 do
             quest_names = Enum.map(available_quests, & &1.title)
             quest_list = Enum.join(quest_names, ", ")
-            
-            dialogue_lines ++ [
-              "",
-              "#{npc_name} has tasks available for you:",
-              "\"I have some work that needs doing: #{quest_list}\"",
-              "\"Use 'quest \"#{npc_name}\"' to learn more about these tasks.\""
-            ]
+
+            dialogue_lines ++
+              [
+                "",
+                "#{npc_name} has tasks available for you:",
+                "\"I have some work that needs doing: #{quest_list}\"",
+                "\"Use 'quest \"#{npc_name}\"' to learn more about these tasks.\""
+              ]
           else
             dialogue_lines
           end
-        
+
         # If no quests available and none to turn in, just show basic dialogue
-        dialogue_lines = 
+        dialogue_lines =
           if length(available_quests) == 0 and length(turn_in_quests) == 0 do
-            dialogue_lines ++ [
-              "",
-              "#{npc_name} has no tasks for you at this time."
-            ]
+            dialogue_lines ++
+              [
+                "",
+                "#{npc_name} has no tasks for you at this time."
+              ]
           else
             dialogue_lines
           end
@@ -673,46 +682,47 @@ defmodule ShardWeb.UserLive.Commands1 do
       npc ->
         user_id = game_state.character.user_id
         character_id = game_state.character.id
-        
+
         # Get quests that can be turned in to this NPC
         turn_in_quests = Shard.Quests.get_turn_in_quests_by_npc(user_id, npc.id)
-        
+
         if length(turn_in_quests) == 0 do
-          {["#{npc.name || "The NPC"} says: \"You don't have any completed quests for me.\""], game_state}
+          {["#{npc.name || "The NPC"} says: \"You don't have any completed quests for me.\""],
+           game_state}
         else
           # Process each quest that can be turned in
-          {results, completed_quest_ids} = 
+          {results, completed_quest_ids} =
             Enum.reduce(turn_in_quests, {[], []}, fn quest, {results_acc, completed_ids_acc} ->
               case Shard.Quests.turn_in_quest_with_character_id(user_id, character_id, quest.id) do
                 {:ok, _quest_acceptance} ->
                   result = "Successfully turned in '#{quest.title}'"
                   {[result | results_acc], [quest.id | completed_ids_acc]}
-                
+
                 {:error, :missing_items} ->
                   result = "Cannot turn in '#{quest.title}' - you don't have the required items"
                   {[result | results_acc], completed_ids_acc}
-                
+
                 {:error, reason} ->
                   result = "Failed to turn in '#{quest.title}': #{inspect(reason)}"
                   {[result | results_acc], completed_ids_acc}
               end
             end)
-          
+
           # Reverse results to maintain original order
           results = Enum.reverse(results)
-          
+
           # Build response message
           npc_name = npc.name || "The NPC"
           response_lines = ["#{npc_name} examines your completed tasks:"] ++ results
-          
+
           # Update game state to reflect changes
-          updated_game_state = 
+          updated_game_state =
             if length(completed_quest_ids) > 0 do
               # Reload character inventory to reflect item removal
               inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
-              
+
               # Update quest status in local game state
-              updated_quests = 
+              updated_quests =
                 Enum.map(game_state.quests, fn quest ->
                   if quest[:id] in completed_quest_ids do
                     %{quest | status: "Completed", progress: "100% complete"}
@@ -720,12 +730,12 @@ defmodule ShardWeb.UserLive.Commands1 do
                     quest
                   end
                 end)
-              
+
               %{game_state | inventory_items: inventory_items, quests: updated_quests}
             else
               game_state
             end
-          
+
           {response_lines, updated_game_state}
         end
     end
