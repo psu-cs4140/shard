@@ -607,6 +607,7 @@ defmodule Shard.Quests do
 
   defp remove_items_from_entries([], 0), do: :ok
   defp remove_items_from_entries([], _remaining), do: {:error, :insufficient_items}
+  defp remove_items_from_entries(_entries, 0), do: :ok
 
   defp remove_items_from_entries([entry | rest], remaining) when remaining > 0 do
     cond do
@@ -631,6 +632,4 @@ defmodule Shard.Quests do
       error -> error
     end
   end
-
-  defp remove_items_from_entries(_entries, 0), do: :ok
 end
