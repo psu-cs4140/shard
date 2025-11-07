@@ -9,12 +9,12 @@ defmodule Shard.Seeds.DamageTypesSeeder do
 
   defp insert_damage_type(attrs) do
     case Repo.get_by(DamageTypes, name: attrs.name) do
-      nil -> 
+      nil ->
         %DamageTypes{}
         |> DamageTypes.changeset(attrs)
         |> Repo.insert!()
-      
-      _ -> 
+
+      _ ->
         :already_exists
     end
   end

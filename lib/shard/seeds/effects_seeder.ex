@@ -9,12 +9,12 @@ defmodule Shard.Seeds.EffectsSeeder do
 
   defp insert_effect(attrs) do
     case Repo.get_by(Effects, name: attrs.name) do
-      nil -> 
+      nil ->
         %Effects{}
         |> Effects.changeset(attrs)
         |> Repo.insert!()
-      
-      _ -> 
+
+      _ ->
         :already_exists
     end
   end
