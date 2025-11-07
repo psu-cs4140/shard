@@ -115,13 +115,22 @@ defmodule ShardWeb.UserLive.QuestHandlers do
 
   # Attempt to accept the quest in the database
   defp attempt_quest_acceptance(user_id, quest_id) do
-    try do
-      Shard.Quests.accept_quest(user_id, quest_id)
-    rescue
-      error ->
-        # IO.inspect(error, label: "Error accepting quest") 
-        {:error, :database_error}
+    case Shard.Quests.accept_quest(user_id, quest_id) do
+      {:ok, quest_acceptance} -> 
+        {:ok, quest_acceptance}
+      
+      {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
+        # This is a validation error, not a database connection error
+        {:error, changeset}
+      
+      {:error, reason} ->
+        # This is some other kind of error
+        {:error, reason}
     end
+  rescue
+    error ->
+      # IO.inspect(error, label: "Error accepting quest") 
+      {:error, :database_error}
   end
 
   # Handle the result of quest acceptance attempt
