@@ -259,7 +259,7 @@ defmodule Shard.Quests do
       quest_acceptance ->
         result =
           quest_acceptance
-          |> QuestAcceptance.changeset(%{status: "completed", completed_at: DateTime.utc_now()})
+          |> QuestAcceptance.changeset(%{status: "completed", completed_at: DateTime.utc_now() |> DateTime.truncate(:second)})
           |> Repo.update()
 
         # After completing a quest, check if any locked quests should be unlocked

@@ -37,7 +37,7 @@ defmodule Shard.Quests.QuestAcceptance do
     |> cast(attrs, [:user_id, :quest_id])
     |> validate_required([:user_id, :quest_id])
     |> put_change(:status, "accepted")
-    |> put_change(:accepted_at, DateTime.utc_now())
+    |> put_change(:accepted_at, DateTime.utc_now() |> DateTime.truncate(:second))
     |> validate_quest_not_in_progress()
     |> unique_constraint([:user_id, :quest_id])
     |> foreign_key_constraint(:user_id)
