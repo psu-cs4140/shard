@@ -252,7 +252,7 @@ defmodule Shard.Combat do
   defp handle_monster_death(game_state, dead_monster, monsters_list) do
     IO.puts("DEBUG: handle_monster_death called for monster: #{inspect(dead_monster[:name])}")
     IO.puts("DEBUG: Full dead_monster data in handle_monster_death: #{inspect(dead_monster)}")
-    
+
     # Remove the monster from the list
     updated_monsters =
       Enum.reject(monsters_list, fn m ->
@@ -287,8 +287,11 @@ defmodule Shard.Combat do
   defp process_loot_drops(game_state, dead_monster) do
     IO.puts("DEBUG: Processing loot drops for monster: #{inspect(dead_monster[:name])}")
     IO.puts("DEBUG: Full dead_monster data in process_loot_drops: #{inspect(dead_monster)}")
-    IO.puts("DEBUG: Monster's potential_loot_drops: #{inspect(dead_monster[:potential_loot_drops])}")
-    
+
+    IO.puts(
+      "DEBUG: Monster's potential_loot_drops: #{inspect(dead_monster[:potential_loot_drops])}"
+    )
+
     case dead_monster[:potential_loot_drops] do
       %{} = drops_map ->
         result = process_drops_map(game_state, drops_map)
@@ -314,21 +317,25 @@ defmodule Shard.Combat do
   end
 
   defp process_single_drop(game_state, item_id_str, drop_info, acc) do
-    IO.puts("DEBUG: Processing single drop - item_id_str: #{inspect(item_id_str)}, drop_info: #{inspect(drop_info)}")
-    
+    IO.puts(
+      "DEBUG: Processing single drop - item_id_str: #{inspect(item_id_str)}, drop_info: #{inspect(drop_info)}"
+    )
+
     # Convert item_id string back to integer
     case Integer.parse(item_id_str) do
       {item_id, ""} ->
         chance = Map.get(drop_info, :chance, 1.0)
         min_qty = Map.get(drop_info, :min_quantity, 1)
         max_qty = Map.get(drop_info, :max_quantity, 1)
-        
-        IO.puts("DEBUG: Parsed item_id: #{item_id}, chance: #{chance}, min_qty: #{min_qty}, max_qty: #{max_qty}")
+
+        IO.puts(
+          "DEBUG: Parsed item_id: #{item_id}, chance: #{chance}, min_qty: #{min_qty}, max_qty: #{max_qty}"
+        )
 
         # Check if item drops
         random_value = :rand.uniform()
         drops = random_value <= chance
-        
+
         IO.puts("DEBUG: Random value: #{random_value}, drops: #{drops}")
 
         if drops do
@@ -337,7 +344,7 @@ defmodule Shard.Combat do
           IO.puts("DEBUG: Item did not drop due to chance")
           acc
         end
-        
+
       :error ->
         IO.puts("DEBUG: Failed to parse item_id_str: #{inspect(item_id_str)}")
         acc
@@ -347,7 +354,7 @@ defmodule Shard.Combat do
   defp process_successful_drop(game_state, item_id, min_qty, max_qty, acc) do
     # Calculate quantity
     quantity = calculate_drop_quantity(min_qty, max_qty)
-    
+
     IO.puts("DEBUG: Calculated drop quantity: #{quantity}")
 
     # Add item to player inventory
@@ -361,7 +368,10 @@ defmodule Shard.Combat do
         create_loot_message(item_id, quantity, acc)
 
       {:error, reason} ->
-        IO.puts("DEBUG: Failed to add item ID #{item_id} to inventory. Reason: #{inspect(reason)}")
+        IO.puts(
+          "DEBUG: Failed to add item ID #{item_id} to inventory. Reason: #{inspect(reason)}"
+        )
+
         # Handle error (log it, maybe drop in room instead)
         acc
     end
@@ -377,10 +387,11 @@ defmodule Shard.Combat do
 
   defp create_loot_message(item_id, quantity, acc) do
     case Shard.Items.get_item(item_id) do
-      nil -> 
+      nil ->
         IO.puts("DEBUG: Could not find item with ID #{item_id} in database")
         acc
-      item -> 
+
+      item ->
         IO.puts("DEBUG: Found item #{item.name} for loot message")
         ["You find #{quantity} #{item.name} on the corpse." | acc]
     end
