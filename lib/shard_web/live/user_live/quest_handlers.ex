@@ -113,7 +113,6 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       in_progress || completed
     rescue
       _error ->
-        # IO.inspect(error, label: "Error checking if quest already accepted")
         false
     end
   end
@@ -144,17 +143,16 @@ defmodule ShardWeb.UserLive.QuestHandlers do
 
       {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
         # Log the changeset errors for debugging
-        IO.inspect(changeset.errors, label: "Quest acceptance validation errors")
+
         {:error, changeset}
 
       {:error, reason} ->
         # Log the specific error reason
-        IO.inspect(reason, label: "Quest acceptance error reason")
+
         {:error, reason}
     end
   rescue
     error ->
-      IO.inspect(error, label: "Quest acceptance database error")
       {:error, :database_error}
   end
 
@@ -259,15 +257,6 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   # Handle database error fallback
   defp handle_database_error_fallback(game_state, quest, npc_name, quest_title) do
     # Log more details about the quest and user for debugging
-    IO.inspect(
-      %{
-        user_id: game_state.character.user_id,
-        quest_id: quest.id,
-        quest_title: quest_title,
-        npc_name: npc_name
-      },
-      label: "Quest acceptance failed - details"
-    )
 
     response = [
       "#{npc_name} looks troubled.",
@@ -368,7 +357,6 @@ defmodule ShardWeb.UserLive.QuestHandlers do
             end
           rescue
             _error ->
-              # IO.inspect(error, label: "Error getting quest #{quest.id} from database")
               false
           end
         else
@@ -377,7 +365,6 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       end)
     rescue
       _error ->
-        # IO.inspect(error, label: "Error finding deliverable quest")
         nil
     end
   end
@@ -417,7 +404,6 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       Repo.get(Quest, quest_id)
     rescue
       _error ->
-        # IO.inspect(error, label: "Error getting quest #{quest_id} from database")
         nil
     end
   end
@@ -436,7 +422,6 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       |> Map.update(:experience, 0, &(&1 + exp_reward))
     rescue
       _error ->
-        # IO.inspect(error, label: "Error updating player stats")
         player_stats
     end
   end
@@ -447,7 +432,6 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       check_level_up(updated_stats)
     rescue
       _error ->
-        # IO.inspect(error, label: "Error checking level up")
         {updated_stats, nil}
     end
   end
@@ -464,7 +448,6 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       end
     rescue
       _error ->
-        # IO.inspect(error, label: "Error completing quest in database")
         mark_quest_as_completed(quests, quest_id)
     end
   end
@@ -531,7 +514,6 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       end
     rescue
       _error ->
-        # IO.inspect(error, label: "Error processing item rewards")
         response
     end
   end
