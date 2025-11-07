@@ -476,7 +476,7 @@ defmodule Shard.Items do
     from(ci in CharacterInventory,
       join: i in Item,
       on: ci.item_id == i.id,
-      where: ci.character_id == ^character_id and i.name == ^item_name and ci.quantity > 0
+      where: ci.character_id == ^character_id and ilike(i.name, ^item_name) and ci.quantity > 0
     )
     |> Repo.exists?()
   end
@@ -498,7 +498,7 @@ defmodule Shard.Items do
       from(ci in CharacterInventory,
         join: i in Item,
         on: ci.item_id == i.id,
-        where: ci.character_id == ^character_id and i.name == ^item_name,
+        where: ci.character_id == ^character_id and ilike(i.name, ^item_name),
         select: sum(ci.quantity)
       )
       |> Repo.one()

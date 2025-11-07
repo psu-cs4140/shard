@@ -707,7 +707,7 @@ defmodule Shard.Quests do
       from(ci in CharacterInventory,
         join: i in Item,
         on: ci.item_id == i.id,
-        where: ci.character_id == ^character_id and i.name == ^item_name and ci.quantity > 0,
+        where: ci.character_id == ^character_id and ilike(i.name, ^item_name) and ci.quantity > 0,
         order_by: [asc: ci.id]
       )
       |> Repo.all()
