@@ -418,44 +418,8 @@ defmodule Shard.Combat do
 
   # Helper function to add items to character inventory
   defp add_item_to_character_inventory(character_id, item_id, quantity) do
-    # Get the item to verify it exists
-    case Shard.Items.get_item(item_id) do
-      nil ->
-        {:error, "Item not found"}
-
-      item ->
-        # Create inventory entry using the proper Items context function
-        attrs = %{
-          character_id: character_id,
-          item_id: item_id,
-          quantity: quantity,
-          slot_position: find_next_available_slot(character_id)
-        }
-
-        # Use the correct function name from the Items context
-        case Shard.Repo.insert(Shard.Items.CharacterInventory.changeset(%Shard.Items.CharacterInventory{}, attrs)) do
-          {:ok, inventory_item} ->
-            {:ok, inventory_item}
-
-          {:error, changeset} ->
-            {:error, changeset}
-        end
-    end
-  end
-
-  # Helper function to find next available inventory slot
-  defp find_next_available_slot(character_id) do
-    import Ecto.Query
-
-    used_slots =
-      from(ci in Shard.Items.CharacterInventory,
-        where: ci.character_id == ^character_id,
-        select: ci.slot_position
-      )
-      |> Shard.Repo.all()
-      |> MapSet.new()
-
-    Enum.find(0..99, fn slot -> not MapSet.member?(used_slots, slot) end) || 0
+    # Use the existing Items context function that handles stackable/non-stackable items
+    Shard.Items.add_item_to_inventory(character_id, item_id, quantity)
   end
 
   # NEW: Check for special damage effect
