@@ -230,7 +230,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
             existing
         end
 
-      # Create the sewage slime monster with guaranteed inventory drops
+      # Create the sewage slime monster with item drops
       {:ok, _slime} =
         Monsters.create_monster(%{
           name: "Sewage Slime",
@@ -242,9 +242,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
           level: 2,
           description: "A disgusting blob of sewage and filth that has gained sentience.",
           location_id: sewer_lair.id,
-          guaranteed_drops: %{
-            "#{slippers_item.id}" => %{quantity: 1, add_to_inventory: true}
-          }
+          item_drops: [%{item_id: slippers_item.id, drop_rate: 100, quantity: 1}]
         })
 
       IO.puts("Successfully created Sewage Slime in Sewer Lair")
