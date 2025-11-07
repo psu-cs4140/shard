@@ -67,7 +67,6 @@ defmodule Shard.Quests.QuestAcceptance do
     unless user_id && quest_id do
       changeset
     else
-
       # Get the quest to check its type
       case Shard.Repo.get(Shard.Quests.Quest, quest_id) do
         nil -> changeset
