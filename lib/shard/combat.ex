@@ -324,9 +324,10 @@ defmodule Shard.Combat do
     # Convert item_id string back to integer
     case Integer.parse(item_id_str) do
       {item_id, ""} ->
-        chance = Map.get(drop_info, :chance, 1.0)
-        min_qty = Map.get(drop_info, :min_quantity, 1)
-        max_qty = Map.get(drop_info, :max_quantity, 1)
+        # Use string keys since data comes from database
+        chance = Map.get(drop_info, "chance", 1.0)
+        min_qty = Map.get(drop_info, "min_quantity", 1)
+        max_qty = Map.get(drop_info, "max_quantity", 1)
 
         IO.puts(
           "DEBUG: Parsed item_id: #{item_id}, chance: #{chance}, min_qty: #{min_qty}, max_qty: #{max_qty}"
