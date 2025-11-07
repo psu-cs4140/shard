@@ -558,19 +558,23 @@ defmodule Shard.Quests do
   defp remove_quest_items_from_inventory(character_id, objectives) when is_map(objectives) do
     case objectives do
       %{"retrieve_items" => items} when is_list(items) ->
-        Enum.reduce_while(items, :ok, fn item, :ok ->
-          required_quantity = Map.get(item, "quantity", 1)
-
-          case remove_items_by_name(character_id, item["item_name"], required_quantity) do
-            :ok -> {:cont, :ok}
-            error -> {:halt, error}
-          end
-        end)
+        remove_all_quest_items(character_id, items)
 
       _ ->
         # No items to remove
         :ok
     end
+  end
+
+  defp remove_all_quest_items(character_id, items) do
+    Enum.reduce_while(items, :ok, fn item, :ok ->
+      required_quantity = Map.get(item, "quantity", 1)
+
+      case remove_items_by_name(character_id, item["item_name"], required_quantity) do
+        :ok -> {:cont, :ok}
+        error -> {:halt, error}
+      end
+    end)
   end
 
   defp remove_quest_items_from_inventory(_character_id, _objectives), do: :ok
@@ -601,18 +605,24 @@ defmodule Shard.Quests do
   defp remove_items_from_entries([entry | rest], remaining) when remaining > 0 do
     cond do
       entry.quantity >= remaining ->
-        # This entry has enough items
-        case Shard.Items.remove_item_from_inventory(entry.id, remaining) do
-          {:ok, _} -> :ok
-          error -> error
-        end
+        remove_sufficient_items(entry.id, remaining)
 
       entry.quantity < remaining ->
-        # Remove all from this entry and continue
-        case Shard.Items.remove_item_from_inventory(entry.id, entry.quantity) do
-          {:ok, _} -> remove_items_from_entries(rest, remaining - entry.quantity)
-          error -> error
-        end
+        remove_partial_items(entry, rest, remaining)
+    end
+  end
+
+  defp remove_sufficient_items(entry_id, quantity) do
+    case Shard.Items.remove_item_from_inventory(entry_id, quantity) do
+      {:ok, _} -> :ok
+      error -> error
+    end
+  end
+
+  defp remove_partial_items(entry, rest, remaining) do
+    case Shard.Items.remove_item_from_inventory(entry.id, entry.quantity) do
+      {:ok, _} -> remove_items_from_entries(rest, remaining - entry.quantity)
+      error -> error
     end
   end
 
