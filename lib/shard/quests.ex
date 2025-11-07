@@ -210,32 +210,34 @@ defmodule Shard.Quests do
     cond do
       quest_completed_by_user?(user_id, quest_id) ->
         {:error, :quest_already_completed}
-      
+
       quest_in_progress_by_user?(user_id, quest_id) ->
         {:error, :quest_already_accepted}
-      
+
       quest_ever_accepted_by_user?(user_id, quest_id) ->
         # Additional safety check - if quest was ever accepted, don't allow duplicate
         {:error, :quest_already_accepted}
-      
+
       true ->
         # Log the attempt for debugging
         IO.inspect(%{user_id: user_id, quest_id: quest_id}, label: "Attempting to accept quest")
-        
-        changeset = %QuestAcceptance{}
-        |> QuestAcceptance.accept_changeset(%{user_id: user_id, quest_id: quest_id})
-        
+
+        changeset =
+          %QuestAcceptance{}
+          |> QuestAcceptance.accept_changeset(%{user_id: user_id, quest_id: quest_id})
+
         # Log the changeset before insertion
         IO.inspect(changeset.valid?, label: "Changeset valid?")
+
         if not changeset.valid? do
           IO.inspect(changeset.errors, label: "Changeset errors")
         end
-        
+
         case Repo.insert(changeset) do
           {:ok, quest_acceptance} ->
             IO.inspect("Quest acceptance successful", label: "Success")
             {:ok, quest_acceptance}
-          
+
           {:error, changeset} ->
             IO.inspect(changeset.errors, label: "Database insertion failed")
             {:error, changeset}
@@ -268,7 +270,10 @@ defmodule Shard.Quests do
       quest_acceptance ->
         result =
           quest_acceptance
-          |> QuestAcceptance.changeset(%{status: "completed", completed_at: DateTime.utc_now() |> DateTime.truncate(:second)})
+          |> QuestAcceptance.changeset(%{
+            status: "completed",
+            completed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+          })
           |> Repo.update()
 
         # After completing a quest, check if any locked quests should be unlocked
@@ -285,7 +290,7 @@ defmodule Shard.Quests do
 
   defp unlock_eligible_quests(user_id) do
     IO.inspect(user_id, label: "Unlocking quests for user")
-    
+
     # Get completed quest titles for this user
     completed_quest_titles =
       from(qa in QuestAcceptance,
@@ -310,11 +315,13 @@ defmodule Shard.Quests do
     Enum.each(locked_quests, fn quest ->
       if check_quest_prerequisites(quest, completed_quest_titles) do
         IO.inspect("Unlocking quest: #{quest.title}", label: "Quest unlock")
+
         case update_quest(quest, %{status: "available"}) do
-          {:ok, updated_quest} -> 
+          {:ok, updated_quest} ->
             IO.inspect("Successfully unlocked: #{updated_quest.title}", label: "Success")
             :ok
-          {:error, changeset} -> 
+
+          {:error, changeset} ->
             IO.inspect(changeset.errors, label: "Failed to unlock quest")
             :error
         end
@@ -468,70 +475,91 @@ defmodule Shard.Quests do
       )
       |> Repo.all()
 
-    IO.inspect(%{
-      user_id: user_id,
-      npc_id: npc_id,
-      completed_non_repeatable_quest_ids: completed_non_repeatable_quest_ids,
-      active_quest_ids: active_quest_ids,
-      completed_quest_titles: completed_quest_titles,
-      active_quest_types: active_quest_types,
-      all_npc_quests: Enum.map(all_npc_quests, &{&1.id, &1.title, &1.status, &1.prerequisites, &1.is_repeatable})
-    }, label: "Available quests debug")
+    IO.inspect(
+      %{
+        user_id: user_id,
+        npc_id: npc_id,
+        completed_non_repeatable_quest_ids: completed_non_repeatable_quest_ids,
+        active_quest_ids: active_quest_ids,
+        completed_quest_titles: completed_quest_titles,
+        active_quest_types: active_quest_types,
+        all_npc_quests:
+          Enum.map(
+            all_npc_quests,
+            &{&1.id, &1.title, &1.status, &1.prerequisites, &1.is_repeatable}
+          )
+      },
+      label: "Available quests debug"
+    )
 
     # Filter quests based on all conditions
-    available_quests = Enum.filter(all_npc_quests, fn quest ->
-      # Check if quest is already completed (and not repeatable) or currently active
-      quest_not_taken = quest.id not in completed_non_repeatable_quest_ids and quest.id not in active_quest_ids
-      
-      # Check if user already has an active quest of this type
-      quest_type_available = quest.quest_type not in active_quest_types
+    available_quests =
+      Enum.filter(all_npc_quests, fn quest ->
+        # Check if quest is already completed (and not repeatable) or currently active
+        quest_not_taken =
+          quest.id not in completed_non_repeatable_quest_ids and quest.id not in active_quest_ids
 
-      # Check status and prerequisites
-      status_available =
-        case quest.status do
-          "available" ->
-            true
+        # Check if user already has an active quest of this type
+        quest_type_available = quest.quest_type not in active_quest_types
 
-          "locked" ->
-            # Check if prerequisites are met
-            check_quest_prerequisites(quest, completed_quest_titles)
+        # Check status and prerequisites
+        status_available =
+          case quest.status do
+            "available" ->
+              true
 
-          _ ->
-            false
-        end
+            "locked" ->
+              # Check if prerequisites are met
+              check_quest_prerequisites(quest, completed_quest_titles)
 
-      # Quest is only available if ALL conditions are met
-      result = quest_not_taken and quest_type_available and status_available
-      IO.inspect(%{
-        quest: quest.title,
-        quest_id: quest.id,
-        quest_not_taken: quest_not_taken,
-        quest_type_available: quest_type_available,
-        status_available: status_available,
-        final_result: result
-      }, label: "Quest availability check")
-      
-      result
-    end)
+            _ ->
+              false
+          end
 
-    IO.inspect(Enum.map(available_quests, &{&1.title, &1.status}), label: "Final available quests")
+        # Quest is only available if ALL conditions are met
+        result = quest_not_taken and quest_type_available and status_available
+
+        IO.inspect(
+          %{
+            quest: quest.title,
+            quest_id: quest.id,
+            quest_not_taken: quest_not_taken,
+            quest_type_available: quest_type_available,
+            status_available: status_available,
+            final_result: result
+          },
+          label: "Quest availability check"
+        )
+
+        result
+      end)
+
+    IO.inspect(Enum.map(available_quests, &{&1.title, &1.status}),
+      label: "Final available quests"
+    )
+
     available_quests
   end
 
   defp check_quest_prerequisites(quest, completed_quest_titles) do
-    IO.inspect(%{
-      quest_title: quest.title,
-      prerequisites: quest.prerequisites,
-      completed_titles: completed_quest_titles
-    }, label: "Checking prerequisites")
+    IO.inspect(
+      %{
+        quest_title: quest.title,
+        prerequisites: quest.prerequisites,
+        completed_titles: completed_quest_titles
+      },
+      label: "Checking prerequisites"
+    )
 
     case quest.prerequisites do
       %{"completed_quests" => required_quests} when is_list(required_quests) ->
-        result = Enum.all?(required_quests, fn required_quest ->
-          match = required_quest in completed_quest_titles
-          IO.inspect(%{required: required_quest, match: match}, label: "Prerequisite check")
-          match
-        end)
+        result =
+          Enum.all?(required_quests, fn required_quest ->
+            match = required_quest in completed_quest_titles
+            IO.inspect(%{required: required_quest, match: match}, label: "Prerequisite check")
+            match
+          end)
+
         IO.inspect(result, label: "Prerequisites met")
         result
 
@@ -626,7 +654,9 @@ defmodule Shard.Quests do
   def can_turn_in_quest?(user_id, quest_id) do
     # Get the user's character ID from the Characters context
     case Shard.Characters.get_character_by_user_id(user_id) do
-      nil -> {:error, :character_not_found}
+      nil ->
+        {:error, :character_not_found}
+
       character ->
         character_id = character.id
 
@@ -706,7 +736,9 @@ defmodule Shard.Quests do
   """
   def turn_in_quest_with_items(user_id, quest_id) do
     case Shard.Characters.get_character_by_user_id(user_id) do
-      nil -> {:error, :character_not_found}
+      nil ->
+        {:error, :character_not_found}
+
       character ->
         character_id = character.id
 
