@@ -43,7 +43,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
             end)
           end)
 
-        if length(available_quests) == 0 do
+        if Enum.empty?(available_quests) do
           npc_name = npc.name || "Unknown NPC"
           {["#{npc_name} has no quests available for you at this time."], game_state}
         else
