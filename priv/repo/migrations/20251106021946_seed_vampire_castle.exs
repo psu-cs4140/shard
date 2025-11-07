@@ -242,7 +242,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
           level: 2,
           description: "A disgusting blob of sewage and filth that has gained sentience.",
           location_id: sewer_lair.id,
-          item_drops: [%{item_id: slippers_item.id, drop_rate: 100, quantity: 1}]
+          item_drops: [%{item_id: slippers_item.id, drop_rate: 0.9, quantity: 1}]
         })
 
       IO.puts("Successfully created Sewage Slime in Sewer Lair")
