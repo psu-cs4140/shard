@@ -8,8 +8,13 @@ defmodule Shard.Repo.Migrations.SeedVampireManorKeys do
   defp seed_keys_up do
     alias Shard.Repo
     alias Shard.Items.Item
+    alias Shard.Items
+    alias Shard.Map.{Zone, Room}
 
     IO.puts("Creating Vampire Manor key items...")
+
+    # Get the Vampire's Manor zone
+    manor_zone = Repo.get_by!(Zone, slug: "vampires-manor")
 
     # Define the key items needed for the vampire manor
     key_items = [
@@ -98,7 +103,16 @@ defmodule Shard.Repo.Migrations.SeedVampireManorKeys do
       }
     ]
 
-    # Create each key item
+    # Define key placement locations based on manor layout
+    key_placements = [
+      {"Rusty Sewer Key", {1, 1}},    # Garden S - hidden in the garden
+      {"Manor Key", {-4, 1}},         # Sewer Lair - guarded location
+      {"Library Key", {4, -3}},       # Freezer - cold storage area
+      {"Study Key", {5, -3}},         # Kitchen - on a table
+      {"Master Key", {-1, -3}}        # Study - the study itself (ironic)
+    ]
+
+    # Create each key item and place it in the world
     Enum.each(key_items, fn key_attrs ->
       case Repo.get_by(Item, name: key_attrs.name) do
         nil ->
@@ -107,6 +121,29 @@ defmodule Shard.Repo.Migrations.SeedVampireManorKeys do
                |> Repo.insert() do
             {:ok, item} ->
               IO.puts("Created key item: #{item.name}")
+              
+              # Find the placement location for this key
+              case Enum.find(key_placements, fn {name, _coords} -> name == item.name end) do
+                {_name, {x, y}} ->
+                  # Find the room at these coordinates
+                  case Repo.get_by(Room, zone_id: manor_zone.id, x_coordinate: x, y_coordinate: y, z_coordinate: 0) do
+                    nil ->
+                      IO.puts("Warning: Could not find room at coordinates (#{x}, #{y}) for #{item.name}")
+                    
+                    room ->
+                      # Place the item in the room
+                      case Items.add_item_to_room(room.id, item.id, 1) do
+                        {:ok, _room_item} ->
+                          IO.puts("Placed #{item.name} in #{room.name}")
+                        
+                        {:error, changeset} ->
+                          IO.puts("Failed to place #{item.name} in room: #{inspect(changeset.errors)}")
+                      end
+                  end
+                
+                nil ->
+                  IO.puts("Warning: No placement location defined for #{item.name}")
+              end
 
             {:error, changeset} ->
               IO.puts("Failed to create key item #{key_attrs.name}: #{inspect(changeset.errors)}")
@@ -118,12 +155,13 @@ defmodule Shard.Repo.Migrations.SeedVampireManorKeys do
       end
     end)
 
-    IO.puts("✓ Vampire Manor key items successfully seeded!")
+    IO.puts("✓ Vampire Manor key items successfully seeded and placed in rooms!")
   end
 
   defp seed_keys_down do
     alias Shard.Repo
     alias Shard.Items.Item
+    alias Shard.Items.RoomItem
 
     IO.puts("Removing Vampire Manor key items...")
 
@@ -141,6 +179,14 @@ defmodule Shard.Repo.Migrations.SeedVampireManorKeys do
           IO.puts("Key item not found: #{key_name}")
 
         item ->
+          # Remove any room placements first
+          room_items = Repo.all(from ri in RoomItem, where: ri.item_id == ^item.id)
+          Enum.each(room_items, fn room_item ->
+            Repo.delete!(room_item)
+            IO.puts("Removed #{key_name} from room")
+          end)
+          
+          # Then delete the item itself
           Repo.delete!(item)
           IO.puts("Deleted key item: #{key_name}")
       end
