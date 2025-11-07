@@ -275,6 +275,8 @@ defmodule Shard.Quests do
   end
 
   defp unlock_eligible_quests(user_id) do
+    IO.inspect(user_id, label: "Unlocking quests for user")
+    
     # Get completed quest titles for this user
     completed_quest_titles =
       from(qa in QuestAcceptance,
@@ -285,6 +287,8 @@ defmodule Shard.Quests do
       )
       |> Repo.all()
 
+    IO.inspect(completed_quest_titles, label: "Completed quest titles")
+
     # Find locked quests that should be unlocked
     locked_quests =
       from(q in Quest,
@@ -292,12 +296,21 @@ defmodule Shard.Quests do
       )
       |> Repo.all()
 
+    IO.inspect(Enum.map(locked_quests, &{&1.title, &1.prerequisites}), label: "Locked quests")
+
     Enum.each(locked_quests, fn quest ->
       if check_quest_prerequisites(quest, completed_quest_titles) do
+        IO.inspect("Unlocking quest: #{quest.title}", label: "Quest unlock")
         case update_quest(quest, %{status: "available"}) do
-          {:ok, _updated_quest} -> :ok
-          {:error, _changeset} -> :error
+          {:ok, updated_quest} -> 
+            IO.inspect("Successfully unlocked: #{updated_quest.title}", label: "Success")
+            :ok
+          {:error, changeset} -> 
+            IO.inspect(changeset.errors, label: "Failed to unlock quest")
+            :error
         end
+      else
+        IO.inspect("Prerequisites not met for: #{quest.title}", label: "Prerequisites not met")
       end
     end)
   end
@@ -461,17 +474,29 @@ defmodule Shard.Quests do
   end
 
   defp check_quest_prerequisites(quest, completed_quest_titles) do
+    IO.inspect(%{
+      quest_title: quest.title,
+      prerequisites: quest.prerequisites,
+      completed_titles: completed_quest_titles
+    }, label: "Checking prerequisites")
+
     case quest.prerequisites do
       %{"completed_quests" => required_quests} when is_list(required_quests) ->
-        Enum.all?(required_quests, fn required_quest ->
-          required_quest in completed_quest_titles
+        result = Enum.all?(required_quests, fn required_quest ->
+          match = required_quest in completed_quest_titles
+          IO.inspect(%{required: required_quest, match: match}, label: "Prerequisite check")
+          match
         end)
+        IO.inspect(result, label: "Prerequisites met")
+        result
 
       %{} ->
         # No prerequisites
+        IO.inspect("No prerequisites", label: "Prerequisites")
         true
 
       _ ->
+        IO.inspect("Invalid prerequisites format", label: "Prerequisites")
         false
     end
   end
