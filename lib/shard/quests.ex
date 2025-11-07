@@ -219,25 +219,15 @@ defmodule Shard.Quests do
         {:error, :quest_already_accepted}
 
       true ->
-        # Log the attempt for debugging
-        
-
         changeset =
           %QuestAcceptance{}
           |> QuestAcceptance.accept_changeset(%{user_id: user_id, quest_id: quest_id})
 
-        # Log the changeset before insertion
-        
-
-        
-
         case Repo.insert(changeset) do
           {:ok, quest_acceptance} ->
-            IO.inspect("Quest acceptance successful", label: "Success")
             {:ok, quest_acceptance}
 
           {:error, changeset} ->
-            IO.inspect(changeset.errors, label: "Database insertion failed")
             {:error, changeset}
         end
     end
@@ -287,8 +277,6 @@ defmodule Shard.Quests do
   end
 
   defp unlock_eligible_quests(user_id) do
-    IO.inspect(user_id, label: "Unlocking quests for user")
-
     # Get completed quest titles for this user
     completed_quest_titles =
       from(qa in QuestAcceptance,
@@ -299,7 +287,6 @@ defmodule Shard.Quests do
       )
       |> Repo.all()
 
-   
     # Find locked quests that should be unlocked
     locked_quests =
       from(q in Quest,
@@ -307,7 +294,6 @@ defmodule Shard.Quests do
       )
       |> Repo.all()
 
-   
     Enum.each(locked_quests, fn quest ->
       if check_quest_prerequisites(quest, completed_quest_titles) do
         case update_quest(quest, %{status: "available"}) do
@@ -465,23 +451,6 @@ defmodule Shard.Quests do
       )
       |> Repo.all()
 
-    IO.inspect(
-      %{
-        user_id: user_id,
-        npc_id: npc_id,
-        completed_non_repeatable_quest_ids: completed_non_repeatable_quest_ids,
-        active_quest_ids: active_quest_ids,
-        completed_quest_titles: completed_quest_titles,
-        active_quest_types: active_quest_types,
-        all_npc_quests:
-          Enum.map(
-            all_npc_quests,
-            &{&1.id, &1.title, &1.status, &1.prerequisites, &1.is_repeatable}
-          )
-      },
-      label: "Available quests debug"
-    )
-
     # Filter quests based on all conditions
     available_quests =
       Enum.filter(all_npc_quests, fn quest ->
@@ -512,21 +481,15 @@ defmodule Shard.Quests do
         result
       end)
 
-    IO.inspect(available_quests, label: "Final available quests")
-
     available_quests
   end
 
   defp check_quest_prerequisites(quest, completed_quest_titles) do
     case quest.prerequisites do
       %{"completed_quests" => required_quests} when is_list(required_quests) ->
-        result =
-          Enum.all?(required_quests, fn required_quest ->
-            match = required_quest in completed_quest_titles
-            match
-          end)
-
-        result
+        Enum.all?(required_quests, fn required_quest ->
+          required_quest in completed_quest_titles
+        end)
 
       %{} ->
         # No prerequisites
