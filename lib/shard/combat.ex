@@ -284,49 +284,65 @@ defmodule Shard.Combat do
   defp process_loot_drops(game_state, dead_monster) do
     case dead_monster[:potential_loot_drops] do
       %{} = drops_map ->
-        drops_map
-        |> Enum.reduce([], fn {item_id_str, drop_info}, acc ->
-          # Convert item_id string back to integer
-          item_id = String.to_integer(item_id_str)
-          chance = Map.get(drop_info, :chance, 1.0)
-          min_qty = Map.get(drop_info, :min_quantity, 1)
-          max_qty = Map.get(drop_info, :max_quantity, 1)
-
-          # Check if item drops
-          if :rand.uniform() <= chance do
-            # Calculate quantity
-            quantity =
-              if min_qty == max_qty do
-                min_qty
-              else
-                min_qty + :rand.uniform(max_qty - min_qty + 1) - 1
-              end
-
-            # Add item to player inventory
-            case Shard.Items.add_item_to_inventory(
-                   game_state.character.id,
-                   item_id,
-                   quantity
-                 ) do
-              {:ok, _} ->
-                # Get item name for message
-                case Shard.Items.get_item(item_id) do
-                  nil -> acc
-                  item -> ["You find #{quantity} #{item.name} on the corpse." | acc]
-                end
-
-              {:error, _reason} ->
-                # Handle error (log it, maybe drop in room instead)
-                acc
-            end
-          else
-            acc
-          end
-        end)
-        |> Enum.reverse()
-
+        process_drops_map(game_state, drops_map)
       _ ->
         []
+    end
+  end
+
+  defp process_drops_map(game_state, drops_map) do
+    drops_map
+    |> Enum.reduce([], fn {item_id_str, drop_info}, acc ->
+      process_single_drop(game_state, item_id_str, drop_info, acc)
+    end)
+    |> Enum.reverse()
+  end
+
+  defp process_single_drop(game_state, item_id_str, drop_info, acc) do
+    # Convert item_id string back to integer
+    item_id = String.to_integer(item_id_str)
+    chance = Map.get(drop_info, :chance, 1.0)
+    min_qty = Map.get(drop_info, :min_quantity, 1)
+    max_qty = Map.get(drop_info, :max_quantity, 1)
+
+    # Check if item drops
+    if :rand.uniform() <= chance do
+      process_successful_drop(game_state, item_id, min_qty, max_qty, acc)
+    else
+      acc
+    end
+  end
+
+  defp process_successful_drop(game_state, item_id, min_qty, max_qty, acc) do
+    # Calculate quantity
+    quantity = calculate_drop_quantity(min_qty, max_qty)
+
+    # Add item to player inventory
+    case Shard.Items.add_item_to_inventory(
+           game_state.character.id,
+           item_id,
+           quantity
+         ) do
+      {:ok, _} ->
+        create_loot_message(item_id, quantity, acc)
+      {:error, _reason} ->
+        # Handle error (log it, maybe drop in room instead)
+        acc
+    end
+  end
+
+  defp calculate_drop_quantity(min_qty, max_qty) do
+    if min_qty == max_qty do
+      min_qty
+    else
+      min_qty + :rand.uniform(max_qty - min_qty + 1) - 1
+    end
+  end
+
+  defp create_loot_message(item_id, quantity, acc) do
+    case Shard.Items.get_item(item_id) do
+      nil -> acc
+      item -> ["You find #{quantity} #{item.name} on the corpse." | acc]
     end
   end
 
