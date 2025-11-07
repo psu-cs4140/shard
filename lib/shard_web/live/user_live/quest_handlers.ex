@@ -136,8 +136,8 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       {:error, :database_error} ->
         handle_database_error_fallback(game_state, quest, npc_name, quest_title)
 
-      {:error, _changeset} ->
-        handle_quest_acceptance_error(game_state, npc_name)
+      {:error, changeset} ->
+        handle_quest_acceptance_validation_error(game_state, npc_name, changeset)
     end
   end
 
@@ -195,6 +195,25 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         pending_quest_offer: nil
     }
 
+    {response, updated_game_state}
+  end
+
+  # Handle quest acceptance validation errors (like quest type restrictions)
+  defp handle_quest_acceptance_validation_error(game_state, npc_name, changeset) do
+    # Extract the first error message from the changeset
+    error_message = 
+      case changeset.errors do
+        [{_field, {message, _opts}} | _] -> message
+        _ -> "There seems to be an issue with accepting this quest right now."
+      end
+
+    response = [
+      "#{npc_name} looks at you thoughtfully.",
+      "",
+      "\"#{String.capitalize(error_message)}\""
+    ]
+
+    updated_game_state = %{game_state | pending_quest_offer: nil}
     {response, updated_game_state}
   end
 
