@@ -572,6 +572,8 @@ defmodule Shard.Quests do
     end
   end
 
+  defp remove_quest_items_from_inventory(_character_id, _objectives), do: :ok
+
   defp remove_all_quest_items(character_id, items) do
     Enum.reduce_while(items, :ok, fn item, :ok ->
       required_quantity = Map.get(item, "quantity", 1)
@@ -582,8 +584,6 @@ defmodule Shard.Quests do
       end
     end)
   end
-
-  defp remove_quest_items_from_inventory(_character_id, _objectives), do: :ok
 
   defp remove_items_by_name(character_id, item_name, quantity) do
     # Get all inventory entries for this item
