@@ -422,10 +422,13 @@ defmodule ShardWeb.UserLive.Commands1 do
         on: ri.item_id == i.id,
         where: is_nil(i.is_active) or i.is_active == true,
         select: %{
+          room_item_id: ri.id,
+          item_id: i.id,
           name: i.name,
           description: i.description,
           item_type: i.item_type,
-          quantity: ri.quantity
+          quantity: ri.quantity,
+          pickup: i.pickup
         }
       )
       |> Repo.all()
