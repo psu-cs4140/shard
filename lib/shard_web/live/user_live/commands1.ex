@@ -20,13 +20,16 @@ defmodule ShardWeb.UserLive.Commands1 do
 
   alias Shard.Map, as: GameMap
   alias Shard.Items.Item
+  # Fixed: removed unused AdminStick alias
   alias Shard.Repo
   import Ecto.Query
 
   # Process terminal commands
   def process_command(command, game_state) do
-    case String.downcase(command) do
-      "help" ->
+    downcased_command = String.downcase(command)
+
+    cond do
+      downcased_command == "help" ->
         response = [
           "Available commands:",
           "  look - Examine your surroundings",
@@ -47,12 +50,16 @@ defmodule ShardWeb.UserLive.Commands1 do
           "  northeast/southeast/northwest/southwest - Move diagonally",
           "  Shortcuts: n/s/e/w/ne/se/nw/sw",
           "  unlock [direction] with [item_name] - Unlock a door using an item",
+          "  create room [direction] - Create a new room in the specified direction (admin only)",
+          "  delete room [direction] - Delete the room in the specified direction (admin only)",
+          "  create door [direction] - Create a door in the specified direction (admin only)",
+          "  delete door [direction] - Delete the door in the specified direction (admin only)",
           "  help - Show this help message"
         ]
 
         {response, game_state}
 
-      "attack" ->
+      downcased_command == "attack" ->
         {x, y} = game_state.player_position
 
         # Check if there are monsters at current location
@@ -75,14 +82,14 @@ defmodule ShardWeb.UserLive.Commands1 do
           Shard.Combat.execute_action(updated_game_state, "attack")
         end
 
-      "flee" ->
+      downcased_command == "flee" ->
         if Shard.Combat.in_combat?(game_state) do
           Shard.Combat.execute_action(game_state, "flee")
         else
           {["There is nothing to flee from..."], game_state}
         end
 
-      "look" ->
+      downcased_command == "look" ->
         {x, y} = game_state.player_position
 
         # Get room from database
@@ -274,7 +281,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         {description_lines, game_state}
 
-      "stats" ->
+      downcased_command == "stats" ->
         stats = game_state.player_stats
 
         response = [
@@ -286,14 +293,14 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         {response, game_state}
 
-      "position" ->
+      downcased_command == "position" ->
         {x, y} = game_state.player_position
         {["You are at position (#{x}, #{y})."], game_state}
 
-      "inventory" ->
+      downcased_command == "inventory" ->
         {["Your inventory is empty. (Feature coming soon!)"], game_state}
 
-      "npc" ->
+      downcased_command == "npc" ->
         {x, y} = game_state.player_position
         npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
 
@@ -311,37 +318,50 @@ defmodule ShardWeb.UserLive.Commands1 do
           {["There are no NPCs in this area."], game_state}
         end
 
-      cmd when cmd in ["north", "n"] ->
+      downcased_command in ["north", "n"] ->
         execute_movement(game_state, "ArrowUp")
 
-      cmd when cmd in ["south", "s"] ->
+      downcased_command in ["south", "s"] ->
         execute_movement(game_state, "ArrowDown")
 
-      cmd when cmd in ["east", "e"] ->
+      downcased_command in ["east", "e"] ->
         execute_movement(game_state, "ArrowRight")
 
-      cmd when cmd in ["west", "w"] ->
+      downcased_command in ["west", "w"] ->
         execute_movement(game_state, "ArrowLeft")
 
-      cmd when cmd in ["northeast", "ne"] ->
+      downcased_command in ["northeast", "ne"] ->
         execute_movement(game_state, "northeast")
 
-      cmd when cmd in ["southeast", "se"] ->
+      downcased_command in ["southeast", "se"] ->
         execute_movement(game_state, "southeast")
 
-      cmd when cmd in ["northwest", "nw"] ->
+      downcased_command in ["northwest", "nw"] ->
         execute_movement(game_state, "northwest")
 
-      cmd when cmd in ["southwest", "sw"] ->
+      downcased_command in ["southwest", "sw"] ->
         execute_movement(game_state, "southwest")
 
-      "accept" ->
+      # Admin zone editing commands
+      downcased_command == "create room" or String.starts_with?(downcased_command, "create room ") ->
+        ShardWeb.UserLive.AdminCommands.handle_create_room_command(command, game_state)
+
+      downcased_command == "delete room" or String.starts_with?(downcased_command, "delete room ") ->
+        ShardWeb.UserLive.AdminCommands.handle_delete_room_command(command, game_state)
+
+      downcased_command == "create door" or String.starts_with?(downcased_command, "create door ") ->
+        ShardWeb.UserLive.AdminCommands.handle_create_door_command(command, game_state)
+
+      downcased_command == "delete door" or String.starts_with?(downcased_command, "delete door ") ->
+        ShardWeb.UserLive.AdminCommands.handle_delete_door_command(command, game_state)
+
+      downcased_command == "accept" ->
         execute_accept_quest(game_state)
 
-      "deny" ->
+      downcased_command == "deny" ->
         execute_deny_quest(game_state)
 
-      _ ->
+      true ->
         # Check if it's a talk command
         case parse_talk_command(command) do
           {:ok, npc_name} ->

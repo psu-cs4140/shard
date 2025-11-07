@@ -149,4 +149,108 @@ defmodule ShardWeb.UserLive.CommandParsersTest do
       assert {:ok, "Key"} = CommandParsers.parse_pickup_command(~s(PICKUP "Key"))
     end
   end
+
+  describe "parse_create_room_command/1" do
+    test "parses direction without quotes" do
+      assert {:ok, "north"} = CommandParsers.parse_create_room_command("create room north")
+      assert {:ok, "south"} = CommandParsers.parse_create_room_command("create room south")
+      assert {:ok, "east"} = CommandParsers.parse_create_room_command("create room east")
+      assert {:ok, "west"} = CommandParsers.parse_create_room_command("create room west")
+    end
+
+    test "parses direction with quotes" do
+      assert {:ok, "north"} = CommandParsers.parse_create_room_command(~s(create room "north"))
+      assert {:ok, "south"} = CommandParsers.parse_create_room_command(~s(create room 'south'))
+    end
+
+    test "returns error for invalid formats" do
+      assert :error = CommandParsers.parse_create_room_command("create room")
+      assert :error = CommandParsers.parse_create_room_command("create")
+      assert :error = CommandParsers.parse_create_room_command("room north")
+      assert :error = CommandParsers.parse_create_room_command("create room north extra")
+    end
+
+    test "is case insensitive" do
+      assert {:ok, "north"} = CommandParsers.parse_create_room_command("CREATE ROOM NORTH")
+      assert {:ok, "north"} = CommandParsers.parse_create_room_command(~s(CREATE ROOM "NORTH"))
+    end
+  end
+
+  describe "parse_delete_room_command/1" do
+    test "parses direction without quotes" do
+      assert {:ok, "north"} = CommandParsers.parse_delete_room_command("delete room north")
+      assert {:ok, "south"} = CommandParsers.parse_delete_room_command("delete room south")
+      assert {:ok, "east"} = CommandParsers.parse_delete_room_command("delete room east")
+      assert {:ok, "west"} = CommandParsers.parse_delete_room_command("delete room west")
+    end
+
+    test "parses direction with quotes" do
+      assert {:ok, "north"} = CommandParsers.parse_delete_room_command(~s(delete room "north"))
+      assert {:ok, "south"} = CommandParsers.parse_delete_room_command(~s(delete room 'south'))
+    end
+
+    test "returns error for invalid formats" do
+      assert :error = CommandParsers.parse_delete_room_command("delete room")
+      assert :error = CommandParsers.parse_delete_room_command("delete")
+      assert :error = CommandParsers.parse_delete_room_command("room north")
+      assert :error = CommandParsers.parse_delete_room_command("delete room north extra")
+    end
+
+    test "is case insensitive" do
+      assert {:ok, "north"} = CommandParsers.parse_delete_room_command("DELETE ROOM NORTH")
+      assert {:ok, "north"} = CommandParsers.parse_delete_room_command(~s(DELETE ROOM "NORTH"))
+    end
+  end
+
+  describe "parse_create_door_command/1" do
+    test "parses direction without quotes" do
+      assert {:ok, "north"} = CommandParsers.parse_create_door_command("create door north")
+      assert {:ok, "south"} = CommandParsers.parse_create_door_command("create door south")
+      assert {:ok, "east"} = CommandParsers.parse_create_door_command("create door east")
+      assert {:ok, "west"} = CommandParsers.parse_create_door_command("create door west")
+    end
+
+    test "parses direction with quotes" do
+      assert {:ok, "north"} = CommandParsers.parse_create_door_command(~s(create door "north"))
+      assert {:ok, "south"} = CommandParsers.parse_create_door_command(~s(create door 'south'))
+    end
+
+    test "returns error for invalid formats" do
+      assert :error = CommandParsers.parse_create_door_command("create door")
+      assert :error = CommandParsers.parse_create_door_command("create")
+      assert :error = CommandParsers.parse_create_door_command("door north")
+      assert :error = CommandParsers.parse_create_door_command("create door north extra")
+    end
+
+    test "is case insensitive" do
+      assert {:ok, "north"} = CommandParsers.parse_create_door_command("CREATE DOOR NORTH")
+      assert {:ok, "north"} = CommandParsers.parse_create_door_command(~s(CREATE DOOR "NORTH"))
+    end
+  end
+
+  describe "parse_delete_door_command/1" do
+    test "parses direction without quotes" do
+      assert {:ok, "north"} = CommandParsers.parse_delete_door_command("delete door north")
+      assert {:ok, "south"} = CommandParsers.parse_delete_door_command("delete door south")
+      assert {:ok, "east"} = CommandParsers.parse_delete_door_command("delete door east")
+      assert {:ok, "west"} = CommandParsers.parse_delete_door_command("delete door west")
+    end
+
+    test "parses direction with quotes" do
+      assert {:ok, "north"} = CommandParsers.parse_delete_door_command(~s(delete door "north"))
+      assert {:ok, "south"} = CommandParsers.parse_delete_door_command(~s(delete door 'south'))
+    end
+
+    test "returns error for invalid formats" do
+      assert :error = CommandParsers.parse_delete_door_command("delete door")
+      assert :error = CommandParsers.parse_delete_door_command("delete")
+      assert :error = CommandParsers.parse_delete_door_command("door north")
+      assert :error = CommandParsers.parse_delete_door_command("delete door north extra")
+    end
+
+    test "is case insensitive" do
+      assert {:ok, "north"} = CommandParsers.parse_delete_door_command("DELETE DOOR NORTH")
+      assert {:ok, "north"} = CommandParsers.parse_delete_door_command(~s(DELETE DOOR "NORTH"))
+    end
+  end
 end
