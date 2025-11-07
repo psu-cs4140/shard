@@ -133,24 +133,27 @@ defmodule ShardWeb.UserLive.NpcCommands do
 
   # Helper function to update game state after quest delivery
   defp update_game_state_after_delivery(game_state, completed_quest_ids) do
-    if Enum.empty?(completed_quest_ids) do
-      game_state
-    else
-      # Reload character inventory to reflect item removal
-      inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
+    # Early return if no quests were completed
+    if Enum.empty?(completed_quest_ids), do: game_state
 
-      # Update quest status in local game state
-      updated_quests =
-        Enum.map(game_state.quests, fn quest ->
-          if quest[:id] in completed_quest_ids do
-            %{quest | status: "Completed", progress: "100% complete"}
-          else
-            quest
-          end
-        end)
+    # Reload character inventory to reflect item removal
+    inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
 
-      %{game_state | inventory_items: inventory_items, quests: updated_quests}
-    end
+    # Update quest status in local game state
+    updated_quests = update_completed_quests(game_state.quests, completed_quest_ids)
+
+    %{game_state | inventory_items: inventory_items, quests: updated_quests}
+  end
+
+  # Helper function to update quest statuses
+  defp update_completed_quests(quests, completed_quest_ids) do
+    Enum.map(quests, fn quest ->
+      if quest[:id] in completed_quest_ids do
+        %{quest | status: "Completed", progress: "100% complete"}
+      else
+        quest
+      end
+    end)
   end
 
   # Helper function to build NPC dialogue
