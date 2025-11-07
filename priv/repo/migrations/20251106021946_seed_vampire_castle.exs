@@ -169,8 +169,8 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
 
         key_required =
           cond do
-            from_x == 0 && from_y == -1 && to_x == 0 && to_y == -2 -> "Rusty Sewer Key"
-            from_x == -1 && from_y == 0 && to_x == -2 && to_y == 0 -> "Manor Key"
+            from_x == 0 && from_y == -1 && to_x == 0 && to_y == -2 -> "Manor Key"
+            from_x == -1 && from_y == 0 && to_x == -2 && to_y == 0 -> "Rusty Sewer Key"
             from_x == 0 && from_y == -4 && to_x == -1 && to_y == -4 -> "Master Key"
             from_x == 0 && from_y == -2 && to_x == -1 && to_y == -2 -> "Library Key"
             from_x == -1 && from_y == -2 && to_x == -1 && to_y == -3 -> "Study Key"
