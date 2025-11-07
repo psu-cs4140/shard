@@ -252,6 +252,57 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
       IO.puts("Warning: Sewer Lair room not found at (-4,1) in Vampire's Manor")
     end
 
+    # Create possessed suit of armor monster in the Freezer
+    freezer = Enum.find(manor_rooms, &(&1.x_coordinate == 4 && &1.y_coordinate == -3))
+
+    if freezer do
+      # Create the Chainmail item if it doesn't exist
+      chainmail_item =
+        case Repo.get_by(Item, name: "Chainmail") do
+          nil ->
+            {:ok, new_item} =
+              %Item{}
+              |> Item.changeset(%{
+                name: "Chainmail",
+                description: "A suit of interlocking metal rings, cold to the touch and emanating dark energy.",
+                item_type: "armor",
+                rarity: "uncommon",
+                value: 25,
+                stackable: false,
+                equippable: true,
+                equipment_slot: "chest",
+                is_active: true
+              })
+              |> Repo.insert()
+
+            new_item
+
+          existing ->
+            existing
+        end
+
+      # Create the possessed suit of armor monster with item drops
+      {:ok, _armor} =
+        Monsters.create_monster(%{
+          name: "Possessed Suit of Armor",
+          race: "Undead",
+          health: 35,
+          max_health: 35,
+          attack_damage: 4,
+          xp_amount: 20,
+          level: 3,
+          description: "An ancient suit of armor animated by dark magic, its empty helmet glowing with malevolent eyes.",
+          location_id: freezer.id,
+          potential_loot_drops: %{
+            "#{chainmail_item.id}" => %{chance: 0.7, min_quantity: 1, max_quantity: 1}
+          }
+        })
+
+      IO.puts("Successfully created Possessed Suit of Armor in Freezer")
+    else
+      IO.puts("Warning: Freezer room not found at (4,-3) in Vampire's Manor")
+    end
+
     IO.puts("""
 
     ✓ Vampire's Manor successfully seeded!
@@ -279,6 +330,17 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
         IO.puts("Deleted Sewage Slime")
       _ ->
         IO.puts("Sewage Slime not found")
+    end
+
+    # Find and delete the possessed suit of armor using raw SQL
+    armor_result = Repo.query("SELECT id FROM monsters WHERE name = $1", ["Possessed Suit of Armor"])
+    
+    case armor_result do
+      {:ok, %{rows: [[armor_id]]}} ->
+        Repo.query("DELETE FROM monsters WHERE id = $1", [armor_id])
+        IO.puts("Deleted Possessed Suit of Armor")
+      _ ->
+        IO.puts("Possessed Suit of Armor not found")
     end
 
 
