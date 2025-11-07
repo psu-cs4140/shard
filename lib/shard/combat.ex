@@ -58,21 +58,28 @@ defmodule Shard.Combat do
       updated_monster
     )
 
+    # NEW: Check for special damage effect
+    {final_response, final_monsters} =
+      case check_special_damage_effect(game_state, monster, updated_monster, response) do
+        {resp, mons} -> {resp, mons}
+        nil -> {response, updated_monsters}
+      end
+
     if updated_monster[:is_alive] do
       # Monster survived - handle counterattack
       handle_monster_counterattack(
         game_state,
         updated_monster,
         position,
-        response,
-        updated_monsters
+        final_response,
+        final_monsters
       )
     else
       # Monster died - handle death and rewards
       {messages, final_monsters, updated_player_stats, updated_character} =
-        handle_monster_death(game_state, updated_monster, updated_monsters)
+        handle_monster_death(game_state, updated_monster, final_monsters)
 
-      final_response = response ++ messages
+      final_response = final_response ++ messages
 
       updated_game_state =
         update_combat_state(
@@ -243,6 +250,9 @@ defmodule Shard.Combat do
   end
 
   defp handle_monster_death(game_state, dead_monster, monsters_list) do
+    IO.puts("DEBUG: handle_monster_death called for monster: #{inspect(dead_monster[:name])}")
+    IO.puts("DEBUG: Full dead_monster data in handle_monster_death: #{inspect(dead_monster)}")
+
     # Remove the monster from the list
     updated_monsters =
       Enum.reject(monsters_list, fn m ->
@@ -260,13 +270,131 @@ defmodule Shard.Combat do
     # Update character - add gold
     updated_character = Map.update(game_state.character, :gold, 0, &(&1 + gold_reward))
 
+    # Process loot drops
+    loot_messages = process_loot_drops(game_state, dead_monster)
+
     # Generate reward messages
-    death_messages = [
-      "You gain #{xp_reward} experience.",
-      "You find #{gold_reward} gold on the corpse."
-    ]
+    death_messages =
+      [
+        "You gain #{xp_reward} experience.",
+        "You find #{gold_reward} gold on the corpse."
+      ] ++ loot_messages
 
     {death_messages, updated_monsters, updated_stats, updated_character}
+  end
+
+  # NEW: Process loot drops when monster dies
+  defp process_loot_drops(game_state, dead_monster) do
+    IO.puts("DEBUG: Processing loot drops for monster: #{inspect(dead_monster[:name])}")
+    IO.puts("DEBUG: Full dead_monster data in process_loot_drops: #{inspect(dead_monster)}")
+
+    IO.puts(
+      "DEBUG: Monster's potential_loot_drops: #{inspect(dead_monster[:potential_loot_drops])}"
+    )
+
+    case dead_monster[:potential_loot_drops] do
+      %{} = drops_map ->
+        result = process_drops_map(game_state, drops_map)
+        IO.puts("DEBUG: Processed drops map, result: #{inspect(result)}")
+        result
+
+      nil ->
+        IO.puts("DEBUG: No potential_loot_drops found for monster")
+        []
+
+      other ->
+        IO.puts("DEBUG: Unexpected potential_loot_drops format: #{inspect(other)}")
+        []
+    end
+  end
+
+  defp process_drops_map(game_state, drops_map) do
+    drops_map
+    |> Enum.reduce([], fn {item_id_str, drop_info}, acc ->
+      process_single_drop(game_state, item_id_str, drop_info, acc)
+    end)
+    |> Enum.reverse()
+  end
+
+  defp process_single_drop(game_state, item_id_str, drop_info, acc) do
+    IO.puts(
+      "DEBUG: Processing single drop - item_id_str: #{inspect(item_id_str)}, drop_info: #{inspect(drop_info)}"
+    )
+
+    # Convert item_id string back to integer
+    case Integer.parse(item_id_str) do
+      {item_id, ""} ->
+        chance = Map.get(drop_info, :chance, 1.0)
+        min_qty = Map.get(drop_info, :min_quantity, 1)
+        max_qty = Map.get(drop_info, :max_quantity, 1)
+
+        IO.puts(
+          "DEBUG: Parsed item_id: #{item_id}, chance: #{chance}, min_qty: #{min_qty}, max_qty: #{max_qty}"
+        )
+
+        # Check if item drops
+        random_value = :rand.uniform()
+        drops = random_value <= chance
+
+        IO.puts("DEBUG: Random value: #{random_value}, drops: #{drops}")
+
+        if drops do
+          process_successful_drop(game_state, item_id, min_qty, max_qty, acc)
+        else
+          IO.puts("DEBUG: Item did not drop due to chance")
+          acc
+        end
+
+      :error ->
+        IO.puts("DEBUG: Failed to parse item_id_str: #{inspect(item_id_str)}")
+        acc
+    end
+  end
+
+  defp process_successful_drop(game_state, item_id, min_qty, max_qty, acc) do
+    # Calculate quantity
+    quantity = calculate_drop_quantity(min_qty, max_qty)
+
+    IO.puts("DEBUG: Calculated drop quantity: #{quantity}")
+
+    # Add item to player inventory
+    case Shard.Items.add_item_to_inventory(
+           game_state.character.id,
+           item_id,
+           quantity
+         ) do
+      {:ok, _} ->
+        IO.puts("DEBUG: Successfully added #{quantity} of item ID #{item_id} to inventory.")
+        create_loot_message(item_id, quantity, acc)
+
+      {:error, reason} ->
+        IO.puts(
+          "DEBUG: Failed to add item ID #{item_id} to inventory. Reason: #{inspect(reason)}"
+        )
+
+        # Handle error (log it, maybe drop in room instead)
+        acc
+    end
+  end
+
+  defp calculate_drop_quantity(min_qty, max_qty) do
+    if min_qty == max_qty do
+      min_qty
+    else
+      min_qty + :rand.uniform(max_qty - min_qty + 1) - 1
+    end
+  end
+
+  defp create_loot_message(item_id, quantity, acc) do
+    case Shard.Items.get_item(item_id) do
+      nil ->
+        IO.puts("DEBUG: Could not find item with ID #{item_id} in database")
+        acc
+
+      item ->
+        IO.puts("DEBUG: Found item #{item.name} for loot message")
+        ["You find #{quantity} #{item.name} on the corpse." | acc]
+    end
   end
 
   # Helper function to parse damage strings like "1d4" or plain numbers
@@ -291,4 +419,62 @@ defmodule Shard.Combat do
 
   # Default fallback
   defp parse_damage(_), do: 1
+
+  # NEW: Check for special damage effect
+  defp check_special_damage_effect(game_state, original_monster, updated_monster, base_response) do
+    # Check if monster has special damage and is still alive
+    if updated_monster[:is_alive] &&
+         original_monster[:special_damage_type_id] &&
+         original_monster[:special_damage_amount] > 0 &&
+         :rand.uniform(100) <= (original_monster[:special_damage_chance] || 100) do
+      # Get damage type name
+      damage_type = get_damage_type_name(original_monster[:special_damage_type_id])
+      amount = original_monster[:special_damage_amount]
+      duration = original_monster[:special_damage_duration] || 3
+
+      # Apply special damage effect to combat server
+      combat_id = "#{elem(game_state.player_position, 0)},#{elem(game_state.player_position, 1)}"
+
+      # Create effect
+      effect = %{
+        kind: "special_damage",
+        target: {:player, game_state.character.id},
+        remaining_ticks: duration,
+        magnitude: amount,
+        damage_type: damage_type
+      }
+
+      # Try to add effect to combat server
+      case apply_special_damage_effect(combat_id, effect) do
+        :ok ->
+          effect_message = "The #{original_monster[:name]}'s attack #{damage_type}s you!"
+          effect_response = base_response ++ [effect_message]
+          {effect_response, game_state.monsters}
+
+        _ ->
+          {base_response, game_state.monsters}
+      end
+    else
+      nil
+    end
+  end
+
+  # NEW: Get damage type name from database
+  defp get_damage_type_name(damage_type_id) do
+    case Shard.Repo.get(Shard.Weapons.DamageTypes, damage_type_id) do
+      nil -> "unknown"
+      damage_type -> String.downcase(damage_type.name)
+    end
+  end
+
+  # NEW: Apply special damage effect to combat server
+  defp apply_special_damage_effect(combat_id, effect) do
+    try do
+      # Add the effect to the combat server
+      Shard.Combat.Server.add_effect(combat_id, effect)
+      :ok
+    rescue
+      _ -> :error
+    end
+  end
 end

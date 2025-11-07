@@ -62,6 +62,13 @@ defmodule Shard.Combat.Server do
     {:reply, state, state}
   end
 
+  # Add this handle_call callback for adding effects
+  def handle_call({:add_effect, effect}, _from, state) do
+    effects = Map.get(state, :effects, [])
+    new_state = Map.put(state, :effects, [effect | effects])
+    {:reply, :ok, new_state}
+  end
+
   defp broadcast_combat_events(state, events) do
     room_pos = state[:room_position]
 
@@ -89,5 +96,10 @@ defmodule Shard.Combat.Server do
 
   def get_combat_state(combat_id) do
     GenServer.call(via(combat_id), :get_state)
+  end
+
+  # Add this public API function for adding effects
+  def add_effect(combat_id, effect) do
+    GenServer.call(via(combat_id), {:add_effect, effect})
   end
 end
