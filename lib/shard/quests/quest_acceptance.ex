@@ -48,8 +48,34 @@ defmodule Shard.Quests.QuestAcceptance do
     user_id = get_field(changeset, :user_id)
     quest_id = get_field(changeset, :quest_id)
 
-    if user_id && quest_id && Shard.Quests.quest_in_progress_by_user?(user_id, quest_id) do
-      add_error(changeset, :quest_id, "quest is already accepted or in progress")
+    changeset =
+      if user_id && quest_id && Shard.Quests.quest_in_progress_by_user?(user_id, quest_id) do
+        add_error(changeset, :quest_id, "quest is already accepted or in progress")
+      else
+        changeset
+      end
+
+    # Also validate that user doesn't have another active quest of the same type
+    validate_no_active_quest_of_same_type(changeset)
+  end
+
+  defp validate_no_active_quest_of_same_type(changeset) do
+    user_id = get_field(changeset, :user_id)
+    quest_id = get_field(changeset, :quest_id)
+
+    if user_id && quest_id do
+      # Get the quest to check its type
+      case Shard.Repo.get(Shard.Quests.Quest, quest_id) do
+        nil ->
+          changeset
+
+        quest ->
+          if Shard.Quests.user_has_active_quest_of_type?(user_id, quest.quest_type) do
+            add_error(changeset, :quest_id, "you already have an active quest of type '#{quest.quest_type}'")
+          else
+            changeset
+          end
+      end
     else
       changeset
     end

@@ -131,6 +131,30 @@ defmodule Shard.Quests do
   end
 
   @doc """
+  Checks if a user has an active quest of a specific quest type.
+
+  ## Examples
+
+      iex> user_has_active_quest_of_type?(user_id, "main")
+      true
+
+      iex> user_has_active_quest_of_type?(user_id, "side")
+      false
+
+  """
+  def user_has_active_quest_of_type?(user_id, quest_type) do
+    from(qa in QuestAcceptance,
+      join: q in Quest,
+      on: qa.quest_id == q.id,
+      where:
+        qa.user_id == ^user_id and
+          qa.status in ["accepted", "in_progress"] and
+          q.quest_type == ^quest_type
+    )
+    |> Repo.exists?()
+  end
+
+  @doc """
   Checks if a user has already completed a specific quest.
 
   ## Examples
