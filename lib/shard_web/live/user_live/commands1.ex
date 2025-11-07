@@ -609,11 +609,15 @@ defmodule ShardWeb.UserLive.Commands1 do
                   item_struct = Shard.Items.get_item!(item.item_id)
                   case Shard.Items.update_item(item_struct, %{is_active: false}) do
                     {:ok, _} ->
+                      # Reload the character's inventory to reflect the change
+                      updated_inventory = Shard.Items.get_character_inventory(game_state.character.id)
+                      updated_game_state = %{game_state | inventory_items: updated_inventory}
+                      
                       response = [
                         "You pick up #{item.name}.",
                         "#{item.name} has been added to your inventory."
                       ]
-                      {response, game_state}
+                      {response, updated_game_state}
                     
                     {:error, _reason} ->
                       response = ["You failed to pick up #{item.name} - could not remove from world."]
@@ -629,11 +633,15 @@ defmodule ShardWeb.UserLive.Commands1 do
               # This is a room item, use the existing pickup function
               case Shard.Items.pick_up_item(game_state.character.id, room_item_id) do
                 {:ok, _} ->
+                  # Reload the character's inventory to reflect the change
+                  updated_inventory = Shard.Items.get_character_inventory(game_state.character.id)
+                  updated_game_state = %{game_state | inventory_items: updated_inventory}
+                  
                   response = [
                     "You pick up #{item.name}.",
                     "#{item.name} has been added to your inventory."
                   ]
-                  {response, game_state}
+                  {response, updated_game_state}
 
                 {:error, :item_not_pickupable} ->
                   response = ["You cannot pick up #{item.name}."]
