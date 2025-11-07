@@ -129,7 +129,9 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         # Add NPC descriptions if any are present
         description_lines =
-          if not Enum.empty?(npcs_here) do
+          if Enum.empty?(npcs_here) do
+            description_lines
+          else
             # Empty line for spacing
             updated_lines = description_lines ++ [""]
 
@@ -142,13 +144,13 @@ defmodule ShardWeb.UserLive.Commands1 do
               end)
 
             updated_lines ++ npc_descriptions
-          else
-            description_lines
           end
 
         # Add item descriptions if any are present
         description_lines =
-          if not Enum.empty?(items_here) do
+          if Enum.empty?(items_here) do
+            description_lines
+          else
             # Empty line for spacing
             updated_lines = description_lines ++ [""]
 
@@ -160,20 +162,18 @@ defmodule ShardWeb.UserLive.Commands1 do
               end)
 
             updated_lines ++ item_descriptions
-          else
-            description_lines
           end
 
         # Add available exits information
         exits = get_available_exits(x, y, room, game_state)
 
         description_lines =
-          if not Enum.empty?(exits) do
+          if Enum.empty?(exits) do
+            description_lines ++ ["", "There are no obvious exits."]
+          else
             updated_lines = description_lines ++ [""]
             exit_text = "Exits: " <> Enum.join(exits, ", ")
             updated_lines ++ [exit_text]
-          else
-            description_lines ++ ["", "There are no obvious exits."]
           end
 
         # To see if there are monsters
@@ -260,7 +260,9 @@ defmodule ShardWeb.UserLive.Commands1 do
         {x, y} = game_state.player_position
         npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
 
-        if not Enum.empty?(npcs_here) do
+        if Enum.empty?(npcs_here) do
+          {["There are no NPCs in this area."], game_state}
+        else
           response =
             ["NPCs in this area:"] ++
               Enum.flat_map(npcs_here, fn npc ->
@@ -270,8 +272,6 @@ defmodule ShardWeb.UserLive.Commands1 do
               end)
 
           {response, game_state}
-        else
-          {["There are no NPCs in this area."], game_state}
         end
 
       downcased_command in ["north", "n"] ->
@@ -519,7 +519,9 @@ defmodule ShardWeb.UserLive.Commands1 do
 
             # Show completable quests first
             updated_lines =
-              if not Enum.empty?(completable_quests) do
+              if Enum.empty?(completable_quests) do
+                updated_lines
+              else
                 quest_names = Enum.map(completable_quests, & &1.title)
                 quest_list = Enum.join(quest_names, ", ")
 
@@ -530,13 +532,13 @@ defmodule ShardWeb.UserLive.Commands1 do
                     "\"Excellent! I see you have completed: #{quest_list}\"",
                     "\"Use 'deliver_quest \"#{npc_name}\"' to turn in your completed quests.\""
                   ]
-              else
-                updated_lines
               end
 
             # Show in-progress quests that need more work
             updated_lines =
-              if not Enum.empty?(in_progress_quests) do
+              if Enum.empty?(in_progress_quests) do
+                updated_lines
+              else
                 quest_names = Enum.map(in_progress_quests, & &1.title)
                 quest_list = Enum.join(quest_names, ", ")
 
@@ -547,8 +549,6 @@ defmodule ShardWeb.UserLive.Commands1 do
                     "\"I see you're still working on: #{quest_list}\"",
                     "\"Come back when you have everything I need.\""
                   ]
-              else
-                updated_lines
               end
 
             updated_lines
@@ -558,7 +558,9 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         # Check for available quests
         dialogue_lines =
-          if not Enum.empty?(available_quests) do
+          if Enum.empty?(available_quests) do
+            dialogue_lines
+          else
             quest_names = Enum.map(available_quests, & &1.title)
             quest_list = Enum.join(quest_names, ", ")
 
@@ -569,8 +571,6 @@ defmodule ShardWeb.UserLive.Commands1 do
                 "\"I have some work that needs doing: #{quest_list}\"",
                 "\"Use 'quest \"#{npc_name}\"' to learn more about these tasks.\""
               ]
-          else
-            dialogue_lines
           end
 
         # If no quests available and none to turn in, just show basic dialogue
