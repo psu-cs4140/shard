@@ -59,36 +59,128 @@ defmodule Shard.Repo.Migrations.CreateBoneZoneNpcs do
       'bone_zone_guardians',
       0,
       'stationary',
-      '{
-        "quest_chain": {
-          "current_quest": "retrieve_sword",
-          "completed_quests": [],
-          "available_quests": ["retrieve_sword", "kill_spider", "receive_key"]
-        },
-        "quest_retrieve_sword": {
-          "name": "Retrieve the Iron Sword",
-          "description": "Travel to the barracks and retrieve the iron sword that lies within. Bring it back to me as proof of your courage.",
-          "objective": "Find and retrieve the iron sword from the barracks",
-          "reward": "Access to the next trial",
-          "status": "available"
-        },
-        "quest_kill_spider": {
-          "name": "Harvest Spider Silk",
-          "description": "Venture forth and slay a spider to collect its silk. This silk is needed for an important ritual.",
-          "objective": "Kill a spider and bring back spider silk",
-          "reward": "The Bone Zone key",
-          "status": "locked",
-          "prerequisite": "retrieve_sword"
-        },
-        "quest_receive_key": {
-          "name": "Receive the Bone Zone Key",
-          "description": "Return to Tombguard with the spider silk to receive the Bone Zone key.",
-          "objective": "Deliver spider silk to Tombguard",
-          "reward": "Bone Zone key and access to deeper areas",
-          "status": "locked",
-          "prerequisite": "kill_spider"
-        }
-      }',
+      '{}',
+      NOW(),
+      NOW()
+    );
+    """
+
+    # Create the actual quest records in the database
+    execute """
+    INSERT INTO quests (
+      title,
+      description,
+      quest_type,
+      difficulty,
+      status,
+      min_level,
+      max_level,
+      experience_reward,
+      gold_reward,
+      objectives,
+      prerequisites,
+      giver_npc_id,
+      turn_in_npc_id,
+      is_active,
+      sort_order,
+      inserted_at,
+      updated_at
+    ) VALUES (
+      'Retrieve the Iron Sword',
+      'Travel to the barracks and retrieve the iron sword that lies within. Bring it back to me as proof of your courage.',
+      'fetch',
+      'easy',
+      'available',
+      1,
+      20,
+      100,
+      25,
+      '{"retrieve_items": [{"item_name": "iron sword", "quantity": 1}]}',
+      '{}',
+      (SELECT id FROM npcs WHERE name = 'Tombguard' LIMIT 1),
+      (SELECT id FROM npcs WHERE name = 'Tombguard' LIMIT 1),
+      true,
+      1,
+      NOW(),
+      NOW()
+    );
+    """
+
+    execute """
+    INSERT INTO quests (
+      title,
+      description,
+      quest_type,
+      difficulty,
+      status,
+      min_level,
+      max_level,
+      experience_reward,
+      gold_reward,
+      objectives,
+      prerequisites,
+      giver_npc_id,
+      turn_in_npc_id,
+      is_active,
+      sort_order,
+      inserted_at,
+      updated_at
+    ) VALUES (
+      'Harvest Spider Silk',
+      'Venture forth and slay a spider to collect its silk. This silk is needed for an important ritual.',
+      'kill',
+      'medium',
+      'locked',
+      5,
+      25,
+      200,
+      50,
+      '{"retrieve_items": [{"item_name": "spider silk", "quantity": 1}]}',
+      '{"completed_quests": ["Retrieve the Iron Sword"]}',
+      (SELECT id FROM npcs WHERE name = 'Tombguard' LIMIT 1),
+      (SELECT id FROM npcs WHERE name = 'Tombguard' LIMIT 1),
+      true,
+      2,
+      NOW(),
+      NOW()
+    );
+    """
+
+    execute """
+    INSERT INTO quests (
+      title,
+      description,
+      quest_type,
+      difficulty,
+      status,
+      min_level,
+      max_level,
+      experience_reward,
+      gold_reward,
+      objectives,
+      prerequisites,
+      giver_npc_id,
+      turn_in_npc_id,
+      is_active,
+      sort_order,
+      inserted_at,
+      updated_at
+    ) VALUES (
+      'Receive the Bone Zone Key',
+      'Return to Tombguard with the spider silk to receive the Bone Zone key.',
+      'delivery',
+      'medium',
+      'locked',
+      5,
+      25,
+      300,
+      75,
+      '{"receive_item": {"item_name": "Bone Zone key", "quantity": 1}}',
+      '{"completed_quests": ["Harvest Spider Silk"]}',
+      (SELECT id FROM npcs WHERE name = 'Tombguard' LIMIT 1),
+      (SELECT id FROM npcs WHERE name = 'Tombguard' LIMIT 1),
+      true,
+      3,
       NOW(),
       NOW()
     );
@@ -96,6 +188,7 @@ defmodule Shard.Repo.Migrations.CreateBoneZoneNpcs do
   end
 
   def down do
+    execute "DELETE FROM quests WHERE giver_npc_id IN (SELECT id FROM npcs WHERE name = 'Tombguard');"
     execute "DELETE FROM npcs WHERE name = 'Tombguard';"
   end
 end
