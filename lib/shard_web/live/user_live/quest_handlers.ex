@@ -5,7 +5,13 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   # Execute quest command to get quest details from an NPC
   def execute_quest_command(game_state, npc_name) do
     {x, y} = game_state.player_position
-    npcs_here = ShardWeb.UserLive.MapHelpers.get_npcs_at_location(x, y, game_state.character.current_zone_id)
+
+    npcs_here =
+      ShardWeb.UserLive.MapHelpers.get_npcs_at_location(
+        x,
+        y,
+        game_state.character.current_zone_id
+      )
 
     # Find the NPC by name (case-insensitive)
     target_npc =
@@ -21,19 +27,22 @@ defmodule ShardWeb.UserLive.QuestHandlers do
 
       npc ->
         user_id = game_state.character.user_id
-        
+
         # Get available quests from this NPC
-        available_quests = Shard.Quests.get_available_quests_by_giver_excluding_completed(user_id, npc.id)
-        
+        available_quests =
+          Shard.Quests.get_available_quests_by_giver_excluding_completed(user_id, npc.id)
+
         # Additional filter to ensure we don't show quests that are in the local game state as accepted
         # This helps catch timing issues where the database query might not reflect recent changes
-        available_quests = Enum.filter(available_quests, fn quest ->
-          # Check if this quest is already in the player's quest log
-          not Enum.any?(game_state.quests, fn player_quest ->
-            player_quest[:id] == quest.id and player_quest[:status] in ["In Progress", "Completed"]
+        available_quests =
+          Enum.filter(available_quests, fn quest ->
+            # Check if this quest is already in the player's quest log
+            not Enum.any?(game_state.quests, fn player_quest ->
+              player_quest[:id] == quest.id and
+                player_quest[:status] in ["In Progress", "Completed"]
+            end)
           end)
-        end)
-        
+
         if length(available_quests) == 0 do
           npc_name = npc.name || "Unknown NPC"
           {["#{npc_name} has no quests available for you at this time."], game_state}
@@ -41,7 +50,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
           # Show the first available quest
           quest = List.first(available_quests)
           npc_name = npc.name || "Unknown NPC"
-          
+
           response = [
             "#{npc_name} offers you a quest:",
             "",
@@ -55,17 +64,18 @@ defmodule ShardWeb.UserLive.QuestHandlers do
             "Do you want to accept this quest?",
             "Type 'accept' to accept or 'deny' to decline."
           ]
-          
+
           # Store the quest offer in game state
           updated_game_state = %{
-            game_state | 
-            pending_quest_offer: %{quest: quest, npc: npc}
+            game_state
+            | pending_quest_offer: %{quest: quest, npc: npc}
           }
-          
+
           {response, updated_game_state}
         end
     end
   end
+
   # Execute quest acceptance
   def execute_accept_quest(game_state) do
     case game_state.pending_quest_offer do
@@ -99,7 +109,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       # Check if quest is currently in progress or completed
       in_progress = Shard.Quests.quest_in_progress_by_user?(user_id, quest_id)
       completed = Shard.Quests.quest_completed_by_user?(user_id, quest_id)
-      
+
       in_progress || completed
     rescue
       _error ->
@@ -129,14 +139,14 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   # Attempt to accept the quest in the database
   defp attempt_quest_acceptance(user_id, quest_id) do
     case Shard.Quests.accept_quest(user_id, quest_id) do
-      {:ok, quest_acceptance} -> 
+      {:ok, quest_acceptance} ->
         {:ok, quest_acceptance}
-      
+
       {:error, changeset} when is_struct(changeset, Ecto.Changeset) ->
         # Log the changeset errors for debugging
         IO.inspect(changeset.errors, label: "Quest acceptance validation errors")
         {:error, changeset}
-      
+
       {:error, reason} ->
         # Log the specific error reason
         IO.inspect(reason, label: "Quest acceptance error reason")
@@ -176,22 +186,23 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     # Only add to local quest list if successfully added to database
     # Load the quest acceptance from database to get the current status
     user_id = game_state.character.user_id
-    
+
     # Get the quest acceptance from database to confirm it was created
-    quest_acceptance = 
+    quest_acceptance =
       case Shard.Quests.get_user_active_quests(user_id) do
         active_quests ->
           Enum.find(active_quests, fn qa -> qa.quest_id == quest.id end)
       end
-    
+
     # Only add to local state if we can confirm it's in the database AND it's not already in local state
-    updated_quests = 
+    updated_quests =
       if quest_acceptance do
         # Check if quest is already in local game state
-        quest_already_in_local = Enum.any?(game_state.quests, fn local_quest ->
-          local_quest[:id] == quest.id
-        end)
-        
+        quest_already_in_local =
+          Enum.any?(game_state.quests, fn local_quest ->
+            local_quest[:id] == quest.id
+          end)
+
         if quest_already_in_local do
           # Quest is already in local state, don't add duplicate
           game_state.quests
@@ -248,12 +259,15 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   # Handle database error fallback
   defp handle_database_error_fallback(game_state, quest, npc_name, quest_title) do
     # Log more details about the quest and user for debugging
-    IO.inspect(%{
-      user_id: game_state.character.user_id,
-      quest_id: quest.id,
-      quest_title: quest_title,
-      npc_name: npc_name
-    }, label: "Quest acceptance failed - details")
+    IO.inspect(
+      %{
+        user_id: game_state.character.user_id,
+        quest_id: quest.id,
+        quest_title: quest_title,
+        npc_name: npc_name
+      },
+      label: "Quest acceptance failed - details"
+    )
 
     response = [
       "#{npc_name} looks troubled.",
@@ -272,7 +286,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   # Handle quest acceptance validation errors (like quest type restrictions)
   defp handle_quest_acceptance_validation_error(game_state, npc_name, changeset) do
     # Extract the first error message from the changeset
-    error_message = 
+    error_message =
       case changeset.errors do
         [{_field, {message, _opts}} | _] -> message
         _ -> "There seems to be an issue with accepting this quest right now."
@@ -380,7 +394,8 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     updated_stats = update_player_stats_with_experience(game_state.player_stats, exp_reward)
     {updated_stats, level_up_message} = handle_level_up_check(updated_stats)
 
-    updated_quests = complete_quest_in_database_and_update_state(game_state.quests, quest.id, user_id)
+    updated_quests =
+      complete_quest_in_database_and_update_state(game_state.quests, quest.id, user_id)
 
     response =
       build_quest_completion_response(
