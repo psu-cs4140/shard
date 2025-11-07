@@ -18,6 +18,12 @@ defmodule Shard.Monsters.Monster do
     field :level, :integer, default: 1
     field :description, :string
 
+    # Special damage fields for poison, fire, etc.
+    field :special_damage_amount, :integer, default: 0
+    field :special_damage_duration, :integer, default: 0
+    field :special_damage_chance, :integer, default: 100
+    belongs_to :special_damage_type, Shard.Weapons.DamageTypes
+
     # Location reference - assuming monsters are placed in rooms
     belongs_to :location, Shard.Map.Room, foreign_key: :location_id
 
@@ -37,7 +43,11 @@ defmodule Shard.Monsters.Monster do
       :xp_amount,
       :level,
       :description,
-      :location_id
+      :location_id,
+      :special_damage_type_id,
+      :special_damage_amount,
+      :special_damage_duration,
+      :special_damage_chance
     ])
     |> validate_required([:name, :race, :health, :max_health, :attack_damage, :xp_amount])
     |> validate_number(:health, greater_than: 0)
@@ -45,6 +55,12 @@ defmodule Shard.Monsters.Monster do
     |> validate_number(:attack_damage, greater_than_or_equal_to: 0)
     |> validate_number(:xp_amount, greater_than_or_equal_to: 0)
     |> validate_number(:level, greater_than: 0)
+    |> validate_number(:special_damage_amount, greater_than_or_equal_to: 0)
+    |> validate_number(:special_damage_duration, greater_than_or_equal_to: 0)
+    |> validate_number(:special_damage_chance,
+      greater_than_or_equal_to: 0,
+      less_than_or_equal_to: 100
+    )
     |> validate_health_not_exceeding_max()
   end
 
