@@ -303,6 +303,57 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
       IO.puts("Warning: Freezer room not found at (4,-3) in Vampire's Manor")
     end
 
+    # Create The Count monster in the Master Chamber
+    master_chamber = Enum.find(manor_rooms, &(&1.x_coordinate == -1 && &1.y_coordinate == -4))
+
+    if master_chamber do
+      # Create the Vampire Cloak item if it doesn't exist
+      vampire_cloak_item =
+        case Repo.get_by(Item, name: "Vampire Cloak") do
+          nil ->
+            {:ok, new_item} =
+              %Item{}
+              |> Item.changeset(%{
+                name: "Vampire Cloak",
+                description: "A magnificent black cloak lined with crimson silk, radiating an aura of ancient power and nobility.",
+                item_type: "armor",
+                rarity: "rare",
+                value: 100,
+                stackable: false,
+                equippable: true,
+                equipment_slot: "back",
+                is_active: true
+              })
+              |> Repo.insert()
+
+            new_item
+
+          existing ->
+            existing
+        end
+
+      # Create The Count monster with item drops
+      {:ok, _count} =
+        Monsters.create_monster(%{
+          name: "The Count",
+          race: "Vampire",
+          health: 80,
+          max_health: 80,
+          attack_damage: 8,
+          xp_amount: 50,
+          level: 5,
+          description: "The ancient master of this manor, a powerful vampire lord with centuries of dark knowledge and supernatural strength.",
+          location_id: master_chamber.id,
+          potential_loot_drops: %{
+            "#{vampire_cloak_item.id}" => %{chance: 1.0, min_quantity: 1, max_quantity: 1}
+          }
+        })
+
+      IO.puts("Successfully created The Count in Master Chamber")
+    else
+      IO.puts("Warning: Master Chamber room not found at (-1,-4) in Vampire's Manor")
+    end
+
     IO.puts("""
 
     ✓ Vampire's Manor successfully seeded!
@@ -341,6 +392,17 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
         IO.puts("Deleted Possessed Suit of Armor")
       _ ->
         IO.puts("Possessed Suit of Armor not found")
+    end
+
+    # Find and delete The Count using raw SQL
+    count_result = Repo.query("SELECT id FROM monsters WHERE name = $1", ["The Count"])
+    
+    case count_result do
+      {:ok, %{rows: [[count_id]]}} ->
+        Repo.query("DELETE FROM monsters WHERE id = $1", [count_id])
+        IO.puts("Deleted The Count")
+      _ ->
+        IO.puts("The Count not found")
     end
 
 
