@@ -424,7 +424,7 @@ defmodule Shard.Combat do
         {:error, "Item not found"}
 
       item ->
-        # Create inventory entry
+        # Create inventory entry using the proper Items context function
         attrs = %{
           character_id: character_id,
           item_id: item_id,
@@ -432,7 +432,8 @@ defmodule Shard.Combat do
           slot_position: find_next_available_slot(character_id)
         }
 
-        case Shard.Items.create_character_inventory(attrs) do
+        # Use the correct function name from the Items context
+        case Shard.Repo.insert(Shard.Items.CharacterInventory.changeset(%Shard.Items.CharacterInventory{}, attrs)) do
           {:ok, inventory_item} ->
             {:ok, inventory_item}
 
