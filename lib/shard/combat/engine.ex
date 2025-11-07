@@ -123,7 +123,13 @@ defmodule Shard.Combat.Engine do
             end
 
           # NEW: Special damage effects (poison, burn, etc.)
-          %{kind: "special_damage", target: {:monster, i}, remaining_ticks: t, magnitude: mag, damage_type: type}
+          %{
+            kind: "special_damage",
+            target: {:monster, i},
+            remaining_ticks: t,
+            magnitude: mag,
+            damage_type: type
+          }
           when t > 0 ->
             case Enum.fetch(mons, i) do
               {:ok, m} ->
@@ -146,7 +152,13 @@ defmodule Shard.Combat.Engine do
                 {mons, plrs, keep, evs}
             end
 
-          %{kind: "special_damage", target: {:player, player_id}, remaining_ticks: t, magnitude: mag, damage_type: type}
+          %{
+            kind: "special_damage",
+            target: {:player, player_id},
+            remaining_ticks: t,
+            magnitude: mag,
+            damage_type: type
+          }
           when t > 0 ->
             case Enum.find_index(plrs, &(&1.id == player_id)) do
               nil ->

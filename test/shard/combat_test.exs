@@ -267,9 +267,9 @@ defmodule Shard.CombatTest do
   describe "Engine.apply_special_damage_effect/5" do
     test "adds special damage effect to combat state" do
       state = %{effects: []}
-      
+
       new_state = Engine.apply_special_damage_effect(state, {:player, "player1"}, "poison", 2, 3)
-      
+
       assert length(new_state.effects) == 1
       effect = hd(new_state.effects)
       assert effect.kind == "special_damage"
@@ -283,7 +283,7 @@ defmodule Shard.CombatTest do
   describe "special damage monsters" do
     setup do
       # Create a poison damage type for testing
-      {:ok, poison_type} = 
+      {:ok, poison_type} =
         %DamageTypes{}
         |> DamageTypes.changeset(%{name: "Poison"})
         |> Repo.insert()
@@ -310,7 +310,7 @@ defmodule Shard.CombatTest do
       }
 
       {:ok, monster} = Shard.Monsters.create_monster(attrs)
-      
+
       assert monster.name == "Poison Spider"
       assert monster.special_damage_type_id == poison_type.id
       assert monster.special_damage_amount == 2
@@ -327,13 +327,15 @@ defmodule Shard.CombatTest do
         attack_damage: 3,
         xp_amount: 10,
         special_damage_type_id: poison_type.id,
-        special_damage_amount: -1,  # Invalid: negative amount
+        # Invalid: negative amount
+        special_damage_amount: -1,
         special_damage_duration: 3,
-        special_damage_chance: 150  # Invalid: over 100
+        # Invalid: over 100
+        special_damage_chance: 150
       }
 
       {:error, changeset} = Shard.Monsters.create_monster(attrs)
-      
+
       assert changeset.errors[:special_damage_amount] != nil
       assert changeset.errors[:special_damage_chance] != nil
     end

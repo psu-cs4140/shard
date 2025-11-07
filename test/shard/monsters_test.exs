@@ -52,11 +52,11 @@ defmodule Shard.MonstersTest do
     test "list_monsters/0 returns all monsters" do
       # Create a test monster and verify it's in the list
       test_monster = monster_fixture()
-      
+
       # Get all monsters and find our test monster
       all_monsters = Monsters.list_monsters()
       found_monster = Enum.find(all_monsters, fn m -> m.id == test_monster.id end)
-      
+
       # Verify our test monster is in the list
       assert found_monster != nil
       assert found_monster.id == test_monster.id
@@ -66,7 +66,7 @@ defmodule Shard.MonstersTest do
     test "get_monster!/1 returns the monster with given id" do
       monster = monster_fixture()
       retrieved_monster = Monsters.get_monster!(monster.id)
-      
+
       # Compare specific fields instead of entire structs to avoid association loading issues
       assert retrieved_monster.id == monster.id
       assert retrieved_monster.name == monster.name
@@ -110,7 +110,7 @@ defmodule Shard.MonstersTest do
     test "update_monster/2 with invalid data returns error changeset" do
       monster = monster_fixture()
       assert {:error, %Ecto.Changeset{}} = Monsters.update_monster(monster, @invalid_attrs)
-      
+
       # Retrieve the monster again and verify it hasn't changed
       unchanged_monster = Monsters.get_monster!(monster.id)
       assert unchanged_monster.id == monster.id
@@ -133,7 +133,7 @@ defmodule Shard.MonstersTest do
   describe "special damage monsters" do
     setup do
       # Create a poison damage type for testing
-      {:ok, poison_type} = 
+      {:ok, poison_type} =
         %DamageTypes{}
         |> DamageTypes.changeset(%{name: "Poison"})
         |> Repo.insert()
@@ -144,12 +144,13 @@ defmodule Shard.MonstersTest do
     end
 
     test "create monster with special damage attributes", %{poison_type: poison_type} do
-      attrs = Map.merge(@valid_attrs, %{
-        special_damage_type_id: poison_type.id,
-        special_damage_amount: 2,
-        special_damage_duration: 3,
-        special_damage_chance: 50
-      })
+      attrs =
+        Map.merge(@valid_attrs, %{
+          special_damage_type_id: poison_type.id,
+          special_damage_amount: 2,
+          special_damage_duration: 3,
+          special_damage_chance: 50
+        })
 
       assert {:ok, %Monster{} = monster} = Monsters.create_monster(attrs)
       assert monster.special_damage_type_id == poison_type.id
@@ -159,46 +160,51 @@ defmodule Shard.MonstersTest do
     end
 
     test "validates special damage amount is non-negative" do
-      attrs = Map.merge(@valid_attrs, %{
-        special_damage_amount: -1
-      })
+      attrs =
+        Map.merge(@valid_attrs, %{
+          special_damage_amount: -1
+        })
 
       assert {:error, %Ecto.Changeset{} = changeset} = Monsters.create_monster(attrs)
       assert "must be greater than or equal to 0" in errors_on(changeset).special_damage_amount
     end
 
     test "validates special damage duration is non-negative" do
-      attrs = Map.merge(@valid_attrs, %{
-        special_damage_duration: -1
-      })
+      attrs =
+        Map.merge(@valid_attrs, %{
+          special_damage_duration: -1
+        })
 
       assert {:error, %Ecto.Changeset{} = changeset} = Monsters.create_monster(attrs)
       assert "must be greater than or equal to 0" in errors_on(changeset).special_damage_duration
     end
 
     test "validates special damage chance is between 0 and 100" do
-      attrs = Map.merge(@valid_attrs, %{
-        special_damage_chance: -1
-      })
+      attrs =
+        Map.merge(@valid_attrs, %{
+          special_damage_chance: -1
+        })
 
       assert {:error, %Ecto.Changeset{} = changeset} = Monsters.create_monster(attrs)
       assert "must be greater than or equal to 0" in errors_on(changeset).special_damage_chance
 
-      attrs = Map.merge(@valid_attrs, %{
-        special_damage_chance: 101
-      })
+      attrs =
+        Map.merge(@valid_attrs, %{
+          special_damage_chance: 101
+        })
 
       assert {:error, %Ecto.Changeset{} = changeset} = Monsters.create_monster(attrs)
       assert "must be less than or equal to 100" in errors_on(changeset).special_damage_chance
     end
 
     test "special damage type can be nil" do
-      attrs = Map.merge(@valid_attrs, %{
-        special_damage_type_id: nil,
-        special_damage_amount: 0,
-        special_damage_duration: 0,
-        special_damage_chance: 100
-      })
+      attrs =
+        Map.merge(@valid_attrs, %{
+          special_damage_type_id: nil,
+          special_damage_amount: 0,
+          special_damage_duration: 0,
+          special_damage_chance: 100
+        })
 
       assert {:ok, %Monster{} = monster} = Monsters.create_monster(attrs)
       assert monster.special_damage_type_id == nil

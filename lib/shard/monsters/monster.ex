@@ -57,7 +57,10 @@ defmodule Shard.Monsters.Monster do
     |> validate_number(:level, greater_than: 0)
     |> validate_number(:special_damage_amount, greater_than_or_equal_to: 0)
     |> validate_number(:special_damage_duration, greater_than_or_equal_to: 0)
-    |> validate_number(:special_damage_chance, greater_than_or_equal_to: 0, less_than_or_equal_to: 100)
+    |> validate_number(:special_damage_chance,
+      greater_than_or_equal_to: 0,
+      less_than_or_equal_to: 100
+    )
     |> validate_health_not_exceeding_max()
   end
 
