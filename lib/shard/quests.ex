@@ -292,87 +292,91 @@ defmodule Shard.Quests do
   This excludes quests that have been completed to prevent repetition.
   """
   def get_available_quests_by_giver_excluding_completed(user_id, npc_id) do
-    # Get quest IDs that the user has completed and are NOT repeatable (to exclude from showing again)
-    completed_non_repeatable_quest_ids =
-      from(qa in QuestAcceptance,
-        join: q in Quest,
-        on: qa.quest_id == q.id,
-        where: qa.user_id == ^user_id and qa.status == "completed" and q.is_repeatable == false,
-        select: qa.quest_id
-      )
-      |> Repo.all()
+    user_quest_data = get_user_quest_data(user_id)
+    all_npc_quests = get_npc_quests(npc_id)
 
-    # Get quest IDs that the user currently has active (accepted/in_progress)
-    active_quest_ids =
-      from(qa in QuestAcceptance,
-        where: qa.user_id == ^user_id and qa.status in ["accepted", "in_progress"],
-        select: qa.quest_id
-      )
-      |> Repo.all()
+    Enum.filter(all_npc_quests, &quest_available_for_user?(&1, user_quest_data))
+  end
 
-    # Get completed quest titles for prerequisite checking
-    completed_quest_titles =
-      from(qa in QuestAcceptance,
-        join: q in Quest,
-        on: qa.quest_id == q.id,
-        where: qa.user_id == ^user_id and qa.status == "completed",
-        select: q.title
-      )
-      |> Repo.all()
+  defp get_user_quest_data(user_id) do
+    %{
+      completed_non_repeatable_quest_ids: get_completed_non_repeatable_quest_ids(user_id),
+      active_quest_ids: get_active_quest_ids(user_id),
+      completed_quest_titles: get_completed_quest_titles(user_id),
+      active_quest_types: get_active_quest_types(user_id)
+    }
+  end
 
-    # Get quest types that the user currently has active
-    active_quest_types =
-      from(qa in QuestAcceptance,
-        join: q in Quest,
-        on: qa.quest_id == q.id,
-        where:
-          qa.user_id == ^user_id and
-            qa.status in ["accepted", "in_progress"],
-        select: q.quest_type
-      )
-      |> Repo.all()
+  defp get_completed_non_repeatable_quest_ids(user_id) do
+    from(qa in QuestAcceptance,
+      join: q in Quest,
+      on: qa.quest_id == q.id,
+      where: qa.user_id == ^user_id and qa.status == "completed" and q.is_repeatable == false,
+      select: qa.quest_id
+    )
+    |> Repo.all()
+  end
 
-    # Get all quests from this NPC that are active
-    all_npc_quests =
-      from(q in Quest,
-        where:
-          q.giver_npc_id == ^npc_id and
-            q.is_active == true,
-        order_by: [asc: q.sort_order, asc: q.id]
-      )
-      |> Repo.all()
+  defp get_active_quest_ids(user_id) do
+    from(qa in QuestAcceptance,
+      where: qa.user_id == ^user_id and qa.status in ["accepted", "in_progress"],
+      select: qa.quest_id
+    )
+    |> Repo.all()
+  end
 
-    # Filter quests based on all conditions
-    available_quests =
-      Enum.filter(all_npc_quests, fn quest ->
-        # Check if quest is already completed (and not repeatable) or currently active
-        quest_not_taken =
-          quest.id not in completed_non_repeatable_quest_ids and quest.id not in active_quest_ids
+  defp get_completed_quest_titles(user_id) do
+    from(qa in QuestAcceptance,
+      join: q in Quest,
+      on: qa.quest_id == q.id,
+      where: qa.user_id == ^user_id and qa.status == "completed",
+      select: q.title
+    )
+    |> Repo.all()
+  end
 
-        # Check if user already has an active quest of this type
-        quest_type_available = quest.quest_type not in active_quest_types
+  defp get_active_quest_types(user_id) do
+    from(qa in QuestAcceptance,
+      join: q in Quest,
+      on: qa.quest_id == q.id,
+      where:
+        qa.user_id == ^user_id and
+          qa.status in ["accepted", "in_progress"],
+      select: q.quest_type
+    )
+    |> Repo.all()
+  end
 
-        # Check status and prerequisites
-        status_available =
-          case quest.status do
-            "available" ->
-              true
+  defp get_npc_quests(npc_id) do
+    from(q in Quest,
+      where:
+        q.giver_npc_id == ^npc_id and
+          q.is_active == true,
+      order_by: [asc: q.sort_order, asc: q.id]
+    )
+    |> Repo.all()
+  end
 
-            "locked" ->
-              # Check if prerequisites are met
-              check_quest_prerequisites(quest, completed_quest_titles)
+  defp quest_available_for_user?(quest, user_quest_data) do
+    quest_not_taken?(quest, user_quest_data) and
+      quest_type_available?(quest, user_quest_data) and
+      quest_status_available?(quest, user_quest_data)
+  end
 
-            _ ->
-              false
-          end
+  defp quest_not_taken?(quest, %{completed_non_repeatable_quest_ids: completed_ids, active_quest_ids: active_ids}) do
+    quest.id not in completed_ids and quest.id not in active_ids
+  end
 
-        # Quest is only available if ALL conditions are met
-        result = quest_not_taken and quest_type_available and status_available
+  defp quest_type_available?(quest, %{active_quest_types: active_types}) do
+    quest.quest_type not in active_types
+  end
 
-        result
-      end)
-
-    available_quests
+  defp quest_status_available?(quest, %{completed_quest_titles: completed_titles}) do
+    case quest.status do
+      "available" -> true
+      "locked" -> check_quest_prerequisites(quest, completed_titles)
+      _ -> false
+    end
   end
 
   defp check_quest_prerequisites(quest, completed_quest_titles) do
