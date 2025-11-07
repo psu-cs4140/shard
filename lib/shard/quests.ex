@@ -488,9 +488,38 @@ defmodule Shard.Quests do
 
   """
   def can_turn_in_quest?(user_id, quest_id) do
-    # Get the user's character (assuming user_id maps to character_id for now)
-    character_id = user_id
+    # Get the user's character ID from the Characters context
+    case Shard.Characters.get_character_by_user_id(user_id) do
+      nil -> {:error, :character_not_found}
+      character ->
+        character_id = character.id
 
+        with quest when not is_nil(quest) <- get_quest!(quest_id),
+             true <- quest_in_progress_by_user?(user_id, quest_id) do
+          case Shard.Items.character_has_quest_items?(character_id, quest.objectives) do
+            true -> {:ok, true}
+            false -> {:error, :missing_items}
+          end
+        else
+          nil -> {:error, :quest_not_found}
+          false -> {:error, :quest_not_in_progress}
+        end
+    end
+  end
+
+  @doc """
+  Checks if a user can turn in a quest based on quest objectives with explicit character_id.
+
+  ## Examples
+
+      iex> can_turn_in_quest_with_character_id?(user_id, character_id, quest_id)
+      {:ok, true}
+
+      iex> can_turn_in_quest_with_character_id?(user_id, character_id, quest_id)
+      {:error, :missing_items}
+
+  """
+  def can_turn_in_quest_with_character_id?(user_id, character_id, quest_id) do
     with quest when not is_nil(quest) <- get_quest!(quest_id),
          true <- quest_in_progress_by_user?(user_id, quest_id) do
       case Shard.Items.character_has_quest_items?(character_id, quest.objectives) do
@@ -540,9 +569,50 @@ defmodule Shard.Quests do
 
   """
   def turn_in_quest_with_items(user_id, quest_id) do
-    character_id = user_id
+    case Shard.Characters.get_character_by_user_id(user_id) do
+      nil -> {:error, :character_not_found}
+      character ->
+        character_id = character.id
 
-    case can_turn_in_quest?(user_id, quest_id) do
+        case can_turn_in_quest?(user_id, quest_id) do
+          {:ok, true} ->
+            quest = get_quest!(quest_id)
+
+            Repo.transaction(fn ->
+              # Remove required items from inventory
+              case remove_quest_items_from_inventory(character_id, quest.objectives) do
+                :ok ->
+                  # Complete the quest
+                  case complete_quest(user_id, quest_id) do
+                    {:ok, quest_acceptance} -> quest_acceptance
+                    {:error, reason} -> Repo.rollback(reason)
+                  end
+
+                {:error, reason} ->
+                  Repo.rollback(reason)
+              end
+            end)
+
+          error ->
+            error
+        end
+    end
+  end
+
+  @doc """
+  Processes quest turn-in with explicit character_id, removing required items from inventory.
+
+  ## Examples
+
+      iex> turn_in_quest_with_character_id(user_id, character_id, quest_id)
+      {:ok, %QuestAcceptance{}}
+
+      iex> turn_in_quest_with_character_id(user_id, character_id, quest_id)
+      {:error, :missing_items}
+
+  """
+  def turn_in_quest_with_character_id(user_id, character_id, quest_id) do
+    case can_turn_in_quest_with_character_id?(user_id, character_id, quest_id) do
       {:ok, true} ->
         quest = get_quest!(quest_id)
 

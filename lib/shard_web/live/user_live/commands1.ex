@@ -548,7 +548,7 @@ defmodule ShardWeb.UserLive.Commands1 do
             # Check which quests can actually be turned in (objectives completed)
             completable_quests = 
               Enum.filter(turn_in_quests, fn quest ->
-                case Shard.Quests.can_turn_in_quest?(user_id, quest.id) do
+                case Shard.Quests.can_turn_in_quest_with_character_id?(user_id, game_state.character.id, quest.id) do
                   {:ok, true} -> true
                   _ -> false
                 end
@@ -557,7 +557,7 @@ defmodule ShardWeb.UserLive.Commands1 do
             # Check which quests are in progress but not yet completable
             in_progress_quests = 
               Enum.filter(turn_in_quests, fn quest ->
-                case Shard.Quests.can_turn_in_quest?(user_id, quest.id) do
+                case Shard.Quests.can_turn_in_quest_with_character_id?(user_id, game_state.character.id, quest.id) do
                   {:error, :missing_items} -> true
                   _ -> false
                 end
@@ -652,6 +652,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
       npc ->
         user_id = game_state.character.user_id
+        character_id = game_state.character.id
         
         # Get quests that can be turned in to this NPC
         turn_in_quests = Shard.Quests.get_turn_in_quests_by_npc(user_id, npc.id)
@@ -662,7 +663,7 @@ defmodule ShardWeb.UserLive.Commands1 do
           # Process each quest that can be turned in
           results = 
             Enum.map(turn_in_quests, fn quest ->
-              case Shard.Quests.turn_in_quest_with_items(user_id, quest.id) do
+              case Shard.Quests.turn_in_quest_with_character_id(user_id, character_id, quest.id) do
                 {:ok, _quest_acceptance} ->
                   "Successfully turned in '#{quest.title}'"
                 
