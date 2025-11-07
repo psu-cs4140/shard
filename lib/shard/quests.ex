@@ -220,18 +220,16 @@ defmodule Shard.Quests do
 
       true ->
         # Log the attempt for debugging
-        IO.inspect(%{user_id: user_id, quest_id: quest_id}, label: "Attempting to accept quest")
+        
 
         changeset =
           %QuestAcceptance{}
           |> QuestAcceptance.accept_changeset(%{user_id: user_id, quest_id: quest_id})
 
         # Log the changeset before insertion
-        IO.inspect(changeset.valid?, label: "Changeset valid?")
+        
 
-        if not changeset.valid? do
-          IO.inspect(changeset.errors, label: "Changeset errors")
-        end
+        
 
         case Repo.insert(changeset) do
           {:ok, quest_acceptance} ->
