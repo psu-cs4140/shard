@@ -652,12 +652,13 @@ defmodule Shard.Quests do
 
   """
   def can_turn_in_quest?(user_id, quest_id) do
-    # Get the user's character ID from the Characters context
-    case Shard.Characters.get_character_by_user_id(user_id) do
-      nil ->
+    # Get the user's characters from the Characters context
+    case Shard.Characters.get_characters_by_user(user_id) do
+      [] ->
         {:error, :character_not_found}
 
-      character ->
+      [character | _] ->
+        # Use the first character for now
         character_id = character.id
 
         with quest when not is_nil(quest) <- get_quest!(quest_id),
@@ -735,11 +736,12 @@ defmodule Shard.Quests do
 
   """
   def turn_in_quest_with_items(user_id, quest_id) do
-    case Shard.Characters.get_character_by_user_id(user_id) do
-      nil ->
+    case Shard.Characters.get_characters_by_user(user_id) do
+      [] ->
         {:error, :character_not_found}
 
-      character ->
+      [character | _] ->
+        # Use the first character for now
         character_id = character.id
 
         case can_turn_in_quest?(user_id, quest_id) do
