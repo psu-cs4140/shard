@@ -164,7 +164,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         {:error, reason}
     end
   rescue
-    error ->
+    _error ->
       {:error, :database_error}
   end
 
