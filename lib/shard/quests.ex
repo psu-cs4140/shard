@@ -363,7 +363,10 @@ defmodule Shard.Quests do
       quest_status_available?(quest, user_quest_data)
   end
 
-  defp quest_not_taken?(quest, %{completed_non_repeatable_quest_ids: completed_ids, active_quest_ids: active_ids}) do
+  defp quest_not_taken?(quest, %{
+         completed_non_repeatable_quest_ids: completed_ids,
+         active_quest_ids: active_ids
+       }) do
     quest.id not in completed_ids and quest.id not in active_ids
   end
 
