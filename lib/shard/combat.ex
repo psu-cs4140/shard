@@ -357,12 +357,8 @@ defmodule Shard.Combat do
 
     IO.puts("DEBUG: Calculated drop quantity: #{quantity}")
 
-    # Add item to player inventory
-    case Shard.Items.add_item_to_inventory(
-           game_state.character.id,
-           item_id,
-           quantity
-         ) do
+    # Add item to player inventory using proper Items context function
+    case add_item_to_character_inventory(game_state.character.id, item_id, quantity) do
       {:ok, _} ->
         IO.puts("DEBUG: Successfully added #{quantity} of item ID #{item_id} to inventory.")
         create_loot_message(item_id, quantity, acc)
@@ -419,6 +415,47 @@ defmodule Shard.Combat do
 
   # Default fallback
   defp parse_damage(_), do: 1
+
+  # Helper function to add items to character inventory
+  defp add_item_to_character_inventory(character_id, item_id, quantity) do
+    # Get the item to verify it exists
+    case Shard.Items.get_item(item_id) do
+      nil ->
+        {:error, "Item not found"}
+
+      item ->
+        # Create inventory entry
+        attrs = %{
+          character_id: character_id,
+          item_id: item_id,
+          quantity: quantity,
+          slot_position: find_next_available_slot(character_id)
+        }
+
+        case Shard.Items.create_character_inventory(attrs) do
+          {:ok, inventory_item} ->
+            {:ok, inventory_item}
+
+          {:error, changeset} ->
+            {:error, changeset}
+        end
+    end
+  end
+
+  # Helper function to find next available inventory slot
+  defp find_next_available_slot(character_id) do
+    import Ecto.Query
+
+    used_slots =
+      from(ci in Shard.Items.CharacterInventory,
+        where: ci.character_id == ^character_id,
+        select: ci.slot_position
+      )
+      |> Shard.Repo.all()
+      |> MapSet.new()
+
+    Enum.find(0..99, fn slot -> not MapSet.member?(used_slots, slot) end) || 0
+  end
 
   # NEW: Check for special damage effect
   defp check_special_damage_effect(game_state, original_monster, updated_monster, base_response) do
