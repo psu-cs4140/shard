@@ -414,10 +414,12 @@ defmodule Shard.Quests do
 
   """
   def get_available_quests_by_giver_excluding_completed(user_id, npc_id) do
-    # Get quest IDs that the user has completed (to exclude from showing again)
-    completed_quest_ids =
+    # Get quest IDs that the user has completed and are NOT repeatable (to exclude from showing again)
+    completed_non_repeatable_quest_ids =
       from(qa in QuestAcceptance,
-        where: qa.user_id == ^user_id and qa.status == "completed",
+        join: q in Quest,
+        on: qa.quest_id == q.id,
+        where: qa.user_id == ^user_id and qa.status == "completed" and q.is_repeatable == false,
         select: qa.quest_id
       )
       |> Repo.all()
@@ -465,17 +467,17 @@ defmodule Shard.Quests do
     IO.inspect(%{
       user_id: user_id,
       npc_id: npc_id,
-      completed_quest_ids: completed_quest_ids,
+      completed_non_repeatable_quest_ids: completed_non_repeatable_quest_ids,
       active_quest_ids: active_quest_ids,
       completed_quest_titles: completed_quest_titles,
       active_quest_types: active_quest_types,
-      all_npc_quests: Enum.map(all_npc_quests, &{&1.id, &1.title, &1.status, &1.prerequisites})
+      all_npc_quests: Enum.map(all_npc_quests, &{&1.id, &1.title, &1.status, &1.prerequisites, &1.is_repeatable})
     }, label: "Available quests debug")
 
     # Filter quests based on all conditions
     available_quests = Enum.filter(all_npc_quests, fn quest ->
-      # Check if quest is already completed or active
-      quest_not_taken = quest.id not in completed_quest_ids and quest.id not in active_quest_ids
+      # Check if quest is already completed (and not repeatable) or currently active
+      quest_not_taken = quest.id not in completed_non_repeatable_quest_ids and quest.id not in active_quest_ids
       
       # Check if user already has an active quest of this type
       quest_type_available = quest.quest_type not in active_quest_types
