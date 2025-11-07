@@ -545,15 +545,59 @@ defmodule ShardWeb.UserLive.Commands1 do
         # Check for quest turn-ins first (higher priority)
         dialogue_lines = 
           if length(turn_in_quests) > 0 do
-            quest_names = Enum.map(turn_in_quests, & &1.title)
-            quest_list = Enum.join(quest_names, ", ")
+            # Check which quests can actually be turned in (objectives completed)
+            completable_quests = 
+              Enum.filter(turn_in_quests, fn quest ->
+                case Shard.Quests.can_turn_in_quest?(user_id, quest.id) do
+                  {:ok, true} -> true
+                  _ -> false
+                end
+              end)
             
-            dialogue_lines ++ [
-              "",
-              "#{npc_name} notices you have completed some tasks:",
-              "\"I see you have completed: #{quest_list}\"",
-              "\"Use 'deliver_quest \"#{npc_name}\"' to turn in your completed quests.\""
-            ]
+            # Check which quests are in progress but not yet completable
+            in_progress_quests = 
+              Enum.filter(turn_in_quests, fn quest ->
+                case Shard.Quests.can_turn_in_quest?(user_id, quest.id) do
+                  {:error, :missing_items} -> true
+                  _ -> false
+                end
+              end)
+            
+            updated_lines = dialogue_lines
+            
+            # Show completable quests first
+            updated_lines = 
+              if length(completable_quests) > 0 do
+                quest_names = Enum.map(completable_quests, & &1.title)
+                quest_list = Enum.join(quest_names, ", ")
+                
+                updated_lines ++ [
+                  "",
+                  "#{npc_name} notices you have completed some tasks:",
+                  "\"Excellent! I see you have completed: #{quest_list}\"",
+                  "\"Use 'deliver_quest \"#{npc_name}\"' to turn in your completed quests.\""
+                ]
+              else
+                updated_lines
+              end
+            
+            # Show in-progress quests that need more work
+            updated_lines = 
+              if length(in_progress_quests) > 0 do
+                quest_names = Enum.map(in_progress_quests, & &1.title)
+                quest_list = Enum.join(quest_names, ", ")
+                
+                updated_lines ++ [
+                  "",
+                  "#{npc_name} checks on your progress:",
+                  "\"I see you're still working on: #{quest_list}\"",
+                  "\"Come back when you have everything I need.\""
+                ]
+              else
+                updated_lines
+              end
+            
+            updated_lines
           else
             dialogue_lines
           end

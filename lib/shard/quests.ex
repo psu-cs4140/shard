@@ -514,28 +514,17 @@ defmodule Shard.Quests do
   """
   def get_turn_in_quests_by_npc(user_id, npc_id) do
     # Get all active quests for this user that can be turned in to this NPC
-    active_quests =
-      from(qa in QuestAcceptance,
-        join: q in Quest,
-        on: qa.quest_id == q.id,
-        where:
-          qa.user_id == ^user_id and
-            qa.status in ["accepted", "in_progress"] and
-            q.turn_in_npc_id == ^npc_id,
-        select: q
-      )
-      |> Repo.all()
-      |> Repo.preload([:turn_in_npc])
-
-    # Filter quests that can actually be turned in (objectives met)
-    character_id = user_id
-
-    Enum.filter(active_quests, fn quest ->
-      case can_turn_in_quest?(user_id, quest.id) do
-        {:ok, true} -> true
-        _ -> false
-      end
-    end)
+    from(qa in QuestAcceptance,
+      join: q in Quest,
+      on: qa.quest_id == q.id,
+      where:
+        qa.user_id == ^user_id and
+          qa.status in ["accepted", "in_progress"] and
+          q.turn_in_npc_id == ^npc_id,
+      select: q
+    )
+    |> Repo.all()
+    |> Repo.preload([:turn_in_npc])
   end
 
   @doc """
