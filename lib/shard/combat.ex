@@ -357,20 +357,30 @@ defmodule Shard.Combat do
     quantity = calculate_drop_quantity(min_qty, max_qty)
 
     IO.puts("DEBUG: Calculated drop quantity: #{quantity}")
+    IO.puts("DEBUG: Character ID: #{game_state.character.id}")
+    IO.puts("DEBUG: Item ID: #{item_id}")
 
-    # Add item to player inventory using proper Items context function
-    case add_item_to_character_inventory(game_state.character.id, item_id, quantity) do
-      {:ok, _} ->
-        IO.puts("DEBUG: Successfully added #{quantity} of item ID #{item_id} to inventory.")
-        create_loot_message(item_id, quantity, acc)
-
-      {:error, reason} ->
-        IO.puts(
-          "DEBUG: Failed to add item ID #{item_id} to inventory. Reason: #{inspect(reason)}"
-        )
-
-        # Handle error (log it, maybe drop in room instead)
+    # Verify the item exists first
+    case Shard.Items.get_item(item_id) do
+      nil ->
+        IO.puts("DEBUG: Item with ID #{item_id} does not exist in database")
         acc
+
+      item ->
+        IO.puts("DEBUG: Found item: #{item.name}")
+        
+        # Add item to player inventory using the exact same pattern as pickup
+        case add_item_to_character_inventory(game_state.character.id, item_id, quantity) do
+          {:ok, _} ->
+            IO.puts("DEBUG: Successfully added #{quantity} of item ID #{item_id} to inventory.")
+            create_loot_message(item_id, quantity, acc)
+
+          {:error, reason} ->
+            IO.puts(
+              "DEBUG: Failed to add item ID #{item_id} to inventory. Reason: #{inspect(reason)}"
+            )
+            acc
+        end
     end
   end
 
@@ -419,8 +429,26 @@ defmodule Shard.Combat do
 
   # Helper function to add items to character inventory
   defp add_item_to_character_inventory(character_id, item_id, quantity) do
-    # Use the existing Items context function that handles stackable/non-stackable items
-    Shard.Items.add_item_to_inventory(character_id, item_id, quantity)
+    IO.puts("DEBUG: Attempting to add item #{item_id} (qty: #{quantity}) to character #{character_id}")
+    
+    # Use the exact same pattern as the pickup logic in Items context
+    result = Shard.Items.add_item_to_inventory(character_id, item_id, quantity)
+    
+    IO.puts("DEBUG: add_item_to_inventory result: #{inspect(result)}")
+    
+    case result do
+      {:ok, _} = success ->
+        IO.puts("DEBUG: Successfully added item to inventory")
+        success
+      
+      {:error, reason} = error ->
+        IO.puts("DEBUG: Failed to add item to inventory: #{inspect(reason)}")
+        error
+      
+      other ->
+        IO.puts("DEBUG: Unexpected result from add_item_to_inventory: #{inspect(other)}")
+        {:error, :unexpected_result}
+    end
   end
 
   # NEW: Check for special damage effect
