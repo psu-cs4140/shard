@@ -202,6 +202,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
 
     ✓ Vampire's Manor successfully seeded!
 
+
     Created 1 zone:
     - Vampire Castle (4x4 grid, coordinates 0,0 to 3,3)
     """)

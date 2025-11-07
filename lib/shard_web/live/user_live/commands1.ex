@@ -18,11 +18,12 @@ defmodule ShardWeb.UserLive.Commands1 do
       execute_pickup_command: 2
     ]
 
+  #  import ShardWeb.UserLive.ItemCommands
+
   alias Shard.Map, as: GameMap
-  alias Shard.Items.Item
-  # Fixed: removed unused AdminStick alias
-  alias Shard.Repo
-  import Ecto.Query
+  # alias Shard.Items.Item
+  # alias Shard.Repo
+  # import Ecto.Query
 
   # Process terminal commands
   def process_command(command, game_state) do
@@ -187,7 +188,12 @@ defmodule ShardWeb.UserLive.Commands1 do
         npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
 
         # Check for items at current location
-        items_here = get_items_at_location(x, y, game_state.character.current_zone_id)
+        items_here =
+          ShardWeb.UserLive.ItemCommands.get_items_at_location(
+            x,
+            y,
+            game_state.character.current_zone_id
+          )
 
         description_lines = [room_description]
 
@@ -298,7 +304,27 @@ defmodule ShardWeb.UserLive.Commands1 do
         {["You are at position (#{x}, #{y})."], game_state}
 
       downcased_command == "inventory" ->
-        {["Your inventory is empty. (Feature coming soon!)"], game_state}
+        inventory_items = game_state.inventory_items
+
+        if Enum.empty?(inventory_items) do
+          {["Your inventory is empty."], game_state}
+        else
+          response =
+            ["Your inventory contains:"] ++
+              Enum.map(inventory_items, fn inv_item ->
+                item_name = inv_item.item.name
+                quantity = inv_item.quantity
+                equipped_text = if inv_item.equipped, do: " (equipped)", else: ""
+
+                if quantity > 1 do
+                  "  #{item_name} x#{quantity}#{equipped_text}"
+                else
+                  "  #{item_name}#{equipped_text}"
+                end
+              end)
+
+          {response, game_state}
+        end
 
       downcased_command == "npc" ->
         {x, y} = game_state.player_position
@@ -381,9 +407,12 @@ defmodule ShardWeb.UserLive.Commands1 do
 
                   :error ->
                     # Check if it's a pickup command
-                    case parse_pickup_command(command) do
+                    case ShardWeb.UserLive.ItemCommands.parse_pickup_command(command) do
                       {:ok, item_name} ->
-                        execute_pickup_command(game_state, item_name)
+                        ShardWeb.UserLive.ItemCommands.execute_pickup_command(
+                          game_state,
+                          item_name
+                        )
 
                       :error ->
                         # Check if it's an unlock command
@@ -408,47 +437,6 @@ defmodule ShardWeb.UserLive.Commands1 do
             end
         end
     end
-  end
-
-  # Get items at a specific location
-  defp get_items_at_location(x, y, _zone_id) do
-    alias Shard.Items.RoomItem
-    location_string = "#{x},#{y},0"
-
-    # Get items from RoomItem table (items placed in world)
-    room_items =
-      from(ri in RoomItem,
-        where: ri.location == ^location_string,
-        join: i in Item,
-        on: ri.item_id == i.id,
-        where: is_nil(i.is_active) or i.is_active == true,
-        select: %{
-          name: i.name,
-          description: i.description,
-          item_type: i.item_type,
-          quantity: ri.quantity
-        }
-      )
-      |> Repo.all()
-
-    # Also check for items directly in Item table with matching location
-    direct_items =
-      from(i in Item,
-        where:
-          i.location == ^location_string and
-            (is_nil(i.is_active) or i.is_active == true),
-        select: %{
-          name: i.name,
-          description: i.description,
-          item_type: i.item_type,
-          quantity: 1
-        }
-      )
-      |> Repo.all()
-
-    # Combine both results and remove duplicates based on name
-    all_items = room_items ++ direct_items
-    all_items |> Enum.uniq_by(& &1.name)
   end
 
   # Parse talk command to extract NPC name
@@ -517,93 +505,6 @@ defmodule ShardWeb.UserLive.Commands1 do
 
       true ->
         :error
-    end
-  end
-
-  # Parse pickup command to extract item name
-  def parse_pickup_command(command) do
-    # Match patterns like: pickup "item name", pickup 'item name', pickup item_name
-    cond do
-      # Match pickup "item name" or pickup 'item name'
-      Regex.match?(~r/^pickup\s+["'](.+)["']\s*$/i, command) ->
-        case Regex.run(~r/^pickup\s+["'](.+)["']\s*$/i, command) do
-          [_, item_name] -> {:ok, String.trim(item_name)}
-          _ -> :error
-        end
-
-      # Match pickup item_name (single word, no quotes)
-      Regex.match?(~r/^pickup\s+(\w+)\s*$/i, command) ->
-        case Regex.run(~r/^pickup\s+(\w+)\s*$/i, command) do
-          [_, item_name] -> {:ok, String.trim(item_name)}
-          _ -> :error
-        end
-
-      true ->
-        :error
-    end
-  end
-
-  # Execute pickup command with a specific item name
-  def execute_pickup_command(game_state, item_name) do
-    {x, y} = game_state.player_position
-    items_here = get_items_at_location(x, y, game_state.character.current_zone_id)
-
-    # Find the item by name (case-insensitive)
-    target_item =
-      Enum.find(items_here, fn item ->
-        String.downcase(item.name || "") == String.downcase(item_name)
-      end)
-
-    case target_item do
-      nil ->
-        if length(items_here) > 0 do
-          # credo:disable-for-next-line Credo.Check.Refactor.EnumMapJoin
-          available_names = Enum.map_join(items_here, ", ", & &1.name)
-
-          response = [
-            "There is no item named '#{item_name}' here.",
-            "Available items: #{available_names}"
-          ]
-
-          {response, game_state}
-        else
-          {["There are no items here to pick up."], game_state}
-        end
-
-      item ->
-        # Check if item can be picked up (assuming all items can be picked up for now)
-        # In the future, you might want to add a "pickupable" field to items
-
-        # Add item to player's inventory
-        updated_inventory = [
-          %{
-            id: item[:id],
-            name: item.name,
-            type: item.item_type || "misc",
-            quantity: item.quantity || 1,
-            damage: item[:damage],
-            defense: item[:defense],
-            effect: item[:effect],
-            description: item[:description]
-          }
-          | game_state.inventory_items
-        ]
-
-        # Remove item from the room (this would need database implementation)
-        # For now, we'll just update the game state
-
-        response = [
-          "You pick up #{item.name}.",
-          "#{item.name} has been added to your inventory."
-        ]
-
-        updated_game_state = %{game_state | inventory_items: updated_inventory}
-
-        # NOTE: Remove item from database room/location
-        # This would require calling something like:
-        # Shard.Items.remove_item_from_location(item.id, "#{x},#{y},0")
-
-        {response, updated_game_state}
     end
   end
 end
