@@ -303,7 +303,7 @@ defmodule ShardWeb.UserLive.Commands1 do
         {x, y} = game_state.player_position
         {["You are at position (#{x}, #{y})."], game_state}
 
-      "inventory" ->
+      downcased_command == "inventory" ->
         inventory_items = game_state.inventory_items
 
         if Enum.empty?(inventory_items) do
