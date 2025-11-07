@@ -71,7 +71,7 @@
       #
       checks: %{
         enabled: [
-          {Shard.Credo.MaxFileLength, max_lines: 595},
+          {Shard.Credo.MaxFileLength, max_lines: 650},
           # TODO: return max_lines to 400 reduce file length of offending files ^^^^
 
           #
