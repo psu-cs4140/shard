@@ -59,7 +59,7 @@ defmodule Shard.Combat do
     )
 
     # NEW: Check for special damage effect
-    {final_response, final_monsters} = 
+    {final_response, final_monsters} =
       case check_special_damage_effect(game_state, monster, updated_monster, response) do
         {resp, mons} -> {resp, mons}
         nil -> {response, updated_monsters}
@@ -271,10 +271,11 @@ defmodule Shard.Combat do
     loot_messages = process_loot_drops(game_state, dead_monster)
 
     # Generate reward messages
-    death_messages = [
-      "You gain #{xp_reward} experience.",
-      "You find #{gold_reward} gold on the corpse."
-    ] ++ loot_messages
+    death_messages =
+      [
+        "You gain #{xp_reward} experience.",
+        "You find #{gold_reward} gold on the corpse."
+      ] ++ loot_messages
 
     {death_messages, updated_monsters, updated_stats, updated_character}
   end
@@ -294,26 +295,27 @@ defmodule Shard.Combat do
           # Check if item drops
           if :rand.uniform() <= chance do
             # Calculate quantity
-            quantity = 
+            quantity =
               if min_qty == max_qty do
                 min_qty
               else
                 min_qty + :rand.uniform(max_qty - min_qty + 1) - 1
               end
-            
+
             # Add item to player inventory
             case Shard.Items.add_item_to_inventory(
-                   game_state.character.id, 
-                   item_id, 
+                   game_state.character.id,
+                   item_id,
                    quantity
                  ) do
-              {:ok, _} -> 
+              {:ok, _} ->
                 # Get item name for message
                 case Shard.Items.get_item(item_id) do
                   nil -> acc
                   item -> ["You find #{quantity} #{item.name} on the corpse." | acc]
                 end
-              {:error, _reason} -> 
+
+              {:error, _reason} ->
                 # Handle error (log it, maybe drop in room instead)
                 acc
             end
@@ -322,7 +324,9 @@ defmodule Shard.Combat do
           end
         end)
         |> Enum.reverse()
-      _ -> []
+
+      _ ->
+        []
     end
   end
 
@@ -352,19 +356,18 @@ defmodule Shard.Combat do
   # NEW: Check for special damage effect
   defp check_special_damage_effect(game_state, original_monster, updated_monster, base_response) do
     # Check if monster has special damage and is still alive
-    if updated_monster[:is_alive] && 
-       original_monster[:special_damage_type_id] && 
-       original_monster[:special_damage_amount] > 0 &&
-       :rand.uniform(100) <= (original_monster[:special_damage_chance] || 100) do
-      
+    if updated_monster[:is_alive] &&
+         original_monster[:special_damage_type_id] &&
+         original_monster[:special_damage_amount] > 0 &&
+         :rand.uniform(100) <= (original_monster[:special_damage_chance] || 100) do
       # Get damage type name
       damage_type = get_damage_type_name(original_monster[:special_damage_type_id])
       amount = original_monster[:special_damage_amount]
       duration = original_monster[:special_damage_duration] || 3
-      
+
       # Apply special damage effect to combat server
       combat_id = "#{elem(game_state.player_position, 0)},#{elem(game_state.player_position, 1)}"
-      
+
       # Create effect
       effect = %{
         kind: "special_damage",
@@ -373,13 +376,14 @@ defmodule Shard.Combat do
         magnitude: amount,
         damage_type: damage_type
       }
-      
+
       # Try to add effect to combat server
       case apply_special_damage_effect(combat_id, effect) do
         :ok ->
           effect_message = "The #{original_monster[:name]}'s attack #{damage_type}s you!"
           effect_response = base_response ++ [effect_message]
           {effect_response, game_state.monsters}
+
         _ ->
           {base_response, game_state.monsters}
       end
