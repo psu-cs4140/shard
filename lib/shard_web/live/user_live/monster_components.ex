@@ -71,7 +71,9 @@ defmodule ShardWeb.UserLive.MonsterComponents do
           special_damage_type_id: monster.special_damage_type_id,
           special_damage_amount: monster.special_damage_amount,
           special_damage_duration: monster.special_damage_duration,
-          special_damage_chance: monster.special_damage_chance
+          special_damage_chance: monster.special_damage_chance,
+          # Include potential_loot_drops field
+          potential_loot_drops: monster.potential_loot_drops
         }
       end)
     rescue
