@@ -285,6 +285,7 @@ defmodule Shard.Combat do
     case dead_monster[:potential_loot_drops] do
       %{} = drops_map ->
         process_drops_map(game_state, drops_map)
+
       _ ->
         []
     end
@@ -325,6 +326,7 @@ defmodule Shard.Combat do
          ) do
       {:ok, _} ->
         create_loot_message(item_id, quantity, acc)
+
       {:error, _reason} ->
         # Handle error (log it, maybe drop in room instead)
         acc
