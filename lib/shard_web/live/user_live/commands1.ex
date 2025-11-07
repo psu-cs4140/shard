@@ -488,7 +488,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         # Check for quest turn-ins first (higher priority)
         dialogue_lines =
-          if not Enum.empty?(turn_in_quests) do
+          if Enum.any?(turn_in_quests) do
             # Check which quests can actually be turned in (objectives completed)
             completable_quests =
               Enum.filter(turn_in_quests, fn quest ->
@@ -575,14 +575,14 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         # If no quests available and none to turn in, just show basic dialogue
         dialogue_lines =
-          if Enum.empty?(available_quests) and Enum.empty?(turn_in_quests) do
+          if Enum.any?(available_quests) or Enum.any?(turn_in_quests) do
+            dialogue_lines
+          else
             dialogue_lines ++
               [
                 "",
                 "#{npc_name} has no tasks for you at this time."
               ]
-          else
-            dialogue_lines
           end
 
         {dialogue_lines, game_state}
