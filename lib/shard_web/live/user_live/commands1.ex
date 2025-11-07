@@ -661,30 +661,47 @@ defmodule ShardWeb.UserLive.Commands1 do
           {["#{npc.name || "The NPC"} says: \"You don't have any completed quests for me.\""], game_state}
         else
           # Process each quest that can be turned in
-          results = 
-            Enum.map(turn_in_quests, fn quest ->
+          {results, completed_quest_ids} = 
+            Enum.reduce(turn_in_quests, {[], []}, fn quest, {results_acc, completed_ids_acc} ->
               case Shard.Quests.turn_in_quest_with_character_id(user_id, character_id, quest.id) do
                 {:ok, _quest_acceptance} ->
-                  "Successfully turned in '#{quest.title}'"
+                  result = "Successfully turned in '#{quest.title}'"
+                  {[result | results_acc], [quest.id | completed_ids_acc]}
                 
                 {:error, :missing_items} ->
-                  "Cannot turn in '#{quest.title}' - you don't have the required items"
+                  result = "Cannot turn in '#{quest.title}' - you don't have the required items"
+                  {[result | results_acc], completed_ids_acc}
                 
                 {:error, reason} ->
-                  "Failed to turn in '#{quest.title}': #{inspect(reason)}"
+                  result = "Failed to turn in '#{quest.title}': #{inspect(reason)}"
+                  {[result | results_acc], completed_ids_acc}
               end
             end)
+          
+          # Reverse results to maintain original order
+          results = Enum.reverse(results)
           
           # Build response message
           npc_name = npc.name || "The NPC"
           response_lines = ["#{npc_name} examines your completed tasks:"] ++ results
           
-          # Reload inventory to reflect any item changes
+          # Update game state to reflect changes
           updated_game_state = 
-            if Enum.any?(results, &String.starts_with?(&1, "Successfully")) do
-              # Reload character inventory
+            if length(completed_quest_ids) > 0 do
+              # Reload character inventory to reflect item removal
               inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
-              %{game_state | inventory_items: inventory_items}
+              
+              # Update quest status in local game state
+              updated_quests = 
+                Enum.map(game_state.quests, fn quest ->
+                  if quest[:id] in completed_quest_ids do
+                    %{quest | status: "Completed", progress: "100% complete"}
+                  else
+                    quest
+                  end
+                end)
+              
+              %{game_state | inventory_items: inventory_items, quests: updated_quests}
             else
               game_state
             end
