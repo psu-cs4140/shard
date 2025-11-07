@@ -391,6 +391,18 @@ defmodule Shard.Quests do
       )
       |> Repo.all()
 
+    # Get quest types that the user currently has active
+    active_quest_types =
+      from(qa in QuestAcceptance,
+        join: q in Quest,
+        on: qa.quest_id == q.id,
+        where:
+          qa.user_id == ^user_id and
+            qa.status in ["accepted", "in_progress"],
+        select: q.quest_type
+      )
+      |> Repo.all()
+
     # Get all quests from this NPC
     all_npc_quests =
       from(q in Quest,
@@ -402,19 +414,27 @@ defmodule Shard.Quests do
       )
       |> Repo.all()
 
-    # Filter quests based on prerequisites and status
+    # Filter quests based on prerequisites, status, and quest type restrictions
     Enum.filter(all_npc_quests, fn quest ->
-      case quest.status do
-        "available" ->
-          true
+      # First check if user already has an active quest of this type
+      quest_type_available = quest.quest_type not in active_quest_types
 
-        "locked" ->
-          # Check if prerequisites are met
-          check_quest_prerequisites(quest, completed_quest_titles)
+      # Then check status and prerequisites
+      status_available =
+        case quest.status do
+          "available" ->
+            true
 
-        _ ->
-          false
-      end
+          "locked" ->
+            # Check if prerequisites are met
+            check_quest_prerequisites(quest, completed_quest_titles)
+
+          _ ->
+            false
+        end
+
+      # Quest is only available if both conditions are met
+      quest_type_available and status_available
     end)
   end
 
