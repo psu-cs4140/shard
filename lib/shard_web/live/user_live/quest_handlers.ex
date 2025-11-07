@@ -34,12 +34,12 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   defp handle_npc_quest_interaction(game_state, npc) do
     user_id = game_state.character.user_id
     available_quests = get_filtered_available_quests(user_id, npc.id, game_state.quests)
-    
+
     case available_quests do
       [] ->
         npc_name = npc.name || "Unknown NPC"
         {["#{npc_name} has no quests available for you at this time."], game_state}
-      
+
       [quest | _] ->
         present_quest_offer(game_state, quest, npc)
     end
