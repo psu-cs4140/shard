@@ -198,6 +198,60 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
 
     IO.puts("Created doors for vampire manor zone")
 
+    # Create sewage slime monster in the Sewer Lair
+    sewer_lair = Enum.find(manor_rooms, &(&1.x_coordinate == -4 && &1.y_coordinate == 1))
+
+    if sewer_lair do
+      alias Shard.Monsters
+      alias Shard.Items.Item
+
+      # Create the Slippers item if it doesn't exist
+      slippers_item =
+        case Repo.get_by(Item, name: "Slippers") do
+          nil ->
+            {:ok, new_item} =
+              %Item{}
+              |> Item.changeset(%{
+                name: "Slippers",
+                description: "Comfortable cloth slippers, slightly damp from the sewers.",
+                item_type: "armor",
+                rarity: "common",
+                value: 3,
+                stackable: false,
+                equippable: true,
+                equipment_slot: "feet",
+                is_active: true
+              })
+              |> Repo.insert()
+
+            new_item
+
+          existing ->
+            existing
+        end
+
+      # Create the sewage slime monster
+      {:ok, _slime} =
+        Monsters.create_monster(%{
+          name: "Sewage Slime",
+          race: "Ooze",
+          health: 20,
+          max_health: 20,
+          attack_damage: 2,
+          xp_amount: 12,
+          level: 2,
+          description: "A disgusting blob of sewage and filth that has gained sentience.",
+          location_id: sewer_lair.id,
+          potential_loot_drops: %{
+            "#{slippers_item.id}" => %{chance: 0.8, min_quantity: 1, max_quantity: 1}
+          }
+        })
+
+      IO.puts("Successfully created Sewage Slime in Sewer Lair")
+    else
+      IO.puts("Warning: Sewer Lair room not found at (-4,1) in Vampire's Manor")
+    end
+
     IO.puts("""
 
     ✓ Vampire's Manor successfully seeded!
@@ -211,8 +265,30 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
   defp seed_manor_down do
     alias Shard.Repo
     alias Shard.Map.{Zone, Room, Door}
+    alias Shard.Monsters
+    alias Shard.Items.Item
 
     IO.puts("Removing Vampire's Manor...")
+
+    # Find and delete the sewage slime
+    slime = Repo.get_by(Shard.Monsters.Monster, name: "Sewage Slime")
+
+    if slime do
+      Monsters.delete_monster(slime)
+      IO.puts("Deleted Sewage Slime")
+    else
+      IO.puts("Sewage Slime not found")
+    end
+
+    # Find and delete the slippers item
+    slippers = Repo.get_by(Item, name: "Slippers")
+
+    if slippers do
+      Repo.delete(slippers)
+      IO.puts("Deleted Slippers item")
+    else
+      IO.puts("Slippers item not found")
+    end
 
     # Delete zone by slug (this will cascade to rooms and doors)
     case Repo.get_by(Zone, slug: "vampires-manor") do
