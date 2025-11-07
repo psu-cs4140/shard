@@ -415,21 +415,28 @@ defmodule ShardWeb.UserLive.Commands1 do
                         )
 
                       :error ->
-                        # Check if it's an unlock command
-                        case parse_unlock_command(command) do
-                          {:ok, direction, item_name} ->
-                            execute_unlock_command(game_state, direction, item_name)
+                        # Check if it's a use command
+                        case parse_use_command(command) do
+                          {:ok, item_name} ->
+                            execute_use_command(game_state, item_name)
 
                           :error ->
-                            # Check if it's a poke command
-                            case parse_poke_command(command) do
-                              {:ok, character_name} ->
-                                execute_poke_command(game_state, character_name)
+                            # Check if it's an unlock command
+                            case parse_unlock_command(command) do
+                              {:ok, direction, item_name} ->
+                                execute_unlock_command(game_state, direction, item_name)
 
                               :error ->
-                                {[
-                                   "Unknown command: '#{command}'. Type 'help' for available commands."
-                                 ], game_state}
+                                # Check if it's a poke command
+                                case parse_poke_command(command) do
+                                  {:ok, character_name} ->
+                                    execute_poke_command(game_state, character_name)
+
+                                  :error ->
+                                    {[
+                                       "Unknown command: '#{command}'. Type 'help' for available commands."
+                                     ], game_state}
+                                end
                             end
                         end
                     end
@@ -505,6 +512,189 @@ defmodule ShardWeb.UserLive.Commands1 do
 
       true ->
         :error
+    end
+  end
+
+  # Parse pickup command to extract item name
+  def parse_pickup_command(command) do
+    # Match patterns like: pickup "item name", pickup 'item name', pickup item_name
+    cond do
+      # Match pickup "item name" or pickup 'item name'
+      Regex.match?(~r/^pickup\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^pickup\s+["'](.+)["']\s*$/i, command) do
+          [_, item_name] -> {:ok, String.trim(item_name)}
+          _ -> :error
+        end
+
+      # Match pickup item_name (single word, no quotes)
+      Regex.match?(~r/^pickup\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^pickup\s+(\w+)\s*$/i, command) do
+          [_, item_name] -> {:ok, String.trim(item_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
+    end
+  end
+
+  # Execute pickup command with a specific item name
+  def execute_pickup_command(game_state, item_name) do
+    {x, y} = game_state.player_position
+    items_here = get_items_at_location(x, y, game_state.character.current_zone_id)
+
+    # Find the item by name (case-insensitive)
+    target_item =
+      Enum.find(items_here, fn item ->
+        String.downcase(item.name || "") == String.downcase(item_name)
+      end)
+
+    case target_item do
+      nil ->
+        if length(items_here) > 0 do
+          # credo:disable-for-next-line Credo.Check.Refactor.EnumMapJoin
+          available_names = Enum.map_join(items_here, ", ", & &1.name)
+
+          response = [
+            "There is no item named '#{item_name}' here.",
+            "Available items: #{available_names}"
+          ]
+
+          {response, game_state}
+        else
+          {["There are no items here to pick up."], game_state}
+        end
+
+      item ->
+        # Check if item can be picked up (assuming all items can be picked up for now)
+        # In the future, you might want to add a "pickupable" field to items
+
+        # Add item to player's inventory
+        updated_inventory = [
+          %{
+            id: item[:id],
+            name: item.name,
+            type: item.item_type || "misc",
+            quantity: item.quantity || 1,
+            damage: item[:damage],
+            defense: item[:defense],
+            effect: item[:effect],
+            description: item[:description]
+          }
+          | game_state.inventory_items
+        ]
+
+        # Remove item from the room (this would need database implementation)
+        # For now, we'll just update the game state
+
+        response = [
+          "You pick up #{item.name}.",
+          "#{item.name} has been added to your inventory."
+        ]
+
+        updated_game_state = %{game_state | inventory_items: updated_inventory}
+
+        # NOTE: Remove item from database room/location
+        # This would require calling something like:
+        # Shard.Items.remove_item_from_location(item.id, "#{x},#{y},0")
+
+        {response, updated_game_state}
+    end
+  end
+
+  # Parse use command to extract item name
+  def parse_use_command(command) do
+    # Match patterns like: use "item name", use 'item name', use item_name
+    cond do
+      # Match use "item name" or use 'item name'
+      Regex.match?(~r/^use\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^use\s+["'](.+)["']\s*$/i, command) do
+          [_, item_name] -> {:ok, String.trim(item_name)}
+          _ -> :error
+        end
+
+      # Match use item_name (can be multi-word without quotes)
+      Regex.match?(~r/^use\s+([a-z\s']+)\s*$/i, command) ->
+        case Regex.run(~r/^use\s+([a-z\s']+)\s*$/i, command) do
+          [_, item_name] -> {:ok, String.trim(item_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
+    end
+  end
+
+  # Execute use command with a specific item name
+  def execute_use_command(game_state, item_name) do
+    # Get character inventory from database
+    inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
+
+    # Find the item by name (case-insensitive)
+    target_inventory =
+      Enum.find(inventory_items, fn inv ->
+        String.downcase(inv.item.name || "") == String.downcase(item_name)
+      end)
+
+    case target_inventory do
+      nil ->
+        if length(inventory_items) > 0 do
+          available_names = Enum.map_join(inventory_items, ", ", & &1.item.name)
+
+          response = [
+            "You don't have an item named '#{item_name}' in your inventory.",
+            "Available items: #{available_names}"
+          ]
+
+          {response, game_state}
+        else
+          {["Your inventory is empty."], game_state}
+        end
+
+      inventory ->
+        item = inventory.item
+
+        # Check if it's a spell scroll
+        if Shard.Items.is_spell_scroll?(item) do
+          character_id = game_state.character.id
+
+          case Shard.Items.use_spell_scroll(character_id, inventory.id) do
+            {:ok, :learned, spell} ->
+              response = [
+                "You read the #{item.name}!",
+                "You have learned the spell: #{spell.name}",
+                "The scroll crumbles to dust as its magic is absorbed.",
+                "Use 'spells' to see your known spells."
+              ]
+
+              {response, game_state}
+
+            {:ok, :already_known, spell} ->
+              response = [
+                "You read the #{item.name}.",
+                "You already know the spell: #{spell.name}",
+                "The scroll crumbles to dust, its magic already within you."
+              ]
+
+              {response, game_state}
+
+            {:error, :not_a_spell_scroll} ->
+              response = ["This is not a spell scroll."]
+              {response, game_state}
+
+            {:error, _reason} ->
+              response = ["Failed to use #{item.name}."]
+              {response, game_state}
+          end
+        else
+          # For other consumable items, would need additional logic here
+          response = [
+            "You cannot use #{item.name} from the terminal yet.",
+            "Try using it from the inventory UI or hotbar."
+          ]
+
+          {response, game_state}
+        end
     end
   end
 end
