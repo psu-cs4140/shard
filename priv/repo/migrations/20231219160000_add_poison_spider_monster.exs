@@ -78,7 +78,7 @@ defmodule Shard.Repo.Migrations.AddPoisonSpiderMonster do
             special_damage_duration: 5,
             special_damage_chance: 25,
             potential_loot_drops: %{
-              "#{spider_silk_item.id}" => %{chance: 0.8, min_quantity: 1, max_quantity: 2}
+              "#{spider_silk_item.id}" => %{chance: 1.0, min_quantity: 1, max_quantity: 1}
             }
           })
 
