@@ -202,7 +202,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         # Add NPC descriptions if any are present
         description_lines =
-          if length(npcs_here) > 0 do
+          if not Enum.empty?(npcs_here) do
             # Empty line for spacing
             updated_lines = description_lines ++ [""]
 
@@ -221,7 +221,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         # Add item descriptions if any are present
         description_lines =
-          if length(items_here) > 0 do
+          if not Enum.empty?(items_here) do
             # Empty line for spacing
             updated_lines = description_lines ++ [""]
 
@@ -241,7 +241,7 @@ defmodule ShardWeb.UserLive.Commands1 do
         exits = get_available_exits(x, y, room, game_state)
 
         description_lines =
-          if length(exits) > 0 do
+          if not Enum.empty?(exits) do
             updated_lines = description_lines ++ [""]
             exit_text = "Exits: " <> Enum.join(exits, ", ")
             updated_lines ++ [exit_text]
@@ -333,7 +333,7 @@ defmodule ShardWeb.UserLive.Commands1 do
         {x, y} = game_state.player_position
         npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
 
-        if length(npcs_here) > 0 do
+        if not Enum.empty?(npcs_here) do
           response =
             ["NPCs in this area:"] ++
               Enum.flat_map(npcs_here, fn npc ->
@@ -561,7 +561,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         # Check for quest turn-ins first (higher priority)
         dialogue_lines =
-          if length(turn_in_quests) > 0 do
+          if not Enum.empty?(turn_in_quests) do
             # Check which quests can actually be turned in (objectives completed)
             completable_quests =
               Enum.filter(turn_in_quests, fn quest ->
@@ -592,7 +592,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
             # Show completable quests first
             updated_lines =
-              if length(completable_quests) > 0 do
+              if not Enum.empty?(completable_quests) do
                 quest_names = Enum.map(completable_quests, & &1.title)
                 quest_list = Enum.join(quest_names, ", ")
 
@@ -609,7 +609,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
             # Show in-progress quests that need more work
             updated_lines =
-              if length(in_progress_quests) > 0 do
+              if not Enum.empty?(in_progress_quests) do
                 quest_names = Enum.map(in_progress_quests, & &1.title)
                 quest_list = Enum.join(quest_names, ", ")
 
@@ -631,7 +631,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         # Check for available quests
         dialogue_lines =
-          if length(available_quests) > 0 do
+          if not Enum.empty?(available_quests) do
             quest_names = Enum.map(available_quests, & &1.title)
             quest_list = Enum.join(quest_names, ", ")
 
@@ -648,7 +648,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         # If no quests available and none to turn in, just show basic dialogue
         dialogue_lines =
-          if length(available_quests) == 0 and length(turn_in_quests) == 0 do
+          if Enum.empty?(available_quests) and Enum.empty?(turn_in_quests) do
             dialogue_lines ++
               [
                 "",
@@ -686,7 +686,7 @@ defmodule ShardWeb.UserLive.Commands1 do
         # Get quests that can be turned in to this NPC
         turn_in_quests = Shard.Quests.get_turn_in_quests_by_npc(user_id, npc.id)
 
-        if length(turn_in_quests) == 0 do
+        if Enum.empty?(turn_in_quests) do
           {["#{npc.name || "The NPC"} says: \"You don't have any completed quests for me.\""],
            game_state}
         else
@@ -717,7 +717,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
           # Update game state to reflect changes
           updated_game_state =
-            if length(completed_quest_ids) > 0 do
+            if not Enum.empty?(completed_quest_ids) do
               # Reload character inventory to reflect item removal
               inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
 
