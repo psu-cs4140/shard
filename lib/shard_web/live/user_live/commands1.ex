@@ -532,8 +532,28 @@ defmodule ShardWeb.UserLive.Commands1 do
         # Check for available quests from this NPC
         available_quests = Shard.Quests.get_available_quests_by_giver_excluding_completed(user_id, npc.id)
         
+        # Additional filter to ensure we don't show quests that are in the local game state as accepted
+        # This helps catch timing issues where the database query might not reflect recent changes
+        available_quests = Enum.filter(available_quests, fn quest ->
+          # Check if this quest is already in the player's quest log
+          not Enum.any?(game_state.quests, fn player_quest ->
+            player_quest[:id] == quest.id and player_quest[:status] in ["In Progress", "Completed"]
+          end)
+        end)
+        
         # Check for quests that can be turned in to this NPC
         turn_in_quests = Shard.Quests.get_turn_in_quests_by_npc(user_id, npc.id)
+        
+        # Debug logging to see what's happening
+        IO.inspect(%{
+          npc_id: npc.id,
+          user_id: user_id,
+          available_quests_count: length(available_quests),
+          turn_in_quests_count: length(turn_in_quests),
+          available_quest_titles: Enum.map(available_quests, & &1.title),
+          turn_in_quest_titles: Enum.map(turn_in_quests, & &1.title),
+          player_quest_titles: Enum.map(game_state.quests, & &1[:title])
+        }, label: "Talk command quest check")
         
         # Build dialogue based on quest status
         dialogue_lines = []
