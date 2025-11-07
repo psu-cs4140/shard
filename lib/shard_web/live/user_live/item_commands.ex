@@ -124,10 +124,7 @@ defmodule ShardWeb.UserLive.ItemCommands do
 
       item ->
         # Check if item can be picked up
-        if not item.pickup do
-          response = ["You cannot pick up #{item.name}."]
-          {response, game_state}
-        else
+        if item.pickup do
           # Handle pickup differently for room items vs direct items
           case item.room_item_id do
             nil ->
@@ -193,6 +190,9 @@ defmodule ShardWeb.UserLive.ItemCommands do
                   {response, game_state}
               end
           end
+        else
+          response = ["You cannot pick up #{item.name}."]
+          {response, game_state}
         end
     end
   end
