@@ -62,7 +62,7 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
                 %{
                   id: item.id,
                   name: item.name,
-                  type: item.item_type || "misc",
+                  item_type: item.item_type || "misc",
                   quantity: inventory.quantity,
                   damage: item.damage,
                   defense: item.defense,
@@ -106,19 +106,19 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
             %{
               name: item.name,
               damage: item.damage || "1d6",
-              type: "weapon"
+              item_type: "weapon"
             }
           else
             # Default weapon
-            %{name: "Fists", damage: "1d4", type: "unarmed"}
+            %{name: "Fists", damage: "1d4", item_type: "unarmed"}
           end
 
         _ ->
-          %{name: "Fists", damage: "1d4", type: "unarmed"}
+          %{name: "Fists", damage: "1d4", item_type: "unarmed"}
       end
     rescue
       _ ->
-        %{name: "Fists", damage: "1d4", type: "unarmed"}
+        %{name: "Fists", damage: "1d4", item_type: "unarmed"}
     end
   end
 
@@ -142,7 +142,7 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
                     %{
                       id: item.id,
                       name: item.name,
-                      type: item.item_type || "misc",
+                      item_type: item.item_type || "misc",
                       damage: item.damage,
                       effect: item.effect
                     }
