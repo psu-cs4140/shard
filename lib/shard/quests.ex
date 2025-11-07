@@ -216,17 +216,16 @@ defmodule Shard.Quests do
       )
       |> Repo.all()
 
-    Enum.each(locked_quests, fn quest ->
-      if check_quest_prerequisites(quest, completed_quest_titles) do
-        case update_quest(quest, %{status: "available"}) do
-          {:ok, updated_quest} ->
-            :ok
+    Enum.each(locked_quests, &unlock_quest_if_eligible(&1, completed_quest_titles))
+  end
 
-          {:error, changeset} ->
-            :error
-        end
+  defp unlock_quest_if_eligible(quest, completed_quest_titles) do
+    if check_quest_prerequisites(quest, completed_quest_titles) do
+      case update_quest(quest, %{status: "available"}) do
+        {:ok, _updated_quest} -> :ok
+        {:error, _changeset} -> :error
       end
-    end)
+    end
   end
 
   @doc """
