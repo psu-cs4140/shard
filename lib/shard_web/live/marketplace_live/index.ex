@@ -92,11 +92,11 @@ defmodule ShardWeb.MarketplaceLive.Index do
     cond do
       diff < 60 -> "less than a minute"
       diff < 120 -> "1 minute"
-      diff < 3600 -> "#{div(diff, 60)} minutes"
-      diff < 7200 -> "1 hour"
-      diff < 86400 -> "#{div(diff, 3600)} hours"
-      diff < 172800 -> "1 day"
-      true -> "#{div(diff, 86400)} days"
+      diff < 3_600 -> "#{div(diff, 60)} minutes"
+      diff < 7_200 -> "1 hour"
+      diff < 86_400 -> "#{div(diff, 3_600)} hours"
+      diff < 172_800 -> "1 day"
+      true -> "#{div(diff, 86_400)} days"
     end
   end
 end
