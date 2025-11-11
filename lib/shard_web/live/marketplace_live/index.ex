@@ -4,6 +4,15 @@ defmodule ShardWeb.MarketplaceLive.Index do
   # alias Shard.Marketplace
   alias Shard.Items
 
+  @moduledoc """
+  Marketplace LiveView for listing and managing player item listings.
+  
+  NOTE: Most event handlers are currently stubbed out because the underlying
+  Shard.Marketplace context functions have not been implemented yet. The 
+  handlers contain the proper variable assignments and structure that will
+  be needed once the database context is implemented.
+  """
+
   @impl true
   def mount(_params, _session, socket) do
     current_scope = socket.assigns.current_scope
@@ -25,60 +34,43 @@ defmodule ShardWeb.MarketplaceLive.Index do
   end
 
   @impl true
-  def handle_event("create_listing", %{"listing" => params}, socket) do
-    current_user = socket.assigns.current_scope.user
-    
+  def handle_event("create_listing", %{"listing" => _params}, socket) do
     # TODO: Implement Marketplace.create_listing/2
+    # This handler is stubbed until the database context is implemented
+    # Variables that will be needed:
+    # current_user = socket.assigns.current_scope.user
     # case Marketplace.create_listing(params, current_user) do
-    case {:error, :not_implemented} do
-      {:ok, listing} ->
-        {:noreply, 
-         socket
-         |> put_flash(:info, "Item listed successfully!")
-         |> assign(:form, to_form(%{}, as: :listing)) # Reset form
-         |> assign(:selected_item, nil)
-         |> stream_insert(:listings, listing)}
-      
-      {:error, changeset} ->
-        {:noreply, assign(socket, form: to_form(changeset))}
-    end
+    
+    {:noreply, 
+     socket
+     |> put_flash(:info, "Item listing functionality coming soon!")}
   end
   
   @impl true
-  def handle_event("cancel_listing", %{"id" => id}, socket) do
-    current_user = socket.assigns.current_scope.user
-    
+  def handle_event("cancel_listing", %{"id" => _id}, socket) do
     # TODO: Implement Marketplace.cancel_listing/2
+    # This handler is stubbed until the database context is implemented
+    # Variables that will be needed:
+    # current_user = socket.assigns.current_scope.user
     # case Marketplace.cancel_listing(id, current_user) do
-    case {:error, :not_implemented} do
-      {:ok, listing} ->
-        {:noreply, 
-         socket
-         |> put_flash(:info, "Listing cancelled")
-         |> stream_delete(:listings, listing)}
-      
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Unable to cancel listing")}
-    end
+    
+    {:noreply, 
+     socket
+     |> put_flash(:info, "Listing cancellation functionality coming soon!")}
   end
   
   @impl true
-  def handle_event("update_price", %{"id" => id, "price" => price}, socket) do
-    current_user = socket.assigns.current_scope.user
-    price = String.to_integer(price)
-    
+  def handle_event("update_price", %{"id" => _id, "price" => _price}, socket) do
     # TODO: Implement Marketplace.update_listing_price/3
+    # This handler is stubbed until the database context is implemented
+    # Variables that will be needed:
+    # current_user = socket.assigns.current_scope.user
+    # price = String.to_integer(price)
     # case Marketplace.update_listing_price(id, price, current_user) do
-    case {:error, :not_implemented} do
-      {:ok, listing} ->
-        {:noreply, 
-         socket
-         |> put_flash(:info, "Price updated successfully!")
-         |> stream_insert(:listings, listing, at: -1)} # Update the listing in the stream
-      
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Unable to update price")}
-    end
+    
+    {:noreply, 
+     socket
+     |> put_flash(:info, "Price update functionality coming soon!")}
   end
   
   @impl true
