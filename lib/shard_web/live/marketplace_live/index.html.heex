@@ -14,18 +14,18 @@
           <.form for={@form} id="listing-form" phx-submit="create_listing" phx-change="preview_item">
             <div class="space-y-4">
               <.input 
+                field={@form[:item_id]}
                 type="select" 
                 label="Select Item" 
-                name="listing[item_id]" 
                 options={@inventory_items}
                 prompt="Choose an item from your inventory"
                 required
               />
               
               <.input 
+                field={@form[:price]}
                 type="number" 
                 label="Price (Gold)" 
-                name="listing[price]" 
                 min="1"
                 required
               />
