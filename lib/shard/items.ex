@@ -48,7 +48,9 @@ defmodule Shard.Items do
 
   def get_character_inventory(character_id) do
     from(ci in CharacterInventory,
-      where: ci.character_id == ^character_id,
+      join: i in Item,
+      on: ci.item_id == i.id,
+      where: ci.character_id == ^character_id and i.sellable == true,
       preload: [:item],
       order_by: [asc: :slot_position]
     )
