@@ -1,7 +1,7 @@
 defmodule ShardWeb.MarketplaceLive.Index do
   use ShardWeb, :live_view
 
-  alias Shard.Marketplace
+  # alias Shard.Marketplace
   alias Shard.Items
 
   @impl true
@@ -9,7 +9,8 @@ defmodule ShardWeb.MarketplaceLive.Index do
     current_scope = socket.assigns.current_scope
     
     # Get user's active listings
-    listings = Marketplace.list_user_listings(current_scope.user)
+    # TODO: Implement Marketplace.list_user_listings/1
+    listings = []
     
     # Get user's inventory items for the dropdown
     inventory_items = Items.get_character_inventory(current_scope.user.id)
@@ -27,7 +28,9 @@ defmodule ShardWeb.MarketplaceLive.Index do
   def handle_event("create_listing", %{"listing" => params}, socket) do
     current_user = socket.assigns.current_scope.user
     
-    case Marketplace.create_listing(params, current_user) do
+    # TODO: Implement Marketplace.create_listing/2
+    # case Marketplace.create_listing(params, current_user) do
+    case {:error, :not_implemented} do
       {:ok, listing} ->
         {:noreply, 
          socket
@@ -45,7 +48,9 @@ defmodule ShardWeb.MarketplaceLive.Index do
   def handle_event("cancel_listing", %{"id" => id}, socket) do
     current_user = socket.assigns.current_scope.user
     
-    case Marketplace.cancel_listing(id, current_user) do
+    # TODO: Implement Marketplace.cancel_listing/2
+    # case Marketplace.cancel_listing(id, current_user) do
+    case {:error, :not_implemented} do
       {:ok, listing} ->
         {:noreply, 
          socket
@@ -62,7 +67,9 @@ defmodule ShardWeb.MarketplaceLive.Index do
     current_user = socket.assigns.current_scope.user
     price = String.to_integer(price)
     
-    case Marketplace.update_listing_price(id, price, current_user) do
+    # TODO: Implement Marketplace.update_listing_price/3
+    # case Marketplace.update_listing_price(id, price, current_user) do
+    case {:error, :not_implemented} do
       {:ok, listing} ->
         {:noreply, 
          socket
