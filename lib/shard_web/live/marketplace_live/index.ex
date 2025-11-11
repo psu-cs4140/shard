@@ -83,4 +83,20 @@ defmodule ShardWeb.MarketplaceLive.Index do
   def handle_event("preview_item", _params, socket) do
     {:noreply, assign(socket, :selected_item, nil)}
   end
+  
+  # Helper function to format time ago
+  def time_ago_in_words(datetime) do
+    now = DateTime.utc_now()
+    diff = DateTime.diff(now, datetime, :second)
+    
+    cond do
+      diff < 60 -> "less than a minute"
+      diff < 120 -> "1 minute"
+      diff < 3600 -> "#{div(diff, 60)} minutes"
+      diff < 7200 -> "1 hour"
+      diff < 86400 -> "#{div(diff, 3600)} hours"
+      diff < 172800 -> "1 day"
+      true -> "#{div(diff, 86400)} days"
+    end
+  end
 end
