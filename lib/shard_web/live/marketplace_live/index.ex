@@ -17,10 +17,10 @@ defmodule ShardWeb.MarketplaceLive.Index do
     
     {:ok,
      socket
-     |> assign(:listings, listings)
      |> assign(:form, to_form(%{}, as: :listing))
      |> assign(:selected_item, nil)
-     |> assign(:inventory_items, inventory_items)}
+     |> assign(:inventory_items, inventory_items)
+     |> stream(:listings, listings)}
   end
 
   @impl true
@@ -33,7 +33,8 @@ defmodule ShardWeb.MarketplaceLive.Index do
          socket
          |> put_flash(:info, "Item listed successfully!")
          |> assign(:form, to_form(%{}, as: :listing)) # Reset form
-         |> assign(:selected_item, nil)}
+         |> assign(:selected_item, nil)
+         |> stream_insert(:listings, listing)}
       
       {:error, changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
@@ -45,10 +46,11 @@ defmodule ShardWeb.MarketplaceLive.Index do
     current_user = socket.assigns.current_scope.user
     
     case Marketplace.cancel_listing(id, current_user) do
-      {:ok, _} ->
+      {:ok, listing} ->
         {:noreply, 
          socket
-         |> put_flash(:info, "Listing cancelled")}
+         |> put_flash(:info, "Listing cancelled")
+         |> stream_delete(:listings, listing)}
       
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Unable to cancel listing")}
@@ -61,10 +63,11 @@ defmodule ShardWeb.MarketplaceLive.Index do
     price = String.to_integer(price)
     
     case Marketplace.update_listing_price(id, price, current_user) do
-      {:ok, _} ->
+      {:ok, listing} ->
         {:noreply, 
          socket
-         |> put_flash(:info, "Price updated successfully!")}
+         |> put_flash(:info, "Price updated successfully!")
+         |> stream_insert(:listings, listing, at: -1)} # Update the listing in the stream
       
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Unable to update price")}
