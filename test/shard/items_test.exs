@@ -222,11 +222,12 @@ defmodule Shard.ItemsTest do
       assert is_list(hotbar)
     end
 
-    test "set_hotbar_slot/4 sets item in hotbar slot", %{character_id: character_id, item: item} do
+    test "set_hotbar_slot/3 sets item in hotbar slot", %{character_id: character_id, item: item} do
       slot_number = 1
+      inventory_id = 999999
       
       # Test will likely fail due to foreign key constraints
-      result = Items.set_hotbar_slot(character_id, slot_number, item.id, 999999)
+      result = Items.set_hotbar_slot(character_id, slot_number, inventory_id)
       assert match?({:ok, %HotbarSlot{}}, result) or 
              match?({:error, %Ecto.Changeset{}}, result)
     end
