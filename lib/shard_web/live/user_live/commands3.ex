@@ -36,7 +36,7 @@ defmodule ShardWeb.UserLive.Commands3 do
   def parse_poke_command(command) do
     # Trim the entire command first to handle leading/trailing whitespace
     trimmed_command = String.trim(command)
-    
+
     cond do
       # Match poke "character name" or poke 'character name'
       Regex.match?(~r/^poke\s+["'](.+)["']\s*$/i, trimmed_command) ->

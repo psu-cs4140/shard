@@ -289,9 +289,13 @@ defmodule ShardWeb.MudGameLive do
     case handle_submit_command(params, socket) do
       {:noreply, socket, updated_game_state, terminal_state} ->
         # Reload inventory to ensure it's synced with database
-        updated_inventory = ShardWeb.UserLive.CharacterHelpers.load_character_inventory(updated_game_state.character)
+        updated_inventory =
+          ShardWeb.UserLive.CharacterHelpers.load_character_inventory(
+            updated_game_state.character
+          )
+
         final_game_state = %{updated_game_state | inventory_items: updated_inventory}
-        
+
         socket = assign(socket, game_state: final_game_state, terminal_state: terminal_state)
 
         # Auto-scroll terminal to bottom

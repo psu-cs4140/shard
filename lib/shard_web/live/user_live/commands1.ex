@@ -22,7 +22,6 @@ defmodule ShardWeb.UserLive.Commands1 do
   # alias Shard.Repo
   # import Ecto.Query
 
-
   # Process terminal commands
   def process_command(command, game_state) do
     downcased_command = String.downcase(command)

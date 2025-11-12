@@ -56,7 +56,8 @@ defmodule ShardWeb.UserLive.Commands3Test do
     end
 
     test "handles non-existent character", %{game_state: game_state} do
-      {response, _updated_state} = Commands3.execute_poke_command(game_state, "NonExistentCharacter")
+      {response, _updated_state} =
+        Commands3.execute_poke_command(game_state, "NonExistentCharacter")
 
       assert is_list(response)
       assert Enum.any?(response, &String.contains?(&1, "No character named"))

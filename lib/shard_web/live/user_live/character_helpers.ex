@@ -53,7 +53,7 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
     try do
       # Use the proper Items context function to get inventory
       inventory_items = Shard.Items.get_character_inventory(character.id)
-      
+
       # Transform to the format expected by the game state
       Enum.map(inventory_items, fn inventory ->
         %{
@@ -62,8 +62,11 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
           name: inventory.item.name,
           item_type: inventory.item.item_type || "misc",
           quantity: inventory.quantity,
-          damage: get_in(inventory.item.stats, ["damage"]) || get_in(inventory.item.effects, ["damage"]),
-          defense: get_in(inventory.item.stats, ["defense"]) || get_in(inventory.item.effects, ["defense"]),
+          damage:
+            get_in(inventory.item.stats, ["damage"]) || get_in(inventory.item.effects, ["damage"]),
+          defense:
+            get_in(inventory.item.stats, ["defense"]) ||
+              get_in(inventory.item.effects, ["defense"]),
           effect: get_in(inventory.item.effects, ["effect"]) || inventory.item.description,
           description: inventory.item.description,
           equipped: inventory.equipped || false,

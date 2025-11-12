@@ -357,6 +357,7 @@ defmodule Shard.Items do
   end
 
   defp validate_inventory_for_hotbar(nil), do: {:ok, nil}
+
   defp validate_inventory_for_hotbar(inventory_id) do
     case Repo.get(CharacterInventory, inventory_id) do
       nil -> {:error, :inventory_not_found}
@@ -366,7 +367,7 @@ defmodule Shard.Items do
 
   def clear_hotbar_slot(character_id, slot_number) do
     case Repo.get_by(HotbarSlot, character_id: character_id, slot_number: slot_number) do
-      nil -> 
+      nil ->
         # Create an empty hotbar slot to match expected return type
         %HotbarSlot{}
         |> HotbarSlot.changeset(%{
@@ -376,7 +377,9 @@ defmodule Shard.Items do
           inventory_id: nil
         })
         |> Repo.insert()
-      hotbar_slot -> Repo.delete(hotbar_slot)
+
+      hotbar_slot ->
+        Repo.delete(hotbar_slot)
     end
   end
 
@@ -425,7 +428,9 @@ defmodule Shard.Items do
                 {:ok, _room_item} -> {:ok, key_item}
                 {:error, changeset} -> {:error, changeset}
               end
-            {:error, changeset} -> {:error, changeset}
+
+            {:error, changeset} ->
+              {:error, changeset}
           end
 
         existing_item ->

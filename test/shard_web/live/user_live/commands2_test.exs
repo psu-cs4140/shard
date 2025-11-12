@@ -53,7 +53,8 @@ defmodule ShardWeb.UserLive.Commands2Test do
     end
 
     test "delivering quest to non-existent NPC", %{game_state: game_state} do
-      {response, _updated_state} = Commands2.execute_deliver_quest_command(game_state, "NonExistentNPC")
+      {response, _updated_state} =
+        Commands2.execute_deliver_quest_command(game_state, "NonExistentNPC")
 
       assert is_list(response)
       assert Enum.any?(response, &String.contains?(&1, "There are no NPCs here"))

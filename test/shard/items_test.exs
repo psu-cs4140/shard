@@ -9,6 +9,7 @@ defmodule Shard.ItemsTest do
 
     defp valid_item_attrs(name \\ nil) do
       unique_name = name || "Test Sword #{System.unique_integer([:positive])}"
+
       %{
         name: unique_name,
         item_type: "weapon",
@@ -29,11 +30,13 @@ defmodule Shard.ItemsTest do
 
     test "list_active_items/0 returns only active items" do
       {:ok, active_item} = Items.create_item(valid_item_attrs("Active Sword"))
-      {:ok, inactive_item} = Items.create_item(Map.put(valid_item_attrs("Inactive Sword"), :is_active, false))
-      
+
+      {:ok, inactive_item} =
+        Items.create_item(Map.put(valid_item_attrs("Inactive Sword"), :is_active, false))
+
       active_items = Items.list_active_items()
       active_ids = Enum.map(active_items, & &1.id)
-      
+
       assert active_item.id in active_ids
       refute inactive_item.id in active_ids
     end
@@ -98,58 +101,69 @@ defmodule Shard.ItemsTest do
     setup do
       # Create a character first (using a simple approach for testing)
       character_id = System.unique_integer([:positive])
-      
+
       # Create unique item for this test
-      {:ok, item} = Items.create_item(%{
-        name: "Inventory Test Sword #{character_id}",
-        item_type: "weapon",
-        rarity: "common",
-        value: 50,
-        stackable: false,
-        equippable: true,
-        equipment_slot: "weapon"
-      })
-      
+      {:ok, item} =
+        Items.create_item(%{
+          name: "Inventory Test Sword #{character_id}",
+          item_type: "weapon",
+          rarity: "common",
+          value: 50,
+          stackable: false,
+          equippable: true,
+          equipment_slot: "weapon"
+        })
+
       %{item: item, character_id: character_id}
     end
 
-    test "get_character_inventory/1 returns list of inventory items", %{item: _item, character_id: character_id} do
+    test "get_character_inventory/1 returns list of inventory items", %{
+      item: _item,
+      character_id: character_id
+    } do
       # For this test, we'll just verify the function returns a list
       # since we can't easily create a valid character in the test database
       inventory = Items.get_character_inventory(character_id)
       assert is_list(inventory)
     end
 
-    test "add_item_to_inventory/3 adds item to character inventory", %{item: item, character_id: character_id} do
+    test "add_item_to_inventory/3 adds item to character inventory", %{
+      item: item,
+      character_id: character_id
+    } do
       # This test will likely fail due to foreign key constraints
       # but we'll test the function signature and error handling
       quantity = 3
-      
+
       result = Items.add_item_to_inventory(character_id, item.id, quantity)
       # Accept either success or foreign key error
-      assert match?({:ok, %CharacterInventory{}}, result) or 
-             match?({:error, %Ecto.Changeset{}}, result)
+      assert match?({:ok, %CharacterInventory{}}, result) or
+               match?({:error, %Ecto.Changeset{}}, result)
     end
 
-    test "add_item_to_inventory/3 stacks items when item is stackable", %{character_id: character_id} do
+    test "add_item_to_inventory/3 stacks items when item is stackable", %{
+      character_id: character_id
+    } do
       # Create a stackable item
-      {:ok, stackable_item} = Items.create_item(%{
-        name: "Stackable Item #{character_id}",
-        item_type: "consumable",
-        rarity: "common",
-        stackable: true
-      })
-      
+      {:ok, stackable_item} =
+        Items.create_item(%{
+          name: "Stackable Item #{character_id}",
+          item_type: "consumable",
+          rarity: "common",
+          stackable: true
+        })
+
       # Test will likely fail due to foreign key constraints, but test the logic
       result1 = Items.add_item_to_inventory(character_id, stackable_item.id, 3)
-      assert match?({:ok, %CharacterInventory{}}, result1) or 
-             match?({:error, %Ecto.Changeset{}}, result1)
+
+      assert match?({:ok, %CharacterInventory{}}, result1) or
+               match?({:error, %Ecto.Changeset{}}, result1)
     end
 
     test "remove_item_from_inventory/1 removes inventory item" do
       # Test with non-existent inventory ID
       assert_raise Ecto.NoResultsError, fn ->
-        Items.remove_item_from_inventory(999999)
+        Items.remove_item_from_inventory(999_999)
       end
     end
 
@@ -168,14 +182,14 @@ defmodule Shard.ItemsTest do
     test "equip_item/1 equips an item", %{character_id: _character_id} do
       # Test with non-existent inventory ID since we can't easily create valid inventory
       assert_raise Ecto.NoResultsError, fn ->
-        Items.equip_item(999999)
+        Items.equip_item(999_999)
       end
     end
 
     test "unequip_item/1 unequips an item", %{character_id: _character_id} do
       # Test with non-existent inventory ID
       assert_raise Ecto.NoResultsError, fn ->
-        Items.unequip_item(999999)
+        Items.unequip_item(999_999)
       end
     end
   end
@@ -183,11 +197,14 @@ defmodule Shard.ItemsTest do
   describe "room items" do
     setup do
       character_id = System.unique_integer([:positive])
-      {:ok, item} = Items.create_item(%{
-        name: "Room Test Item #{character_id}",
-        item_type: "misc",
-        rarity: "common"
-      })
+
+      {:ok, item} =
+        Items.create_item(%{
+          name: "Room Test Item #{character_id}",
+          item_type: "misc",
+          rarity: "common"
+        })
+
       %{item: item, character_id: character_id}
     end
 
@@ -197,12 +214,15 @@ defmodule Shard.ItemsTest do
       assert is_list(items)
     end
 
-    test "drop_item_in_room/4 with non-existent inventory returns error", %{item: _item, character_id: character_id} do
+    test "drop_item_in_room/4 with non-existent inventory returns error", %{
+      item: _item,
+      character_id: character_id
+    } do
       room_coordinates = "1,1,0"
       quantity = 2
-      
+
       # Test with non-existent inventory ID should return error tuple
-      result = Items.drop_item_in_room(character_id, 999999, room_coordinates, quantity)
+      result = Items.drop_item_in_room(character_id, 999_999, room_coordinates, quantity)
       assert result == {:error, :inventory_not_found}
     end
   end
@@ -210,13 +230,16 @@ defmodule Shard.ItemsTest do
   describe "hotbar" do
     setup do
       character_id = System.unique_integer([:positive])
-      {:ok, item} = Items.create_item(%{
-        name: "Hotbar Test Item #{character_id}",
-        item_type: "weapon",
-        rarity: "common",
-        equippable: true,
-        equipment_slot: "weapon"
-      })
+
+      {:ok, item} =
+        Items.create_item(%{
+          name: "Hotbar Test Item #{character_id}",
+          item_type: "weapon",
+          rarity: "common",
+          equippable: true,
+          equipment_slot: "weapon"
+        })
+
       %{item: item, character_id: character_id}
     end
 
@@ -227,8 +250,8 @@ defmodule Shard.ItemsTest do
 
     test "set_hotbar_slot/3 sets item in hotbar slot", %{character_id: character_id, item: _item} do
       slot_number = 1
-      inventory_id = 999999
-      
+      inventory_id = 999_999
+
       # Test with non-existent inventory should return error
       result = Items.set_hotbar_slot(character_id, slot_number, inventory_id)
       assert result == {:error, :inventory_not_found}
@@ -236,20 +259,22 @@ defmodule Shard.ItemsTest do
 
     test "set_hotbar_slot/3 sets hotbar slot with nil inventory", %{character_id: character_id} do
       slot_number = 1
-      
+
       # Test with nil inventory should work (clearing the slot)
       result = Items.set_hotbar_slot(character_id, slot_number, nil)
-      assert match?({:ok, %HotbarSlot{}}, result) or 
-             match?({:error, %Ecto.Changeset{}}, result)
+
+      assert match?({:ok, %HotbarSlot{}}, result) or
+               match?({:error, %Ecto.Changeset{}}, result)
     end
 
     test "clear_hotbar_slot/2 clears hotbar slot", %{character_id: character_id} do
       slot_number = 2
-      
+
       # Test will likely fail due to foreign key constraints
       result = Items.clear_hotbar_slot(character_id, slot_number)
-      assert match?({:ok, %HotbarSlot{}}, result) or 
-             match?({:error, %Ecto.Changeset{}}, result)
+
+      assert match?({:ok, %HotbarSlot{}}, result) or
+               match?({:error, %Ecto.Changeset{}}, result)
     end
   end
 
@@ -278,160 +303,159 @@ defmodule Shard.ItemsTest do
     end
   end
 
-
   describe "CharacterInventory changeset" do
-      test "validates required fields" do
-        changeset = CharacterInventory.changeset(%CharacterInventory{}, %{})
-        refute changeset.valid?
+    test "validates required fields" do
+      changeset = CharacterInventory.changeset(%CharacterInventory{}, %{})
+      refute changeset.valid?
 
-        errors = errors_on(changeset)
-        assert "can't be blank" in errors.character_id
-        assert "can't be blank" in errors.item_id
-        # Note: quantity has a default value of 1, so it's not required in the same way
-      end
+      errors = errors_on(changeset)
+      assert "can't be blank" in errors.character_id
+      assert "can't be blank" in errors.item_id
+      # Note: quantity has a default value of 1, so it's not required in the same way
+    end
 
-      test "validates quantity is positive" do
-        attrs = %{character_id: 1, item_id: 1, quantity: 0}
-        changeset = CharacterInventory.changeset(%CharacterInventory{}, attrs)
-        refute changeset.valid?
-        assert %{quantity: ["must be greater than 0"]} = errors_on(changeset)
-      end
+    test "validates quantity is positive" do
+      attrs = %{character_id: 1, item_id: 1, quantity: 0}
+      changeset = CharacterInventory.changeset(%CharacterInventory{}, attrs)
+      refute changeset.valid?
+      assert %{quantity: ["must be greater than 0"]} = errors_on(changeset)
+    end
 
-      test "validates slot_position is non-negative" do
-        attrs = %{character_id: 1, item_id: 1, quantity: 1, slot_position: -1}
-        changeset = CharacterInventory.changeset(%CharacterInventory{}, attrs)
-        refute changeset.valid?
-        assert %{slot_position: ["must be greater than or equal to 0"]} = errors_on(changeset)
-      end
+    test "validates slot_position is non-negative" do
+      attrs = %{character_id: 1, item_id: 1, quantity: 1, slot_position: -1}
+      changeset = CharacterInventory.changeset(%CharacterInventory{}, attrs)
+      refute changeset.valid?
+      assert %{slot_position: ["must be greater than or equal to 0"]} = errors_on(changeset)
+    end
 
-      test "validates equipment consistency - equipped requires equipment_slot" do
-        attrs = %{character_id: 1, item_id: 1, quantity: 1, equipped: true, equipment_slot: nil}
-        changeset = CharacterInventory.changeset(%CharacterInventory{}, attrs)
-        refute changeset.valid?
-        assert %{equipment_slot: ["must be specified for equipped items"]} = errors_on(changeset)
-      end
+    test "validates equipment consistency - equipped requires equipment_slot" do
+      attrs = %{character_id: 1, item_id: 1, quantity: 1, equipped: true, equipment_slot: nil}
+      changeset = CharacterInventory.changeset(%CharacterInventory{}, attrs)
+      refute changeset.valid?
+      assert %{equipment_slot: ["must be specified for equipped items"]} = errors_on(changeset)
+    end
 
-      test "validates equipment consistency - unequipped clears equipment_slot" do
-        attrs = %{
-          character_id: 1,
-          item_id: 1,
-          quantity: 1,
-          equipped: false,
-          equipment_slot: "weapon"
-        }
+    test "validates equipment consistency - unequipped clears equipment_slot" do
+      attrs = %{
+        character_id: 1,
+        item_id: 1,
+        quantity: 1,
+        equipped: false,
+        equipment_slot: "weapon"
+      }
 
-        changeset = CharacterInventory.changeset(%CharacterInventory{}, attrs)
-        assert changeset.valid?
-        assert get_change(changeset, :equipment_slot) == nil
-      end
+      changeset = CharacterInventory.changeset(%CharacterInventory{}, attrs)
+      assert changeset.valid?
+      assert get_change(changeset, :equipment_slot) == nil
+    end
 
-      test "accepts valid equipped item" do
-        attrs = %{
-          character_id: 1,
-          item_id: 1,
-          quantity: 1,
-          equipped: true,
-          equipment_slot: "weapon"
-        }
+    test "accepts valid equipped item" do
+      attrs = %{
+        character_id: 1,
+        item_id: 1,
+        quantity: 1,
+        equipped: true,
+        equipment_slot: "weapon"
+      }
 
-        changeset = CharacterInventory.changeset(%CharacterInventory{}, attrs)
-        assert changeset.valid?
-      end
+      changeset = CharacterInventory.changeset(%CharacterInventory{}, attrs)
+      assert changeset.valid?
+    end
   end
 
   describe "HotbarSlot changeset" do
-      test "validates required fields" do
-        changeset = HotbarSlot.changeset(%HotbarSlot{}, %{})
-        refute changeset.valid?
+    test "validates required fields" do
+      changeset = HotbarSlot.changeset(%HotbarSlot{}, %{})
+      refute changeset.valid?
 
-        errors = errors_on(changeset)
-        assert "can't be blank" in errors.character_id
-        assert "can't be blank" in errors.slot_number
-      end
+      errors = errors_on(changeset)
+      assert "can't be blank" in errors.character_id
+      assert "can't be blank" in errors.slot_number
+    end
 
-      test "validates slot_number range" do
-        # Test too low
-        attrs = %{character_id: 1, slot_number: 0}
-        changeset = HotbarSlot.changeset(%HotbarSlot{}, attrs)
-        refute changeset.valid?
-        assert %{slot_number: ["must be greater than or equal to 1"]} = errors_on(changeset)
+    test "validates slot_number range" do
+      # Test too low
+      attrs = %{character_id: 1, slot_number: 0}
+      changeset = HotbarSlot.changeset(%HotbarSlot{}, attrs)
+      refute changeset.valid?
+      assert %{slot_number: ["must be greater than or equal to 1"]} = errors_on(changeset)
 
-        # Test too high
-        attrs = %{character_id: 1, slot_number: 13}
-        changeset = HotbarSlot.changeset(%HotbarSlot{}, attrs)
-        refute changeset.valid?
-        assert %{slot_number: ["must be less than or equal to 12"]} = errors_on(changeset)
-      end
+      # Test too high
+      attrs = %{character_id: 1, slot_number: 13}
+      changeset = HotbarSlot.changeset(%HotbarSlot{}, attrs)
+      refute changeset.valid?
+      assert %{slot_number: ["must be less than or equal to 12"]} = errors_on(changeset)
+    end
 
-      test "validates inventory/item consistency - item without inventory" do
-        attrs = %{character_id: 1, slot_number: 1, item_id: 1, inventory_id: nil}
-        changeset = HotbarSlot.changeset(%HotbarSlot{}, attrs)
-        refute changeset.valid?
-        assert %{inventory_id: ["must be specified when item is set"]} = errors_on(changeset)
-      end
+    test "validates inventory/item consistency - item without inventory" do
+      attrs = %{character_id: 1, slot_number: 1, item_id: 1, inventory_id: nil}
+      changeset = HotbarSlot.changeset(%HotbarSlot{}, attrs)
+      refute changeset.valid?
+      assert %{inventory_id: ["must be specified when item is set"]} = errors_on(changeset)
+    end
 
-      test "validates inventory/item consistency - inventory without item" do
-        attrs = %{character_id: 1, slot_number: 1, item_id: nil, inventory_id: 1}
-        changeset = HotbarSlot.changeset(%HotbarSlot{}, attrs)
-        refute changeset.valid?
-        assert %{item_id: ["must be specified when inventory is set"]} = errors_on(changeset)
-      end
+    test "validates inventory/item consistency - inventory without item" do
+      attrs = %{character_id: 1, slot_number: 1, item_id: nil, inventory_id: 1}
+      changeset = HotbarSlot.changeset(%HotbarSlot{}, attrs)
+      refute changeset.valid?
+      assert %{item_id: ["must be specified when inventory is set"]} = errors_on(changeset)
+    end
 
-      test "accepts valid hotbar slot with both item and inventory" do
-        attrs = %{character_id: 1, slot_number: 1, item_id: 1, inventory_id: 1}
-        changeset = HotbarSlot.changeset(%HotbarSlot{}, attrs)
-        assert changeset.valid?
-      end
+    test "accepts valid hotbar slot with both item and inventory" do
+      attrs = %{character_id: 1, slot_number: 1, item_id: 1, inventory_id: 1}
+      changeset = HotbarSlot.changeset(%HotbarSlot{}, attrs)
+      assert changeset.valid?
+    end
 
-      test "accepts valid hotbar slot with neither item nor inventory" do
-        attrs = %{character_id: 1, slot_number: 1, item_id: nil, inventory_id: nil}
-        changeset = HotbarSlot.changeset(%HotbarSlot{}, attrs)
-        assert changeset.valid?
-      end
+    test "accepts valid hotbar slot with neither item nor inventory" do
+      attrs = %{character_id: 1, slot_number: 1, item_id: nil, inventory_id: nil}
+      changeset = HotbarSlot.changeset(%HotbarSlot{}, attrs)
+      assert changeset.valid?
+    end
   end
 
   describe "Item changeset" do
-      test "validates required fields" do
-        changeset = Item.changeset(%Item{}, %{})
-        refute changeset.valid?
+    test "validates required fields" do
+      changeset = Item.changeset(%Item{}, %{})
+      refute changeset.valid?
 
-        errors = errors_on(changeset)
-        assert "can't be blank" in errors.name
-        assert "can't be blank" in errors.item_type
-      end
+      errors = errors_on(changeset)
+      assert "can't be blank" in errors.name
+      assert "can't be blank" in errors.item_type
+    end
 
-      test "validates rarity inclusion" do
-        attrs = %{name: "Test Item", item_type: "misc", rarity: "invalid"}
+    test "validates rarity inclusion" do
+      attrs = %{name: "Test Item", item_type: "misc", rarity: "invalid"}
+      changeset = Item.changeset(%Item{}, attrs)
+      refute changeset.valid?
+      assert %{rarity: ["is invalid"]} = errors_on(changeset)
+    end
+
+    test "accepts valid rarities" do
+      valid_rarities = ["common", "uncommon", "rare", "epic", "legendary"]
+
+      for rarity <- valid_rarities do
+        attrs = %{name: "Test Item", item_type: "misc", rarity: rarity}
         changeset = Item.changeset(%Item{}, attrs)
-        refute changeset.valid?
-        assert %{rarity: ["is invalid"]} = errors_on(changeset)
+        assert changeset.valid?
       end
+    end
 
-      test "accepts valid rarities" do
-        valid_rarities = ["common", "uncommon", "rare", "epic", "legendary"]
+    test "validates item_type inclusion" do
+      attrs = %{name: "Test Item", item_type: "invalid", rarity: "common"}
+      changeset = Item.changeset(%Item{}, attrs)
+      refute changeset.valid?
+      assert %{item_type: ["is invalid"]} = errors_on(changeset)
+    end
 
-        for rarity <- valid_rarities do
-          attrs = %{name: "Test Item", item_type: "misc", rarity: rarity}
-          changeset = Item.changeset(%Item{}, attrs)
-          assert changeset.valid?
-        end
-      end
+    test "accepts valid item_types" do
+      valid_types = ["weapon", "armor", "consumable", "misc", "quest"]
 
-      test "validates item_type inclusion" do
-        attrs = %{name: "Test Item", item_type: "invalid", rarity: "common"}
+      for type <- valid_types do
+        attrs = %{name: "Test Item", item_type: type, rarity: "common"}
         changeset = Item.changeset(%Item{}, attrs)
-        refute changeset.valid?
-        assert %{item_type: ["is invalid"]} = errors_on(changeset)
+        assert changeset.valid?
       end
-
-      test "accepts valid item_types" do
-        valid_types = ["weapon", "armor", "consumable", "misc", "quest"]
-
-        for type <- valid_types do
-          attrs = %{name: "Test Item", item_type: type, rarity: "common"}
-          changeset = Item.changeset(%Item{}, attrs)
-          assert changeset.valid?
-        end
-      end
+    end
   end
 end

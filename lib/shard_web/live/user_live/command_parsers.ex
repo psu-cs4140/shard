@@ -170,7 +170,7 @@ defmodule ShardWeb.UserLive.CommandParsers do
   def execute_pickup_command(game_state, item_name) do
     {x, y} = game_state.player_position
     location_string = "#{x},#{y},0"
-    
+
     # Get room items from database
     room_items = Shard.Items.get_room_items(location_string)
 
@@ -200,7 +200,9 @@ defmodule ShardWeb.UserLive.CommandParsers do
         case Shard.Items.pick_up_item(game_state.character.id, room_item.id, room_item.quantity) do
           {:ok, _result} ->
             # Reload inventory from database to sync with game state
-            updated_inventory = ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+            updated_inventory =
+              ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+
             updated_game_state = %{game_state | inventory_items: updated_inventory}
 
             response = [
@@ -231,12 +233,12 @@ defmodule ShardWeb.UserLive.CommandParsers do
   defp unlock_door_with_item(game_state, direction, item_name) do
     normalized_direction = normalize_direction(direction)
     {x, y} = game_state.player_position
-    
+
     # Get the current room first, then find the door in the specified direction
     case GameMap.get_room_by_coordinates_legacy(x, y, 0) do
       nil ->
         handle_door_unlock(game_state, nil, normalized_direction, item_name)
-      
+
       room ->
         door = GameMap.get_door_in_direction(room.id, normalized_direction)
         handle_door_unlock(game_state, door, normalized_direction, item_name)
@@ -299,7 +301,7 @@ defmodule ShardWeb.UserLive.CommandParsers do
       String.downcase(inventory_item.item.name || "") == String.downcase(item_name)
     end)
   end
-  
+
   defp perform_door_unlock(game_state, door, normalized_direction, item_name) do
     case GameMap.update_door(door, %{is_locked: false}) do
       {:ok, _updated_door} ->
@@ -321,8 +323,11 @@ defmodule ShardWeb.UserLive.CommandParsers do
   defp unlock_return_door(door) do
     # Find the return door (door going back from the destination room)
     case GameMap.get_return_door(door) do
-      nil -> :ok  # No return door exists
-      return_door -> 
+      # No return door exists
+      nil ->
+        :ok
+
+      return_door ->
         GameMap.update_door(return_door, %{is_locked: false})
         :ok
     end
@@ -331,24 +336,29 @@ defmodule ShardWeb.UserLive.CommandParsers do
   # Remove item from player's inventory
   defp remove_item_from_inventory(game_state, item_name) do
     # Find the inventory item to remove
-    inventory_item = Enum.find(game_state.inventory_items, fn inv_item ->
-      String.downcase(inv_item.item.name || "") == String.downcase(item_name)
-    end)
+    inventory_item =
+      Enum.find(game_state.inventory_items, fn inv_item ->
+        String.downcase(inv_item.item.name || "") == String.downcase(item_name)
+      end)
 
     case inventory_item do
-      nil -> 
-        game_state  # Item not found, return unchanged state
+      nil ->
+        # Item not found, return unchanged state
+        game_state
 
       inv_item ->
         # Remove one quantity of the item
         case Shard.Items.remove_item_from_inventory(inv_item.id, 1) do
           {:ok, _} ->
             # Reload inventory from database to sync with game state
-            updated_inventory = ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+            updated_inventory =
+              ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+
             %{game_state | inventory_items: updated_inventory}
 
           {:error, _} ->
-            game_state  # Failed to remove, return unchanged state
+            # Failed to remove, return unchanged state
+            game_state
         end
     end
   end
