@@ -113,9 +113,9 @@ defmodule ShardWeb.AdminLive.Monsters do
     cleaned_params =
       monster_params
       |> Enum.reduce(%{}, fn
-        {k, ""}, acc -> Map.put(acc, k, nil)
-        {k, nil}, acc -> Map.put(acc, k, nil)
-        {k, v}, acc -> Map.put(acc, k, v)
+        {k, ""}, acc -> Elixir.Map.put(acc, k, nil)
+        {k, nil}, acc -> Elixir.Map.put(acc, k, nil)
+        {k, v}, acc -> Elixir.Map.put(acc, k, v)
       end)
 
     case socket.assigns.form_monster.id do
