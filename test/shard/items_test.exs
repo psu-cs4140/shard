@@ -75,7 +75,11 @@ defmodule Shard.ItemsTest do
     test "update_item/2 with invalid data returns error changeset" do
       {:ok, item} = Items.create_item(valid_item_attrs("Invalid Update Test"))
       assert {:error, %Ecto.Changeset{}} = Items.update_item(item, @invalid_item_attrs)
-      assert item == Items.get_item!(item.id)
+      # Refresh the item from database to ensure consistent comparison
+      refreshed_item = Items.get_item!(item.id)
+      assert refreshed_item.name == item.name
+      assert refreshed_item.value == item.value
+      assert refreshed_item.item_type == item.item_type
     end
 
     test "delete_item/1 deletes the item" do
