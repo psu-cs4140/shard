@@ -281,8 +281,7 @@ defmodule Shard.ItemsTest do
     equipment_slot: "weapon"
   }
 
-  describe "changeset validations" do
-    describe "CharacterInventory changeset" do
+  describe "CharacterInventory changeset" do
       test "validates required fields" do
         changeset = CharacterInventory.changeset(%CharacterInventory{}, %{})
         refute changeset.valid?
@@ -340,9 +339,9 @@ defmodule Shard.ItemsTest do
         changeset = CharacterInventory.changeset(%CharacterInventory{}, attrs)
         assert changeset.valid?
       end
-    end
+  end
 
-    describe "HotbarSlot changeset" do
+  describe "HotbarSlot changeset" do
       test "validates required fields" do
         changeset = HotbarSlot.changeset(%HotbarSlot{}, %{})
         refute changeset.valid?
@@ -391,9 +390,9 @@ defmodule Shard.ItemsTest do
         changeset = HotbarSlot.changeset(%HotbarSlot{}, attrs)
         assert changeset.valid?
       end
-    end
+  end
 
-    describe "Item changeset" do
+  describe "Item changeset" do
       test "validates required fields" do
         changeset = Item.changeset(%Item{}, %{})
         refute changeset.valid?
@@ -436,6 +435,5 @@ defmodule Shard.ItemsTest do
           assert changeset.valid?
         end
       end
-    end
   end
 end
