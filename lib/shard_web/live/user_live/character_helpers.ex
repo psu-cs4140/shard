@@ -62,9 +62,9 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
           name: inventory.item.name,
           item_type: inventory.item.item_type || "misc",
           quantity: inventory.quantity,
-          damage: inventory.item.damage,
-          defense: inventory.item.defense,
-          effect: inventory.item.effect,
+          damage: get_in(inventory.item.stats, ["damage"]) || get_in(inventory.item.effects, ["damage"]),
+          defense: get_in(inventory.item.stats, ["defense"]) || get_in(inventory.item.effects, ["defense"]),
+          effect: get_in(inventory.item.effects, ["effect"]) || inventory.item.description,
           description: inventory.item.description,
           equipped: inventory.equipped || false,
           slot_position: inventory.slot_position
@@ -95,7 +95,7 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
 
             %{
               name: item.name,
-              damage: item.damage || "1d6",
+              damage: get_in(item.stats, ["damage"]) || get_in(item.effects, ["damage"]) || "1d6",
               item_type: "weapon"
             }
           else
@@ -133,8 +133,8 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
                       id: item.id,
                       name: item.name,
                       item_type: item.item_type || "misc",
-                      damage: item.damage,
-                      effect: item.effect
+                      damage: get_in(item.stats, ["damage"]) || get_in(item.effects, ["damage"]),
+                      effect: get_in(item.effects, ["effect"]) || item.description
                     }
                   else
                     nil
