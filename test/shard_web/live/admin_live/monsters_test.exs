@@ -5,7 +5,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
   import Shard.UsersFixtures
 
   alias Shard.Monsters
-  alias Shard.Map
+  alias Shard.Map, as: GameMap
 
   @create_attrs %{
     name: "Test Monster",
@@ -46,7 +46,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
 
   defp create_room(_) do
     {:ok, room} =
-      Map.create_room(%{
+      GameMap.create_room(%{
         name: "Test Room",
         description: "A test room",
         x_coordinate: 0,
@@ -140,7 +140,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
 
     test "displays monster location when assigned to room", %{conn: conn, user: user, room: room} do
       {:ok, _monster} =
-        Monsters.create_monster(Elixir.Map.put(@create_attrs, :location_id, room.id))
+        Monsters.create_monster(Map.put(@create_attrs, :location_id, room.id))
 
       {:ok, _index_live, html} =
         conn
@@ -346,7 +346,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
       long_description = String.duplicate("a", 100)
 
       {:ok, _monster} =
-        Monsters.create_monster(Elixir.Map.put(@create_attrs, :description, long_description))
+        Monsters.create_monster(Map.put(@create_attrs, :description, long_description))
 
       {:ok, _index_live, html} =
         conn

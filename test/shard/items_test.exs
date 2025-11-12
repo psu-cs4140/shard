@@ -437,7 +437,7 @@ defmodule Shard.ItemsTest do
       for rarity <- valid_rarities do
         attrs = %{name: "Test Item", item_type: "misc", rarity: rarity}
         changeset = Item.changeset(%Item{}, attrs)
-        assert changeset.valid?
+        assert changeset.valid?, "Expected #{rarity} to be valid"
       end
     end
 
@@ -449,12 +449,12 @@ defmodule Shard.ItemsTest do
     end
 
     test "accepts valid item_types" do
-      valid_types = ["weapon", "armor", "consumable", "misc", "quest"]
+      valid_types = ["weapon", "armor", "consumable", "misc", "material", "tool"]
 
       for type <- valid_types do
         attrs = %{name: "Test Item", item_type: type, rarity: "common"}
         changeset = Item.changeset(%Item{}, attrs)
-        assert changeset.valid?
+        assert changeset.valid?, "Expected #{type} to be valid"
       end
     end
   end

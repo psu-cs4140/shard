@@ -102,6 +102,7 @@ defmodule ShardWeb.Router do
       live "/inventory", InventoryLive.Index, :index
       live "/zones", ZoneSelectionLive, :index
       live "/play/:character_id", MudGameLive
+      live "/marketplace", MarketplaceLive.Index, :index
     end
 
     post "/users/update-password", UserSessionController, :update_password

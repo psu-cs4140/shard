@@ -106,18 +106,12 @@ defmodule Shard.Map.AdminStickTest do
       result = AdminStick.grant_admin_stick(character.id)
       assert {:ok, _} = result
 
-      # Check that the character now has the admin stick
+      # Check that the character now has the admin stick using our special function
       assert AdminStick.has_admin_stick?(character.id) == true
 
-      # Check that the inventory entry exists
-      inventory = Items.get_character_inventory(character.id)
-      admin_stick = AdminStick.get_admin_stick_item()
-
-      has_admin_stick =
-        inventory
-        |> Enum.any?(fn ci -> ci.item_id == admin_stick.id end)
-
-      assert has_admin_stick == true
+      # Check that the inventory entry exists using our count function
+      admin_stick_count = AdminStick.count_admin_sticks(character.id)
+      assert admin_stick_count == 1
     end
 
     test "grant_admin_stick does not add duplicate stick", %{character: character} do
@@ -128,14 +122,8 @@ defmodule Shard.Map.AdminStickTest do
       result = AdminStick.grant_admin_stick(character.id)
       assert {:ok, "Character already has Admin Stick"} = result
 
-      # Check inventory - should still only have one
-      inventory = Items.get_character_inventory(character.id)
-      admin_stick = AdminStick.get_admin_stick_item()
-
-      admin_stick_count =
-        inventory
-        |> Enum.count(fn ci -> ci.item_id == admin_stick.id end)
-
+      # Check inventory - should still only have one using our count function
+      admin_stick_count = AdminStick.count_admin_sticks(character.id)
       assert admin_stick_count == 1
     end
 
