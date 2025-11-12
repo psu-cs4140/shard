@@ -125,6 +125,35 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
     end
   end
 
+  def handle_use_hotbar_item(%{"item_id" => item_id} = params, socket) do
+    # Handle case where item_id is provided instead of slot
+    # Find item in inventory by item_id
+    item =
+      Enum.find(socket.assigns.game_state.inventory_items, fn inv_item ->
+        to_string(Map.get(inv_item, :id)) == item_id
+      end)
+
+    case item do
+      nil ->
+        # Add error message to terminal
+        new_output =
+          socket.assigns.terminal_state.output ++ ["Item not found in inventory."] ++ [""]
+
+        terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+
+        {:noreply, socket, socket.assigns.game_state, terminal_state}
+
+      item ->
+        {response, updated_game_state} = use_item(socket.assigns.game_state, item)
+
+        # Add response to terminal
+        new_output = socket.assigns.terminal_state.output ++ response ++ [""]
+        terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+
+        {:noreply, socket, updated_game_state, terminal_state}
+    end
+  end
+
   def handle_equip_item(%{"item_id" => item_id}, socket) do
     # Find item in inventory
     item =
