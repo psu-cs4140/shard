@@ -163,7 +163,7 @@ defmodule ShardWeb.UserLive.Components do
               <%= for item <- @game_state.inventory_items do %>
                 <div class="bg-gray-800 rounded-lg p-4 flex items-center">
                   <div class="mr-4">
-                    <%= case item.item.item_type do %>
+                    <%= case item.item_type do %>
                       <% "weapon" -> %>
                         <.icon name="hero-sword" class="w-10 h-10 text-red-400" />
                       <% "armor" -> %>
@@ -180,12 +180,12 @@ defmodule ShardWeb.UserLive.Components do
                   </div>
                   <div class="flex-1">
                     <div class="flex justify-between items-start">
-                      <div class="font-semibold">{item.item.name}</div>
+                      <div class="font-semibold">{item.name}</div>
                       <%= if item.quantity && item.quantity > 1 do %>
                         <span class="text-sm bg-gray-600 px-2 py-1 rounded">x{item.quantity}</span>
                       <% end %>
                     </div>
-                    <div class="text-sm text-gray-300 capitalize">{item.item.item_type}</div>
+                    <div class="text-sm text-gray-300 capitalize">{item.item_type}</div>
                     <%= if Map.get(item, :damage) do %>
                       <div class="text-sm text-red-300">Damage: {item.damage}</div>
                     <% end %>
@@ -201,7 +201,7 @@ defmodule ShardWeb.UserLive.Components do
                     
     <!-- Action buttons -->
                     <div class="flex gap-2 mt-2">
-                      <%= if item.item.item_type in ["weapon", "armor"] do %>
+                      <%= if item.item_type in ["weapon", "armor"] do %>
                         <button
                           phx-click="equip_item"
                           phx-value-item_id={item.id}
@@ -210,7 +210,7 @@ defmodule ShardWeb.UserLive.Components do
                           Equip
                         </button>
                       <% end %>
-                      <%= if item.item.item_type == "consumable" do %>
+                      <%= if item.item_type == "consumable" do %>
                         <button
                           phx-click="use_hotbar_item"
                           phx-value-item_id={item.id}
