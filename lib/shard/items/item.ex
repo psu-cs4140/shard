@@ -5,7 +5,17 @@ defmodule Shard.Items.Item do
   # Define valid item types and rarities
   @item_types ["weapon", "armor", "consumable", "misc", "material", "tool"]
   @rarities ["common", "uncommon", "rare", "epic", "legendary"]
-  @equipment_slots ["head", "chest", "hands", "legs", "feet", "weapon", "shield", "ring", "necklace"]
+  @equipment_slots [
+    "head",
+    "chest",
+    "hands",
+    "legs",
+    "feet",
+    "weapon",
+    "shield",
+    "ring",
+    "necklace"
+  ]
 
   # Expose these for other modules to use
   def item_types, do: @item_types
@@ -62,10 +72,15 @@ defmodule Shard.Items.Item do
       :map,
       :sellable
     ])
-    |> validate_required([:name, :item_type])  # Added :item_type to required fields
-    |> validate_inclusion(:item_type, @item_types)  # Validate item_type is in allowed list
-    |> validate_inclusion(:rarity, @rarities)  # Validate rarity is in allowed list
-    |> validate_inclusion(:equipment_slot, @equipment_slots)  # Validate equipment_slot when present
-    |> unique_constraint(:name)  # Add unique constraint on name
+    # Added :item_type to required fields
+    |> validate_required([:name, :item_type])
+    # Validate item_type is in allowed list
+    |> validate_inclusion(:item_type, @item_types)
+    # Validate rarity is in allowed list
+    |> validate_inclusion(:rarity, @rarities)
+    # Validate equipment_slot when present
+    |> validate_inclusion(:equipment_slot, @equipment_slots)
+    # Add unique constraint on name
+    |> unique_constraint(:name)
   end
 end

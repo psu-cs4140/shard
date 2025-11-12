@@ -5,9 +5,9 @@ defmodule Shard.Repo.Migrations.AddSellableToItems do
     alter table(:items) do
       add :sellable, :boolean, default: true
     end
-    
+
     create index(:items, [:sellable])
-    
+
     # Set existing "Admin Zone Editing Stick" items to not sellable
     execute """
     UPDATE items 

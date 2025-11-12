@@ -62,7 +62,8 @@ defmodule Shard.Monsters.Monster do
       less_than_or_equal_to: 100
     )
     |> validate_health_not_exceeding_max()
-    |> handle_empty_location_id()  # Add this line to handle empty strings
+    # Add this line to handle empty strings
+    |> handle_empty_location_id()
   end
 
   defp validate_health_not_exceeding_max(changeset) do

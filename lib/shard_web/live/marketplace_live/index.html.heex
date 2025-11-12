@@ -10,45 +10,50 @@
       <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
           <h2 class="card-title">List New Item</h2>
-          
-          <.form for={@form} id="listing-form" phx-submit="create_listing" phx-change="preview_item">
+
+          <.form
+            for={@form}
+            id="listing-form"
+            phx-submit="create_listing"
+            phx-change="preview_item"
+          >
             <div class="space-y-4">
-              <.input 
+              <.input
                 field={@form[:item_id]}
-                type="select" 
-                label="Select Item" 
+                type="select"
+                label="Select Item"
                 options={@inventory_items}
                 prompt="Choose an item from your inventory"
                 required
               />
-              
-              <.input 
+
+              <.input
                 field={@form[:price]}
-                type="number" 
-                label="Price (Gold)" 
+                type="number"
+                label="Price (Gold)"
                 min="1"
                 required
               />
-              
+
               <div class="form-control">
                 <.button type="submit" class="w-full">List Item</.button>
               </div>
             </div>
           </.form>
           
-          <!-- Item Preview -->
+<!-- Item Preview -->
           <%= if @selected_item do %>
             <div class="mt-6 p-4 bg-base-200 rounded-lg">
               <h3 class="font-bold mb-2">Item Preview</h3>
               <div class="flex items-center gap-3">
                 <div class="avatar placeholder">
                   <div class="bg-neutral text-neutral-content rounded-full w-12">
-                    <span><%= String.first(@selected_item.name) %></span>
+                    <span>{String.first(@selected_item.name)}</span>
                   </div>
                 </div>
                 <div>
-                  <p class="font-semibold"><%= @selected_item.name %></p>
-                  <p class="text-sm opacity-70"><%= @selected_item.description %></p>
+                  <p class="font-semibold">{@selected_item.name}</p>
+                  <p class="text-sm opacity-70">{@selected_item.description}</p>
                 </div>
               </div>
             </div>
@@ -57,43 +62,52 @@
       </div>
     </div>
     
-    <!-- Active Listings -->
+<!-- Active Listings -->
     <div class="lg:col-span-2">
       <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
           <h2 class="card-title">Your Active Listings</h2>
-          
+
           <div id="listings" phx-update="stream">
             <div class="hidden only:block text-center py-8">
               <.icon name="hero-shopping-cart" class="size-12 mx-auto text-base-content/20" />
               <h3 class="text-lg font-medium mt-4">No Active Listings</h3>
-              <p class="mt-1 text-base-content/70">List items from your inventory to start selling!</p>
+              <p class="mt-1 text-base-content/70">
+                List items from your inventory to start selling!
+              </p>
             </div>
-            
-            <div :for={{id, listing} <- @streams.listings} id={id} class="border-b border-base-200 last:border-b-0 py-4">
+
+            <div
+              :for={{id, listing} <- @streams.listings}
+              id={id}
+              class="border-b border-base-200 last:border-b-0 py-4"
+            >
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
                   <div class="avatar placeholder">
                     <div class="bg-primary text-primary-content rounded-full w-10">
-                      <span><%= String.first(listing.item.name) %></span>
+                      <span>{String.first(listing.item.name)}</span>
                     </div>
                   </div>
                   <div>
-                    <h3 class="font-semibold"><%= listing.item.name %></h3>
-                    <p class="text-sm opacity-70">Listed <%= time_ago_in_words(listing.inserted_at) %> ago</p>
+                    <h3 class="font-semibold">{listing.item.name}</h3>
+                    <p class="text-sm opacity-70">
+                      Listed {time_ago_in_words(listing.inserted_at)} ago
+                    </p>
                   </div>
                 </div>
-                
+
                 <div class="flex items-center gap-4">
                   <div class="text-right">
-                    <p class="text-lg font-bold"><%= listing.price %> Gold</p>
+                    <p class="text-lg font-bold">{listing.price} Gold</p>
                   </div>
                   <div class="flex gap-2">
-                    <.link 
-                      phx-click="cancel_listing" 
+                    <.link
+                      phx-click="cancel_listing"
                       phx-value-id={listing.id}
                       class="btn btn-sm btn-error btn-outline"
-                      data-confirm="Are you sure you want to cancel this listing?">
+                      data-confirm="Are you sure you want to cancel this listing?"
+                    >
                       Cancel
                     </.link>
                   </div>
