@@ -13,6 +13,7 @@ defmodule ShardWeb.UserLive.Commands1 do
   import ShardWeb.UserLive.Commands3
 
   import ShardWeb.UserLive.NpcCommands
+  import ShardWeb.UserLive.CommandParsers
 
   #  import ShardWeb.UserLive.ItemCommands
 
