@@ -244,15 +244,6 @@ defmodule ShardWeb.UserLive.ItemHelpers do
     end
   end
 
-  defp unlock_door(door) do
-    # Update the door to be unlocked
-    attrs = %{is_locked: false}
-    
-    case Shard.Map.update_door(door, attrs) do
-      {:ok, updated_door} -> {:ok, updated_door}
-      {:error, changeset} -> {:error, changeset}
-    end
-  end
 
   defp unlock_door_and_return_door(door) do
     # Update the door to be unlocked

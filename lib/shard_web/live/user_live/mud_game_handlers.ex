@@ -125,7 +125,7 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
     end
   end
 
-  def handle_use_hotbar_item(%{"item_id" => item_id} = params, socket) do
+  def handle_use_hotbar_item(%{"item_id" => item_id} = _params, socket) do
     # Handle case where item_id is provided instead of slot
     # Find item in inventory by item_id
     item =

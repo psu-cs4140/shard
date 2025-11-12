@@ -1,8 +1,5 @@
 defmodule ShardWeb.UserLive.CommandParsers do
   alias Shard.Map, as: GameMap
-  alias Shard.Items.Item
-  alias Shard.Repo
-  import Ecto.Query
 
   # Parse talk command to extract NPC name
   def parse_talk_command(command) do
@@ -235,10 +232,15 @@ defmodule ShardWeb.UserLive.CommandParsers do
     normalized_direction = normalize_direction(direction)
     {x, y} = game_state.player_position
     
-    # Find the door in the specified direction
-    door = GameMap.get_door_by_room_and_direction(x, y, 0, normalized_direction)
-    
-    handle_door_unlock(game_state, door, normalized_direction, item_name)
+    # Get the current room first, then find the door in the specified direction
+    case GameMap.get_room_by_coordinates_legacy(x, y, 0) do
+      nil ->
+        handle_door_unlock(game_state, nil, normalized_direction, item_name)
+      
+      room ->
+        door = GameMap.get_door_in_direction(room.id, normalized_direction)
+        handle_door_unlock(game_state, door, normalized_direction, item_name)
+    end
   end
 
   # Normalize direction name
