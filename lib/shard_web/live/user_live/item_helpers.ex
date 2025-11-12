@@ -63,13 +63,38 @@ defmodule ShardWeb.UserLive.ItemHelpers do
   defp perform_healing(game_state, item, healing_amount, current_health, max_health) do
     new_health = min(current_health + healing_amount, max_health)
     updated_stats = %{game_state.player_stats | health: new_health}
-    updated_game_state = %{game_state | player_stats: updated_stats}
-
+    
     # Save updated stats to database
     ShardWeb.UserLive.CharacterHelpers.save_character_stats(
       game_state.character,
       updated_stats
     )
+
+    # Remove the item from inventory using database function
+    updated_game_state = case Map.get(item, :inventory_id) do
+      nil ->
+        # Fallback: remove from local state if no inventory_id
+        updated_inventory = Enum.reject(game_state.inventory_items, fn inv_item ->
+          inv_item.id == item.id
+        end)
+        %{game_state | player_stats: updated_stats, inventory_items: updated_inventory}
+
+      inventory_id ->
+        # Remove from database
+        case Shard.Items.remove_item_from_inventory(inventory_id, 1) do
+          {:ok, _} ->
+            # Reload inventory from database
+            updated_inventory = ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+            %{game_state | player_stats: updated_stats, inventory_items: updated_inventory}
+
+          {:error, _} ->
+            # Fallback to local removal if database operation fails
+            updated_inventory = Enum.reject(game_state.inventory_items, fn inv_item ->
+              inv_item.id == item.id
+            end)
+            %{game_state | player_stats: updated_stats, inventory_items: updated_inventory}
+        end
+    end
 
     response = [
       "You use #{item.name}.",

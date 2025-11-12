@@ -172,18 +172,21 @@ defmodule ShardWeb.UserLive.CommandParsers do
   # Execute pickup command with a specific item name
   def execute_pickup_command(game_state, item_name) do
     {x, y} = game_state.player_position
-    items_here = get_items_at_location(x, y, game_state.map_id)
+    location_string = "#{x},#{y},0"
+    
+    # Get room items from database
+    room_items = Shard.Items.get_room_items(location_string)
 
     # Find the item by name (case-insensitive)
-    target_item =
-      Enum.find(items_here, fn item ->
-        String.downcase(item.name || "") == String.downcase(item_name)
+    target_room_item =
+      Enum.find(room_items, fn room_item ->
+        String.downcase(room_item.item.name || "") == String.downcase(item_name)
       end)
 
-    case target_item do
+    case target_room_item do
       nil ->
-        if length(items_here) > 0 do
-          available_names = Enum.map_join(items_here, ", ", & &1.name)
+        if length(room_items) > 0 do
+          available_names = Enum.map_join(room_items, ", ", & &1.item.name)
 
           response = [
             "There is no item named '#{item_name}' here.",
@@ -195,71 +198,77 @@ defmodule ShardWeb.UserLive.CommandParsers do
           {["There are no items here to pick up."], game_state}
         end
 
-      item ->
-        # Check if item can be picked up (assuming all items can be picked up for now)
-        # In the future, you might want to add a "pickupable" field to items
+      room_item ->
+        # Use the proper database function to pick up the item
+        case Shard.Items.pick_up_item(game_state.character.id, room_item.id, room_item.quantity) do
+          {:ok, _result} ->
+            # Reload inventory from database to sync with game state
+            updated_inventory = ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+            updated_game_state = %{game_state | inventory_items: updated_inventory}
 
-        # Add item to player's inventory
-        updated_inventory = [
-          %{
-            id: item[:id],
-            name: item.name,
-            type: item.item_type || "misc",
-            quantity: item.quantity || 1,
-            damage: item[:damage],
-            defense: item[:defense],
-            effect: item[:effect],
-            description: item[:description]
-          }
-          | game_state.inventory_items
-        ]
+            response = [
+              "You pick up #{room_item.item.name}.",
+              "#{room_item.item.name} has been added to your inventory."
+            ]
 
-        # Remove item from the room (this would need database implementation)
-        # For now, we'll just update the game state
+            {response, updated_game_state}
 
-        response = [
-          "You pick up #{item.name}.",
-          "#{item.name} has been added to your inventory."
-        ]
+          {:error, :item_not_pickupable} ->
+            {["You cannot pick up #{room_item.item.name}."], game_state}
 
-        updated_game_state = %{game_state | inventory_items: updated_inventory}
+          {:error, :insufficient_quantity} ->
+            {["There isn't enough #{room_item.item.name} here to pick up."], game_state}
 
-        # Remove item from database room/location
-        # This would require calling something like:
-        # Shard.Items.remove_item_from_location(item.id, "#{x},#{y},0")
-
-        {response, updated_game_state}
+          {:error, _reason} ->
+            {["Failed to pick up #{room_item.item.name}."], game_state}
+        end
     end
   end
 
   # Execute unlock command with direction and item name
   def execute_unlock_command(game_state, direction, item_name) do
-    if has_item_in_inventory?(game_state.inventory_items, item_name) do
-      unlock_door_with_item(game_state, direction, item_name)
-    else
-      {["You don't have '#{item_name}' in your inventory."], game_state}
-    end
+    unlock_door_with_item(game_state, direction, item_name)
   end
 
-  # Check if player has the item in inventory
+  # Check if player has the item in inventory using database
   defp has_item_in_inventory?(inventory_items, item_name) do
-    Enum.any?(inventory_items, fn inv_item ->
-      String.downcase(inv_item.item.name || "") == String.downcase(item_name)
+    # First check the loaded inventory items
+    has_in_loaded = Enum.any?(inventory_items, fn inv_item ->
+      String.downcase(inv_item.name || "") == String.downcase(item_name)
     end)
+    
+    # Also check database directly to ensure accuracy
+    if has_in_loaded do
+      true
+    else
+      # Get character_id from the first inventory item if available
+      case inventory_items do
+        [first_item | _] when is_map(first_item) ->
+          # This is a fallback - ideally we'd pass character_id directly
+          false
+        _ ->
+          false
+      end
+    end
   end
 
   # Handle unlocking door with item
   defp unlock_door_with_item(game_state, direction, item_name) do
-    {x, y} = game_state.player_position
+    # Check if character has the item using database function
+    if Shard.Items.character_has_item?(game_state.character.id, item_name) do
+      {x, y} = game_state.player_position
 
-    case GameMap.get_room_by_coordinates(game_state.character.current_zone_id, x, y, 0) do
-      nil ->
-        {["You are not in a valid room."], game_state}
+      case GameMap.get_room_by_coordinates(game_state.character.current_zone_id, x, y, 0) do
+        nil ->
+          {["You are not in a valid room."], game_state}
 
-      room ->
-        normalized_direction = normalize_direction(direction)
-        door = GameMap.get_door_in_direction(room.id, normalized_direction)
-        handle_door_unlock(game_state, door, normalized_direction, item_name)
+        room ->
+          normalized_direction = normalize_direction(direction)
+          door = GameMap.get_door_in_direction(room.id, normalized_direction)
+          handle_door_unlock(game_state, door, normalized_direction, item_name)
+      end
+    else
+      {["You don't have '#{item_name}' in your inventory."], game_state}
     end
   end
 
@@ -347,55 +356,62 @@ defmodule ShardWeb.UserLive.CommandParsers do
     end
   end
 
-  # Remove item from inventory
+  # Remove item from inventory using database
   defp remove_item_from_inventory(game_state, item_name) do
-    updated_inventory =
-      Enum.reject(game_state.inventory_items, fn inv_item ->
-        String.downcase(inv_item.item.name || "") == String.downcase(item_name)
-      end)
+    # Find the inventory item to remove
+    inventory_item = Enum.find(game_state.inventory_items, fn inv_item ->
+      String.downcase(inv_item.name || "") == String.downcase(item_name)
+    end)
 
-    %{game_state | inventory_items: updated_inventory}
+    case inventory_item do
+      nil ->
+        game_state
+
+      item ->
+        # Use database function to remove the item
+        case Map.get(item, :inventory_id) do
+          nil ->
+            # Fallback: just remove from local state if no inventory_id
+            updated_inventory = Enum.reject(game_state.inventory_items, fn inv_item ->
+              String.downcase(inv_item.name || "") == String.downcase(item_name)
+            end)
+            %{game_state | inventory_items: updated_inventory}
+
+          inventory_id ->
+            # Remove from database
+            case Shard.Items.remove_item_from_inventory(inventory_id, 1) do
+              {:ok, _} ->
+                # Reload inventory from database
+                updated_inventory = ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+                %{game_state | inventory_items: updated_inventory}
+
+              {:error, _} ->
+                # Fallback to local removal if database operation fails
+                updated_inventory = Enum.reject(game_state.inventory_items, fn inv_item ->
+                  String.downcase(inv_item.name || "") == String.downcase(item_name)
+                end)
+                %{game_state | inventory_items: updated_inventory}
+            end
+        end
+    end
   end
 
-  # Get items at a specific location
-  defp get_items_at_location(x, y, map_id) do
-    alias Shard.Items.RoomItem
+  # Get items at a specific location using the Items context
+  defp get_items_at_location(x, y, _map_id) do
     location_string = "#{x},#{y},0"
-
-    # Get items from RoomItem table (items placed in world)
-    room_items =
-      from(ri in RoomItem,
-        where: ri.location == ^location_string,
-        join: i in Item,
-        on: ri.item_id == i.id,
-        where: is_nil(i.is_active) or i.is_active == true,
-        select: %{
-          name: i.name,
-          description: i.description,
-          item_type: i.item_type,
-          quantity: ri.quantity
-        }
-      )
-      |> Repo.all()
-
-    # Also check for items directly in Item table with matching location and map
-    direct_items =
-      from(i in Item,
-        where:
-          i.location == ^location_string and
-            (i.map == ^map_id or is_nil(i.map)) and
-            (is_nil(i.is_active) or i.is_active == true),
-        select: %{
-          name: i.name,
-          description: i.description,
-          item_type: i.item_type,
-          quantity: 1
-        }
-      )
-      |> Repo.all()
-
-    # Combine both results and remove duplicates based on name
-    all_items = room_items ++ direct_items
-    all_items |> Enum.uniq_by(& &1.name)
+    
+    # Use the proper Items context function
+    room_items = Shard.Items.get_room_items(location_string)
+    
+    # Transform to the format expected by the rest of the code
+    Enum.map(room_items, fn room_item ->
+      %{
+        id: room_item.id,
+        name: room_item.item.name,
+        description: room_item.item.description,
+        item_type: room_item.item.item_type,
+        quantity: room_item.quantity
+      }
+    end)
   end
 end

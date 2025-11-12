@@ -288,7 +288,11 @@ defmodule ShardWeb.MudGameLive do
   def handle_event("submit_command", params, socket) do
     case handle_submit_command(params, socket) do
       {:noreply, socket, updated_game_state, terminal_state} ->
-        socket = assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
+        # Reload inventory to ensure it's synced with database
+        updated_inventory = ShardWeb.UserLive.CharacterHelpers.load_character_inventory(updated_game_state.character)
+        final_game_state = %{updated_game_state | inventory_items: updated_inventory}
+        
+        socket = assign(socket, game_state: final_game_state, terminal_state: terminal_state)
 
         # Auto-scroll terminal to bottom
         socket = push_event(socket, "scroll_to_bottom", %{target: "terminal-output"})

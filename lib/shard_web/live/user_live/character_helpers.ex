@@ -48,42 +48,32 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
       abs(old_stats.mana - new_stats.mana) >= 15
   end
 
-  # Load character inventory from database
+  # Load character inventory from database using the Items context
   def load_character_inventory(character) do
     try do
-      # Check if character_inventories is loaded and has items
-      case Map.get(character, :character_inventories) do
-        inventories when is_list(inventories) ->
-          loaded_items =
-            Enum.map(inventories, fn inventory ->
-              item = Shard.Repo.get(Shard.Items.Item, inventory.item_id)
-
-              if item do
-                %{
-                  id: item.id,
-                  name: item.name,
-                  item_type: item.item_type || "misc",
-                  quantity: inventory.quantity,
-                  damage: item.damage,
-                  defense: item.defense,
-                  effect: item.effect,
-                  description: item.description
-                }
-              else
-                nil
-              end
-            end)
-            |> Enum.filter(&(&1 != nil))
-
-          loaded_items
-
-        _ ->
-          # Return empty list if no inventory loaded or association not loaded
-          []
-      end
+      # Use the proper Items context function to get inventory
+      inventory_items = Shard.Items.get_character_inventory(character.id)
+      
+      # Transform to the format expected by the game state
+      Enum.map(inventory_items, fn inventory ->
+        %{
+          inventory_id: inventory.id,
+          id: inventory.item.id,
+          name: inventory.item.name,
+          item_type: inventory.item.item_type || "misc",
+          quantity: inventory.quantity,
+          damage: inventory.item.damage,
+          defense: inventory.item.defense,
+          effect: inventory.item.effect,
+          description: inventory.item.description,
+          equipped: inventory.equipped || false,
+          slot_position: inventory.slot_position
+        }
+      end)
     rescue
-      _ ->
-        # Return empty list on error instead of fallback items
+      error ->
+        require Logger
+        Logger.error("Failed to load character inventory: #{inspect(error)}")
         []
     end
   end
