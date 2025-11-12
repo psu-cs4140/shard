@@ -560,4 +560,38 @@ defmodule Shard.Items do
   end
 
   def character_has_quest_items?(_character_id, _objectives), do: true
+
+  @doc """
+  Checks if a character has the tutorial key in their inventory.
+
+  ## Examples
+
+      iex> has_tutorial_key?(character_id)
+      true
+
+      iex> has_tutorial_key?(character_id)
+      false
+
+  """
+  def has_tutorial_key?(character_id) do
+    character_has_item?(character_id, "Tutorial Key")
+  end
+
+  @doc """
+  Checks if a character has access to the dungeon door (this is a placeholder function).
+  In a real implementation, this might check if the character has unlocked a specific door
+  or has the required key/permission.
+
+  ## Examples
+
+      iex> has_dungeon_door?(character_id)
+      false
+
+  """
+  def has_dungeon_door?(_character_id) do
+    # This is a placeholder implementation
+    # In a real game, this might check if the character has unlocked the dungeon door
+    # or has the required permissions/items to access it
+    false
+  end
 end

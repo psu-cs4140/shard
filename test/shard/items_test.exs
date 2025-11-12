@@ -29,7 +29,7 @@ defmodule Shard.ItemsTest do
 
     test "list_active_items/0 returns only active items" do
       {:ok, active_item} = Items.create_item(valid_item_attrs("Active Sword"))
-      {:ok, inactive_item} = Items.create_item(Map.put(valid_item_attrs("Inactive Sword"), :active, false))
+      {:ok, inactive_item} = Items.create_item(Map.put(valid_item_attrs("Inactive Sword"), :is_active, false))
       
       active_items = Items.list_active_items()
       active_ids = Enum.map(active_items, & &1.id)
