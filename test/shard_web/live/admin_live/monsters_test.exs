@@ -140,7 +140,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
 
     test "displays monster location when assigned to room", %{conn: conn, user: user, room: room} do
       {:ok, _monster} =
-        Monsters.create_monster(Elixir.Map.put(@create_attrs, :location_id, room.id))
+        Monsters.create_monster(Map.put(@create_attrs, :location_id, room.id))
 
       {:ok, _index_live, html} =
         conn
@@ -277,7 +277,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
         |> live(~p"/admin/monsters/new")
 
       # Submit form with empty location_id (empty string)
-      attrs_with_empty_string = Elixir.Map.put(@create_attrs, :location_id, "")
+      attrs_with_empty_string = Map.put(@create_attrs, :location_id, "")
 
       assert index_live
              |> form("#monster-form", monster: attrs_with_empty_string)
@@ -289,6 +289,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
       assert html =~ "Monster created successfully"
 
       # Verify the monster was created with nil location_id
+      # Get the most recently created monster
       monster = Monsters.list_monsters() |> List.last()
       assert monster.location_id == nil
     end
@@ -328,7 +329,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
       long_description = String.duplicate("a", 100)
 
       {:ok, _monster} =
-        Monsters.create_monster(Elixir.Map.put(@create_attrs, :description, long_description))
+        Monsters.create_monster(Map.put(@create_attrs, :description, long_description))
 
       {:ok, _index_live, html} =
         conn
