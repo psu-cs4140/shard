@@ -276,9 +276,12 @@ defmodule ShardWeb.AdminLive.MonstersTest do
         |> log_in_user(user)
         |> live(~p"/admin/monsters/new")
 
+      # Get the initial count of monsters
+      initial_count = length(Monsters.list_monsters())
+
       # Submit form with empty location_id (empty string) - use explicit form data
       form_data = %{
-        "name" => "Test Monster",
+        "name" => "Test Monster Empty Location",
         "race" => "orc", 
         "level" => "5",
         "health" => "100",
@@ -299,7 +302,11 @@ defmodule ShardWeb.AdminLive.MonstersTest do
       assert html =~ "Monster created successfully"
 
       # Verify the monster was created with nil location_id
-      monster = Monsters.list_monsters() |> List.last()
+      # Find the specific monster we just created by name
+      monster = Monsters.list_monsters() 
+                |> Enum.find(&(&1.name == "Test Monster Empty Location"))
+      
+      assert monster != nil
       assert monster.location_id == nil
     end
   end
