@@ -66,5 +66,6 @@ defmodule Shard.Items.Item do
     |> validate_inclusion(:item_type, @item_types)  # Validate item_type is in allowed list
     |> validate_inclusion(:rarity, @rarities)  # Validate rarity is in allowed list
     |> validate_inclusion(:equipment_slot, @equipment_slots)  # Validate equipment_slot when present
+    |> unique_constraint(:name)  # Add unique constraint on name
   end
 end
