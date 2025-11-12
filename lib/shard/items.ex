@@ -222,27 +222,38 @@ defmodule Shard.Items do
 
   # credo:disable-for-next-line Credo.Check.Refactor.Nesting
   def drop_item_in_room(character_id, inventory_id, location, quantity \\ 1) do
-    inventory = Repo.get!(CharacterInventory, inventory_id) |> Repo.preload(:item)
+    case Repo.get(CharacterInventory, inventory_id) do
+      nil ->
+        {:error, :inventory_not_found}
 
-    if inventory.quantity >= quantity do
-      Repo.transaction(fn ->
-        # Create room item
-        {:ok, room_item} =
-          %RoomItem{}
-          |> RoomItem.changeset(%{
-            location: location,
-            item_id: inventory.item_id,
-            quantity: quantity,
-            dropped_by_character_id: character_id
-          })
-          |> Repo.insert()
+      inventory ->
+        inventory = Repo.preload(inventory, :item)
 
-        # Remove from inventory
-        case remove_item_from_inventory(inventory_id, quantity) do
-          {:ok, _} -> room_item
-          error -> Repo.rollback(error)
+        if inventory.quantity >= quantity do
+          Repo.transaction(fn ->
+            # Create room item
+            case %RoomItem{}
+                 |> RoomItem.changeset(%{
+                   location: location,
+                   item_id: inventory.item_id,
+                   quantity: quantity,
+                   dropped_by_character_id: character_id
+                 })
+                 |> Repo.insert() do
+              {:ok, room_item} ->
+                # Remove from inventory
+                case remove_item_from_inventory(inventory_id, quantity) do
+                  {:ok, _} -> room_item
+                  error -> Repo.rollback(error)
+                end
+
+              {:error, changeset} ->
+                Repo.rollback(changeset)
+            end
+          end)
+        else
+          {:error, :insufficient_quantity}
         end
-      end)
     end
   end
 
@@ -319,32 +330,56 @@ defmodule Shard.Items do
   end
 
   def set_hotbar_slot(character_id, slot_number, inventory_id \\ nil) do
-    inventory = if inventory_id, do: Repo.get!(CharacterInventory, inventory_id), else: nil
+    case validate_inventory_for_hotbar(inventory_id) do
+      {:ok, inventory} ->
+        attrs = %{
+          character_id: character_id,
+          slot_number: slot_number,
+          item_id: inventory && inventory.item_id,
+          inventory_id: inventory_id
+        }
 
-    attrs = %{
-      character_id: character_id,
-      slot_number: slot_number,
-      item_id: inventory && inventory.item_id,
-      inventory_id: inventory_id
-    }
+        case Repo.get_by(HotbarSlot, character_id: character_id, slot_number: slot_number) do
+          nil ->
+            %HotbarSlot{}
+            |> HotbarSlot.changeset(attrs)
+            |> Repo.insert()
 
-    case Repo.get_by(HotbarSlot, character_id: character_id, slot_number: slot_number) do
-      nil ->
-        %HotbarSlot{}
-        |> HotbarSlot.changeset(attrs)
-        |> Repo.insert()
+          existing ->
+            existing
+            |> HotbarSlot.changeset(attrs)
+            |> Repo.update()
+        end
 
-      existing ->
-        existing
-        |> HotbarSlot.changeset(attrs)
-        |> Repo.update()
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp validate_inventory_for_hotbar(nil), do: {:ok, nil}
+
+  defp validate_inventory_for_hotbar(inventory_id) do
+    case Repo.get(CharacterInventory, inventory_id) do
+      nil -> {:error, :inventory_not_found}
+      inventory -> {:ok, inventory}
     end
   end
 
   def clear_hotbar_slot(character_id, slot_number) do
     case Repo.get_by(HotbarSlot, character_id: character_id, slot_number: slot_number) do
-      nil -> {:ok, nil}
-      hotbar_slot -> Repo.delete(hotbar_slot)
+      nil ->
+        # Create an empty hotbar slot to match expected return type
+        %HotbarSlot{}
+        |> HotbarSlot.changeset(%{
+          character_id: character_id,
+          slot_number: slot_number,
+          item_id: nil,
+          inventory_id: nil
+        })
+        |> Repo.insert()
+
+      hotbar_slot ->
+        Repo.delete(hotbar_slot)
     end
   end
 
@@ -364,41 +399,49 @@ defmodule Shard.Items do
       |> Repo.one()
 
     if is_nil(existing_key) do
-      Repo.transaction(fn ->
-        # Create the tutorial key item if it doesn't exist in the items table
-        {:ok, key_item} =
-          case Repo.get_by(Item, name: "Tutorial Key") do
-            nil ->
-              %Item{}
-              |> Item.changeset(%{
-                name: "Tutorial Key",
-                description: "A mysterious key that might unlock something important.",
-                item_type: "misc",
-                rarity: "common",
-                value: 10,
-                stackable: false,
-                equippable: false,
-                location: "0,2,0",
-                map: "tutorial_terrain",
-                is_active: true
-              })
-              |> Repo.insert()
+      # Create the tutorial key item if it doesn't exist in the items table
+      case Repo.get_by(Item, name: "Tutorial Key") do
+        nil ->
+          case %Item{}
+               |> Item.changeset(%{
+                 name: "Tutorial Key",
+                 description: "A mysterious key that might unlock something important.",
+                 item_type: "misc",
+                 rarity: "common",
+                 value: 10,
+                 stackable: false,
+                 equippable: false,
+                 location: "0,2,0",
+                 map: "tutorial_terrain",
+                 is_active: true
+               })
+               |> Repo.insert() do
+            {:ok, key_item} ->
+              # Place the key in the room at (0,2,0)
+              case %RoomItem{}
+                   |> RoomItem.changeset(%{
+                     item_id: key_item.id,
+                     location: "0,2,0",
+                     quantity: 1
+                   })
+                   |> Repo.insert() do
+                {:ok, _room_item} -> {:ok, key_item}
+                {:error, changeset} -> {:error, changeset}
+              end
 
-            existing_item ->
-              {:ok, existing_item}
+            {:error, changeset} ->
+              {:error, changeset}
           end
 
-        # Place the key in the room at (0,2,0)
-        %RoomItem{}
-        |> RoomItem.changeset(%{
-          item_id: key_item.id,
-          location: "0,2,0",
-          quantity: 1
-        })
-        |> Repo.insert()
-      end)
+        existing_item ->
+          {:ok, existing_item}
+      end
     else
-      {:ok, existing_key}
+      # Return the item, not the room item
+      case Repo.get(Item, existing_key.item_id) do
+        nil -> {:error, :item_not_found}
+        item -> {:ok, item}
+      end
     end
   end
 
@@ -534,4 +577,38 @@ defmodule Shard.Items do
   end
 
   def character_has_quest_items?(_character_id, _objectives), do: true
+
+  @doc """
+  Checks if a character has the tutorial key in their inventory.
+
+  ## Examples
+
+      iex> has_tutorial_key?(character_id)
+      true
+
+      iex> has_tutorial_key?(character_id)
+      false
+
+  """
+  def has_tutorial_key?(character_id) do
+    character_has_item?(character_id, "Tutorial Key")
+  end
+
+  @doc """
+  Checks if a character has access to the dungeon door (this is a placeholder function).
+  In a real implementation, this might check if the character has unlocked a specific door
+  or has the required key/permission.
+
+  ## Examples
+
+      iex> has_dungeon_door?(character_id)
+      false
+
+  """
+  def has_dungeon_door?(_character_id) do
+    # This is a placeholder implementation
+    # In a real game, this might check if the character has unlocked the dungeon door
+    # or has the required permissions/items to access it
+    false
+  end
 end

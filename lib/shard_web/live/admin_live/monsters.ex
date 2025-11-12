@@ -116,6 +116,7 @@ defmodule ShardWeb.AdminLive.Monsters do
         {"location_id", ""}, acc -> Elixir.Map.put(acc, "location_id", nil)
         {"location_id", nil}, acc -> Elixir.Map.put(acc, "location_id", nil)
         {k, ""}, acc -> Elixir.Map.put(acc, k, nil)
+        {k, nil}, acc -> Elixir.Map.put(acc, k, nil)
         {k, v}, acc -> Elixir.Map.put(acc, k, v)
       end)
 

@@ -34,17 +34,20 @@ defmodule ShardWeb.UserLive.Commands3 do
   Supports formats like: poke "character name", poke 'character name', poke character_name
   """
   def parse_poke_command(command) do
+    # Trim the entire command first to handle leading/trailing whitespace
+    trimmed_command = String.trim(command)
+
     cond do
       # Match poke "character name" or poke 'character name'
-      Regex.match?(~r/^poke\s+["'](.+)["']\s*$/i, command) ->
-        case Regex.run(~r/^poke\s+["'](.+)["']\s*$/i, command) do
+      Regex.match?(~r/^poke\s+["'](.+)["']\s*$/i, trimmed_command) ->
+        case Regex.run(~r/^poke\s+["'](.+)["']\s*$/i, trimmed_command) do
           [_, character_name] -> {:ok, String.trim(character_name)}
           _ -> :error
         end
 
       # Match poke character_name (single word, no quotes)
-      Regex.match?(~r/^poke\s+(\w+)\s*$/i, command) ->
-        case Regex.run(~r/^poke\s+(\w+)\s*$/i, command) do
+      Regex.match?(~r/^poke\s+(\w+)\s*$/i, trimmed_command) ->
+        case Regex.run(~r/^poke\s+(\w+)\s*$/i, trimmed_command) do
           [_, character_name] -> {:ok, String.trim(character_name)}
           _ -> :error
         end

@@ -48,42 +48,35 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
       abs(old_stats.mana - new_stats.mana) >= 15
   end
 
-  # Load character inventory from database
+  # Load character inventory from database using the Items context
   def load_character_inventory(character) do
     try do
-      # Check if character_inventories is loaded and has items
-      case Map.get(character, :character_inventories) do
-        inventories when is_list(inventories) ->
-          loaded_items =
-            Enum.map(inventories, fn inventory ->
-              item = Shard.Repo.get(Shard.Items.Item, inventory.item_id)
+      # Use the proper Items context function to get inventory
+      inventory_items = Shard.Items.get_character_inventory(character.id)
 
-              if item do
-                %{
-                  id: item.id,
-                  name: item.name,
-                  item_type: item.item_type || "misc",
-                  quantity: inventory.quantity,
-                  damage: item.damage,
-                  defense: item.defense,
-                  effect: item.effect,
-                  description: item.description
-                }
-              else
-                nil
-              end
-            end)
-            |> Enum.filter(&(&1 != nil))
-
-          loaded_items
-
-        _ ->
-          # Return empty list if no inventory loaded or association not loaded
-          []
-      end
+      # Transform to the format expected by the game state
+      Enum.map(inventory_items, fn inventory ->
+        %{
+          inventory_id: inventory.id,
+          id: inventory.item.id,
+          name: inventory.item.name,
+          item_type: inventory.item.item_type || "misc",
+          quantity: inventory.quantity,
+          damage:
+            get_in(inventory.item.stats, ["damage"]) || get_in(inventory.item.effects, ["damage"]),
+          defense:
+            get_in(inventory.item.stats, ["defense"]) ||
+              get_in(inventory.item.effects, ["defense"]),
+          effect: get_in(inventory.item.effects, ["effect"]) || inventory.item.description,
+          description: inventory.item.description,
+          equipped: inventory.equipped || false,
+          slot_position: inventory.slot_position
+        }
+      end)
     rescue
-      _ ->
-        # Return empty list on error instead of fallback items
+      error ->
+        require Logger
+        Logger.error("Failed to load character inventory: #{inspect(error)}")
         []
     end
   end
@@ -105,7 +98,7 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
 
             %{
               name: item.name,
-              damage: item.damage || "1d6",
+              damage: get_in(item.stats, ["damage"]) || get_in(item.effects, ["damage"]) || "1d6",
               item_type: "weapon"
             }
           else
@@ -143,8 +136,8 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
                       id: item.id,
                       name: item.name,
                       item_type: item.item_type || "misc",
-                      damage: item.damage,
-                      effect: item.effect
+                      damage: get_in(item.stats, ["damage"]) || get_in(item.effects, ["damage"]),
+                      effect: get_in(item.effects, ["effect"]) || item.description
                     }
                   else
                     nil
