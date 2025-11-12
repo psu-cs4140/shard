@@ -219,15 +219,16 @@ defmodule ShardWeb.UserLive.ItemHelpers do
         {response, game_state}
       
       [door | _] ->
-        # Unlock the first matching door
-        case unlock_door(door) do
+        # Unlock the first matching door and its return door
+        case unlock_door_and_return_door(door) do
           {:ok, _updated_door} ->
             # Remove the key from inventory after successful use
             updated_game_state = remove_key_from_inventory(game_state, key)
             
             response = [
               "You use #{key.name}.",
-              "The door to the #{door.direction} unlocks with a satisfying click!"
+              "The door to the #{door.direction} unlocks with a satisfying click!",
+              "You hear another lock click in the distance."
             ]
             
             {response, updated_game_state}
@@ -250,6 +251,31 @@ defmodule ShardWeb.UserLive.ItemHelpers do
     case Shard.Map.update_door(door, attrs) do
       {:ok, updated_door} -> {:ok, updated_door}
       {:error, changeset} -> {:error, changeset}
+    end
+  end
+
+  defp unlock_door_and_return_door(door) do
+    # Update the door to be unlocked
+    attrs = %{is_locked: false}
+    
+    case Shard.Map.update_door(door, attrs) do
+      {:ok, updated_door} ->
+        # Also unlock the return door if it exists
+        case Shard.Map.get_return_door(door) do
+          nil ->
+            # No return door exists, just return the updated door
+            {:ok, updated_door}
+          
+          return_door ->
+            # Unlock the return door as well
+            case Shard.Map.update_door(return_door, attrs) do
+              {:ok, _updated_return_door} -> {:ok, updated_door}
+              {:error, _changeset} -> {:ok, updated_door} # Still succeed even if return door fails
+            end
+        end
+      
+      {:error, changeset} -> 
+        {:error, changeset}
     end
   end
 

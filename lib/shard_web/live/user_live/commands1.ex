@@ -22,6 +22,67 @@ defmodule ShardWeb.UserLive.Commands1 do
   # alias Shard.Repo
   # import Ecto.Query
 
+  # Parse unlock command
+  def parse_unlock_command(command) do
+    # Match patterns like "unlock north with manor key" or "unlock door north with key"
+    cond do
+      Regex.match?(~r/^unlock\s+(\w+)\s+with\s+(.+)$/i, command) ->
+        case Regex.run(~r/^unlock\s+(\w+)\s+with\s+(.+)$/i, command) do
+          [_, direction, item_name] ->
+            {:ok, String.downcase(direction), String.trim(item_name)}
+          _ ->
+            :error
+        end
+      
+      Regex.match?(~r/^unlock\s+door\s+(\w+)\s+with\s+(.+)$/i, command) ->
+        case Regex.run(~r/^unlock\s+door\s+(\w+)\s+with\s+(.+)$/i, command) do
+          [_, direction, item_name] ->
+            {:ok, String.downcase(direction), String.trim(item_name)}
+          _ ->
+            :error
+        end
+      
+      true ->
+        :error
+    end
+  end
+
+  # Execute unlock command
+  def execute_unlock_command(game_state, direction, item_name) do
+    # Find the item in inventory
+    item = Enum.find(game_state.inventory_items, fn inv_item ->
+      String.downcase(inv_item.name) == String.downcase(item_name)
+    end)
+
+    case item do
+      nil ->
+        {["You don't have '#{item_name}' in your inventory."], game_state}
+      
+      item ->
+        # Check if there's a door in the specified direction
+        {x, y} = game_state.player_position
+        
+        case Shard.Map.get_room_by_coordinates(game_state.character.current_zone_id, x, y) do
+          nil ->
+            {["You are not in a valid room."], game_state}
+          
+          room ->
+            case Shard.Map.get_door_in_direction(room.id, direction) do
+              nil ->
+                {["There is no door to the #{direction}."], game_state}
+              
+              door ->
+                if door.is_locked do
+                  # Try to use the item as a key
+                  ShardWeb.UserLive.ItemHelpers.use_key_item(game_state, item)
+                else
+                  {["The door to the #{direction} is already unlocked."], game_state}
+                end
+            end
+        end
+    end
+  end
+
   # Process terminal commands
   def process_command(command, game_state) do
     downcased_command = String.downcase(command)
