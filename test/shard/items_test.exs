@@ -188,25 +188,20 @@ defmodule Shard.ItemsTest do
       assert is_list(items)
     end
 
-    test "add_item_to_room/3 adds item to room", %{item: item} do
+    test "drop_item_in_room/3 drops item in room", %{item: item} do
+      character_id = 1
       room_coordinates = "1,1,0"
       quantity = 2
       
-      assert {:ok, %RoomItem{} = room_item} = 
-        Items.add_item_to_room(room_coordinates, item.id, quantity)
+      # First add item to character's inventory
+      {:ok, inventory} = Items.add_item_to_inventory(character_id, item.id, quantity)
       
-      assert room_item.room_coordinates == room_coordinates
+      assert {:ok, %RoomItem{} = room_item} = 
+        Items.drop_item_in_room(character_id, inventory.id, room_coordinates, quantity)
+      
+      assert room_item.location == room_coordinates
       assert room_item.item_id == item.id
       assert room_item.quantity == quantity
-    end
-
-    test "remove_item_from_room/1 removes item from room", %{item: item} do
-      {:ok, room_item} = Items.add_item_to_room("1,1,0", item.id, 1)
-      
-      assert {:ok, %RoomItem{}} = Items.remove_item_from_room(room_item.id)
-      assert_raise Ecto.NoResultsError, fn -> 
-        Repo.get!(RoomItem, room_item.id) 
-      end
     end
   end
 
