@@ -222,27 +222,38 @@ defmodule Shard.Items do
 
   # credo:disable-for-next-line Credo.Check.Refactor.Nesting
   def drop_item_in_room(character_id, inventory_id, location, quantity \\ 1) do
-    inventory = Repo.get!(CharacterInventory, inventory_id) |> Repo.preload(:item)
+    case Repo.get(CharacterInventory, inventory_id) do
+      nil ->
+        {:error, :inventory_not_found}
 
-    if inventory.quantity >= quantity do
-      Repo.transaction(fn ->
-        # Create room item
-        {:ok, room_item} =
-          %RoomItem{}
-          |> RoomItem.changeset(%{
-            location: location,
-            item_id: inventory.item_id,
-            quantity: quantity,
-            dropped_by_character_id: character_id
-          })
-          |> Repo.insert()
+      inventory ->
+        inventory = Repo.preload(inventory, :item)
 
-        # Remove from inventory
-        case remove_item_from_inventory(inventory_id, quantity) do
-          {:ok, _} -> room_item
-          error -> Repo.rollback(error)
+        if inventory.quantity >= quantity do
+          Repo.transaction(fn ->
+            # Create room item
+            case %RoomItem{}
+                 |> RoomItem.changeset(%{
+                   location: location,
+                   item_id: inventory.item_id,
+                   quantity: quantity,
+                   dropped_by_character_id: character_id
+                 })
+                 |> Repo.insert() do
+              {:ok, room_item} ->
+                # Remove from inventory
+                case remove_item_from_inventory(inventory_id, quantity) do
+                  {:ok, _} -> room_item
+                  error -> Repo.rollback(error)
+                end
+
+              {:error, changeset} ->
+                Repo.rollback(changeset)
+            end
+          end)
+        else
+          {:error, :insufficient_quantity}
         end
-      end)
     end
   end
 

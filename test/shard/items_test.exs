@@ -193,14 +193,13 @@ defmodule Shard.ItemsTest do
       assert is_list(items)
     end
 
-    test "drop_item_in_room/4 drops item in room", %{item: item, character_id: character_id} do
+    test "drop_item_in_room/4 with non-existent inventory returns error", %{item: item, character_id: character_id} do
       room_coordinates = "1,1,0"
       quantity = 2
       
-      # Test will likely fail due to foreign key constraints, but test the function signature
+      # Test with non-existent inventory ID should return error tuple
       result = Items.drop_item_in_room(character_id, 999999, room_coordinates, quantity)
-      assert match?({:ok, %RoomItem{}}, result) or 
-             match?({:error, %Ecto.Changeset{}}, result)
+      assert result == {:error, :inventory_not_found}
     end
   end
 
