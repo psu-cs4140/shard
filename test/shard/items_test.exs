@@ -225,8 +225,16 @@ defmodule Shard.ItemsTest do
       slot_number = 1
       inventory_id = 999999
       
-      # Test will likely fail due to foreign key constraints
+      # Test with non-existent inventory should return error
       result = Items.set_hotbar_slot(character_id, slot_number, inventory_id)
+      assert result == {:error, :inventory_not_found}
+    end
+
+    test "set_hotbar_slot/3 sets hotbar slot with nil inventory", %{character_id: character_id} do
+      slot_number = 1
+      
+      # Test with nil inventory should work (clearing the slot)
+      result = Items.set_hotbar_slot(character_id, slot_number, nil)
       assert match?({:ok, %HotbarSlot{}}, result) or 
              match?({:error, %Ecto.Changeset{}}, result)
     end

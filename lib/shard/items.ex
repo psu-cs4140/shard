@@ -330,25 +330,37 @@ defmodule Shard.Items do
   end
 
   def set_hotbar_slot(character_id, slot_number, inventory_id \\ nil) do
-    inventory = if inventory_id, do: Repo.get!(CharacterInventory, inventory_id), else: nil
+    case validate_inventory_for_hotbar(inventory_id) do
+      {:ok, inventory} ->
+        attrs = %{
+          character_id: character_id,
+          slot_number: slot_number,
+          item_id: inventory && inventory.item_id,
+          inventory_id: inventory_id
+        }
 
-    attrs = %{
-      character_id: character_id,
-      slot_number: slot_number,
-      item_id: inventory && inventory.item_id,
-      inventory_id: inventory_id
-    }
+        case Repo.get_by(HotbarSlot, character_id: character_id, slot_number: slot_number) do
+          nil ->
+            %HotbarSlot{}
+            |> HotbarSlot.changeset(attrs)
+            |> Repo.insert()
 
-    case Repo.get_by(HotbarSlot, character_id: character_id, slot_number: slot_number) do
-      nil ->
-        %HotbarSlot{}
-        |> HotbarSlot.changeset(attrs)
-        |> Repo.insert()
+          existing ->
+            existing
+            |> HotbarSlot.changeset(attrs)
+            |> Repo.update()
+        end
 
-      existing ->
-        existing
-        |> HotbarSlot.changeset(attrs)
-        |> Repo.update()
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp validate_inventory_for_hotbar(nil), do: {:ok, nil}
+  defp validate_inventory_for_hotbar(inventory_id) do
+    case Repo.get(CharacterInventory, inventory_id) do
+      nil -> {:error, :inventory_not_found}
+      inventory -> {:ok, inventory}
     end
   end
 
