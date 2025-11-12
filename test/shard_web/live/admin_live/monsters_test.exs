@@ -5,7 +5,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
   import Shard.UsersFixtures
 
   alias Shard.Monsters
-  alias Shard.Map
+  alias Shard.Map, as: GameMap
 
   @create_attrs %{
     name: "Test Monster",
@@ -46,7 +46,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
 
   defp create_room(_) do
     {:ok, room} =
-      Map.create_room(%{
+      GameMap.create_room(%{
         name: "Test Room",
         description: "A test room",
         x_coordinate: 0,
