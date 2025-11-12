@@ -2,7 +2,7 @@ defmodule Shard.ItemsTest do
   use Shard.DataCase
 
   alias Shard.Items
-  alias Shard.Items.{CharacterInventory, HotbarSlot, Item, RoomItem}
+  alias Shard.Items.{CharacterInventory, HotbarSlot, Item}
 
   describe "items" do
     @invalid_item_attrs %{name: nil, item_type: nil}
@@ -113,7 +113,7 @@ defmodule Shard.ItemsTest do
       %{item: item, character_id: character_id}
     end
 
-    test "get_character_inventory/1 returns list of inventory items", %{item: item, character_id: character_id} do
+    test "get_character_inventory/1 returns list of inventory items", %{item: _item, character_id: character_id} do
       # For this test, we'll just verify the function returns a list
       # since we can't easily create a valid character in the test database
       inventory = Items.get_character_inventory(character_id)
@@ -165,14 +165,14 @@ defmodule Shard.ItemsTest do
       assert is_list(equipped_items)
     end
 
-    test "equip_item/1 equips an item", %{character_id: character_id} do
+    test "equip_item/1 equips an item", %{character_id: _character_id} do
       # Test with non-existent inventory ID since we can't easily create valid inventory
       assert_raise Ecto.NoResultsError, fn ->
         Items.equip_item(999999)
       end
     end
 
-    test "unequip_item/1 unequips an item", %{character_id: character_id} do
+    test "unequip_item/1 unequips an item", %{character_id: _character_id} do
       # Test with non-existent inventory ID
       assert_raise Ecto.NoResultsError, fn ->
         Items.unequip_item(999999)
@@ -197,7 +197,7 @@ defmodule Shard.ItemsTest do
       assert is_list(items)
     end
 
-    test "drop_item_in_room/4 with non-existent inventory returns error", %{item: item, character_id: character_id} do
+    test "drop_item_in_room/4 with non-existent inventory returns error", %{item: _item, character_id: character_id} do
       room_coordinates = "1,1,0"
       quantity = 2
       
@@ -225,7 +225,7 @@ defmodule Shard.ItemsTest do
       assert is_list(hotbar)
     end
 
-    test "set_hotbar_slot/3 sets item in hotbar slot", %{character_id: character_id, item: item} do
+    test "set_hotbar_slot/3 sets item in hotbar slot", %{character_id: character_id, item: _item} do
       slot_number = 1
       inventory_id = 999999
       
