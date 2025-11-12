@@ -276,11 +276,21 @@ defmodule ShardWeb.AdminLive.MonstersTest do
         |> log_in_user(user)
         |> live(~p"/admin/monsters/new")
 
-      # Submit form with empty location_id (empty string)
-      attrs_with_empty_string = Elixir.Map.put(@create_attrs, :location_id, "")
+      # Submit form with empty location_id (empty string) - use explicit form data
+      form_data = %{
+        "name" => "Test Monster",
+        "race" => "orc", 
+        "level" => "5",
+        "health" => "100",
+        "max_health" => "100",
+        "attack_damage" => "15",
+        "xp_amount" => "50",
+        "description" => "A fearsome test monster",
+        "location_id" => ""
+      }
 
       assert index_live
-             |> form("#monster-form", monster: attrs_with_empty_string)
+             |> form("#monster-form", monster: form_data)
              |> render_submit()
 
       assert_patch(index_live, ~p"/admin/monsters")
