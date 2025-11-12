@@ -354,7 +354,16 @@ defmodule Shard.Items do
 
   def clear_hotbar_slot(character_id, slot_number) do
     case Repo.get_by(HotbarSlot, character_id: character_id, slot_number: slot_number) do
-      nil -> {:ok, nil}
+      nil -> 
+        # Create an empty hotbar slot to match expected return type
+        %HotbarSlot{}
+        |> HotbarSlot.changeset(%{
+          character_id: character_id,
+          slot_number: slot_number,
+          item_id: nil,
+          inventory_id: nil
+        })
+        |> Repo.insert()
       hotbar_slot -> Repo.delete(hotbar_slot)
     end
   end
@@ -375,41 +384,47 @@ defmodule Shard.Items do
       |> Repo.one()
 
     if is_nil(existing_key) do
-      Repo.transaction(fn ->
-        # Create the tutorial key item if it doesn't exist in the items table
-        {:ok, key_item} =
-          case Repo.get_by(Item, name: "Tutorial Key") do
-            nil ->
-              %Item{}
-              |> Item.changeset(%{
-                name: "Tutorial Key",
-                description: "A mysterious key that might unlock something important.",
-                item_type: "misc",
-                rarity: "common",
-                value: 10,
-                stackable: false,
-                equippable: false,
-                location: "0,2,0",
-                map: "tutorial_terrain",
-                is_active: true
-              })
-              |> Repo.insert()
-
-            existing_item ->
-              {:ok, existing_item}
+      # Create the tutorial key item if it doesn't exist in the items table
+      case Repo.get_by(Item, name: "Tutorial Key") do
+        nil ->
+          case %Item{}
+               |> Item.changeset(%{
+                 name: "Tutorial Key",
+                 description: "A mysterious key that might unlock something important.",
+                 item_type: "misc",
+                 rarity: "common",
+                 value: 10,
+                 stackable: false,
+                 equippable: false,
+                 location: "0,2,0",
+                 map: "tutorial_terrain",
+                 is_active: true
+               })
+               |> Repo.insert() do
+            {:ok, key_item} ->
+              # Place the key in the room at (0,2,0)
+              case %RoomItem{}
+                   |> RoomItem.changeset(%{
+                     item_id: key_item.id,
+                     location: "0,2,0",
+                     quantity: 1
+                   })
+                   |> Repo.insert() do
+                {:ok, _room_item} -> {:ok, key_item}
+                {:error, changeset} -> {:error, changeset}
+              end
+            {:error, changeset} -> {:error, changeset}
           end
 
-        # Place the key in the room at (0,2,0)
-        %RoomItem{}
-        |> RoomItem.changeset(%{
-          item_id: key_item.id,
-          location: "0,2,0",
-          quantity: 1
-        })
-        |> Repo.insert()
-      end)
+        existing_item ->
+          {:ok, existing_item}
+      end
     else
-      {:ok, existing_key}
+      # Return the item, not the room item
+      case Repo.get(Item, existing_key.item_id) do
+        nil -> {:error, :item_not_found}
+        item -> {:ok, item}
+      end
     end
   end
 
