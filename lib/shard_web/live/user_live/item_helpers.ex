@@ -5,12 +5,15 @@ defmodule ShardWeb.UserLive.ItemHelpers do
 
   # Use an item from hotbar or inventory
   def use_item(game_state, item) do
-    case item.type do
+    case item.item_type do
       "consumable" ->
         use_consumable_item(game_state, item)
 
       "weapon" ->
         equip_item(game_state, item)
+
+      "key" ->
+        use_key_item(game_state, item)
 
       _ ->
         response = ["You cannot use #{item.name} in this way."]

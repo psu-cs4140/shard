@@ -174,6 +174,8 @@ defmodule ShardWeb.UserLive.Components do
                         <.icon name="hero-light-bulb" class="w-10 h-10 text-yellow-400" />
                       <% "tool" -> %>
                         <.icon name="hero-wrench" class="w-10 h-10 text-purple-400" />
+                      <% "key" -> %>
+                        <.icon name="hero-key" class="w-10 h-10 text-yellow-600" />
                       <% _ -> %>
                         <.icon name="hero-cube" class="w-10 h-10 text-gray-400" />
                     <% end %>
@@ -210,7 +212,7 @@ defmodule ShardWeb.UserLive.Components do
                           Equip
                         </button>
                       <% end %>
-                      <%= if item.item_type == "consumable" do %>
+                      <%= if item.item_type in ["consumable", "key"] do %>
                         <button
                           phx-click="use_hotbar_item"
                           phx-value-item_id={item.id}
