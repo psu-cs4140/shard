@@ -6,7 +6,7 @@ defmodule ShardWeb.MarketplaceLive.Index do
 
   @moduledoc """
   Marketplace LiveView for listing and managing player item listings.
-  
+
   NOTE: Most event handlers are currently stubbed out because the underlying
   Shard.Marketplace context functions have not been implemented yet. The 
   handlers contain the proper variable assignments and structure that will
@@ -16,15 +16,16 @@ defmodule ShardWeb.MarketplaceLive.Index do
   @impl true
   def mount(_params, _session, socket) do
     current_scope = socket.assigns.current_scope
-    
+
     # Get user's active listings
     # TODO: Implement Marketplace.list_user_listings/1
     listings = []
-    
+
     # Get user's inventory items for the dropdown
-    inventory_items = Items.get_character_inventory(current_scope.user.id)
-    |> Enum.map(&{&1.item.name, &1.id})
-    
+    inventory_items =
+      Items.get_character_inventory(current_scope.user.id)
+      |> Enum.map(&{&1.item.name, &1.id})
+
     {:ok,
      socket
      |> assign(:form, to_form(%{}, as: :listing))
@@ -40,12 +41,12 @@ defmodule ShardWeb.MarketplaceLive.Index do
     # Variables that will be needed:
     # current_user = socket.assigns.current_scope.user
     # case Marketplace.create_listing(params, current_user) do
-    
-    {:noreply, 
+
+    {:noreply,
      socket
      |> put_flash(:info, "Item listing functionality coming soon!")}
   end
-  
+
   @impl true
   def handle_event("cancel_listing", %{"id" => _id}, socket) do
     # TODO: Implement Marketplace.cancel_listing/2
@@ -53,12 +54,12 @@ defmodule ShardWeb.MarketplaceLive.Index do
     # Variables that will be needed:
     # current_user = socket.assigns.current_scope.user
     # case Marketplace.cancel_listing(id, current_user) do
-    
-    {:noreply, 
+
+    {:noreply,
      socket
      |> put_flash(:info, "Listing cancellation functionality coming soon!")}
   end
-  
+
   @impl true
   def handle_event("update_price", %{"id" => _id, "price" => _price}, socket) do
     # TODO: Implement Marketplace.update_listing_price/3
@@ -67,27 +68,28 @@ defmodule ShardWeb.MarketplaceLive.Index do
     # current_user = socket.assigns.current_scope.user
     # price = String.to_integer(price)
     # case Marketplace.update_listing_price(id, price, current_user) do
-    
-    {:noreply, 
+
+    {:noreply,
      socket
      |> put_flash(:info, "Price update functionality coming soon!")}
   end
-  
+
   @impl true
-  def handle_event("preview_item", %{"listing" => %{"item_id" => item_id}}, socket) when item_id != "" do
+  def handle_event("preview_item", %{"listing" => %{"item_id" => item_id}}, socket)
+      when item_id != "" do
     item = Items.get_item(item_id)
     {:noreply, assign(socket, :selected_item, item)}
   end
-  
+
   def handle_event("preview_item", _params, socket) do
     {:noreply, assign(socket, :selected_item, nil)}
   end
-  
+
   # Helper function to format time ago
   def time_ago_in_words(datetime) do
     now = DateTime.utc_now()
     diff = DateTime.diff(now, datetime, :second)
-    
+
     cond do
       diff < 60 -> "less than a minute"
       diff < 120 -> "1 minute"
