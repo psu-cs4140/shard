@@ -8,7 +8,7 @@ defmodule Shard.Items.Item do
     field :item_type, :string
     field :rarity, :string
     field :value, :integer
-    field :weight, :float
+    field :weight, :decimal
     field :stackable, :boolean, default: false
     field :max_stack_size, :integer
     field :usable, :boolean, default: false
