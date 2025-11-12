@@ -5,12 +5,15 @@ defmodule ShardWeb.UserLive.ItemHelpers do
 
   # Use an item from hotbar or inventory
   def use_item(game_state, item) do
-    case item.type do
+    case item.item_type do
       "consumable" ->
         use_consumable_item(game_state, item)
 
       "weapon" ->
         equip_item(game_state, item)
+
+      "key" ->
+        use_key_item(game_state, item)
 
       _ ->
         response = ["You cannot use #{item.name} in this way."]
@@ -63,13 +66,45 @@ defmodule ShardWeb.UserLive.ItemHelpers do
   defp perform_healing(game_state, item, healing_amount, current_health, max_health) do
     new_health = min(current_health + healing_amount, max_health)
     updated_stats = %{game_state.player_stats | health: new_health}
-    updated_game_state = %{game_state | player_stats: updated_stats}
 
     # Save updated stats to database
     ShardWeb.UserLive.CharacterHelpers.save_character_stats(
       game_state.character,
       updated_stats
     )
+
+    # Remove the item from inventory using database function
+    updated_game_state =
+      case Map.get(item, :inventory_id) do
+        nil ->
+          # Fallback: remove from local state if no inventory_id
+          updated_inventory =
+            Enum.reject(game_state.inventory_items, fn inv_item ->
+              inv_item.id == item.id
+            end)
+
+          %{game_state | player_stats: updated_stats, inventory_items: updated_inventory}
+
+        inventory_id ->
+          # Remove from database
+          case Shard.Items.remove_item_from_inventory(inventory_id, 1) do
+            {:ok, _} ->
+              # Reload inventory from database
+              updated_inventory =
+                ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+
+              %{game_state | player_stats: updated_stats, inventory_items: updated_inventory}
+
+            {:error, _} ->
+              # Fallback to local removal if database operation fails
+              updated_inventory =
+                Enum.reject(game_state.inventory_items, fn inv_item ->
+                  inv_item.id == item.id
+                end)
+
+              %{game_state | player_stats: updated_stats, inventory_items: updated_inventory}
+          end
+      end
 
     response = [
       "You use #{item.name}.",
@@ -106,6 +141,181 @@ defmodule ShardWeb.UserLive.ItemHelpers do
       _ ->
         response = ["You cannot equip #{item.name}."]
         {response, game_state}
+    end
+  end
+
+  # Use a key to unlock doors
+  def use_key_item(game_state, key) do
+    # Get current room from character position and zone
+    character = game_state.character
+    {x, y} = game_state.player_position
+
+    case find_locked_doors_for_key(character.current_zone_id, x, y, key) do
+      [] ->
+        response = ["There are no locked doors here that #{key.name} can unlock."]
+        {response, game_state}
+
+      doors ->
+        unlock_doors_with_key(game_state, doors, key)
+    end
+  end
+
+  defp find_locked_doors_for_key(zone_id, x, y, key) do
+    # Get current room
+    case Shard.Map.get_room_by_coordinates(zone_id, x, y) do
+      nil ->
+        []
+
+      room ->
+        # Get all doors from this room that are locked and match the key
+        doors = Shard.Map.get_doors_from_room(room.id)
+
+        Enum.filter(doors, fn door ->
+          door_is_locked?(door) && key_matches_door_by_requirement?(key, door)
+        end)
+    end
+  end
+
+  defp door_is_locked?(door) do
+    # Check if door is locked
+    door.is_locked == true ||
+      door.door_type in ["locked", "locked_gate"] ||
+      Map.get(door.properties || %{}, "locked", false)
+  end
+
+  defp key_matches_door_by_requirement?(key, door) do
+    # Match key to door based on the door's key_required field
+    cond do
+      # Direct match with key_required field
+      door.key_required && door.key_required == key.name ->
+        true
+
+      # Check if door properties specify required key
+      door.properties && Map.get(door.properties, "required_key") == key.name ->
+        true
+
+      # Fallback to name-based matching for backwards compatibility
+      key_matches_door_by_name?(key, door) ->
+        true
+
+      true ->
+        false
+    end
+  end
+
+  defp key_matches_door_by_name?(key, door) do
+    # Match key to door based on name patterns or properties
+    key_name_lower = String.downcase(key.name)
+    door_name_lower = String.downcase(door.name || "")
+
+    # Check if key name contains door-related keywords
+    cond do
+      String.contains?(key_name_lower, "sewer") && String.contains?(door_name_lower, "sewer") ->
+        true
+
+      String.contains?(key_name_lower, "manor") && String.contains?(door_name_lower, "manor") ->
+        true
+
+      String.contains?(key_name_lower, "gate") && String.contains?(door_name_lower, "gate") ->
+        true
+
+      # Generic matching - if key has "key" in name and door has "door" in name
+      String.contains?(key_name_lower, "key") && String.contains?(door_name_lower, "door") ->
+        true
+
+      true ->
+        false
+    end
+  end
+
+  defp unlock_doors_with_key(game_state, doors, key) do
+    case doors do
+      [] ->
+        response = ["There are no locked doors here that #{key.name} can unlock."]
+        {response, game_state}
+
+      [door | _] ->
+        # Unlock the first matching door and its return door
+        case unlock_door_and_return_door(door) do
+          {:ok, _updated_door} ->
+            # Remove the key from inventory after successful use
+            updated_game_state = remove_key_from_inventory(game_state, key)
+
+            response = [
+              "You use #{key.name}.",
+              "The door to the #{door.direction} unlocks with a satisfying click!",
+              "You hear another lock click in the distance."
+            ]
+
+            {response, updated_game_state}
+
+          {:error, _reason} ->
+            response = [
+              "You try to use #{key.name}, but it doesn't seem to work.",
+              "The door remains locked."
+            ]
+
+            {response, game_state}
+        end
+    end
+  end
+
+  defp unlock_door_and_return_door(door) do
+    # Update the door to be unlocked
+    attrs = %{is_locked: false}
+
+    case Shard.Map.update_door(door, attrs) do
+      {:ok, updated_door} ->
+        # Also unlock the return door if it exists
+        case Shard.Map.get_return_door(door) do
+          nil ->
+            # No return door exists, just return the updated door
+            {:ok, updated_door}
+
+          return_door ->
+            # Unlock the return door as well
+            case Shard.Map.update_door(return_door, attrs) do
+              {:ok, _updated_return_door} -> {:ok, updated_door}
+              # Still succeed even if return door fails
+              {:error, _changeset} -> {:ok, updated_door}
+            end
+        end
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
+  end
+
+  defp remove_key_from_inventory(game_state, key) do
+    case Map.get(key, :inventory_id) do
+      nil ->
+        # Fallback: remove from local state if no inventory_id
+        updated_inventory =
+          Enum.reject(game_state.inventory_items, fn inv_item ->
+            inv_item.id == key.id
+          end)
+
+        %{game_state | inventory_items: updated_inventory}
+
+      inventory_id ->
+        # Remove from database
+        case Shard.Items.remove_item_from_inventory(inventory_id, 1) do
+          {:ok, _} ->
+            # Reload inventory from database
+            updated_inventory =
+              ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+
+            %{game_state | inventory_items: updated_inventory}
+
+          {:error, _} ->
+            # Fallback to local removal if database operation fails
+            updated_inventory =
+              Enum.reject(game_state.inventory_items, fn inv_item ->
+                inv_item.id == key.id
+              end)
+
+            %{game_state | inventory_items: updated_inventory}
+        end
     end
   end
 end
