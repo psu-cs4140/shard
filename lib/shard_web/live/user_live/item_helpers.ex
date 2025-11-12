@@ -158,19 +158,40 @@ defmodule ShardWeb.UserLive.ItemHelpers do
     case Shard.Map.get_room_by_coordinates(zone_id, x, y) do
       nil -> []
       room ->
-        # Get all doors from this room - for now return empty list since we need Map functions
-        # This is a placeholder until the Map context has the required functions
-        []
+        # Get all doors from this room that are locked and match the key
+        doors = Shard.Map.get_doors_from_room(room.id)
+        
+        Enum.filter(doors, fn door ->
+          door_is_locked?(door) && key_matches_door_by_requirement?(key, door)
+        end)
     end
   end
 
   defp door_is_locked?(door) do
-    # Check if door is locked (assuming locked doors have a "locked" property)
-    Map.get(door.properties || %{}, "locked", false) ||
-    door.door_type == "locked"
+    # Check if door is locked
+    door.is_locked == true ||
+    door.door_type in ["locked", "locked_gate"] ||
+    Map.get(door.properties || %{}, "locked", false)
   end
 
-  defp key_matches_door?(key, door) do
+  defp key_matches_door_by_requirement?(key, door) do
+    # Match key to door based on the door's key_required field
+    cond do
+      # Direct match with key_required field
+      door.key_required && door.key_required == key.name ->
+        true
+      # Check if door properties specify required key
+      door.properties && Map.get(door.properties, "required_key") == key.name ->
+        true
+      # Fallback to name-based matching for backwards compatibility
+      key_matches_door_by_name?(key, door) ->
+        true
+      true ->
+        false
+    end
+  end
+
+  defp key_matches_door_by_name?(key, door) do
     # Match key to door based on name patterns or properties
     key_name_lower = String.downcase(key.name)
     door_name_lower = String.downcase(door.name || "")
@@ -183,9 +204,6 @@ defmodule ShardWeb.UserLive.ItemHelpers do
         true
       String.contains?(key_name_lower, "gate") && String.contains?(door_name_lower, "gate") ->
         true
-      # Check if door properties specify required key
-      door.properties && Map.get(door.properties, "required_key") == key.name ->
-        true
       # Generic matching - if key has "key" in name and door has "door" in name
       String.contains?(key_name_lower, "key") && String.contains?(door_name_lower, "door") ->
         true
@@ -195,20 +213,44 @@ defmodule ShardWeb.UserLive.ItemHelpers do
   end
 
   defp unlock_doors_with_key(game_state, doors, key) do
-    # For now, just show a message since we need Map context functions
-    # This is a placeholder implementation
-    response = [
-      "You use #{key.name}.",
-      "The key doesn't seem to work on any doors here yet.",
-      "(Key functionality requires additional Map context functions)"
-    ]
-    
-    {response, game_state}
+    case doors do
+      [] ->
+        response = ["There are no locked doors here that #{key.name} can unlock."]
+        {response, game_state}
+      
+      [door | _] ->
+        # Unlock the first matching door
+        case unlock_door(door) do
+          {:ok, _updated_door} ->
+            # Remove the key from inventory after successful use
+            updated_game_state = remove_key_from_inventory(game_state, key)
+            
+            response = [
+              "You use #{key.name}.",
+              "The door to the #{door.direction} unlocks with a satisfying click!"
+            ]
+            
+            {response, updated_game_state}
+          
+          {:error, _reason} ->
+            response = [
+              "You try to use #{key.name}, but it doesn't seem to work.",
+              "The door remains locked."
+            ]
+            
+            {response, game_state}
+        end
+    end
   end
 
   defp unlock_door(door) do
-    # Placeholder - needs Map context functions
-    {:ok, door}
+    # Update the door to be unlocked
+    attrs = %{is_locked: false}
+    
+    case Shard.Map.update_door(door, attrs) do
+      {:ok, updated_door} -> {:ok, updated_door}
+      {:error, changeset} -> {:error, changeset}
+    end
   end
 
   defp remove_key_from_inventory(game_state, key) do
