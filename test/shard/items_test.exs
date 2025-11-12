@@ -161,10 +161,10 @@ defmodule Shard.ItemsTest do
       assert is_list(equipped_items)
     end
 
-    test "equip_item/2 equips an item", %{character_id: character_id} do
+    test "equip_item/1 equips an item", %{character_id: character_id} do
       # Test with non-existent inventory ID since we can't easily create valid inventory
       assert_raise Ecto.NoResultsError, fn ->
-        Items.equip_item(999999, "weapon")
+        Items.equip_item(999999)
       end
     end
 
