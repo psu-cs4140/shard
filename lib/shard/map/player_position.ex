@@ -21,8 +21,24 @@ defmodule Shard.Map.PlayerPosition do
   @doc false
   def changeset(player_position, attrs) do
     player_position
-    |> cast(attrs, [:character_id, :zone_id, :room_id, :x_coordinate, :y_coordinate, :z_coordinate, :last_visited_at])
-    |> validate_required([:character_id, :zone_id, :room_id, :x_coordinate, :y_coordinate, :z_coordinate, :last_visited_at])
+    |> cast(attrs, [
+      :character_id,
+      :zone_id,
+      :room_id,
+      :x_coordinate,
+      :y_coordinate,
+      :z_coordinate,
+      :last_visited_at
+    ])
+    |> validate_required([
+      :character_id,
+      :zone_id,
+      :room_id,
+      :x_coordinate,
+      :y_coordinate,
+      :z_coordinate,
+      :last_visited_at
+    ])
     |> foreign_key_constraint(:character_id)
     |> foreign_key_constraint(:zone_id)
     |> foreign_key_constraint(:room_id)

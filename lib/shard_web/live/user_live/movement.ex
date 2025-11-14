@@ -25,14 +25,16 @@ defmodule ShardWeb.UserLive.Movement do
         # Update player position in database
         {new_x, new_y} = new_pos
         zone_id = game_state.character.current_zone_id || 1
-        
+
         case GameMap.get_room_by_coordinates(zone_id, new_x, new_y, 0) do
-          nil -> 
-            {["You cannot move in that direction. There's no room or passage that way."], game_state}
+          nil ->
+            {["You cannot move in that direction. There's no room or passage that way."],
+             game_state}
+
           room ->
             # Save position to database
             GameMap.update_player_position(game_state.character.id, zone_id, room)
-            
+
             # Continue with existing movement logic
             execute_movement_with_room(game_state, direction, current_pos, new_pos, room)
         end
