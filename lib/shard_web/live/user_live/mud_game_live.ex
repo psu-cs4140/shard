@@ -28,6 +28,31 @@ defmodule ShardWeb.MudGameLive do
          {:ok, character} <- load_character_with_associations(character),
          :ok <- setup_tutorial_content(character_id),
          {:ok, socket} <- initialize_game_state(socket, character, character_id, character_name) do
+      # Ensure player position is saved for first-time zone entry
+      zone_id = character.current_zone_id || 1
+      {x, y} = socket.assigns.game_state.player_position
+
+      case Shard.Map.get_room_by_coordinates(zone_id, x, y, 0) do
+        nil ->
+          # If no room exists at current position, find starting room and save it
+          case Shard.Map.get_zone_starting_room(zone_id) do
+            # No starting room found, continue without saving
+            nil ->
+              :ok
+
+            room ->
+              Shard.Map.update_player_position(character.id, zone_id, room)
+          end
+
+        room ->
+          # Save current position if player doesn't have a saved position
+          case Shard.Map.get_player_position(character.id, zone_id) do
+            nil -> Shard.Map.update_player_position(character.id, zone_id, room)
+            # Position already exists, don't overwrite
+            _existing -> :ok
+          end
+      end
+
       # Subscribe to the global chat topic
       Phoenix.PubSub.subscribe(Shard.PubSub, "global_chat")
       # Subscribe to player presence updates

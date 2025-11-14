@@ -103,6 +103,30 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
     {:ok, assigns}
   end
 
+  def initialize_game_state_with_position(character, _map_id, character_name, player_position) do
+    # Use the character's current zone for map generation and monster loading
+    zone_id = character.current_zone_id || 1
+    map_data = generate_map_from_database(zone_id)
+
+    game_state = build_game_state(character, map_data, zone_id, player_position)
+    terminal_state = build_terminal_state(player_position, zone_id)
+    chat_state = build_chat_state()
+    modal_state = build_modal_state()
+
+    PubSub.subscribe(Shard.PubSub, posn_to_room_channel(game_state.player_position))
+
+    assigns = %{
+      game_state: game_state,
+      terminal_state: terminal_state,
+      chat_state: chat_state,
+      modal_state: modal_state,
+      character_name: character_name,
+      active_tab: "terminal"
+    }
+
+    {:ok, assigns}
+  end
+
   defp build_game_state(character, map_data, map_id, starting_position) do
     player_stats = build_player_stats(character)
 

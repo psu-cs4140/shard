@@ -6,7 +6,7 @@ defmodule Shard.Map do
   import Ecto.Query, warn: false
   alias Shard.Repo
 
-  alias Shard.Map.{Room, Door, Zone}
+  alias Shard.Map.{Room, Door, Zone, PlayerPosition}
 
   # Zone functions
 
@@ -338,5 +338,104 @@ defmodule Shard.Map do
     else
       _ -> :no_completion
     end
+  end
+
+  # Player Position functions
+
+  @doc """
+  Gets a player's position in a specific zone.
+  Returns nil if the player has never been in that zone.
+  """
+  def get_player_position(character_id, zone_id) do
+    Repo.one(
+      from p in PlayerPosition,
+        where: p.character_id == ^character_id and p.zone_id == ^zone_id,
+        preload: [:room, :zone]
+    )
+  end
+
+  @doc """
+  Gets all player positions for a character across all zones.
+  """
+  def get_player_positions(character_id) do
+    Repo.all(
+      from p in PlayerPosition,
+        where: p.character_id == ^character_id,
+        preload: [:room, :zone],
+        order_by: [desc: p.last_visited_at]
+    )
+  end
+
+  @doc """
+  Updates or creates a player's position in a zone.
+  This should be called every time a player moves to a new room.
+  """
+  def update_player_position(character_id, zone_id, room) do
+    attrs = %{
+      character_id: character_id,
+      zone_id: zone_id,
+      room_id: room.id,
+      x_coordinate: room.x_coordinate,
+      y_coordinate: room.y_coordinate,
+      z_coordinate: room.z_coordinate || 0,
+      last_visited_at: DateTime.utc_now()
+    }
+
+    case get_player_position(character_id, zone_id) do
+      nil ->
+        %PlayerPosition{}
+        |> PlayerPosition.changeset(attrs)
+        |> Repo.insert()
+
+      existing_position ->
+        existing_position
+        |> PlayerPosition.changeset(attrs)
+        |> Repo.update()
+    end
+  end
+
+  @doc """
+  Gets the last known room for a player in a specific zone.
+  Returns nil if the player has never been in that zone.
+  """
+  def get_player_last_room(character_id, zone_id) do
+    case get_player_position(character_id, zone_id) do
+      nil -> nil
+      position -> position.room
+    end
+  end
+
+  @doc """
+  Gets the default starting room for a zone.
+  This is used when a player enters a zone for the first time.
+  """
+  def get_zone_starting_room(zone_id) do
+    # You might want to add a starting_room_id field to zones table
+    # For now, we'll get the first room in the zone
+    Repo.one(
+      from r in Room,
+        where: r.zone_id == ^zone_id,
+        order_by: [asc: r.id],
+        limit: 1
+    )
+  end
+
+  @doc """
+  Determines which room a player should be placed in when entering a zone.
+  Returns their last known position if they've been there before,
+  otherwise returns the zone's starting room.
+  """
+  def get_player_entry_room(character_id, zone_id) do
+    case get_player_last_room(character_id, zone_id) do
+      nil -> get_zone_starting_room(zone_id)
+      room -> room
+    end
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking player position changes.
+  """
+  def change_player_position(%PlayerPosition{} = player_position, attrs \\ %{}) do
+    PlayerPosition.changeset(player_position, attrs)
   end
 end
