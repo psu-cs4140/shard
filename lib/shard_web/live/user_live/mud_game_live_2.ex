@@ -75,9 +75,25 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
   end
 
   def initialize_game_state(socket, character, map_id, character_name) do
-    # Use the helper function from MudGameHelpers
+    # Load saved player position or use default
+    zone_id = character.current_zone_id || 1
+    
+    player_position = case Shard.Map.get_player_entry_room(character.id, zone_id) do
+      nil -> 
+        # Fallback to default position if no room found
+        {0, 0}
+      room -> 
+        {room.x_coordinate, room.y_coordinate}
+    end
+
+    # Use the helper function from MudGameHelpers with the loaded position
     {:ok, assigns} =
-      ShardWeb.UserLive.MudGameHelpers.initialize_game_state(character, map_id, character_name)
+      ShardWeb.UserLive.MudGameHelpers.initialize_game_state_with_position(
+        character, 
+        map_id, 
+        character_name, 
+        player_position
+      )
 
     # Extract the states
     game_state = assigns.game_state
