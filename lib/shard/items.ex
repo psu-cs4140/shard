@@ -390,60 +390,70 @@ defmodule Shard.Items do
   def create_tutorial_key do
     alias Shard.Items.{Item, RoomItem}
 
-    # Check if tutorial key already exists in the room at (0,2,0)
-    existing_key =
-      from(ri in RoomItem,
-        where: ri.location == "0,2,0",
-        join: i in Item,
-        on: ri.item_id == i.id,
-        where: i.name == "Tutorial Key"
-      )
-      |> Repo.one()
+    case find_existing_tutorial_key_in_room() do
+      nil -> create_or_get_tutorial_key_item()
+      existing_key -> get_tutorial_key_item_from_room(existing_key)
+    end
+  end
 
-    if is_nil(existing_key) do
-      # Create the tutorial key item if it doesn't exist in the items table
-      case Repo.get_by(Item, name: "Tutorial Key") do
-        nil ->
-          case %Item{}
-               |> Item.changeset(%{
-                 name: "Tutorial Key",
-                 description: "A mysterious key that might unlock something important.",
-                 item_type: "misc",
-                 rarity: "common",
-                 value: 10,
-                 stackable: false,
-                 equippable: false,
-                 location: "0,2,0",
-                 map: "tutorial_terrain",
-                 is_active: true
-               })
-               |> Repo.insert() do
-            {:ok, key_item} ->
-              # Place the key in the room at (0,2,0)
-              case %RoomItem{}
-                   |> RoomItem.changeset(%{
-                     item_id: key_item.id,
-                     location: "0,2,0",
-                     quantity: 1
-                   })
-                   |> Repo.insert() do
-                {:ok, _room_item} -> {:ok, key_item}
-                {:error, changeset} -> {:error, changeset}
-              end
+  defp find_existing_tutorial_key_in_room do
+    from(ri in RoomItem,
+      where: ri.location == "0,2,0",
+      join: i in Item,
+      on: ri.item_id == i.id,
+      where: i.name == "Tutorial Key"
+    )
+    |> Repo.one()
+  end
 
-            {:error, changeset} ->
-              {:error, changeset}
-          end
+  defp create_or_get_tutorial_key_item do
+    case Repo.get_by(Item, name: "Tutorial Key") do
+      nil -> create_tutorial_key_item_and_place_in_room()
+      existing_item -> {:ok, existing_item}
+    end
+  end
 
-        existing_item ->
-          {:ok, existing_item}
-      end
-    else
-      # Return the item, not the room item
-      case Repo.get(Item, existing_key.item_id) do
-        nil -> {:error, :item_not_found}
-        item -> {:ok, item}
-      end
+  defp create_tutorial_key_item_and_place_in_room do
+    case create_tutorial_key_item() do
+      {:ok, key_item} -> place_tutorial_key_in_room(key_item)
+      {:error, changeset} -> {:error, changeset}
+    end
+  end
+
+  defp create_tutorial_key_item do
+    %Item{}
+    |> Item.changeset(%{
+      name: "Tutorial Key",
+      description: "A mysterious key that might unlock something important.",
+      item_type: "misc",
+      rarity: "common",
+      value: 10,
+      stackable: false,
+      equippable: false,
+      location: "0,2,0",
+      map: "tutorial_terrain",
+      is_active: true
+    })
+    |> Repo.insert()
+  end
+
+  defp place_tutorial_key_in_room(key_item) do
+    case %RoomItem{}
+         |> RoomItem.changeset(%{
+           item_id: key_item.id,
+           location: "0,2,0",
+           quantity: 1
+         })
+         |> Repo.insert() do
+      {:ok, _room_item} -> {:ok, key_item}
+      {:error, changeset} -> {:error, changeset}
+    end
+  end
+
+  defp get_tutorial_key_item_from_room(existing_key) do
+    case Repo.get(Item, existing_key.item_id) do
+      nil -> {:error, :item_not_found}
+      item -> {:ok, item}
     end
   end
 

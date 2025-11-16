@@ -127,7 +127,7 @@ defmodule Shard.Repo.Migrations.CreateBoneZoneNpcs do
       updated_at
     ) VALUES (
       'Harvest Spider Silk',
-      'Venture forth and slay a spider to collect its silk. This silk is needed for an important ritual.',
+      'Venture forth and slay a spider to collect its silk. This silk is needed for an important ritual. In return, I will grant you a bone zone key that will unlock deeper areas of this realm.',
       'kill',
       'medium',
       'locked',
@@ -135,52 +135,12 @@ defmodule Shard.Repo.Migrations.CreateBoneZoneNpcs do
       25,
       200,
       50,
-      '{"retrieve_items": [{"item_name": "spider silk", "quantity": 1}]}',
+      '{"retrieve_items": [{"item_name": "spider silk", "quantity": 1}], "reward_items": [{"item_name": "bone zone key", "quantity": 1}]}',
       '{"completed_quests": ["Retrieve the Iron Sword"]}',
       (SELECT id FROM npcs WHERE name = 'Tombguard' LIMIT 1),
       (SELECT id FROM npcs WHERE name = 'Tombguard' LIMIT 1),
       true,
       2,
-      NOW(),
-      NOW()
-    );
-    """
-
-    execute """
-    INSERT INTO quests (
-      title,
-      description,
-      quest_type,
-      difficulty,
-      status,
-      min_level,
-      max_level,
-      experience_reward,
-      gold_reward,
-      objectives,
-      prerequisites,
-      giver_npc_id,
-      turn_in_npc_id,
-      is_active,
-      sort_order,
-      inserted_at,
-      updated_at
-    ) VALUES (
-      'Receive the Bone Zone Key',
-      'Return to Tombguard with the spider silk to receive the Bone Zone key.',
-      'delivery',
-      'medium',
-      'locked',
-      5,
-      25,
-      300,
-      75,
-      '{"receive_item": {"item_name": "Bone Zone key", "quantity": 1}}',
-      '{"completed_quests": ["Harvest Spider Silk"]}',
-      (SELECT id FROM npcs WHERE name = 'Tombguard' LIMIT 1),
-      (SELECT id FROM npcs WHERE name = 'Tombguard' LIMIT 1),
-      true,
-      3,
       NOW(),
       NOW()
     );

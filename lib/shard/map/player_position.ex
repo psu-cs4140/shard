@@ -5,6 +5,10 @@ defmodule Shard.Map.PlayerPosition do
   alias Shard.Characters.Character
   alias Shard.Map.{Zone, Room}
 
+  @moduledoc """
+  Creates schema for player position persistence
+  """
+
   schema "player_positions" do
     field :x_coordinate, :integer
     field :y_coordinate, :integer

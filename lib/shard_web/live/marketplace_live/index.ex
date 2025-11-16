@@ -18,7 +18,6 @@ defmodule ShardWeb.MarketplaceLive.Index do
     current_scope = socket.assigns.current_scope
 
     # Get user's active listings
-    # TODO: Implement Marketplace.list_user_listings/1
     listings = []
 
     # Get user's inventory items for the dropdown
@@ -36,7 +35,6 @@ defmodule ShardWeb.MarketplaceLive.Index do
 
   @impl true
   def handle_event("create_listing", %{"listing" => _params}, socket) do
-    # TODO: Implement Marketplace.create_listing/2
     # This handler is stubbed until the database context is implemented
     # Variables that will be needed:
     # current_user = socket.assigns.current_scope.user
@@ -49,7 +47,6 @@ defmodule ShardWeb.MarketplaceLive.Index do
 
   @impl true
   def handle_event("cancel_listing", %{"id" => _id}, socket) do
-    # TODO: Implement Marketplace.cancel_listing/2
     # This handler is stubbed until the database context is implemented
     # Variables that will be needed:
     # current_user = socket.assigns.current_scope.user
@@ -62,7 +59,6 @@ defmodule ShardWeb.MarketplaceLive.Index do
 
   @impl true
   def handle_event("update_price", %{"id" => _id, "price" => _price}, socket) do
-    # TODO: Implement Marketplace.update_listing_price/3
     # This handler is stubbed until the database context is implemented
     # Variables that will be needed:
     # current_user = socket.assigns.current_scope.user

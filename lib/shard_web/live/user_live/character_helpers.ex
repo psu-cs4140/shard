@@ -120,57 +120,61 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
     try do
       case character.hotbar_slots do
         slots when is_list(slots) ->
-          # Convert list of hotbar slots to map
-          hotbar_map =
-            Enum.reduce(1..5, %{}, fn slot_num, acc ->
-              slot_key = String.to_atom("slot_#{slot_num}")
-
-              slot_data = Enum.find(slots, fn slot -> slot.slot_number == slot_num end)
-
-              slot_content =
-                if slot_data && slot_data.item_id do
-                  item = Shard.Repo.get(Shard.Items.Item, slot_data.item_id)
-
-                  if item do
-                    %{
-                      id: item.id,
-                      name: item.name,
-                      item_type: item.item_type || "misc",
-                      damage: get_in(item.stats, ["damage"]) || get_in(item.effects, ["damage"]),
-                      effect: get_in(item.effects, ["effect"]) || item.description
-                    }
-                  else
-                    nil
-                  end
-                else
-                  nil
-                end
-
-              Map.put(acc, slot_key, slot_content)
-            end)
-
-          hotbar_map
+          build_hotbar_from_slots(slots)
 
         _ ->
-          # Empty hotbar if no slots loaded
-          %{
-            slot_1: nil,
-            slot_2: nil,
-            slot_3: nil,
-            slot_4: nil,
-            slot_5: nil
-          }
+          empty_hotbar()
       end
     rescue
       _ ->
-        # Empty hotbar on error
+        empty_hotbar()
+    end
+  end
+
+  # Helper function to build hotbar map from slots
+  defp build_hotbar_from_slots(slots) do
+    Enum.reduce(1..5, %{}, fn slot_num, acc ->
+      slot_key = String.to_atom("slot_#{slot_num}")
+      slot_data = Enum.find(slots, fn slot -> slot.slot_number == slot_num end)
+      slot_content = build_slot_content(slot_data)
+      Map.put(acc, slot_key, slot_content)
+    end)
+  end
+
+  # Helper function to build content for a single hotbar slot
+  defp build_slot_content(slot_data) do
+    if slot_data && slot_data.item_id do
+      build_item_content(slot_data.item_id)
+    else
+      nil
+    end
+  end
+
+  # Helper function to build item content from item ID
+  defp build_item_content(item_id) do
+    case Shard.Repo.get(Shard.Items.Item, item_id) do
+      nil ->
+        nil
+
+      item ->
         %{
-          slot_1: nil,
-          slot_2: nil,
-          slot_3: nil,
-          slot_4: nil,
-          slot_5: nil
+          id: item.id,
+          name: item.name,
+          item_type: item.item_type || "misc",
+          damage: get_in(item.stats, ["damage"]) || get_in(item.effects, ["damage"]),
+          effect: get_in(item.effects, ["effect"]) || item.description
         }
     end
+  end
+
+  # Helper function to return empty hotbar
+  defp empty_hotbar do
+    %{
+      slot_1: nil,
+      slot_2: nil,
+      slot_3: nil,
+      slot_4: nil,
+      slot_5: nil
+    }
   end
 end
