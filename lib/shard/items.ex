@@ -7,7 +7,7 @@ defmodule Shard.Items do
   import Ecto.Query, warn: false
   alias Shard.Repo
 
-  alias Shard.Items.{Item, CharacterInventory, RoomItem, HotbarSlot}
+  alias Shard.Items.{Item, CharacterInventory, RoomItem, HotbarSlot, CharacterEquipment}
 
   ## Items
 
@@ -612,5 +612,80 @@ defmodule Shard.Items do
     # In a real game, this might check if the character has unlocked the dungeon door
     # or has the required permissions/items to access it
     false
+  end
+
+  ## Character Equipment
+
+  @doc """
+  Gets all equipped items for a character.
+  Returns a map with equipment slots as keys and items as values.
+  """
+  def get_equipped_items(character_id) do
+    equipment = 
+      Repo.all(
+        from ce in CharacterEquipment,
+        where: ce.character_id == ^character_id,
+        preload: [:item]
+      )
+    
+    Enum.reduce(equipment, %{}, fn equip, acc ->
+      Map.put(acc, equip.equipment_slot, equip.item)
+    end)
+  end
+
+  @doc """
+  Equips an item to a character's equipment slot.
+  """
+  def equip_item_to_slot(character_id, item_id) do
+    with {:ok, item} <- get_item_if_equippable(item_id),
+         {:ok, _} <- unequip_slot_if_occupied(character_id, item.equipment_slot),
+         {:ok, equipment} <- create_equipment(character_id, item_id, item.equipment_slot) do
+      {:ok, equipment}
+    else
+      error -> error
+    end
+  end
+
+  @doc """
+  Unequips an item from a character's equipment slot.
+  """
+  def unequip_item_from_slot(character_id, equipment_slot) do
+    case get_equipment_by_slot(character_id, equipment_slot) do
+      nil -> {:error, :not_equipped}
+      equipment -> Repo.delete(equipment)
+    end
+  end
+
+  defp get_item_if_equippable(item_id) do
+    case Repo.get(Item, item_id) do
+      nil -> {:error, :item_not_found}
+      item -> 
+        if item.equippable do
+          {:ok, item}
+        else
+          {:error, :item_not_equippable}
+        end
+    end
+  end
+
+  defp unequip_slot_if_occupied(character_id, equipment_slot) do
+    case get_equipment_by_slot(character_id, equipment_slot) do
+      nil -> {:ok, nil}
+      equipment -> Repo.delete(equipment)
+    end
+  end
+
+  defp create_equipment(character_id, item_id, equipment_slot) do
+    %CharacterEquipment{}
+    |> CharacterEquipment.changeset(%{
+      character_id: character_id,
+      item_id: item_id,
+      equipment_slot: equipment_slot
+    })
+    |> Repo.insert()
+  end
+
+  defp get_equipment_by_slot(character_id, equipment_slot) do
+    Repo.get_by(CharacterEquipment, character_id: character_id, equipment_slot: equipment_slot)
   end
 end
