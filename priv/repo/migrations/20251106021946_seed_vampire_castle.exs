@@ -232,6 +232,35 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
             %{id: item_id}
         end
 
+      # Create the Manor Key item if it doesn't exist
+      manor_key_item =
+        case Repo.query("SELECT * FROM items WHERE name = $1", ["Manor Key"]) do
+          {:ok, %{rows: []}} ->
+            {:ok, %{rows: [[item_id | _]]}} =
+              Repo.query(
+                "INSERT INTO items (name, description, item_type, rarity, value, weight, equippable, equipment_slot, is_active, pickup, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id",
+                [
+                  "Manor Key",
+                  "A heavy brass key with intricate engravings. It bears the crest of the vampire manor and unlocks the main entrance.",
+                  "key",
+                  "uncommon",
+                  25,
+                  0.2,
+                  false,
+                  nil,
+                  true,
+                  true,
+                  DateTime.utc_now(),
+                  DateTime.utc_now()
+                ]
+              )
+
+            %{id: item_id}
+
+          {:ok, %{rows: [[item_id | _]]}} ->
+            %{id: item_id}
+        end
+
       # Create the sewage slime monster with item drops
       {:ok, _slime} =
         Shard.Monsters.create_monster(%{
@@ -245,7 +274,8 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
           description: "A disgusting blob of sewage and filth that has gained sentience.",
           location_id: sewer_lair.id,
           potential_loot_drops: %{
-            "#{slippers_item.id}" => %{chance: 0.9, min_quantity: 1, max_quantity: 1}
+            "#{slippers_item.id}" => %{chance: 0.9, min_quantity: 1, max_quantity: 1},
+            "#{manor_key_item.id}" => %{chance: 1.0, min_quantity: 1, max_quantity: 1}
           }
         })
 
@@ -320,11 +350,41 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
           end
         end)
 
+      # Create the Library Key item if it doesn't exist
+      library_key_item =
+        case Repo.query("SELECT * FROM items WHERE name = $1", ["Library Key"]) do
+          {:ok, %{rows: []}} ->
+            {:ok, %{rows: [[item_id | _]]}} =
+              Repo.query(
+                "INSERT INTO items (name, description, item_type, rarity, value, weight, equippable, equipment_slot, is_active, pickup, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id",
+                [
+                  "Library Key",
+                  "A small, ornate key made of silver. It has the symbol of an open book etched into its head.",
+                  "key",
+                  "uncommon",
+                  20,
+                  0.1,
+                  false,
+                  nil,
+                  true,
+                  true,
+                  DateTime.utc_now(),
+                  DateTime.utc_now()
+                ]
+              )
+
+            %{id: item_id}
+
+          {:ok, %{rows: [[item_id | _]]}} ->
+            %{id: item_id}
+        end
+
       # Create the possessed suit of armor monster with multiple item drops
       loot_drops = 
         created_chainmail_items
         |> Enum.map(fn item -> {"#{item.id}", %{chance: 0.3, min_quantity: 1, max_quantity: 1}} end)
         |> Enum.into(%{})
+        |> Map.put("#{library_key_item.id}", %{chance: 1.0, min_quantity: 1, max_quantity: 1})
 
       {:ok, _armor} =
         Shard.Monsters.create_monster(%{
