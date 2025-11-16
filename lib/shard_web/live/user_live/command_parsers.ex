@@ -391,24 +391,30 @@ defmodule ShardWeb.UserLive.CommandParsers do
 
   # Execute equipped command to show equipped items
   def execute_equipped_command(game_state) do
+    # Get all available equipment slots
+    all_slots = Shard.Items.Item.equipment_slots()
+    
     # Use the same data source as the inventory management page
     inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
     
     # Filter for equipped items only
     equipped_items = Enum.filter(inventory_items, fn inv_item -> inv_item.equipped end)
     
-    if Enum.empty?(equipped_items) do
-      {["You have no items equipped."], game_state}
-    else
-      response = ["Your equipped items:"] ++
-        Enum.map(equipped_items, fn inv_item ->
-          item_name = inv_item.item.name
-          slot = inv_item.equipment_slot || "unknown slot"
-          "  #{String.capitalize(slot)}: #{item_name}"
-        end)
-      
-      {response, game_state}
-    end
+    # Create a map of slot -> item name for equipped items
+    equipped_map = 
+      Enum.reduce(equipped_items, %{}, fn inv_item, acc ->
+        slot = inv_item.equipment_slot || "unknown"
+        Map.put(acc, slot, inv_item.item.name)
+      end)
+    
+    # Build response showing all slots
+    response = ["Your equipment slots:"] ++
+      Enum.map(all_slots, fn slot ->
+        item_name = Map.get(equipped_map, slot, "None")
+        "  #{String.capitalize(slot)}: #{item_name}"
+      end)
+    
+    {response, game_state}
   end
 
   # Execute equip command with a specific item name
