@@ -172,30 +172,4 @@ defmodule ShardWeb.InventoryLive.Index do
   defp rarity_class("epic"), do: "text-secondary"
   defp rarity_class("legendary"), do: "text-warning"
   defp rarity_class(_), do: "text-base-content"
-
-  # Get equipment slots from Item schema
-  defp equipment_slots, do: Shard.Items.Item.equipment_slots()
-
-  # Group equipped items by slot
-  defp group_equipped_items(inventory) do
-    equipped_items = Enum.filter(inventory, & &1.equipped)
-    
-    Enum.reduce(equipped_items, %{}, fn item, acc ->
-      slot = item.equipment_slot || "unknown"
-      Map.put(acc, slot, item)
-    end)
-  end
-
-  # Get available equipment slots that are not currently equipped
-  defp available_equipment_slots(inventory) do
-    equipped_slots = 
-      inventory
-      |> Enum.filter(& &1.equipped)
-      |> Enum.map(& &1.equipment_slot)
-      |> Enum.reject(&is_nil/1)
-      |> MapSet.new()
-
-    equipment_slots()
-    |> Enum.reject(&MapSet.member?(equipped_slots, &1))
-  end
 end
