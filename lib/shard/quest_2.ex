@@ -249,81 +249,69 @@ defmodule Shard.Quest2 do
     quest = Shard.Quests.get_quest!(quest_id)
 
     Repo.transaction(fn ->
-      case remove_quest_items_from_inventory(character_id, quest.objectives) do
-        :ok ->
-          case complete_quest_or_rollback(user_id, quest_id) do
-            quest_acceptance ->
-              # Apply experience and gold rewards
-              exp_reward = quest.experience_reward || 0
-              gold_reward = quest.gold_reward || 0
-
-              # Log the rewards being applied for debugging
-              IO.puts(
-                "Applying quest rewards: #{exp_reward} exp, #{gold_reward} gold to character #{character_id}"
-              )
-
-              case apply_character_rewards(character_id, exp_reward, gold_reward) do
-                {:ok, _updated_character} ->
-                  IO.puts("Successfully applied character rewards")
-                  # Extract reward items from objectives field
-                  reward_items = extract_reward_items_from_objectives(quest.objectives)
-                  # Give quest reward items after successful completion
-                  case give_quest_reward_items(character_id, reward_items) do
-                    {:ok, given_items} ->
-                      IO.puts("Successfully gave #{length(given_items)} quest reward items")
-                      {quest_acceptance, given_items}
-
-                    {:error, reason} ->
-                      IO.puts("Failed to give quest reward items: #{inspect(reason)}")
-                      Repo.rollback(reason)
-                  end
-
-                {:error, reason} ->
-                  IO.puts("Failed to apply character rewards: #{inspect(reason)}")
-                  Repo.rollback(reason)
-              end
-          end
-
-        {:error, reason} ->
-          Repo.rollback(reason)
+      with :ok <- remove_quest_items_from_inventory(character_id, quest.objectives),
+           quest_acceptance <- complete_quest_or_rollback(user_id, quest_id) do
+        process_quest_rewards_with_logging(character_id, quest, quest_acceptance)
+      else
+        {:error, reason} -> Repo.rollback(reason)
       end
     end)
+  end
+
+  defp process_quest_rewards_with_logging(character_id, quest, quest_acceptance) do
+    exp_reward = quest.experience_reward || 0
+    gold_reward = quest.gold_reward || 0
+
+    IO.puts("Applying quest rewards: #{exp_reward} exp, #{gold_reward} gold to character #{character_id}")
+
+    with {:ok, _updated_character} <- apply_character_rewards(character_id, exp_reward, gold_reward) do
+      IO.puts("Successfully applied character rewards")
+      process_item_rewards_with_logging(character_id, quest, quest_acceptance)
+    else
+      {:error, reason} ->
+        IO.puts("Failed to apply character rewards: #{inspect(reason)}")
+        Repo.rollback(reason)
+    end
+  end
+
+  defp process_item_rewards_with_logging(character_id, quest, quest_acceptance) do
+    reward_items = extract_reward_items_from_objectives(quest.objectives)
+
+    case give_quest_reward_items(character_id, reward_items) do
+      {:ok, given_items} ->
+        IO.puts("Successfully gave #{length(given_items)} quest reward items")
+        {quest_acceptance, given_items}
+
+      {:error, reason} ->
+        IO.puts("Failed to give quest reward items: #{inspect(reason)}")
+        Repo.rollback(reason)
+    end
   end
 
   defp execute_quest_turn_in_transaction(user_id, character_id, quest_id) do
     quest = Shard.Quests.get_quest!(quest_id)
 
     Repo.transaction(fn ->
-      case remove_quest_items_from_inventory(character_id, quest.objectives) do
-        :ok ->
-          case complete_quest_or_rollback(user_id, quest_id) do
-            quest_acceptance ->
-              # Apply experience and gold rewards
-              exp_reward = quest.experience_reward || 0
-              gold_reward = quest.gold_reward || 0
-
-              case apply_character_rewards(character_id, exp_reward, gold_reward) do
-                {:ok, _updated_character} ->
-                  # Extract reward items from objectives field
-                  reward_items = extract_reward_items_from_objectives(quest.objectives)
-                  # Give quest reward items after successful completion
-                  case give_quest_reward_items(character_id, reward_items) do
-                    {:ok, given_items} ->
-                      {quest_acceptance, given_items}
-
-                    {:error, reason} ->
-                      Repo.rollback(reason)
-                  end
-
-                {:error, reason} ->
-                  Repo.rollback(reason)
-              end
-          end
-
-        {:error, reason} ->
-          Repo.rollback(reason)
+      with :ok <- remove_quest_items_from_inventory(character_id, quest.objectives),
+           quest_acceptance <- complete_quest_or_rollback(user_id, quest_id) do
+        process_quest_rewards(character_id, quest, quest_acceptance)
+      else
+        {:error, reason} -> Repo.rollback(reason)
       end
     end)
+  end
+
+  defp process_quest_rewards(character_id, quest, quest_acceptance) do
+    exp_reward = quest.experience_reward || 0
+    gold_reward = quest.gold_reward || 0
+
+    with {:ok, _updated_character} <- apply_character_rewards(character_id, exp_reward, gold_reward),
+         reward_items <- extract_reward_items_from_objectives(quest.objectives),
+         {:ok, given_items} <- give_quest_reward_items(character_id, reward_items) do
+      {quest_acceptance, given_items}
+    else
+      {:error, reason} -> Repo.rollback(reason)
+    end
   end
 
   defp complete_quest_or_rollback(user_id, quest_id) do
