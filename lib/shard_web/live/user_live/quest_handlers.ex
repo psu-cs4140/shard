@@ -484,7 +484,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
          exp_reward,
          gold_reward,
          level_up_message,
-         given_items \\ []
+         given_items
        ) do
     base_response = [
       "#{npc_name} examines your progress carefully.",
