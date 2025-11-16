@@ -81,5 +81,33 @@ defmodule Shard.Items.Item do
     |> validate_inclusion(:equipment_slot, @equipment_slots)
     # Add unique constraint on name
     |> unique_constraint(:name)
+    # Auto-set equippable and equipment_slot for armor pieces
+    |> set_equipment_defaults()
+  end
+
+  # Automatically set equippable=true and equipment_slot for armor pieces
+  defp set_equipment_defaults(changeset) do
+    item_type = get_field(changeset, :item_type)
+    
+    case item_type do
+      type when type in ["head", "body", "legs", "feet", "weapon", "shield", "ring", "necklace"] ->
+        changeset
+        |> put_change(:equippable, true)
+        |> maybe_set_equipment_slot(type)
+      
+      _ ->
+        changeset
+    end
+  end
+
+  # Set equipment_slot if not already set
+  defp maybe_set_equipment_slot(changeset, item_type) do
+    current_slot = get_field(changeset, :equipment_slot)
+    
+    if is_nil(current_slot) do
+      put_change(changeset, :equipment_slot, item_type)
+    else
+      changeset
+    end
   end
 end
