@@ -80,10 +80,13 @@
             </div>
             
             <%= if earned do %>
-              <% {user_achievement, _} = Enum.find(@user_achievements, fn {_ua, a} -> a.id == achievement.id end) %>
-              <div class="text-xs opacity-60">
-                Earned <%= Calendar.strftime(user_achievement.earned_at, "%m/%d/%y") %>
-              </div>
+              <% user_achievement_tuple = Enum.find(@user_achievements, fn {_ua, a} -> a.id == achievement.id end) %>
+              <%= if user_achievement_tuple do %>
+                <% {user_achievement, _} = user_achievement_tuple %>
+                <div class="text-xs opacity-60">
+                  Earned <%= Calendar.strftime(user_achievement.earned_at, "%m/%d/%y") %>
+                </div>
+              <% end %>
             <% end %>
           </div>
         </div>
