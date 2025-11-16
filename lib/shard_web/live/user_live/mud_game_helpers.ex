@@ -103,6 +103,30 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
     {:ok, assigns}
   end
 
+  def initialize_game_state_with_position(character, _map_id, character_name, player_position) do
+    # Use the character's current zone for map generation and monster loading
+    zone_id = character.current_zone_id || 1
+    map_data = generate_map_from_database(zone_id)
+
+    game_state = build_game_state(character, map_data, zone_id, player_position)
+    terminal_state = build_terminal_state(player_position, zone_id)
+    chat_state = build_chat_state()
+    modal_state = build_modal_state()
+
+    PubSub.subscribe(Shard.PubSub, posn_to_room_channel(game_state.player_position))
+
+    assigns = %{
+      game_state: game_state,
+      terminal_state: terminal_state,
+      chat_state: chat_state,
+      modal_state: modal_state,
+      character_name: character_name,
+      active_tab: "terminal"
+    }
+
+    {:ok, assigns}
+  end
+
   defp build_game_state(character, map_data, map_id, starting_position) do
     player_stats = build_player_stats(character)
 
@@ -195,6 +219,21 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
           "Welcome to Shard!",
           "You step into the Vampire Castle, where darkness reigns eternal.",
           "Blood-red tapestries line the walls and danger lurks in every shadow. Type 'help' for available commands.",
+          ""
+        ]
+
+      3 ->
+        [
+          "Welcome to the Vampire's Manor!",
+          "You stand before the imposing entrance of an ancient vampire's estate.",
+          "The air is thick with the scent of decay and forgotten secrets.",
+          "",
+          "To get started on your adventure:",
+          "• Look around to see what's here",
+          "• Talk to any NPCs you encounter - they may have quests for you",
+          "• Use 'help' anytime to see all available commands",
+          "",
+          "The path to the manor doors lies ahead, but gaining entry may require some effort...",
           ""
         ]
 

@@ -516,6 +516,117 @@ defmodule Shard.Quests do
     end
   end
 
+  @doc """
+  Gives quest reward items to a character's inventory.
+  """
+  def give_quest_reward_items(character_id, item_rewards) when is_map(item_rewards) do
+    case map_size(item_rewards) do
+      0 -> {:ok, []}
+      _ -> process_item_rewards(character_id, item_rewards)
+    end
+  end
+
+  def give_quest_reward_items(_character_id, _item_rewards), do: {:ok, []}
+
+  @doc """
+  Applies experience and gold rewards to a character.
+  """
+  def apply_character_rewards(character_id, exp_reward, gold_reward) do
+    try do
+      case Shard.Repo.get(Shard.Characters.Character, character_id) do
+        nil -> 
+          {:error, :character_not_found}
+        
+        character ->
+          # Update character with new experience and gold
+          new_experience = (character.experience || 0) + exp_reward
+          new_gold = (character.gold || 0) + gold_reward
+          
+          # Calculate level up if needed
+          {new_level, new_experience_final} = calculate_level_from_experience(new_experience, character.level || 1)
+          
+          changeset = Ecto.Changeset.change(character, %{
+            experience: new_experience_final,
+            gold: new_gold,
+            level: new_level
+          })
+          
+          case Shard.Repo.update(changeset) do
+            {:ok, updated_character} -> {:ok, updated_character}
+            {:error, changeset} -> {:error, changeset}
+          end
+      end
+    rescue
+      error -> {:error, error}
+    end
+  end
+
+  # Helper function to calculate level from total experience
+  defp calculate_level_from_experience(total_experience, current_level) do
+    # Simple leveling formula: each level requires level * 500 XP
+    # Level 1: 0-499, Level 2: 500-1499, Level 3: 1500-2999, etc.
+    
+    calculate_level_recursive(total_experience, 1, 0)
+  end
+  
+  defp calculate_level_recursive(remaining_exp, level, total_used_exp) do
+    exp_for_this_level = level * 500
+    
+    if remaining_exp >= exp_for_this_level do
+      calculate_level_recursive(remaining_exp - exp_for_this_level, level + 1, total_used_exp + exp_for_this_level)
+    else
+      {level, total_used_exp + remaining_exp}
+    end
+  end
+
+  defp process_item_rewards(character_id, item_rewards) do
+    results =
+      Enum.map(item_rewards, fn {item_name, quantity} ->
+        give_reward_item_by_name(character_id, item_name, quantity)
+      end)
+
+    # Check if all items were successfully given
+    case Enum.all?(results, &match?({:ok, _}, &1)) do
+      true ->
+        given_items = Enum.map(results, fn {:ok, item} -> item end)
+        {:ok, given_items}
+
+      false ->
+        {:error, :failed_to_give_items}
+    end
+  end
+
+  defp give_reward_item_by_name(character_id, item_name, quantity) when is_binary(item_name) do
+    # Find the item by name
+    case Shard.Repo.get_by(Shard.Items.Item, name: item_name) do
+      nil ->
+        {:error, :item_not_found}
+
+      item ->
+        case Shard.Items.add_item_to_inventory(character_id, item.id, quantity) do
+          {:ok, _inventory_entry} -> {:ok, %{name: item_name, quantity: quantity}}
+          error -> error
+        end
+    end
+  end
+
+  defp give_reward_item_by_name(character_id, item_name, quantity) when is_integer(item_name) do
+    # Handle case where item_name is actually an item_id
+    case Shard.Items.add_item_to_inventory(character_id, item_name, quantity) do
+      {:ok, _inventory_entry} ->
+        case Shard.Repo.get(Shard.Items.Item, item_name) do
+          nil -> {:ok, %{name: "Unknown Item", quantity: quantity}}
+          item -> {:ok, %{name: item.name, quantity: quantity}}
+        end
+
+      error ->
+        error
+    end
+  end
+
+  defp give_reward_item_by_name(_character_id, _item_name, _quantity),
+    do: {:error, :invalid_item_name}
+
   defp process_quest_turn_in(user_id, character_id, quest_id) do
     case can_turn_in_quest?(user_id, quest_id) do
       {:ok, true} ->
@@ -532,7 +643,27 @@ defmodule Shard.Quests do
     Repo.transaction(fn ->
       case remove_quest_items_from_inventory(character_id, quest.objectives) do
         :ok ->
-          complete_quest_or_rollback(user_id, quest_id)
+          case complete_quest_or_rollback(user_id, quest_id) do
+            quest_acceptance ->
+              # Apply experience and gold rewards
+              exp_reward = quest.experience_reward || 0
+              gold_reward = quest.gold_reward || 0
+              
+              case apply_character_rewards(character_id, exp_reward, gold_reward) do
+                {:ok, _updated_character} ->
+                  # Give quest reward items after successful completion
+                  case give_quest_reward_items(character_id, quest.item_rewards) do
+                    {:ok, given_items} ->
+                      {quest_acceptance, given_items}
+
+                    {:error, reason} ->
+                      Repo.rollback(reason)
+                  end
+                
+                {:error, reason} ->
+                  Repo.rollback(reason)
+              end
+          end
 
         {:error, reason} ->
           Repo.rollback(reason)
@@ -546,7 +677,27 @@ defmodule Shard.Quests do
     Repo.transaction(fn ->
       case remove_quest_items_from_inventory(character_id, quest.objectives) do
         :ok ->
-          complete_quest_or_rollback(user_id, quest_id)
+          case complete_quest_or_rollback(user_id, quest_id) do
+            quest_acceptance ->
+              # Apply experience and gold rewards
+              exp_reward = quest.experience_reward || 0
+              gold_reward = quest.gold_reward || 0
+              
+              case apply_character_rewards(character_id, exp_reward, gold_reward) do
+                {:ok, _updated_character} ->
+                  # Give quest reward items after successful completion
+                  case give_quest_reward_items(character_id, quest.item_rewards) do
+                    {:ok, given_items} ->
+                      {quest_acceptance, given_items}
+
+                    {:error, reason} ->
+                      Repo.rollback(reason)
+                  end
+                
+                {:error, reason} ->
+                  Repo.rollback(reason)
+              end
+          end
 
         {:error, reason} ->
           Repo.rollback(reason)

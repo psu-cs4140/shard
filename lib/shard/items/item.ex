@@ -1,46 +1,53 @@
 defmodule Shard.Items.Item do
-  @moduledoc """
-  The item module defines the scheme and some functions related to items/
-  """
-
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Shard.Items.{CharacterInventory, RoomItem, HotbarSlot}
+  # Define valid item types and rarities
+  @item_types ["weapon", "armor", "consumable", "misc", "material", "tool"]
+  @rarities ["common", "uncommon", "rare", "epic", "legendary"]
+  @equipment_slots [
+    "head",
+    "chest",
+    "hands",
+    "legs",
+    "feet",
+    "weapon",
+    "shield",
+    "ring",
+    "necklace"
+  ]
+
+  # Expose these for other modules to use
+  def item_types, do: @item_types
+  def rarities, do: @rarities
+  def equipment_slots, do: @equipment_slots
 
   schema "items" do
     field :name, :string
     field :description, :string
     field :item_type, :string
-    field :rarity, :string, default: "common"
-    field :value, :integer, default: 0
-    field :weight, :decimal, default: Decimal.new("0.0")
+    field :rarity, :string
+    field :value, :integer
+    field :weight, :decimal
     field :stackable, :boolean, default: false
-    field :max_stack_size, :integer, default: 1
+    field :max_stack_size, :integer
     field :usable, :boolean, default: false
     field :equippable, :boolean, default: false
     field :equipment_slot, :string
-    field :stats, :map, default: %{}
-    field :requirements, :map, default: %{}
-    field :effects, :map, default: %{}
+    field :stats, :map
+    field :requirements, :map
+    field :effects, :map
     field :icon, :string
     field :is_active, :boolean, default: true
     field :pickup, :boolean, default: true
     field :location, :string
     field :map, :string
-
-    has_many :character_inventories, CharacterInventory
-    has_many :room_items, RoomItem
-    has_many :hotbar_slots, HotbarSlot
+    field :sellable, :boolean, default: true
 
     timestamps(type: :utc_datetime)
   end
 
-  @item_types ~w(weapon armor consumable material quest misc key)
-  @rarities ~w(common uncommon rare epic legendary)
-  @equipment_slots ~w(head chest legs feet hands weapon shield ring necklace)
-  @maps ~w(tutorial_terrain dark_forest crystal_caves volcanic_peaks frozen_wastes shadow_realm)
-
+  @doc false
   def changeset(item, attrs) do
     item
     |> cast(attrs, [
@@ -62,41 +69,18 @@ defmodule Shard.Items.Item do
       :is_active,
       :pickup,
       :location,
-      :map
+      :map,
+      :sellable
     ])
+    # Added :item_type to required fields
     |> validate_required([:name, :item_type])
-    |> validate_length(:name, min: 2, max: 100)
+    # Validate item_type is in allowed list
     |> validate_inclusion(:item_type, @item_types)
+    # Validate rarity is in allowed list
     |> validate_inclusion(:rarity, @rarities)
-    |> validate_inclusion(:map, @maps)
-    |> validate_number(:value, greater_than_or_equal_to: 0)
-    |> validate_number(:weight, greater_than_or_equal_to: 0)
-    |> validate_number(:max_stack_size, greater_than: 0)
-    |> validate_equipment_slot()
+    # Validate equipment_slot when present
+    |> validate_inclusion(:equipment_slot, @equipment_slots)
+    # Add unique constraint on name
     |> unique_constraint(:name)
   end
-
-  defp validate_equipment_slot(changeset) do
-    equippable = get_field(changeset, :equippable)
-    equipment_slot = get_field(changeset, :equipment_slot)
-
-    cond do
-      equippable && is_nil(equipment_slot) ->
-        add_error(changeset, :equipment_slot, "must be specified for equippable items")
-
-      equippable && equipment_slot not in @equipment_slots ->
-        add_error(changeset, :equipment_slot, "is not a valid equipment slot")
-
-      !equippable && equipment_slot ->
-        put_change(changeset, :equipment_slot, nil)
-
-      true ->
-        changeset
-    end
-  end
-
-  def item_types, do: @item_types
-  def rarities, do: @rarities
-  def equipment_slots, do: @equipment_slots
-  def maps, do: @maps
 end

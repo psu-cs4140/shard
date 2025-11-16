@@ -386,15 +386,24 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     npc_name = npc.name || "Unknown NPC"
     quest_title = quest.title || "Untitled Quest"
     user_id = game_state.character.user_id
+    character_id = game_state.character.id
 
     full_quest = get_full_quest_safely(quest.id)
     {exp_reward, gold_reward} = calculate_quest_rewards(full_quest)
 
-    updated_stats = update_player_stats_with_experience(game_state.player_stats, exp_reward)
-    {updated_stats, level_up_message} = handle_level_up_check(updated_stats)
+    # Complete quest in database (this now handles all rewards including exp, gold, and items)
+    {updated_quests, given_items} =
+      complete_quest_in_database_and_update_state(
+        game_state.quests,
+        quest.id,
+        user_id,
+        character_id
+      )
 
-    updated_quests =
-      complete_quest_in_database_and_update_state(game_state.quests, quest.id, user_id)
+    # Update local game state to reflect the rewards
+    updated_stats = update_player_stats_with_experience(game_state.player_stats, exp_reward)
+    updated_stats = update_player_stats_with_gold(updated_stats, gold_reward)
+    {updated_stats, level_up_message} = handle_level_up_check(updated_stats)
 
     response =
       build_quest_completion_response(
@@ -403,7 +412,8 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         exp_reward,
         gold_reward,
         full_quest,
-        level_up_message
+        level_up_message,
+        given_items
       )
 
     updated_game_state = %{game_state | player_stats: updated_stats, quests: updated_quests}
@@ -438,6 +448,18 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     end
   end
 
+  # Helper function to update player stats with gold
+  defp update_player_stats_with_gold(player_stats, gold_reward) do
+    try do
+      player_stats
+      |> Map.update(:gold, 0, &(&1 + gold_reward))
+    rescue
+      _error ->
+        player_stats
+    end
+  end
+
+
   # Helper function to handle level up check
   defp handle_level_up_check(updated_stats) do
     try do
@@ -449,18 +471,22 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   end
 
   # Helper function to complete quest in database and update game state
-  defp complete_quest_in_database_and_update_state(quests, quest_id, user_id) do
+  defp complete_quest_in_database_and_update_state(quests, quest_id, user_id, character_id) do
     try do
-      case Shard.Quests.complete_quest(user_id, quest_id) do
+      case Shard.Quests.turn_in_quest_with_character_id(user_id, character_id, quest_id) do
+        {:ok, {_quest_acceptance, given_items}} ->
+          {mark_quest_as_completed(quests, quest_id), given_items}
+
         {:ok, _quest_acceptance} ->
-          mark_quest_as_completed(quests, quest_id)
+          # Fallback for when no items are given
+          {mark_quest_as_completed(quests, quest_id), []}
 
         {:error, _} ->
-          mark_quest_as_completed(quests, quest_id)
+          {mark_quest_as_completed(quests, quest_id), []}
       end
     rescue
       _error ->
-        mark_quest_as_completed(quests, quest_id)
+        {mark_quest_as_completed(quests, quest_id), []}
     end
   end
 
@@ -482,7 +508,8 @@ defmodule ShardWeb.UserLive.QuestHandlers do
          exp_reward,
          gold_reward,
          full_quest,
-         level_up_message
+         level_up_message,
+         given_items \\ []
        ) do
     base_response = [
       "#{npc_name} examines your progress carefully.",
@@ -494,7 +521,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     ]
 
     response_with_gold = add_gold_reward_to_response(base_response, gold_reward)
-    response_with_items = add_item_rewards_to_response(response_with_gold, full_quest)
+    response_with_items = add_given_items_to_response(response_with_gold, given_items)
 
     response_with_level_up =
       add_level_up_message_to_response(response_with_items, level_up_message)
@@ -515,11 +542,15 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     end
   end
 
-  # Helper function to add item rewards to response
-  defp add_item_rewards_to_response(response, full_quest) do
+  # Helper function to add given items to response
+  defp add_given_items_to_response(response, given_items) do
     try do
-      if full_quest && full_quest.item_rewards && map_size(full_quest.item_rewards) > 0 do
-        item_list = Enum.map(full_quest.item_rewards, fn {_key, item} -> "  - #{item}" end)
+      if length(given_items) > 0 do
+        item_list =
+          Enum.map(given_items, fn item ->
+            "  - #{item.name} (x#{item.quantity})"
+          end)
+
         response ++ ["Items received:"] ++ item_list
       else
         response
