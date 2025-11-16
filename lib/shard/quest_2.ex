@@ -116,42 +116,56 @@ defmodule Shard.Quest2 do
           {:error, :character_not_found}
 
         character ->
-          # Get current values, defaulting to 0 if fields don't exist
-          current_exp = Map.get(character, :experience, 0) || 0
-          current_gold = Map.get(character, :gold, 0) || 0
-          current_level = Map.get(character, :level, 1) || 1
-
-          # Update character with new experience and gold
-          new_experience = current_exp + exp_reward
-          new_gold = current_gold + gold_reward
-
-          # Calculate level up if needed
-          {new_level, new_experience_final} =
-            calculate_level_from_experience(new_experience, current_level)
-
-          # Build changeset with only fields that exist on the character schema
-          attrs = %{}
-
-          attrs =
-            if Map.has_key?(character, :experience),
-              do: Map.put(attrs, :experience, new_experience_final),
-              else: attrs
-
-          attrs =
-            if Map.has_key?(character, :gold), do: Map.put(attrs, :gold, new_gold), else: attrs
-
-          attrs =
-            if Map.has_key?(character, :level), do: Map.put(attrs, :level, new_level), else: attrs
-
-          changeset = Ecto.Changeset.change(character, attrs)
-
-          case Shard.Repo.update(changeset) do
-            {:ok, updated_character} -> {:ok, updated_character}
-            {:error, changeset} -> {:error, changeset}
-          end
+          update_character_with_rewards(character, exp_reward, gold_reward)
       end
     rescue
       error -> {:error, error}
+    end
+  end
+
+  defp update_character_with_rewards(character, exp_reward, gold_reward) do
+    current_values = extract_current_character_values(character)
+    new_values = calculate_new_character_values(current_values, exp_reward, gold_reward)
+    attrs = build_character_update_attrs(character, new_values)
+    
+    changeset = Ecto.Changeset.change(character, attrs)
+    Shard.Repo.update(changeset)
+  end
+
+  defp extract_current_character_values(character) do
+    %{
+      experience: Map.get(character, :experience, 0) || 0,
+      gold: Map.get(character, :gold, 0) || 0,
+      level: Map.get(character, :level, 1) || 1
+    }
+  end
+
+  defp calculate_new_character_values(current_values, exp_reward, gold_reward) do
+    new_experience = current_values.experience + exp_reward
+    new_gold = current_values.gold + gold_reward
+    
+    {new_level, new_experience_final} = 
+      calculate_level_from_experience(new_experience, current_values.level)
+    
+    %{
+      experience: new_experience_final,
+      gold: new_gold,
+      level: new_level
+    }
+  end
+
+  defp build_character_update_attrs(character, new_values) do
+    %{}
+    |> maybe_add_field(character, :experience, new_values.experience)
+    |> maybe_add_field(character, :gold, new_values.gold)
+    |> maybe_add_field(character, :level, new_values.level)
+  end
+
+  defp maybe_add_field(attrs, character, field, value) do
+    if Map.has_key?(character, field) do
+      Map.put(attrs, field, value)
+    else
+      attrs
     end
   end
 
