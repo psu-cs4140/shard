@@ -6,13 +6,13 @@ defmodule ShardWeb.AchievementsLive.Index do
   @impl true
   def mount(_params, _session, socket) do
     user = socket.assigns.current_scope.user
-    
+
     achievements = Achievements.list_achievements()
     user_achievements = Achievements.get_user_achievements(user)
     stats = Achievements.get_user_achievement_stats(user)
-    
+
     # Create a map of earned achievement IDs for quick lookup
-    earned_achievement_ids = 
+    earned_achievement_ids =
       user_achievements
       |> Enum.map(fn {_user_achievement, achievement} -> achievement.id end)
       |> MapSet.new()

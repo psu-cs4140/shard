@@ -107,11 +107,13 @@ defmodule Shard.Achievements do
   Gets all achievements earned by a user.
   """
   def get_user_achievements(%User{} = user) do
-    query = from ua in UserAchievement,
-      where: ua.user_id == ^user.id,
-      join: a in Achievement, on: ua.achievement_id == a.id,
-      select: {ua, a},
-      order_by: [desc: ua.earned_at]
+    query =
+      from ua in UserAchievement,
+        where: ua.user_id == ^user.id,
+        join: a in Achievement,
+        on: ua.achievement_id == a.id,
+        select: {ua, a},
+        order_by: [desc: ua.earned_at]
 
     Repo.all(query)
   end
@@ -133,8 +135,9 @@ defmodule Shard.Achievements do
   Checks if a user has earned a specific achievement.
   """
   def has_achievement?(%User{} = user, %Achievement{} = achievement) do
-    query = from ua in UserAchievement,
-      where: ua.user_id == ^user.id and ua.achievement_id == ^achievement.id
+    query =
+      from ua in UserAchievement,
+        where: ua.user_id == ^user.id and ua.achievement_id == ^achievement.id
 
     Repo.exists?(query)
   end
@@ -144,23 +147,29 @@ defmodule Shard.Achievements do
   """
   def get_user_achievement_stats(%User{} = user) do
     total_achievements = Repo.aggregate(Achievement, :count, :id)
-    
-    earned_achievements = 
+
+    earned_achievements =
       from(ua in UserAchievement, where: ua.user_id == ^user.id)
       |> Repo.aggregate(:count, :id)
 
-    total_points = 
+    total_points =
       from(ua in UserAchievement,
         where: ua.user_id == ^user.id,
-        join: a in Achievement, on: ua.achievement_id == a.id,
-        select: sum(a.points))
+        join: a in Achievement,
+        on: ua.achievement_id == a.id,
+        select: sum(a.points)
+      )
       |> Repo.one() || 0
 
     %{
       total_achievements: total_achievements,
       earned_achievements: earned_achievements,
       total_points: total_points,
-      completion_percentage: if(total_achievements > 0, do: Float.round(earned_achievements / total_achievements * 100, 1), else: 0.0)
+      completion_percentage:
+        if(total_achievements > 0,
+          do: Float.round(earned_achievements / total_achievements * 100, 1),
+          else: 0.0
+        )
     }
   end
 end
