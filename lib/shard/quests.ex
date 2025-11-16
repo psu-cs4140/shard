@@ -538,18 +538,25 @@ defmodule Shard.Quests do
           {:error, :character_not_found}
         
         character ->
+          # Get current values, defaulting to 0 if fields don't exist
+          current_exp = Map.get(character, :experience, 0) || 0
+          current_gold = Map.get(character, :gold, 0) || 0
+          current_level = Map.get(character, :level, 1) || 1
+          
           # Update character with new experience and gold
-          new_experience = (character.experience || 0) + exp_reward
-          new_gold = (character.gold || 0) + gold_reward
+          new_experience = current_exp + exp_reward
+          new_gold = current_gold + gold_reward
           
           # Calculate level up if needed
-          {new_level, new_experience_final} = calculate_level_from_experience(new_experience, character.level || 1)
+          {new_level, new_experience_final} = calculate_level_from_experience(new_experience, current_level)
           
-          changeset = Ecto.Changeset.change(character, %{
-            experience: new_experience_final,
-            gold: new_gold,
-            level: new_level
-          })
+          # Build changeset with only fields that exist on the character schema
+          attrs = %{}
+          attrs = if Map.has_key?(character, :experience), do: Map.put(attrs, :experience, new_experience_final), else: attrs
+          attrs = if Map.has_key?(character, :gold), do: Map.put(attrs, :gold, new_gold), else: attrs
+          attrs = if Map.has_key?(character, :level), do: Map.put(attrs, :level, new_level), else: attrs
+          
+          changeset = Ecto.Changeset.change(character, attrs)
           
           case Shard.Repo.update(changeset) do
             {:ok, updated_character} -> {:ok, updated_character}
@@ -597,15 +604,23 @@ defmodule Shard.Quests do
   end
 
   defp give_reward_item_by_name(character_id, item_name, quantity) when is_binary(item_name) do
-    # Find the item by name
-    case Shard.Repo.get_by(Shard.Items.Item, name: item_name) do
+    # Find the item by name (case-insensitive)
+    item_query = from(i in Shard.Items.Item, where: ilike(i.name, ^item_name))
+    
+    case Shard.Repo.one(item_query) do
       nil ->
+        IO.puts("Item not found: #{item_name}")
         {:error, :item_not_found}
 
       item ->
+        IO.puts("Found item: #{item.name} (ID: #{item.id})")
         case Shard.Items.add_item_to_inventory(character_id, item.id, quantity) do
-          {:ok, _inventory_entry} -> {:ok, %{name: item_name, quantity: quantity}}
-          error -> error
+          {:ok, inventory_entry} -> 
+            IO.puts("Successfully added #{quantity} #{item.name} to inventory")
+            {:ok, %{name: item.name, quantity: quantity}}
+          error -> 
+            IO.puts("Failed to add item to inventory: #{inspect(error)}")
+            error
         end
     end
   end
@@ -649,18 +664,25 @@ defmodule Shard.Quests do
               exp_reward = quest.experience_reward || 0
               gold_reward = quest.gold_reward || 0
               
+              # Log the rewards being applied for debugging
+              IO.puts("Applying quest rewards: #{exp_reward} exp, #{gold_reward} gold to character #{character_id}")
+              
               case apply_character_rewards(character_id, exp_reward, gold_reward) do
-                {:ok, _updated_character} ->
+                {:ok, updated_character} ->
+                  IO.puts("Successfully applied character rewards")
                   # Give quest reward items after successful completion
                   case give_quest_reward_items(character_id, quest.item_rewards) do
                     {:ok, given_items} ->
+                      IO.puts("Successfully gave #{length(given_items)} quest reward items")
                       {quest_acceptance, given_items}
 
                     {:error, reason} ->
+                      IO.puts("Failed to give quest reward items: #{inspect(reason)}")
                       Repo.rollback(reason)
                   end
                 
                 {:error, reason} ->
+                  IO.puts("Failed to apply character rewards: #{inspect(reason)}")
                   Repo.rollback(reason)
               end
           end
