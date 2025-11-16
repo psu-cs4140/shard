@@ -117,30 +117,48 @@ defmodule ShardWeb.UserLive.ItemHelpers do
 
   # Equip an item (weapons, armor, etc.)
   def equip_item(game_state, item) do
-    case item.type do
-      "weapon" ->
-        old_weapon = game_state.equipped_weapon
-        updated_game_state = %{game_state | equipped_weapon: item}
-
-        response = [
-          "You equip #{item.name}.",
-          "You unequip #{old_weapon.name}."
-        ]
-
-        {response, updated_game_state}
-
-      "armor" ->
-        # For now, just show a message since we don't have equipped armor tracking yet
-        response = [
-          "You equip #{item.name}.",
-          "Your defense increases!"
-        ]
-
+    # Use the same logic as the equip command for consistency
+    case Map.get(item, :inventory_id) do
+      nil ->
+        response = ["Cannot equip #{item.name} - no inventory reference found."]
         {response, game_state}
 
-      _ ->
-        response = ["You cannot equip #{item.name}."]
-        {response, game_state}
+      inventory_id ->
+        case Shard.Items.equip_item(inventory_id) do
+          {:ok, _} ->
+            # Reload inventory to sync with game state
+            updated_inventory =
+              ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+
+            updated_game_state = %{game_state | inventory_items: updated_inventory}
+
+            # Generate appropriate message based on equipment slot
+            equipment_slot = Map.get(item, :equipment_slot) || item.item_type
+
+            message =
+              case equipment_slot do
+                "weapon" -> "You equip #{item.name} as your weapon."
+                "shield" -> "You equip your mighty #{item.name} for protection."
+                "head" -> "You equip #{item.name} on your head."
+                "body" -> "You equip #{item.name} on your body."
+                "legs" -> "You equip #{item.name} on your legs."
+                "feet" -> "You equip #{item.name} on your feet."
+                "ring" -> "You slide #{item.name} on one of your fingers."
+                "necklace" -> "You place #{item.name} around your neck."
+                _ -> "You equip #{item.name}."
+              end
+
+            {[message], updated_game_state}
+
+          {:error, :not_equippable} ->
+            {["#{item.name} cannot be equipped."], game_state}
+
+          {:error, :already_equipped} ->
+            {["#{item.name} is already equipped."], game_state}
+
+          {:error, reason} ->
+            {["Failed to equip #{item.name}: #{reason}"], game_state}
+        end
     end
   end
 

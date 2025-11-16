@@ -82,22 +82,6 @@ defmodule Shard.Repo.Migrations.AddVampireManorKeys do
     ON CONFLICT (name) DO NOTHING;
     """
 
-    execute """
-    INSERT INTO room_items (
-      item_id,
-      location,
-      quantity,
-      inserted_at,
-      updated_at
-    ) VALUES (
-      (SELECT id FROM items WHERE name = 'Manor Key' LIMIT 1),
-      '-4,1,0',
-      1,
-      NOW(),
-      NOW()
-    );
-    """
-
     # Create the Library Key item and place it in the Freezer (4,-3)
     execute """
     INSERT INTO items (
@@ -128,22 +112,6 @@ defmodule Shard.Repo.Migrations.AddVampireManorKeys do
       NOW()
     )
     ON CONFLICT (name) DO NOTHING;
-    """
-
-    execute """
-    INSERT INTO room_items (
-      item_id,
-      location,
-      quantity,
-      inserted_at,
-      updated_at
-    ) VALUES (
-      (SELECT id FROM items WHERE name = 'Library Key' LIMIT 1),
-      '4,-3,0',
-      1,
-      NOW(),
-      NOW()
-    );
     """
 
     # Create the Study Key item and place it in the Library (-1,-2)
@@ -250,13 +218,11 @@ defmodule Shard.Repo.Migrations.AddVampireManorKeys do
     WHERE item_id IN (
       SELECT id FROM items WHERE name IN (
         'Rusty Sewer Key',
-        'Manor Key', 
-        'Library Key',
         'Study Key',
         'Master Key'
       )
     )
-    AND location IN ('-1,1,0', '-4,1,0', '1,1,0', '5,-3,0', '4,-3,0');
+    AND location IN ('-1,1,0', '1,1,0', '5,-3,0');
     """
 
     # Optionally remove the key items entirely (uncomment if desired)

@@ -449,7 +449,21 @@ defmodule Shard.ItemsTest do
     end
 
     test "accepts valid item_types" do
-      valid_types = ["weapon", "armor", "consumable", "misc", "material", "tool"]
+      valid_types = [
+        "weapon",
+        "shield",
+        "head",
+        "body",
+        "legs",
+        "feet",
+        "ring",
+        "necklace",
+        "consumable",
+        "misc",
+        "material",
+        "tool",
+        "quest"
+      ]
 
       for type <- valid_types do
         attrs = %{name: "Test Item", item_type: type, rarity: "common"}
