@@ -114,6 +114,16 @@ defmodule ShardWeb.UserLive.CommandParsers do
     end
   end
 
+  # Parse equipped command to show equipped items
+  def parse_equipped_command(command) do
+    # Match patterns like: equipped, equip
+    if Regex.match?(~r/^(equipped|equip)\s*$/i, command) do
+      :ok
+    else
+      :error
+    end
+  end
+
   # Parse create room command: "create room <direction>"
   def parse_create_room_command(command) do
     # Match patterns like: create room north, create room "north"
