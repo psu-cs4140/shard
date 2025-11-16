@@ -333,6 +333,32 @@ defmodule ShardWeb.UserLive.CommandParsers do
     end
   end
 
+  # Execute equipped command to show equipped items
+  def execute_equipped_command(game_state) do
+    # Get all possible equipment slots from the Item module
+    equipment_slots = Shard.Items.Item.equipment_slots()
+    
+    # Get character's equipped items
+    equipped_items = get_equipped_items(game_state)
+    
+    # Build response showing each slot and what's equipped
+    response = ["Your equipped items:"]
+    
+    slot_responses = Enum.map(equipment_slots, fn slot ->
+      case Map.get(equipped_items, slot) do
+        nil -> "#{String.capitalize(slot)}: None"
+        item -> "#{String.capitalize(slot)}: #{item.name}"
+      end
+    end)
+    
+    {response ++ slot_responses, game_state}
+  end
+
+  # Helper function to get equipped items for a character
+  defp get_equipped_items(game_state) do
+    Shard.Items.get_equipped_items(game_state.character.id)
+  end
+
   # Remove item from player's inventory
   defp remove_item_from_inventory(game_state, item_name) do
     # Find the inventory item to remove
