@@ -424,6 +424,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       quests: updated_quests,
       character: updated_character
     }
+    
     {response, updated_game_state}
   end
 
@@ -582,7 +583,9 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     try do
       case Shard.Repo.get(Shard.Characters.Character, character_id) do
         nil -> nil
-        character -> character
+        character -> 
+          # Preload associations to ensure we have complete character data
+          Shard.Repo.preload(character, [:character_inventories, :hotbar_slots])
       end
     rescue
       _error -> nil
@@ -592,13 +595,26 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   # Helper function to sync player stats with character data
   defp sync_player_stats_with_character(current_stats, character) do
     if character do
-      current_stats
+      # Ensure we update all relevant fields from the character
+      updated_stats = current_stats
       |> Map.put(:experience, character.experience || 0)
       |> Map.put(:gold, character.gold || 0)
       |> Map.put(:level, character.level || 1)
+      
+      # Recalculate next level experience if needed
+      current_level = character.level || 1
+      next_level_exp = calculate_next_level_exp(current_level)
+      
+      Map.put(updated_stats, :next_level_exp, next_level_exp)
     else
       current_stats
     end
+  end
+  
+  # Helper function to calculate next level experience requirement
+  defp calculate_next_level_exp(level) do
+    # Use the same formula as in the quest system: level * 500
+    (level + 1) * 500
   end
 
   # Helper function to handle level up check from character data
