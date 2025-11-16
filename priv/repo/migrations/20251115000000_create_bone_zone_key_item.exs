@@ -14,7 +14,6 @@ defmodule Shard.Repo.Migrations.CreateBoneZoneKeyItem do
       stackable,
       max_stack_size,
       equipment_slot,
-      properties,
       pickup,
       inserted_at,
       updated_at
@@ -28,7 +27,6 @@ defmodule Shard.Repo.Migrations.CreateBoneZoneKeyItem do
       true,
       1,
       null,
-      '{"zone_access": "bone_zone_deep", "key_type": "zone_key"}',
       true,
       NOW(),
       NOW()
