@@ -145,48 +145,6 @@ defmodule Shard.Repo.Migrations.CreateBoneZoneNpcs do
       NOW()
     );
     """
-
-    execute """
-    INSERT INTO quests (
-      title,
-      description,
-      quest_type,
-      difficulty,
-      status,
-      min_level,
-      max_level,
-      experience_reward,
-      gold_reward,
-      item_rewards,
-      objectives,
-      prerequisites,
-      giver_npc_id,
-      turn_in_npc_id,
-      is_active,
-      sort_order,
-      inserted_at,
-      updated_at
-    ) VALUES (
-      'Receive the Bone Zone Key',
-      'Return to Tombguard with the spider silk to receive the Bone Zone key.',
-      'delivery',
-      'medium',
-      'locked',
-      5,
-      25,
-      300,
-      75,
-      '{"Bone Zone Key": 1}',
-      '{"retrieve_items": [{"item_name": "spider silk", "quantity": 1}]}',
-      '{"completed_quests": ["Harvest Spider Silk"]}',
-      (SELECT id FROM npcs WHERE name = 'Tombguard' LIMIT 1),
-      (SELECT id FROM npcs WHERE name = 'Tombguard' LIMIT 1),
-      true,
-      3,
-      NOW(),
-      NOW()
-    );
-    """
   end
 
   def down do
