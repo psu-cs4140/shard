@@ -3,7 +3,7 @@ defmodule Shard.Items.Item do
   import Ecto.Changeset
 
   # Define valid item types and rarities
-  @item_types ["weapon", "armor", "consumable", "misc", "material", "tool"]
+  @item_types ["weapon", "head", "body", "legs", "consumable", "misc", "material", "tool"]
   @rarities ["common", "uncommon", "rare", "epic", "legendary"]
   @equipment_slots [
     "head",

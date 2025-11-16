@@ -129,10 +129,25 @@ defmodule ShardWeb.UserLive.ItemHelpers do
 
         {response, updated_game_state}
 
-      "armor" ->
-        # For now, just show a message since we don't have equipped armor tracking yet
+      "head" ->
         response = [
-          "You equip #{item.name}.",
+          "You equip #{item.name} on your head.",
+          "Your defense increases!"
+        ]
+
+        {response, game_state}
+
+      "body" ->
+        response = [
+          "You equip #{item.name} on your body.",
+          "Your defense increases!"
+        ]
+
+        {response, game_state}
+
+      "legs" ->
+        response = [
+          "You equip #{item.name} on your legs.",
           "Your defense increases!"
         ]
 
