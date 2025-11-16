@@ -348,8 +348,8 @@ defmodule ShardWeb.UserLive.CommandParsers do
     # Get all possible equipment slots from the Item module
     equipment_slots = Shard.Items.Item.equipment_slots()
     
-    # Get character's equipped items
-    equipped_items = get_equipped_items(game_state)
+    # Get character's equipped items using the legacy system
+    equipped_items = get_equipped_items_legacy(game_state)
     
     # Build response showing each slot and what's equipped
     response = ["Your equipped items:"]
@@ -364,9 +364,19 @@ defmodule ShardWeb.UserLive.CommandParsers do
     {response ++ slot_responses, game_state}
   end
 
-  # Helper function to get equipped items for a character
-  defp get_equipped_items(game_state) do
-    Shard.Items.get_equipped_items(game_state.character.id)
+  # Helper function to get equipped items for a character using legacy system
+  defp get_equipped_items_legacy(game_state) do
+    # Get equipped items from character inventories
+    equipped_inventories = Shard.Items.get_character_equipped_items(game_state.character.id)
+    
+    # Build a map of equipment slots to items
+    Enum.reduce(equipped_inventories, %{}, fn inventory, acc ->
+      if inventory.equipment_slot do
+        Map.put(acc, inventory.equipment_slot, inventory.item)
+      else
+        acc
+      end
+    end)
   end
 
   # Remove item from player's inventory
