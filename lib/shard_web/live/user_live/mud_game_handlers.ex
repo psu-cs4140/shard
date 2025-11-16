@@ -47,54 +47,64 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   def handle_submit_command(%{"command" => %{"text" => command_text}}, socket) do
     trimmed_command = String.trim(command_text)
 
-    if trimmed_command != "" do
-      # Add command to history
-      new_history = [trimmed_command | socket.assigns.terminal_state.command_history]
-
-      # Process the command and get response and updated game state
-      {response, updated_game_state} = process_command(trimmed_command, socket.assigns.game_state)
-
-      # Check if stats changed significantly and save to database
-      old_stats = socket.assigns.game_state.player_stats
-      new_stats = updated_game_state.player_stats
-
-      if stats_changed_significantly?(old_stats, new_stats) do
-        save_character_stats(updated_game_state.character, new_stats)
-      end
-
-      # Check if this was a quest completion command and reload character data if needed
-      final_game_state =
-        if quest_completion_command?(trimmed_command) do
-          # Reload character from database to ensure we have the latest data
-          case reload_character_from_database(updated_game_state.character.id) do
-            nil ->
-              updated_game_state
-
-            reloaded_character ->
-              # Update game state with reloaded character and synced stats
-              synced_stats = sync_player_stats_with_character(new_stats, reloaded_character)
-              %{updated_game_state | character: reloaded_character, player_stats: synced_stats}
-          end
-        else
-          updated_game_state
-        end
-
-      # Add command and response to output
-      new_output =
-        socket.assigns.terminal_state.output ++
-          ["> #{trimmed_command}"] ++
-          response ++
-          [""]
-
-      terminal_state = %{
-        output: new_output,
-        command_history: new_history,
-        current_command: ""
-      }
-
-      {:noreply, socket, final_game_state, terminal_state}
-    else
+    if trimmed_command == "" do
       {:noreply, socket}
+    else
+      process_non_empty_command(trimmed_command, socket)
+    end
+  end
+
+  defp process_non_empty_command(trimmed_command, socket) do
+    # Add command to history
+    new_history = [trimmed_command | socket.assigns.terminal_state.command_history]
+
+    # Process the command and get response and updated game state
+    {response, updated_game_state} = process_command(trimmed_command, socket.assigns.game_state)
+
+    # Check if stats changed significantly and save to database
+    old_stats = socket.assigns.game_state.player_stats
+    new_stats = updated_game_state.player_stats
+
+    if stats_changed_significantly?(old_stats, new_stats) do
+      save_character_stats(updated_game_state.character, new_stats)
+    end
+
+    # Check if this was a quest completion command and reload character data if needed
+    final_game_state = handle_quest_completion(trimmed_command, updated_game_state, new_stats)
+
+    # Add command and response to output
+    new_output =
+      socket.assigns.terminal_state.output ++
+        ["> #{trimmed_command}"] ++
+        response ++
+        [""]
+
+    terminal_state = %{
+      output: new_output,
+      command_history: new_history,
+      current_command: ""
+    }
+
+    {:noreply, socket, final_game_state, terminal_state}
+  end
+
+  defp handle_quest_completion(command, updated_game_state, new_stats) do
+    if quest_completion_command?(command) do
+      reload_character_if_needed(updated_game_state, new_stats)
+    else
+      updated_game_state
+    end
+  end
+
+  defp reload_character_if_needed(updated_game_state, new_stats) do
+    case reload_character_from_database(updated_game_state.character.id) do
+      nil ->
+        updated_game_state
+
+      reloaded_character ->
+        # Update game state with reloaded character and synced stats
+        synced_stats = sync_player_stats_with_character(new_stats, reloaded_character)
+        %{updated_game_state | character: reloaded_character, player_stats: synced_stats}
     end
   end
 
