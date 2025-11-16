@@ -182,18 +182,23 @@ defmodule Shard.Items do
   def equip_item(inventory_id) do
     inventory = Repo.get!(CharacterInventory, inventory_id) |> Repo.preload(:item)
 
-    if inventory.item.equippable do
-      # Unequip any existing item in the same slot
-      unequip_slot(inventory.character_id, inventory.item.equipment_slot)
+    cond do
+      not inventory.item.equippable ->
+        {:error, :not_equippable}
+      
+      inventory.equipped ->
+        {:error, :already_equipped}
+      
+      true ->
+        # Unequip any existing item in the same slot
+        unequip_slot(inventory.character_id, inventory.item.equipment_slot)
 
-      inventory
-      |> CharacterInventory.changeset(%{
-        equipped: true,
-        equipment_slot: inventory.item.equipment_slot
-      })
-      |> Repo.update()
-    else
-      {:error, :not_equippable}
+        inventory
+        |> CharacterInventory.changeset(%{
+          equipped: true,
+          equipment_slot: inventory.item.equipment_slot
+        })
+        |> Repo.update()
     end
   end
 
@@ -614,6 +619,26 @@ defmodule Shard.Items do
     false
   end
 
+  @doc """
+  Checks if a specific item is currently equipped by a character.
+  """
+  def item_equipped?(character_id, item_id) do
+    case Repo.get_by(CharacterEquipment, character_id: character_id, item_id: item_id) do
+      nil -> false
+      _equipment -> true
+    end
+  end
+
+  @doc """
+  Checks if a specific inventory item is currently equipped by a character (legacy system).
+  """
+  def inventory_item_equipped?(inventory_id) do
+    case Repo.get(CharacterInventory, inventory_id) do
+      nil -> false
+      inventory -> inventory.equipped || false
+    end
+  end
+
   ## Character Equipment
 
   @doc """
@@ -638,6 +663,7 @@ defmodule Shard.Items do
   """
   def equip_item_to_slot(character_id, item_id) do
     with {:ok, item} <- get_item_if_equippable(item_id),
+         {:ok, _} <- check_if_item_already_equipped(character_id, item_id),
          {:ok, _} <- unequip_slot_if_occupied(character_id, item.equipment_slot),
          {:ok, equipment} <- create_equipment(character_id, item_id, item.equipment_slot) do
       {:ok, equipment}
@@ -687,5 +713,12 @@ defmodule Shard.Items do
 
   defp get_equipment_by_slot(character_id, equipment_slot) do
     Repo.get_by(CharacterEquipment, character_id: character_id, equipment_slot: equipment_slot)
+  end
+
+  defp check_if_item_already_equipped(character_id, item_id) do
+    case Repo.get_by(CharacterEquipment, character_id: character_id, item_id: item_id) do
+      nil -> {:ok, nil}
+      _equipment -> {:error, :already_equipped}
+    end
   end
 end
