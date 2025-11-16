@@ -59,7 +59,7 @@ defmodule Shard.Characters do
          |> Repo.insert() do
       {:ok, character} ->
         # Create tutorial key when character is created
-        Shard.Items.create_tutorial_key()
+        Shard.Items.GameFeatures.create_tutorial_key()
         {:ok, character}
 
       error ->
