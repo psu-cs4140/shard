@@ -135,7 +135,6 @@ defmodule Shard.Repo.Migrations.CreateBoneZoneNpcs do
       25,
       200,
       50,
-      '{"Bone Zone Key": 1}',
       '{"retrieve_items": [{"item_name": "spider silk", "quantity": 1}]}',
       '{"completed_quests": ["Retrieve the Iron Sword"]}',
       (SELECT id FROM npcs WHERE name = 'Tombguard' LIMIT 1),
