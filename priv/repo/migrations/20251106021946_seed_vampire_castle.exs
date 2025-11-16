@@ -214,7 +214,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
                 [
                   "Slippers",
                   "Comfortable cloth slippers, slightly damp from the sewers.",
-                  "armor",
+                  "material",
                   "common",
                   3,
                   false,
@@ -266,9 +266,61 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
               Repo.query(
                 "INSERT INTO items (name, description, item_type, rarity, value, stackable, equippable, equipment_slot, is_active, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id",
                 [
-                  "Chainmail",
+                  "Chainmail Helmet",
+                  "A helmet comprised of interlocking metal rings, cold to the touch and emanating dark energy.",
+                  "head",
+                  "uncommon",
+                  25,
+                  false,
+                  true,
+                  "chest",
+                  true,
+                  DateTime.utc_now(),
+                  DateTime.utc_now()
+                ],
+                [
+                  "Chainmail Chestplate",
                   "A suit of interlocking metal rings, cold to the touch and emanating dark energy.",
-                  "armor",
+                  "body",
+                  "uncommon",
+                  25,
+                  false,
+                  true,
+                  "chest",
+                  true,
+                  DateTime.utc_now(),
+                  DateTime.utc_now()
+                ],
+                [
+                  "Chainmail Leggings",
+                  "A suit of interlocking metal rings, cold to the touch and emanating dark energy.",
+                  "legs",
+                  "uncommon",
+                  25,
+                  false,
+                  true,
+                  "chest",
+                  true,
+                  DateTime.utc_now(),
+                  DateTime.utc_now()
+                ],
+                [
+                  "Chainmail Boots",
+                  "A pair of boots made up of interlocking metal rings, cold to the touch and emanating dark energy.",
+                  "feet",
+                  "uncommon",
+                  25,
+                  false,
+                  true,
+                  "chest",
+                  true,
+                  DateTime.utc_now(),
+                  DateTime.utc_now()
+                ],
+                [
+                  "Darkened Broadsword",
+                  "A blade, clearly discolored and dulled from constant use from its previous wielder.",
+                  "weapon",
                   "uncommon",
                   25,
                   false,
@@ -300,7 +352,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
             "An ancient suit of armor animated by dark magic, its empty helmet glowing with malevolent eyes.",
           location_id: freezer.id,
           potential_loot_drops: %{
-            "#{chainmail_item.id}" => %{chance: 0.7, min_quantity: 1, max_quantity: 1}
+            "#{chainmail_item.id}" => %{chance: 0.9, min_quantity: 1, max_quantity: 1}
           }
         })
 
@@ -323,7 +375,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
                 [
                   "Vampire Cloak",
                   "A magnificent black cloak lined with crimson silk, radiating an aura of ancient power and nobility.",
-                  "armor",
+                  "body",
                   "rare",
                   100,
                   false,
