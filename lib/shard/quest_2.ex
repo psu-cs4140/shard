@@ -278,10 +278,11 @@ defmodule Shard.Quest2 do
 
     IO.puts("Applying quest rewards: #{exp_reward} exp, #{gold_reward} gold to character #{character_id}")
 
-    with {:ok, _updated_character} <- apply_character_rewards(character_id, exp_reward, gold_reward) do
-      IO.puts("Successfully applied character rewards")
-      process_item_rewards_with_logging(character_id, quest, quest_acceptance)
-    else
+    case apply_character_rewards(character_id, exp_reward, gold_reward) do
+      {:ok, _updated_character} ->
+        IO.puts("Successfully applied character rewards")
+        process_item_rewards_with_logging(character_id, quest, quest_acceptance)
+
       {:error, reason} ->
         IO.puts("Failed to apply character rewards: #{inspect(reason)}")
         Repo.rollback(reason)
