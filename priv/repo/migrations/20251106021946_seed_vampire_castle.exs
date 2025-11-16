@@ -384,7 +384,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
         created_chainmail_items
         |> Enum.map(fn item -> {"#{item.id}", %{chance: 0.3, min_quantity: 1, max_quantity: 1}} end)
         |> Enum.into(%{})
-        |> Map.put("#{library_key_item.id}", %{chance: 1.0, min_quantity: 1, max_quantity: 1})
+        |> Kernel.put_in([Access.key("#{library_key_item.id}")], %{chance: 1.0, min_quantity: 1, max_quantity: 1})
 
       {:ok, _armor} =
         Shard.Monsters.create_monster(%{
