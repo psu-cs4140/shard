@@ -345,38 +345,24 @@ defmodule ShardWeb.UserLive.CommandParsers do
 
   # Execute equipped command to show equipped items
   def execute_equipped_command(game_state) do
-    # Get all possible equipment slots from the Item module
-    equipment_slots = Shard.Items.Item.equipment_slots()
+    # Use the same data source as the inventory management page
+    inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
     
-    # Get character's equipped items using the legacy system
-    equipped_items = get_equipped_items_legacy(game_state)
+    # Filter for equipped items only
+    equipped_items = Enum.filter(inventory_items, fn inv_item -> inv_item.equipped end)
     
-    # Build response showing each slot and what's equipped
-    response = ["Your equipped items:"]
-    
-    slot_responses = Enum.map(equipment_slots, fn slot ->
-      case Map.get(equipped_items, slot) do
-        nil -> "#{String.capitalize(slot)}: None"
-        item -> "#{String.capitalize(slot)}: #{item.name}"
-      end
-    end)
-    
-    {response ++ slot_responses, game_state}
-  end
-
-  # Helper function to get equipped items for a character using legacy system
-  defp get_equipped_items_legacy(game_state) do
-    # Get equipped items from character inventories
-    equipped_inventories = Shard.Items.get_character_equipped_items(game_state.character.id)
-    
-    # Build a map of equipment slots to items
-    Enum.reduce(equipped_inventories, %{}, fn inventory, acc ->
-      if inventory.equipment_slot do
-        Map.put(acc, inventory.equipment_slot, inventory.item)
-      else
-        acc
-      end
-    end)
+    if Enum.empty?(equipped_items) do
+      {["You have no items equipped."], game_state}
+    else
+      response = ["Your equipped items:"] ++
+        Enum.map(equipped_items, fn inv_item ->
+          item_name = inv_item.item.name
+          slot = inv_item.equipment_slot || "unknown slot"
+          "  #{String.capitalize(slot)}: #{item_name}"
+        end)
+      
+      {response, game_state}
+    end
   end
 
   # Remove item from player's inventory
