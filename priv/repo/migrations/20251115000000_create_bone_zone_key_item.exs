@@ -18,7 +18,7 @@ defmodule Shard.Repo.Migrations.CreateBoneZoneKeyItem do
       inserted_at,
       updated_at
     ) VALUES (
-      'Bone Zone Key',
+      'bone zone key',
       'An ancient skeletal key that glows with eerie blue light. This key grants access to deeper areas of the Bone Zone.',
       'key',
       'rare',

@@ -578,7 +578,7 @@ defmodule Shard.Quests do
   end
 
   # Helper function to calculate level from total experience
-  defp calculate_level_from_experience(total_experience, current_level) do
+  defp calculate_level_from_experience(total_experience, _current_level) do
     # Simple leveling formula: each level requires level * 500 XP
     # Level 1: 0-499, Level 2: 500-1499, Level 3: 1500-2999, etc.
 
@@ -629,7 +629,7 @@ defmodule Shard.Quests do
         IO.puts("Found item: #{item.name} (ID: #{item.id})")
 
         case Shard.Items.add_item_to_inventory(character_id, item.id, quantity) do
-          {:ok, inventory_entry} ->
+          {:ok, _inventory_entry} ->
             IO.puts("Successfully added #{quantity} #{item.name} to inventory")
             {:ok, %{name: item.name, quantity: quantity}}
 
@@ -685,7 +685,7 @@ defmodule Shard.Quests do
               )
 
               case apply_character_rewards(character_id, exp_reward, gold_reward) do
-                {:ok, updated_character} ->
+                {:ok, _updated_character} ->
                   IO.puts("Successfully applied character rewards")
                   # Extract reward items from objectives field
                   reward_items = extract_reward_items_from_objectives(quest.objectives)
@@ -809,6 +809,7 @@ defmodule Shard.Quests do
           quantity = Map.get(item, "quantity", 1)
           if item_name, do: Map.put(acc, item_name, quantity), else: acc
         end)
+
       _ ->
         %{}
     end

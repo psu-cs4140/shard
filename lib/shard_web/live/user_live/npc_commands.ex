@@ -138,13 +138,14 @@ defmodule ShardWeb.UserLive.NpcCommands do
 
         # Build reward message including items
         reward_parts = ["gained #{exp_reward} exp", "#{gold_reward} gold"]
-        
-        item_rewards = if length(given_items) > 0 do
-          item_list = Enum.map(given_items, fn item -> "#{item.name} (x#{item.quantity})" end)
-          ["items: #{Enum.join(item_list, ", ")}"]
-        else
-          []
-        end
+
+        item_rewards =
+          if length(given_items) > 0 do
+            item_list = Enum.map(given_items, fn item -> "#{item.name} (x#{item.quantity})" end)
+            ["items: #{Enum.join(item_list, ", ")}"]
+          else
+            []
+          end
 
         all_rewards = Enum.join(reward_parts ++ item_rewards, ", ")
         result = "Successfully turned in '#{quest.title}' (#{all_rewards})"

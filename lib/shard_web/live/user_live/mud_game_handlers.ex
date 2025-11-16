@@ -63,11 +63,13 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
       end
 
       # Check if this was a quest completion command and reload character data if needed
-      final_game_state = 
+      final_game_state =
         if quest_completion_command?(trimmed_command) do
           # Reload character from database to ensure we have the latest data
           case reload_character_from_database(updated_game_state.character.id) do
-            nil -> updated_game_state
+            nil ->
+              updated_game_state
+
             reloaded_character ->
               # Update game state with reloaded character and synced stats
               synced_stats = sync_player_stats_with_character(new_stats, reloaded_character)
@@ -386,18 +388,21 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   # Helper function to detect if a command might have completed a quest
   defp quest_completion_command?(command) do
     command_lower = String.downcase(command)
-    String.contains?(command_lower, "deliver") or 
-    String.contains?(command_lower, "turn in") or
-    String.contains?(command_lower, "complete") or
-    String.contains?(command_lower, "give")
+
+    String.contains?(command_lower, "deliver") or
+      String.contains?(command_lower, "turn in") or
+      String.contains?(command_lower, "complete") or
+      String.contains?(command_lower, "give")
   end
 
   # Helper function to reload character from database
   defp reload_character_from_database(character_id) do
     try do
       case Shard.Repo.get(Shard.Characters.Character, character_id) do
-        nil -> nil
-        character -> 
+        nil ->
+          nil
+
+        character ->
           # Preload associations to ensure we have complete character data
           Shard.Repo.preload(character, [:character_inventories, :hotbar_slots])
       end
