@@ -116,11 +116,57 @@ defmodule ShardWeb.UserLive.CommandParsers do
 
   # Parse equipped command to show equipped items
   def parse_equipped_command(command) do
-    # Match patterns like: equipped, equip
-    if Regex.match?(~r/^(equipped|equip)\s*$/i, command) do
+    # Match patterns like: equipped
+    if Regex.match?(~r/^equipped\s*$/i, command) do
       :ok
     else
       :error
+    end
+  end
+
+  # Parse equip command to extract item name
+  def parse_equip_command(command) do
+    # Match patterns like: equip "item name", equip 'item name', equip item_name
+    cond do
+      # Match equip "item name" or equip 'item name'
+      Regex.match?(~r/^equip\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^equip\s+["'](.+)["']\s*$/i, command) do
+          [_, item_name] -> {:ok, String.trim(item_name)}
+          _ -> :error
+        end
+
+      # Match equip item_name (single word, no quotes)
+      Regex.match?(~r/^equip\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^equip\s+(\w+)\s*$/i, command) do
+          [_, item_name] -> {:ok, String.trim(item_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
+    end
+  end
+
+  # Parse unequip command to extract item name
+  def parse_unequip_command(command) do
+    # Match patterns like: unequip "item name", unequip 'item name', unequip item_name
+    cond do
+      # Match unequip "item name" or unequip 'item name'
+      Regex.match?(~r/^unequip\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^unequip\s+["'](.+)["']\s*$/i, command) do
+          [_, item_name] -> {:ok, String.trim(item_name)}
+          _ -> :error
+        end
+
+      # Match unequip item_name (single word, no quotes)
+      Regex.match?(~r/^unequip\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^unequip\s+(\w+)\s*$/i, command) do
+          [_, item_name] -> {:ok, String.trim(item_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
     end
   end
 
@@ -362,6 +408,74 @@ defmodule ShardWeb.UserLive.CommandParsers do
         end)
       
       {response, game_state}
+    end
+  end
+
+  # Execute equip command with a specific item name
+  def execute_equip_command(game_state, item_name) do
+    # Get character's inventory
+    inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
+    
+    # Find the item by name (case-insensitive)
+    target_item = Enum.find(inventory_items, fn inv_item ->
+      String.downcase(inv_item.item.name || "") == String.downcase(item_name)
+    end)
+
+    case target_item do
+      nil ->
+        {["You don't have an item named '#{item_name}' in your inventory."], game_state}
+
+      inv_item ->
+        if inv_item.equipped do
+          {["#{inv_item.item.name} is already equipped."], game_state}
+        else
+          case Shard.Items.equip_item(inv_item.id) do
+            {:ok, _} ->
+              # Reload inventory to sync with game state
+              updated_inventory = ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+              updated_game_state = %{game_state | inventory_items: updated_inventory}
+              
+              {["You equip #{inv_item.item.name}."], updated_game_state}
+
+            {:error, :not_equippable} ->
+              {["#{inv_item.item.name} cannot be equipped."], game_state}
+
+            {:error, :already_equipped} ->
+              {["#{inv_item.item.name} is already equipped."], game_state}
+
+            {:error, reason} ->
+              {["Failed to equip #{inv_item.item.name}: #{reason}"], game_state}
+          end
+        end
+    end
+  end
+
+  # Execute unequip command with a specific item name
+  def execute_unequip_command(game_state, item_name) do
+    # Get character's inventory
+    inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
+    
+    # Find the equipped item by name (case-insensitive)
+    target_item = Enum.find(inventory_items, fn inv_item ->
+      inv_item.equipped && String.downcase(inv_item.item.name || "") == String.downcase(item_name)
+    end)
+
+    case target_item do
+      nil ->
+        {["You don't have an equipped item named '#{item_name}'."], game_state}
+
+      inv_item ->
+        case Shard.Items.unequip_item(inv_item.id) do
+          {:ok, _} ->
+            # Reload inventory to sync with game state
+            updated_inventory = ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+            updated_game_state = %{game_state | inventory_items: updated_inventory}
+            
+            {["You unequip #{inv_item.item.name}."], updated_game_state}
+
+          {:error, reason} ->
+            {["Failed to unequip #{inv_item.item.name}: #{reason}"], game_state}
+        end
     end
   end
 

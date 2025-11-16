@@ -45,6 +45,8 @@ defmodule ShardWeb.UserLive.Commands1 do
           "  deliver_quest \"npc_name\" - Deliver completed quest to NPC",
           "  poke \"character_name\" - Poke another player",
           "  equipped - Show your currently equipped items",
+          "  equip \"item_name\" - Equip an item from your inventory",
+          "  unequip \"item_name\" - Unequip an equipped item",
           "  north/south/east/west - Move in cardinal directions",
           "  northeast/southeast/northwest/southwest - Move diagonally",
           "  Shortcuts: n/s/e/w/ne/se/nw/sw",
@@ -358,9 +360,23 @@ defmodule ShardWeb.UserLive.Commands1 do
                                     execute_equipped_command(game_state)
 
                                   :error ->
-                                    {[
-                                       "Unknown command: '#{command}'. Type 'help' for available commands."
-                                     ], game_state}
+                                    # Check if it's an equip command
+                                    case parse_equip_command(command) do
+                                      {:ok, item_name} ->
+                                        execute_equip_command(game_state, item_name)
+
+                                      :error ->
+                                        # Check if it's an unequip command
+                                        case parse_unequip_command(command) do
+                                          {:ok, item_name} ->
+                                            execute_unequip_command(game_state, item_name)
+
+                                          :error ->
+                                            {[
+                                               "Unknown command: '#{command}'. Type 'help' for available commands."
+                                             ], game_state}
+                                        end
+                                    end
                                 end
                             end
                         end
