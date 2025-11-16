@@ -516,7 +516,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
          quest_title,
          exp_reward,
          gold_reward,
-         
+         full_quest,
          level_up_message,
          given_items \\ []
        ) do
