@@ -383,12 +383,7 @@ defmodule Shard.Quest2 do
   defp extract_reward_items_from_objectives(objectives) when is_map(objectives) do
     case objectives do
       %{"reward_items" => reward_items} when is_list(reward_items) ->
-        # Convert list of reward items to map format expected by give_quest_reward_items
-        Enum.reduce(reward_items, %{}, fn item, acc ->
-          item_name = Map.get(item, "item_name")
-          quantity = Map.get(item, "quantity", 1)
-          if item_name, do: Map.put(acc, item_name, quantity), else: acc
-        end)
+        convert_reward_items_to_map(reward_items)
 
       _ ->
         %{}
@@ -396,6 +391,14 @@ defmodule Shard.Quest2 do
   end
 
   defp extract_reward_items_from_objectives(_objectives), do: %{}
+
+  defp convert_reward_items_to_map(reward_items) do
+    Enum.reduce(reward_items, %{}, fn item, acc ->
+      item_name = Map.get(item, "item_name")
+      quantity = Map.get(item, "quantity", 1)
+      if item_name, do: Map.put(acc, item_name, quantity), else: acc
+    end)
+  end
 
   defp remove_items_from_entries([], 0), do: :ok
   defp remove_items_from_entries([], _remaining), do: {:error, :insufficient_items}
