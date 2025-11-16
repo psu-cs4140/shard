@@ -3,7 +3,21 @@ defmodule Shard.Items.Item do
   import Ecto.Changeset
 
   # Define valid item types and rarities
-  @item_types ["weapon", "shield", "head", "body", "legs", "feet", "ring", "necklace", "consumable", "misc", "material", "tool", "quest"]
+  @item_types [
+    "weapon",
+    "shield",
+    "head",
+    "body",
+    "legs",
+    "feet",
+    "ring",
+    "necklace",
+    "consumable",
+    "misc",
+    "material",
+    "tool",
+    "quest"
+  ]
   @rarities ["common", "uncommon", "rare", "epic", "legendary"]
   @equipment_slots [
     "head",
@@ -88,13 +102,14 @@ defmodule Shard.Items.Item do
   # Automatically set equippable=true and equipment_slot for armor pieces
   defp set_equipment_defaults(changeset) do
     item_type = get_field(changeset, :item_type)
-    
+
     case item_type do
-      type when type in ["head", "body", "legs", "feet", "weapon", "shield", "ring", "necklace"] ->
+      type
+      when type in ["head", "body", "legs", "feet", "weapon", "shield", "ring", "necklace"] ->
         changeset
         |> put_change(:equippable, true)
         |> maybe_set_equipment_slot(type)
-      
+
       _ ->
         changeset
     end
@@ -103,7 +118,7 @@ defmodule Shard.Items.Item do
   # Set equipment_slot if not already set
   defp maybe_set_equipment_slot(changeset, item_type) do
     current_slot = get_field(changeset, :equipment_slot)
-    
+
     if is_nil(current_slot) do
       put_change(changeset, :equipment_slot, item_type)
     else

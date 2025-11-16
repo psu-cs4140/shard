@@ -82,7 +82,6 @@ defmodule Shard.Repo.Migrations.AddVampireManorKeys do
     ON CONFLICT (name) DO NOTHING;
     """
 
-
     # Create the Library Key item and place it in the Freezer (4,-3)
     execute """
     INSERT INTO items (
@@ -114,7 +113,6 @@ defmodule Shard.Repo.Migrations.AddVampireManorKeys do
     )
     ON CONFLICT (name) DO NOTHING;
     """
-
 
     # Create the Study Key item and place it in the Library (-1,-2)
     execute """

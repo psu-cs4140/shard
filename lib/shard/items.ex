@@ -185,10 +185,10 @@ defmodule Shard.Items do
     cond do
       not inventory.item.equippable ->
         {:error, :not_equippable}
-      
+
       inventory.equipped ->
         {:error, :already_equipped}
-      
+
       true ->
         # Unequip any existing item in the same slot
         unequip_slot(inventory.character_id, inventory.item.equipment_slot)
@@ -646,13 +646,13 @@ defmodule Shard.Items do
   Returns a map with equipment slots as keys and items as values.
   """
   def get_equipped_items(character_id) do
-    equipment = 
+    equipment =
       Repo.all(
         from ce in CharacterEquipment,
-        where: ce.character_id == ^character_id,
-        preload: [:item]
+          where: ce.character_id == ^character_id,
+          preload: [:item]
       )
-    
+
     Enum.reduce(equipment, %{}, fn equip, acc ->
       Map.put(acc, equip.equipment_slot, equip.item)
     end)
@@ -684,8 +684,10 @@ defmodule Shard.Items do
 
   defp get_item_if_equippable(item_id) do
     case Repo.get(Item, item_id) do
-      nil -> {:error, :item_not_found}
-      item -> 
+      nil ->
+        {:error, :item_not_found}
+
+      item ->
         if item.equippable do
           {:ok, item}
         else

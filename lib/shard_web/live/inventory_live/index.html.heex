@@ -12,7 +12,10 @@
         <select name="character_id" class="select select-bordered w-full max-w-xs">
           <option disabled selected={is_nil(@selected_character)}>Choose a character</option>
           <%= for character <- @characters do %>
-            <option value={character.id} selected={@selected_character && @selected_character.id == character.id}>
+            <option
+              value={character.id}
+              selected={@selected_character && @selected_character.id == character.id}
+            >
               {character.name} (Level {character.level} {String.capitalize(character.class)})
             </option>
           <% end %>

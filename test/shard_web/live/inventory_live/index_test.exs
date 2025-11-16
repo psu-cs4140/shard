@@ -4,11 +4,10 @@ defmodule ShardWeb.InventoryLive.IndexTest do
   import Phoenix.LiveViewTest
   import Shard.UsersFixtures
 
-
   describe "Index" do
     setup do
       user = user_fixture()
-      
+
       %{user: user}
     end
 

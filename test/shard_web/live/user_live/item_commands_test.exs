@@ -8,52 +8,58 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
   describe "get_items_at_location/3" do
     setup do
       # Create test items
-      {:ok, pickupable_item} = Items.create_item(%{
-        name: "Test Sword",
-        description: "A test sword",
-        item_type: "weapon",
-        pickup: true,
-        is_active: true
-      })
+      {:ok, pickupable_item} =
+        Items.create_item(%{
+          name: "Test Sword",
+          description: "A test sword",
+          item_type: "weapon",
+          pickup: true,
+          is_active: true
+        })
 
-      {:ok, non_pickupable_item} = Items.create_item(%{
-        name: "Heavy Boulder",
-        description: "A very heavy boulder",
-        item_type: "misc",
-        pickup: false,
-        is_active: true
-      })
+      {:ok, non_pickupable_item} =
+        Items.create_item(%{
+          name: "Heavy Boulder",
+          description: "A very heavy boulder",
+          item_type: "misc",
+          pickup: false,
+          is_active: true
+        })
 
-      {:ok, inactive_item} = Items.create_item(%{
-        name: "Inactive Item",
-        description: "An inactive item",
-        item_type: "misc",
-        pickup: true,
-        is_active: false
-      })
+      {:ok, inactive_item} =
+        Items.create_item(%{
+          name: "Inactive Item",
+          description: "An inactive item",
+          item_type: "misc",
+          pickup: true,
+          is_active: false
+        })
 
       # Create room items
-      {:ok, room_item1} = Repo.insert(%RoomItem{
-        item_id: pickupable_item.id,
-        location: "5,10,0",
-        quantity: 2
-      })
+      {:ok, room_item1} =
+        Repo.insert(%RoomItem{
+          item_id: pickupable_item.id,
+          location: "5,10,0",
+          quantity: 2
+        })
 
-      {:ok, room_item2} = Repo.insert(%RoomItem{
-        item_id: non_pickupable_item.id,
-        location: "5,10,0",
-        quantity: 1
-      })
+      {:ok, room_item2} =
+        Repo.insert(%RoomItem{
+          item_id: non_pickupable_item.id,
+          location: "5,10,0",
+          quantity: 1
+        })
 
       # Create direct item with location
-      {:ok, direct_item} = Items.create_item(%{
-        name: "Direct Item",
-        description: "An item placed directly",
-        item_type: "misc",
-        pickup: true,
-        is_active: true,
-        location: "5,10,0"
-      })
+      {:ok, direct_item} =
+        Items.create_item(%{
+          name: "Direct Item",
+          description: "An item placed directly",
+          item_type: "misc",
+          pickup: true,
+          is_active: true,
+          location: "5,10,0"
+        })
 
       %{
         pickupable_item: pickupable_item,
@@ -73,7 +79,7 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
       items = ItemCommands.get_items_at_location(5, 10, 1)
 
       assert length(items) == 3
-      
+
       item_names = Enum.map(items, & &1.name)
       assert "Test Sword" in item_names
       assert "Heavy Boulder" in item_names
@@ -82,7 +88,7 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
 
     test "excludes inactive items" do
       items = ItemCommands.get_items_at_location(5, 10, 1)
-      
+
       item_names = Enum.map(items, & &1.name)
       refute "Inactive Item" in item_names
     end
@@ -95,17 +101,19 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
     test "removes duplicates based on name", %{pickupable_item: pickupable_item} do
       # Create another room item with same item as existing pickupable_item
       # This simulates having the same item in multiple room item records
-      {:ok, _room_item} = Repo.insert(%RoomItem{
-        item_id: pickupable_item.id, # Use the existing pickupable item's ID
-        location: "5,10,0",
-        quantity: 1
-      })
+      {:ok, _room_item} =
+        Repo.insert(%RoomItem{
+          # Use the existing pickupable item's ID
+          item_id: pickupable_item.id,
+          location: "5,10,0",
+          quantity: 1
+        })
 
       items = ItemCommands.get_items_at_location(5, 10, 1)
-      
+
       # Should still only have 3 unique items despite duplicate room items
       assert length(items) == 3
-      
+
       # Verify we don't have duplicate names
       item_names = Enum.map(items, & &1.name)
       unique_names = Enum.uniq(item_names)
@@ -116,12 +124,16 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
   describe "parse_pickup_command/1" do
     test "parses quoted item names with double quotes" do
       assert {:ok, "magic sword"} = ItemCommands.parse_pickup_command("pickup \"magic sword\"")
-      assert {:ok, "long item name"} = ItemCommands.parse_pickup_command("pickup \"long item name\"")
+
+      assert {:ok, "long item name"} =
+               ItemCommands.parse_pickup_command("pickup \"long item name\"")
     end
 
     test "parses quoted item names with single quotes" do
       assert {:ok, "magic sword"} = ItemCommands.parse_pickup_command("pickup 'magic sword'")
-      assert {:ok, "long item name"} = ItemCommands.parse_pickup_command("pickup 'long item name'")
+
+      assert {:ok, "long item name"} =
+               ItemCommands.parse_pickup_command("pickup 'long item name'")
     end
 
     test "parses single word item names without quotes" do
@@ -136,7 +148,9 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
 
     test "handles extra whitespace" do
       assert {:ok, "sword"} = ItemCommands.parse_pickup_command("pickup   sword   ")
-      assert {:ok, "magic sword"} = ItemCommands.parse_pickup_command("pickup   \"magic sword\"   ")
+
+      assert {:ok, "magic sword"} =
+               ItemCommands.parse_pickup_command("pickup   \"magic sword\"   ")
     end
 
     test "returns error for invalid formats" do
@@ -151,45 +165,50 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
   describe "execute_pickup_command/2" do
     setup do
       # Create a character
-      {:ok, character} = Characters.create_character(%{
-        name: "Test Character",
-        level: 1,
-        health: 100,
-        max_health: 100,
-        experience: 0,
-        class: "warrior",
-        race: "human"
-      })
+      {:ok, character} =
+        Characters.create_character(%{
+          name: "Test Character",
+          level: 1,
+          health: 100,
+          max_health: 100,
+          experience: 0,
+          class: "warrior",
+          race: "human"
+        })
 
       # Create test items
-      {:ok, pickupable_item} = Items.create_item(%{
-        name: "Test Sword",
-        description: "A test sword",
-        item_type: "weapon",
-        pickup: true,
-        is_active: true
-      })
+      {:ok, pickupable_item} =
+        Items.create_item(%{
+          name: "Test Sword",
+          description: "A test sword",
+          item_type: "weapon",
+          pickup: true,
+          is_active: true
+        })
 
-      {:ok, non_pickupable_item} = Items.create_item(%{
-        name: "Heavy Boulder",
-        description: "A very heavy boulder",
-        item_type: "misc",
-        pickup: false,
-        is_active: true
-      })
+      {:ok, non_pickupable_item} =
+        Items.create_item(%{
+          name: "Heavy Boulder",
+          description: "A very heavy boulder",
+          item_type: "misc",
+          pickup: false,
+          is_active: true
+        })
 
       # Create room items at player location
-      {:ok, room_item1} = Repo.insert(%RoomItem{
-        item_id: pickupable_item.id,
-        location: "0,0,0",
-        quantity: 1
-      })
+      {:ok, room_item1} =
+        Repo.insert(%RoomItem{
+          item_id: pickupable_item.id,
+          location: "0,0,0",
+          quantity: 1
+        })
 
-      {:ok, room_item2} = Repo.insert(%RoomItem{
-        item_id: non_pickupable_item.id,
-        location: "0,0,0",
-        quantity: 1
-      })
+      {:ok, room_item2} =
+        Repo.insert(%RoomItem{
+          item_id: non_pickupable_item.id,
+          location: "0,0,0",
+          quantity: 1
+        })
 
       game_state = %{
         character: character,
@@ -211,7 +230,8 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
       game_state: game_state,
       pickupable_item: _pickupable_item
     } do
-      {response, updated_game_state} = ItemCommands.execute_pickup_command(game_state, "Test Sword")
+      {response, updated_game_state} =
+        ItemCommands.execute_pickup_command(game_state, "Test Sword")
 
       assert "You pick up Test Sword." in response
       assert "Test Sword has been added to your inventory." in response
@@ -222,7 +242,8 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
       game_state: game_state,
       non_pickupable_item: _non_pickupable_item
     } do
-      {response, updated_game_state} = ItemCommands.execute_pickup_command(game_state, "Heavy Boulder")
+      {response, updated_game_state} =
+        ItemCommands.execute_pickup_command(game_state, "Heavy Boulder")
 
       assert "You cannot pick up Heavy Boulder." in response
       assert updated_game_state == game_state
@@ -231,9 +252,14 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
     test "handles item not found with suggestions", %{
       game_state: game_state
     } do
-      {response, updated_game_state} = ItemCommands.execute_pickup_command(game_state, "Nonexistent Item")
+      {response, updated_game_state} =
+        ItemCommands.execute_pickup_command(game_state, "Nonexistent Item")
 
-      assert Enum.any?(response, &String.contains?(&1, "There is no item named 'Nonexistent Item' here."))
+      assert Enum.any?(
+               response,
+               &String.contains?(&1, "There is no item named 'Nonexistent Item' here.")
+             )
+
       assert Enum.any?(response, &String.contains?(&1, "Available items:"))
       assert updated_game_state == game_state
     end
@@ -245,7 +271,8 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
         inventory_items: []
       }
 
-      {response, updated_game_state} = ItemCommands.execute_pickup_command(empty_game_state, "Any Item")
+      {response, updated_game_state} =
+        ItemCommands.execute_pickup_command(empty_game_state, "Any Item")
 
       assert "There are no items here to pick up." in response
       assert updated_game_state == empty_game_state
@@ -254,7 +281,8 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
     test "handles case insensitive item matching", %{
       game_state: game_state
     } do
-      {response, _updated_game_state} = ItemCommands.execute_pickup_command(game_state, "test sword")
+      {response, _updated_game_state} =
+        ItemCommands.execute_pickup_command(game_state, "test sword")
 
       assert "You pick up Test Sword." in response
     end
@@ -262,7 +290,8 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
     test "handles case insensitive item matching with different case", %{
       game_state: game_state
     } do
-      {response, _updated_game_state} = ItemCommands.execute_pickup_command(game_state, "TEST SWORD")
+      {response, _updated_game_state} =
+        ItemCommands.execute_pickup_command(game_state, "TEST SWORD")
 
       assert "You pick up Test Sword." in response
     end

@@ -20,19 +20,21 @@ defmodule Shard.Items.CharacterEquipment do
     |> validate_inclusion(:equipment_slot, Item.equipment_slots())
     |> foreign_key_constraint(:character_id)
     |> foreign_key_constraint(:item_id)
-    |> unique_constraint([:character_id, :equipment_slot], 
-         name: :character_equipment_character_id_equipment_slot_index)
+    |> unique_constraint([:character_id, :equipment_slot],
+      name: :character_equipment_character_id_equipment_slot_index
+    )
     |> validate_item_equippable()
     |> validate_equipment_slot_matches_item()
   end
 
   defp validate_item_equippable(changeset) do
     item_id = get_field(changeset, :item_id)
-    
+
     if item_id do
       case Shard.Repo.get(Item, item_id) do
-        nil -> 
+        nil ->
           add_error(changeset, :item_id, "does not exist")
+
         item ->
           if item.equippable do
             changeset
@@ -48,11 +50,12 @@ defmodule Shard.Items.CharacterEquipment do
   defp validate_equipment_slot_matches_item(changeset) do
     item_id = get_field(changeset, :item_id)
     equipment_slot = get_field(changeset, :equipment_slot)
-    
+
     if item_id && equipment_slot do
       case Shard.Repo.get(Item, item_id) do
-        nil -> 
+        nil ->
           changeset
+
         item ->
           if item.equipment_slot == equipment_slot do
             changeset

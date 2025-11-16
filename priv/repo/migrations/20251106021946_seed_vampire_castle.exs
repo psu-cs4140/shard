@@ -292,37 +292,42 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
       chainmail_items = [
         %{
           name: "Chainmail Helmet",
-          description: "A helmet comprised of interlocking metal rings, cold to the touch and emanating dark energy.",
-          item_type: "armor",
+          description:
+            "A helmet comprised of interlocking metal rings, cold to the touch and emanating dark energy.",
+          item_type: "head",
           equipment_slot: "head"
         },
         %{
-          name: "Chainmail Chestplate", 
-          description: "A suit of interlocking metal rings, cold to the touch and emanating dark energy.",
-          item_type: "armor",
+          name: "Chainmail Chestplate",
+          description:
+            "A suit of interlocking metal rings, cold to the touch and emanating dark energy.",
+          item_type: "body",
           equipment_slot: "chest"
         },
         %{
           name: "Chainmail Leggings",
-          description: "Leggings made of interlocking metal rings, cold to the touch and emanating dark energy.",
-          item_type: "armor", 
+          description:
+            "Leggings made of interlocking metal rings, cold to the touch and emanating dark energy.",
+          item_type: "legs",
           equipment_slot: "legs"
         },
         %{
           name: "Chainmail Boots",
-          description: "A pair of boots made up of interlocking metal rings, cold to the touch and emanating dark energy.",
-          item_type: "armor",
+          description:
+            "A pair of boots made up of interlocking metal rings, cold to the touch and emanating dark energy.",
+          item_type: "feet",
           equipment_slot: "feet"
         },
         %{
           name: "Darkened Broadsword",
-          description: "A blade, clearly discolored and dulled from constant use from its previous wielder.",
+          description:
+            "A blade, clearly discolored and dulled from constant use from its previous wielder.",
           item_type: "weapon",
           equipment_slot: "main_hand"
         }
       ]
 
-      created_chainmail_items = 
+      created_chainmail_items =
         Enum.map(chainmail_items, fn item_spec ->
           case Repo.query("SELECT id FROM items WHERE name = $1", [item_spec.name]) do
             {:ok, %{rows: []}} ->
@@ -343,6 +348,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
                     DateTime.utc_now()
                   ]
                 )
+
               %{id: item_id, name: item_spec.name}
 
             {:ok, %{rows: [[item_id]]}} ->
@@ -380,11 +386,17 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
         end
 
       # Create the possessed suit of armor monster with multiple item drops
-      loot_drops = 
+      loot_drops =
         created_chainmail_items
-        |> Enum.map(fn item -> {"#{item.id}", %{chance: 0.3, min_quantity: 1, max_quantity: 1}} end)
+        |> Enum.map(fn item ->
+          {"#{item.id}", %{chance: 0.3, min_quantity: 1, max_quantity: 1}}
+        end)
         |> Enum.into(%{})
-        |> Kernel.put_in([Access.key("#{library_key_item.id}")], %{chance: 1.0, min_quantity: 1, max_quantity: 1})
+        |> Kernel.put_in([Access.key("#{library_key_item.id}")], %{
+          chance: 1.0,
+          min_quantity: 1,
+          max_quantity: 1
+        })
 
       {:ok, _armor} =
         Shard.Monsters.create_monster(%{
@@ -425,7 +437,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
                   100,
                   false,
                   true,
-                  "back",
+                  "body",
                   true,
                   DateTime.utc_now(),
                   DateTime.utc_now()

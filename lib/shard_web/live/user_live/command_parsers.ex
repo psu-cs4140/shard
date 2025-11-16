@@ -393,27 +393,28 @@ defmodule ShardWeb.UserLive.CommandParsers do
   def execute_equipped_command(game_state) do
     # Get all available equipment slots
     all_slots = Shard.Items.Item.equipment_slots()
-    
+
     # Use the same data source as the inventory management page
     inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
-    
+
     # Filter for equipped items only
     equipped_items = Enum.filter(inventory_items, fn inv_item -> inv_item.equipped end)
-    
+
     # Create a map of slot -> item name for equipped items
-    equipped_map = 
+    equipped_map =
       Enum.reduce(equipped_items, %{}, fn inv_item, acc ->
         slot = inv_item.equipment_slot || "unknown"
         Map.put(acc, slot, inv_item.item.name)
       end)
-    
+
     # Build response showing all slots
-    response = ["Your equipment slots:"] ++
-      Enum.map(all_slots, fn slot ->
-        item_name = Map.get(equipped_map, slot, "None")
-        "  #{String.capitalize(slot)}: #{item_name}"
-      end)
-    
+    response =
+      ["Your equipment slots:"] ++
+        Enum.map(all_slots, fn slot ->
+          item_name = Map.get(equipped_map, slot, "None")
+          "  #{String.capitalize(slot)}: #{item_name}"
+        end)
+
     {response, game_state}
   end
 
@@ -421,11 +422,12 @@ defmodule ShardWeb.UserLive.CommandParsers do
   def execute_equip_command(game_state, item_name) do
     # Get character's inventory
     inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
-    
+
     # Find the item by name (case-insensitive)
-    target_item = Enum.find(inventory_items, fn inv_item ->
-      String.downcase(inv_item.item.name || "") == String.downcase(item_name)
-    end)
+    target_item =
+      Enum.find(inventory_items, fn inv_item ->
+        String.downcase(inv_item.item.name || "") == String.downcase(item_name)
+      end)
 
     case target_item do
       nil ->
@@ -438,9 +440,11 @@ defmodule ShardWeb.UserLive.CommandParsers do
           case Shard.Items.equip_item(inv_item.id) do
             {:ok, _} ->
               # Reload inventory to sync with game state
-              updated_inventory = ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+              updated_inventory =
+                ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+
               updated_game_state = %{game_state | inventory_items: updated_inventory}
-              
+
               {["You equip #{inv_item.item.name}."], updated_game_state}
 
             {:error, :not_equippable} ->
@@ -460,11 +464,13 @@ defmodule ShardWeb.UserLive.CommandParsers do
   def execute_unequip_command(game_state, item_name) do
     # Get character's inventory
     inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
-    
+
     # Find the equipped item by name (case-insensitive)
-    target_item = Enum.find(inventory_items, fn inv_item ->
-      inv_item.equipped && String.downcase(inv_item.item.name || "") == String.downcase(item_name)
-    end)
+    target_item =
+      Enum.find(inventory_items, fn inv_item ->
+        inv_item.equipped &&
+          String.downcase(inv_item.item.name || "") == String.downcase(item_name)
+      end)
 
     case target_item do
       nil ->
@@ -474,9 +480,11 @@ defmodule ShardWeb.UserLive.CommandParsers do
         case Shard.Items.unequip_item(inv_item.id) do
           {:ok, _} ->
             # Reload inventory to sync with game state
-            updated_inventory = ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+            updated_inventory =
+              ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+
             updated_game_state = %{game_state | inventory_items: updated_inventory}
-            
+
             {["You unequip #{inv_item.item.name}."], updated_game_state}
 
           {:error, reason} ->

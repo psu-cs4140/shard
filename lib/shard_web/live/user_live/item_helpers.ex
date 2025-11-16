@@ -127,23 +127,27 @@ defmodule ShardWeb.UserLive.ItemHelpers do
         case Shard.Items.equip_item(inventory_id) do
           {:ok, _} ->
             # Reload inventory to sync with game state
-            updated_inventory = ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+            updated_inventory =
+              ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+
             updated_game_state = %{game_state | inventory_items: updated_inventory}
-            
+
             # Generate appropriate message based on equipment slot
             equipment_slot = Map.get(item, :equipment_slot) || item.item_type
-            message = case equipment_slot do
-              "weapon" -> "You equip #{item.name} as your weapon."
-              "shield" -> "You equip your mighty #{item.name} for protection."
-              "head" -> "You equip #{item.name} on your head."
-              "body" -> "You equip #{item.name} on your body."
-              "legs" -> "You equip #{item.name} on your legs."
-              "feet" -> "You equip #{item.name} on your feet."
-              "ring" -> "You slide #{item.name} on one of your fingers."
-              "necklace" -> "You place #{item.name} around your neck."
-              _ -> "You equip #{item.name}."
-            end
-            
+
+            message =
+              case equipment_slot do
+                "weapon" -> "You equip #{item.name} as your weapon."
+                "shield" -> "You equip your mighty #{item.name} for protection."
+                "head" -> "You equip #{item.name} on your head."
+                "body" -> "You equip #{item.name} on your body."
+                "legs" -> "You equip #{item.name} on your legs."
+                "feet" -> "You equip #{item.name} on your feet."
+                "ring" -> "You slide #{item.name} on one of your fingers."
+                "necklace" -> "You place #{item.name} around your neck."
+                _ -> "You equip #{item.name}."
+              end
+
             {[message], updated_game_state}
 
           {:error, :not_equippable} ->
@@ -157,7 +161,6 @@ defmodule ShardWeb.UserLive.ItemHelpers do
         end
     end
   end
-
 
   # Use a key to unlock doors
   def use_key_item(game_state, key) do
