@@ -62,6 +62,21 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
         save_character_stats(updated_game_state.character, new_stats)
       end
 
+      # Check if this was a quest completion command and reload character data if needed
+      final_game_state = 
+        if quest_completion_command?(trimmed_command) do
+          # Reload character from database to ensure we have the latest data
+          case reload_character_from_database(updated_game_state.character.id) do
+            nil -> updated_game_state
+            reloaded_character ->
+              # Update game state with reloaded character and synced stats
+              synced_stats = sync_player_stats_with_character(new_stats, reloaded_character)
+              %{updated_game_state | character: reloaded_character, player_stats: synced_stats}
+          end
+        else
+          updated_game_state
+        end
+
       # Add command and response to output
       new_output =
         socket.assigns.terminal_state.output ++
@@ -75,7 +90,7 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
         current_command: ""
       }
 
-      {:noreply, socket, updated_game_state, terminal_state}
+      {:noreply, socket, final_game_state, terminal_state}
     else
       {:noreply, socket}
     end
@@ -367,4 +382,40 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   end
 
   defp handle_player_fled(_event, _socket), do: nil
+
+  # Helper function to detect if a command might have completed a quest
+  defp quest_completion_command?(command) do
+    command_lower = String.downcase(command)
+    String.contains?(command_lower, "deliver") or 
+    String.contains?(command_lower, "turn in") or
+    String.contains?(command_lower, "complete") or
+    String.contains?(command_lower, "give")
+  end
+
+  # Helper function to reload character from database
+  defp reload_character_from_database(character_id) do
+    try do
+      case Shard.Repo.get(Shard.Characters.Character, character_id) do
+        nil -> nil
+        character -> 
+          # Preload associations to ensure we have complete character data
+          Shard.Repo.preload(character, [:character_inventories, :hotbar_slots])
+      end
+    rescue
+      _error -> nil
+    end
+  end
+
+  # Helper function to sync player stats with character data
+  defp sync_player_stats_with_character(current_stats, character) do
+    if character do
+      # Ensure we update all relevant fields from the character
+      current_stats
+      |> Map.put(:experience, character.experience || 0)
+      |> Map.put(:gold, character.gold || 0)
+      |> Map.put(:level, character.level || 1)
+    else
+      current_stats
+    end
+  end
 end
