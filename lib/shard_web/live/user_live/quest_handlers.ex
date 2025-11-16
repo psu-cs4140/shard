@@ -402,10 +402,12 @@ defmodule ShardWeb.UserLive.QuestHandlers do
 
     # Reload character from database to get updated stats
     updated_character = reload_character_from_database(character_id)
-    
+
     # Update local game state with actual database values
     updated_stats = sync_player_stats_with_character(game_state.player_stats, updated_character)
-    {updated_stats, level_up_message} = handle_level_up_check_from_character(updated_stats, updated_character)
+
+    {updated_stats, level_up_message} =
+      handle_level_up_check_from_character(updated_stats, updated_character)
 
     response =
       build_quest_completion_response(
@@ -419,12 +421,12 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       )
 
     updated_game_state = %{
-      game_state | 
-      player_stats: updated_stats, 
-      quests: updated_quests,
-      character: updated_character
+      game_state
+      | player_stats: updated_stats,
+        quests: updated_quests,
+        character: updated_character
     }
-    
+
     {response, updated_game_state}
   end
 
@@ -466,7 +468,6 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         player_stats
     end
   end
-
 
   # Helper function to handle level up check
   defp handle_level_up_check(updated_stats) do
@@ -515,7 +516,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
          quest_title,
          exp_reward,
          gold_reward,
-         full_quest,
+         
          level_up_message,
          given_items \\ []
        ) do
@@ -582,8 +583,10 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   defp reload_character_from_database(character_id) do
     try do
       case Shard.Repo.get(Shard.Characters.Character, character_id) do
-        nil -> nil
-        character -> 
+        nil ->
+          nil
+
+        character ->
           # Preload associations to ensure we have complete character data
           Shard.Repo.preload(character, [:character_inventories, :hotbar_slots])
       end
@@ -596,21 +599,22 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   defp sync_player_stats_with_character(current_stats, character) do
     if character do
       # Ensure we update all relevant fields from the character
-      updated_stats = current_stats
-      |> Map.put(:experience, character.experience || 0)
-      |> Map.put(:gold, character.gold || 0)
-      |> Map.put(:level, character.level || 1)
-      
+      updated_stats =
+        current_stats
+        |> Map.put(:experience, character.experience || 0)
+        |> Map.put(:gold, character.gold || 0)
+        |> Map.put(:level, character.level || 1)
+
       # Recalculate next level experience if needed
       current_level = character.level || 1
       next_level_exp = calculate_next_level_exp(current_level)
-      
+
       Map.put(updated_stats, :next_level_exp, next_level_exp)
     else
       current_stats
     end
   end
-  
+
   # Helper function to calculate next level experience requirement
   defp calculate_next_level_exp(level) do
     # Use the same formula as in the quest system: level * 500
