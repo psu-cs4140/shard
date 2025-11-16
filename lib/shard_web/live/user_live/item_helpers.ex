@@ -117,7 +117,7 @@ defmodule ShardWeb.UserLive.ItemHelpers do
 
   # Equip an item (weapons, armor, etc.)
   def equip_item(game_state, item) do
-    case item.type do
+    case item.item_type do
       "weapon" ->
         old_weapon = game_state.equipped_weapon
         updated_game_state = %{game_state | equipped_weapon: item}
