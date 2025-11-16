@@ -119,86 +119,135 @@ defmodule ShardWeb.UserLive.ItemHelpers do
   def equip_item(game_state, item) do
     case item.item_type do
       "weapon" ->
-        old_weapon = game_state.equipped_weapon
-        updated_game_state = %{game_state | equipped_weapon: item}
+        case equip_item_to_slot(item, "weapon") do
+          {:ok, _} ->
+            old_weapon = game_state.equipped_weapon
+            updated_game_state = %{game_state | equipped_weapon: item}
 
-        response = [
-          "You equip #{item.name}.",
-          "You unequip #{old_weapon.name}."
-        ]
+            response = [
+              "You equip #{item.name}.",
+              "You unequip #{old_weapon.name}."
+            ]
 
-        {response, updated_game_state}
+            {response, updated_game_state}
+
+          {:error, _} ->
+            response = ["Failed to equip #{item.name}."]
+            {response, game_state}
+        end
 
       "shield" ->
-        response = [
-          "You equip your mighty #{item.name} for protection",
-        ]
+        case equip_item_to_slot(item, "shield") do
+          {:ok, _} ->
+            response = [
+              "You equip your mighty #{item.name} for protection."
+            ]
 
-        {response, game_state}
+            {response, game_state}
 
-        ->
-        response = ["You cannot equip #{item.name}."]
-        {response, game_state}
-
+          {:error, _} ->
+            response = ["Failed to equip #{item.name}."]
+            {response, game_state}
+        end
 
       "head" ->
-        response = [
-          "You equip #{item.name} on your head.",
-        ]
+        case equip_item_to_slot(item, "head") do
+          {:ok, _} ->
+            response = [
+              "You equip #{item.name} on your head."
+            ]
 
-        {response, game_state}
+            {response, game_state}
+
+          {:error, _} ->
+            response = ["Failed to equip #{item.name}."]
+            {response, game_state}
+        end
 
       "body" ->
-        response = [
-          "You equip #{item.name} on your body.",
-        ]
+        case equip_item_to_slot(item, "body") do
+          {:ok, _} ->
+            response = [
+              "You equip #{item.name} on your body."
+            ]
 
-        {response, game_state}
+            {response, game_state}
+
+          {:error, _} ->
+            response = ["Failed to equip #{item.name}."]
+            {response, game_state}
+        end
 
       "legs" ->
-        response = [
-          "You equip #{item.name} on your legs.",
-        ]
+        case equip_item_to_slot(item, "legs") do
+          {:ok, _} ->
+            response = [
+              "You equip #{item.name} on your legs."
+            ]
 
-        {response, game_state}
+            {response, game_state}
 
-        ->
-        response = ["You cannot equip #{item.name}."]
-        {response, game_state}
-      
+          {:error, _} ->
+            response = ["Failed to equip #{item.name}."]
+            {response, game_state}
+        end
+
       "feet" ->
-        response = [
-          "You equip #{item.name} on your feet.",
-        ]
+        case equip_item_to_slot(item, "feet") do
+          {:ok, _} ->
+            response = [
+              "You equip #{item.name} on your feet."
+            ]
 
-        {response, game_state}
+            {response, game_state}
 
-        ->
-        response = ["You cannot equip #{item.name}."]
-        {response, game_state}
+          {:error, _} ->
+            response = ["Failed to equip #{item.name}."]
+            {response, game_state}
+        end
 
       "ring" ->
-        response = [
-          "You slide #{item.name} on one of your fingers.",
-        ]
+        case equip_item_to_slot(item, "ring") do
+          {:ok, _} ->
+            response = [
+              "You slide #{item.name} on one of your fingers."
+            ]
 
-        {response, game_state}
+            {response, game_state}
 
-        ->
-        response = ["You cannot equip #{item.name}."]
-        {response, game_state}
+          {:error, _} ->
+            response = ["Failed to equip #{item.name}."]
+            {response, game_state}
+        end
 
       "necklace" ->
-        response = [
-          "You place #{item.name} around your neck.",
-        ]
+        case equip_item_to_slot(item, "necklace") do
+          {:ok, _} ->
+            response = [
+              "You place #{item.name} around your neck."
+            ]
 
-        {response, game_state}
+            {response, game_state}
 
-        ->
+          {:error, _} ->
+            response = ["Failed to equip #{item.name}."]
+            {response, game_state}
+        end
+
+      _ ->
         response = ["You cannot equip #{item.name}."]
         {response, game_state}
+    end
+  end
 
+  # Helper function to equip an item to a specific slot
+  defp equip_item_to_slot(item, equipment_slot) do
+    case Map.get(item, :inventory_id) do
+      nil ->
+        {:error, :no_inventory_id}
+
+      inventory_id ->
+        Shard.Items.equip_item(inventory_id)
     end
   end
 
