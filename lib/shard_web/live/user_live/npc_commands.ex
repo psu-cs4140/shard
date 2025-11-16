@@ -135,7 +135,10 @@ defmodule ShardWeb.UserLive.NpcCommands do
       {:ok, _quest_acceptance} ->
         exp_reward = quest.experience_reward || 0
         gold_reward = quest.gold_reward || 0
-        result = "Successfully turned in '#{quest.title}' (gained #{exp_reward} exp, #{gold_reward} gold)"
+
+        result =
+          "Successfully turned in '#{quest.title}' (gained #{exp_reward} exp, #{gold_reward} gold)"
+
         {[result | results_acc], [quest.id | completed_ids_acc]}
 
       {:error, :missing_items} ->
