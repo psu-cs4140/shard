@@ -133,33 +133,11 @@ defmodule ShardWeb.UserLive.NpcCommands do
        ) do
     case Shard.Quests.turn_in_quest_with_character_id(user_id, character_id, quest.id) do
       {:ok, {_quest_acceptance, given_items}} ->
-        exp_reward = quest.experience_reward || 0
-        gold_reward = quest.gold_reward || 0
-
-        # Build reward message including items
-        reward_parts = ["gained #{exp_reward} exp", "#{gold_reward} gold"]
-
-        item_rewards =
-          if length(given_items) > 0 do
-            item_list = Enum.map(given_items, fn item -> "#{item.name} (x#{item.quantity})" end)
-            ["items: #{Enum.join(item_list, ", ")}"]
-          else
-            []
-          end
-
-        all_rewards = Enum.join(reward_parts ++ item_rewards, ", ")
-        result = "Successfully turned in '#{quest.title}' (#{all_rewards})"
-
+        result = build_success_message_with_items(quest, given_items)
         {[result | results_acc], [quest.id | completed_ids_acc]}
 
       {:ok, _quest_acceptance} ->
-        # Fallback for when no items are returned
-        exp_reward = quest.experience_reward || 0
-        gold_reward = quest.gold_reward || 0
-
-        result =
-          "Successfully turned in '#{quest.title}' (gained #{exp_reward} exp, #{gold_reward} gold)"
-
+        result = build_success_message_without_items(quest)
         {[result | results_acc], [quest.id | completed_ids_acc]}
 
       {:error, :missing_items} ->
@@ -169,6 +147,34 @@ defmodule ShardWeb.UserLive.NpcCommands do
       {:error, reason} ->
         result = "Failed to turn in '#{quest.title}': #{inspect(reason)}"
         {[result | results_acc], completed_ids_acc}
+    end
+  end
+
+  # Helper function to build success message with items
+  defp build_success_message_with_items(quest, given_items) do
+    exp_reward = quest.experience_reward || 0
+    gold_reward = quest.gold_reward || 0
+    reward_parts = ["gained #{exp_reward} exp", "#{gold_reward} gold"]
+
+    item_rewards = build_item_rewards_message(given_items)
+    all_rewards = Enum.join(reward_parts ++ item_rewards, ", ")
+    "Successfully turned in '#{quest.title}' (#{all_rewards})"
+  end
+
+  # Helper function to build success message without items
+  defp build_success_message_without_items(quest) do
+    exp_reward = quest.experience_reward || 0
+    gold_reward = quest.gold_reward || 0
+    "Successfully turned in '#{quest.title}' (gained #{exp_reward} exp, #{gold_reward} gold)"
+  end
+
+  # Helper function to build item rewards message
+  defp build_item_rewards_message(given_items) do
+    if length(given_items) > 0 do
+      item_list = Enum.map(given_items, fn item -> "#{item.name} (x#{item.quantity})" end)
+      ["items: #{Enum.join(item_list, ", ")}"]
+    else
+      []
     end
   end
 
