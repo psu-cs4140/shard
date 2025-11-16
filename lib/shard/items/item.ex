@@ -2,6 +2,10 @@ defmodule Shard.Items.Item do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @moduledoc """
+  New schema for items
+  """
+
   # Define valid item types and rarities
   @item_types ["weapon", "armor", "consumable", "misc", "material", "tool", "key"]
   @rarities ["common", "uncommon", "rare", "epic", "legendary"]

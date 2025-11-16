@@ -127,7 +127,7 @@ defmodule Shard.Quest2 do
     current_values = extract_current_character_values(character)
     new_values = calculate_new_character_values(current_values, exp_reward, gold_reward)
     attrs = build_character_update_attrs(character, new_values)
-    
+
     changeset = Ecto.Changeset.change(character, attrs)
     Shard.Repo.update(changeset)
   end
@@ -143,10 +143,10 @@ defmodule Shard.Quest2 do
   defp calculate_new_character_values(current_values, exp_reward, gold_reward) do
     new_experience = current_values.experience + exp_reward
     new_gold = current_values.gold + gold_reward
-    
-    {new_level, new_experience_final} = 
+
+    {new_level, new_experience_final} =
       calculate_level_from_experience(new_experience, current_values.level)
-    
+
     %{
       experience: new_experience_final,
       gold: new_gold,
@@ -276,7 +276,9 @@ defmodule Shard.Quest2 do
     exp_reward = quest.experience_reward || 0
     gold_reward = quest.gold_reward || 0
 
-    IO.puts("Applying quest rewards: #{exp_reward} exp, #{gold_reward} gold to character #{character_id}")
+    IO.puts(
+      "Applying quest rewards: #{exp_reward} exp, #{gold_reward} gold to character #{character_id}"
+    )
 
     case apply_character_rewards(character_id, exp_reward, gold_reward) do
       {:ok, _updated_character} ->
@@ -320,7 +322,8 @@ defmodule Shard.Quest2 do
     exp_reward = quest.experience_reward || 0
     gold_reward = quest.gold_reward || 0
 
-    with {:ok, _updated_character} <- apply_character_rewards(character_id, exp_reward, gold_reward),
+    with {:ok, _updated_character} <-
+           apply_character_rewards(character_id, exp_reward, gold_reward),
          reward_items <- extract_reward_items_from_objectives(quest.objectives),
          {:ok, given_items} <- give_quest_reward_items(character_id, reward_items) do
       {quest_acceptance, given_items}
