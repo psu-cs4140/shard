@@ -2,7 +2,7 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
   use Shard.DataCase
 
   alias ShardWeb.UserLive.ItemCommands
-  alias Shard.Items.{Item, RoomItem}
+  alias Shard.Items.RoomItem
   alias Shard.{Repo, Characters, Items}
 
   describe "get_items_at_location/3" do
@@ -66,9 +66,9 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
     end
 
     test "returns items from both RoomItem and Item tables at location", %{
-      pickupable_item: pickupable_item,
-      non_pickupable_item: non_pickupable_item,
-      direct_item: direct_item
+      pickupable_item: _pickupable_item,
+      non_pickupable_item: _non_pickupable_item,
+      direct_item: _direct_item
     } do
       items = ItemCommands.get_items_at_location(5, 10, 1)
 
@@ -209,7 +209,7 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
 
     test "successfully picks up a pickupable item", %{
       game_state: game_state,
-      pickupable_item: pickupable_item
+      pickupable_item: _pickupable_item
     } do
       {response, updated_game_state} = ItemCommands.execute_pickup_command(game_state, "Test Sword")
 
@@ -220,7 +220,7 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
 
     test "fails to pick up non-pickupable item", %{
       game_state: game_state,
-      non_pickupable_item: non_pickupable_item
+      non_pickupable_item: _non_pickupable_item
     } do
       {response, updated_game_state} = ItemCommands.execute_pickup_command(game_state, "Heavy Boulder")
 

@@ -4,7 +4,6 @@ defmodule ShardWeb.InventoryLive.IndexTest do
   import Phoenix.LiveViewTest
   import Shard.UsersFixtures
 
-  alias Shard.{Characters, Items}
 
   describe "Index" do
     setup do
