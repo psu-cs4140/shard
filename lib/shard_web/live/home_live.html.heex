@@ -1,21 +1,21 @@
 <Layouts.flash_group flash={@flash} />
 
-<div class="gothic-hero min-h-screen relative overflow-hidden bg-gradient-to-b from-gray-900 via-red-950 to-black">
+<div class="gothic-hero min-h-screen relative overflow-hidden bg-gradient-to-b from-gray-800 via-gray-900 to-black">
   <!-- Gothic Stone Background -->
-  <div class="gothic-stones absolute inset-0 opacity-20" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot;><defs><pattern id=&quot;cracks&quot; patternUnits=&quot;userSpaceOnUse&quot; width=&quot;20&quot; height=&quot;20&quot;><path d=&quot;M0,10 Q5,5 10,10 T20,10 M5,0 L5,20 M15,0 L15,20&quot; stroke=&quot;%23666&quot; stroke-width=&quot;0.5&quot; fill=&quot;none&quot;/></pattern></defs><rect width=&quot;100&quot; height=&quot;100&quot; fill=&quot;%23333&quot; /><rect width=&quot;100&quot; height=&quot;100&quot; fill=&quot;url(%23cracks)&quot; /></svg>');"></div>
+  <div class="gothic-stones absolute inset-0 opacity-40" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot;><defs><pattern id=&quot;stones&quot; patternUnits=&quot;userSpaceOnUse&quot; width=&quot;30&quot; height=&quot;30&quot;><rect width=&quot;30&quot; height=&quot;30&quot; fill=&quot;%23444&quot;/><rect x=&quot;0&quot; y=&quot;0&quot; width=&quot;14&quot; height=&quot;14&quot; fill=&quot;%23555&quot; stroke=&quot;%23333&quot; stroke-width=&quot;0.5&quot;/><rect x=&quot;16&quot; y=&quot;0&quot; width=&quot;14&quot; height=&quot;14&quot; fill=&quot;%23666&quot; stroke=&quot;%23333&quot; stroke-width=&quot;0.5&quot;/><rect x=&quot;8&quot; y=&quot;16&quot; width=&quot;14&quot; height=&quot;14&quot; fill=&quot;%23555&quot; stroke=&quot;%23333&quot; stroke-width=&quot;0.5&quot;/><path d=&quot;M5,5 L10,8 M20,3 L25,7 M12,20 L18,25&quot; stroke=&quot;%23222&quot; stroke-width=&quot;0.3&quot; fill=&quot;none&quot;/></pattern></defs><rect width=&quot;100&quot; height=&quot;100&quot; fill=&quot;url(%23stones)&quot; /></svg>');"></div>
   
-<!-- Red Ambient Lighting -->
-  <div class="absolute inset-0 bg-red-900 opacity-10 animate-pulse"></div>
+<!-- Stone Texture Overlay -->
+  <div class="absolute inset-0 bg-gray-900 opacity-30"></div>
   
-<!-- Floating Embers -->
-  <div class="gothic-embers absolute inset-0 pointer-events-none">
-    <div class="ember ember-1 absolute w-1 h-1 bg-red-500 rounded-full animate-bounce" style="top: 20%; left: 10%; animation-delay: 0s;"></div>
-    <div class="ember ember-2 absolute w-1 h-1 bg-orange-400 rounded-full animate-bounce" style="top: 60%; left: 80%; animation-delay: 2s;"></div>
-    <div class="ember ember-3 absolute w-1 h-1 bg-red-400 rounded-full animate-bounce" style="top: 40%; left: 30%; animation-delay: 4s;"></div>
+<!-- Floating Dust Particles -->
+  <div class="gothic-dust absolute inset-0 pointer-events-none">
+    <div class="dust dust-1 absolute w-0.5 h-0.5 bg-gray-400 rounded-full animate-pulse opacity-60" style="top: 20%; left: 10%; animation-delay: 0s;"></div>
+    <div class="dust dust-2 absolute w-0.5 h-0.5 bg-gray-500 rounded-full animate-pulse opacity-40" style="top: 60%; left: 80%; animation-delay: 3s;"></div>
+    <div class="dust dust-3 absolute w-0.5 h-0.5 bg-gray-400 rounded-full animate-pulse opacity-50" style="top: 40%; left: 30%; animation-delay: 6s;"></div>
   </div>
   
-<!-- Gothic Mist -->
-  <div class="gothic-mist absolute bottom-0 w-full h-32 bg-gradient-to-t from-gray-800 to-transparent opacity-60"></div>
+<!-- Gothic Shadow -->
+  <div class="gothic-shadow absolute bottom-0 w-full h-32 bg-gradient-to-t from-black to-transparent opacity-80"></div>
 
   <div class="hero-content text-center relative z-10">
     <div class="max-w-md backdrop-blur-sm bg-gray-900/90 p-8 rounded-lg shadow-2xl border border-red-800/50 relative">
