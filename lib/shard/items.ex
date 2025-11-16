@@ -367,4 +367,83 @@ defmodule Shard.Items do
       _equipment -> {:error, :already_equipped}
     end
   end
+
+  ## Delegation functions for backward compatibility
+
+  @doc """
+  Delegates to Shard.Items.GameFeatures.get_character_hotbar/1
+  """
+  def get_character_hotbar(character_id) do
+    Shard.Items.GameFeatures.get_character_hotbar(character_id)
+  end
+
+  @doc """
+  Delegates to Shard.Items.GameFeatures.pick_up_item/2
+  """
+  def pick_up_item(character_id, room_item_id, quantity \\ nil) do
+    Shard.Items.GameFeatures.pick_up_item(character_id, room_item_id, quantity)
+  end
+
+  @doc """
+  Delegates to Shard.Items.GameFeatures.get_room_items/1
+  """
+  def get_room_items(location) do
+    Shard.Items.GameFeatures.get_room_items(location)
+  end
+
+  @doc """
+  Delegates to Shard.Items.GameFeatures.drop_item_in_room/4
+  """
+  def drop_item_in_room(character_id, inventory_id, location, quantity \\ 1) do
+    Shard.Items.GameFeatures.drop_item_in_room(character_id, inventory_id, location, quantity)
+  end
+
+  @doc """
+  Delegates to Shard.Items.GameFeatures.set_hotbar_slot/3
+  """
+  def set_hotbar_slot(character_id, slot_number, inventory_id \\ nil) do
+    Shard.Items.GameFeatures.set_hotbar_slot(character_id, slot_number, inventory_id)
+  end
+
+  @doc """
+  Delegates to Shard.Items.GameFeatures.clear_hotbar_slot/2
+  """
+  def clear_hotbar_slot(character_id, slot_number) do
+    Shard.Items.GameFeatures.clear_hotbar_slot(character_id, slot_number)
+  end
+
+  @doc """
+  Delegates to Shard.Items.GameFeatures.has_tutorial_key?/1
+  """
+  def has_tutorial_key?(character_id) do
+    Shard.Items.GameFeatures.has_tutorial_key?(character_id)
+  end
+
+  @doc """
+  Delegates to Shard.Items.GameFeatures.has_dungeon_door?/1
+  """
+  def has_dungeon_door?(character_id) do
+    Shard.Items.GameFeatures.has_dungeon_door?(character_id)
+  end
+
+  @doc """
+  Delegates to Shard.Items.GameFeatures.create_tutorial_key/0
+  """
+  def create_tutorial_key do
+    Shard.Items.GameFeatures.create_tutorial_key()
+  end
+
+  @doc """
+  Delegates to Shard.Items.GameFeatures.create_dungeon_door/0
+  """
+  def create_dungeon_door do
+    Shard.Items.GameFeatures.create_dungeon_door()
+  end
+
+  @doc """
+  Delegates to Shard.Items.GameFeatures.character_has_quest_items?/2
+  """
+  def character_has_quest_items?(character_id, objectives) do
+    Shard.Items.GameFeatures.character_has_quest_items?(character_id, objectives)
+  end
 end
