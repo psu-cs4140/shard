@@ -158,7 +158,9 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
         level: 1,
         health: 100,
         max_health: 100,
-        experience: 0
+        experience: 0,
+        class: "warrior",
+        race: "human"
       })
 
       # Create test items
