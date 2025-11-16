@@ -534,30 +534,39 @@ defmodule Shard.Quests do
   def apply_character_rewards(character_id, exp_reward, gold_reward) do
     try do
       case Shard.Repo.get(Shard.Characters.Character, character_id) do
-        nil -> 
+        nil ->
           {:error, :character_not_found}
-        
+
         character ->
           # Get current values, defaulting to 0 if fields don't exist
           current_exp = Map.get(character, :experience, 0) || 0
           current_gold = Map.get(character, :gold, 0) || 0
           current_level = Map.get(character, :level, 1) || 1
-          
+
           # Update character with new experience and gold
           new_experience = current_exp + exp_reward
           new_gold = current_gold + gold_reward
-          
+
           # Calculate level up if needed
-          {new_level, new_experience_final} = calculate_level_from_experience(new_experience, current_level)
-          
+          {new_level, new_experience_final} =
+            calculate_level_from_experience(new_experience, current_level)
+
           # Build changeset with only fields that exist on the character schema
           attrs = %{}
-          attrs = if Map.has_key?(character, :experience), do: Map.put(attrs, :experience, new_experience_final), else: attrs
-          attrs = if Map.has_key?(character, :gold), do: Map.put(attrs, :gold, new_gold), else: attrs
-          attrs = if Map.has_key?(character, :level), do: Map.put(attrs, :level, new_level), else: attrs
-          
+
+          attrs =
+            if Map.has_key?(character, :experience),
+              do: Map.put(attrs, :experience, new_experience_final),
+              else: attrs
+
+          attrs =
+            if Map.has_key?(character, :gold), do: Map.put(attrs, :gold, new_gold), else: attrs
+
+          attrs =
+            if Map.has_key?(character, :level), do: Map.put(attrs, :level, new_level), else: attrs
+
           changeset = Ecto.Changeset.change(character, attrs)
-          
+
           case Shard.Repo.update(changeset) do
             {:ok, updated_character} -> {:ok, updated_character}
             {:error, changeset} -> {:error, changeset}
@@ -572,15 +581,19 @@ defmodule Shard.Quests do
   defp calculate_level_from_experience(total_experience, current_level) do
     # Simple leveling formula: each level requires level * 500 XP
     # Level 1: 0-499, Level 2: 500-1499, Level 3: 1500-2999, etc.
-    
+
     calculate_level_recursive(total_experience, 1, 0)
   end
-  
+
   defp calculate_level_recursive(remaining_exp, level, total_used_exp) do
     exp_for_this_level = level * 500
-    
+
     if remaining_exp >= exp_for_this_level do
-      calculate_level_recursive(remaining_exp - exp_for_this_level, level + 1, total_used_exp + exp_for_this_level)
+      calculate_level_recursive(
+        remaining_exp - exp_for_this_level,
+        level + 1,
+        total_used_exp + exp_for_this_level
+      )
     else
       {level, total_used_exp + remaining_exp}
     end
@@ -606,7 +619,7 @@ defmodule Shard.Quests do
   defp give_reward_item_by_name(character_id, item_name, quantity) when is_binary(item_name) do
     # Find the item by name (case-insensitive)
     item_query = from(i in Shard.Items.Item, where: ilike(i.name, ^item_name))
-    
+
     case Shard.Repo.one(item_query) do
       nil ->
         IO.puts("Item not found: #{item_name}")
@@ -614,11 +627,13 @@ defmodule Shard.Quests do
 
       item ->
         IO.puts("Found item: #{item.name} (ID: #{item.id})")
+
         case Shard.Items.add_item_to_inventory(character_id, item.id, quantity) do
-          {:ok, inventory_entry} -> 
+          {:ok, inventory_entry} ->
             IO.puts("Successfully added #{quantity} #{item.name} to inventory")
             {:ok, %{name: item.name, quantity: quantity}}
-          error -> 
+
+          error ->
             IO.puts("Failed to add item to inventory: #{inspect(error)}")
             error
         end
@@ -663,10 +678,12 @@ defmodule Shard.Quests do
               # Apply experience and gold rewards
               exp_reward = quest.experience_reward || 0
               gold_reward = quest.gold_reward || 0
-              
+
               # Log the rewards being applied for debugging
-              IO.puts("Applying quest rewards: #{exp_reward} exp, #{gold_reward} gold to character #{character_id}")
-              
+              IO.puts(
+                "Applying quest rewards: #{exp_reward} exp, #{gold_reward} gold to character #{character_id}"
+              )
+
               case apply_character_rewards(character_id, exp_reward, gold_reward) do
                 {:ok, updated_character} ->
                   IO.puts("Successfully applied character rewards")
@@ -680,7 +697,7 @@ defmodule Shard.Quests do
                       IO.puts("Failed to give quest reward items: #{inspect(reason)}")
                       Repo.rollback(reason)
                   end
-                
+
                 {:error, reason} ->
                   IO.puts("Failed to apply character rewards: #{inspect(reason)}")
                   Repo.rollback(reason)
@@ -704,7 +721,7 @@ defmodule Shard.Quests do
               # Apply experience and gold rewards
               exp_reward = quest.experience_reward || 0
               gold_reward = quest.gold_reward || 0
-              
+
               case apply_character_rewards(character_id, exp_reward, gold_reward) do
                 {:ok, _updated_character} ->
                   # Give quest reward items after successful completion
@@ -715,7 +732,7 @@ defmodule Shard.Quests do
                     {:error, reason} ->
                       Repo.rollback(reason)
                   end
-                
+
                 {:error, reason} ->
                   Repo.rollback(reason)
               end
