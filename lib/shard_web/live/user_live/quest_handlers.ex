@@ -415,7 +415,6 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         quest_title,
         exp_reward,
         gold_reward,
-        full_quest,
         level_up_message,
         given_items
       )
@@ -445,38 +444,6 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     exp_reward = if full_quest, do: full_quest.experience_reward || 100, else: 100
     gold_reward = if full_quest, do: full_quest.gold_reward || 50, else: 50
     {exp_reward, gold_reward}
-  end
-
-  # Helper function to update player stats with experience
-  defp update_player_stats_with_experience(player_stats, exp_reward) do
-    try do
-      player_stats
-      |> Map.update(:experience, 0, &(&1 + exp_reward))
-    rescue
-      _error ->
-        player_stats
-    end
-  end
-
-  # Helper function to update player stats with gold
-  defp update_player_stats_with_gold(player_stats, gold_reward) do
-    try do
-      player_stats
-      |> Map.update(:gold, 0, &(&1 + gold_reward))
-    rescue
-      _error ->
-        player_stats
-    end
-  end
-
-  # Helper function to handle level up check
-  defp handle_level_up_check(updated_stats) do
-    try do
-      check_level_up(updated_stats)
-    rescue
-      _error ->
-        {updated_stats, nil}
-    end
   end
 
   # Helper function to complete quest in database and update game state
@@ -516,7 +483,6 @@ defmodule ShardWeb.UserLive.QuestHandlers do
          quest_title,
          exp_reward,
          gold_reward,
-         full_quest,
          level_up_message,
          given_items \\ []
        ) do
