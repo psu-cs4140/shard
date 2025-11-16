@@ -386,15 +386,28 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     npc_name = npc.name || "Unknown NPC"
     quest_title = quest.title || "Untitled Quest"
     user_id = game_state.character.user_id
+    character_id = game_state.character.id
 
     full_quest = get_full_quest_safely(quest.id)
     {exp_reward, gold_reward} = calculate_quest_rewards(full_quest)
 
-    updated_stats = update_player_stats_with_experience(game_state.player_stats, exp_reward)
-    {updated_stats, level_up_message} = handle_level_up_check(updated_stats)
+    # Complete quest in database (this now handles all rewards including exp, gold, and items)
+    {updated_quests, given_items} =
+      complete_quest_in_database_and_update_state(
+        game_state.quests,
+        quest.id,
+        user_id,
+        character_id
+      )
 
-    updated_quests =
-      complete_quest_in_database_and_update_state(game_state.quests, quest.id, user_id)
+    # Reload character from database to get updated stats
+    updated_character = reload_character_from_database(character_id)
+
+    # Update local game state with actual database values
+    updated_stats = sync_player_stats_with_character(game_state.player_stats, updated_character)
+
+    {updated_stats, level_up_message} =
+      handle_level_up_check_from_character(updated_stats, updated_character)
 
     response =
       build_quest_completion_response(
@@ -402,11 +415,17 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         quest_title,
         exp_reward,
         gold_reward,
-        full_quest,
-        level_up_message
+        level_up_message,
+        given_items
       )
 
-    updated_game_state = %{game_state | player_stats: updated_stats, quests: updated_quests}
+    updated_game_state = %{
+      game_state
+      | player_stats: updated_stats,
+        quests: updated_quests,
+        character: updated_character
+    }
+
     {response, updated_game_state}
   end
 
@@ -427,40 +446,23 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     {exp_reward, gold_reward}
   end
 
-  # Helper function to update player stats with experience
-  defp update_player_stats_with_experience(player_stats, exp_reward) do
-    try do
-      player_stats
-      |> Map.update(:experience, 0, &(&1 + exp_reward))
-    rescue
-      _error ->
-        player_stats
-    end
-  end
-
-  # Helper function to handle level up check
-  defp handle_level_up_check(updated_stats) do
-    try do
-      check_level_up(updated_stats)
-    rescue
-      _error ->
-        {updated_stats, nil}
-    end
-  end
-
   # Helper function to complete quest in database and update game state
-  defp complete_quest_in_database_and_update_state(quests, quest_id, user_id) do
+  defp complete_quest_in_database_and_update_state(quests, quest_id, user_id, character_id) do
     try do
-      case Shard.Quests.complete_quest(user_id, quest_id) do
+      case Shard.Quests.turn_in_quest_with_character_id(user_id, character_id, quest_id) do
+        {:ok, {_quest_acceptance, given_items}} ->
+          {mark_quest_as_completed(quests, quest_id), given_items}
+
         {:ok, _quest_acceptance} ->
-          mark_quest_as_completed(quests, quest_id)
+          # Fallback for when no items are given
+          {mark_quest_as_completed(quests, quest_id), []}
 
         {:error, _} ->
-          mark_quest_as_completed(quests, quest_id)
+          {mark_quest_as_completed(quests, quest_id), []}
       end
     rescue
       _error ->
-        mark_quest_as_completed(quests, quest_id)
+        {mark_quest_as_completed(quests, quest_id), []}
     end
   end
 
@@ -481,8 +483,8 @@ defmodule ShardWeb.UserLive.QuestHandlers do
          quest_title,
          exp_reward,
          gold_reward,
-         full_quest,
-         level_up_message
+         level_up_message,
+         given_items
        ) do
     base_response = [
       "#{npc_name} examines your progress carefully.",
@@ -494,7 +496,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     ]
 
     response_with_gold = add_gold_reward_to_response(base_response, gold_reward)
-    response_with_items = add_item_rewards_to_response(response_with_gold, full_quest)
+    response_with_items = add_given_items_to_response(response_with_gold, given_items)
 
     response_with_level_up =
       add_level_up_message_to_response(response_with_items, level_up_message)
@@ -515,11 +517,15 @@ defmodule ShardWeb.UserLive.QuestHandlers do
     end
   end
 
-  # Helper function to add item rewards to response
-  defp add_item_rewards_to_response(response, full_quest) do
+  # Helper function to add given items to response
+  defp add_given_items_to_response(response, given_items) do
     try do
-      if full_quest && full_quest.item_rewards && map_size(full_quest.item_rewards) > 0 do
-        item_list = Enum.map(full_quest.item_rewards, fn {_key, item} -> "  - #{item}" end)
+      if length(given_items) > 0 do
+        item_list =
+          Enum.map(given_items, fn item ->
+            "  - #{item.name} (x#{item.quantity})"
+          end)
+
         response ++ ["Items received:"] ++ item_list
       else
         response
@@ -536,6 +542,63 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       response ++ ["", level_up_message]
     else
       response
+    end
+  end
+
+  # Helper function to reload character from database
+  defp reload_character_from_database(character_id) do
+    try do
+      case Shard.Repo.get(Shard.Characters.Character, character_id) do
+        nil ->
+          nil
+
+        character ->
+          # Preload associations to ensure we have complete character data
+          Shard.Repo.preload(character, [:character_inventories, :hotbar_slots])
+      end
+    rescue
+      _error -> nil
+    end
+  end
+
+  # Helper function to sync player stats with character data
+  defp sync_player_stats_with_character(current_stats, character) do
+    if character do
+      # Ensure we update all relevant fields from the character
+      updated_stats =
+        current_stats
+        |> Map.put(:experience, character.experience || 0)
+        |> Map.put(:gold, character.gold || 0)
+        |> Map.put(:level, character.level || 1)
+
+      # Recalculate next level experience if needed
+      current_level = character.level || 1
+      next_level_exp = calculate_next_level_exp(current_level)
+
+      Map.put(updated_stats, :next_level_exp, next_level_exp)
+    else
+      current_stats
+    end
+  end
+
+  # Helper function to calculate next level experience requirement
+  defp calculate_next_level_exp(level) do
+    # Use the same formula as in the quest system: level * 500
+    (level + 1) * 500
+  end
+
+  # Helper function to handle level up check from character data
+  defp handle_level_up_check_from_character(stats, character) do
+    if character do
+      # Check if character level is higher than current stats level
+      if character.level > stats.level do
+        level_up_message = "*** LEVEL UP! *** You are now level #{character.level}!"
+        {stats, level_up_message}
+      else
+        {stats, nil}
+      end
+    else
+      {stats, nil}
     end
   end
 

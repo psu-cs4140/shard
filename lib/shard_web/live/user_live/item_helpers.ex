@@ -226,24 +226,20 @@ defmodule ShardWeb.UserLive.ItemHelpers do
     key_name_lower = String.downcase(key.name)
     door_name_lower = String.downcase(door.name || "")
 
-    # Check if key name contains door-related keywords
-    cond do
-      String.contains?(key_name_lower, "sewer") && String.contains?(door_name_lower, "sewer") ->
-        true
+    # Check specific location matches first
+    location_match?(key_name_lower, door_name_lower) ||
+      generic_key_door_match?(key_name_lower, door_name_lower)
+  end
 
-      String.contains?(key_name_lower, "manor") && String.contains?(door_name_lower, "manor") ->
-        true
+  defp location_match?(key_name, door_name) do
+    ["sewer", "manor", "gate"]
+    |> Enum.any?(fn location ->
+      String.contains?(key_name, location) && String.contains?(door_name, location)
+    end)
+  end
 
-      String.contains?(key_name_lower, "gate") && String.contains?(door_name_lower, "gate") ->
-        true
-
-      # Generic matching - if key has "key" in name and door has "door" in name
-      String.contains?(key_name_lower, "key") && String.contains?(door_name_lower, "door") ->
-        true
-
-      true ->
-        false
-    end
+  defp generic_key_door_match?(key_name, door_name) do
+    String.contains?(key_name, "key") && String.contains?(door_name, "door")
   end
 
   defp unlock_doors_with_key(game_state, doors, key) do
@@ -279,28 +275,22 @@ defmodule ShardWeb.UserLive.ItemHelpers do
   end
 
   defp unlock_door_and_return_door(door) do
-    # Update the door to be unlocked
     attrs = %{is_locked: false}
 
-    case Shard.Map.update_door(door, attrs) do
-      {:ok, updated_door} ->
-        # Also unlock the return door if it exists
-        case Shard.Map.get_return_door(door) do
-          nil ->
-            # No return door exists, just return the updated door
-            {:ok, updated_door}
+    with {:ok, updated_door} <- Shard.Map.update_door(door, attrs) do
+      unlock_return_door_if_exists(door, updated_door, attrs)
+    end
+  end
 
-          return_door ->
-            # Unlock the return door as well
-            case Shard.Map.update_door(return_door, attrs) do
-              {:ok, _updated_return_door} -> {:ok, updated_door}
-              # Still succeed even if return door fails
-              {:error, _changeset} -> {:ok, updated_door}
-            end
-        end
+  defp unlock_return_door_if_exists(door, updated_door, attrs) do
+    case Shard.Map.get_return_door(door) do
+      nil ->
+        {:ok, updated_door}
 
-      {:error, changeset} ->
-        {:error, changeset}
+      return_door ->
+        # Always succeed even if return door update fails
+        Shard.Map.update_door(return_door, attrs)
+        {:ok, updated_door}
     end
   end
 
