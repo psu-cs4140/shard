@@ -239,7 +239,7 @@ defmodule ShardWeb.UserLive.Commands1 do
           response =
             ["Your inventory contains:"] ++
               Enum.map(inventory_items, fn inv_item ->
-                item_name = inv_item.name
+                item_name = inv_item.item.name
                 quantity = inv_item.quantity
                 equipped_text = if inv_item.equipped, do: " (equipped)", else: ""
 
