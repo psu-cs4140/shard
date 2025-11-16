@@ -33,13 +33,13 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
       })
 
       # Create room items
-      {:ok, room_item1} = Items.create_room_item(%{
+      {:ok, room_item1} = Repo.insert(%RoomItem{
         item_id: pickupable_item.id,
         location: "5,10,0",
         quantity: 2
       })
 
-      {:ok, room_item2} = Items.create_room_item(%{
+      {:ok, room_item2} = Repo.insert(%RoomItem{
         item_id: non_pickupable_item.id,
         location: "5,10,0",
         quantity: 1
@@ -102,7 +102,7 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
         is_active: true
       })
 
-      {:ok, _room_item} = Items.create_room_item(%{
+      {:ok, _room_item} = Repo.insert(%RoomItem{
         item_id: duplicate_item.id,
         location: "5,10,0",
         quantity: 1
@@ -181,13 +181,13 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
       })
 
       # Create room items at player location
-      {:ok, room_item1} = Items.create_room_item(%{
+      {:ok, room_item1} = Repo.insert(%RoomItem{
         item_id: pickupable_item.id,
         location: "0,0,0",
         quantity: 1
       })
 
-      {:ok, room_item2} = Items.create_room_item(%{
+      {:ok, room_item2} = Repo.insert(%RoomItem{
         item_id: non_pickupable_item.id,
         location: "0,0,0",
         quantity: 1
