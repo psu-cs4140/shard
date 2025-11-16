@@ -117,121 +117,47 @@ defmodule ShardWeb.UserLive.ItemHelpers do
 
   # Equip an item (weapons, armor, etc.)
   def equip_item(game_state, item) do
-    # Check if item is equippable first
-    equippable = Map.get(item, :equippable, true)
-    if not equippable do
-      response = ["#{item.name} cannot be equipped."]
-      {response, game_state}
-    else
-      # Use the item's equipment_slot field instead of item_type for slot determination
-      equipment_slot = Map.get(item, :equipment_slot) || item.item_type
-      
-      case equipment_slot do
-        "weapon" ->
-          case equip_item_to_slot(item, "weapon") do
-            {:ok, _} ->
-              response = ["You equip #{item.name} as your weapon."]
-              {response, game_state}
-
-            {:error, _} ->
-              response = ["Failed to equip #{item.name}."]
-              {response, game_state}
-          end
-
-        "shield" ->
-          case equip_item_to_slot(item, "shield") do
-            {:ok, _} ->
-              response = ["You equip your mighty #{item.name} for protection."]
-              {response, game_state}
-
-            {:error, _} ->
-              response = ["Failed to equip #{item.name}."]
-              {response, game_state}
-          end
-
-        "head" ->
-          case equip_item_to_slot(item, "head") do
-            {:ok, _} ->
-              response = ["You equip #{item.name} on your head."]
-              {response, game_state}
-
-            {:error, _} ->
-              response = ["Failed to equip #{item.name}."]
-              {response, game_state}
-          end
-
-        "body" ->
-          case equip_item_to_slot(item, "body") do
-            {:ok, _} ->
-              response = ["You equip #{item.name} on your body."]
-              {response, game_state}
-
-            {:error, _} ->
-              response = ["Failed to equip #{item.name}."]
-              {response, game_state}
-          end
-
-        "legs" ->
-          case equip_item_to_slot(item, "legs") do
-            {:ok, _} ->
-              response = ["You equip #{item.name} on your legs."]
-              {response, game_state}
-
-            {:error, _} ->
-              response = ["Failed to equip #{item.name}."]
-              {response, game_state}
-          end
-
-        "feet" ->
-          case equip_item_to_slot(item, "feet") do
-            {:ok, _} ->
-              response = ["You equip #{item.name} on your feet."]
-              {response, game_state}
-
-            {:error, _} ->
-              response = ["Failed to equip #{item.name}."]
-              {response, game_state}
-          end
-
-        "ring" ->
-          case equip_item_to_slot(item, "ring") do
-            {:ok, _} ->
-              response = ["You slide #{item.name} on one of your fingers."]
-              {response, game_state}
-
-            {:error, _} ->
-              response = ["Failed to equip #{item.name}."]
-              {response, game_state}
-          end
-
-        "necklace" ->
-          case equip_item_to_slot(item, "necklace") do
-            {:ok, _} ->
-              response = ["You place #{item.name} around your neck."]
-              {response, game_state}
-
-            {:error, _} ->
-              response = ["Failed to equip #{item.name}."]
-              {response, game_state}
-          end
-
-        _ ->
-          response = ["You cannot equip #{item.name} - unknown equipment slot."]
-          {response, game_state}
-      end
-    end
-  end
-
-  # Helper function to equip an item to a specific slot
-  defp equip_item_to_slot(item, equipment_slot) do
+    # Use the same logic as the equip command for consistency
     case Map.get(item, :inventory_id) do
       nil ->
-        {:error, :no_inventory_id}
+        response = ["Cannot equip #{item.name} - no inventory reference found."]
+        {response, game_state}
 
       inventory_id ->
-        Shard.Items.equip_item(inventory_id)
+        case Shard.Items.equip_item(inventory_id) do
+          {:ok, _} ->
+            # Reload inventory to sync with game state
+            updated_inventory = ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+            updated_game_state = %{game_state | inventory_items: updated_inventory}
+            
+            # Generate appropriate message based on equipment slot
+            equipment_slot = Map.get(item, :equipment_slot) || item.item_type
+            message = case equipment_slot do
+              "weapon" -> "You equip #{item.name} as your weapon."
+              "shield" -> "You equip your mighty #{item.name} for protection."
+              "head" -> "You equip #{item.name} on your head."
+              "body" -> "You equip #{item.name} on your body."
+              "legs" -> "You equip #{item.name} on your legs."
+              "feet" -> "You equip #{item.name} on your feet."
+              "ring" -> "You slide #{item.name} on one of your fingers."
+              "necklace" -> "You place #{item.name} around your neck."
+              _ -> "You equip #{item.name}."
+            end
+            
+            {[message], updated_game_state}
+
+          {:error, :not_equippable} ->
+            {["#{item.name} cannot be equipped."], game_state}
+
+          {:error, :already_equipped} ->
+            {["#{item.name} is already equipped."], game_state}
+
+          {:error, reason} ->
+            {["Failed to equip #{item.name}: #{reason}"], game_state}
+        end
     end
   end
+
 
   # Use a key to unlock doors
   def use_key_item(game_state, key) do
