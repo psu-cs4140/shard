@@ -124,7 +124,7 @@ defmodule ShardWeb.UserLive.ItemHelpers do
       {response, game_state}
     else
       # Use the item's equipment_slot field instead of item_type for slot determination
-      equipment_slot = item.equipment_slot || item.item_type
+      equipment_slot = Map.get(item, :equipment_slot) || item.item_type
       
       case equipment_slot do
         "weapon" ->
