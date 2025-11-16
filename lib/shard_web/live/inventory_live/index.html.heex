@@ -8,7 +8,17 @@
   <div class="lg:col-span-3">
     <div class="bg-base-100 shadow rounded-lg p-4">
       <h3 class="text-lg font-medium text-base-content mb-4">Select Character</h3>
-      <div class="flex flex-wrap gap-2">
+      <form phx-change="select_character">
+        <select name="character_id" class="select select-bordered w-full max-w-xs">
+          <option disabled selected={is_nil(@selected_character)}>Choose a character</option>
+          <%= for character <- @characters do %>
+            <option value={character.id} selected={@selected_character && @selected_character.id == character.id}>
+              {character.name} (Level {character.level} {String.capitalize(character.class)})
+            </option>
+          <% end %>
+        </select>
+      </form>
+      <div class="flex flex-wrap gap-2 mt-4">
         <%= for character <- @characters do %>
           <button
             phx-click="select_character"
