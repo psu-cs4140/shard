@@ -258,87 +258,74 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
     freezer = Enum.find(manor_rooms, &(&1.x_coordinate == 4 && &1.y_coordinate == -3))
 
     if freezer do
-      # Create the Chainmail item if it doesn't exist
-      chainmail_item =
-        case Repo.query("SELECT * FROM items WHERE name = $1", ["Chainmail"]) do
-          {:ok, %{rows: []}} ->
-            {:ok, %{rows: [[item_id | _]]}} =
-              Repo.query(
-                "INSERT INTO items (name, description, item_type, rarity, value, stackable, equippable, equipment_slot, is_active, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id",
-                [
-                  "Chainmail Helmet",
-                  "A helmet comprised of interlocking metal rings, cold to the touch and emanating dark energy.",
-                  "head",
-                  "uncommon",
-                  25,
-                  false,
-                  true,
-                  "chest",
-                  true,
-                  DateTime.utc_now(),
-                  DateTime.utc_now()
-                ],
-                [
-                  "Chainmail Chestplate",
-                  "A suit of interlocking metal rings, cold to the touch and emanating dark energy.",
-                  "body",
-                  "uncommon",
-                  25,
-                  false,
-                  true,
-                  "chest",
-                  true,
-                  DateTime.utc_now(),
-                  DateTime.utc_now()
-                ],
-                [
-                  "Chainmail Leggings",
-                  "A suit of interlocking metal rings, cold to the touch and emanating dark energy.",
-                  "legs",
-                  "uncommon",
-                  25,
-                  false,
-                  true,
-                  "chest",
-                  true,
-                  DateTime.utc_now(),
-                  DateTime.utc_now()
-                ],
-                [
-                  "Chainmail Boots",
-                  "A pair of boots made up of interlocking metal rings, cold to the touch and emanating dark energy.",
-                  "feet",
-                  "uncommon",
-                  25,
-                  false,
-                  true,
-                  "chest",
-                  true,
-                  DateTime.utc_now(),
-                  DateTime.utc_now()
-                ],
-                [
-                  "Darkened Broadsword",
-                  "A blade, clearly discolored and dulled from constant use from its previous wielder.",
-                  "weapon",
-                  "uncommon",
-                  25,
-                  false,
-                  true,
-                  "chest",
-                  true,
-                  DateTime.utc_now(),
-                  DateTime.utc_now()
-                ]
-              )
+      # Create the Chainmail items if they don't exist
+      chainmail_items = [
+        %{
+          name: "Chainmail Helmet",
+          description: "A helmet comprised of interlocking metal rings, cold to the touch and emanating dark energy.",
+          item_type: "armor",
+          equipment_slot: "head"
+        },
+        %{
+          name: "Chainmail Chestplate", 
+          description: "A suit of interlocking metal rings, cold to the touch and emanating dark energy.",
+          item_type: "armor",
+          equipment_slot: "chest"
+        },
+        %{
+          name: "Chainmail Leggings",
+          description: "Leggings made of interlocking metal rings, cold to the touch and emanating dark energy.",
+          item_type: "armor", 
+          equipment_slot: "legs"
+        },
+        %{
+          name: "Chainmail Boots",
+          description: "A pair of boots made up of interlocking metal rings, cold to the touch and emanating dark energy.",
+          item_type: "armor",
+          equipment_slot: "feet"
+        },
+        %{
+          name: "Darkened Broadsword",
+          description: "A blade, clearly discolored and dulled from constant use from its previous wielder.",
+          item_type: "weapon",
+          equipment_slot: "main_hand"
+        }
+      ]
 
-            %{id: item_id}
+      created_chainmail_items = 
+        Enum.map(chainmail_items, fn item_spec ->
+          case Repo.query("SELECT id FROM items WHERE name = $1", [item_spec.name]) do
+            {:ok, %{rows: []}} ->
+              {:ok, %{rows: [[item_id]]}} =
+                Repo.query(
+                  "INSERT INTO items (name, description, item_type, rarity, value, stackable, equippable, equipment_slot, is_active, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id",
+                  [
+                    item_spec.name,
+                    item_spec.description,
+                    item_spec.item_type,
+                    "uncommon",
+                    25,
+                    false,
+                    true,
+                    item_spec.equipment_slot,
+                    true,
+                    DateTime.utc_now(),
+                    DateTime.utc_now()
+                  ]
+                )
+              %{id: item_id, name: item_spec.name}
 
-          {:ok, %{rows: [[item_id | _]]}} ->
-            %{id: item_id}
-        end
+            {:ok, %{rows: [[item_id]]}} ->
+              %{id: item_id, name: item_spec.name}
+          end
+        end)
 
-      # Create the possessed suit of armor monster with item drops
+      # Create the possessed suit of armor monster with multiple item drops
+      loot_drops = 
+        created_chainmail_items
+        |> Enum.map(fn item -> {"#{item.id}", %{chance: 0.3, min_quantity: 1, max_quantity: 1}} end)
+        |> Enum.into(%{})
+
       {:ok, _armor} =
         Shard.Monsters.create_monster(%{
           name: "Possessed Suit of Armor",
@@ -351,9 +338,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
           description:
             "An ancient suit of armor animated by dark magic, its empty helmet glowing with malevolent eyes.",
           location_id: freezer.id,
-          potential_loot_drops: %{
-            "#{chainmail_item.id}" => %{chance: 0.9, min_quantity: 1, max_quantity: 1}
-          }
+          potential_loot_drops: loot_drops
         })
 
       IO.puts("Successfully created Possessed Suit of Armor in Freezer")
