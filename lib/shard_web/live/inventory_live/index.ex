@@ -16,6 +16,7 @@ defmodule ShardWeb.InventoryLive.Index do
       |> assign(:inventory, [])
       |> assign(:hotbar, [])
       |> assign(:room_items, [])
+      |> assign(:equipment, [])
       |> load_character_data()
 
     {:ok, socket}
@@ -158,11 +159,13 @@ defmodule ShardWeb.InventoryLive.Index do
         inventory = Items.get_character_inventory(character.id)
         hotbar = Items.get_character_hotbar(character.id)
         room_items = Items.get_room_items(character.location)
+        equipment = Items.get_character_equipment(character.id)
 
         socket
         |> assign(:inventory, inventory)
         |> assign(:hotbar, hotbar)
         |> assign(:room_items, room_items)
+        |> assign(:equipment, equipment)
     end
   end
 
