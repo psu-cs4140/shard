@@ -400,10 +400,12 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         character_id
       )
 
-    # Update local game state to reflect the rewards
-    updated_stats = update_player_stats_with_experience(game_state.player_stats, exp_reward)
-    updated_stats = update_player_stats_with_gold(updated_stats, gold_reward)
-    {updated_stats, level_up_message} = handle_level_up_check(updated_stats)
+    # Reload character from database to get updated stats
+    updated_character = reload_character_from_database(character_id)
+    
+    # Update local game state with actual database values
+    updated_stats = sync_player_stats_with_character(game_state.player_stats, updated_character)
+    {updated_stats, level_up_message} = handle_level_up_check_from_character(updated_stats, updated_character)
 
     response =
       build_quest_completion_response(
@@ -416,7 +418,12 @@ defmodule ShardWeb.UserLive.QuestHandlers do
         given_items
       )
 
-    updated_game_state = %{game_state | player_stats: updated_stats, quests: updated_quests}
+    updated_game_state = %{
+      game_state | 
+      player_stats: updated_stats, 
+      quests: updated_quests,
+      character: updated_character
+    }
     {response, updated_game_state}
   end
 
@@ -567,6 +574,45 @@ defmodule ShardWeb.UserLive.QuestHandlers do
       response ++ ["", level_up_message]
     else
       response
+    end
+  end
+
+  # Helper function to reload character from database
+  defp reload_character_from_database(character_id) do
+    try do
+      case Shard.Repo.get(Shard.Characters.Character, character_id) do
+        nil -> nil
+        character -> character
+      end
+    rescue
+      _error -> nil
+    end
+  end
+
+  # Helper function to sync player stats with character data
+  defp sync_player_stats_with_character(current_stats, character) do
+    if character do
+      current_stats
+      |> Map.put(:experience, character.experience || 0)
+      |> Map.put(:gold, character.gold || 0)
+      |> Map.put(:level, character.level || 1)
+    else
+      current_stats
+    end
+  end
+
+  # Helper function to handle level up check from character data
+  defp handle_level_up_check_from_character(stats, character) do
+    if character do
+      # Check if character level is higher than current stats level
+      if character.level > stats.level do
+        level_up_message = "*** LEVEL UP! *** You are now level #{character.level}!"
+        {stats, level_up_message}
+      else
+        {stats, nil}
+      end
+    else
+      {stats, nil}
     end
   end
 
