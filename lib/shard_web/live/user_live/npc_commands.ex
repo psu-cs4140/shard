@@ -132,7 +132,27 @@ defmodule ShardWeb.UserLive.NpcCommands do
          {results_acc, completed_ids_acc}
        ) do
     case Shard.Quests.turn_in_quest_with_character_id(user_id, character_id, quest.id) do
+      {:ok, {_quest_acceptance, given_items}} ->
+        exp_reward = quest.experience_reward || 0
+        gold_reward = quest.gold_reward || 0
+
+        # Build reward message including items
+        reward_parts = ["gained #{exp_reward} exp", "#{gold_reward} gold"]
+        
+        item_rewards = if length(given_items) > 0 do
+          item_list = Enum.map(given_items, fn item -> "#{item.name} (x#{item.quantity})" end)
+          ["items: #{Enum.join(item_list, ", ")}"]
+        else
+          []
+        end
+
+        all_rewards = Enum.join(reward_parts ++ item_rewards, ", ")
+        result = "Successfully turned in '#{quest.title}' (#{all_rewards})"
+
+        {[result | results_acc], [quest.id | completed_ids_acc]}
+
       {:ok, _quest_acceptance} ->
+        # Fallback for when no items are returned
         exp_reward = quest.experience_reward || 0
         gold_reward = quest.gold_reward || 0
 
