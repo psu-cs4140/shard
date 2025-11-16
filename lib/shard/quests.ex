@@ -687,8 +687,10 @@ defmodule Shard.Quests do
               case apply_character_rewards(character_id, exp_reward, gold_reward) do
                 {:ok, updated_character} ->
                   IO.puts("Successfully applied character rewards")
+                  # Extract reward items from objectives field
+                  reward_items = extract_reward_items_from_objectives(quest.objectives)
                   # Give quest reward items after successful completion
-                  case give_quest_reward_items(character_id, quest.item_rewards) do
+                  case give_quest_reward_items(character_id, reward_items) do
                     {:ok, given_items} ->
                       IO.puts("Successfully gave #{length(given_items)} quest reward items")
                       {quest_acceptance, given_items}
@@ -724,8 +726,10 @@ defmodule Shard.Quests do
 
               case apply_character_rewards(character_id, exp_reward, gold_reward) do
                 {:ok, _updated_character} ->
+                  # Extract reward items from objectives field
+                  reward_items = extract_reward_items_from_objectives(quest.objectives)
                   # Give quest reward items after successful completion
-                  case give_quest_reward_items(character_id, quest.item_rewards) do
+                  case give_quest_reward_items(character_id, reward_items) do
                     {:ok, given_items} ->
                       {quest_acceptance, given_items}
 
@@ -794,6 +798,23 @@ defmodule Shard.Quests do
       {:error, :insufficient_items}
     end
   end
+
+  # Helper function to extract reward items from objectives field
+  defp extract_reward_items_from_objectives(objectives) when is_map(objectives) do
+    case objectives do
+      %{"reward_items" => reward_items} when is_list(reward_items) ->
+        # Convert list of reward items to map format expected by give_quest_reward_items
+        Enum.reduce(reward_items, %{}, fn item, acc ->
+          item_name = Map.get(item, "item_name")
+          quantity = Map.get(item, "quantity", 1)
+          if item_name, do: Map.put(acc, item_name, quantity), else: acc
+        end)
+      _ ->
+        %{}
+    end
+  end
+
+  defp extract_reward_items_from_objectives(_objectives), do: %{}
 
   defp remove_items_from_entries([], 0), do: :ok
   defp remove_items_from_entries([], _remaining), do: {:error, :insufficient_items}
