@@ -319,7 +319,10 @@ defmodule Shard.Items.GameFeatures do
       %{"retrieve_items" => items} when is_list(items) ->
         Enum.all?(items, fn item ->
           required_quantity = Map.get(item, "quantity", 1)
-          actual_quantity = Shard.Items.get_character_item_quantity(character_id, item["item_name"])
+
+          actual_quantity =
+            Shard.Items.get_character_item_quantity(character_id, item["item_name"])
+
           actual_quantity >= required_quantity
         end)
 
