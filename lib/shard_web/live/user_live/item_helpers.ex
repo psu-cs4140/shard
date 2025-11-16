@@ -118,7 +118,8 @@ defmodule ShardWeb.UserLive.ItemHelpers do
   # Equip an item (weapons, armor, etc.)
   def equip_item(game_state, item) do
     # Check if item is equippable first
-    if not item.equippable do
+    equippable = Map.get(item, :equippable, true)
+    if not equippable do
       response = ["#{item.name} cannot be equipped."]
       {response, game_state}
     else
