@@ -129,10 +129,21 @@ defmodule ShardWeb.UserLive.ItemHelpers do
 
         {response, updated_game_state}
 
+      "shield" ->
+        response = [
+          "You equip your mighty #{item.name} for protection",
+        ]
+
+        {response, game_state}
+
+        ->
+        response = ["You cannot equip #{item.name}."]
+        {response, game_state}
+
+
       "head" ->
         response = [
           "You equip #{item.name} on your head.",
-          "Your defense increases!"
         ]
 
         {response, game_state}
@@ -140,7 +151,6 @@ defmodule ShardWeb.UserLive.ItemHelpers do
       "body" ->
         response = [
           "You equip #{item.name} on your body.",
-          "Your defense increases!"
         ]
 
         {response, game_state}
@@ -148,14 +158,47 @@ defmodule ShardWeb.UserLive.ItemHelpers do
       "legs" ->
         response = [
           "You equip #{item.name} on your legs.",
-          "Your defense increases!"
         ]
 
         {response, game_state}
 
-      _ ->
+        ->
         response = ["You cannot equip #{item.name}."]
         {response, game_state}
+      
+      "feet" ->
+        response = [
+          "You equip #{item.name} on your feet.",
+        ]
+
+        {response, game_state}
+
+        ->
+        response = ["You cannot equip #{item.name}."]
+        {response, game_state}
+
+      "ring" ->
+        response = [
+          "You slide #{item.name} on one of your fingers.",
+        ]
+
+        {response, game_state}
+
+        ->
+        response = ["You cannot equip #{item.name}."]
+        {response, game_state}
+
+      "necklace" ->
+        response = [
+          "You place #{item.name} around your neck.",
+        ]
+
+        {response, game_state}
+
+        ->
+        response = ["You cannot equip #{item.name}."]
+        {response, game_state}
+
     end
   end
 
