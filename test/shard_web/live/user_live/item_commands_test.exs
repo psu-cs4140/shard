@@ -92,12 +92,11 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
       assert items == []
     end
 
-    test "removes duplicates based on name" do
-      # Create another room item with same name as existing pickupable_item
-      # We'll use the existing pickupable_item to create a second room item
+    test "removes duplicates based on name", %{pickupable_item: pickupable_item} do
+      # Create another room item with same item as existing pickupable_item
       # This simulates having the same item in multiple room item records
       {:ok, _room_item} = Repo.insert(%RoomItem{
-        item_id: 1, # Use the first item's ID to create a duplicate reference
+        item_id: pickupable_item.id, # Use the existing pickupable item's ID
         location: "5,10,0",
         quantity: 1
       })
