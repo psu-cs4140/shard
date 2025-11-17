@@ -3,113 +3,223 @@
     Marketplace
     <:subtitle>Buy and sell items with other players</:subtitle>
   </.header>
-
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Listing Creation Form -->
-    <div class="lg:col-span-1">
-      <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title">List New Item</h2>
-
-          <.form
-            for={@form}
-            id="listing-form"
-            phx-submit="create_listing"
-            phx-change="preview_item"
-          >
-            <div class="space-y-4">
-              <.input
-                field={@form[:item_id]}
-                type="select"
-                label="Select Item"
-                options={@inventory_items}
-                prompt="Choose an item from your inventory"
-                required
-              />
-
-              <.input
-                field={@form[:price]}
-                type="number"
-                label="Price (Gold)"
-                min="1"
-                required
-              />
-
-              <div class="form-control">
-                <.button type="submit" class="w-full">List Item</.button>
-              </div>
-            </div>
-          </.form>
-          
-<!-- Item Preview -->
-          <%= if @selected_item do %>
-            <div class="mt-6 p-4 bg-base-200 rounded-lg">
-              <h3 class="font-bold mb-2">Item Preview</h3>
-              <div class="flex items-center gap-3">
-                <div class="avatar placeholder">
-                  <div class="bg-neutral text-neutral-content rounded-full w-12">
-                    <span>{String.first(@selected_item.name)}</span>
-                  </div>
-                </div>
-                <div>
-                  <p class="font-semibold">{@selected_item.name}</p>
-                  <p class="text-sm opacity-70">{@selected_item.description}</p>
-                </div>
-              </div>
-            </div>
-          <% end %>
+  
+<!-- Navigation Tabs -->
+  <div class="tabs tabs-boxed mb-6">
+    <a
+      class={"tab #{@active_tab == "browse" && "tab-active"}"}
+      phx-click="switch_tab"
+      phx-value-tab="browse"
+    >
+      Browse Market
+    </a>
+    <a
+      class={"tab #{@active_tab == "listings" && "tab-active"}"}
+      phx-click="switch_tab"
+      phx-value-tab="listings"
+    >
+      My Listings
+    </a>
+  </div>
+  
+<!-- Browse Market Tab -->
+  <%= if @active_tab == "browse" do %>
+    <!-- Search and Filter Controls -->
+    <div class="bg-base-100 rounded-lg p-4 mb-6 shadow">
+      <form phx-submit="search" class="flex flex-col sm:flex-row gap-4">
+        <div class="flex-1">
+          <.input
+            name="search[query]"
+            type="text"
+            value={@search_query}
+            placeholder="Search items..."
+            class="w-full"
+          />
         </div>
-      </div>
+        <div class="sm:w-48">
+          <.input
+            name="search[rarity]"
+            type="select"
+            value={@rarity_filter}
+            options={[
+              {"All", "all"},
+              {"Common", "common"},
+              {"Uncommon", "uncommon"},
+              {"Rare", "rare"},
+              {"Epic", "epic"}
+            ]}
+          />
+        </div>
+        <.button type="submit" class="btn-primary">
+          <.icon name="hero-magnifying-glass" class="w-5 h-5" /> Search
+        </.button>
+      </form>
     </div>
     
-<!-- Active Listings -->
-    <div class="lg:col-span-2">
-      <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title">Your Active Listings</h2>
-
-          <div id="listings" phx-update="stream">
-            <div class="hidden only:block text-center py-8">
-              <.icon name="hero-shopping-cart" class="size-12 mx-auto text-base-content/20" />
-              <h3 class="text-lg font-medium mt-4">No Active Listings</h3>
-              <p class="mt-1 text-base-content/70">
-                List items from your inventory to start selling!
-              </p>
+<!-- Item Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <%= for listing <- @filtered_listings do %>
+        <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+          <div class="card-body p-4">
+            <div class="flex items-start justify-between">
+              <h3 class="card-title text-lg">{listing.item_name}</h3>
+              <span class={"badge badge-sm capitalize #{rarity_color_class(listing.rarity)}"}>
+                {listing.rarity}
+              </span>
             </div>
 
-            <div
-              :for={{id, listing} <- @streams.listings}
-              id={id}
-              class="border-b border-base-200 last:border-b-0 py-4"
+            <p class="text-sm opacity-70 mb-2">{listing.item_type}</p>
+
+            <div class="stats stats-vertical bg-base-200 mb-3">
+              <%= for {stat, value} <- listing.stats do %>
+                <div class="stat p-2">
+                  <div class="stat-title capitalize">
+                    {String.replace(to_string(stat), "_", " ")}
+                  </div>
+                  <div class="stat-value text-primary">{value}</div>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-lg font-bold text-primary">{listing.price} gold</p>
+                <p class="text-xs opacity-70">by {listing.seller} (Lv.{listing.seller_level})</p>
+              </div>
+            </div>
+
+            <div class="card-actions justify-end mt-4">
+              <.button
+                phx-click="view_listing"
+                phx-value-id={listing.id}
+                class="btn-primary btn-sm"
+              >
+                View Details
+              </.button>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <%= if Enum.empty?(@filtered_listings) do %>
+      <div class="text-center py-12">
+        <.icon name="hero-shopping-cart" class="size-16 mx-auto text-base-content/20 mb-4" />
+        <h3 class="text-xl font-medium mb-2">No items found</h3>
+        <p class="text-base-content/70">Try adjusting your search or filters</p>
+      </div>
+    <% end %>
+  <% end %>
+  
+<!-- My Listings Tab -->
+  <%= if @active_tab == "listings" do %>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Listing Creation Form -->
+      <div class="lg:col-span-1">
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title">List New Item</h2>
+
+            <.form
+              for={@form}
+              id="listing-form"
+              phx-submit="create_listing"
+              phx-change="preview_item"
             >
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="space-y-4">
+                <.input
+                  field={@form[:item_id]}
+                  type="select"
+                  label="Select Item"
+                  options={@inventory_items}
+                  prompt="Choose an item from your inventory"
+                  required
+                />
+
+                <.input
+                  field={@form[:price]}
+                  type="number"
+                  label="Price (Gold)"
+                  min="1"
+                  required
+                />
+
+                <div class="form-control">
+                  <.button type="submit" class="w-full">List Item</.button>
+                </div>
+              </div>
+            </.form>
+            
+<!-- Item Preview -->
+            <%= if @selected_item do %>
+              <div class="mt-6 p-4 bg-base-200 rounded-lg">
+                <h3 class="font-bold mb-2">Item Preview</h3>
                 <div class="flex items-center gap-3">
                   <div class="avatar placeholder">
-                    <div class="bg-primary text-primary-content rounded-full w-10">
-                      <span>{String.first(listing.item.name)}</span>
+                    <div class="bg-neutral text-neutral-content rounded-full w-12">
+                      <span>{String.first(@selected_item.name)}</span>
                     </div>
                   </div>
                   <div>
-                    <h3 class="font-semibold">{listing.item.name}</h3>
-                    <p class="text-sm opacity-70">
-                      Listed {time_ago_in_words(listing.inserted_at)} ago
-                    </p>
+                    <p class="font-semibold">{@selected_item.name}</p>
+                    <p class="text-sm opacity-70">{@selected_item.description}</p>
                   </div>
                 </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+      
+<!-- Active Listings -->
+      <div class="lg:col-span-2">
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title">Your Active Listings</h2>
 
-                <div class="flex items-center gap-4">
-                  <div class="text-right">
-                    <p class="text-lg font-bold">{listing.price} Gold</p>
+            <div id="listings" phx-update="stream">
+              <div class="hidden only:block text-center py-8">
+                <.icon name="hero-shopping-cart" class="size-12 mx-auto text-base-content/20" />
+                <h3 class="text-lg font-medium mt-4">No Active Listings</h3>
+                <p class="mt-1 text-base-content/70">
+                  List items from your inventory to start selling!
+                </p>
+              </div>
+
+              <div
+                :for={{id, listing} <- @streams.listings}
+                id={id}
+                class="border-b border-base-200 last:border-b-0 py-4"
+              >
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div class="flex items-center gap-3">
+                    <div class="avatar placeholder">
+                      <div class="bg-primary text-primary-content rounded-full w-10">
+                        <span>{String.first(listing.item.name)}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 class="font-semibold">{listing.item.name}</h3>
+                      <p class="text-sm opacity-70">
+                        Listed {time_ago_in_words(listing.inserted_at)} ago
+                      </p>
+                    </div>
                   </div>
-                  <div class="flex gap-2">
-                    <.link
-                      phx-click="cancel_listing"
-                      phx-value-id={listing.id}
-                      class="btn btn-sm btn-error btn-outline"
-                      data-confirm="Are you sure you want to cancel this listing?"
-                    >
-                      Cancel
-                    </.link>
+
+                  <div class="flex items-center gap-4">
+                    <div class="text-right">
+                      <p class="text-lg font-bold">{listing.price} Gold</p>
+                    </div>
+                    <div class="flex gap-2">
+                      <.link
+                        phx-click="cancel_listing"
+                        phx-value-id={listing.id}
+                        class="btn btn-sm btn-error btn-outline"
+                        data-confirm="Are you sure you want to cancel this listing?"
+                      >
+                        Cancel
+                      </.link>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -118,5 +228,87 @@
         </div>
       </div>
     </div>
-  </div>
+  <% end %>
+  
+<!-- Item Details Modal -->
+  <%= if @selected_listing do %>
+    <div class="modal modal-open">
+      <div class="modal-box max-w-lg">
+        <h3 class="font-bold text-xl mb-4">{@selected_listing.item_name}</h3>
+
+        <div class="space-y-4">
+          <!-- Rarity and Type -->
+          <div class="flex items-center gap-2">
+            <span class={"badge capitalize #{rarity_color_class(@selected_listing.rarity)}"}>
+              {@selected_listing.rarity}
+            </span>
+            <span class="badge badge-outline">{@selected_listing.item_type}</span>
+          </div>
+          
+<!-- Description -->
+          <p class="text-sm">{@selected_listing.description}</p>
+          
+<!-- Stats -->
+          <%= unless Enum.empty?(@selected_listing.stats) do %>
+            <div>
+              <h4 class="font-semibold mb-2">Stats</h4>
+              <div class="grid grid-cols-2 gap-2">
+                <%= for {stat, value} <- @selected_listing.stats do %>
+                  <div class="flex justify-between">
+                    <span class="capitalize text-sm">
+                      {String.replace(to_string(stat), "_", " ")}:
+                    </span>
+                    <span class="font-semibold">{value}</span>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+          
+<!-- Requirements -->
+          <%= unless Enum.empty?(@selected_listing.requirements) do %>
+            <div>
+              <h4 class="font-semibold mb-2">Requirements</h4>
+              <div class="grid grid-cols-2 gap-2">
+                <%= for {req, value} <- @selected_listing.requirements do %>
+                  <div class="flex justify-between">
+                    <span class="capitalize text-sm">{req}:</span>
+                    <span class="font-semibold">{value}</span>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+          
+<!-- Seller Info -->
+          <div class="bg-base-200 p-3 rounded-lg">
+            <h4 class="font-semibold mb-1">Seller</h4>
+            <p class="text-sm">
+              {@selected_listing.seller} (Level {@selected_listing.seller_level})
+            </p>
+            <p class="text-xs opacity-70">
+              Listed {time_ago_in_words(@selected_listing.listed_at)}
+            </p>
+          </div>
+          
+<!-- Price -->
+          <div class="text-center">
+            <p class="text-2xl font-bold text-primary">{@selected_listing.price} Gold</p>
+          </div>
+        </div>
+
+        <div class="modal-action">
+          <.button
+            phx-click="purchase_listing"
+            phx-value-id={@selected_listing.id}
+            class="btn-primary"
+            data-confirm="Purchase this item for {@selected_listing.price} gold?"
+          >
+            Buy Now
+          </.button>
+          <.button phx-click="close_modal" class="btn-ghost">Cancel</.button>
+        </div>
+      </div>
+    </div>
+  <% end %>
 </Layouts.app>
