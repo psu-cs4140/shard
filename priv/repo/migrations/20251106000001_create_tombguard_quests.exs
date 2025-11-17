@@ -34,9 +34,9 @@ defmodule Shard.Repo.Migrations.CreateTombguardQuests do
       updated_at
     ) VALUES 
     (
-      'Retrieve the Ancient Sword',
-      'Travel to the barracks and retrieve the ancient sword that lies within. Bring it back to me as proof of your courage.',
-      'Find and retrieve the ancient sword from the barracks',
+      'Retrieve the Iron Sword',
+      'Travel to the barracks and retrieve the iron sword that lies within. Bring it back to me as proof of your courage.',
+      'Find and retrieve the iron sword from the barracks',
       'main',
       'normal',
       1,
@@ -45,7 +45,7 @@ defmodule Shard.Repo.Migrations.CreateTombguardQuests do
       50,
       '{}',
       '{}',
-      '{"retrieve_sword": {"description": "Find and retrieve the ancient sword from the barracks", "completed": false}}',
+      '{"retrieve_items": [{"item_name": "Iron Sword", "quantity": 1}]}',
       'available',
       false,
       (#{tombguard_id_query}),
@@ -67,9 +67,9 @@ defmodule Shard.Repo.Migrations.CreateTombguardQuests do
       NULL,
       150,
       75,
-      '{}',
-      '{"completed_quests": ["Retrieve the Ancient Sword"]}',
-      '{"kill_spider": {"description": "Kill a spider and bring back spider silk", "completed": false}}',
+      '{"Bone Zone Key": 1}',
+      '{"completed_quests": ["Retrieve the Iron Sword"]}',
+      '{"retrieve_items": [{"item_name": "Spider Silk", "quantity": 1}]}',
       'locked',
       false,
       (#{tombguard_id_query}),
@@ -80,30 +80,30 @@ defmodule Shard.Repo.Migrations.CreateTombguardQuests do
       '{"quest_chain_step": 2, "next_quest": "receive_key", "prerequisite": "retrieve_sword"}',
       NOW(),
       NOW()
-    ),
-    (
-      'Receive the Bone Zone Key',
-      'Return to Tombguard with the spider silk to receive the Bone Zone key.',
-      'Deliver spider silk to Tombguard',
-      'main',
-      'normal',
-      1,
-      NULL,
-      200,
-      100,
-      '{"bone_zone_key": 1}',
-      '{"completed_quests": ["Harvest Spider Silk"]}',
-      '{"deliver_silk": {"description": "Deliver spider silk to Tombguard", "completed": false}}',
-      'locked',
-      false,
-      (#{tombguard_id_query}),
-      (#{tombguard_id_query}),
-      'Return to Tombguard at coordinates (2,5)',
-      true,
-      3,
-      '{"quest_chain_step": 3, "prerequisite": "kill_spider", "final_quest": true}',
-      NOW(),
-      NOW()
+     ),
+      (
+        'Receive the Bone Zone Key',
+        'Return to Tombguard with the spider silk to receive the Bone Zone key.',
+        'Deliver spider silk to Tombguard',
+        'main',
+        'normal',
+        1,
+        NULL,
+        200,
+        100,
+        '{"Bone Zone Key": 1}',
+        '{"completed_quests": ["Harvest Spider Silk"]}',
+        '{"retrieve_items": [{"item_name": "Spider Silk", "quantity": 1}]}',
+        'locked',
+        false,
+        (#{tombguard_id_query}),
+        (#{tombguard_id_query}),
+        'Return to Tombguard at coordinates (2,5)',
+        true,
+        3,
+        '{"quest_chain_step": 3, "prerequisite": "kill_spider", "final_quest": true}',
+        NOW(),
+        NOW()
     );
     """
   end
@@ -112,7 +112,7 @@ defmodule Shard.Repo.Migrations.CreateTombguardQuests do
     execute """
     DELETE FROM quests 
     WHERE title IN (
-      'Retrieve the Ancient Sword',
+      'Retrieve the Iron Sword',
       'Harvest Spider Silk', 
       'Receive the Bone Zone Key'
     );

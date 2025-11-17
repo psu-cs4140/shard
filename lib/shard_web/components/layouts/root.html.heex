@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
-    <.live_title default="Shard" suffix=" · Phoenix Framework">
+    <.live_title default="Crimson Shard" suffix=" · Dark Realm">
       {assigns[:page_title]}
     </.live_title>
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
@@ -131,6 +131,9 @@
           </li>
           <li>
             <.link href={~p"/inventory"}>Inventory</.link>
+          </li>
+          <li>
+            <.link href={~p"/achievements"}>Achievements</.link>
           </li>
           <%= if @current_scope.user.admin do %>
             <li>

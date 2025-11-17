@@ -5,7 +5,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
   import Shard.UsersFixtures
 
   alias Shard.Monsters
-  alias Shard.Map
+  alias Shard.Map, as: GameMap
 
   @create_attrs %{
     name: "Test Monster",
@@ -46,7 +46,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
 
   defp create_room(_) do
     {:ok, room} =
-      Map.create_room(%{
+      GameMap.create_room(%{
         name: "Test Room",
         description: "A test room",
         x_coordinate: 0,
@@ -140,7 +140,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
 
     test "displays monster location when assigned to room", %{conn: conn, user: user, room: room} do
       {:ok, _monster} =
-        Monsters.create_monster(Elixir.Map.put(@create_attrs, :location_id, room.id))
+        Monsters.create_monster(Map.put(@create_attrs, :location_id, room.id))
 
       {:ok, _index_live, html} =
         conn
@@ -265,6 +265,10 @@ defmodule ShardWeb.AdminLive.MonstersTest do
       # Should redirect to index
       assert_patch(index_live, ~p"/admin/monsters")
     end
+  end
+
+  describe "Event Handlers - Empty String Handling" do
+    setup [:create_admin_user]
 
     test "handle_event save_monster with empty strings converts to nil", %{conn: conn, user: user} do
       {:ok, index_live, _html} =
@@ -272,11 +276,24 @@ defmodule ShardWeb.AdminLive.MonstersTest do
         |> log_in_user(user)
         |> live(~p"/admin/monsters/new")
 
-      # Submit form with empty location_id (empty string)
-      attrs_with_empty_string = Elixir.Map.put(@create_attrs, :location_id, "")
+      # Get the initial count of monsters
+      _initial_count = length(Monsters.list_monsters())
+
+      # Submit form with empty location_id (empty string) - use explicit form data
+      form_data = %{
+        "name" => "Test Monster Empty Location",
+        "race" => "orc",
+        "level" => "5",
+        "health" => "100",
+        "max_health" => "100",
+        "attack_damage" => "15",
+        "xp_amount" => "50",
+        "description" => "A fearsome test monster",
+        "location_id" => ""
+      }
 
       assert index_live
-             |> form("#monster-form", monster: attrs_with_empty_string)
+             |> form("#monster-form", monster: form_data)
              |> render_submit()
 
       assert_patch(index_live, ~p"/admin/monsters")
@@ -285,7 +302,12 @@ defmodule ShardWeb.AdminLive.MonstersTest do
       assert html =~ "Monster created successfully"
 
       # Verify the monster was created with nil location_id
-      monster = Monsters.list_monsters() |> List.last()
+      # Find the specific monster we just created by name
+      monster =
+        Monsters.list_monsters()
+        |> Enum.find(&(&1.name == "Test Monster Empty Location"))
+
+      assert monster != nil
       assert monster.location_id == nil
     end
   end
@@ -324,7 +346,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
       long_description = String.duplicate("a", 100)
 
       {:ok, _monster} =
-        Monsters.create_monster(Elixir.Map.put(@create_attrs, :description, long_description))
+        Monsters.create_monster(Map.put(@create_attrs, :description, long_description))
 
       {:ok, _index_live, html} =
         conn

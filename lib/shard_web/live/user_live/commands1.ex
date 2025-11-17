@@ -6,17 +6,14 @@ defmodule ShardWeb.UserLive.Commands1 do
   import ShardWeb.UserLive.Movement
   import ShardWeb.UserLive.QuestHandlers
   import ShardWeb.UserLive.Movement
-  import ShardWeb.UserLive.Commands2
+
+  # import ShardWeb.UserLive.Commands2,
+  #   except: [execute_talk_command: 2, execute_deliver_quest_command: 2, execute_quest_command: 2]
+
   import ShardWeb.UserLive.Commands3
 
-  import ShardWeb.UserLive.CommandParsers,
-    except: [
-      parse_talk_command: 1,
-      parse_quest_command: 1,
-      parse_pickup_command: 1,
-      parse_deliver_quest_command: 1,
-      execute_pickup_command: 2
-    ]
+  import ShardWeb.UserLive.NpcCommands
+  import ShardWeb.UserLive.CommandParsers
 
   #  import ShardWeb.UserLive.ItemCommands
 
@@ -47,6 +44,9 @@ defmodule ShardWeb.UserLive.Commands1 do
           "  deny - Deny a quest offer",
           "  deliver_quest \"npc_name\" - Deliver completed quest to NPC",
           "  poke \"character_name\" - Poke another player",
+          "  equipped - Show your currently equipped items",
+          "  equip \"item_name\" - Equip an item from your inventory",
+          "  unequip \"item_name\" - Unequip an equipped item",
           "  north/south/east/west - Move in cardinal directions",
           "  northeast/southeast/northwest/southwest - Move diagonally",
           "  Shortcuts: n/s/e/w/ne/se/nw/sw",
@@ -95,93 +95,20 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         # Get room from database
         room = GameMap.get_room_by_coordinates(game_state.character.current_zone_id, x, y, 0)
-        # Build room description - always use predetermined descriptions for tutorial terrain
+        # Build room description from database
         room_description =
-          if game_state.map_id == "tutorial_terrain" do
-            # Provide tutorial-specific descriptions based on coordinates
-            case {x, y} do
-              {0, 0} ->
-                "Tutorial Starting Chamber\nYou are in a small stone chamber with rough-hewn walls. Ancient torches mounted on iron brackets cast flickering light across the weathered stones. This appears to be the beginning of your adventure. You can see worn footprints in the dust, suggesting others have passed this way before."
+          case room do
+            nil ->
+              "Empty Space\nYou are in an empty area with no defined room. The ground beneath your feet feels uncertain, as if this space exists between the cracks of reality."
 
-              {1, 0} ->
-                "Eastern Alcove\nA narrow alcove extends eastward from the starting chamber. The walls here are carved with simple symbols that seem to glow faintly in the torchlight. The air carries a hint of something ancient and mysterious."
+            room ->
+              room_title = room.name || "Unnamed Room"
 
-              {0, 1} ->
-                "Southern Passage\nA short passage leads south from the starting chamber. The stone floor is worn smooth by countless footsteps. Moisture drips steadily from somewhere in the darkness ahead."
+              room_desc =
+                room.description ||
+                  "A mysterious room with no particular features. The walls are bare stone, and the air is still and quiet."
 
-              {1, 1} ->
-                "Corner Junction\nYou stand at a junction where two passages meet. The walls here show signs of careful construction, with fitted stones and mortar still holding strong after unknown years. A cool breeze flows through the intersection."
-
-              {5, 5} ->
-                "Central Treasure Chamber\nYou stand in a magnificent circular chamber with a high vaulted ceiling. Ornate pillars support graceful arches, and in the center sits an elaborate treasure chest made of dark wood bound with brass. The chest gleams with an inner light, and precious gems are scattered around its base."
-
-              {2, 2} ->
-                "Training Grounds\nThis rectangular chamber appears to have been used for combat training. Wooden practice dummies stand against the walls, and the floor is marked with scuff marks from countless sparring sessions. Weapon racks line the eastern wall."
-
-              {3, 3} ->
-                "Meditation Garden\nA peaceful underground garden with carefully tended moss growing in geometric patterns on the floor. A small fountain in the center provides the gentle sound of flowing water. The air here feels calm and restorative."
-
-              {4, 4} ->
-                "Library Ruins\nThe remains of what was once a grand library. Broken shelves line the walls, and scattered parchments lie across the floor. A few intact books rest on a reading table, their pages yellowed with age but still legible."
-
-              {6, 6} ->
-                "Armory\nA well-organized armory with weapons and armor displayed on stands and hanging from hooks. Most of the equipment shows signs of age, but some pieces still gleam with careful maintenance. A forge in the corner appears recently used."
-
-              {7, 7} ->
-                "Crystal Cavern\nA natural cavern where the walls are embedded with glowing crystals that provide a soft, blue-white light. The crystals hum with a barely audible resonance, and the air shimmers with magical energy."
-
-              {8, 8} ->
-                "Underground Lake\nYou stand on the shore of a vast underground lake. The water is crystal clear and so still it perfectly reflects the cavern ceiling above. Strange fish with luminescent scales can be seen swimming in the depths."
-
-              {9, 9} ->
-                "Ancient Shrine\nA small shrine dedicated to forgotten deities. Stone statues stand in alcoves around the room, their faces worn smooth by time. An altar in the center holds offerings left by previous visitors - coins, flowers, and small trinkets."
-
-              _ ->
-                # Check tile type for other positions
-                if y >= 0 and y < length(game_state.map_data) do
-                  row = Enum.at(game_state.map_data, y)
-
-                  if x >= 0 and x < length(row) do
-                    tile = Enum.at(row, x)
-
-                    case tile do
-                      0 ->
-                        "Solid Stone Wall\nYou face an impenetrable wall of fitted stone blocks. The craftsmanship is excellent, with no gaps or weaknesses visible. There's no passage here."
-
-                      1 ->
-                        "Stone Corridor\nYou are in a well-constructed stone corridor. The walls are made of carefully fitted blocks, and the floor is worn smooth by the passage of many feet over the years. Torch brackets line the walls, though most are empty. The air is cool and carries the faint scent of old stone and distant moisture."
-
-                      2 ->
-                        "Underground Pool\nYou stand beside a clear underground pool fed by a natural spring. The water is deep and perfectly still, reflecting the ceiling above like a mirror. Small ripples occasionally disturb the surface as drops fall from stalactites overhead. The air here is humid and fresh."
-
-                      3 ->
-                        "Treasure Alcove\nA small alcove has been carved into the stone wall here. The niche shows signs of having once held something valuable - there are mounting brackets and a small pedestal. Scratches on the floor suggest heavy objects were once moved in and out of this space."
-
-                      _ ->
-                        "Mystical Chamber\nYou are in a chamber that defies easy description. The very air seems to shimmer with arcane energy, and the walls appear to shift slightly when you're not looking directly at them. Strange symbols carved into the stone pulse with a faint, otherworldly light."
-                    end
-                  else
-                    "The Void\nYou have somehow moved beyond the boundaries of the known world. Reality becomes uncertain here, and the very ground beneath your feet feels insubstantial. Wisps of strange energy drift through the air, and distant sounds echo from nowhere."
-                  end
-                else
-                  "The Void\nYou have somehow moved beyond the boundaries of the known world. Reality becomes uncertain here, and the very ground beneath your feet feels insubstantial. Wisps of strange energy drift through the air, and distant sounds echo from nowhere."
-                end
-            end
-          else
-            # For non-tutorial maps, use room data from database if available
-            case room do
-              nil ->
-                "Empty Space\nYou are in an empty area with no defined room. The ground beneath your feet feels uncertain, as if this space exists between the cracks of reality."
-
-              room ->
-                room_title = room.name || "Unnamed Room"
-
-                room_desc =
-                  room.description ||
-                    "A mysterious room with no particular features. The walls are bare stone, and the air is still and quiet."
-
-                "#{room_title}\n#{room_desc}"
-            end
+              "#{room_title}\n#{room_desc}"
           end
 
         # Check for NPCs at current location
@@ -199,7 +126,9 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         # Add NPC descriptions if any are present
         description_lines =
-          if length(npcs_here) > 0 do
+          if Enum.empty?(npcs_here) do
+            description_lines
+          else
             # Empty line for spacing
             updated_lines = description_lines ++ [""]
 
@@ -212,13 +141,13 @@ defmodule ShardWeb.UserLive.Commands1 do
               end)
 
             updated_lines ++ npc_descriptions
-          else
-            description_lines
           end
 
         # Add item descriptions if any are present
         description_lines =
-          if length(items_here) > 0 do
+          if Enum.empty?(items_here) do
+            description_lines
+          else
             # Empty line for spacing
             updated_lines = description_lines ++ [""]
 
@@ -230,20 +159,18 @@ defmodule ShardWeb.UserLive.Commands1 do
               end)
 
             updated_lines ++ item_descriptions
-          else
-            description_lines
           end
 
         # Add available exits information
         exits = get_available_exits(x, y, room, game_state)
 
         description_lines =
-          if length(exits) > 0 do
+          if Enum.empty?(exits) do
+            description_lines ++ ["", "There are no obvious exits."]
+          else
             updated_lines = description_lines ++ [""]
             exit_text = "Exits: " <> Enum.join(exits, ", ")
             updated_lines ++ [exit_text]
-          else
-            description_lines ++ ["", "There are no obvious exits."]
           end
 
         # To see if there are monsters
@@ -330,7 +257,9 @@ defmodule ShardWeb.UserLive.Commands1 do
         {x, y} = game_state.player_position
         npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
 
-        if length(npcs_here) > 0 do
+        if Enum.empty?(npcs_here) do
+          {["There are no NPCs in this area."], game_state}
+        else
           response =
             ["NPCs in this area:"] ++
               Enum.flat_map(npcs_here, fn npc ->
@@ -340,8 +269,6 @@ defmodule ShardWeb.UserLive.Commands1 do
               end)
 
           {response, game_state}
-        else
-          {["There are no NPCs in this area."], game_state}
         end
 
       downcased_command in ["north", "n"] ->
@@ -427,84 +354,36 @@ defmodule ShardWeb.UserLive.Commands1 do
                                 execute_poke_command(game_state, character_name)
 
                               :error ->
-                                {[
-                                   "Unknown command: '#{command}'. Type 'help' for available commands."
-                                 ], game_state}
+                                # Check if it's an equipped command
+                                case parse_equipped_command(command) do
+                                  :ok ->
+                                    execute_equipped_command(game_state)
+
+                                  :error ->
+                                    # Check if it's an equip command
+                                    case parse_equip_command(command) do
+                                      {:ok, item_name} ->
+                                        execute_equip_command(game_state, item_name)
+
+                                      :error ->
+                                        # Check if it's an unequip command
+                                        case parse_unequip_command(command) do
+                                          {:ok, item_name} ->
+                                            execute_unequip_command(game_state, item_name)
+
+                                          :error ->
+                                            {[
+                                               "Unknown command: '#{command}'. Type 'help' for available commands."
+                                             ], game_state}
+                                        end
+                                    end
+                                end
                             end
                         end
                     end
                 end
             end
         end
-    end
-  end
-
-  # Parse talk command to extract NPC name
-  def parse_talk_command(command) do
-    # Match patterns like: talk "npc name", talk 'npc name', talk npc_name
-    cond do
-      # Match talk "npc name" or talk 'npc name'
-      Regex.match?(~r/^talk\s+["'](.+)["']\s*$/i, command) ->
-        case Regex.run(~r/^talk\s+["'](.+)["']\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
-
-      # Match talk npc_name (single word, no quotes)
-      Regex.match?(~r/^talk\s+(\w+)\s*$/i, command) ->
-        case Regex.run(~r/^talk\s+(\w+)\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
-
-      true ->
-        :error
-    end
-  end
-
-  # Parse quest command to extract NPC name
-  def parse_quest_command(command) do
-    # Match patterns like: quest "npc name", quest 'npc name', quest npc_name
-    cond do
-      # Match quest "npc name" or quest 'npc name'
-      Regex.match?(~r/^quest\s+["'](.+)["']\s*$/i, command) ->
-        case Regex.run(~r/^quest\s+["'](.+)["']\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
-
-      # Match quest npc_name (single word, no quotes)
-      Regex.match?(~r/^quest\s+(\w+)\s*$/i, command) ->
-        case Regex.run(~r/^quest\s+(\w+)\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
-
-      true ->
-        :error
-    end
-  end
-
-  # Parse deliver_quest command to extract NPC name
-  def parse_deliver_quest_command(command) do
-    # Match patterns like: deliver_quest "npc name", deliver_quest 'npc name', deliver_quest npc_name
-    cond do
-      # Match deliver_quest "npc name" or deliver_quest 'npc name'
-      Regex.match?(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) ->
-        case Regex.run(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
-
-      # Match deliver_quest npc_name (single word, no quotes)
-      Regex.match?(~r/^deliver_quest\s+(\w+)\s*$/i, command) ->
-        case Regex.run(~r/^deliver_quest\s+(\w+)\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
-
-      true ->
-        :error
     end
   end
 end

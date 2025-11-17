@@ -22,78 +22,99 @@ defmodule ShardWeb.UserLive.Movement do
       if new_pos == current_pos do
         {["You cannot move in that direction. There's no room or passage that way."], game_state}
       else
-        direction_name =
-          case direction do
-            "ArrowUp" -> "north"
-            "ArrowDown" -> "south"
-            "ArrowRight" -> "east"
-            "ArrowLeft" -> "west"
-            "northeast" -> "northeast"
-            "southeast" -> "southeast"
-            "northwest" -> "northwest"
-            "southwest" -> "southwest"
-            _ -> "unknown"
-          end
-
-        {curr_x, curr_y} = current_pos
+        # Update player position in database
         {new_x, new_y} = new_pos
-
         zone_id = game_state.character.current_zone_id || 1
 
-        current_room =
-          GameMap.get_room_by_coordinates(zone_id, curr_x, curr_y, 0)
+        case GameMap.get_room_by_coordinates(zone_id, new_x, new_y, 0) do
+          nil ->
+            {["You cannot move in that direction. There's no room or passage that way."],
+             game_state}
 
-        destination_room =
-          GameMap.get_room_by_coordinates(zone_id, new_x, new_y, 0)
+          room ->
+            # Save position to database
+            GameMap.update_player_position(game_state.character.id, zone_id, room)
 
-        completion_result = GameMap.check_dungeon_completion(current_room, destination_room)
-
-        npcs_here = get_npcs_at_location(new_x, new_y, zone_id)
-        items_here = get_items_at_location(new_x, new_y, zone_id)
-        monsters = Enum.filter(game_state.monsters, fn m -> m[:position] == new_pos end)
-        monster_count = Enum.count(monsters)
-
-        response =
-          ["You traversed #{direction_name}."] ++
-            if length(npcs_here) > 0 do
-              ["You see #{Enum.map_join(npcs_here, ", ", & &1.name)} here."]
-            else
-              []
-            end ++
-            if length(items_here) > 0 do
-              Enum.map(items_here, fn item ->
-                "You see a #{item.name || "unknown item"} on the ground."
-              end)
-            else
-              []
-            end ++
-            cond do
-              monster_count == 1 ->
-                ["There is a #{Enum.at(monsters, 0)[:name]} here! It prepares to attack."]
-
-              monster_count > 1 ->
-                names = Enum.map_join(monsters, ", ", fn m -> "a " <> to_string(m[:name]) end)
-
-                [
-                  "There are #{monster_count} monsters! The monsters include #{names}.",
-                  "They prepare to attack."
-                ]
-
-              true ->
-                []
-            end
-
-        updated_game_state = %{game_state | player_position: new_pos}
-        {combat_msgs, updated_game_state} = Shard.Combat.start_combat(updated_game_state)
-        final_response = response ++ combat_msgs
-
-        case completion_result do
-          {:completed, msg} ->
-            {final_response, updated_game_state, {:show_completion_popup, msg}}
-
-          :no_completion ->
-            {final_response, updated_game_state, :no_popup}
+            # Continue with existing movement logic
+            execute_movement_with_room(game_state, direction, current_pos, new_pos, room)
         end
+      end
+    rescue
+      _ ->
+        {["You can't move that way."], game_state}
+    end
+  end
+
+  defp execute_movement_with_room(game_state, direction, current_pos, new_pos, room) do
+    try do
+      direction_name =
+        case direction do
+          "ArrowUp" -> "north"
+          "ArrowDown" -> "south"
+          "ArrowRight" -> "east"
+          "ArrowLeft" -> "west"
+          "northeast" -> "northeast"
+          "southeast" -> "southeast"
+          "northwest" -> "northwest"
+          "southwest" -> "southwest"
+          _ -> "unknown"
+        end
+
+      {curr_x, curr_y} = current_pos
+      {new_x, new_y} = new_pos
+
+      zone_id = game_state.character.current_zone_id || 1
+
+      current_room =
+        GameMap.get_room_by_coordinates(zone_id, curr_x, curr_y, 0)
+
+      completion_result = GameMap.check_dungeon_completion(current_room, room)
+
+      npcs_here = get_npcs_at_location(new_x, new_y, zone_id)
+      items_here = get_items_at_location(new_x, new_y, zone_id)
+      monsters = Enum.filter(game_state.monsters, fn m -> m[:position] == new_pos end)
+      monster_count = Enum.count(monsters)
+
+      response =
+        ["You traversed #{direction_name}."] ++
+          if length(npcs_here) > 0 do
+            ["You see #{Enum.map_join(npcs_here, ", ", & &1.name)} here."]
+          else
+            []
+          end ++
+          if length(items_here) > 0 do
+            Enum.map(items_here, fn item ->
+              "You see a #{item.name || "unknown item"} on the ground."
+            end)
+          else
+            []
+          end ++
+          cond do
+            monster_count == 1 ->
+              ["There is a #{Enum.at(monsters, 0)[:name]} here! It prepares to attack."]
+
+            monster_count > 1 ->
+              names = Enum.map_join(monsters, ", ", fn m -> "a " <> to_string(m[:name]) end)
+
+              [
+                "There are #{monster_count} monsters! The monsters include #{names}.",
+                "They prepare to attack."
+              ]
+
+            true ->
+              []
+          end
+
+      updated_game_state = %{game_state | player_position: new_pos}
+      {combat_msgs, updated_game_state} = Shard.Combat.start_combat(updated_game_state)
+      final_response = response ++ combat_msgs
+
+      case completion_result do
+        {:completed, msg} ->
+          {final_response, updated_game_state, {:show_completion_popup, msg}}
+
+        :no_completion ->
+          {final_response, updated_game_state, :no_popup}
       end
     rescue
       _ ->
