@@ -1,7 +1,9 @@
 defmodule ShardWeb.MarketplaceLive.Index do
   use ShardWeb, :live_view
 
-  # alias Shard.Marketplace
+  import Ecto.Query
+
+  alias Shard.Marketplace
   alias Shard.Items
 
   @moduledoc """
@@ -17,61 +19,8 @@ defmodule ShardWeb.MarketplaceLive.Index do
   def mount(_params, _session, socket) do
     current_scope = socket.assigns.current_scope
 
-    # Mock marketplace listings for demonstration
-    all_listings = [
-      %{
-        id: 1,
-        item_name: "Iron Sword",
-        item_type: "weapon",
-        rarity: "common",
-        stats: %{damage: 15},
-        requirements: %{strength: 8},
-        description: "A basic iron sword",
-        price: 150,
-        seller: "SamplePlayer1",
-        seller_level: 12,
-        listed_at: ~N[2025-11-16 15:30:00]
-      },
-      %{
-        id: 2,
-        item_name: "Steel Dagger",
-        item_type: "weapon",
-        rarity: "uncommon",
-        stats: %{damage: 20},
-        requirements: %{dexterity: 10},
-        description: "A sharp steel dagger",
-        price: 220,
-        seller: "SamplePlayer2",
-        seller_level: 8,
-        listed_at: ~N[2025-11-16 14:45:00]
-      },
-      %{
-        id: 3,
-        item_name: "Leather Cap",
-        item_type: "head",
-        rarity: "common",
-        stats: %{defense: 8},
-        requirements: %{},
-        description: "Basic leather head protection",
-        price: 75,
-        seller: "SamplePlayer3",
-        seller_level: 5,
-        listed_at: ~N[2025-11-16 16:20:00]
-      },
-      %{
-        id: 4,
-        item_name: "Enchanted Cloak",
-        item_type: "body",
-        rarity: "rare",
-        stats: %{defense: 25, magic_resist: 15},
-        requirements: %{intelligence: 12},
-        description: "A magically infused cloak that resists spells",
-        price: 450,
-        seller: "SamplePlayer4",
-        seller_level: 18,
-        listed_at: ~N[2025-11-16 12:10:00]
-      }
-    ]
+    # Get all active marketplace listings
+    all_listings = Marketplace.list_active_listings() |> format_listings_for_display()
 
     # Get user's inventory items for the dropdown
     inventory_items =
@@ -93,40 +42,99 @@ defmodule ShardWeb.MarketplaceLive.Index do
   end
 
   @impl true
-  def handle_event("create_listing", %{"listing" => _params}, socket) do
-    # This handler is stubbed until the database context is implemented
-    # Variables that will be needed:
-    # current_user = socket.assigns.current_scope.user
-    # case Marketplace.create_listing(params, current_user) do
+  def handle_event("create_listing", %{"listing" => params}, socket) do
+    current_user = socket.assigns.current_scope.user
 
-    {:noreply,
-     socket
-     |> put_flash(:info, "Item listing functionality coming soon!")}
+    case Marketplace.create_listing(params, current_user) do
+      {:ok, _listing} ->
+        all_listings = Marketplace.list_active_listings() |> format_listings_for_display()
+
+        {:noreply,
+         socket
+         |> assign(:all_listings, all_listings)
+         |> assign(:filtered_listings, all_listings)
+         |> put_flash(:info, "Item listed successfully!")}
+
+      {:error, :no_item_selected} ->
+        {:noreply, put_flash(socket, :error, "Please select an item to list")}
+
+      {:error, :inventory_not_found} ->
+        {:noreply, put_flash(socket, :error, "Item not found in your inventory")}
+
+      {:error, :item_is_equipped} ->
+        {:noreply, put_flash(socket, :error, "Cannot list equipped items")}
+
+      {:error, :item_not_sellable} ->
+        {:noreply, put_flash(socket, :error, "This item cannot be sold")}
+
+      {:error, :item_already_listed} ->
+        {:noreply, put_flash(socket, :error, "This item is already listed")}
+
+      {:error, %Ecto.Changeset{}} ->
+        {:noreply, put_flash(socket, :error, "Please check your listing details")}
+    end
   end
 
   @impl true
-  def handle_event("cancel_listing", %{"id" => _id}, socket) do
-    # This handler is stubbed until the database context is implemented
-    # Variables that will be needed:
-    # current_user = socket.assigns.current_scope.user
-    # case Marketplace.cancel_listing(id, current_user) do
+  def handle_event("cancel_listing", %{"id" => id}, socket) do
+    current_user = socket.assigns.current_scope.user
 
-    {:noreply,
-     socket
-     |> put_flash(:info, "Listing cancellation functionality coming soon!")}
+    case Marketplace.cancel_listing(id, current_user) do
+      {:ok, _listing} ->
+        all_listings = Marketplace.list_active_listings() |> format_listings_for_display()
+
+        {:noreply,
+         socket
+         |> assign(:all_listings, all_listings)
+         |> assign(:filtered_listings, all_listings)
+         |> put_flash(:info, "Listing cancelled successfully")}
+
+      {:error, :listing_not_found} ->
+        {:noreply, put_flash(socket, :error, "Listing not found")}
+
+      {:error, :not_seller} ->
+        {:noreply, put_flash(socket, :error, "You can only cancel your own listings")}
+
+      {:error, :listing_not_active} ->
+        {:noreply, put_flash(socket, :error, "This listing is no longer active")}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Failed to cancel listing")}
+    end
   end
 
   @impl true
-  def handle_event("update_price", %{"id" => _id, "price" => _price}, socket) do
-    # This handler is stubbed until the database context is implemented
-    # Variables that will be needed:
-    # current_user = socket.assigns.current_scope.user
-    # price = String.to_integer(price)
-    # case Marketplace.update_listing_price(id, price, current_user) do
+  def handle_event("update_price", %{"id" => id, "price" => price}, socket) do
+    current_user = socket.assigns.current_scope.user
 
-    {:noreply,
-     socket
-     |> put_flash(:info, "Price update functionality coming soon!")}
+    case Integer.parse(price) do
+      {price_int, _} when price_int > 0 ->
+        case Marketplace.update_listing_price(id, price_int, current_user) do
+          {:ok, _listing} ->
+            all_listings = Marketplace.list_active_listings() |> format_listings_for_display()
+
+            {:noreply,
+             socket
+             |> assign(:all_listings, all_listings)
+             |> assign(:filtered_listings, all_listings)
+             |> put_flash(:info, "Price updated successfully")}
+
+          {:error, :listing_not_found} ->
+            {:noreply, put_flash(socket, :error, "Listing not found")}
+
+          {:error, :not_seller} ->
+            {:noreply, put_flash(socket, :error, "You can only update your own listings")}
+
+          {:error, :listing_not_active} ->
+            {:noreply, put_flash(socket, :error, "This listing is no longer active")}
+
+          {:error, _} ->
+            {:noreply, put_flash(socket, :error, "Failed to update price")}
+        end
+
+      _ ->
+        {:noreply, put_flash(socket, :error, "Please enter a valid price")}
+    end
   end
 
   @impl true
@@ -172,15 +180,55 @@ defmodule ShardWeb.MarketplaceLive.Index do
 
   @impl true
   def handle_event("purchase_listing", %{"id" => id}, socket) do
-    listing = Enum.find(socket.assigns.all_listings, &(&1.id == String.to_integer(id)))
+    current_user = socket.assigns.current_scope.user
 
-    {:noreply,
-     socket
-     |> assign(:selected_listing, nil)
-     |> put_flash(
-       :info,
-       "#{listing.item_name} is a sample item. Purchase functionality available once backend implemented."
-     )}
+    case Marketplace.purchase_listing(id, current_user) do
+      {:ok, _listing} ->
+        all_listings = Marketplace.list_active_listings() |> format_listings_for_display()
+
+        {:noreply,
+         socket
+         |> assign(:all_listings, all_listings)
+         |> assign(:filtered_listings, all_listings)
+         |> assign(:selected_listing, nil)
+         |> put_flash(:info, "Purchase successful!")}
+
+      {:error, :listing_not_found} ->
+        {:noreply,
+         socket
+         |> assign(:selected_listing, nil)
+         |> put_flash(:error, "Listing not found")}
+
+      {:error, :cannot_buy_own_listing} ->
+        {:noreply,
+         socket
+         |> assign(:selected_listing, nil)
+         |> put_flash(:error, "You cannot buy your own listing")}
+
+      {:error, :listing_not_active} ->
+        {:noreply,
+         socket
+         |> assign(:selected_listing, nil)
+         |> put_flash(:error, "This listing is no longer active")}
+
+      {:error, :insufficient_gold} ->
+        {:noreply,
+         socket
+         |> assign(:selected_listing, nil)
+         |> put_flash(:error, "You don't have enough gold")}
+
+      {:error, :buyer_has_no_character} ->
+        {:noreply,
+         socket
+         |> assign(:selected_listing, nil)
+         |> put_flash(:error, "You need to create a character first")}
+
+      {:error, _} ->
+        {:noreply,
+         socket
+         |> assign(:selected_listing, nil)
+         |> put_flash(:error, "Purchase failed. Please try again.")}
+    end
   end
 
   # Helper functions
@@ -240,5 +288,42 @@ defmodule ShardWeb.MarketplaceLive.Index do
       diff < 172_800 -> "1 day"
       true -> "#{div(diff, 86_400)} days"
     end
+  end
+
+  # Helper function to format listings for display in the UI
+  defp format_listings_for_display(listings) when listings == [], do: []
+
+  defp format_listings_for_display(listings) do
+    # Get all seller user IDs
+    seller_ids = Enum.map(listings, & &1.seller_id) |> Enum.uniq()
+
+    # Fetch all characters for these sellers
+    seller_characters =
+      from(c in Shard.Characters.Character,
+        where: c.user_id in ^seller_ids,
+        select: {c.user_id, c}
+      )
+      |> Shard.Repo.all()
+      |> Enum.into(%{})
+
+    Enum.map(listings, fn listing ->
+      item = listing.character_inventory.item
+      seller = listing.seller
+      seller_character = Map.get(seller_characters, seller.id)
+
+      %{
+        id: listing.id,
+        item_name: item.name,
+        item_type: item.item_type,
+        rarity: item.rarity,
+        stats: item.stats || %{},
+        requirements: item.requirements || %{},
+        description: item.description,
+        price: listing.price,
+        seller: seller.email,
+        seller_level: if(seller_character, do: seller_character.level, else: 1),
+        listed_at: listing.inserted_at
+      }
+    end)
   end
 end
