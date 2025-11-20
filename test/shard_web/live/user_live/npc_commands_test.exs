@@ -44,7 +44,9 @@ defmodule ShardWeb.UserLive.NpcCommandsTest do
         max_health: 100,
         mana: 50,
         max_mana: 50,
-        gold: 100
+        gold: 100,
+        class: "warrior",
+        race: "human"
       })
 
       {:ok, npc} = Npcs.create_npc(%{
@@ -188,7 +190,9 @@ defmodule ShardWeb.UserLive.NpcCommandsTest do
         max_health: 100,
         mana: 50,
         max_mana: 50,
-        gold: 100
+        gold: 100,
+        class: "warrior",
+        race: "human"
       })
 
       {:ok, npc} = Npcs.create_npc(%{
@@ -350,7 +354,9 @@ defmodule ShardWeb.UserLive.NpcCommandsTest do
         max_health: 100,
         mana: 50,
         max_mana: 50,
-        gold: 100
+        gold: 100,
+        class: "warrior",
+        race: "human"
       })
 
       game_state = %{
