@@ -81,7 +81,7 @@ defmodule Shard.Achievements.AchievementTest do
       attrs = valid_achievement_attributes(%{name: ""})
       changeset = Achievement.changeset(%Achievement{}, attrs)
       refute changeset.valid?
-      assert "should be at least 1 character(s)" in errors_on(changeset).name
+      assert "can't be blank" in errors_on(changeset).name
 
       # Test maximum length (over 100 characters should be invalid)
       long_name = String.duplicate("A", 101)
@@ -101,7 +101,7 @@ defmodule Shard.Achievements.AchievementTest do
       attrs = valid_achievement_attributes(%{description: ""})
       changeset = Achievement.changeset(%Achievement{}, attrs)
       refute changeset.valid?
-      assert "should be at least 1 character(s)" in errors_on(changeset).description
+      assert "can't be blank" in errors_on(changeset).description
 
       # Test maximum length (over 500 characters should be invalid)
       long_description = String.duplicate("A", 501)
