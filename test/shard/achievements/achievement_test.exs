@@ -77,33 +77,43 @@ defmodule Shard.Achievements.AchievementTest do
     end
 
     test "name length validation" do
-      # Test minimum length
-      attrs = valid_achievement_attributes(%{name: "A"})
+      # Test minimum length (empty string should be invalid)
+      attrs = valid_achievement_attributes(%{name: ""})
       changeset = Achievement.changeset(%Achievement{}, attrs)
       refute changeset.valid?
-      assert "should be at least 2 character(s)" in errors_on(changeset).name
+      assert "should be at least 1 character(s)" in errors_on(changeset).name
 
-      # Test maximum length
-      long_name = String.duplicate("A", 256)
+      # Test maximum length (over 100 characters should be invalid)
+      long_name = String.duplicate("A", 101)
       attrs = valid_achievement_attributes(%{name: long_name})
       changeset = Achievement.changeset(%Achievement{}, attrs)
       refute changeset.valid?
-      assert "should be at most 255 character(s)" in errors_on(changeset).name
+      assert "should be at most 100 character(s)" in errors_on(changeset).name
+
+      # Test valid single character name
+      attrs = valid_achievement_attributes(%{name: "A"})
+      changeset = Achievement.changeset(%Achievement{}, attrs)
+      assert changeset.valid?
     end
 
     test "description length validation" do
-      # Test minimum length
-      attrs = valid_achievement_attributes(%{description: "A"})
+      # Test minimum length (empty string should be invalid)
+      attrs = valid_achievement_attributes(%{description: ""})
       changeset = Achievement.changeset(%Achievement{}, attrs)
       refute changeset.valid?
-      assert "should be at least 10 character(s)" in errors_on(changeset).description
+      assert "should be at least 1 character(s)" in errors_on(changeset).description
 
-      # Test maximum length
-      long_description = String.duplicate("A", 1001)
+      # Test maximum length (over 500 characters should be invalid)
+      long_description = String.duplicate("A", 501)
       attrs = valid_achievement_attributes(%{description: long_description})
       changeset = Achievement.changeset(%Achievement{}, attrs)
       refute changeset.valid?
-      assert "should be at most 1000 character(s)" in errors_on(changeset).description
+      assert "should be at most 500 character(s)" in errors_on(changeset).description
+
+      # Test valid single character description
+      attrs = valid_achievement_attributes(%{description: "A"})
+      changeset = Achievement.changeset(%Achievement{}, attrs)
+      assert changeset.valid?
     end
   end
 end
