@@ -22,7 +22,7 @@ defmodule ShardWeb.AdminLive.Zones do
        |> assign(:changeset, nil)
        |> assign(:selected_zone, nil)}
     else
-      {:ok, push_redirect(socket, to: "/")}
+      {:ok, push_navigate(socket, to: "/")}
     end
   end
 
