@@ -26,24 +26,4 @@ defmodule Shard.AchievementsFixtures do
     achievement
   end
 
-  def valid_user_achievement_attributes(attrs \\ %{}) do
-    achievement = achievement_fixture()
-    user = Shard.UsersFixtures.user_fixture()
-
-    Enum.into(attrs, %{
-      user_id: user.id,
-      achievement_id: achievement.id,
-      earned_at: DateTime.utc_now(),
-      progress: %{"current" => 1, "required" => 1}
-    })
-  end
-
-  def user_achievement_fixture(attrs \\ %{}) do
-    {:ok, user_achievement} =
-      attrs
-      |> valid_user_achievement_attributes()
-      |> Achievements.create_user_achievement()
-
-    user_achievement
-  end
 end
