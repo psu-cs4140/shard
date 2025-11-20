@@ -99,13 +99,26 @@ defmodule ShardWeb.AdminLive.ZonesTest do
              |> form("#zone-form", zone: @invalid_attrs)
              |> render_change() =~ "can&#39;t be blank"
 
+      # Use unique attributes to avoid conflicts with existing data
+      unique_attrs = %{
+        name: "Unique Test Zone #{System.unique_integer([:positive])}",
+        slug: "unique-test-zone-#{System.unique_integer([:positive])}",
+        description: "A unique test zone for testing",
+        zone_type: "standard",
+        min_level: 1,
+        max_level: 10,
+        display_order: 0,
+        is_public: true,
+        is_active: true
+      }
+
       assert index_live
-             |> form("#zone-form", zone: @create_attrs)
+             |> form("#zone-form", zone: unique_attrs)
              |> render_submit()
 
       html = render(index_live)
       assert html =~ "Zone created successfully"
-      assert html =~ @create_attrs.name
+      assert html =~ unique_attrs.name
     end
 
     test "updates zone in listing", %{conn: conn, user: user, zone: zone} do
