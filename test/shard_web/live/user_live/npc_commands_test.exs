@@ -20,7 +20,8 @@ defmodule ShardWeb.UserLive.NpcCommandsTest do
         description: "A test zone",
         zone_type: "dungeon",
         min_level: 1,
-        max_level: 10
+        max_level: 10,
+        slug: "test-zone"
       })
 
       {:ok, room} = Map.create_room(%{
@@ -163,7 +164,8 @@ defmodule ShardWeb.UserLive.NpcCommandsTest do
         description: "A test zone",
         zone_type: "dungeon",
         min_level: 1,
-        max_level: 10
+        max_level: 10,
+        slug: "test-zone-2"
       })
 
       {:ok, room} = Map.create_room(%{
@@ -334,7 +336,8 @@ defmodule ShardWeb.UserLive.NpcCommandsTest do
         description: "A test zone",
         zone_type: "dungeon",
         min_level: 1,
-        max_level: 10
+        max_level: 10,
+        slug: "test-zone-3"
       })
 
       {:ok, character} = Characters.create_character(%{
