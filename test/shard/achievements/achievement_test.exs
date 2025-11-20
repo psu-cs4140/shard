@@ -67,10 +67,10 @@ defmodule Shard.Achievements.AchievementTest do
 
     test "name must be unique" do
       achievement_fixture(%{name: "Unique Achievement"})
-      
+
       attrs = valid_achievement_attributes(%{name: "Unique Achievement"})
       changeset = Achievement.changeset(%Achievement{}, attrs)
-      
+
       assert {:error, changeset} = Repo.insert(changeset)
       assert "has already been taken" in errors_on(changeset).name
     end

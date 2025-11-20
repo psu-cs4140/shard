@@ -115,7 +115,13 @@ defmodule ShardWeb.UserLive.Commands1 do
         npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
 
         # Check for other players at current location
-        other_players = get_other_players_at_location(x, y, game_state.character.current_zone_id, game_state.character.id)
+        other_players =
+          get_other_players_at_location(
+            x,
+            y,
+            game_state.character.current_zone_id,
+            game_state.character.id
+          )
 
         # Check for items at current location
         items_here =
@@ -413,17 +419,21 @@ defmodule ShardWeb.UserLive.Commands1 do
     try do
       # Get the room at the current coordinates
       room = GameMap.get_room_by_coordinates(zone_id, x, y, 0)
-      
+
       case room do
-        nil -> []
+        nil ->
+          []
+
         room ->
           # Get all player positions in this room, excluding the current character
-          query = from(pp in GameMap.PlayerPosition,
-            join: c in Shard.Characters.Character, on: pp.character_id == c.id,
-            where: pp.room_id == ^room.id and pp.character_id != ^current_character_id,
-            select: c
-          )
-          
+          query =
+            from(pp in GameMap.PlayerPosition,
+              join: c in Shard.Characters.Character,
+              on: pp.character_id == c.id,
+              where: pp.room_id == ^room.id and pp.character_id != ^current_character_id,
+              select: c
+            )
+
           Repo.all(query)
       end
     rescue

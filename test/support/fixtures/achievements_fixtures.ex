@@ -25,5 +25,4 @@ defmodule Shard.AchievementsFixtures do
 
     achievement
   end
-
 end

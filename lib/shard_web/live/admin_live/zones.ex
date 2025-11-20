@@ -10,7 +10,7 @@ defmodule ShardWeb.AdminLive.Zones do
   @impl true
   def mount(_params, _session, socket) do
     current_user = socket.assigns[:current_scope] && socket.assigns.current_scope.user
-    
+
     if current_user && current_user.admin do
       zones = Map.list_zones()
 

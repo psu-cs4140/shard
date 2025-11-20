@@ -5,7 +5,6 @@ defmodule Shard.AchievementsTest do
   alias Shard.Achievements.Achievement
 
   import Shard.AchievementsFixtures
-  import Shard.UsersFixtures
 
   describe "achievements" do
     test "list_achievements/0 returns all achievements" do
@@ -17,7 +16,6 @@ defmodule Shard.AchievementsTest do
       achievement = achievement_fixture()
       assert Achievements.get_achievement!(achievement.id) == achievement
     end
-
 
     test "create_achievement/1 with valid data creates an achievement" do
       valid_attrs = valid_achievement_attributes()
@@ -37,13 +35,16 @@ defmodule Shard.AchievementsTest do
 
     test "update_achievement/2 with valid data updates the achievement" do
       achievement = achievement_fixture()
+
       update_attrs = %{
         name: "Updated Achievement",
         description: "Updated description",
         points: 200
       }
 
-      assert {:ok, %Achievement{} = achievement} = Achievements.update_achievement(achievement, update_attrs)
+      assert {:ok, %Achievement{} = achievement} =
+               Achievements.update_achievement(achievement, update_attrs)
+
       assert achievement.name == "Updated Achievement"
       assert achievement.description == "Updated description"
       assert achievement.points == 200
@@ -51,7 +52,10 @@ defmodule Shard.AchievementsTest do
 
     test "update_achievement/2 with invalid data returns error changeset" do
       achievement = achievement_fixture()
-      assert {:error, %Ecto.Changeset{}} = Achievements.update_achievement(achievement, %{name: nil})
+
+      assert {:error, %Ecto.Changeset{}} =
+               Achievements.update_achievement(achievement, %{name: nil})
+
       assert achievement == Achievements.get_achievement!(achievement.id)
     end
 
@@ -66,5 +70,4 @@ defmodule Shard.AchievementsTest do
       assert %Ecto.Changeset{} = Achievements.change_achievement(achievement)
     end
   end
-
 end
