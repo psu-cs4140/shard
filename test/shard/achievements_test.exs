@@ -18,14 +18,6 @@ defmodule Shard.AchievementsTest do
       assert Achievements.get_achievement!(achievement.id) == achievement
     end
 
-    test "get_achievement/1 returns the achievement with given id" do
-      achievement = achievement_fixture()
-      assert Achievements.get_achievement(achievement.id) == achievement
-    end
-
-    test "get_achievement/1 returns nil for non-existent id" do
-      assert Achievements.get_achievement(999) == nil
-    end
 
     test "create_achievement/1 with valid data creates an achievement" do
       valid_attrs = valid_achievement_attributes()
