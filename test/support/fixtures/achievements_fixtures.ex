@@ -13,8 +13,7 @@ defmodule Shard.AchievementsFixtures do
       category: "test",
       points: 100,
       requirements: %{"level" => 5},
-      is_hidden: false,
-      is_repeatable: false
+      hidden: false
     })
   end
 

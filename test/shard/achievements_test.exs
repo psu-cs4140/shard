@@ -36,8 +36,7 @@ defmodule Shard.AchievementsTest do
       assert achievement.category == valid_attrs.category
       assert achievement.points == valid_attrs.points
       assert achievement.requirements == valid_attrs.requirements
-      assert achievement.is_hidden == valid_attrs.is_hidden
-      assert achievement.is_repeatable == valid_attrs.is_repeatable
+      assert achievement.hidden == valid_attrs.hidden
     end
 
     test "create_achievement/1 with invalid data returns error changeset" do

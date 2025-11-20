@@ -59,11 +59,10 @@ defmodule Shard.Achievements.AchievementTest do
     end
 
     test "valid changeset with boolean flags" do
-      attrs = valid_achievement_attributes(%{is_hidden: true, is_repeatable: true})
+      attrs = valid_achievement_attributes(%{hidden: true})
       changeset = Achievement.changeset(%Achievement{}, attrs)
       assert changeset.valid?
-      assert Ecto.Changeset.get_field(changeset, :is_hidden) == true
-      assert Ecto.Changeset.get_field(changeset, :is_repeatable) == true
+      assert Ecto.Changeset.get_field(changeset, :hidden) == true
     end
 
     test "name must be unique" do
