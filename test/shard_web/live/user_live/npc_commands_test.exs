@@ -93,7 +93,7 @@ defmodule ShardWeb.UserLive.NpcCommandsTest do
       {:ok, quest} = Quests.create_quest(%{
         title: "Test Quest",
         description: "A test quest",
-        quest_type: "fetch",
+        quest_type: "side",
         difficulty: "easy",
         status: "available",
         giver_npc_id: npc.id,
@@ -117,7 +117,7 @@ defmodule ShardWeb.UserLive.NpcCommandsTest do
       {:ok, quest} = Quests.create_quest(%{
         title: "Completed Quest",
         description: "A completed quest",
-        quest_type: "fetch",
+        quest_type: "side",
         difficulty: "easy",
         status: "available",
         giver_npc_id: npc.id,
@@ -243,7 +243,7 @@ defmodule ShardWeb.UserLive.NpcCommandsTest do
       {:ok, quest} = Quests.create_quest(%{
         title: "Delivery Quest",
         description: "Deliver an item",
-        quest_type: "fetch",
+        quest_type: "side",
         difficulty: "easy",
         status: "available",
         giver_npc_id: npc.id,
@@ -293,7 +293,7 @@ defmodule ShardWeb.UserLive.NpcCommandsTest do
       {:ok, quest} = Quests.create_quest(%{
         title: "Missing Items Quest",
         description: "A quest with missing items",
-        quest_type: "fetch",
+        quest_type: "side",
         difficulty: "easy",
         status: "available",
         giver_npc_id: npc.id,
