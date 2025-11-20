@@ -9,15 +9,19 @@ defmodule ShardWeb.AdminLive.Zones do
 
   @impl true
   def mount(_params, _session, socket) do
-    zones = Map.list_zones()
+    if socket.assigns.current_user && socket.assigns.current_user.admin do
+      zones = Map.list_zones()
 
-    {:ok,
-     socket
-     |> assign(:zones, zones)
-     |> assign(:page_title, "Zone Management")
-     |> assign(:editing, nil)
-     |> assign(:changeset, nil)
-     |> assign(:selected_zone, nil)}
+      {:ok,
+       socket
+       |> assign(:zones, zones)
+       |> assign(:page_title, "Zone Management")
+       |> assign(:editing, nil)
+       |> assign(:changeset, nil)
+       |> assign(:selected_zone, nil)}
+    else
+      {:ok, socket |> redirect(to: "/")}
+    end
   end
 
   @impl true
