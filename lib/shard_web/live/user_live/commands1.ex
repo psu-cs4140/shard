@@ -114,6 +114,9 @@ defmodule ShardWeb.UserLive.Commands1 do
         # Check for NPCs at current location
         npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
 
+        # Check for other players at current location
+        other_players = get_other_players_at_location(x, y, game_state.character.current_zone_id, game_state.character.id)
+
         # Check for items at current location
         items_here =
           ShardWeb.UserLive.ItemCommands.get_items_at_location(
@@ -141,6 +144,24 @@ defmodule ShardWeb.UserLive.Commands1 do
               end)
 
             updated_lines ++ npc_descriptions
+          end
+
+        # Add other player descriptions if any are present
+        description_lines =
+          if Enum.empty?(other_players) do
+            description_lines
+          else
+            # Empty line for spacing
+            updated_lines = description_lines ++ [""]
+
+            # Add each player
+            player_descriptions =
+              Enum.map(other_players, fn player ->
+                player_name = Map.get(player, :name) || "Unknown Player"
+                "#{player_name} is here."
+              end)
+
+            updated_lines ++ player_descriptions
           end
 
         # Add item descriptions if any are present
@@ -384,6 +405,22 @@ defmodule ShardWeb.UserLive.Commands1 do
                 end
             end
         end
+    end
+  end
+
+  # Helper function to get other players at the same location
+  defp get_other_players_at_location(x, y, zone_id, current_character_id) do
+    try do
+      # Get all characters at the same coordinates, excluding the current character
+      Shard.Characters.list_characters()
+      |> Enum.filter(fn character ->
+        character.id != current_character_id &&
+        character.current_zone_id == zone_id &&
+        character.x_coordinate == x &&
+        character.y_coordinate == y
+      end)
+    rescue
+      _ -> []
     end
   end
 end
