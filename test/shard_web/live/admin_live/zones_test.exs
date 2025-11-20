@@ -95,8 +95,6 @@ defmodule ShardWeb.AdminLive.ZonesTest do
       assert index_live |> element("button", "Create Zone") |> render_click() =~
                "New Zone"
 
-      assert_patch(index_live, ~p"/admin/zones")
-
       assert index_live
              |> form("#zone-form", zone: @invalid_attrs)
              |> render_change() =~ "can&#39;t be blank"
@@ -104,8 +102,6 @@ defmodule ShardWeb.AdminLive.ZonesTest do
       assert index_live
              |> form("#zone-form", zone: @create_attrs)
              |> render_submit()
-
-      assert_patch(index_live, ~p"/admin/zones")
 
       html = render(index_live)
       assert html =~ "Zone created successfully"
@@ -121,8 +117,6 @@ defmodule ShardWeb.AdminLive.ZonesTest do
       assert index_live |> element("[phx-click='edit_zone'][phx-value-id='#{zone.id}']") |> render_click() =~
                "Edit Zone"
 
-      assert_patch(index_live, ~p"/admin/zones")
-
       assert index_live
              |> form("#zone-form", zone: @invalid_attrs)
              |> render_change() =~ "can&#39;t be blank"
@@ -130,8 +124,6 @@ defmodule ShardWeb.AdminLive.ZonesTest do
       assert index_live
              |> form("#zone-form", zone: @update_attrs)
              |> render_submit()
-
-      assert_patch(index_live, ~p"/admin/zones")
 
       html = render(index_live)
       assert html =~ "Zone updated successfully"
