@@ -384,10 +384,11 @@ defmodule ShardWeb.UserLive.NpcCommandsTest do
       
       # The function should return a valid game state structure
       # This tests the internal helper functions indirectly
-      assert Map.has_key?(game_state, :character)
-      assert Map.has_key?(game_state, :quests)
-      assert Map.has_key?(game_state, :inventory_items)
-      assert Map.has_key?(game_state, :player_position)
+      assert Kernel.map_size(game_state) > 0
+      assert game_state[:character] != nil
+      assert game_state[:quests] != nil
+      assert game_state[:inventory_items] != nil
+      assert game_state[:player_position] != nil
     end
 
     test "quest status updates work correctly", %{game_state: game_state} do
