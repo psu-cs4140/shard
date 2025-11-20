@@ -3,11 +3,6 @@ defmodule ShardWeb.UserLive.NpcCommandsTest do
 
   alias ShardWeb.UserLive.NpcCommands
   alias Shard.{Npcs, Quests, Items, Characters, Map}
-  alias Shard.Npcs.Npc
-  alias Shard.Quests.{Quest, QuestAcceptance}
-  alias Shard.Items.{Item, CharacterInventory}
-  alias Shard.Characters.Character
-  alias Shard.Map.{Room, Zone}
 
   import Shard.UsersFixtures
 
@@ -89,8 +84,8 @@ defmodule ShardWeb.UserLive.NpcCommandsTest do
       assert Enum.any?(messages, &String.contains?(&1, "has no tasks for you"))
     end
 
-    test "shows available quests when NPC has quests", %{game_state: game_state, npc: npc, character: character} do
-      {:ok, quest} = Quests.create_quest(%{
+    test "shows available quests when NPC has quests", %{game_state: game_state, npc: npc, character: _character} do
+      {:ok, _quest} = Quests.create_quest(%{
         title: "Test Quest",
         description: "A test quest",
         quest_type: "side",
@@ -380,7 +375,7 @@ defmodule ShardWeb.UserLive.NpcCommandsTest do
     test "game state is properly updated after quest completion", %{game_state: game_state} do
       # Test the update_game_state_after_delivery helper indirectly
       # by checking that the game state structure is maintained
-      completed_quest_ids = [1]
+      _completed_quest_ids = [1]
       
       # The function should return a valid game state structure
       # This tests the internal helper functions indirectly
