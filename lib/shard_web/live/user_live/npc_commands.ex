@@ -381,4 +381,86 @@ defmodule ShardWeb.UserLive.NpcCommands do
         ]
     end
   end
+
+  # Execute accept_quest command
+  def execute_accept_quest_command(game_state, npc_name, quest_title) do
+    # Ensure tutorial NPCs exist before checking
+    ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
+    
+    {x, y} = game_state.player_position
+    npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
+    target_npc = find_npc_by_name(npcs_here, npc_name)
+
+    case target_npc do
+      nil ->
+        {["There is no NPC named '#{npc_name}' here."], game_state}
+
+      npc ->
+        handle_quest_acceptance(game_state, npc, quest_title)
+    end
+  end
+
+  # Helper function to handle quest acceptance
+  defp handle_quest_acceptance(game_state, npc, quest_title) do
+    user_id = game_state.character.user_id
+    npc_name = npc.name || "Unknown NPC"
+
+    # Get available quests from this NPC
+    available_quests = get_filtered_available_quests(user_id, npc.id, game_state.quests)
+
+    # Find the quest by title
+    target_quest = Enum.find(available_quests, fn quest ->
+      String.downcase(quest.title) == String.downcase(quest_title)
+    end)
+
+    case target_quest do
+      nil ->
+        {["#{npc_name} says: \"I don't have a quest called '#{quest_title}' available for you.\""], game_state}
+
+      quest ->
+        process_quest_acceptance(game_state, npc, quest)
+    end
+  end
+
+  # Helper function to process quest acceptance
+  defp process_quest_acceptance(game_state, npc, quest) do
+    user_id = game_state.character.user_id
+    npc_name = npc.name || "Unknown NPC"
+
+    case Shard.Quests.accept_quest(user_id, quest.id) do
+      {:ok, _quest_acceptance} ->
+        # Update local game state to include the new quest
+        new_quest = %{
+          id: quest.id,
+          title: quest.title,
+          description: quest.description,
+          status: "In Progress",
+          progress: "0% complete",
+          experience_reward: quest.experience_reward,
+          gold_reward: quest.gold_reward
+        }
+
+        updated_quests = [new_quest | game_state.quests]
+        updated_game_state = %{game_state | quests: updated_quests}
+
+        response = [
+          "#{npc_name} says: \"Excellent! You have accepted the quest '#{quest.title}'.\"",
+          "",
+          "Quest accepted: #{quest.title}",
+          "Description: #{quest.description}",
+          "Reward: #{quest.experience_reward || 0} exp, #{quest.gold_reward || 0} gold"
+        ]
+
+        {response, updated_game_state}
+
+      {:error, :quest_already_completed} ->
+        {["#{npc_name} says: \"You have already completed this quest.\""], game_state}
+
+      {:error, :quest_already_accepted} ->
+        {["#{npc_name} says: \"You have already accepted this quest.\""], game_state}
+
+      {:error, reason} ->
+        {["#{npc_name} says: \"I cannot give you this quest right now. (#{inspect(reason)})\""], game_state}
+    end
+  end
 end

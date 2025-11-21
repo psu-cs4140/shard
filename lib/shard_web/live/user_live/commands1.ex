@@ -375,9 +375,16 @@ defmodule ShardWeb.UserLive.Commands1 do
                                             execute_unequip_command(game_state, item_name)
 
                                           :error ->
-                                            {[
-                                               "Unknown command: '#{command}'. Type 'help' for available commands."
-                                             ], game_state}
+                                            # Check if it's an accept_quest command
+                                            case parse_accept_quest_command(command) do
+                                              {:ok, npc_name, quest_title} ->
+                                                execute_accept_quest_command(game_state, npc_name, quest_title)
+
+                                              :error ->
+                                                {[
+                                                   "Unknown command: '#{command}'. Type 'help' for available commands."
+                                                 ], game_state}
+                                            end
                                         end
                                     end
                                 end
