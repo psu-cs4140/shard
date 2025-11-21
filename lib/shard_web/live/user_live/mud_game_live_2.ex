@@ -42,7 +42,6 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
     end
   end
 
-
   def initialize_game_state(socket, character, map_id, character_name) do
     # Load saved player position or use default
     zone_id = character.current_zone_id || 1

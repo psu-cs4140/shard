@@ -380,7 +380,12 @@ defmodule ShardWeb.UserLive.Commands1 do
                                               {:ok, npc_name, quest_title} ->
                                                 # Only create NPCs when player explicitly tries to accept quests
                                                 ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
-                                                execute_accept_quest_command(game_state, npc_name, quest_title)
+
+                                                execute_accept_quest_command(
+                                                  game_state,
+                                                  npc_name,
+                                                  quest_title
+                                                )
 
                                               :error ->
                                                 {[

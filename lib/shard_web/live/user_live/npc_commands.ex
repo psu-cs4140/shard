@@ -90,18 +90,19 @@ defmodule ShardWeb.UserLive.NpcCommands do
   # Helper function to handle quest offering
   defp handle_quest_offering(game_state, npc, available_quests) do
     npc_name = npc.name || "Unknown NPC"
-    
+
     quest_lines = ["#{npc_name} offers you the following quests:", ""]
-    
-    quest_details = Enum.with_index(available_quests, 1)
-    |> Enum.flat_map(fn {quest, index} ->
-      [
-        "#{index}. #{quest.title}",
-        "   Description: #{quest.description}",
-        "   Reward: #{quest.experience_reward || 0} exp, #{quest.gold_reward || 0} gold",
-        ""
-      ]
-    end)
+
+    quest_details =
+      Enum.with_index(available_quests, 1)
+      |> Enum.flat_map(fn {quest, index} ->
+        [
+          "#{index}. #{quest.title}",
+          "   Description: #{quest.description}",
+          "   Reward: #{quest.experience_reward || 0} exp, #{quest.gold_reward || 0} gold",
+          ""
+        ]
+      end)
 
     instruction_lines = [
       "To accept a quest, use: accept_quest \"#{npc_name}\" \"<quest_title>\""
@@ -398,7 +399,7 @@ defmodule ShardWeb.UserLive.NpcCommands do
       character ->
         # Get player's current position
         zone_id = character.current_zone_id || 1
-        
+
         case Shard.Map.get_player_position(character.id, zone_id) do
           nil ->
             # No saved position, check if player is at default position (0, 0)
@@ -407,8 +408,8 @@ defmodule ShardWeb.UserLive.NpcCommands do
           player_position ->
             # Compare player position with NPC position
             player_position.room.x_coordinate == npc.location_x &&
-            player_position.room.y_coordinate == npc.location_y &&
-            (player_position.room.z_coordinate || 0) == (npc.location_z || 0)
+              player_position.room.y_coordinate == npc.location_y &&
+              (player_position.room.z_coordinate || 0) == (npc.location_z || 0)
         end
     end
   end
@@ -423,7 +424,7 @@ defmodule ShardWeb.UserLive.NpcCommands do
       character ->
         # Get player's current position with fresh database query
         zone_id = character.current_zone_id || 1
-        
+
         case Shard.Map.get_player_position(character.id, zone_id) do
           nil ->
             # No saved position, check if both player and NPC are at default position (0, 0)
@@ -434,11 +435,11 @@ defmodule ShardWeb.UserLive.NpcCommands do
             player_x = player_position.room.x_coordinate
             player_y = player_position.room.y_coordinate
             player_z = player_position.room.z_coordinate || 0
-            
+
             npc_x = npc.location_x
             npc_y = npc.location_y
             npc_z = npc.location_z || 0
-            
+
             # Only return true if positions exactly match
             player_x == npc_x && player_y == npc_y && player_z == npc_z
         end
@@ -449,6 +450,7 @@ defmodule ShardWeb.UserLive.NpcCommands do
   defp get_character_by_user_id(user_id) do
     try do
       characters = Shard.Characters.list_characters()
+
       Enum.find(characters, fn character ->
         character.user_id == user_id
       end)
@@ -493,13 +495,16 @@ defmodule ShardWeb.UserLive.NpcCommands do
     available_quests = get_filtered_available_quests(user_id, npc.id, game_state.quests)
 
     # Find the quest by title
-    target_quest = Enum.find(available_quests, fn quest ->
-      String.downcase(quest.title) == String.downcase(quest_title)
-    end)
+    target_quest =
+      Enum.find(available_quests, fn quest ->
+        String.downcase(quest.title) == String.downcase(quest_title)
+      end)
 
     case target_quest do
       nil ->
-        {["#{npc_name} says: \"I don't have a quest called '#{quest_title}' available for you.\""], game_state}
+        {[
+           "#{npc_name} says: \"I don't have a quest called '#{quest_title}' available for you.\""
+         ], game_state}
 
       quest ->
         process_quest_acceptance(game_state, npc, quest)
@@ -545,8 +550,8 @@ defmodule ShardWeb.UserLive.NpcCommands do
         {["#{npc_name} says: \"You have already accepted this quest.\""], game_state}
 
       {:error, reason} ->
-        {["#{npc_name} says: \"I cannot give you this quest right now. (#{inspect(reason)})\""], game_state}
+        {["#{npc_name} says: \"I cannot give you this quest right now. (#{inspect(reason)})\""],
+         game_state}
     end
   end
-
 end

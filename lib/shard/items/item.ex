@@ -203,7 +203,10 @@ defmodule Shard.Items.Item do
 
   # Get valid stats for a given item type
   defp get_valid_stats_for_type("weapon"), do: @weapon_stats ++ @general_stats
-  defp get_valid_stats_for_type(type) when type in ["shield", "head", "body", "legs", "feet"], do: @armor_stats ++ @general_stats
+
+  defp get_valid_stats_for_type(type) when type in ["shield", "head", "body", "legs", "feet"],
+    do: @armor_stats ++ @general_stats
+
   defp get_valid_stats_for_type(type) when type in ["ring", "necklace"], do: @general_stats
   defp get_valid_stats_for_type(_), do: []
 
@@ -219,6 +222,7 @@ defmodule Shard.Items.Item do
   def has_stat?(%__MODULE__{stats: stats}, stat_name) when is_map(stats) do
     Map.has_key?(stats, stat_name)
   end
+
   def has_stat?(%__MODULE__{stats: nil}, _stat_name), do: false
 
   @doc """
@@ -227,5 +231,6 @@ defmodule Shard.Items.Item do
   def get_stat(%__MODULE__{stats: stats}, stat_name) when is_map(stats) do
     Map.get(stats, stat_name, 0)
   end
+
   def get_stat(%__MODULE__{stats: nil}, _stat_name), do: 0
 end

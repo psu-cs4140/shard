@@ -14,9 +14,9 @@ defmodule Shard.Repo.Migrations.AddItemStatsSupport do
     create_if_not_exists index(:items, [:item_type])
     create_if_not_exists index(:items, [:equippable])
     create_if_not_exists index(:items, [:equipment_slot])
-    
+
     # Add a GIN index for the stats JSONB column for efficient stat queries
-    execute "CREATE INDEX CONCURRENTLY IF NOT EXISTS items_stats_gin_index ON items USING GIN (stats)", 
+    execute "CREATE INDEX CONCURRENTLY IF NOT EXISTS items_stats_gin_index ON items USING GIN (stats)",
             "DROP INDEX IF EXISTS items_stats_gin_index"
   end
 end

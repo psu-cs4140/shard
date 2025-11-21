@@ -78,7 +78,7 @@ defmodule Shard.Weapons.Weapon do
 
     base_damage = weapon.damage || 0
     attack_power = Item.get_stat(weapon, "attack_power")
-    
+
     base_damage + attack_power
   end
 
@@ -89,7 +89,7 @@ defmodule Shard.Weapons.Weapon do
     alias Shard.Items.Item
 
     stats = Item.get_total_stats(weapon)
-    
+
     %{
       attack_power: Map.get(stats, "attack_power", 0),
       critical_chance: Map.get(stats, "critical_chance", 0),
