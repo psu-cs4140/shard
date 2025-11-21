@@ -1,6 +1,5 @@
 defmodule Shard.Repo.Migrations.AddItemStatsSupport do
   use Ecto.Migration
-  @disable_ddl_transaction true
 
   def change do
     # Create items table if it doesn't exist
@@ -37,8 +36,7 @@ defmodule Shard.Repo.Migrations.AddItemStatsSupport do
     create_if_not_exists index(:items, [:equippable])
     create_if_not_exists index(:items, [:equipment_slot])
 
-    # Add a GIN index for the stats JSONB column for efficient stat queries
-    execute "CREATE INDEX CONCURRENTLY IF NOT EXISTS items_stats_gin_index ON items USING GIN (stats)",
-            "DROP INDEX IF EXISTS items_stats_gin_index"
+    # Add a regular GIN index for the stats JSONB column (without CONCURRENTLY)
+    create_if_not_exists index(:items, [:stats], using: :gin)
   end
 end
