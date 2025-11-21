@@ -1,7 +1,6 @@
 defmodule ShardWeb.AdminLive.Npcs do
   use ShardWeb, :live_view
 
-  import ShardWeb.AdminLive.NpcHelpers
   alias Shard.Npcs
   alias Shard.Npcs.Npc
 

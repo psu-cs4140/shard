@@ -417,7 +417,7 @@ defmodule ShardWeb.UserLive.NpcCommands do
   # Strict position validation with database query
   defp validate_player_npc_position_strict(npc, user_id) do
     # Get the character for this user with fresh database query
-    case Shard.Characters.get_character_by_user_id(user_id) do
+    case get_character_by_user_id(user_id) do
       nil ->
         false
 
@@ -459,12 +459,6 @@ defmodule ShardWeb.UserLive.NpcCommands do
     end
   end
 
-  # Create NPCs only when explicitly needed for interactions
-  defp ensure_npcs_exist_for_interaction() do
-    # Only create NPCs when a player is actually trying to interact with them
-    # This prevents automatic dialogue from appearing on page load
-    ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
-  end
 
   # Execute accept_quest command
   def execute_accept_quest_command(game_state, npc_name, quest_title) do
