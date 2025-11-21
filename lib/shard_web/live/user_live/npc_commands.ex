@@ -459,7 +459,6 @@ defmodule ShardWeb.UserLive.NpcCommands do
     end
   end
 
-
   # Execute accept_quest command
   def execute_accept_quest_command(game_state, npc_name, quest_title) do
     {x, y} = game_state.player_position
