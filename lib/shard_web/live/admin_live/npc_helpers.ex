@@ -200,10 +200,26 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
       %{zone_id: 1, x_coordinate: 2, y_coordinate: 0, z_coordinate: 0, name: "Bone Zone - Northernmost Chamber", description: "The final chamber to the north, where shadows dance in the dim light."}
     ]
 
+    IO.puts("Creating #{length(bone_zone_rooms)} rooms...")
     Enum.each(bone_zone_rooms, &ensure_room_exists/1)
     
     # Create doors between the rooms for proper navigation
+    IO.puts("Creating doors between rooms...")
     ensure_bone_zone_doors_exist()
+    
+    # Verify rooms were created
+    IO.puts("Verifying room creation...")
+    Enum.each(bone_zone_rooms, fn room_params ->
+      x = room_params.x_coordinate
+      y = room_params.y_coordinate
+      z = room_params.z_coordinate
+      room = GameMap.get_room_by_coordinates(room_params.zone_id, x, y, z)
+      if room do
+        IO.puts("✓ Room verified at (#{x}, #{y}, #{z}): #{room.name}")
+      else
+        IO.puts("✗ Room missing at (#{x}, #{y}, #{z})")
+      end
+    end)
     
     IO.puts("Finished Bone Zone room creation process.")
   end
