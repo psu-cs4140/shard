@@ -10,9 +10,9 @@ defmodule Shard.Repo.Migrations.AddItemStatsSupport do
     end
 
     # Add indexes for better performance when querying by item type and stats
-    create index(:items, [:item_type])
-    create index(:items, [:equippable])
-    create index(:items, [:equipment_slot])
+    create_if_not_exists index(:items, [:item_type])
+    create_if_not_exists index(:items, [:equippable])
+    create_if_not_exists index(:items, [:equipment_slot])
     
     # Add a GIN index for the stats JSONB column for efficient stat queries
     execute "CREATE INDEX CONCURRENTLY IF NOT EXISTS items_stats_gin_index ON items USING GIN (stats)", 
