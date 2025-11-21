@@ -1,5 +1,6 @@
 defmodule Shard.Repo.Migrations.AddItemStatsSupport do
   use Ecto.Migration
+  @disable_ddl_transaction true
 
   def change do
     # Ensure the stats column exists and is properly typed
