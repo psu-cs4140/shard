@@ -20,6 +20,21 @@ defmodule ShardWeb.UserLive.NpcCommands do
     end
   end
 
+  # Execute quest command
+  def execute_quest_command(game_state, npc_name) do
+    {x, y} = game_state.player_position
+    npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
+    target_npc = find_npc_by_name(npcs_here, npc_name)
+
+    case target_npc do
+      nil ->
+        {["There is no NPC named '#{npc_name}' here."], game_state}
+
+      npc ->
+        handle_npc_quest(game_state, npc)
+    end
+  end
+
   # Helper function to handle talking to an NPC
   defp handle_npc_talk(game_state, npc) do
     user_id = game_state.character.user_id
@@ -43,6 +58,47 @@ defmodule ShardWeb.UserLive.NpcCommands do
       )
 
     {dialogue_lines, game_state}
+  end
+
+  # Helper function to handle quest interactions with an NPC
+  defp handle_npc_quest(game_state, npc) do
+    user_id = game_state.character.user_id
+    npc_name = npc.name || "Unknown NPC"
+
+    # Check for available quests from this NPC
+    available_quests = get_filtered_available_quests(user_id, npc.id, game_state.quests)
+
+    case available_quests do
+      [] ->
+        {["#{npc_name} says: \"I have no quests available for you at this time.\""], game_state}
+
+      quests ->
+        handle_quest_offering(game_state, npc, quests)
+    end
+  end
+
+  # Helper function to handle quest offering
+  defp handle_quest_offering(game_state, npc, available_quests) do
+    npc_name = npc.name || "Unknown NPC"
+    
+    quest_lines = ["#{npc_name} offers you the following quests:", ""]
+    
+    quest_details = Enum.with_index(available_quests, 1)
+    |> Enum.flat_map(fn {quest, index} ->
+      [
+        "#{index}. #{quest.title}",
+        "   Description: #{quest.description}",
+        "   Reward: #{quest.experience_reward || 0} exp, #{quest.gold_reward || 0} gold",
+        ""
+      ]
+    end)
+
+    instruction_lines = [
+      "To accept a quest, use: accept_quest \"#{npc_name}\" \"<quest_title>\""
+    ]
+
+    all_lines = quest_lines ++ quest_details ++ instruction_lines
+    {all_lines, game_state}
   end
 
   # Helper function to get filtered available quests
