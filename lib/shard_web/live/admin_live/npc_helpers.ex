@@ -3,7 +3,7 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
   alias Shard.Npcs
 
   def ensure_tutorial_npcs_exist do
-    # Ensure required rooms exist first
+    # Silently ensure required rooms exist first
     ensure_bone_zone_rooms_exist()
     
     tutorial_npcs = [
@@ -142,9 +142,11 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
   defp ensure_npc_exists(npc_params) do
     case Npcs.get_npc_by_name(npc_params.name) do
       nil ->
+        # Silently create new NPC without any output
         create_new_npc(npc_params)
 
       existing_npc ->
+        # Silently ensure NPC location without any output
         ensure_npc_location(existing_npc, npc_params)
     end
   end
@@ -188,8 +190,6 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
   defp ensure_bone_zone_rooms_exist do
     alias Shard.Map, as: GameMap
     
-    IO.puts("Starting Bone Zone room creation process...")
-    
     # Define the rooms that should exist in the Bone Zone (zone_id: 1)
     bone_zone_rooms = [
       # Existing rooms that should be there
@@ -200,28 +200,9 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
       %{zone_id: 1, x_coordinate: 2, y_coordinate: 0, z_coordinate: 0, name: "Bone Zone - Northernmost Chamber", description: "The final chamber to the north, where shadows dance in the dim light."}
     ]
 
-    IO.puts("Creating #{length(bone_zone_rooms)} rooms...")
+    # Silently create rooms and doors
     Enum.each(bone_zone_rooms, &ensure_room_exists/1)
-    
-    # Create doors between the rooms for proper navigation
-    IO.puts("Creating doors between rooms...")
     ensure_bone_zone_doors_exist()
-    
-    # Verify rooms were created
-    IO.puts("Verifying room creation...")
-    Enum.each(bone_zone_rooms, fn room_params ->
-      x = room_params.x_coordinate
-      y = room_params.y_coordinate
-      z = room_params.z_coordinate
-      room = GameMap.get_room_by_coordinates(room_params.zone_id, x, y, z)
-      if room do
-        IO.puts("✓ Room verified at (#{x}, #{y}, #{z}): #{room.name}")
-      else
-        IO.puts("✗ Room missing at (#{x}, #{y}, #{z})")
-      end
-    end)
-    
-    IO.puts("Finished Bone Zone room creation process.")
   end
 
   defp ensure_room_exists(room_params) do
@@ -233,10 +214,10 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
     
     case GameMap.get_room_by_coordinates(room_params.zone_id, x, y, z) do
       nil ->
-        IO.puts("Creating room at (#{x}, #{y}, #{z}): #{room_params.name}")
+        # Silently create room without output
         create_new_room(room_params)
-      existing_room ->
-        IO.puts("Room already exists at (#{x}, #{y}, #{z}): #{existing_room.name}")
+      _existing_room ->
+        # Silently skip existing room
         :ok
     end
   end
@@ -245,11 +226,11 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
     alias Shard.Map, as: GameMap
     
     case GameMap.create_room(room_params) do
-      {:ok, room} -> 
-        IO.puts("Successfully created room: #{room.name} at (#{room.x_coordinate}, #{room.y_coordinate}, #{room.z_coordinate})")
+      {:ok, _room} -> 
+        # Silently succeed
         :ok
-      {:error, changeset} -> 
-        IO.puts("Failed to create room: #{inspect(changeset.errors)}")
+      {:error, _changeset} -> 
+        # Silently fail
         :error
     end
   end
@@ -283,41 +264,29 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
       existing_door = GameMap.get_door_in_direction(from_room.id, direction)
       
       unless existing_door do
-        # Create the door from -> to
-        case GameMap.create_door(%{
+        # Silently create the door from -> to
+        GameMap.create_door(%{
           from_room_id: from_room.id,
           to_room_id: to_room.id,
           direction: direction,
           is_locked: false,
           is_hidden: false
-        }) do
-          {:ok, _door} ->
-            IO.puts("Created door from (#{from_x}, #{from_y}) #{direction} to (#{to_x}, #{to_y})")
-          {:error, changeset} ->
-            IO.puts("Failed to create door: #{inspect(changeset.errors)}")
-        end
+        })
       end
 
       # Check if return door already exists
       existing_return_door = GameMap.get_door_in_direction(to_room.id, opposite_direction)
       
       unless existing_return_door do
-        # Create the return door to -> from
-        case GameMap.create_door(%{
+        # Silently create the return door to -> from
+        GameMap.create_door(%{
           from_room_id: to_room.id,
           to_room_id: from_room.id,
           direction: opposite_direction,
           is_locked: false,
           is_hidden: false
-        }) do
-          {:ok, _door} ->
-            IO.puts("Created return door from (#{to_x}, #{to_y}) #{opposite_direction} to (#{from_x}, #{from_y})")
-          {:error, changeset} ->
-            IO.puts("Failed to create return door: #{inspect(changeset.errors)}")
-        end
+        })
       end
-    else
-      IO.puts("Cannot create door connection: from_room=#{inspect(from_room)}, to_room=#{inspect(to_room)}")
     end
   end
 end
