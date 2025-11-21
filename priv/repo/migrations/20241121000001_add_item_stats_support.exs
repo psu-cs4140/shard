@@ -2,26 +2,49 @@ defmodule Shard.Repo.Migrations.AddItemStatsSupport do
   use Ecto.Migration
 
   def change do
-    # Add missing columns that aren't in the base items table
-    alter table(:items) do
-      add_if_not_exists :pickup, :boolean, default: true
-      add_if_not_exists :location, :string
-      add_if_not_exists :map, :string
-      add_if_not_exists :sellable, :boolean, default: true
+    # Create items table with comprehensive schema including weapon and armor stats
+    create table(:items) do
+      add :name, :string, null: false
+      add :description, :text
+      add :item_type, :string, null: false
+      add :rarity, :string, default: "common"
+      add :value, :integer, default: 0
+      add :weight, :decimal, precision: 8, scale: 2, default: 0.0
+      add :stackable, :boolean, default: false
+      add :max_stack_size, :integer, default: 1
+      add :usable, :boolean, default: false
+      add :equippable, :boolean, default: false
+      add :equipment_slot, :string
+      add :stats, :map, default: %{}
+      add :requirements, :map, default: %{}
+      add :effects, :map, default: %{}
+      add :icon, :string
+      add :is_active, :boolean, default: true
+      add :pickup, :boolean, default: true
+      add :location, :string
+      add :map, :string
+      add :sellable, :boolean, default: true
+
+      timestamps(type: :utc_datetime)
     end
 
+    # Add unique constraint on name
+    create unique_index(:items, [:name])
+
     # Add indexes for better performance when querying by item type and stats
-    create_if_not_exists index(:items, [:equippable])
-    create_if_not_exists index(:items, [:equipment_slot])
-    create_if_not_exists index(:items, [:value])
+    create index(:items, [:item_type])
+    create index(:items, [:rarity])
+    create index(:items, [:equippable])
+    create index(:items, [:equipment_slot])
+    create index(:items, [:value])
 
     # Add a regular GIN index for the stats JSONB column for efficient stat queries
-    create_if_not_exists index(:items, [:stats], using: :gin)
+    create index(:items, [:stats], using: :gin)
 
     # Add a GIN index for the effects JSONB column for efficient effect queries
-    create_if_not_exists index(:items, [:effects], using: :gin)
+    create index(:items, [:effects], using: :gin)
 
     # Add a GIN index for the requirements JSONB column for efficient requirement queries
-    create_if_not_exists index(:items, [:requirements], using: :gin)
+    create index(:items, [:requirements], using: :gin)
   end
 end
