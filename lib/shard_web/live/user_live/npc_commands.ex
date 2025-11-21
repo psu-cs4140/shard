@@ -7,6 +7,9 @@ defmodule ShardWeb.UserLive.NpcCommands do
 
   # Execute talk command
   def execute_talk_command(game_state, npc_name) do
+    # Ensure NPCs exist before checking
+    ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
+    
     {x, y} = game_state.player_position
     npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
     target_npc = find_npc_by_name(npcs_here, npc_name)
@@ -16,12 +19,20 @@ defmodule ShardWeb.UserLive.NpcCommands do
         {["There is no NPC named '#{npc_name}' here."], game_state}
 
       npc ->
-        handle_npc_talk(game_state, npc)
+        # Validate position before allowing interaction
+        if validate_player_npc_position(npc, game_state.character.user_id) do
+          handle_npc_talk(game_state, npc)
+        else
+          {["There is no NPC named '#{npc_name}' here."], game_state}
+        end
     end
   end
 
   # Execute quest command
   def execute_quest_command(game_state, npc_name) do
+    # Ensure NPCs exist before checking
+    ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
+    
     {x, y} = game_state.player_position
     npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
     target_npc = find_npc_by_name(npcs_here, npc_name)
@@ -31,7 +42,12 @@ defmodule ShardWeb.UserLive.NpcCommands do
         {["There is no NPC named '#{npc_name}' here."], game_state}
 
       npc ->
-        handle_npc_quest(game_state, npc)
+        # Validate position before allowing interaction
+        if validate_player_npc_position(npc, game_state.character.user_id) do
+          handle_npc_quest(game_state, npc)
+        else
+          {["There is no NPC named '#{npc_name}' here."], game_state}
+        end
     end
   end
 
@@ -261,19 +277,27 @@ defmodule ShardWeb.UserLive.NpcCommands do
 
   # Helper function to build NPC dialogue - only called when player explicitly talks to NPC
   defp build_npc_dialogue(npc, npc_name, available_quests, turn_in_quests, user_id, character_id) do
-    # Only show dialogue when player is explicitly talking to the NPC
-    base_dialogue = npc.dialogue || "Hello there, traveler!"
-    dialogue_lines = ["#{npc_name} says: \"#{base_dialogue}\""]
+    # Validate that player is at the same position as the NPC before showing dialogue
+    case validate_player_npc_position(npc, user_id) do
+      false ->
+        # Player is not at the same position as NPC, return empty dialogue
+        []
 
-    # Add quest turn-in dialogue
-    dialogue_lines =
-      add_turn_in_dialogue(dialogue_lines, turn_in_quests, npc_name, user_id, character_id)
+      true ->
+        # Only show dialogue when player is at the same position as the NPC
+        base_dialogue = npc.dialogue || "Hello there, traveler!"
+        dialogue_lines = ["#{npc_name} says: \"#{base_dialogue}\""]
 
-    # Add available quest dialogue
-    dialogue_lines = add_available_quest_dialogue(dialogue_lines, available_quests, npc_name)
+        # Add quest turn-in dialogue
+        dialogue_lines =
+          add_turn_in_dialogue(dialogue_lines, turn_in_quests, npc_name, user_id, character_id)
 
-    # Add fallback dialogue if no quests
-    add_fallback_dialogue(dialogue_lines, available_quests, turn_in_quests, npc_name)
+        # Add available quest dialogue
+        dialogue_lines = add_available_quest_dialogue(dialogue_lines, available_quests, npc_name)
+
+        # Add fallback dialogue if no quests
+        add_fallback_dialogue(dialogue_lines, available_quests, turn_in_quests, npc_name)
+    end
   end
 
   # Helper function to add turn-in quest dialogue
@@ -368,8 +392,48 @@ defmodule ShardWeb.UserLive.NpcCommands do
     end
   end
 
+  # Validate that player and NPC are at the same position
+  defp validate_player_npc_position(npc, user_id) do
+    # Get the character for this user
+    case get_character_by_user_id(user_id) do
+      nil ->
+        false
+
+      character ->
+        # Get player's current position
+        zone_id = character.current_zone_id || 1
+        
+        case Shard.Map.get_player_position(character.id, zone_id) do
+          nil ->
+            # No saved position, check if player is at default position (0, 0)
+            npc.location_x == 0 && npc.location_y == 0
+
+          player_position ->
+            # Compare player position with NPC position
+            player_position.room.x_coordinate == npc.location_x &&
+            player_position.room.y_coordinate == npc.location_y &&
+            (player_position.room.z_coordinate || 0) == (npc.location_z || 0)
+        end
+    end
+  end
+
+  # Helper function to get character by user_id
+  defp get_character_by_user_id(user_id) do
+    try do
+      characters = Shard.Characters.list_characters()
+      Enum.find(characters, fn character ->
+        character.user_id == user_id
+      end)
+    rescue
+      _ -> nil
+    end
+  end
+
   # Execute accept_quest command
   def execute_accept_quest_command(game_state, npc_name, quest_title) do
+    # Ensure NPCs exist before checking
+    ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
+    
     {x, y} = game_state.player_position
     npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
     target_npc = find_npc_by_name(npcs_here, npc_name)
@@ -379,7 +443,12 @@ defmodule ShardWeb.UserLive.NpcCommands do
         {["There is no NPC named '#{npc_name}' here."], game_state}
 
       npc ->
-        handle_quest_acceptance(game_state, npc, quest_title)
+        # Validate position before allowing interaction
+        if validate_player_npc_position(npc, game_state.character.user_id) do
+          handle_quest_acceptance(game_state, npc, quest_title)
+        else
+          {["There is no NPC named '#{npc_name}' here."], game_state}
+        end
     end
   end
 
