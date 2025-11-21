@@ -291,8 +291,12 @@ defmodule ShardWeb.UserLive.Commands1 do
         result = execute_movement(game_state, "ArrowUp")
         
         case result do
-          {[message], game_state} when message =~ "cannot move" ->
-            {[message] ++ debug_info, game_state}
+          {[message], game_state} ->
+            if String.contains?(message, "cannot move") do
+              {[message] ++ debug_info, game_state}
+            else
+              result
+            end
           _ ->
             result
         end
