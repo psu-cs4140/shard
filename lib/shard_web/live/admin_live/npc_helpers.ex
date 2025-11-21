@@ -128,7 +128,7 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
         is_active: true,
         dialogue: "Before you face the Bone Zone beyond, you must arm yourself. A blade once rested beside your coffin — your blade — but the lesser dead have claimed it for themselves. They skulk in the lower chambers, drawn to its lingering power.",
         location_x: 0,
-        location_y: 2,
+        location_y: 0,
         location_z: 0
       }
     ]
