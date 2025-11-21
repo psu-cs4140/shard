@@ -11,10 +11,10 @@ defmodule Shard.Repo.Migrations.AddItemStatsSupport do
 
     # Add a regular GIN index for the stats JSONB column for efficient stat queries
     create_if_not_exists index(:items, [:stats], using: :gin)
-    
+
     # Add a GIN index for the effects JSONB column for efficient effect queries
     create_if_not_exists index(:items, [:effects], using: :gin)
-    
+
     # Add a GIN index for the requirements JSONB column for efficient requirement queries
     create_if_not_exists index(:items, [:requirements], using: :gin)
   end
