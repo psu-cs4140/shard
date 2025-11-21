@@ -254,6 +254,9 @@ defmodule ShardWeb.UserLive.Commands1 do
         end
 
       downcased_command == "npc" ->
+        # Ensure tutorial NPCs exist before checking
+        ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
+        
         {x, y} = game_state.player_position
         npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
 

@@ -7,6 +7,9 @@ defmodule ShardWeb.UserLive.NpcCommands do
 
   # Execute talk command
   def execute_talk_command(game_state, npc_name) do
+    # Ensure tutorial NPCs exist before checking
+    ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
+    
     {x, y} = game_state.player_position
     npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
     target_npc = find_npc_by_name(npcs_here, npc_name)
@@ -22,6 +25,9 @@ defmodule ShardWeb.UserLive.NpcCommands do
 
   # Execute quest command
   def execute_quest_command(game_state, npc_name) do
+    # Ensure tutorial NPCs exist before checking
+    ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
+    
     {x, y} = game_state.player_position
     npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
     target_npc = find_npc_by_name(npcs_here, npc_name)
