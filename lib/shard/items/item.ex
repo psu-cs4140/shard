@@ -182,7 +182,7 @@ defmodule Shard.Items.Item do
     valid_stats = get_valid_stats_for_type(item_type)
 
     Enum.reduce(stats, changeset, fn {stat_name, stat_value}, acc ->
-      cond ->
+      cond do
         not is_binary(stat_name) ->
           add_error(acc, :stats, "stat names must be strings")
 
