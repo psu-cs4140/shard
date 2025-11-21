@@ -3,6 +3,9 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
   alias Shard.Npcs
 
   def ensure_tutorial_npcs_exist do
+    # Ensure required rooms exist first
+    ensure_bone_zone_rooms_exist()
+    
     tutorial_npcs = [
       %{
         name: "Goldie",

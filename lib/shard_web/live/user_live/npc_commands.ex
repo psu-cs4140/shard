@@ -463,4 +463,93 @@ defmodule ShardWeb.UserLive.NpcCommands do
         {["#{npc_name} says: \"I cannot give you this quest right now. (#{inspect(reason)})\""], game_state}
     end
   end
+
+  # Ensure the Bone Zone rooms exist for proper navigation
+  defp ensure_bone_zone_rooms_exist do
+    alias Shard.Map, as: GameMap
+    
+    # Define the rooms that should exist in the Bone Zone (zone_id: 1)
+    bone_zone_rooms = [
+      # Existing rooms that should be there
+      %{zone_id: 1, x: 2, y: 4, z: 0, name: "Bone Zone - Southern Chamber", description: "A dark chamber filled with ancient bones and the whispers of the dead."},
+      %{zone_id: 1, x: 2, y: 3, z: 0, name: "Bone Zone - Central Passage", description: "A narrow passage between chambers, bones crunch underfoot."},
+      %{zone_id: 1, x: 2, y: 2, z: 0, name: "Bone Zone - Northern Passage", description: "The passage continues north, growing darker and more ominous."},
+      %{zone_id: 1, x: 2, y: 1, z: 0, name: "Bone Zone - Upper Chamber", description: "A large chamber with high ceilings, filled with the echoes of ancient battles."},
+      %{zone_id: 1, x: 2, y: 0, z: 0, name: "Bone Zone - Northernmost Chamber", description: "The final chamber to the north, where shadows dance in the dim light."}
+    ]
+
+    Enum.each(bone_zone_rooms, &ensure_room_exists/1)
+    
+    # Create doors between the rooms for proper navigation
+    ensure_bone_zone_doors_exist()
+  end
+
+  defp ensure_room_exists(room_params) do
+    case GameMap.get_room_by_coordinates(room_params.zone_id, room_params.x, room_params.y, room_params.z) do
+      nil ->
+        create_new_room(room_params)
+      _existing_room ->
+        :ok
+    end
+  end
+
+  defp create_new_room(room_params) do
+    case GameMap.create_room(room_params) do
+      {:ok, _room} -> :ok
+      {:error, _changeset} -> :error
+    end
+  end
+
+  defp ensure_bone_zone_doors_exist do
+    alias Shard.Map, as: GameMap
+    
+    # Define door connections for the Bone Zone vertical path
+    door_connections = [
+      # From (2,4) to (2,3) - north/south
+      {1, 2, 4, 0, 2, 3, 0, "north", "south"},
+      # From (2,3) to (2,2) - north/south  
+      {1, 2, 3, 0, 2, 2, 0, "north", "south"},
+      # From (2,2) to (2,1) - north/south
+      {1, 2, 2, 0, 2, 1, 0, "north", "south"},
+      # From (2,1) to (2,0) - north/south
+      {1, 2, 1, 0, 2, 0, 0, "north", "south"}
+    ]
+
+    Enum.each(door_connections, &ensure_door_connection_exists/1)
+  end
+
+  defp ensure_door_connection_exists({zone_id, from_x, from_y, from_z, to_x, to_y, to_z, direction, opposite_direction}) do
+    from_room = GameMap.get_room_by_coordinates(zone_id, from_x, from_y, from_z)
+    to_room = GameMap.get_room_by_coordinates(zone_id, to_x, to_y, to_z)
+
+    if from_room && to_room do
+      # Check if door already exists
+      existing_door = GameMap.get_door_in_direction(from_room.id, direction)
+      
+      unless existing_door do
+        # Create the door from -> to
+        GameMap.create_door(%{
+          from_room_id: from_room.id,
+          to_room_id: to_room.id,
+          direction: direction,
+          is_locked: false,
+          is_hidden: false
+        })
+      end
+
+      # Check if return door already exists
+      existing_return_door = GameMap.get_door_in_direction(to_room.id, opposite_direction)
+      
+      unless existing_return_door do
+        # Create the return door to -> from
+        GameMap.create_door(%{
+          from_room_id: to_room.id,
+          to_room_id: from_room.id,
+          direction: opposite_direction,
+          is_locked: false,
+          is_hidden: false
+        })
+      end
+    end
+  end
 end
