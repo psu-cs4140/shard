@@ -265,9 +265,9 @@ defmodule ShardWeb.UserLive.NpcCommands do
     end)
   end
 
-  # Helper function to build NPC dialogue
+  # Helper function to build NPC dialogue - only called when player explicitly talks to NPC
   defp build_npc_dialogue(npc, npc_name, available_quests, turn_in_quests, user_id, character_id) do
-    # Start with basic greeting - only show dialogue when explicitly talking to NPC
+    # Only show dialogue when player is explicitly talking to the NPC
     base_dialogue = npc.dialogue || "Hello there, traveler!"
     dialogue_lines = ["#{npc_name} says: \"#{base_dialogue}\""]
 

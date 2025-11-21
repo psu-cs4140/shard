@@ -253,9 +253,6 @@ defmodule ShardWeb.UserLive.Commands1 do
         end
 
       downcased_command == "npc" ->
-        # Ensure tutorial NPCs exist before checking
-        ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
-        
         {x, y} = game_state.player_position
         npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
 
@@ -274,69 +271,27 @@ defmodule ShardWeb.UserLive.Commands1 do
         end
 
       downcased_command in ["north", "n"] ->
-        # Ensure tutorial NPCs and rooms exist before movement
-        ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
-        
-        # Debug: Check current position and target position
-        {x, y} = game_state.player_position
-        target_y = y - 1
-        current_room = GameMap.get_room_by_coordinates(game_state.character.current_zone_id, x, y, 0)
-        target_room = GameMap.get_room_by_coordinates(game_state.character.current_zone_id, x, target_y, 0)
-        
-        debug_info = [
-          "Debug: Current position: (#{x}, #{y})",
-          "Debug: Target position: (#{x}, #{target_y})",
-          "Debug: Current room exists: #{if current_room, do: "Yes (#{current_room.name})", else: "No"}",
-          "Debug: Target room exists: #{if target_room, do: "Yes (#{target_room.name})", else: "No"}",
-          "Debug: Zone ID: #{game_state.character.current_zone_id}"
-        ]
-        
-        result = execute_movement(game_state, "ArrowUp")
-        
-        case result do
-          {[message], game_state} ->
-            if String.contains?(message, "cannot move") do
-              {[message] ++ debug_info, game_state}
-            else
-              result
-            end
-          _ ->
-            result
-        end
+        execute_movement(game_state, "ArrowUp")
 
       downcased_command in ["south", "s"] ->
-        # Ensure tutorial NPCs and rooms exist before movement
-        ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
         execute_movement(game_state, "ArrowDown")
 
       downcased_command in ["east", "e"] ->
-        # Ensure tutorial NPCs and rooms exist before movement
-        ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
         execute_movement(game_state, "ArrowRight")
 
       downcased_command in ["west", "w"] ->
-        # Ensure tutorial NPCs and rooms exist before movement
-        ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
         execute_movement(game_state, "ArrowLeft")
 
       downcased_command in ["northeast", "ne"] ->
-        # Ensure tutorial NPCs and rooms exist before movement
-        ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
         execute_movement(game_state, "northeast")
 
       downcased_command in ["southeast", "se"] ->
-        # Ensure tutorial NPCs and rooms exist before movement
-        ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
         execute_movement(game_state, "southeast")
 
       downcased_command in ["northwest", "nw"] ->
-        # Ensure tutorial NPCs and rooms exist before movement
-        ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
         execute_movement(game_state, "northwest")
 
       downcased_command in ["southwest", "sw"] ->
-        # Ensure tutorial NPCs and rooms exist before movement
-        ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
         execute_movement(game_state, "southwest")
 
       # Admin zone editing commands
