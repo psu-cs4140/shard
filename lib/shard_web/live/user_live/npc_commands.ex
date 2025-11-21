@@ -32,17 +32,9 @@ defmodule ShardWeb.UserLive.NpcCommands do
     npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
     target_npc = find_npc_by_name(npcs_here, npc_name)
 
-    # Debug information
-    debug_info = [
-      "Debug: Player position: (#{x}, #{y})",
-      "Debug: Zone ID: #{game_state.character.current_zone_id}",
-      "Debug: NPCs found at location: #{length(npcs_here)}",
-      "Debug: NPC names: #{Enum.map(npcs_here, & &1.name) |> Enum.join(", ")}"
-    ]
-
     case target_npc do
       nil ->
-        {["There is no NPC named '#{npc_name}' here."] ++ debug_info, game_state}
+        {["There is no NPC named '#{npc_name}' here."], game_state}
 
       npc ->
         handle_npc_quest(game_state, npc)
