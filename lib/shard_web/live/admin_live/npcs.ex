@@ -7,9 +7,6 @@ defmodule ShardWeb.AdminLive.Npcs do
 
   @impl true
   def mount(_params, _session, socket) do
-    # Ensure tutorial NPCs exist
-    ensure_tutorial_npcs_exist()
-
     npcs = Npcs.list_npcs_with_preloads()
     rooms = Npcs.list_rooms()
 
