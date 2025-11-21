@@ -4,7 +4,7 @@ defmodule ShardWeb.UserLive.Commands1 do
   @moduledoc false
   import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.Movement
-  import ShardWeb.UserLive.QuestHandlers
+  import ShardWeb.UserLive.QuestHandlers, except: [execute_quest_command: 2]
   import ShardWeb.UserLive.Movement
 
   # import ShardWeb.UserLive.Commands2,
