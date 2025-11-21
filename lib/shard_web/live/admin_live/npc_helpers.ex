@@ -188,31 +188,39 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
   defp ensure_bone_zone_rooms_exist do
     alias Shard.Map, as: GameMap
     
+    IO.puts("Starting Bone Zone room creation process...")
+    
     # Define the rooms that should exist in the Bone Zone (zone_id: 1)
     bone_zone_rooms = [
       # Existing rooms that should be there
-      %{zone_id: 1, x: 2, y: 4, z: 0, name: "Bone Zone - Southern Chamber", description: "A dark chamber filled with ancient bones and the whispers of the dead."},
-      %{zone_id: 1, x: 2, y: 3, z: 0, name: "Bone Zone - Central Passage", description: "A narrow passage between chambers, bones crunch underfoot."},
-      %{zone_id: 1, x: 2, y: 2, z: 0, name: "Bone Zone - Northern Passage", description: "The passage continues north, growing darker and more ominous."},
-      %{zone_id: 1, x: 2, y: 1, z: 0, name: "Bone Zone - Upper Chamber", description: "A large chamber with high ceilings, filled with the echoes of ancient battles."},
-      %{zone_id: 1, x: 2, y: 0, z: 0, name: "Bone Zone - Northernmost Chamber", description: "The final chamber to the north, where shadows dance in the dim light."}
+      %{zone_id: 1, x_coordinate: 2, y_coordinate: 4, z_coordinate: 0, name: "Bone Zone - Southern Chamber", description: "A dark chamber filled with ancient bones and the whispers of the dead."},
+      %{zone_id: 1, x_coordinate: 2, y_coordinate: 3, z_coordinate: 0, name: "Bone Zone - Central Passage", description: "A narrow passage between chambers, bones crunch underfoot."},
+      %{zone_id: 1, x_coordinate: 2, y_coordinate: 2, z_coordinate: 0, name: "Bone Zone - Northern Passage", description: "The passage continues north, growing darker and more ominous."},
+      %{zone_id: 1, x_coordinate: 2, y_coordinate: 1, z_coordinate: 0, name: "Bone Zone - Upper Chamber", description: "A large chamber with high ceilings, filled with the echoes of ancient battles."},
+      %{zone_id: 1, x_coordinate: 2, y_coordinate: 0, z_coordinate: 0, name: "Bone Zone - Northernmost Chamber", description: "The final chamber to the north, where shadows dance in the dim light."}
     ]
 
     Enum.each(bone_zone_rooms, &ensure_room_exists/1)
     
     # Create doors between the rooms for proper navigation
     ensure_bone_zone_doors_exist()
+    
+    IO.puts("Finished Bone Zone room creation process.")
   end
 
   defp ensure_room_exists(room_params) do
     alias Shard.Map, as: GameMap
     
-    case GameMap.get_room_by_coordinates(room_params.zone_id, room_params.x, room_params.y, room_params.z) do
+    x = room_params.x_coordinate
+    y = room_params.y_coordinate
+    z = room_params.z_coordinate
+    
+    case GameMap.get_room_by_coordinates(room_params.zone_id, x, y, z) do
       nil ->
-        IO.puts("Creating room at (#{room_params.x}, #{room_params.y}, #{room_params.z}): #{room_params.name}")
+        IO.puts("Creating room at (#{x}, #{y}, #{z}): #{room_params.name}")
         create_new_room(room_params)
       existing_room ->
-        IO.puts("Room already exists at (#{room_params.x}, #{room_params.y}, #{room_params.z}): #{existing_room.name}")
+        IO.puts("Room already exists at (#{x}, #{y}, #{z}): #{existing_room.name}")
         :ok
     end
   end
