@@ -317,12 +317,16 @@ defmodule ShardWeb.UserLive.Commands1 do
         # Check if it's a talk command
         case parse_talk_command(command) do
           {:ok, npc_name} ->
+            # Only create NPCs when player explicitly tries to talk
+            ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
             execute_talk_command(game_state, npc_name)
 
           :error ->
             # Check if it's a quest command
             case parse_quest_command(command) do
               {:ok, npc_name} ->
+                # Only create NPCs when player explicitly tries to get quests
+                ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
                 execute_quest_command(game_state, npc_name)
 
               :error ->
@@ -374,6 +378,8 @@ defmodule ShardWeb.UserLive.Commands1 do
                                             # Check if it's an accept_quest command
                                             case parse_accept_quest_command(command) do
                                               {:ok, npc_name, quest_title} ->
+                                                # Only create NPCs when player explicitly tries to accept quests
+                                                ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
                                                 execute_accept_quest_command(game_state, npc_name, quest_title)
 
                                               :error ->
