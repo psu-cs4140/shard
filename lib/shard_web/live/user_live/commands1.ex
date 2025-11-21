@@ -18,9 +18,9 @@ defmodule ShardWeb.UserLive.Commands1 do
   #  import ShardWeb.UserLive.ItemCommands
 
   alias Shard.Map, as: GameMap
+  alias Shard.Repo
+  import Ecto.Query
   # alias Shard.Items.Item
-  # alias Shard.Repo
-  # import Ecto.Query
 
   # Process terminal commands
   def process_command(command, game_state) do
@@ -114,6 +114,15 @@ defmodule ShardWeb.UserLive.Commands1 do
         # Check for NPCs at current location
         npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
 
+        # Check for other players at current location
+        other_players =
+          get_other_players_at_location(
+            x,
+            y,
+            game_state.character.current_zone_id,
+            game_state.character.id
+          )
+
         # Check for items at current location
         items_here =
           ShardWeb.UserLive.ItemCommands.get_items_at_location(
@@ -141,6 +150,24 @@ defmodule ShardWeb.UserLive.Commands1 do
               end)
 
             updated_lines ++ npc_descriptions
+          end
+
+        # Add other player descriptions if any are present
+        description_lines =
+          if Enum.empty?(other_players) do
+            description_lines
+          else
+            # Empty line for spacing
+            updated_lines = description_lines ++ [""]
+
+            # Add each player
+            player_descriptions =
+              Enum.map(other_players, fn player ->
+                player_name = Map.get(player, :name) || "Unknown Player"
+                "#{player_name} is here."
+              end)
+
+            updated_lines ++ player_descriptions
           end
 
         # Add item descriptions if any are present
@@ -384,6 +411,33 @@ defmodule ShardWeb.UserLive.Commands1 do
                 end
             end
         end
+    end
+  end
+
+  # Helper function to get other players at the same location
+  defp get_other_players_at_location(x, y, zone_id, current_character_id) do
+    try do
+      # Get the room at the current coordinates
+      room = GameMap.get_room_by_coordinates(zone_id, x, y, 0)
+
+      case room do
+        nil ->
+          []
+
+        room ->
+          # Get all player positions in this room, excluding the current character
+          query =
+            from(pp in GameMap.PlayerPosition,
+              join: c in Shard.Characters.Character,
+              on: pp.character_id == c.id,
+              where: pp.room_id == ^room.id and pp.character_id != ^current_character_id,
+              select: c
+            )
+
+          Repo.all(query)
+      end
+    rescue
+      _ -> []
     end
   end
 end
