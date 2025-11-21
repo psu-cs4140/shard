@@ -276,7 +276,33 @@ defmodule ShardWeb.UserLive.Commands1 do
       downcased_command in ["north", "n"] ->
         # Ensure tutorial NPCs and rooms exist before movement
         ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
-        execute_movement(game_state, "ArrowUp")
+        
+        # Debug: Check current position and target position
+        {x, y} = game_state.player_position
+        target_y = y - 1
+        current_room = GameMap.get_room_by_coordinates(game_state.character.current_zone_id, x, y, 0)
+        target_room = GameMap.get_room_by_coordinates(game_state.character.current_zone_id, x, target_y, 0)
+        
+        debug_info = [
+          "Debug: Current position: (#{x}, #{y})",
+          "Debug: Target position: (#{x}, #{target_y})",
+          "Debug: Current room exists: #{if current_room, do: "Yes (#{current_room.name})", else: "No"}",
+          "Debug: Target room exists: #{if target_room, do: "Yes (#{target_room.name})", else: "No"}",
+          "Debug: Zone ID: #{game_state.character.current_zone_id}"
+        ]
+        
+        result = execute_movement(game_state, "ArrowUp")
+        
+        case result do
+          {[message], game_state} ->
+            if String.contains?(message, "cannot move") do
+              {[message] ++ debug_info, game_state}
+            else
+              result
+            end
+          _ ->
+            result
+        end
 
       downcased_command in ["south", "s"] ->
         # Ensure tutorial NPCs and rooms exist before movement
