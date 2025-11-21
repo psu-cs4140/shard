@@ -209,8 +209,10 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
     
     case GameMap.get_room_by_coordinates(room_params.zone_id, room_params.x, room_params.y, room_params.z) do
       nil ->
+        IO.puts("Creating room at (#{room_params.x}, #{room_params.y}, #{room_params.z}): #{room_params.name}")
         create_new_room(room_params)
-      _existing_room ->
+      existing_room ->
+        IO.puts("Room already exists at (#{room_params.x}, #{room_params.y}, #{room_params.z}): #{existing_room.name}")
         :ok
     end
   end
@@ -219,8 +221,12 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
     alias Shard.Map, as: GameMap
     
     case GameMap.create_room(room_params) do
-      {:ok, _room} -> :ok
-      {:error, _changeset} -> :error
+      {:ok, room} -> 
+        IO.puts("Successfully created room: #{room.name} at (#{room.x_coordinate}, #{room.y_coordinate}, #{room.z_coordinate})")
+        :ok
+      {:error, changeset} -> 
+        IO.puts("Failed to create room: #{inspect(changeset.errors)}")
+        :error
     end
   end
 
@@ -254,13 +260,18 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
       
       unless existing_door do
         # Create the door from -> to
-        GameMap.create_door(%{
+        case GameMap.create_door(%{
           from_room_id: from_room.id,
           to_room_id: to_room.id,
           direction: direction,
           is_locked: false,
           is_hidden: false
-        })
+        }) do
+          {:ok, _door} ->
+            IO.puts("Created door from (#{from_x}, #{from_y}) #{direction} to (#{to_x}, #{to_y})")
+          {:error, changeset} ->
+            IO.puts("Failed to create door: #{inspect(changeset.errors)}")
+        end
       end
 
       # Check if return door already exists
@@ -268,14 +279,21 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
       
       unless existing_return_door do
         # Create the return door to -> from
-        GameMap.create_door(%{
+        case GameMap.create_door(%{
           from_room_id: to_room.id,
           to_room_id: from_room.id,
           direction: opposite_direction,
           is_locked: false,
           is_hidden: false
-        })
+        }) do
+          {:ok, _door} ->
+            IO.puts("Created return door from (#{to_x}, #{to_y}) #{opposite_direction} to (#{from_x}, #{from_y})")
+          {:error, changeset} ->
+            IO.puts("Failed to create return door: #{inspect(changeset.errors)}")
+        end
       end
+    else
+      IO.puts("Cannot create door connection: from_room=#{inspect(from_room)}, to_room=#{inspect(to_room)}")
     end
   end
 end
