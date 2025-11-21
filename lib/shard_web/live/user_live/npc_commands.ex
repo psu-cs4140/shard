@@ -113,13 +113,15 @@ defmodule ShardWeb.UserLive.NpcCommands do
 
   # Helper function to get filtered available quests
   defp get_filtered_available_quests(user_id, npc_id, player_quests) do
+    # Get quests available from this NPC, excluding only those completed/accepted by THIS user
     available_quests =
       Shard.Quests.get_available_quests_by_giver_excluding_completed(user_id, npc_id)
 
     # Additional filter to ensure we don't show quests that are in the local game state as accepted
     # This helps catch timing issues where the database query might not reflect recent changes
+    # Only filter based on THIS user's quest status, not other players
     Enum.filter(available_quests, fn quest ->
-      # Check if this quest is already in the player's quest log
+      # Check if this quest is already in THIS player's quest log
       not Enum.any?(player_quests, fn player_quest ->
         player_quest[:id] == quest.id and
           player_quest[:status] in ["In Progress", "Completed"]
@@ -487,7 +489,7 @@ defmodule ShardWeb.UserLive.NpcCommands do
     user_id = game_state.character.user_id
     npc_name = npc.name || "Unknown NPC"
 
-    # Get available quests from this NPC
+    # Get available quests from this NPC for this specific user
     available_quests = get_filtered_available_quests(user_id, npc.id, game_state.quests)
 
     # Find the quest by title
@@ -509,6 +511,7 @@ defmodule ShardWeb.UserLive.NpcCommands do
     user_id = game_state.character.user_id
     npc_name = npc.name || "Unknown NPC"
 
+    # Accept quest for this specific user only
     case Shard.Quests.accept_quest(user_id, quest.id) do
       {:ok, _quest_acceptance} ->
         # Update local game state to include the new quest
