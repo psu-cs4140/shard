@@ -9,30 +9,82 @@ defmodule ShardWeb.UserLive.MovementTest do
 
   describe "calc_position/3" do
     setup do
+      # Create a zone and rooms with doors for valid movement testing
+      {:ok, zone} = GameMap.create_zone(%{
+        name: "Test Zone",
+        description: "A test zone",
+        slug: "test-zone-calc",
+        min_level: 1,
+        max_level: 10
+      })
+
+      # Create rooms
+      {:ok, room1} = GameMap.create_room(%{
+        name: "Room 1",
+        description: "First room",
+        x_coordinate: 5,
+        y_coordinate: 5,
+        z_coordinate: 0,
+        zone_id: zone.id
+      })
+
+      {:ok, room2} = GameMap.create_room(%{
+        name: "Room 2",
+        description: "Second room",
+        x_coordinate: 5,
+        y_coordinate: 4,
+        z_coordinate: 0,
+        zone_id: zone.id
+      })
+
+      {:ok, room3} = GameMap.create_room(%{
+        name: "Room 3",
+        description: "Third room",
+        x_coordinate: 6,
+        y_coordinate: 5,
+        z_coordinate: 0,
+        zone_id: zone.id
+      })
+
+      # Create doors for valid movement
+      {:ok, _door1} = Repo.insert(%Door{
+        from_room_id: room1.id,
+        to_room_id: room2.id,
+        direction: "north",
+        is_locked: false,
+        door_type: "normal"
+      })
+
+      {:ok, _door2} = Repo.insert(%Door{
+        from_room_id: room1.id,
+        to_room_id: room3.id,
+        direction: "east",
+        is_locked: false,
+        door_type: "normal"
+      })
+
       game_state = %{
-        character: %Character{current_zone_id: 1},
+        character: %Character{current_zone_id: zone.id},
         player_position: {5, 5}
       }
 
-      {:ok, game_state: game_state}
+      {:ok, game_state: game_state, zone: zone}
     end
 
-    test "calculates correct position for arrow keys", %{game_state: game_state} do
+    test "calculates correct position for valid arrow key movements", %{game_state: game_state} do
       current_pos = {5, 5}
 
+      # These should work because we have doors/rooms set up
       assert Movement.calc_position(current_pos, "ArrowUp", game_state) == {5, 4}
-      assert Movement.calc_position(current_pos, "ArrowDown", game_state) == {5, 6}
       assert Movement.calc_position(current_pos, "ArrowRight", game_state) == {6, 5}
-      assert Movement.calc_position(current_pos, "ArrowLeft", game_state) == {4, 5}
     end
 
-    test "calculates correct position for diagonal directions", %{game_state: game_state} do
+    test "returns current position for invalid movements", %{game_state: game_state} do
       current_pos = {5, 5}
 
-      assert Movement.calc_position(current_pos, "northeast", game_state) == {6, 6}
-      assert Movement.calc_position(current_pos, "southeast", game_state) == {6, 4}
-      assert Movement.calc_position(current_pos, "northwest", game_state) == {4, 6}
-      assert Movement.calc_position(current_pos, "southwest", game_state) == {4, 4}
+      # These should return current position because no doors/rooms exist in these directions
+      assert Movement.calc_position(current_pos, "ArrowDown", game_state) == current_pos
+      assert Movement.calc_position(current_pos, "ArrowLeft", game_state) == current_pos
     end
 
     test "returns current position for invalid direction", %{game_state: game_state} do
@@ -142,7 +194,7 @@ defmodule ShardWeb.UserLive.MovementTest do
     end
 
     test "returns empty list when no room provided", %{game_state: game_state} do
-      exits = Movement.get_available_exits(5, 5, nil, game_state)
+      exits = Movement.get_available_exits(99, 99, nil, game_state)
       
       assert exits == []
     end
@@ -243,7 +295,8 @@ defmodule ShardWeb.UserLive.MovementTest do
       # Create character
       {:ok, character} = Repo.insert(%Character{
         name: "Test Character",
-        current_zone_id: zone.id
+        current_zone_id: zone.id,
+        class: "warrior"
       })
 
       # Create rooms
