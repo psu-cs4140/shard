@@ -240,10 +240,7 @@ defmodule ShardWeb.UserLive.MovementTest do
       # Create character
       {:ok, character} = Repo.insert(%Character{
         name: "Test Character",
-        current_zone_id: zone.id,
-        x_coordinate: 5,
-        y_coordinate: 5,
-        z_coordinate: 0
+        current_zone_id: zone.id
       })
 
       # Create rooms
