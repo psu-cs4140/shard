@@ -114,7 +114,7 @@ defmodule Shard.Repo.Migrations.AddVampireManorKeys do
     ON CONFLICT (name) DO NOTHING;
     """
 
-    # Create the Study Key item and place it in the Library (-1,-2)
+    # Create the Study Key item and place it in the Library (3,-2)
     execute """
     INSERT INTO items (
       name,
@@ -155,7 +155,7 @@ defmodule Shard.Repo.Migrations.AddVampireManorKeys do
       updated_at
     ) VALUES (
       (SELECT id FROM items WHERE name = 'Study Key' LIMIT 1),
-      '-1,-2,0',
+      '3,-2,0',
       1,
       NOW(),
       NOW()
