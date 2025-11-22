@@ -296,7 +296,8 @@ defmodule ShardWeb.UserLive.MovementTest do
       {:ok, character} = Repo.insert(%Character{
         name: "Test Character",
         current_zone_id: zone.id,
-        class: "warrior"
+        class: "warrior",
+        race: "human"
       })
 
       # Create rooms
