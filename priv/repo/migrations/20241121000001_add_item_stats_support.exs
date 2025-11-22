@@ -21,7 +21,6 @@ defmodule Shard.Repo.Migrations.AddItemStatsSupport do
       add :icon, :string
       add :is_active, :boolean, default: true
       add :pickup, :boolean, default: true
-      add :map, :string
       add :sellable, :boolean, default: true
 
       timestamps(type: :utc_datetime)
