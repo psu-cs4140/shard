@@ -81,7 +81,7 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
     # Create the quest for retrieving the slippers
     execute """
     INSERT INTO quests (
-      name,
+      title,
       description,
       quest_type,
       status,
@@ -142,7 +142,7 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
   end
 
   def down do
-    execute "DELETE FROM quests WHERE name = 'The Master''s Slippers';"
+    execute "DELETE FROM quests WHERE title = 'The Master''s Slippers';"
     execute "DELETE FROM npcs WHERE name = 'Vampire''s Thrall';"
   end
 end
