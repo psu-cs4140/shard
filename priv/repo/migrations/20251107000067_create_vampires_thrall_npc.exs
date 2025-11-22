@@ -52,7 +52,7 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
 
     If you can hunt down that disgusting ooze and bring back my master''s slippers, I''ll give you the key to enter the manor. Please, it''s very important - my master will be most displeased if his slippers aren''t returned!
 
-    The sewer entrance is just to the west of here. Be careful, adventurer - the sewers are dark and dangerous!',
+    The sewer entrance is just to the west of here, though the entrance has been locked for quite some time. The key to it should be buried away somewhere within the garden's perimeter to the east. Be careful, adventurer - the sewers are dark and dangerous!',
       '{}',
       0,
       -1,
