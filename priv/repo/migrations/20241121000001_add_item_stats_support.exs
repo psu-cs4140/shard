@@ -3,7 +3,7 @@ defmodule Shard.Repo.Migrations.AddItemStatsSupport do
 
   def change do
     # Create items table with comprehensive schema including weapon and armor stats
-    create table(:items) do
+    create_if_not_exists table(:items) do
       add :name, :string, null: false
       add :description, :text
       add :item_type, :string, null: false
