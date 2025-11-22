@@ -389,7 +389,8 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
       loot_drops =
         created_chainmail_items
         |> Enum.map(fn item ->
-          {"#{item.id}", %{chance: 0.3, min_quantity: 1, max_quantity: 1}}
+          chance = if item.name == "Darkened Broadsword", do: 1.0, else: 0.3
+          {"#{item.id}", %{chance: chance, min_quantity: 1, max_quantity: 1}}
         end)
         |> Enum.into(%{})
         |> Kernel.put_in([Access.key("#{library_key_item.id}")], %{
