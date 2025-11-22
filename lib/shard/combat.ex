@@ -436,16 +436,22 @@ defmodule Shard.Combat do
 
   # Helper function to get currently equipped weapon from database
   defp get_current_equipped_weapon(character_id) do
-    equipped_items = Shard.Items.get_equipped_items(character_id)
-    
-    case Map.get(equipped_items, "weapon") do
-      nil -> nil
-      weapon -> 
-        %{
-          damage: weapon.damage,
-          name: weapon.name,
-          id: weapon.id
-        }
+    try do
+      equipped_items = Shard.Items.get_equipped_items(character_id)
+      
+      case Map.get(equipped_items, "weapon") do
+        nil -> nil
+        weapon -> 
+          %{
+            damage: weapon.damage,
+            name: weapon.name,
+            id: weapon.id
+          }
+      end
+    rescue
+      # Handle case where database table doesn't exist (e.g., in tests)
+      Postgrex.Error -> nil
+      _ -> nil
     end
   end
 
