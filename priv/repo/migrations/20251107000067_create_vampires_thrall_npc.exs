@@ -35,7 +35,7 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
       updated_at
     ) VALUES (
           'Vampire''s Thrall',
-          'A pale, nervous-looking servant bound to the vampire lord. His eyes dart suspiciously, and he clutches a small bundle of keys tightly. Despite his fearful demeanor, he seems willing to help those who might aid him. (Use ''talk "Vampire''s Thrall"'' to speak with him or ''quest "Vampire''s Thrall"'' to check for quests)',
+          'A pale, nervous-looking servant bound to the vampire lord. His eyes dart suspiciously, and he clutches a small bundle of keys tightly. Despite his fearful demeanor, he seems willing to help those who might aid him. (Use ''talk "Vampire''''s Thrall"'' to speak with him or ''quest "Vampire''''s Thrall"'' to check for quests)',
       5,
       80,
       80,
@@ -68,7 +68,7 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
       'stationary',
       '{
         "quest_available": true,
-        "quest_description": "Help the Vampire''s Thrall retrieve his master''s stolen slippers from an ooze in the sewers",
+        "quest_description": "Help the Vampire''''s Thrall retrieve his master''''s stolen slippers from an ooze in the sewers",
         "quest_reward": "Manor Key - allows entry to the main vampire manor",
         "personality": "nervous",
         "background": "indentured servant to vampire lord"
