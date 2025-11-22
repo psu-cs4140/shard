@@ -2,9 +2,9 @@ defmodule ShardWeb.UserLive.MovementTest do
   use Shard.DataCase, async: true
   alias ShardWeb.UserLive.Movement
   alias Shard.Map, as: GameMap
-  alias Shard.Map.{Room, Door, Zone}
+  alias Shard.Map.Door
   alias Shard.Characters.Character
-  alias Shard.Items.{Item, RoomItem}
+  alias Shard.Items.Item
   alias Shard.Repo
 
   describe "calc_position/3" do
