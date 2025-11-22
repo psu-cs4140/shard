@@ -26,7 +26,6 @@ defmodule ShardWeb.MudGameLive do
     with {:ok, character} <- get_character_from_params(params),
          character_name <- get_character_name(params, character),
          {:ok, character} <- load_character_with_associations(character),
-         :ok <- setup_tutorial_content(character_id),
          {:ok, socket} <- initialize_game_state(socket, character, character_id, character_name) do
       # Ensure player position is saved for first-time zone entry
       zone_id = character.current_zone_id || 1

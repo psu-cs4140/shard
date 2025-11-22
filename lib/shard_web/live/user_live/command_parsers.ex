@@ -170,6 +170,15 @@ defmodule ShardWeb.UserLive.CommandParsers do
     end
   end
 
+  # Parse accept_quest command to extract NPC name and quest title
+  def parse_accept_quest_command(command) do
+    # Match pattern: accept_quest "npc name" "quest title"
+    case Regex.run(~r/^accept_quest\s+"([^"]+)"\s+"([^"]+)"\s*$/i, command) do
+      [_, npc_name, quest_title] -> {:ok, String.trim(npc_name), String.trim(quest_title)}
+      _ -> :error
+    end
+  end
+
   # Parse create room command: "create room <direction>"
   def parse_create_room_command(command) do
     # Match patterns like: create room north, create room "north"

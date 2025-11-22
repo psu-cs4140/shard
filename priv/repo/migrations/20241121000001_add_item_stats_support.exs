@@ -1,7 +1,8 @@
-defmodule Shard.Repo.Migrations.CreateItems do
+defmodule Shard.Repo.Migrations.AddItemStatsSupport do
   use Ecto.Migration
 
   def change do
+    # Create items table with comprehensive schema including weapon and armor stats
     create table(:items) do
       add :name, :string, null: false
       add :description, :text
@@ -23,8 +24,23 @@ defmodule Shard.Repo.Migrations.CreateItems do
       timestamps(type: :utc_datetime)
     end
 
+    # Add unique constraint on name
     create unique_index(:items, [:name])
+
+    # Add indexes for better performance when querying by item type and stats
     create index(:items, [:item_type])
     create index(:items, [:rarity])
+    create index(:items, [:equippable])
+    create index(:items, [:equipment_slot])
+    create index(:items, [:value])
+
+    # Add a regular GIN index for the stats JSONB column for efficient stat queries
+    create index(:items, [:stats], using: :gin)
+
+    # Add a GIN index for the effects JSONB column for efficient effect queries
+    create index(:items, [:effects], using: :gin)
+
+    # Add a GIN index for the requirements JSONB column for efficient requirement queries
+    create index(:items, [:requirements], using: :gin)
   end
 end

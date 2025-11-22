@@ -4,7 +4,7 @@ defmodule ShardWeb.UserLive.Commands1 do
   @moduledoc false
   import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.Movement
-  import ShardWeb.UserLive.QuestHandlers
+  import ShardWeb.UserLive.QuestHandlers, except: [execute_quest_command: 2]
   import ShardWeb.UserLive.Movement
 
   # import ShardWeb.UserLive.Commands2,
@@ -40,8 +40,7 @@ defmodule ShardWeb.UserLive.Commands1 do
           "  npc - Show descriptions of NPCs in this room",
           "  talk \"npc_name\" - Talk to a specific NPC",
           "  quest \"npc_name\" - Get quest from a specific NPC",
-          "  accept - Accept a quest offer",
-          "  deny - Deny a quest offer",
+          "  accept_quest \"npc_name\" \"quest_title\" - Accept a specific quest from an NPC",
           "  deliver_quest \"npc_name\" - Deliver completed quest to NPC",
           "  poke \"character_name\" - Poke another player",
           "  equipped - Show your currently equipped items",
@@ -345,12 +344,16 @@ defmodule ShardWeb.UserLive.Commands1 do
         # Check if it's a talk command
         case parse_talk_command(command) do
           {:ok, npc_name} ->
+            # Only create NPCs when player explicitly tries to talk
+            ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
             execute_talk_command(game_state, npc_name)
 
           :error ->
             # Check if it's a quest command
             case parse_quest_command(command) do
               {:ok, npc_name} ->
+                # Only create NPCs when player explicitly tries to get quests
+                ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
                 execute_quest_command(game_state, npc_name)
 
               :error ->
@@ -399,9 +402,23 @@ defmodule ShardWeb.UserLive.Commands1 do
                                             execute_unequip_command(game_state, item_name)
 
                                           :error ->
-                                            {[
-                                               "Unknown command: '#{command}'. Type 'help' for available commands."
-                                             ], game_state}
+                                            # Check if it's an accept_quest command
+                                            case parse_accept_quest_command(command) do
+                                              {:ok, npc_name, quest_title} ->
+                                                # Only create NPCs when player explicitly tries to accept quests
+                                                ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
+
+                                                execute_accept_quest_command(
+                                                  game_state,
+                                                  npc_name,
+                                                  quest_title
+                                                )
+
+                                              :error ->
+                                                {[
+                                                   "Unknown command: '#{command}'. Type 'help' for available commands."
+                                                 ], game_state}
+                                            end
                                         end
                                     end
                                 end
