@@ -30,15 +30,15 @@ defmodule ShardWeb.PageControllerTest do
       # Test that unauthenticated users can access the home page
       conn = get(conn, ~p"/")
       assert conn.status == 200
-      refute redirected_to(conn)
+      # Ensure we're not redirected (status would be 3xx if redirected)
+      assert conn.status < 300
     end
   end
 
   describe "error handling" do
     test "handles invalid routes gracefully", %{conn: conn} do
-      assert_error_sent 404, fn ->
-        get(conn, "/nonexistent-route")
-      end
+      conn = get(conn, "/nonexistent-route")
+      assert conn.status == 404
     end
   end
 
