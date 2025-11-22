@@ -274,7 +274,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
           description: "A disgusting blob of sewage and filth that has gained sentience.",
           location_id: sewer_lair.id,
           potential_loot_drops: %{
-            "#{slippers_item.id}" => %{chance: 0.9, min_quantity: 1, max_quantity: 1},
+            "#{slippers_item.id}" => %{chance: 1.0, min_quantity: 1, max_quantity: 1},
             "#{manor_key_item.id}" => %{chance: 1.0, min_quantity: 1, max_quantity: 1}
           }
         })
