@@ -78,7 +78,7 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
     );
     """
 
-    # Insert Gargoyle NPC in Manor Lobby SE (3,-2)
+    # Insert Gargoyle NPC in Library (-1,-2)
     execute """
     INSERT INTO npcs (
       name,
@@ -124,15 +124,17 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
       0,
       0,
       'informant',
-      'Greetings, mortal. I have watched over this manor for centuries, observing all who pass through these halls.
+      'Greetings, mortal. I have watched over this manor for centuries, observing all who enter and leave these halls.
 
-    You seek knowledge, do you not? I can sense your curiosity about the secrets hidden within these walls.
+    You seek a spell so powerful, do you not? I can sense your curiosity about the secrets hidden within these walls.
 
-    The Library Key you seek... it lies within the Manor Lobby SE, where the eastern wing meets the southern corridor. Look carefully among the shadows and furnishings - the previous librarian was known to hide spare keys in that very room.
+    The key you seek... it lies within this manor, yes. 
 
-    Be warned, however - the library itself holds more than just books. Ancient knowledge comes with its own perils.',
+    From a bird's eye view, the manor stares at you. 
+    On it's most lonesome tip, a tiny glint gives your eyes a slip.
+    There, is where your key shall be found.',
       '{}',
-      3,
+      -1,
       -2,
       0,
       (SELECT r.id FROM rooms r
