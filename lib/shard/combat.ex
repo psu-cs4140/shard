@@ -42,8 +42,11 @@ defmodule Shard.Combat do
   end
 
   defp perform_attack(game_state, monster, position) do
+    # Add character_id to player_stats for weapon lookup
+    player_stats_with_id = Map.put(game_state.player_stats, :character_id, game_state.character.id)
+    
     damage_result =
-      calculate_attack_damage(game_state.player_stats, monster, game_state.equipped_weapon)
+      calculate_attack_damage(player_stats_with_id, monster, game_state.equipped_weapon)
 
     updated_monster = apply_damage_to_monster(monster, damage_result.final_damage)
     updated_monsters = update_monsters_list(game_state.monsters, monster, updated_monster)
@@ -93,8 +96,11 @@ defmodule Shard.Combat do
   end
 
   defp calculate_attack_damage(player_stats, monster, equipped_weapon) do
+    # Get the current equipped weapon from database to ensure we have latest data
+    current_weapon = get_current_equipped_weapon(player_stats.character_id) || equipped_weapon
+    
     # Parse weapon damage (supports dice notation like "1d4" or plain numbers)
-    base_damage = parse_damage(equipped_weapon[:damage] || 10)
+    base_damage = parse_damage(current_weapon[:damage] || 10)
 
     # Add strength modifier
     base_damage = base_damage + (player_stats.strength - 10)
@@ -427,6 +433,21 @@ defmodule Shard.Combat do
 
   # Default fallback
   defp parse_damage(_), do: 1
+
+  # Helper function to get currently equipped weapon from database
+  defp get_current_equipped_weapon(character_id) do
+    equipped_items = Shard.Items.get_equipped_items(character_id)
+    
+    case Map.get(equipped_items, "weapon") do
+      nil -> nil
+      weapon -> 
+        %{
+          damage: weapon.damage,
+          name: weapon.name,
+          id: weapon.id
+        }
+    end
+  end
 
   # Helper function to add items to character inventory
   defp add_item_to_character_inventory(character_id, item_id, quantity) do
