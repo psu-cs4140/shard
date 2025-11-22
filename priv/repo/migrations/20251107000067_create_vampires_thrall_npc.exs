@@ -108,7 +108,7 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
       10,
       50,
       25,
-      '{"Manor Key": 1}',
+      '{}',
       '{}',
       '{
         "collect_slippers": {
@@ -123,7 +123,8 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
       '{
         "completion_message": "Thank you so much! My master will be pleased to have his slippers back. Here is the Manor Key as promised - it will grant you access to the main manor.",
         "location": "Vampire''s Manor - Manor Doorstep",
-        "reward_description": "Manor Key (unlocks the main entrance to the vampire manor)"
+        "reward_description": "Manor Key (unlocks the main entrance to the vampire manor)",
+        "item_rewards": {"Manor Key": 1}
       }',
       (SELECT id FROM npcs WHERE name = 'Vampire''s Thrall' LIMIT 1),
       true,
