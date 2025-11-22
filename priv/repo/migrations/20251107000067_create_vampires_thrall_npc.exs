@@ -130,8 +130,8 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
 
     The key you seek... it lies within this manor, yes. 
 
-    From a bird's eye view, the manor stares at you. 
-    On it's most lonesome tip, a tiny glint gives your eyes a slip.
+    From a bird''s eye view, the manor stares at you. 
+    On its most lonesome tip, a tiny glint gives your eyes a slip.
     There, is where your key shall be found.',
       '{}',
       -1,
