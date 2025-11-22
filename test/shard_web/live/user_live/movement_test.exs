@@ -76,6 +76,7 @@ defmodule ShardWeb.UserLive.MovementTest do
       {:ok, zone} = GameMap.create_zone(%{
         name: "Test Zone",
         description: "A test zone",
+        slug: "test-zone",
         min_level: 1,
         max_level: 10
       })
@@ -152,7 +153,8 @@ defmodule ShardWeb.UserLive.MovementTest do
       # Create a zone
       {:ok, zone} = GameMap.create_zone(%{
         name: "Test Zone",
-        description: "A test zone", 
+        description: "A test zone",
+        slug: "test-zone-2", 
         min_level: 1,
         max_level: 10
       })
@@ -233,6 +235,7 @@ defmodule ShardWeb.UserLive.MovementTest do
       {:ok, zone} = GameMap.create_zone(%{
         name: "Test Zone",
         description: "A test zone",
+        slug: "test-zone-3",
         min_level: 1,
         max_level: 10
       })
