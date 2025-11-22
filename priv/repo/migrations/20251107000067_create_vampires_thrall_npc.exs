@@ -118,7 +118,7 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
       10,
       50,
       25,
-      '{}',
+      '{"Manor Key": 1}',
       '{}',
       '{"retrieve_items": [{"item_name": "Slippers", "quantity": 1}]}',
       'available',
@@ -128,7 +128,7 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
       'Look for the sewer entrance west of the manor doorstep',
       true,
       1,
-      '{"completion_message": "Thank you so much! My master will be pleased to have his slippers back. Here is the Manor Key as promised - it will grant you access to the main manor.", "location": "Vampire''s Manor - Manor Doorstep", "item_rewards": {"Manor Key": 1}}',
+      '{"completion_message": "Thank you so much! My master will be pleased to have his slippers back. Here is the Manor Key as promised - it will grant you access to the main manor.", "location": "Vampire''s Manor - Manor Doorstep"}',
       NOW(),
       NOW()
     );
