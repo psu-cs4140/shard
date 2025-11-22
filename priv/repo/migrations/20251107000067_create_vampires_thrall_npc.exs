@@ -78,6 +78,82 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
     );
     """
 
+    # Insert Gargoyle NPC in Manor Lobby SE (3,-2)
+    execute """
+    INSERT INTO npcs (
+      name,
+      description,
+      level,
+      health,
+      max_health,
+      mana,
+      max_mana,
+      strength,
+      dexterity,
+      intelligence,
+      constitution,
+      experience_reward,
+      gold_reward,
+      npc_type,
+      dialogue,
+      inventory,
+      location_x,
+      location_y,
+      location_z,
+      room_id,
+      is_active,
+      respawn_time,
+      faction,
+      aggression_level,
+      movement_pattern,
+      properties,
+      inserted_at,
+      updated_at
+    ) VALUES (
+          'Gargoyle',
+          'A stone gargoyle perched on a pedestal, its eyes glowing with ancient magic. Despite its intimidating appearance, it seems willing to share knowledge with those who approach respectfully. (Use ''talk "Gargoyle"'' to speak with it)',
+      8,
+      120,
+      120,
+      60,
+      60,
+      15,
+      8,
+      14,
+      18,
+      0,
+      0,
+      'informant',
+      'Greetings, mortal. I have watched over this manor for centuries, observing all who pass through these halls.
+
+    You seek knowledge, do you not? I can sense your curiosity about the secrets hidden within these walls.
+
+    The Library Key you seek... it lies within the Manor Lobby SE, where the eastern wing meets the southern corridor. Look carefully among the shadows and furnishings - the previous librarian was known to hide spare keys in that very room.
+
+    Be warned, however - the library itself holds more than just books. Ancient knowledge comes with its own perils.',
+      '{}',
+      3,
+      -2,
+      0,
+      (SELECT r.id FROM rooms r
+       JOIN zones z ON r.zone_id = z.id
+       WHERE r.x_coordinate = 3 AND r.y_coordinate = -2 AND r.z_coordinate = 0
+       AND z.slug = 'vampires-manor' LIMIT 1),
+      true,
+      0,
+      'manor_guardians',
+      0,
+      'stationary',
+      '{
+        "personality": "ancient_wise",
+        "background": "magical guardian of the manor",
+        "knowledge_areas": ["manor_layout", "hidden_items", "manor_history"]
+      }',
+      NOW(),
+      NOW()
+    );
+    """
+
     # Get Vampire's Thrall ID
     thrall_id_query = """
     SELECT id FROM npcs WHERE name = 'Vampire''s Thrall' LIMIT 1
@@ -128,5 +204,6 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
   def down do
     execute "DELETE FROM quests WHERE title = 'The Master''s Slippers';"
     execute "DELETE FROM npcs WHERE name = 'Vampire''s Thrall';"
+    execute "DELETE FROM npcs WHERE name = 'Gargoyle';"
   end
 end
