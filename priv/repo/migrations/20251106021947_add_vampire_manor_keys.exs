@@ -209,6 +209,54 @@ defmodule Shard.Repo.Migrations.AddVampireManorKeys do
       NOW()
     );
     """
+
+    # Create the Mythical Tomb item and place it in the Study (4,-2)
+    execute """
+    INSERT INTO items (
+      name,
+      description,
+      item_type,
+      rarity,
+      value,
+      weight,
+      equippable,
+      equipment_slot,
+      is_active,
+      pickup,
+      inserted_at,
+      updated_at
+    ) VALUES (
+      'Mythical Tomb',
+      'An ancient tome bound in mysterious leather with glowing runes. It contains secrets of forgotten magic and radiates otherworldly power.',
+      'book',
+      'mythical',
+      500,
+      2.0,
+      false,
+      null,
+      true,
+      true,
+      NOW(),
+      NOW()
+    )
+    ON CONFLICT (name) DO NOTHING;
+    """
+
+    execute """
+    INSERT INTO room_items (
+      item_id,
+      location,
+      quantity,
+      inserted_at,
+      updated_at
+    ) VALUES (
+      (SELECT id FROM items WHERE name = 'Mythical Tomb' LIMIT 1),
+      '4,-2,0',
+      1,
+      NOW(),
+      NOW()
+    );
+    """
   end
 
   def down do
@@ -219,10 +267,11 @@ defmodule Shard.Repo.Migrations.AddVampireManorKeys do
       SELECT id FROM items WHERE name IN (
         'Rusty Sewer Key',
         'Study Key',
-        'Master Key'
+        'Master Key',
+        'Mythical Tomb'
       )
     )
-    AND location IN ('-1,1,0', '1,1,0', '5,-3,0');
+    AND location IN ('-1,1,0', '1,1,0', '5,-3,0', '4,-2,0');
     """
 
     # Optionally remove the key items entirely (uncomment if desired)
