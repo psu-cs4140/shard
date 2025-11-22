@@ -111,13 +111,6 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
       '{"Manor Key": 1}',
       '{}',
       '{
-        "kill_sewage_slime": {
-          "type": "kill_monster",
-          "target": "Sewage Slime",
-          "quantity": 1,
-          "completed": false,
-          "description": "Defeat the Sewage Slime in the sewer lair"
-        },
         "collect_slippers": {
           "type": "collect_item",
           "target": "Slippers",
