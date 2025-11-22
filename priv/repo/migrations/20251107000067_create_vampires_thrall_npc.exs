@@ -77,9 +77,72 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
       NOW()
     );
     """
+
+    # Create the quest for retrieving the slippers
+    execute """
+    INSERT INTO quests (
+      name,
+      description,
+      quest_type,
+      status,
+      min_level,
+      max_level,
+      experience_reward,
+      gold_reward,
+      item_rewards,
+      prerequisites,
+      objectives,
+      faction_reward,
+      properties,
+      giver_npc_id,
+      is_active,
+      is_repeatable,
+      inserted_at,
+      updated_at
+    ) VALUES (
+      'The Master''s Slippers',
+      'The Vampire''s Thrall needs you to retrieve his master''s stolen slippers from a sewage slime in the sewer lair. The slippers were taken by a disgusting ooze creature that lurks in the depths below the manor.',
+      'fetch',
+      'available',
+      1,
+      10,
+      50,
+      25,
+      '{"Manor Key": 1}',
+      '{}',
+      '{
+        "kill_sewage_slime": {
+          "type": "kill_monster",
+          "target": "Sewage Slime",
+          "quantity": 1,
+          "completed": false,
+          "description": "Defeat the Sewage Slime in the sewer lair"
+        },
+        "collect_slippers": {
+          "type": "collect_item",
+          "target": "Slippers",
+          "quantity": 1,
+          "completed": false,
+          "description": "Retrieve the master''s slippers from the sewage slime"
+        }
+      }',
+      '{}',
+      '{
+        "completion_message": "Thank you so much! My master will be pleased to have his slippers back. Here is the Manor Key as promised - it will grant you access to the main manor.",
+        "location": "Vampire''s Manor - Manor Doorstep",
+        "reward_description": "Manor Key (unlocks the main entrance to the vampire manor)"
+      }',
+      (SELECT id FROM npcs WHERE name = 'Vampire''s Thrall' LIMIT 1),
+      true,
+      false,
+      NOW(),
+      NOW()
+    );
+    """
   end
 
   def down do
+    execute "DELETE FROM quests WHERE name = 'The Master''s Slippers';"
     execute "DELETE FROM npcs WHERE name = 'Vampire''s Thrall';"
   end
 end
