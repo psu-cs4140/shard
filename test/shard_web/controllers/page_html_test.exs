@@ -8,45 +8,39 @@ defmodule ShardWeb.PageHTMLTest do
       assert Code.ensure_loaded?(PageHTML)
     end
 
-    test "uses ShardWeb html functionality" do
-      # Verify the module has the expected functions from using ShardWeb, :html
-      assert function_exported?(PageHTML, :sigil_H, 2)
+    test "has Phoenix component functionality" do
+      # Verify the module has Phoenix component functions
+      assert function_exported?(PageHTML, :__components__, 0)
+      assert function_exported?(PageHTML, :__phoenix_component_verify__, 1)
     end
 
-    test "imports CoreComponents" do
-      # Verify CoreComponents functions are available
-      # This tests that the import worked correctly
+    test "has template functions" do
+      # Verify that templates are embedded and accessible
       functions = PageHTML.__info__(:functions)
       
-      # Check for some common CoreComponents functions that should be imported
+      # Check that the home template function exists (based on the error output)
       assert Enum.any?(functions, fn {name, _arity} -> 
-        name in [:button, :input, :label, :error, :header, :table]
+        name == :home
       end)
     end
 
-    test "has embed_templates functionality" do
-      # Verify that the module can handle template embedding
-      # The exact templates depend on what's in the page_html directory
-      assert function_exported?(PageHTML, :__templates__, 0)
+    test "can access embedded templates" do
+      # Verify that the module has embedded template functionality
+      # The home template should be available as a function
+      assert function_exported?(PageHTML, :home, 1)
     end
   end
 
   describe "template rendering" do
-    test "can render templates with assigns" do
-      # Test basic template rendering capability
-      conn = build_conn()
+    test "can render home template with assigns" do
+      # Test that the home template can be called with assigns
+      assigns = %{conn: build_conn()}
       
-      # This tests that the module can be used in a rendering context
-      assert %Phoenix.LiveView.Rendered{} = 
-        Phoenix.Controller.render_to_string(PageHTML, "home", %{conn: conn})
-    rescue
-      # If the template doesn't exist, we expect a specific error
-      UndefinedFunctionError -> 
-        # This is expected if no home template exists
-        assert true
-      Phoenix.Template.UndefinedError ->
-        # This is also expected if template is not found
-        assert true
+      # The home template should return a rendered structure
+      result = PageHTML.home(assigns)
+      
+      # Should return some kind of rendered content
+      assert is_struct(result) or is_binary(result) or is_list(result)
     end
   end
 end
