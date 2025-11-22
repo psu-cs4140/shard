@@ -25,7 +25,7 @@ defmodule Shard.Repo.Migrations.AddItemStatsSupport do
     end
 
     # Add unique constraint on name
-    create unique_index(:items, [:name])
+    create_if_not_exists unique_index(:items, [:name])
 
     # Add indexes for better performance when querying by item type and stats
     create index(:items, [:item_type])
