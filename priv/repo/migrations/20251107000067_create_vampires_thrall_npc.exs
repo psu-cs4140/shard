@@ -78,13 +78,19 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
     );
     """
 
+    # Get Vampire's Thrall ID
+    thrall_id_query = """
+    SELECT id FROM npcs WHERE name = 'Vampire''s Thrall' LIMIT 1
+    """
+
     # Create the quest for retrieving the slippers
     execute """
     INSERT INTO quests (
       title,
       description,
+      short_description,
       quest_type,
-      status,
+      difficulty,
       min_level,
       max_level,
       experience_reward,
@@ -92,43 +98,37 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
       item_rewards,
       prerequisites,
       objectives,
-      faction_reward,
-      properties,
-      giver_npc_id,
-      is_active,
+      status,
       is_repeatable,
+      giver_npc_id,
+      turn_in_npc_id,
+      location_hint,
+      is_active,
+      sort_order,
+      properties,
       inserted_at,
       updated_at
     ) VALUES (
       'The Master''s Slippers',
       'The Vampire''s Thrall needs you to retrieve his master''s stolen slippers from a sewage slime in the sewer lair. The slippers were taken by a disgusting ooze creature that lurks in the depths below the manor.',
+      'Retrieve the vampire lord''s slippers from the sewage slime',
       'fetch',
-      'available',
+      'normal',
       1,
       10,
       50,
       25,
+      '{"Manor Key": 1}',
       '{}',
-      '{}',
-      '{
-        "collect_slippers": {
-          "type": "collect_item",
-          "target": "Slippers",
-          "quantity": 1,
-          "completed": false,
-          "description": "Retrieve the master''s slippers from the sewage slime"
-        }
-      }',
-      '{}',
-      '{
-        "completion_message": "Thank you so much! My master will be pleased to have his slippers back. Here is the Manor Key as promised - it will grant you access to the main manor.",
-        "location": "Vampire''s Manor - Manor Doorstep",
-        "reward_description": "Manor Key (unlocks the main entrance to the vampire manor)",
-        "item_rewards": {"Manor Key": 1}
-      }',
-      (SELECT id FROM npcs WHERE name = 'Vampire''s Thrall' LIMIT 1),
-      true,
+      '{"retrieve_items": [{"item_name": "Slippers", "quantity": 1}]}',
+      'available',
       false,
+      (#{thrall_id_query}),
+      (#{thrall_id_query}),
+      'Look for the sewer entrance west of the manor doorstep',
+      true,
+      1,
+      '{"completion_message": "Thank you so much! My master will be pleased to have his slippers back. Here is the Manor Key as promised - it will grant you access to the main manor.", "location": "Vampire''s Manor - Manor Doorstep"}',
       NOW(),
       NOW()
     );
