@@ -6,6 +6,29 @@ defmodule Shard.Items.Item do
   New schema for items
   """
 
+  # Custom type to handle list -> map conversion
+  defmodule MapField do
+    @moduledoc false
+    use Ecto.Type
+
+    def type, do: :map
+
+    def cast(value) when is_map(value), do: {:ok, value}
+    def cast([]), do: {:ok, %{}}
+    def cast(value) when is_list(value), do: {:ok, %{}}
+    def cast(_), do: :error
+
+    def load(value) when is_map(value), do: {:ok, value}
+    def load([]), do: {:ok, %{}}
+    def load(value) when is_list(value), do: {:ok, %{}}
+    def load(_), do: :error
+
+    def dump(value) when is_map(value), do: {:ok, value}
+    def dump([]), do: {:ok, %{}}
+    def dump(value) when is_list(value), do: {:ok, %{}}
+    def dump(_), do: :error
+  end
+
   # Define valid item types and rarities
   @item_types [
     "weapon",
@@ -79,9 +102,9 @@ defmodule Shard.Items.Item do
     field :usable, :boolean, default: false
     field :equippable, :boolean, default: false
     field :equipment_slot, :string
-    field :stats, :map
-    field :requirements, :map
-    field :effects, :map
+    field :stats, MapField
+    field :requirements, MapField
+    field :effects, MapField
     field :icon, :string
     field :is_active, :boolean, default: true
     field :pickup, :boolean, default: true
