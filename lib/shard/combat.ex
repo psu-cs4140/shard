@@ -99,18 +99,15 @@ defmodule Shard.Combat do
     # Get the current equipped weapon from database to ensure we have latest data
     current_weapon = get_current_equipped_weapon(player_stats.character_id)
     
-    # Parse weapon damage (supports dice notation like "1d4" or plain numbers)
-    # Use current weapon if available, otherwise fall back to base damage
-    weapon_damage = case current_weapon do
+    # Get attack power from weapon (0 if no weapon equipped)
+    weapon_attack_power = case current_weapon do
       %{attack_power: attack_power} when not is_nil(attack_power) -> attack_power
       %{damage: damage} when not is_nil(damage) -> damage  # Fallback for legacy weapons
-      _ -> 10  # Base unarmed damage
+      _ -> 0  # No weapon equipped
     end
     
-    base_damage = parse_damage(weapon_damage)
-
-    # Add strength modifier
-    base_damage = base_damage + (player_stats.strength - 10)
+    # Calculate base damage as strength + weapon attack power
+    base_damage = player_stats.strength + weapon_attack_power
 
     # Apply random variance (±2)
     variance = 5
