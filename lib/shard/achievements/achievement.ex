@@ -1,4 +1,13 @@
 defmodule Shard.Achievements.Achievement do
+  @moduledoc """
+  Schema for game achievements that players can earn.
+  
+  Achievements represent goals or milestones that players can accomplish,
+  such as reaching a certain level, completing quests, or defeating monsters.
+  They can be organized by category and may have point values or be hidden
+  until unlocked.
+  """
+  
   use Ecto.Schema
   import Ecto.Changeset
 

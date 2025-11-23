@@ -1,4 +1,12 @@
 defmodule Shard.Items.CharacterEquipment do
+  @moduledoc """
+  Schema for tracking which items a character has equipped.
+  
+  Each character can have one item equipped per equipment slot (head, body, legs, etc.).
+  This module ensures that only equippable items can be equipped and that they are
+  equipped in the correct slot.
+  """
+  
   use Ecto.Schema
   import Ecto.Changeset
   alias Shard.Characters.Character
