@@ -42,62 +42,89 @@ defmodule Shard.Combat do
   end
 
   defp perform_attack(game_state, monster, position) do
-    damage_result =
-      calculate_attack_damage(game_state.player_stats, monster, game_state.equipped_weapon)
+    # Check if this is The Count and player has required item
+    case check_count_attack_requirements(game_state, monster) do
+      {:error, message} ->
+        {[message], game_state}
 
-    updated_monster = apply_damage_to_monster(monster, damage_result.final_damage)
-    updated_monsters = update_monsters_list(game_state.monsters, monster, updated_monster)
+      :ok ->
+        # Add character_id to player_stats for weapon lookup
+        player_stats_with_id =
+          Map.put(game_state.player_stats, :character_id, game_state.character.id)
 
-    response = create_attack_response(monster, damage_result, updated_monster)
+        damage_result =
+          calculate_attack_damage(player_stats_with_id, monster, game_state.equipped_weapon)
 
-    broadcast_attack_event(
-      position,
-      game_state.character.name,
-      monster,
-      damage_result,
-      updated_monster
-    )
+        updated_monster = apply_damage_to_monster(monster, damage_result.final_damage)
+        updated_monsters = update_monsters_list(game_state.monsters, monster, updated_monster)
 
-    # NEW: Check for special damage effect
-    {final_response, final_monsters} =
-      case check_special_damage_effect(game_state, monster, updated_monster, response) do
-        {resp, mons} -> {resp, mons}
-        nil -> {response, updated_monsters}
-      end
+        response = create_attack_response(monster, damage_result, updated_monster)
 
-    if updated_monster[:is_alive] do
-      # Monster survived - handle counterattack
-      handle_monster_counterattack(
-        game_state,
-        updated_monster,
-        position,
-        final_response,
-        final_monsters
-      )
-    else
-      # Monster died - handle death and rewards
-      {messages, final_monsters, updated_player_stats, updated_character} =
-        handle_monster_death(game_state, updated_monster, final_monsters)
-
-      final_response = final_response ++ messages
-
-      updated_game_state =
-        update_combat_state(
-          %{game_state | player_stats: updated_player_stats, character: updated_character},
-          final_monsters,
-          position
+        broadcast_attack_event(
+          position,
+          game_state.character.name,
+          monster,
+          damage_result,
+          updated_monster
         )
 
-      {final_response, updated_game_state}
+        # NEW: Check for special damage effect
+        {final_response, final_monsters} =
+          case check_special_damage_effect(game_state, monster, updated_monster, response) do
+            {resp, mons} -> {resp, mons}
+            nil -> {response, updated_monsters}
+          end
+
+        if updated_monster[:is_alive] do
+          # Monster survived - handle counterattack
+          handle_monster_counterattack(
+            game_state,
+            updated_monster,
+            position,
+            final_response,
+            final_monsters
+          )
+        else
+          # Monster died - handle death and rewards
+          {messages, final_monsters, updated_player_stats, updated_character} =
+            handle_monster_death(game_state, updated_monster, final_monsters)
+
+          final_response = final_response ++ messages
+
+          updated_game_state =
+            update_combat_state(
+              %{game_state | player_stats: updated_player_stats, character: updated_character},
+              final_monsters,
+              position
+            )
+
+          {final_response, updated_game_state}
+        end
     end
   end
 
-  defp calculate_attack_damage(player_stats, monster, equipped_weapon) do
-    # Parse weapon damage (supports dice notation like "1d4" or plain numbers)
-    base_damage = parse_damage(equipped_weapon[:damage] || 10)
+  defp calculate_attack_damage(player_stats, monster, _equipped_weapon) do
+    # Get the current equipped weapon from database to ensure we have latest data
+    current_weapon = get_current_equipped_weapon(player_stats.character_id)
 
-    # Add strength modifier
-    base_damage = base_damage + (player_stats.strength - 10)
+    # Get attack power from weapon (0 if no weapon equipped)
+    weapon_attack_power =
+      case current_weapon do
+        %{attack_power: attack_power} when is_integer(attack_power) ->
+          attack_power
+
+        %{attack_power: attack_power} when is_binary(attack_power) ->
+          String.to_integer(attack_power)
+
+        %{damage: damage} when not is_nil(damage) ->
+          damage
+
+        _ ->
+          0
+      end
+
+    # Calculate base damage as strength + weapon attack power
+    base_damage = player_stats.strength + weapon_attack_power
 
     # Apply random variance (±2)
     variance = 5
@@ -250,9 +277,6 @@ defmodule Shard.Combat do
   end
 
   defp handle_monster_death(game_state, dead_monster, monsters_list) do
-    IO.puts("DEBUG: handle_monster_death called for monster: #{inspect(dead_monster[:name])}")
-    IO.puts("DEBUG: Full dead_monster data in handle_monster_death: #{inspect(dead_monster)}")
-
     # Remove the monster from the list
     updated_monsters =
       Enum.reject(monsters_list, fn m ->
@@ -285,25 +309,14 @@ defmodule Shard.Combat do
 
   # NEW: Process loot drops when monster dies
   defp process_loot_drops(game_state, dead_monster) do
-    IO.puts("DEBUG: Processing loot drops for monster: #{inspect(dead_monster[:name])}")
-    IO.puts("DEBUG: Full dead_monster data in process_loot_drops: #{inspect(dead_monster)}")
-
-    IO.puts(
-      "DEBUG: Monster's potential_loot_drops: #{inspect(dead_monster[:potential_loot_drops])}"
-    )
-
     case dead_monster[:potential_loot_drops] do
       %{} = drops_map ->
-        result = process_drops_map(game_state, drops_map)
-        IO.puts("DEBUG: Processed drops map, result: #{inspect(result)}")
-        result
+        process_drops_map(game_state, drops_map)
 
       nil ->
-        IO.puts("DEBUG: No potential_loot_drops found for monster")
         []
 
-      other ->
-        IO.puts("DEBUG: Unexpected potential_loot_drops format: #{inspect(other)}")
+      _other ->
         []
     end
   end
@@ -317,10 +330,6 @@ defmodule Shard.Combat do
   end
 
   defp process_single_drop(game_state, item_id_str, drop_info, acc) do
-    IO.puts(
-      "DEBUG: Processing single drop - item_id_str: #{inspect(item_id_str)}, drop_info: #{inspect(drop_info)}"
-    )
-
     # Convert item_id string back to integer
     case Integer.parse(item_id_str) do
       {item_id, ""} ->
@@ -329,25 +338,17 @@ defmodule Shard.Combat do
         min_qty = Map.get(drop_info, "min_quantity", 1)
         max_qty = Map.get(drop_info, "max_quantity", 1)
 
-        IO.puts(
-          "DEBUG: Parsed item_id: #{item_id}, chance: #{chance}, min_qty: #{min_qty}, max_qty: #{max_qty}"
-        )
-
         # Check if item drops
         random_value = :rand.uniform()
         drops = random_value <= chance
 
-        IO.puts("DEBUG: Random value: #{random_value}, drops: #{drops}")
-
         if drops do
           process_successful_drop(game_state, item_id, min_qty, max_qty, acc)
         else
-          IO.puts("DEBUG: Item did not drop due to chance")
           acc
         end
 
       :error ->
-        IO.puts("DEBUG: Failed to parse item_id_str: #{inspect(item_id_str)}")
         acc
     end
   end
@@ -356,30 +357,18 @@ defmodule Shard.Combat do
     # Calculate quantity
     quantity = calculate_drop_quantity(min_qty, max_qty)
 
-    IO.puts("DEBUG: Calculated drop quantity: #{quantity}")
-    IO.puts("DEBUG: Character ID: #{game_state.character.id}")
-    IO.puts("DEBUG: Item ID: #{item_id}")
-
     # Verify the item exists first
     case Shard.Items.get_item(item_id) do
       nil ->
-        IO.puts("DEBUG: Item with ID #{item_id} does not exist in database")
         acc
 
-      item ->
-        IO.puts("DEBUG: Found item: #{item.name}")
-
+      _item ->
         # Add item to player inventory using the exact same pattern as pickup
         case add_item_to_character_inventory(game_state.character.id, item_id, quantity) do
           {:ok, _} ->
-            IO.puts("DEBUG: Successfully added #{quantity} of item ID #{item_id} to inventory.")
             create_loot_message(item_id, quantity, acc)
 
-          {:error, reason} ->
-            IO.puts(
-              "DEBUG: Failed to add item ID #{item_id} to inventory. Reason: #{inspect(reason)}"
-            )
-
+          {:error, _reason} ->
             acc
         end
     end
@@ -396,60 +385,88 @@ defmodule Shard.Combat do
   defp create_loot_message(item_id, quantity, acc) do
     case Shard.Items.get_item(item_id) do
       nil ->
-        IO.puts("DEBUG: Could not find item with ID #{item_id} in database")
         acc
 
       item ->
-        IO.puts("DEBUG: Found item #{item.name} for loot message")
         ["You find #{quantity} #{item.name} on the corpse." | acc]
     end
   end
 
-  # Helper function to parse damage strings like "1d4" or plain numbers
-  defp parse_damage(damage) when is_integer(damage), do: damage
+  # Helper function to get currently equipped weapon from database
+  defp get_current_equipped_weapon(character_id) do
+    try do
+      equipped_items = Shard.Items.get_equipped_items(character_id)
 
-  defp parse_damage(damage) when is_binary(damage) do
-    case String.contains?(damage, "d") do
-      true ->
-        # Parse dice notation like "1d4"
-        [num_dice, die_size] = String.split(damage, "d")
-        num_dice = String.to_integer(num_dice)
-        die_size = String.to_integer(die_size)
+      # Look for weapon in main_hand slot (not "weapon" slot)
+      case Map.get(equipped_items, "main_hand") do
+        nil ->
+          # No weapon equipped, return nil for unarmed combat
+          nil
 
-        # Roll the dice (simple average for now)
-        trunc(num_dice * (die_size + 1) / 2)
+        weapon ->
+          # Check for attack_power first, then fallback to damage for legacy weapons
+          # Handle both parsed maps and JSON strings
+          parsed_stats =
+            case weapon.stats do
+              %{} = stats_map ->
+                stats_map
 
-      false ->
-        # Plain number as string
-        String.to_integer(damage)
+              stats_string when is_binary(stats_string) ->
+                case Jason.decode(stats_string) do
+                  {:ok, parsed} ->
+                    parsed
+
+                  {:error, _} ->
+                    %{}
+                end
+
+              _ ->
+                %{}
+            end
+
+          attack_value =
+            case parsed_stats do
+              %{"attack_power" => attack_power} when is_integer(attack_power) ->
+                attack_power
+
+              %{"attack_power" => attack_power} when is_binary(attack_power) ->
+                String.to_integer(attack_power)
+
+              _ ->
+                weapon.damage || 0
+            end
+
+          %{
+            attack_power: attack_value,
+            # Keep for legacy compatibility
+            damage: weapon.damage,
+            name: weapon.name,
+            id: weapon.id
+          }
+      end
+    rescue
+      # Handle case where database table doesn't exist (e.g., in tests)
+      Postgrex.Error ->
+        nil
+
+      _error ->
+        nil
     end
   end
 
-  # Default fallback
-  defp parse_damage(_), do: 1
-
   # Helper function to add items to character inventory
   defp add_item_to_character_inventory(character_id, item_id, quantity) do
-    IO.puts(
-      "DEBUG: Attempting to add item #{item_id} (qty: #{quantity}) to character #{character_id}"
-    )
-
     # Use the exact same pattern as the pickup logic in Items context
     result = Shard.Items.add_item_to_inventory(character_id, item_id, quantity)
 
-    IO.puts("DEBUG: add_item_to_inventory result: #{inspect(result)}")
-
     case result do
       {:ok, _} = success ->
-        IO.puts("DEBUG: Successfully added item to inventory")
         success
 
-      {:error, reason} = error ->
-        IO.puts("DEBUG: Failed to add item to inventory: #{inspect(reason)}")
+      {:error, _reason} = error ->
         error
 
-      other ->
-        IO.puts("DEBUG: Unexpected result from add_item_to_inventory: #{inspect(other)}")
+      _other ->
         {:error, :unexpected_result}
     end
   end
@@ -509,6 +526,22 @@ defmodule Shard.Combat do
       :ok
     rescue
       _ -> :error
+    end
+  end
+
+  # Check if player can attack The Count (requires Mythical Tome)
+  defp check_count_attack_requirements(game_state, monster) do
+    case monster[:name] do
+      "The Count" ->
+        if Shard.Items.character_has_item?(game_state.character.id, "Mythical Tome") do
+          :ok
+        else
+          {:error,
+           "The Count's dark power repels your attack! You need something more powerful to face him..."}
+        end
+
+      _ ->
+        :ok
     end
   end
 end
