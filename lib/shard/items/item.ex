@@ -15,6 +15,7 @@ defmodule Shard.Items.Item do
     def type, do: :map
 
     def cast(value) when is_map(value), do: {:ok, value}
+
     def cast(value) when is_binary(value) do
       case Jason.decode(value) do
         {:ok, decoded} when is_map(decoded) -> {:ok, decoded}
@@ -22,10 +23,12 @@ defmodule Shard.Items.Item do
         {:error, _} -> {:ok, %{}}
       end
     end
+
     def cast(nil), do: {:ok, %{}}
     def cast(_), do: :error
 
     def load(value) when is_map(value), do: {:ok, value}
+
     def load(value) when is_binary(value) do
       case Jason.decode(value) do
         {:ok, decoded} when is_map(decoded) -> {:ok, decoded}
@@ -33,10 +36,12 @@ defmodule Shard.Items.Item do
         {:error, _} -> {:ok, %{}}
       end
     end
+
     def load(nil), do: {:ok, %{}}
     def load(_), do: {:ok, %{}}
 
     def dump(value) when is_map(value), do: {:ok, value}
+
     def dump(value) when is_binary(value) do
       case Jason.decode(value) do
         {:ok, decoded} when is_map(decoded) -> {:ok, decoded}
@@ -44,6 +49,7 @@ defmodule Shard.Items.Item do
         {:error, _} -> {:ok, %{}}
       end
     end
+
     def dump(nil), do: {:ok, %{}}
     def dump(_), do: :error
   end

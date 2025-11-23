@@ -421,10 +421,13 @@ defmodule ShardWeb.UserLive.CommandParsers do
       ["Your equipment slots:"] ++
         Enum.map(all_slots, fn slot ->
           item_name = Map.get(equipped_map, slot, "None")
-          slot_display = case slot do
-            "main_hand" -> "Main Hand"
-            other -> String.capitalize(other)
-          end
+
+          slot_display =
+            case slot do
+              "main_hand" -> "Main Hand"
+              other -> String.capitalize(other)
+            end
+
           "  #{slot_display}: #{item_name}"
         end)
 

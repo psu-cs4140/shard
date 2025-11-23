@@ -15,7 +15,7 @@ defmodule ShardWeb.PageControllerTest do
     test "contains expected HTML structure", %{conn: conn} do
       conn = get(conn, ~p"/")
       response = html_response(conn, 200)
-      
+
       assert response =~ "<html"
       assert response =~ "<head"
       assert response =~ "<body"
@@ -45,14 +45,14 @@ defmodule ShardWeb.PageControllerTest do
   describe "security headers" do
     test "includes security headers in response", %{conn: conn} do
       conn = get(conn, ~p"/")
-      
+
       # Check for common security headers that Phoenix typically includes
       headers = conn.resp_headers |> Enum.into(%{})
-      
+
       # These may vary based on your Phoenix configuration
-      assert Map.has_key?(headers, "x-frame-options") or 
-             Map.has_key?(headers, "x-content-type-options") or
-             Map.has_key?(headers, "x-xss-protection")
+      assert Map.has_key?(headers, "x-frame-options") or
+               Map.has_key?(headers, "x-content-type-options") or
+               Map.has_key?(headers, "x-xss-protection")
     end
   end
 end

@@ -339,8 +339,9 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
         Enum.map(chainmail_items, fn item_spec ->
           case Repo.query("SELECT id FROM items WHERE name = $1", [item_spec.name]) do
             {:ok, %{rows: []}} ->
-              stats = if item_spec.name == "Darkened Broadsword", do: %{"attack_power" => 20}, else: %{}
-              
+              stats =
+                if item_spec.name == "Darkened Broadsword", do: %{"attack_power" => 20}, else: %{}
+
               {:ok, %{rows: [[item_id]]}} =
                 Repo.query(
                   "INSERT INTO items (name, description, item_type, rarity, value, stackable, equippable, equipment_slot, stats, is_active, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id",

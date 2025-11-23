@@ -17,11 +17,11 @@ defmodule ShardWeb.PageHTMLTest do
     test "has template functions" do
       # Verify that templates are embedded and accessible
       functions = PageHTML.__info__(:functions)
-      
+
       # Check that the home template function exists (based on the error output)
-      assert Enum.any?(functions, fn {name, _arity} -> 
-        name == :home
-      end)
+      assert Enum.any?(functions, fn {name, _arity} ->
+               name == :home
+             end)
     end
 
     test "can access embedded templates" do
@@ -35,10 +35,10 @@ defmodule ShardWeb.PageHTMLTest do
     test "can render home template with assigns" do
       # Test that the home template can be called with assigns
       assigns = %{conn: build_conn()}
-      
+
       # The home template should return a rendered structure
       result = PageHTML.home(assigns)
-      
+
       # Should return some kind of rendered content
       assert is_struct(result) or is_binary(result) or is_list(result)
     end

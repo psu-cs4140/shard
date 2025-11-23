@@ -52,9 +52,11 @@ defmodule Shard.CombatTest do
 
     test "handles flee action", %{game_state: game_state} do
       # Use integer ID instead of string
-      game_state = game_state
-                   |> Map.put(:combat, true)
-                   |> put_in([:character, :id], 1)
+      game_state =
+        game_state
+        |> Map.put(:combat, true)
+        |> put_in([:character, :id], 1)
+
       {messages, updated_state} = Combat.execute_action(game_state, "flee")
       assert messages == ["You flee from combat!"]
       assert updated_state.combat == false

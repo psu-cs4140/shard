@@ -46,11 +46,12 @@ defmodule Shard.Combat do
     case check_count_attack_requirements(game_state, monster) do
       {:error, message} ->
         {[message], game_state}
-      
+
       :ok ->
         # Add character_id to player_stats for weapon lookup
-        player_stats_with_id = Map.put(game_state.player_stats, :character_id, game_state.character.id)
-        
+        player_stats_with_id =
+          Map.put(game_state.player_stats, :character_id, game_state.character.id)
+
         damage_result =
           calculate_attack_damage(player_stats_with_id, monster, game_state.equipped_weapon)
 
@@ -105,19 +106,23 @@ defmodule Shard.Combat do
   defp calculate_attack_damage(player_stats, monster, _equipped_weapon) do
     # Get the current equipped weapon from database to ensure we have latest data
     current_weapon = get_current_equipped_weapon(player_stats.character_id)
-    
+
     # Get attack power from weapon (0 if no weapon equipped)
-    weapon_attack_power = case current_weapon do
-      %{attack_power: attack_power} when is_integer(attack_power) -> 
-        attack_power
-      %{attack_power: attack_power} when is_binary(attack_power) ->
-        String.to_integer(attack_power)
-      %{damage: damage} when not is_nil(damage) -> 
-        damage
-      _ -> 
-        0
-    end
-    
+    weapon_attack_power =
+      case current_weapon do
+        %{attack_power: attack_power} when is_integer(attack_power) ->
+          attack_power
+
+        %{attack_power: attack_power} when is_binary(attack_power) ->
+          String.to_integer(attack_power)
+
+        %{damage: damage} when not is_nil(damage) ->
+          damage
+
+        _ ->
+          0
+      end
+
     # Calculate base damage as strength + weapon attack power
     base_damage = player_stats.strength + weapon_attack_power
 
@@ -272,7 +277,6 @@ defmodule Shard.Combat do
   end
 
   defp handle_monster_death(game_state, dead_monster, monsters_list) do
-
     # Remove the monster from the list
     updated_monsters =
       Enum.reject(monsters_list, fn m ->
@@ -305,7 +309,6 @@ defmodule Shard.Combat do
 
   # NEW: Process loot drops when monster dies
   defp process_loot_drops(game_state, dead_monster) do
-
     case dead_monster[:potential_loot_drops] do
       %{} = drops_map ->
         process_drops_map(game_state, drops_map)
@@ -327,7 +330,6 @@ defmodule Shard.Combat do
   end
 
   defp process_single_drop(game_state, item_id_str, drop_info, acc) do
-
     # Convert item_id string back to integer
     case Integer.parse(item_id_str) do
       {item_id, ""} ->
@@ -390,56 +392,64 @@ defmodule Shard.Combat do
     end
   end
 
-
   # Helper function to get currently equipped weapon from database
   defp get_current_equipped_weapon(character_id) do
     try do
       equipped_items = Shard.Items.get_equipped_items(character_id)
-      
+
       # Look for weapon in main_hand slot (not "weapon" slot)
       case Map.get(equipped_items, "main_hand") do
-        nil -> 
+        nil ->
           # No weapon equipped, return nil for unarmed combat
           nil
+
         weapon ->
-          
           # Check for attack_power first, then fallback to damage for legacy weapons
           # Handle both parsed maps and JSON strings
-          parsed_stats = case weapon.stats do
-            %{} = stats_map -> 
-              stats_map
-            stats_string when is_binary(stats_string) ->
-              case Jason.decode(stats_string) do
-                {:ok, parsed} -> 
-                  parsed
-                {:error, _} -> 
-                  %{}
-              end
-            _ -> 
-              %{}
-          end
-          
-          attack_value = case parsed_stats do
-            %{"attack_power" => attack_power} when is_integer(attack_power) -> 
-              attack_power
-            %{"attack_power" => attack_power} when is_binary(attack_power) ->
-              String.to_integer(attack_power)
-            _ -> 
-              weapon.damage || 0
-          end
-          
+          parsed_stats =
+            case weapon.stats do
+              %{} = stats_map ->
+                stats_map
+
+              stats_string when is_binary(stats_string) ->
+                case Jason.decode(stats_string) do
+                  {:ok, parsed} ->
+                    parsed
+
+                  {:error, _} ->
+                    %{}
+                end
+
+              _ ->
+                %{}
+            end
+
+          attack_value =
+            case parsed_stats do
+              %{"attack_power" => attack_power} when is_integer(attack_power) ->
+                attack_power
+
+              %{"attack_power" => attack_power} when is_binary(attack_power) ->
+                String.to_integer(attack_power)
+
+              _ ->
+                weapon.damage || 0
+            end
+
           %{
             attack_power: attack_value,
-            damage: weapon.damage,  # Keep for legacy compatibility
+            # Keep for legacy compatibility
+            damage: weapon.damage,
             name: weapon.name,
             id: weapon.id
           }
       end
     rescue
       # Handle case where database table doesn't exist (e.g., in tests)
-      Postgrex.Error -> 
+      Postgrex.Error ->
         nil
-      _error -> 
+
+      _error ->
         nil
     end
   end
@@ -526,9 +536,10 @@ defmodule Shard.Combat do
         if Shard.Items.character_has_item?(game_state.character.id, "Mythical Tome") do
           :ok
         else
-          {:error, "The Count's dark power repels your attack! You need something more powerful to face him..."}
+          {:error,
+           "The Count's dark power repels your attack! You need something more powerful to face him..."}
         end
-      
+
       _ ->
         :ok
     end

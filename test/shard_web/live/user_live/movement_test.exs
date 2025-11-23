@@ -10,58 +10,64 @@ defmodule ShardWeb.UserLive.MovementTest do
   describe "calc_position/3" do
     setup do
       # Create a zone and rooms with doors for valid movement testing
-      {:ok, zone} = GameMap.create_zone(%{
-        name: "Test Zone",
-        description: "A test zone",
-        slug: "test-zone-calc",
-        min_level: 1,
-        max_level: 10
-      })
+      {:ok, zone} =
+        GameMap.create_zone(%{
+          name: "Test Zone",
+          description: "A test zone",
+          slug: "test-zone-calc",
+          min_level: 1,
+          max_level: 10
+        })
 
       # Create rooms
-      {:ok, room1} = GameMap.create_room(%{
-        name: "Room 1",
-        description: "First room",
-        x_coordinate: 5,
-        y_coordinate: 5,
-        z_coordinate: 0,
-        zone_id: zone.id
-      })
+      {:ok, room1} =
+        GameMap.create_room(%{
+          name: "Room 1",
+          description: "First room",
+          x_coordinate: 5,
+          y_coordinate: 5,
+          z_coordinate: 0,
+          zone_id: zone.id
+        })
 
-      {:ok, room2} = GameMap.create_room(%{
-        name: "Room 2",
-        description: "Second room",
-        x_coordinate: 5,
-        y_coordinate: 4,
-        z_coordinate: 0,
-        zone_id: zone.id
-      })
+      {:ok, room2} =
+        GameMap.create_room(%{
+          name: "Room 2",
+          description: "Second room",
+          x_coordinate: 5,
+          y_coordinate: 4,
+          z_coordinate: 0,
+          zone_id: zone.id
+        })
 
-      {:ok, room3} = GameMap.create_room(%{
-        name: "Room 3",
-        description: "Third room",
-        x_coordinate: 6,
-        y_coordinate: 5,
-        z_coordinate: 0,
-        zone_id: zone.id
-      })
+      {:ok, room3} =
+        GameMap.create_room(%{
+          name: "Room 3",
+          description: "Third room",
+          x_coordinate: 6,
+          y_coordinate: 5,
+          z_coordinate: 0,
+          zone_id: zone.id
+        })
 
       # Create doors for valid movement
-      {:ok, _door1} = Repo.insert(%Door{
-        from_room_id: room1.id,
-        to_room_id: room2.id,
-        direction: "north",
-        is_locked: false,
-        door_type: "normal"
-      })
+      {:ok, _door1} =
+        Repo.insert(%Door{
+          from_room_id: room1.id,
+          to_room_id: room2.id,
+          direction: "north",
+          is_locked: false,
+          door_type: "normal"
+        })
 
-      {:ok, _door2} = Repo.insert(%Door{
-        from_room_id: room1.id,
-        to_room_id: room3.id,
-        direction: "east",
-        is_locked: false,
-        door_type: "normal"
-      })
+      {:ok, _door2} =
+        Repo.insert(%Door{
+          from_room_id: room1.id,
+          to_room_id: room3.id,
+          direction: "east",
+          is_locked: false,
+          door_type: "normal"
+        })
 
       game_state = %{
         character: %Character{current_zone_id: zone.id},
@@ -125,41 +131,45 @@ defmodule ShardWeb.UserLive.MovementTest do
   describe "get_available_exits/4" do
     setup do
       # Create a zone
-      {:ok, zone} = GameMap.create_zone(%{
-        name: "Test Zone",
-        description: "A test zone",
-        slug: "test-zone",
-        min_level: 1,
-        max_level: 10
-      })
+      {:ok, zone} =
+        GameMap.create_zone(%{
+          name: "Test Zone",
+          description: "A test zone",
+          slug: "test-zone",
+          min_level: 1,
+          max_level: 10
+        })
 
       # Create rooms
-      {:ok, room1} = GameMap.create_room(%{
-        name: "Room 1",
-        description: "First room",
-        x_coordinate: 5,
-        y_coordinate: 5,
-        z_coordinate: 0,
-        zone_id: zone.id
-      })
+      {:ok, room1} =
+        GameMap.create_room(%{
+          name: "Room 1",
+          description: "First room",
+          x_coordinate: 5,
+          y_coordinate: 5,
+          z_coordinate: 0,
+          zone_id: zone.id
+        })
 
-      {:ok, room2} = GameMap.create_room(%{
-        name: "Room 2", 
-        description: "Second room",
-        x_coordinate: 6,
-        y_coordinate: 5,
-        z_coordinate: 0,
-        zone_id: zone.id
-      })
+      {:ok, room2} =
+        GameMap.create_room(%{
+          name: "Room 2",
+          description: "Second room",
+          x_coordinate: 6,
+          y_coordinate: 5,
+          z_coordinate: 0,
+          zone_id: zone.id
+        })
 
       # Create a door between rooms
-      {:ok, door} = Repo.insert(%Door{
-        from_room_id: room1.id,
-        to_room_id: room2.id,
-        direction: "east",
-        is_locked: false,
-        door_type: "normal"
-      })
+      {:ok, door} =
+        Repo.insert(%Door{
+          from_room_id: room1.id,
+          to_room_id: room2.id,
+          direction: "east",
+          is_locked: false,
+          door_type: "normal"
+        })
 
       game_state = %{
         character: %Character{current_zone_id: zone.id},
@@ -171,31 +181,35 @@ defmodule ShardWeb.UserLive.MovementTest do
 
     test "returns available exits from a room", %{room1: room1, game_state: game_state} do
       exits = Movement.get_available_exits(5, 5, room1, game_state)
-      
+
       assert "east" in exits
     end
 
     test "excludes locked doors", %{room1: room1, door: door, game_state: game_state} do
       # Update door to be locked
       Repo.update!(Door.changeset(door, %{is_locked: true}))
-      
+
       exits = Movement.get_available_exits(5, 5, room1, game_state)
-      
+
       refute "east" in exits
     end
 
-    test "shows locked doors with (locked) indicator", %{room1: room1, door: door, game_state: game_state} do
+    test "shows locked doors with (locked) indicator", %{
+      room1: room1,
+      door: door,
+      game_state: game_state
+    } do
       # Update door to be locked
       Repo.update!(Door.changeset(door, %{is_locked: true}))
-      
+
       exits = Movement.get_available_exits(5, 5, room1, game_state)
-      
+
       assert "east (locked)" in exits
     end
 
     test "returns empty list when no room provided", %{game_state: game_state} do
       exits = Movement.get_available_exits(99, 99, nil, game_state)
-      
+
       assert exits == []
     end
   end
@@ -203,41 +217,45 @@ defmodule ShardWeb.UserLive.MovementTest do
   describe "compute_available_exits/2" do
     setup do
       # Create a zone
-      {:ok, zone} = GameMap.create_zone(%{
-        name: "Test Zone",
-        description: "A test zone",
-        slug: "test-zone-2", 
-        min_level: 1,
-        max_level: 10
-      })
+      {:ok, zone} =
+        GameMap.create_zone(%{
+          name: "Test Zone",
+          description: "A test zone",
+          slug: "test-zone-2",
+          min_level: 1,
+          max_level: 10
+        })
 
       # Create rooms
-      {:ok, room1} = GameMap.create_room(%{
-        name: "Room 1",
-        description: "First room",
-        x_coordinate: 5,
-        y_coordinate: 5,
-        z_coordinate: 0,
-        zone_id: zone.id
-      })
+      {:ok, room1} =
+        GameMap.create_room(%{
+          name: "Room 1",
+          description: "First room",
+          x_coordinate: 5,
+          y_coordinate: 5,
+          z_coordinate: 0,
+          zone_id: zone.id
+        })
 
-      {:ok, room2} = GameMap.create_room(%{
-        name: "Room 2",
-        description: "Second room", 
-        x_coordinate: 6,
-        y_coordinate: 5,
-        z_coordinate: 0,
-        zone_id: zone.id
-      })
+      {:ok, room2} =
+        GameMap.create_room(%{
+          name: "Room 2",
+          description: "Second room",
+          x_coordinate: 6,
+          y_coordinate: 5,
+          z_coordinate: 0,
+          zone_id: zone.id
+        })
 
       # Create a door
-      {:ok, door} = Repo.insert(%Door{
-        from_room_id: room1.id,
-        to_room_id: room2.id,
-        direction: "east",
-        is_locked: false,
-        door_type: "normal"
-      })
+      {:ok, door} =
+        Repo.insert(%Door{
+          from_room_id: room1.id,
+          to_room_id: room2.id,
+          direction: "east",
+          is_locked: false,
+          door_type: "normal"
+        })
 
       game_state = %{
         character: %Character{current_zone_id: zone.id},
@@ -249,7 +267,7 @@ defmodule ShardWeb.UserLive.MovementTest do
 
     test "returns available exits with door information", %{game_state: game_state, door: door} do
       exits = Movement.compute_available_exits({5, 5}, game_state)
-      
+
       assert length(exits) == 1
       exit = List.first(exits)
       assert exit.direction == "east"
@@ -258,22 +276,23 @@ defmodule ShardWeb.UserLive.MovementTest do
 
     test "returns empty list when no room exists", %{game_state: game_state} do
       exits = Movement.compute_available_exits({99, 99}, game_state)
-      
+
       assert exits == []
     end
 
     test "filters out invalid directions", %{room1: room1, room2: room2, game_state: game_state} do
       # Create a door with invalid direction
-      {:ok, _invalid_door} = Repo.insert(%Door{
-        from_room_id: room1.id,
-        to_room_id: room2.id,
-        direction: "invalid_direction",
-        is_locked: false,
-        door_type: "normal"
-      })
+      {:ok, _invalid_door} =
+        Repo.insert(%Door{
+          from_room_id: room1.id,
+          to_room_id: room2.id,
+          direction: "invalid_direction",
+          is_locked: false,
+          door_type: "normal"
+        })
 
       exits = Movement.compute_available_exits({5, 5}, game_state)
-      
+
       # Should only have the valid "east" direction, not the invalid one
       directions = Enum.map(exits, & &1.direction)
       assert "east" in directions
@@ -284,49 +303,54 @@ defmodule ShardWeb.UserLive.MovementTest do
   describe "execute_movement/2" do
     setup do
       # Create a zone
-      {:ok, zone} = GameMap.create_zone(%{
-        name: "Test Zone",
-        description: "A test zone",
-        slug: "test-zone-3",
-        min_level: 1,
-        max_level: 10
-      })
+      {:ok, zone} =
+        GameMap.create_zone(%{
+          name: "Test Zone",
+          description: "A test zone",
+          slug: "test-zone-3",
+          min_level: 1,
+          max_level: 10
+        })
 
       # Create character
-      {:ok, character} = Repo.insert(%Character{
-        name: "Test Character",
-        current_zone_id: zone.id,
-        class: "warrior",
-        race: "human"
-      })
+      {:ok, character} =
+        Repo.insert(%Character{
+          name: "Test Character",
+          current_zone_id: zone.id,
+          class: "warrior",
+          race: "human"
+        })
 
       # Create rooms
-      {:ok, room1} = GameMap.create_room(%{
-        name: "Room 1",
-        description: "First room",
-        x_coordinate: 5,
-        y_coordinate: 5,
-        z_coordinate: 0,
-        zone_id: zone.id
-      })
+      {:ok, room1} =
+        GameMap.create_room(%{
+          name: "Room 1",
+          description: "First room",
+          x_coordinate: 5,
+          y_coordinate: 5,
+          z_coordinate: 0,
+          zone_id: zone.id
+        })
 
-      {:ok, room2} = GameMap.create_room(%{
-        name: "Room 2",
-        description: "Second room",
-        x_coordinate: 6,
-        y_coordinate: 5,
-        z_coordinate: 0,
-        zone_id: zone.id
-      })
+      {:ok, room2} =
+        GameMap.create_room(%{
+          name: "Room 2",
+          description: "Second room",
+          x_coordinate: 6,
+          y_coordinate: 5,
+          z_coordinate: 0,
+          zone_id: zone.id
+        })
 
       # Create a door
-      {:ok, door} = Repo.insert(%Door{
-        from_room_id: room1.id,
-        to_room_id: room2.id,
-        direction: "east",
-        is_locked: false,
-        door_type: "normal"
-      })
+      {:ok, door} =
+        Repo.insert(%Door{
+          from_room_id: room1.id,
+          to_room_id: room2.id,
+          direction: "east",
+          is_locked: false,
+          door_type: "normal"
+        })
 
       game_state = %{
         character: character,
@@ -334,22 +358,29 @@ defmodule ShardWeb.UserLive.MovementTest do
         monsters: []
       }
 
-      {:ok, zone: zone, room1: room1, room2: room2, door: door, game_state: game_state, character: character}
+      {:ok,
+       zone: zone,
+       room1: room1,
+       room2: room2,
+       door: door,
+       game_state: game_state,
+       character: character}
     end
 
     test "returns error message for invalid movement", %{game_state: game_state} do
       {messages, updated_state} = Movement.execute_movement(game_state, "ArrowUp")
-      
+
       assert "You cannot move in that direction. There's no room or passage that way." in messages
-      assert updated_state.player_position == {5, 5}  # Position unchanged
+      # Position unchanged
+      assert updated_state.player_position == {5, 5}
     end
 
     test "handles exceptions gracefully", %{game_state: game_state} do
       # Create a game state that might cause an exception
       broken_game_state = %{game_state | character: nil}
-      
+
       {messages, _updated_state} = Movement.execute_movement(broken_game_state, "ArrowRight")
-      
+
       assert "You can't move that way." in messages
     end
   end
@@ -359,14 +390,15 @@ defmodule ShardWeb.UserLive.MovementTest do
     test "get_items_at_location is tested indirectly through movement" do
       # Create an item at a specific location
       location_string = "5,5,0"
-      
-      {:ok, _item} = Repo.insert(%Item{
-        name: "Test Sword",
-        description: "A test sword",
-        item_type: "weapon",
-        location: location_string,
-        is_active: true
-      })
+
+      {:ok, _item} =
+        Repo.insert(%Item{
+          name: "Test Sword",
+          description: "A test sword",
+          item_type: "weapon",
+          location: location_string,
+          is_active: true
+        })
 
       # The get_items_at_location function is private and tested indirectly
       # through the execute_movement function which calls it internally
