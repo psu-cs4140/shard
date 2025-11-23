@@ -400,8 +400,8 @@ defmodule ShardWeb.UserLive.CommandParsers do
 
   # Execute equipped command to show equipped items
   def execute_equipped_command(game_state) do
-    # Get all available equipment slots including weapon
-    all_slots = ["weapon"] ++ Shard.Items.Item.equipment_slots()
+    # Get all available equipment slots including main_hand for weapons
+    all_slots = ["main_hand"] ++ Shard.Items.Item.equipment_slots()
 
     # Use the same data source as the inventory management page
     inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
@@ -422,7 +422,7 @@ defmodule ShardWeb.UserLive.CommandParsers do
         Enum.map(all_slots, fn slot ->
           item_name = Map.get(equipped_map, slot, "None")
           slot_display = case slot do
-            "weapon" -> "Main Hand"
+            "main_hand" -> "Main Hand"
             other -> String.capitalize(other)
           end
           "  #{slot_display}: #{item_name}"
