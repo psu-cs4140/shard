@@ -91,30 +91,44 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
     end
 
     test "presents quest offer when NPC has available quest", %{game_state: game_state, npc: npc, quest: quest, room: room} do
+      # Update the NPC to have location coordinates that match the room
+      {:ok, updated_npc} = Npcs.update_npc(npc, %{
+        location_x: room.x_coordinate,
+        location_y: room.y_coordinate,
+        location_z: room.z_coordinate
+      })
+      
       # Update character to be in the same zone as the NPC
       updated_character = %{game_state.character | current_zone_id: room.zone_id}
       game_state = %{game_state | character: updated_character, player_position: {room.x_coordinate, room.y_coordinate}}
       
-      {response, updated_state} = QuestHandlers.execute_quest_command(game_state, npc.name)
+      {response, updated_state} = QuestHandlers.execute_quest_command(game_state, updated_npc.name)
       
       assert is_list(response)
       assert Enum.any?(response, &String.contains?(&1, quest.title))
       assert updated_state.pending_quest_offer != nil
       assert updated_state.pending_quest_offer.quest.id == quest.id
-      assert updated_state.pending_quest_offer.npc.id == npc.id
+      assert updated_state.pending_quest_offer.npc.id == updated_npc.id
     end
 
     test "returns no quests message when NPC has no available quests", %{game_state: game_state, npc: npc, quest: quest, room: room} do
       # Accept the quest first to make it unavailable
       {:ok, _} = Quests.accept_quest(game_state.character.user_id, quest.id)
       
+      # Update the NPC to have location coordinates that match the room
+      {:ok, updated_npc} = Npcs.update_npc(npc, %{
+        location_x: room.x_coordinate,
+        location_y: room.y_coordinate,
+        location_z: room.z_coordinate
+      })
+      
       # Update character to be in the same zone as the NPC
       updated_character = %{game_state.character | current_zone_id: room.zone_id}
       game_state = %{game_state | character: updated_character, player_position: {room.x_coordinate, room.y_coordinate}}
       
-      {response, updated_state} = QuestHandlers.execute_quest_command(game_state, npc.name)
+      {response, updated_state} = QuestHandlers.execute_quest_command(game_state, updated_npc.name)
       
-      assert response == ["#{npc.name} has no quests available for you at this time."]
+      assert response == ["#{updated_npc.name} has no quests available for you at this time."]
       assert updated_state == game_state
     end
   end
