@@ -125,6 +125,10 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
       {{0, -3}, {0, -4}, "north"},
       # Connect Manor Lobby NW (0,-4) to Master Chamber (-1,-4)
       {{0, -4}, {-1, -4}, "west"},
+      # Connect Master Chamber (-1,-4) to Cellar (-2,-4)
+      {{-1, -4}, {-2, -4}, "west"},
+      # Connect Cellar (-2,-4) to Cellar Doors (-2,-5)
+      {{-2, -4}, {-2, -5}, "north"},
       # Connect Manor Lobby CW (0,-3) to Hallway W (1,-3)
       {{0, -3}, {1, -3}, "east"},
       # Connect Hallway W (1,-3) to Hallway E (2,-3)
@@ -158,12 +162,14 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
         # Master chamber door
         # Study door
         # Library door
+        # Cellar door
         is_locked =
           (from_x == 0 && from_y == -1 && to_x == 0 && to_y == -2) ||
             (from_x == -1 && from_y == 0 && to_x == -2 && to_y == 0) ||
             (from_x == 0 && from_y == -4 && to_x == -1 && to_y == -4) ||
             (from_x == -1 && from_y == -2 && to_x == -1 && to_y == -3) ||
-            (from_x == 0 && from_y == -2 && to_x == -1 && to_y == -2)
+            (from_x == 0 && from_y == -2 && to_x == -1 && to_y == -2) ||
+            (from_x == -1 && from_y == -4 && to_x == -2 && to_y == -4)
 
         door_type = if is_locked, do: "locked_gate", else: "standard"
 
@@ -174,6 +180,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
             from_x == 0 && from_y == -4 && to_x == -1 && to_y == -4 -> "Master Key"
             from_x == 0 && from_y == -2 && to_x == -1 && to_y == -2 -> "Library Key"
             from_x == -1 && from_y == -2 && to_x == -1 && to_y == -3 -> "Study Key"
+            from_x == -1 && from_y == -4 && to_x == -2 && to_y == -4 -> "Cellar Key"
             true -> nil
           end
 
