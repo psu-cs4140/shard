@@ -48,7 +48,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
       {-2, 0, "Sewer Pipe Entrance", "standard"},
       {-3, 0, "Sewer Pipe Tunnel 1", "standard"},
       {-3, 1, "Sewer Pipe Tunnel 2", "standard"},
-      {-4, 1, "Sewer Lair", "dungeon"},
+      {-4, 1, "Sewer Lair", "standard"},
       {0, -2, "Manor Lobby SW", "standard"},
       {0, -3, "Manor Lobby CW", "standard"},
       {0, -4, "Manor Lobby NW", "standard"},
@@ -61,10 +61,11 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
       {4, -4, "Dining Hall W", "standard"},
       {5, -4, "Dining Hall E", "standard"},
       {5, -3, "Kitchen", "standard"},
-      {4, -3, "Freezer", "dungeon"},
-      {-1, -3, "Study", "treasure_room"},
-      {-1, -4, "Master Chamber", "dungeon"},
-      {-2, -4, "Cellar", "dungeon"}
+      {4, -3, "Freezer", "standard"},
+      {-1, -3, "Study", "standard"},
+      {-1, -4, "Master Chamber", "standard"},
+      {-2, -4, "Cellar", "standard"},
+      {-2, -5, "Cellar Doors", "treasure_room"}
     ]
 
     manor_rooms =
