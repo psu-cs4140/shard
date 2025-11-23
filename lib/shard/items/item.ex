@@ -21,7 +21,15 @@ defmodule Shard.Items.Item do
     def load(value) when is_map(value), do: {:ok, value}
     def load([]), do: {:ok, %{}}
     def load(value) when is_list(value), do: {:ok, %{}}
-    def load(_), do: :error
+    def load(value) when is_binary(value) do
+      case Jason.decode(value) do
+        {:ok, decoded} when is_map(decoded) -> {:ok, decoded}
+        {:ok, []} -> {:ok, %{}}
+        {:ok, decoded} when is_list(decoded) -> {:ok, %{}}
+        _ -> {:ok, %{}}
+      end
+    end
+    def load(_), do: {:ok, %{}}
 
     def dump(value) when is_map(value), do: {:ok, value}
     def dump([]), do: {:ok, %{}}
