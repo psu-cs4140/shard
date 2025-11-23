@@ -460,6 +460,35 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
             %{id: item_id}
         end
 
+      # Create the Cellar Key item if it doesn't exist
+      cellar_key_item =
+        case Repo.query("SELECT * FROM items WHERE name = $1", ["Cellar Key"]) do
+          {:ok, %{rows: []}} ->
+            {:ok, %{rows: [[item_id | _]]}} =
+              Repo.query(
+                "INSERT INTO items (name, description, item_type, rarity, value, weight, equippable, equipment_slot, is_active, pickup, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id",
+                [
+                  "Cellar Key",
+                  "A heavy iron key stained with ancient blood. It bears the mark of the vampire lord and unlocks the deepest secrets of the manor.",
+                  "key",
+                  "rare",
+                  50,
+                  0.2,
+                  false,
+                  nil,
+                  true,
+                  true,
+                  DateTime.utc_now(),
+                  DateTime.utc_now()
+                ]
+              )
+
+            %{id: item_id}
+
+          {:ok, %{rows: [[item_id | _]]}} ->
+            %{id: item_id}
+        end
+
       # Create The Count monster with item drops
       {:ok, _count} =
         Shard.Monsters.create_monster(%{
@@ -474,7 +503,8 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
             "The ancient master of this manor, a powerful vampire lord with centuries of dark knowledge and supernatural strength.",
           location_id: master_chamber.id,
           potential_loot_drops: %{
-            "#{vampire_cloak_item.id}" => %{chance: 1.0, min_quantity: 1, max_quantity: 1}
+            "#{vampire_cloak_item.id}" => %{chance: 1.0, min_quantity: 1, max_quantity: 1},
+            "#{cellar_key_item.id}" => %{chance: 1.0, min_quantity: 1, max_quantity: 1}
           }
         })
 
