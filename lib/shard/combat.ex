@@ -102,7 +102,7 @@ defmodule Shard.Combat do
     end
   end
 
-  defp calculate_attack_damage(player_stats, monster, equipped_weapon) do
+  defp calculate_attack_damage(player_stats, monster, _equipped_weapon) do
     # Get the current equipped weapon from database to ensure we have latest data
     current_weapon = get_current_equipped_weapon(player_stats.character_id)
     
@@ -433,28 +433,6 @@ defmodule Shard.Combat do
     end
   end
 
-  # Helper function to parse damage strings like "1d4" or plain numbers
-  defp parse_damage(damage) when is_integer(damage), do: damage
-
-  defp parse_damage(damage) when is_binary(damage) do
-    case String.contains?(damage, "d") do
-      true ->
-        # Parse dice notation like "1d4"
-        [num_dice, die_size] = String.split(damage, "d")
-        num_dice = String.to_integer(num_dice)
-        die_size = String.to_integer(die_size)
-
-        # Roll the dice (simple average for now)
-        trunc(num_dice * (die_size + 1) / 2)
-
-      false ->
-        # Plain number as string
-        String.to_integer(damage)
-    end
-  end
-
-  # Default fallback
-  defp parse_damage(_), do: 1
 
   # Helper function to get currently equipped weapon from database
   defp get_current_equipped_weapon(character_id) do
