@@ -466,7 +466,26 @@ defmodule Shard.Combat do
           IO.puts("DEBUG: Weapon damage: #{inspect(weapon.damage)}")
           
           # Check for attack_power first, then fallback to damage for legacy weapons
-          attack_value = case weapon.stats do
+          # Handle both parsed maps and JSON strings
+          parsed_stats = case weapon.stats do
+            %{} = stats_map -> 
+              IO.puts("DEBUG: Stats already parsed as map: #{inspect(stats_map)}")
+              stats_map
+            stats_string when is_binary(stats_string) ->
+              case Jason.decode(stats_string) do
+                {:ok, parsed} -> 
+                  IO.puts("DEBUG: Successfully parsed JSON stats: #{inspect(parsed)}")
+                  parsed
+                {:error, _} -> 
+                  IO.puts("DEBUG: Failed to parse JSON stats: #{inspect(stats_string)}")
+                  %{}
+              end
+            _ -> 
+              IO.puts("DEBUG: No stats found or invalid format")
+              %{}
+          end
+          
+          attack_value = case parsed_stats do
             %{"attack_power" => attack_power} when is_integer(attack_power) -> 
               IO.puts("DEBUG: Using attack_power from stats: #{attack_power}")
               attack_power
