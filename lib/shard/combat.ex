@@ -101,13 +101,24 @@ defmodule Shard.Combat do
     
     # Get attack power from weapon (0 if no weapon equipped)
     weapon_attack_power = case current_weapon do
-      %{attack_power: attack_power} when not is_nil(attack_power) -> attack_power
-      %{damage: damage} when not is_nil(damage) -> damage  # Fallback for legacy weapons
-      _ -> 0  # No weapon equipped
+      %{attack_power: attack_power} when is_integer(attack_power) -> 
+        IO.puts("DEBUG: Using weapon attack_power: #{attack_power}")
+        attack_power
+      %{attack_power: attack_power} when is_binary(attack_power) ->
+        parsed_power = String.to_integer(attack_power)
+        IO.puts("DEBUG: Using parsed weapon attack_power: #{parsed_power}")
+        parsed_power
+      %{damage: damage} when not is_nil(damage) -> 
+        IO.puts("DEBUG: Using legacy weapon damage: #{damage}")
+        damage
+      _ -> 
+        IO.puts("DEBUG: No weapon equipped, using 0 attack power")
+        0
     end
     
     # Calculate base damage as strength + weapon attack power
     base_damage = player_stats.strength + weapon_attack_power
+    IO.puts("DEBUG: Calculated base damage: #{player_stats.strength} (strength) + #{weapon_attack_power} (weapon) = #{base_damage}")
 
     # Apply random variance (±2)
     variance = 5
@@ -456,12 +467,16 @@ defmodule Shard.Combat do
           
           # Check for attack_power first, then fallback to damage for legacy weapons
           attack_value = case weapon.stats do
-            %{"attack_power" => attack_power} -> 
+            %{"attack_power" => attack_power} when is_integer(attack_power) -> 
               IO.puts("DEBUG: Using attack_power from stats: #{attack_power}")
               attack_power
+            %{"attack_power" => attack_power} when is_binary(attack_power) ->
+              parsed_power = String.to_integer(attack_power)
+              IO.puts("DEBUG: Using parsed attack_power from stats: #{parsed_power}")
+              parsed_power
             _ -> 
-              IO.puts("DEBUG: Using legacy damage field: #{weapon.damage}")
-              weapon.damage
+              IO.puts("DEBUG: Using legacy damage field: #{weapon.damage || 0}")
+              weapon.damage || 0
           end
           
           %{
