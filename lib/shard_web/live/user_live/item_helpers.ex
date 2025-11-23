@@ -157,16 +157,21 @@ defmodule ShardWeb.UserLive.ItemHelpers do
   end
 
   defp generate_equip_message(item_name, equipment_slot) do
+    message_template = get_equip_message_template(equipment_slot)
+    String.replace(message_template, "{item_name}", item_name)
+  end
+
+  defp get_equip_message_template(equipment_slot) do
     case equipment_slot do
-      "weapon" -> "You equip #{item_name} as your weapon."
-      "shield" -> "You equip your mighty #{item_name} for protection."
-      "head" -> "You equip #{item_name} on your head."
-      "body" -> "You equip #{item_name} on your body."
-      "legs" -> "You equip #{item_name} on your legs."
-      "feet" -> "You equip #{item_name} on your feet."
-      "ring" -> "You slide #{item_name} on one of your fingers."
-      "necklace" -> "You place #{item_name} around your neck."
-      _ -> "You equip #{item_name}."
+      "weapon" -> "You equip {item_name} as your weapon."
+      "shield" -> "You equip your mighty {item_name} for protection."
+      "head" -> "You equip {item_name} on your head."
+      "body" -> "You equip {item_name} on your body."
+      "legs" -> "You equip {item_name} on your legs."
+      "feet" -> "You equip {item_name} on your feet."
+      "ring" -> "You slide {item_name} on one of your fingers."
+      "necklace" -> "You place {item_name} around your neck."
+      _ -> "You equip {item_name}."
     end
   end
 

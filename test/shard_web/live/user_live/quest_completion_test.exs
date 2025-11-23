@@ -197,7 +197,7 @@ defmodule ShardWeb.UserLive.QuestCompletionTest do
     test "handles database errors gracefully", %{game_state: game_state, npc: npc} do
       # Use a quest that doesn't exist in the database
       fake_quest = %{
-        id: 99999,
+        id: 99_999,
         title: "Fake Quest",
         status: "In Progress",
         progress: "0% complete"
