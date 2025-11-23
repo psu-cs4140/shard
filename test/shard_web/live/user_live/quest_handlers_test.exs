@@ -57,7 +57,7 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
         title: "Test Quest",
         description: "A test quest",
         short_description: "Test quest",
-        quest_type: "kill",
+        quest_type: "main",
         difficulty: "easy",
         min_level: 1,
         max_level: 10,
@@ -142,7 +142,7 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
         title: "Test Quest",
         description: "A test quest",
         short_description: "Test quest",
-        quest_type: "kill",
+        quest_type: "side",
         difficulty: "easy",
         min_level: 1,
         max_level: 10,
@@ -236,7 +236,7 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
         title: "Test Quest",
         description: "A test quest",
         short_description: "Test quest",
-        quest_type: "kill",
+        quest_type: "daily",
         difficulty: "easy",
         min_level: 1,
         max_level: 10,
@@ -308,7 +308,7 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
         title: "Deliverable Quest",
         description: "A quest that can be turned in",
         short_description: "Deliverable quest",
-        quest_type: "kill",
+        quest_type: "repeatable",
         difficulty: "easy",
         min_level: 1,
         max_level: 10,
@@ -403,7 +403,7 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
         title: "Completable Quest",
         description: "A quest that can be completed",
         short_description: "Completable quest",
-        quest_type: "kill",
+        quest_type: "main",
         difficulty: "easy",
         min_level: 1,
         max_level: 10,
@@ -540,43 +540,79 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
       assert updated_stats.level == 2
       assert message == "*** LEVEL UP! *** You are now level 2!"
       
-      # Check if can level up again
+      # Check if can level up again - with 3000 exp and next level at 2000, should level up again
       {final_stats, second_message} = QuestHandlers.check_level_up(updated_stats)
       
-      if final_stats.experience >= final_stats.next_level_exp do
-        assert final_stats.level == 3
-        assert second_message == "*** LEVEL UP! *** You are now level 3!"
-      else
-        assert final_stats.level == 2
-        assert second_message == nil
-      end
+      # With 3000 exp and next level exp at 2000, should level up to 3
+      assert final_stats.level == 3
+      assert second_message == "*** LEVEL UP! *** You are now level 3!"
     end
   end
 
   describe "helper functions" do
-    test "create_new_quest_entry/3 creates proper quest entry" do
-      quest = %{id: 1, title: "Test Quest", description: "A test quest"}
-      npc_name = "Test NPC"
-      quest_title = "Test Quest"
+    test "quest entry structure is correct when quest is accepted" do
+      # Since create_new_quest_entry is private, we test it indirectly through quest acceptance
+      user = user_fixture()
+      
+      {:ok, character} = Characters.create_character(%{
+        name: "Test Character",
+        class: "warrior",
+        race: "human",
+        user_id: user.id
+      })
 
-      entry = QuestHandlers.create_new_quest_entry(quest, npc_name, quest_title)
+      {:ok, npc} = Npcs.create_npc(%{
+        name: "Test NPC",
+        description: "A helpful NPC",
+        level: 5,
+        health: 100,
+        max_health: 100
+      })
 
-      assert entry.id == 1
-      assert entry.title == "Test Quest"
-      assert entry.status == "In Progress"
-      assert entry.progress == "0% complete"
-      assert entry.npc_giver == "Test NPC"
-      assert entry.description == "A test quest"
+      {:ok, quest} = Quests.create_quest(%{
+        title: "Test Quest",
+        description: "A test quest",
+        short_description: "Test quest",
+        quest_type: "side",
+        difficulty: "easy",
+        min_level: 1,
+        max_level: 10,
+        experience_reward: 100,
+        gold_reward: 50,
+        giver_npc_id: npc.id,
+        turn_in_npc_id: npc.id,
+        objectives: %{"kill" => %{"monster_type" => "orc", "count" => 5}},
+        requirements: %{},
+        rewards: %{}
+      })
+
+      game_state = %{
+        character: character,
+        quests: [],
+        pending_quest_offer: %{quest: quest, npc: npc}
+      }
+
+      {_response, updated_state} = QuestHandlers.execute_accept_quest(game_state)
+      
+      # Check that the quest entry has the correct structure
+      quest_entry = hd(updated_state.quests)
+      assert quest_entry.id == quest.id
+      assert quest_entry.title == "Test Quest"
+      assert quest_entry.status == "In Progress"
+      assert quest_entry.progress == "0% complete"
+      assert quest_entry.npc_giver == "Test NPC"
+      assert quest_entry.description == "A test quest"
     end
   end
 
   describe "error handling" do
     test "handles missing quest data gracefully" do
       game_state = %{
-        character: %{user_id: 1, id: 1},
+        character: %{user_id: 1, id: 1, current_zone_id: 1},
         quests: [],
         player_stats: %{experience: 0, gold: 0, level: 1},
-        pending_quest_offer: nil
+        pending_quest_offer: nil,
+        player_position: {0, 0}
       }
 
       # Test with nil NPC
