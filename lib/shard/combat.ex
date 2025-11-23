@@ -42,56 +42,63 @@ defmodule Shard.Combat do
   end
 
   defp perform_attack(game_state, monster, position) do
-    # Add character_id to player_stats for weapon lookup
-    player_stats_with_id = Map.put(game_state.player_stats, :character_id, game_state.character.id)
-    
-    damage_result =
-      calculate_attack_damage(player_stats_with_id, monster, game_state.equipped_weapon)
+    # Check if this is The Count and player has required item
+    case check_count_attack_requirements(game_state, monster) do
+      {:error, message} ->
+        {[message], game_state}
+      
+      :ok ->
+        # Add character_id to player_stats for weapon lookup
+        player_stats_with_id = Map.put(game_state.player_stats, :character_id, game_state.character.id)
+        
+        damage_result =
+          calculate_attack_damage(player_stats_with_id, monster, game_state.equipped_weapon)
 
-    updated_monster = apply_damage_to_monster(monster, damage_result.final_damage)
-    updated_monsters = update_monsters_list(game_state.monsters, monster, updated_monster)
+        updated_monster = apply_damage_to_monster(monster, damage_result.final_damage)
+        updated_monsters = update_monsters_list(game_state.monsters, monster, updated_monster)
 
-    response = create_attack_response(monster, damage_result, updated_monster)
+        response = create_attack_response(monster, damage_result, updated_monster)
 
-    broadcast_attack_event(
-      position,
-      game_state.character.name,
-      monster,
-      damage_result,
-      updated_monster
-    )
-
-    # NEW: Check for special damage effect
-    {final_response, final_monsters} =
-      case check_special_damage_effect(game_state, monster, updated_monster, response) do
-        {resp, mons} -> {resp, mons}
-        nil -> {response, updated_monsters}
-      end
-
-    if updated_monster[:is_alive] do
-      # Monster survived - handle counterattack
-      handle_monster_counterattack(
-        game_state,
-        updated_monster,
-        position,
-        final_response,
-        final_monsters
-      )
-    else
-      # Monster died - handle death and rewards
-      {messages, final_monsters, updated_player_stats, updated_character} =
-        handle_monster_death(game_state, updated_monster, final_monsters)
-
-      final_response = final_response ++ messages
-
-      updated_game_state =
-        update_combat_state(
-          %{game_state | player_stats: updated_player_stats, character: updated_character},
-          final_monsters,
-          position
+        broadcast_attack_event(
+          position,
+          game_state.character.name,
+          monster,
+          damage_result,
+          updated_monster
         )
 
-      {final_response, updated_game_state}
+        # NEW: Check for special damage effect
+        {final_response, final_monsters} =
+          case check_special_damage_effect(game_state, monster, updated_monster, response) do
+            {resp, mons} -> {resp, mons}
+            nil -> {response, updated_monsters}
+          end
+
+        if updated_monster[:is_alive] do
+          # Monster survived - handle counterattack
+          handle_monster_counterattack(
+            game_state,
+            updated_monster,
+            position,
+            final_response,
+            final_monsters
+          )
+        else
+          # Monster died - handle death and rewards
+          {messages, final_monsters, updated_player_stats, updated_character} =
+            handle_monster_death(game_state, updated_monster, final_monsters)
+
+          final_response = final_response ++ messages
+
+          updated_game_state =
+            update_combat_state(
+              %{game_state | player_stats: updated_player_stats, character: updated_character},
+              final_monsters,
+              position
+            )
+
+          {final_response, updated_game_state}
+        end
     end
   end
 
@@ -597,6 +604,21 @@ defmodule Shard.Combat do
       :ok
     rescue
       _ -> :error
+    end
+  end
+
+  # Check if player can attack The Count (requires Mythical Tome)
+  defp check_count_attack_requirements(game_state, monster) do
+    case monster[:name] do
+      "The Count" ->
+        if Shard.Items.character_has_item?(game_state.character.id, "Mythical Tome") do
+          :ok
+        else
+          {:error, "The Count's dark power repels your attack! You need something more powerful to face him..."}
+        end
+      
+      _ ->
+        :ok
     end
   end
 end
