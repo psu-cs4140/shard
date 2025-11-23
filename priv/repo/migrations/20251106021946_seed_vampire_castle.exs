@@ -63,7 +63,8 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
       {5, -3, "Kitchen", "standard"},
       {4, -3, "Freezer", "dungeon"},
       {-1, -3, "Study", "treasure_room"},
-      {-1, -4, "Master Chamber", "dungeon"}
+      {-1, -4, "Master Chamber", "dungeon"},
+      {-2, -4, "Cellar", "dungeon"}
     ]
 
     manor_rooms =

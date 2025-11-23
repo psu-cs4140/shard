@@ -200,11 +200,88 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
       NOW()
     );
     """
+
+    # Insert The Mayor NPC in Cellar (-2,-4)
+    execute """
+    INSERT INTO npcs (
+      name,
+      description,
+      level,
+      health,
+      max_health,
+      mana,
+      max_mana,
+      strength,
+      dexterity,
+      intelligence,
+      constitution,
+      experience_reward,
+      gold_reward,
+      npc_type,
+      dialogue,
+      inventory,
+      location_x,
+      location_y,
+      location_z,
+      room_id,
+      is_active,
+      respawn_time,
+      faction,
+      aggression_level,
+      movement_pattern,
+      properties,
+      inserted_at,
+      updated_at
+    ) VALUES (
+          'The Mayor',
+          'A distinguished elderly man in tattered formal attire, looking relieved but weary from his ordeal. His eyes light up with gratitude when he sees you. (Use ''talk "The Mayor"'' to speak with him)',
+      3,
+      50,
+      50,
+      20,
+      20,
+      6,
+      8,
+      12,
+      8,
+      0,
+      0,
+      'civilian',
+      'Oh, thank the heavens! You''ve come to rescue me! I am the Mayor of the nearby village, and I was captured by that dreadful vampire lord while investigating reports of missing villagers.
+
+    I cannot express how grateful I am for your bravery in venturing into this cursed place to find me. The Count had been holding me prisoner down here in this dank cellar, planning some terrible fate for me.
+
+    You are truly a hero! When we return to the village, I shall ensure that your heroic deeds are celebrated by all. The people will sing songs of your courage for generations to come!
+
+    Please, lead me out of this nightmare. I never want to see this accursed manor again!',
+      '{}',
+      -2,
+      -4,
+      0,
+      (SELECT r.id FROM rooms r
+       JOIN zones z ON r.zone_id = z.id
+       WHERE r.x_coordinate = -2 AND r.y_coordinate = -4 AND r.z_coordinate = 0
+       AND z.slug = 'vampires-manor' LIMIT 1),
+      true,
+      0,
+      'village_officials',
+      0,
+      'stationary',
+      '{
+        "personality": "grateful_dignified",
+        "background": "village mayor captured by vampires",
+        "rescue_status": "awaiting_rescue"
+      }',
+      NOW(),
+      NOW()
+    );
+    """
   end
 
   def down do
     execute "DELETE FROM quests WHERE title = 'The Master''s Slippers';"
     execute "DELETE FROM npcs WHERE name = 'Vampire''s Thrall';"
     execute "DELETE FROM npcs WHERE name = 'Gargoyle';"
+    execute "DELETE FROM npcs WHERE name = 'The Mayor';"
   end
 end
