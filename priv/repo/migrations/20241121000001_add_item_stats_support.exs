@@ -3,7 +3,7 @@ defmodule Shard.Repo.Migrations.AddItemStatsSupport do
 
   def change do
     # Create items table with comprehensive schema including weapon and armor stats
-    create table(:items) do
+    create_if_not_exists table(:items) do
       add :name, :string, null: false
       add :description, :text
       add :item_type, :string, null: false
@@ -25,22 +25,22 @@ defmodule Shard.Repo.Migrations.AddItemStatsSupport do
     end
 
     # Add unique constraint on name
-    create unique_index(:items, [:name])
+    create_if_not_exists unique_index(:items, [:name])
 
     # Add indexes for better performance when querying by item type and stats
-    create index(:items, [:item_type])
-    create index(:items, [:rarity])
-    create index(:items, [:equippable])
-    create index(:items, [:equipment_slot])
-    create index(:items, [:value])
+    create_if_not_exists index(:items, [:item_type])
+    create_if_not_exists index(:items, [:rarity])
+    create_if_not_exists index(:items, [:equippable])
+    create_if_not_exists index(:items, [:equipment_slot])
+    create_if_not_exists index(:items, [:value])
 
     # Add a regular GIN index for the stats JSONB column for efficient stat queries
-    create index(:items, [:stats], using: :gin)
+    create_if_not_exists index(:items, [:stats], using: :gin)
 
     # Add a GIN index for the effects JSONB column for efficient effect queries
-    create index(:items, [:effects], using: :gin)
+    create_if_not_exists index(:items, [:effects], using: :gin)
 
     # Add a GIN index for the requirements JSONB column for efficient requirement queries
-    create index(:items, [:requirements], using: :gin)
+    create_if_not_exists index(:items, [:requirements], using: :gin)
   end
 end

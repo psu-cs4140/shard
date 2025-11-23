@@ -290,15 +290,17 @@ defmodule Shard.Items do
   Returns a map with equipment slots as keys and items as values.
   """
   def get_equipped_items(character_id) do
-    equipment =
+    # Use the legacy CharacterInventory system that's actually being used by the game
+    equipped_items =
       Repo.all(
-        from ce in CharacterEquipment,
-          where: ce.character_id == ^character_id,
+        from ci in CharacterInventory,
+          where: ci.character_id == ^character_id and ci.equipped == true,
           preload: [:item]
       )
 
-    Enum.reduce(equipment, %{}, fn equip, acc ->
-      Map.put(acc, equip.equipment_slot, equip.item)
+    Enum.reduce(equipped_items, %{}, fn inv_item, acc ->
+      slot = inv_item.equipment_slot || "unknown"
+      Map.put(acc, slot, inv_item.item)
     end)
   end
 
