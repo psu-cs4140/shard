@@ -161,8 +161,8 @@ defmodule ShardWeb.MudGameLive do
             hotbar={@game_state.hotbar}
           />
 
-          <.online_players 
-            online_players={@online_players} 
+          <.online_players
+            online_players={@online_players}
             character_name={@character_name}
             current_player_level={@game_state.player_stats.level}
           />

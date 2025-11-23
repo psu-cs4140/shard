@@ -18,7 +18,7 @@ defmodule ShardWeb.UserLive.MudGameLiveMultiplayerComponents do
           </div>
         </div>
         
-        <!-- Show other players -->
+    <!-- Show other players -->
         <%= for player <- @online_players do %>
           <div class="flex items-center justify-between bg-gray-600 rounded px-3 py-2">
             <div class="flex items-center space-x-2">
@@ -30,7 +30,7 @@ defmodule ShardWeb.UserLive.MudGameLiveMultiplayerComponents do
             </div>
           </div>
         <% end %>
-        
+
         <%= if Enum.empty?(@online_players) do %>
           <div class="text-gray-400 text-sm">No other players online</div>
         <% end %>
