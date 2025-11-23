@@ -109,23 +109,17 @@ defmodule Shard.Combat do
     # Get attack power from weapon (0 if no weapon equipped)
     weapon_attack_power = case current_weapon do
       %{attack_power: attack_power} when is_integer(attack_power) -> 
-        IO.puts("DEBUG: Using weapon attack_power: #{attack_power}")
         attack_power
       %{attack_power: attack_power} when is_binary(attack_power) ->
-        parsed_power = String.to_integer(attack_power)
-        IO.puts("DEBUG: Using parsed weapon attack_power: #{parsed_power}")
-        parsed_power
+        String.to_integer(attack_power)
       %{damage: damage} when not is_nil(damage) -> 
-        IO.puts("DEBUG: Using legacy weapon damage: #{damage}")
         damage
       _ -> 
-        IO.puts("DEBUG: No weapon equipped, using 0 attack power")
         0
     end
     
     # Calculate base damage as strength + weapon attack power
     base_damage = player_stats.strength + weapon_attack_power
-    IO.puts("DEBUG: Calculated base damage: #{player_stats.strength} (strength) + #{weapon_attack_power} (weapon) = #{base_damage}")
 
     # Apply random variance (±2)
     variance = 5
@@ -278,8 +272,6 @@ defmodule Shard.Combat do
   end
 
   defp handle_monster_death(game_state, dead_monster, monsters_list) do
-    IO.puts("DEBUG: handle_monster_death called for monster: #{inspect(dead_monster[:name])}")
-    IO.puts("DEBUG: Full dead_monster data in handle_monster_death: #{inspect(dead_monster)}")
 
     # Remove the monster from the list
     updated_monsters =
@@ -313,25 +305,15 @@ defmodule Shard.Combat do
 
   # NEW: Process loot drops when monster dies
   defp process_loot_drops(game_state, dead_monster) do
-    IO.puts("DEBUG: Processing loot drops for monster: #{inspect(dead_monster[:name])}")
-    IO.puts("DEBUG: Full dead_monster data in process_loot_drops: #{inspect(dead_monster)}")
-
-    IO.puts(
-      "DEBUG: Monster's potential_loot_drops: #{inspect(dead_monster[:potential_loot_drops])}"
-    )
 
     case dead_monster[:potential_loot_drops] do
       %{} = drops_map ->
-        result = process_drops_map(game_state, drops_map)
-        IO.puts("DEBUG: Processed drops map, result: #{inspect(result)}")
-        result
+        process_drops_map(game_state, drops_map)
 
       nil ->
-        IO.puts("DEBUG: No potential_loot_drops found for monster")
         []
 
       other ->
-        IO.puts("DEBUG: Unexpected potential_loot_drops format: #{inspect(other)}")
         []
     end
   end
@@ -345,9 +327,6 @@ defmodule Shard.Combat do
   end
 
   defp process_single_drop(game_state, item_id_str, drop_info, acc) do
-    IO.puts(
-      "DEBUG: Processing single drop - item_id_str: #{inspect(item_id_str)}, drop_info: #{inspect(drop_info)}"
-    )
 
     # Convert item_id string back to integer
     case Integer.parse(item_id_str) do
@@ -357,25 +336,17 @@ defmodule Shard.Combat do
         min_qty = Map.get(drop_info, "min_quantity", 1)
         max_qty = Map.get(drop_info, "max_quantity", 1)
 
-        IO.puts(
-          "DEBUG: Parsed item_id: #{item_id}, chance: #{chance}, min_qty: #{min_qty}, max_qty: #{max_qty}"
-        )
-
         # Check if item drops
         random_value = :rand.uniform()
         drops = random_value <= chance
 
-        IO.puts("DEBUG: Random value: #{random_value}, drops: #{drops}")
-
         if drops do
           process_successful_drop(game_state, item_id, min_qty, max_qty, acc)
         else
-          IO.puts("DEBUG: Item did not drop due to chance")
           acc
         end
 
       :error ->
-        IO.puts("DEBUG: Failed to parse item_id_str: #{inspect(item_id_str)}")
         acc
     end
   end
@@ -384,30 +355,18 @@ defmodule Shard.Combat do
     # Calculate quantity
     quantity = calculate_drop_quantity(min_qty, max_qty)
 
-    IO.puts("DEBUG: Calculated drop quantity: #{quantity}")
-    IO.puts("DEBUG: Character ID: #{game_state.character.id}")
-    IO.puts("DEBUG: Item ID: #{item_id}")
-
     # Verify the item exists first
     case Shard.Items.get_item(item_id) do
       nil ->
-        IO.puts("DEBUG: Item with ID #{item_id} does not exist in database")
         acc
 
       item ->
-        IO.puts("DEBUG: Found item: #{item.name}")
-
         # Add item to player inventory using the exact same pattern as pickup
         case add_item_to_character_inventory(game_state.character.id, item_id, quantity) do
           {:ok, _} ->
-            IO.puts("DEBUG: Successfully added #{quantity} of item ID #{item_id} to inventory.")
             create_loot_message(item_id, quantity, acc)
 
           {:error, reason} ->
-            IO.puts(
-              "DEBUG: Failed to add item ID #{item_id} to inventory. Reason: #{inspect(reason)}"
-            )
-
             acc
         end
     end
@@ -424,11 +383,9 @@ defmodule Shard.Combat do
   defp create_loot_message(item_id, quantity, acc) do
     case Shard.Items.get_item(item_id) do
       nil ->
-        IO.puts("DEBUG: Could not find item with ID #{item_id} in database")
         acc
 
       item ->
-        IO.puts("DEBUG: Found item #{item.name} for loot message")
         ["You find #{quantity} #{item.name} on the corpse." | acc]
     end
   end
@@ -443,43 +400,31 @@ defmodule Shard.Combat do
       case Map.get(equipped_items, "main_hand") do
         nil -> 
           # No weapon equipped, return nil for unarmed combat
-          IO.puts("DEBUG: No weapon found in main_hand slot for character #{character_id}")
           nil
-        weapon -> 
-          IO.puts("DEBUG: Found weapon in main_hand slot: #{weapon.name}")
-          IO.puts("DEBUG: Weapon stats: #{inspect(weapon.stats)}")
-          IO.puts("DEBUG: Weapon damage: #{inspect(weapon.damage)}")
+        weapon ->
           
           # Check for attack_power first, then fallback to damage for legacy weapons
           # Handle both parsed maps and JSON strings
           parsed_stats = case weapon.stats do
             %{} = stats_map -> 
-              IO.puts("DEBUG: Stats already parsed as map: #{inspect(stats_map)}")
               stats_map
             stats_string when is_binary(stats_string) ->
               case Jason.decode(stats_string) do
                 {:ok, parsed} -> 
-                  IO.puts("DEBUG: Successfully parsed JSON stats: #{inspect(parsed)}")
                   parsed
                 {:error, _} -> 
-                  IO.puts("DEBUG: Failed to parse JSON stats: #{inspect(stats_string)}")
                   %{}
               end
             _ -> 
-              IO.puts("DEBUG: No stats found or invalid format")
               %{}
           end
           
           attack_value = case parsed_stats do
             %{"attack_power" => attack_power} when is_integer(attack_power) -> 
-              IO.puts("DEBUG: Using attack_power from stats: #{attack_power}")
               attack_power
             %{"attack_power" => attack_power} when is_binary(attack_power) ->
-              parsed_power = String.to_integer(attack_power)
-              IO.puts("DEBUG: Using parsed attack_power from stats: #{parsed_power}")
-              parsed_power
+              String.to_integer(attack_power)
             _ -> 
-              IO.puts("DEBUG: Using legacy damage field: #{weapon.damage || 0}")
               weapon.damage || 0
           end
           
@@ -493,36 +438,25 @@ defmodule Shard.Combat do
     rescue
       # Handle case where database table doesn't exist (e.g., in tests)
       Postgrex.Error -> 
-        IO.puts("DEBUG: Database error when fetching equipped weapon for character #{character_id}")
         nil
       error -> 
-        IO.puts("DEBUG: Unexpected error when fetching equipped weapon: #{inspect(error)}")
         nil
     end
   end
 
   # Helper function to add items to character inventory
   defp add_item_to_character_inventory(character_id, item_id, quantity) do
-    IO.puts(
-      "DEBUG: Attempting to add item #{item_id} (qty: #{quantity}) to character #{character_id}"
-    )
-
     # Use the exact same pattern as the pickup logic in Items context
     result = Shard.Items.add_item_to_inventory(character_id, item_id, quantity)
 
-    IO.puts("DEBUG: add_item_to_inventory result: #{inspect(result)}")
-
     case result do
       {:ok, _} = success ->
-        IO.puts("DEBUG: Successfully added item to inventory")
         success
 
       {:error, reason} = error ->
-        IO.puts("DEBUG: Failed to add item to inventory: #{inspect(reason)}")
         error
 
       other ->
-        IO.puts("DEBUG: Unexpected result from add_item_to_inventory: #{inspect(other)}")
         {:error, :unexpected_result}
     end
   end
