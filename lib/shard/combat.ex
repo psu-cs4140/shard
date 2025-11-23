@@ -443,15 +443,25 @@ defmodule Shard.Combat do
     try do
       equipped_items = Shard.Items.get_equipped_items(character_id)
       
-      case Map.get(equipped_items, "weapon") do
+      # Look for weapon in main_hand slot (not "weapon" slot)
+      case Map.get(equipped_items, "main_hand") do
         nil -> 
           # No weapon equipped, return nil for unarmed combat
+          IO.puts("DEBUG: No weapon found in main_hand slot for character #{character_id}")
           nil
         weapon -> 
+          IO.puts("DEBUG: Found weapon in main_hand slot: #{weapon.name}")
+          IO.puts("DEBUG: Weapon stats: #{inspect(weapon.stats)}")
+          IO.puts("DEBUG: Weapon damage: #{inspect(weapon.damage)}")
+          
           # Check for attack_power first, then fallback to damage for legacy weapons
           attack_value = case weapon.stats do
-            %{"attack_power" => attack_power} -> attack_power
-            _ -> weapon.damage
+            %{"attack_power" => attack_power} -> 
+              IO.puts("DEBUG: Using attack_power from stats: #{attack_power}")
+              attack_power
+            _ -> 
+              IO.puts("DEBUG: Using legacy damage field: #{weapon.damage}")
+              weapon.damage
           end
           
           %{
