@@ -2,10 +2,10 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
   use Shard.DataCase
 
   alias ShardWeb.UserLive.QuestHandlers
-  alias Shard.{Repo, Quests, Characters, NPCs, Map}
+  alias Shard.{Repo, Quests, Characters, Npcs, Map}
   alias Shard.Quests.{Quest, QuestAcceptance}
   alias Shard.Characters.Character
-  alias Shard.NPCs.NPC
+  alias Shard.Npcs.Npc
   alias Shard.Map.{Zone, Room}
   alias Shard.Users.User
 
@@ -44,7 +44,7 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
         current_zone_id: zone.id
       })
 
-      {:ok, npc} = NPCs.create_npc(%{
+      {:ok, npc} = Npcs.create_npc(%{
         name: "Quest Giver",
         description: "A helpful NPC",
         level: 5,
@@ -130,7 +130,7 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
         user_id: user.id
       })
 
-      {:ok, npc} = NPCs.create_npc(%{
+      {:ok, npc} = Npcs.create_npc(%{
         name: "Quest Giver",
         description: "A helpful NPC",
         level: 5,
@@ -224,7 +224,7 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
         user_id: user.id
       })
 
-      {:ok, npc} = NPCs.create_npc(%{
+      {:ok, npc} = Npcs.create_npc(%{
         name: "Quest Giver",
         description: "A helpful NPC",
         level: 5,
@@ -296,7 +296,7 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
         user_id: user.id
       })
 
-      {:ok, npc} = NPCs.create_npc(%{
+      {:ok, npc} = Npcs.create_npc(%{
         name: "Quest Turn In",
         description: "An NPC for turning in quests",
         level: 5,
@@ -359,7 +359,7 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
 
     test "returns nil when quest cannot be turned in to this NPC", %{quest: quest} do
       # Create a different NPC
-      {:ok, other_npc} = NPCs.create_npc(%{
+      {:ok, other_npc} = Npcs.create_npc(%{
         name: "Other NPC",
         description: "A different NPC",
         level: 5,
@@ -391,7 +391,7 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
         level: 1
       })
 
-      {:ok, npc} = NPCs.create_npc(%{
+      {:ok, npc} = Npcs.create_npc(%{
         name: "Quest Turn In",
         description: "An NPC for turning in quests",
         level: 5,
