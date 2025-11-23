@@ -313,7 +313,7 @@ defmodule Shard.Combat do
       nil ->
         []
 
-      other ->
+      _other ->
         []
     end
   end
@@ -360,13 +360,13 @@ defmodule Shard.Combat do
       nil ->
         acc
 
-      item ->
+      _item ->
         # Add item to player inventory using the exact same pattern as pickup
         case add_item_to_character_inventory(game_state.character.id, item_id, quantity) do
           {:ok, _} ->
             create_loot_message(item_id, quantity, acc)
 
-          {:error, reason} ->
+          {:error, _reason} ->
             acc
         end
     end
@@ -439,7 +439,7 @@ defmodule Shard.Combat do
       # Handle case where database table doesn't exist (e.g., in tests)
       Postgrex.Error -> 
         nil
-      error -> 
+      _error -> 
         nil
     end
   end
@@ -453,10 +453,10 @@ defmodule Shard.Combat do
       {:ok, _} = success ->
         success
 
-      {:error, reason} = error ->
+      {:error, _reason} = error ->
         error
 
-      other ->
+      _other ->
         {:error, :unexpected_result}
     end
   end
