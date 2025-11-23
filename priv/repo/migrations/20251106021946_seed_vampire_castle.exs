@@ -330,7 +330,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
         Enum.map(chainmail_items, fn item_spec ->
           case Repo.query("SELECT id FROM items WHERE name = $1", [item_spec.name]) do
             {:ok, %{rows: []}} ->
-              stats = if item_spec.name == "Darkened Broadsword", do: %{"damage" => 20}, else: %{}
+              stats = if item_spec.name == "Darkened Broadsword", do: %{"attack_power" => 20}, else: %{}
               
               {:ok, %{rows: [[item_id]]}} =
                 Repo.query(

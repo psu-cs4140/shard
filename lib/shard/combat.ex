@@ -102,7 +102,8 @@ defmodule Shard.Combat do
     # Parse weapon damage (supports dice notation like "1d4" or plain numbers)
     # Use current weapon if available, otherwise fall back to base damage
     weapon_damage = case current_weapon do
-      %{damage: damage} when not is_nil(damage) -> damage
+      %{attack_power: attack_power} when not is_nil(attack_power) -> attack_power
+      %{damage: damage} when not is_nil(damage) -> damage  # Fallback for legacy weapons
       _ -> 10  # Base unarmed damage
     end
     
@@ -450,8 +451,15 @@ defmodule Shard.Combat do
           # No weapon equipped, return nil for unarmed combat
           nil
         weapon -> 
+          # Check for attack_power first, then fallback to damage for legacy weapons
+          attack_value = case weapon.stats do
+            %{"attack_power" => attack_power} -> attack_power
+            _ -> weapon.damage
+          end
+          
           %{
-            damage: weapon.damage,
+            attack_power: attack_value,
+            damage: weapon.damage,  # Keep for legacy compatibility
             name: weapon.name,
             id: weapon.id
           }
