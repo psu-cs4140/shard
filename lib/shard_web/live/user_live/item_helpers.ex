@@ -3,6 +3,17 @@ defmodule ShardWeb.UserLive.ItemHelpers do
   Helper functions for item management in the MUD game.
   """
 
+  @equip_message_templates %{
+    "weapon" => "You equip {item_name} as your weapon.",
+    "shield" => "You equip your mighty {item_name} for protection.",
+    "head" => "You equip {item_name} on your head.",
+    "body" => "You equip {item_name} on your body.",
+    "legs" => "You equip {item_name} on your legs.",
+    "feet" => "You equip {item_name} on your feet.",
+    "ring" => "You slide {item_name} on one of your fingers.",
+    "necklace" => "You place {item_name} around your neck."
+  }
+
   # Use an item from hotbar or inventory
   def use_item(game_state, item) do
     case item.item_type do
@@ -162,17 +173,7 @@ defmodule ShardWeb.UserLive.ItemHelpers do
   end
 
   defp get_equip_message_template(equipment_slot) do
-    case equipment_slot do
-      "weapon" -> "You equip {item_name} as your weapon."
-      "shield" -> "You equip your mighty {item_name} for protection."
-      "head" -> "You equip {item_name} on your head."
-      "body" -> "You equip {item_name} on your body."
-      "legs" -> "You equip {item_name} on your legs."
-      "feet" -> "You equip {item_name} on your feet."
-      "ring" -> "You slide {item_name} on one of your fingers."
-      "necklace" -> "You place {item_name} around your neck."
-      _ -> "You equip {item_name}."
-    end
+    Map.get(@equip_message_templates, equipment_slot, "You equip {item_name}.")
   end
 
   # Use a key to unlock doors
