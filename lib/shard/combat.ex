@@ -97,10 +97,16 @@ defmodule Shard.Combat do
 
   defp calculate_attack_damage(player_stats, monster, equipped_weapon) do
     # Get the current equipped weapon from database to ensure we have latest data
-    current_weapon = get_current_equipped_weapon(player_stats.character_id) || equipped_weapon
+    current_weapon = get_current_equipped_weapon(player_stats.character_id)
     
     # Parse weapon damage (supports dice notation like "1d4" or plain numbers)
-    base_damage = parse_damage(current_weapon[:damage] || 10)
+    # Use current weapon if available, otherwise fall back to base damage
+    weapon_damage = case current_weapon do
+      %{damage: damage} when not is_nil(damage) -> damage
+      _ -> 10  # Base unarmed damage
+    end
+    
+    base_damage = parse_damage(weapon_damage)
 
     # Add strength modifier
     base_damage = base_damage + (player_stats.strength - 10)
@@ -440,7 +446,9 @@ defmodule Shard.Combat do
       equipped_items = Shard.Items.get_equipped_items(character_id)
       
       case Map.get(equipped_items, "weapon") do
-        nil -> nil
+        nil -> 
+          # No weapon equipped, return nil for unarmed combat
+          nil
         weapon -> 
           %{
             damage: weapon.damage,
@@ -450,8 +458,12 @@ defmodule Shard.Combat do
       end
     rescue
       # Handle case where database table doesn't exist (e.g., in tests)
-      Postgrex.Error -> nil
-      _ -> nil
+      Postgrex.Error -> 
+        IO.puts("DEBUG: Database error when fetching equipped weapon for character #{character_id}")
+        nil
+      error -> 
+        IO.puts("DEBUG: Unexpected error when fetching equipped weapon: #{inspect(error)}")
+        nil
     end
   end
 
