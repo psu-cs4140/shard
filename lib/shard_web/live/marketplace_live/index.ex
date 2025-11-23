@@ -271,7 +271,7 @@ defmodule ShardWeb.MarketplaceLive.Index do
     now = DateTime.utc_now()
     datetime_time = normalize_datetime(datetime)
     diff = DateTime.diff(now, datetime_time, :second)
-    
+
     format_time_difference(diff)
   end
 

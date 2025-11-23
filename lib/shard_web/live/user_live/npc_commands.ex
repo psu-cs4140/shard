@@ -436,7 +436,7 @@ defmodule ShardWeb.UserLive.NpcCommands do
   defp strict_coordinate_comparison(player_position, npc) do
     player_coords = extract_player_coordinates(player_position)
     npc_coords = extract_npc_coordinates(npc)
-    
+
     coordinates_match?(player_coords, npc_coords)
   end
 

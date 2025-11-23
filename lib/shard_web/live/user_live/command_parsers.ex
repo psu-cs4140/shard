@@ -472,11 +472,12 @@ defmodule ShardWeb.UserLive.CommandParsers do
   end
 
   defp handle_equip_command_error(inv_item, reason, game_state) do
-    message = case reason do
-      :not_equippable -> "#{inv_item.item.name} cannot be equipped."
-      :already_equipped -> "#{inv_item.item.name} is already equipped."
-      _ -> "Failed to equip #{inv_item.item.name}: #{reason}"
-    end
+    message =
+      case reason do
+        :not_equippable -> "#{inv_item.item.name} cannot be equipped."
+        :already_equipped -> "#{inv_item.item.name} is already equipped."
+        _ -> "Failed to equip #{inv_item.item.name}: #{reason}"
+      end
 
     {[message], game_state}
   end

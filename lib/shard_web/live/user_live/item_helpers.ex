@@ -158,11 +158,12 @@ defmodule ShardWeb.UserLive.ItemHelpers do
   end
 
   defp handle_equip_error(item, reason, game_state) do
-    message = case reason do
-      :not_equippable -> "#{item.name} cannot be equipped."
-      :already_equipped -> "#{item.name} is already equipped."
-      _ -> "Failed to equip #{item.name}: #{reason}"
-    end
+    message =
+      case reason do
+        :not_equippable -> "#{item.name} cannot be equipped."
+        :already_equipped -> "#{item.name} is already equipped."
+        _ -> "Failed to equip #{item.name}: #{reason}"
+      end
 
     {[message], game_state}
   end
