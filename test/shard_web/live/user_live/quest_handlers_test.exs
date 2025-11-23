@@ -50,7 +50,7 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
         level: 5,
         health: 100,
         max_health: 100,
-        location_id: room.id
+        room_id: room.id
       })
 
       {:ok, quest} = Quests.create_quest(%{
@@ -97,7 +97,7 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
 
     test "presents quest offer when NPC has available quest", %{game_state: game_state, npc: npc, quest: quest} do
       # Mock the helper function to return the NPC
-      game_state = %{game_state | character: %{game_state.character | current_zone_id: npc.location_id}}
+      game_state = %{game_state | character: %{game_state.character | current_zone_id: npc.room_id}}
       
       {response, updated_state} = QuestHandlers.execute_quest_command(game_state, npc.name)
       
@@ -108,9 +108,9 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
       assert updated_state.pending_quest_offer.npc.id == npc.id
     end
 
-    test "returns no quests message when NPC has no available quests", %{game_state: game_state, npc: npc} do
+    test "returns no quests message when NPC has no available quests", %{game_state: game_state, npc: npc, quest: quest} do
       # Accept the quest first to make it unavailable
-      {:ok, _} = Quests.accept_quest(game_state.character.user_id, npc.id)
+      {:ok, _} = Quests.accept_quest(game_state.character.user_id, quest.id)
       
       {response, updated_state} = QuestHandlers.execute_quest_command(game_state, npc.name)
       
@@ -422,7 +422,8 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
       player_quest = %{
         id: quest.id,
         title: quest.title,
-        status: "In Progress"
+        status: "In Progress",
+        progress: "0% complete"
       }
 
       game_state = %{
@@ -462,14 +463,19 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
       fake_quest = %{
         id: 99999,
         title: "Fake Quest",
-        status: "In Progress"
+        status: "In Progress",
+        progress: "0% complete"
       }
 
-      {response, updated_state} = QuestHandlers.complete_quest_and_give_rewards(game_state, fake_quest, npc)
+      # Add the fake quest to the game state so it can be found and updated
+      game_state_with_fake = %{game_state | quests: [fake_quest]}
+
+      {response, updated_state} = QuestHandlers.complete_quest_and_give_rewards(game_state_with_fake, fake_quest, npc)
       
       assert is_list(response)
       # Should still mark quest as completed in local state even if database fails
       completed_quest = Enum.find(updated_state.quests, &(&1.id == fake_quest.id))
+      assert completed_quest != nil
       assert completed_quest.status == "Completed"
     end
   end
