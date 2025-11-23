@@ -2,12 +2,7 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
   use Shard.DataCase
 
   alias ShardWeb.UserLive.QuestHandlers
-  alias Shard.{Repo, Quests, Characters, Npcs, Map}
-  alias Shard.Quests.{Quest, QuestAcceptance}
-  alias Shard.Characters.Character
-  alias Shard.Npcs.Npc
-  alias Shard.Map.{Zone, Room}
-  alias Shard.Users.User
+  alias Shard.{Quests, Characters, Npcs, Map}
 
   import Shard.UsersFixtures
 
@@ -96,8 +91,8 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
     end
 
     test "presents quest offer when NPC has available quest", %{game_state: game_state, npc: npc, quest: quest, room: room} do
-      # Update character to be in the same room as the NPC
-      updated_character = %{game_state.character | current_room_id: room.id, current_zone_id: room.zone_id}
+      # Update character to be in the same zone as the NPC
+      updated_character = %{game_state.character | current_zone_id: room.zone_id}
       game_state = %{game_state | character: updated_character, player_position: {room.x_coordinate, room.y_coordinate}}
       
       {response, updated_state} = QuestHandlers.execute_quest_command(game_state, npc.name)
@@ -113,8 +108,8 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
       # Accept the quest first to make it unavailable
       {:ok, _} = Quests.accept_quest(game_state.character.user_id, quest.id)
       
-      # Update character to be in the same room as the NPC
-      updated_character = %{game_state.character | current_room_id: room.id, current_zone_id: room.zone_id}
+      # Update character to be in the same zone as the NPC
+      updated_character = %{game_state.character | current_zone_id: room.zone_id}
       game_state = %{game_state | character: updated_character, player_position: {room.x_coordinate, room.y_coordinate}}
       
       {response, updated_state} = QuestHandlers.execute_quest_command(game_state, npc.name)
@@ -647,7 +642,7 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
       
       # Should handle gracefully and still update local state
       assert is_list(response)
-      assert updated_state != nil
+      assert is_map(updated_state)
     end
   end
 end
