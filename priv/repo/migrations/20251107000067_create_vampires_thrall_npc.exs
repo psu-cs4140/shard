@@ -126,12 +126,11 @@ defmodule Shard.Repo.Migrations.CreateVampiresThrallNpc do
       'informant',
       'Greetings, mortal. I have watched over this manor for centuries, observing all who enter and leave these halls.
 
-    You seek a spell so powerful, do you not? I can sense your curiosity about the secrets hidden within these walls.
-
-    The key you seek... it lies within this manor, yes. 
+    You seek a tomb so powerful, do you not? I can sense your curiosity about the secrets hidden within these walls.
+    The key you seek to open the Study... it lies within this manor, yes. 
 
     From a bird''s eye view, the manor stares at you. 
-    On its most lonesome tip, a tiny glint gives your eyes a slip.
+    On its left, lonesome tip, a tiny glint gives your eyes the slip.
     There, is where your key shall be found.',
       '{}',
       -1,
