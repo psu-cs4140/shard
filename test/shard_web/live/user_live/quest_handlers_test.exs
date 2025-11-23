@@ -95,9 +95,10 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
       assert updated_state == game_state
     end
 
-    test "presents quest offer when NPC has available quest", %{game_state: game_state, npc: npc, quest: quest} do
-      # Mock the helper function to return the NPC
-      game_state = %{game_state | character: %{game_state.character | current_zone_id: npc.room_id}}
+    test "presents quest offer when NPC has available quest", %{game_state: game_state, npc: npc, quest: quest, room: room} do
+      # Update character to be in the same room as the NPC
+      updated_character = %{game_state.character | current_room_id: room.id, current_zone_id: room.zone_id}
+      game_state = %{game_state | character: updated_character, player_position: {room.x_coordinate, room.y_coordinate}}
       
       {response, updated_state} = QuestHandlers.execute_quest_command(game_state, npc.name)
       
@@ -108,9 +109,13 @@ defmodule ShardWeb.UserLive.QuestHandlersTest do
       assert updated_state.pending_quest_offer.npc.id == npc.id
     end
 
-    test "returns no quests message when NPC has no available quests", %{game_state: game_state, npc: npc, quest: quest} do
+    test "returns no quests message when NPC has no available quests", %{game_state: game_state, npc: npc, quest: quest, room: room} do
       # Accept the quest first to make it unavailable
       {:ok, _} = Quests.accept_quest(game_state.character.user_id, quest.id)
+      
+      # Update character to be in the same room as the NPC
+      updated_character = %{game_state.character | current_room_id: room.id, current_zone_id: room.zone_id}
+      game_state = %{game_state | character: updated_character, player_position: {room.x_coordinate, room.y_coordinate}}
       
       {response, updated_state} = QuestHandlers.execute_quest_command(game_state, npc.name)
       
