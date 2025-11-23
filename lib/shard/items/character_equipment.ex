@@ -38,20 +38,24 @@ defmodule Shard.Items.CharacterEquipment do
   defp validate_item_equippable(changeset) do
     item_id = get_field(changeset, :item_id)
 
-    if item_id do
-      case Shard.Repo.get(Item, item_id) do
-        nil ->
-          add_error(changeset, :item_id, "does not exist")
+    case item_id do
+      nil -> changeset
+      id -> validate_item_exists_and_equippable(changeset, id)
+    end
+  end
 
-        item ->
-          if item.equippable do
-            changeset
-          else
-            add_error(changeset, :item_id, "is not equippable")
-          end
-      end
-    else
+  defp validate_item_exists_and_equippable(changeset, item_id) do
+    case Shard.Repo.get(Item, item_id) do
+      nil -> add_error(changeset, :item_id, "does not exist")
+      item -> validate_item_is_equippable(changeset, item)
+    end
+  end
+
+  defp validate_item_is_equippable(changeset, item) do
+    if item.equippable do
       changeset
+    else
+      add_error(changeset, :item_id, "is not equippable")
     end
   end
 
@@ -59,20 +63,25 @@ defmodule Shard.Items.CharacterEquipment do
     item_id = get_field(changeset, :item_id)
     equipment_slot = get_field(changeset, :equipment_slot)
 
-    if item_id && equipment_slot do
-      case Shard.Repo.get(Item, item_id) do
-        nil ->
-          changeset
+    case {item_id, equipment_slot} do
+      {nil, _} -> changeset
+      {_, nil} -> changeset
+      {id, slot} -> validate_slot_matches_item(changeset, id, slot)
+    end
+  end
 
-        item ->
-          if item.equipment_slot == equipment_slot do
-            changeset
-          else
-            add_error(changeset, :equipment_slot, "does not match item's equipment slot")
-          end
-      end
-    else
+  defp validate_slot_matches_item(changeset, item_id, equipment_slot) do
+    case Shard.Repo.get(Item, item_id) do
+      nil -> changeset
+      item -> check_slot_match(changeset, item, equipment_slot)
+    end
+  end
+
+  defp check_slot_match(changeset, item, equipment_slot) do
+    if item.equipment_slot == equipment_slot do
       changeset
+    else
+      add_error(changeset, :equipment_slot, "does not match item's equipment slot")
     end
   end
 end

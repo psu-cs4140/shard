@@ -117,48 +117,56 @@ defmodule ShardWeb.UserLive.ItemHelpers do
 
   # Equip an item (weapons, armor, etc.)
   def equip_item(game_state, item) do
-    # Use the same logic as the equip command for consistency
     case Map.get(item, :inventory_id) do
-      nil ->
-        response = ["Cannot equip #{item.name} - no inventory reference found."]
-        {response, game_state}
+      nil -> handle_missing_inventory_reference(item, game_state)
+      inventory_id -> handle_item_equipping(game_state, item, inventory_id)
+    end
+  end
 
-      inventory_id ->
-        case Shard.Items.equip_item(inventory_id) do
-          {:ok, _} ->
-            # Reload inventory to sync with game state
-            updated_inventory =
-              ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+  defp handle_missing_inventory_reference(item, game_state) do
+    response = ["Cannot equip #{item.name} - no inventory reference found."]
+    {response, game_state}
+  end
 
-            updated_game_state = %{game_state | inventory_items: updated_inventory}
+  defp handle_item_equipping(game_state, item, inventory_id) do
+    case Shard.Items.equip_item(inventory_id) do
+      {:ok, _} -> handle_successful_equip(game_state, item)
+      {:error, reason} -> handle_equip_error(item, reason, game_state)
+    end
+  end
 
-            # Generate appropriate message based on equipment slot
-            equipment_slot = Map.get(item, :equipment_slot) || item.item_type
+  defp handle_successful_equip(game_state, item) do
+    updated_inventory =
+      ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
 
-            message =
-              case equipment_slot do
-                "weapon" -> "You equip #{item.name} as your weapon."
-                "shield" -> "You equip your mighty #{item.name} for protection."
-                "head" -> "You equip #{item.name} on your head."
-                "body" -> "You equip #{item.name} on your body."
-                "legs" -> "You equip #{item.name} on your legs."
-                "feet" -> "You equip #{item.name} on your feet."
-                "ring" -> "You slide #{item.name} on one of your fingers."
-                "necklace" -> "You place #{item.name} around your neck."
-                _ -> "You equip #{item.name}."
-              end
+    updated_game_state = %{game_state | inventory_items: updated_inventory}
+    equipment_slot = Map.get(item, :equipment_slot) || item.item_type
+    message = generate_equip_message(item.name, equipment_slot)
 
-            {[message], updated_game_state}
+    {[message], updated_game_state}
+  end
 
-          {:error, :not_equippable} ->
-            {["#{item.name} cannot be equipped."], game_state}
+  defp handle_equip_error(item, reason, game_state) do
+    message = case reason do
+      :not_equippable -> "#{item.name} cannot be equipped."
+      :already_equipped -> "#{item.name} is already equipped."
+      _ -> "Failed to equip #{item.name}: #{reason}"
+    end
 
-          {:error, :already_equipped} ->
-            {["#{item.name} is already equipped."], game_state}
+    {[message], game_state}
+  end
 
-          {:error, reason} ->
-            {["Failed to equip #{item.name}: #{reason}"], game_state}
-        end
+  defp generate_equip_message(item_name, equipment_slot) do
+    case equipment_slot do
+      "weapon" -> "You equip #{item_name} as your weapon."
+      "shield" -> "You equip your mighty #{item_name} for protection."
+      "head" -> "You equip #{item_name} on your head."
+      "body" -> "You equip #{item_name} on your body."
+      "legs" -> "You equip #{item_name} on your legs."
+      "feet" -> "You equip #{item_name} on your feet."
+      "ring" -> "You slide #{item_name} on one of your fingers."
+      "necklace" -> "You place #{item_name} around your neck."
+      _ -> "You equip #{item_name}."
     end
   end
 

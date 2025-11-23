@@ -391,59 +391,69 @@ defmodule ShardWeb.UserLive.NpcCommands do
 
   # Validate that player and NPC are at the same position
   defp validate_player_npc_position(npc, user_id) do
-    # Get the character for this user
     case get_character_by_user_id(user_id) do
-      nil ->
-        false
-
-      character ->
-        # Get player's current position
-        zone_id = character.current_zone_id || 1
-
-        case Shard.Map.get_player_position(character.id, zone_id) do
-          nil ->
-            # No saved position, check if player is at default position (0, 0)
-            npc.location_x == 0 && npc.location_y == 0
-
-          player_position ->
-            # Compare player position with NPC position
-            player_position.room.x_coordinate == npc.location_x &&
-              player_position.room.y_coordinate == npc.location_y &&
-              (player_position.room.z_coordinate || 0) == (npc.location_z || 0)
-        end
+      nil -> false
+      character -> check_character_position_matches_npc(character, npc)
     end
+  end
+
+  defp check_character_position_matches_npc(character, npc) do
+    zone_id = character.current_zone_id || 1
+
+    case Shard.Map.get_player_position(character.id, zone_id) do
+      nil -> check_default_position_match(npc)
+      player_position -> check_position_coordinates_match(player_position, npc)
+    end
+  end
+
+  defp check_default_position_match(npc) do
+    npc.location_x == 0 && npc.location_y == 0
+  end
+
+  defp check_position_coordinates_match(player_position, npc) do
+    player_position.room.x_coordinate == npc.location_x &&
+      player_position.room.y_coordinate == npc.location_y &&
+      (player_position.room.z_coordinate || 0) == (npc.location_z || 0)
   end
 
   # Strict position validation with database query
   defp validate_player_npc_position_strict(npc, user_id) do
-    # Get the character for this user with fresh database query
     case get_character_by_user_id(user_id) do
-      nil ->
-        false
-
-      character ->
-        # Get player's current position with fresh database query
-        zone_id = character.current_zone_id || 1
-
-        case Shard.Map.get_player_position(character.id, zone_id) do
-          nil ->
-            # No saved position, check if both player and NPC are at default position (0, 0)
-            npc.location_x == 0 && npc.location_y == 0
-
-          player_position ->
-            # Strict comparison - player position must exactly match NPC position
-            player_x = player_position.room.x_coordinate
-            player_y = player_position.room.y_coordinate
-            player_z = player_position.room.z_coordinate || 0
-
-            npc_x = npc.location_x
-            npc_y = npc.location_y
-            npc_z = npc.location_z || 0
-
-            # Only return true if positions exactly match
-            player_x == npc_x && player_y == npc_y && player_z == npc_z
-        end
+      nil -> false
+      character -> strict_position_check(character, npc)
     end
+  end
+
+  defp strict_position_check(character, npc) do
+    zone_id = character.current_zone_id || 1
+
+    case Shard.Map.get_player_position(character.id, zone_id) do
+      nil -> check_default_position_match(npc)
+      player_position -> strict_coordinate_comparison(player_position, npc)
+    end
+  end
+
+  defp strict_coordinate_comparison(player_position, npc) do
+    player_coords = extract_player_coordinates(player_position)
+    npc_coords = extract_npc_coordinates(npc)
+    
+    coordinates_match?(player_coords, npc_coords)
+  end
+
+  defp extract_player_coordinates(player_position) do
+    {
+      player_position.room.x_coordinate,
+      player_position.room.y_coordinate,
+      player_position.room.z_coordinate || 0
+    }
+  end
+
+  defp extract_npc_coordinates(npc) do
+    {npc.location_x, npc.location_y, npc.location_z || 0}
+  end
+
+  defp coordinates_match?({px, py, pz}, {nx, ny, nz}) do
+    px == nx && py == ny && pz == nz
   end
 
   # Helper function to get character by user_id

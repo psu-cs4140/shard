@@ -269,26 +269,25 @@ defmodule ShardWeb.MarketplaceLive.Index do
   # Helper function to format time ago
   def time_ago_in_words(datetime) do
     now = DateTime.utc_now()
-
-    # Convert NaiveDateTime to DateTime if needed
-    datetime_time =
-      case datetime do
-        %NaiveDateTime{} -> DateTime.from_naive!(datetime, "Etc/UTC")
-        %DateTime{} -> datetime
-      end
-
+    datetime_time = normalize_datetime(datetime)
     diff = DateTime.diff(now, datetime_time, :second)
-
-    cond do
-      diff < 60 -> "less than a minute"
-      diff < 120 -> "1 minute"
-      diff < 3_600 -> "#{div(diff, 60)} minutes"
-      diff < 7_200 -> "1 hour"
-      diff < 86_400 -> "#{div(diff, 3_600)} hours"
-      diff < 172_800 -> "1 day"
-      true -> "#{div(diff, 86_400)} days"
-    end
+    
+    format_time_difference(diff)
   end
+
+  defp normalize_datetime(%NaiveDateTime{} = datetime) do
+    DateTime.from_naive!(datetime, "Etc/UTC")
+  end
+
+  defp normalize_datetime(%DateTime{} = datetime), do: datetime
+
+  defp format_time_difference(diff) when diff < 60, do: "less than a minute"
+  defp format_time_difference(diff) when diff < 120, do: "1 minute"
+  defp format_time_difference(diff) when diff < 3_600, do: "#{div(diff, 60)} minutes"
+  defp format_time_difference(diff) when diff < 7_200, do: "1 hour"
+  defp format_time_difference(diff) when diff < 86_400, do: "#{div(diff, 3_600)} hours"
+  defp format_time_difference(diff) when diff < 172_800, do: "1 day"
+  defp format_time_difference(diff), do: "#{div(diff, 86_400)} days"
 
   # Helper function to format listings for display in the UI
   defp format_listings_for_display(listings) when listings == [], do: []

@@ -187,7 +187,15 @@ defmodule Shard.Items.GameFeatures do
   def create_tutorial_key do
     alias Shard.Items.{Item, RoomItem}
 
-    # Check if tutorial key already exists in the room at (0,2,0)
+    case find_existing_tutorial_key() do
+      {:ok, item} -> {:ok, item}
+      :not_found -> create_new_tutorial_key()
+    end
+  end
+
+  defp find_existing_tutorial_key do
+    alias Shard.Items.{Item, RoomItem}
+
     existing_key =
       from(ri in RoomItem,
         where: ri.location == "0,2,0",
@@ -197,50 +205,60 @@ defmodule Shard.Items.GameFeatures do
       )
       |> Repo.one()
 
-    if is_nil(existing_key) do
-      # Create the tutorial key item if it doesn't exist in the items table
-      case Repo.get_by(Item, name: "Tutorial Key") do
-        nil ->
-          case %Item{}
-               |> Item.changeset(%{
-                 name: "Tutorial Key",
-                 description: "A mysterious key that might unlock something important.",
-                 item_type: "misc",
-                 rarity: "common",
-                 value: 10,
-                 stackable: false,
-                 equippable: false,
-                 location: "0,2,0",
-                 map: "tutorial_terrain",
-                 is_active: true
-               })
-               |> Repo.insert() do
-            {:ok, key_item} ->
-              # Place the key in the room at (0,2,0)
-              case %RoomItem{}
-                   |> RoomItem.changeset(%{
-                     item_id: key_item.id,
-                     location: "0,2,0",
-                     quantity: 1
-                   })
-                   |> Repo.insert() do
-                {:ok, _room_item} -> {:ok, key_item}
-                {:error, changeset} -> {:error, changeset}
-              end
+    case existing_key do
+      nil -> :not_found
+      key -> get_tutorial_key_item(key.item_id)
+    end
+  end
 
-            {:error, changeset} ->
-              {:error, changeset}
-          end
+  defp get_tutorial_key_item(item_id) do
+    case Repo.get(Shard.Items.Item, item_id) do
+      nil -> {:error, :item_not_found}
+      item -> {:ok, item}
+    end
+  end
 
-        existing_item ->
-          {:ok, existing_item}
-      end
-    else
-      # Return the item, not the room item
-      case Repo.get(Item, existing_key.item_id) do
-        nil -> {:error, :item_not_found}
-        item -> {:ok, item}
-      end
+  defp create_new_tutorial_key do
+    case find_or_create_tutorial_key_item() do
+      {:ok, key_item} -> place_tutorial_key_in_room(key_item)
+      {:error, changeset} -> {:error, changeset}
+    end
+  end
+
+  defp find_or_create_tutorial_key_item do
+    case Repo.get_by(Shard.Items.Item, name: "Tutorial Key") do
+      nil -> create_tutorial_key_item()
+      existing_item -> {:ok, existing_item}
+    end
+  end
+
+  defp create_tutorial_key_item do
+    %Shard.Items.Item{}
+    |> Shard.Items.Item.changeset(%{
+      name: "Tutorial Key",
+      description: "A mysterious key that might unlock something important.",
+      item_type: "misc",
+      rarity: "common",
+      value: 10,
+      stackable: false,
+      equippable: false,
+      location: "0,2,0",
+      map: "tutorial_terrain",
+      is_active: true
+    })
+    |> Repo.insert()
+  end
+
+  defp place_tutorial_key_in_room(key_item) do
+    case %Shard.Items.RoomItem{}
+         |> Shard.Items.RoomItem.changeset(%{
+           item_id: key_item.id,
+           location: "0,2,0",
+           quantity: 1
+         })
+         |> Repo.insert() do
+      {:ok, _room_item} -> {:ok, key_item}
+      {:error, changeset} -> {:error, changeset}
     end
   end
 
