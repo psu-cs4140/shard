@@ -7,20 +7,32 @@ defmodule ShardWeb.UserLive.MudGameLiveMultiplayerComponents do
     <div class="bg-gray-700 rounded-lg p-4 mb-4">
       <h3 class="text-lg font-semibold mb-3 text-green-400">Online Players</h3>
       <div class="space-y-2 max-h-32 overflow-y-auto">
+        <!-- Always show current player first -->
+        <div class="flex items-center justify-between bg-gray-600 rounded px-3 py-2 border-l-4 border-blue-400">
+          <div class="flex items-center space-x-2">
+            <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+            <span class="text-sm font-medium">{@character_name} (You)</span>
+          </div>
+          <div class="text-xs text-gray-300">
+            Lvl {@current_player_level}
+          </div>
+        </div>
+        
+        <!-- Show other players -->
+        <%= for player <- @online_players do %>
+          <div class="flex items-center justify-between bg-gray-600 rounded px-3 py-2">
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+              <span class="text-sm font-medium">{player.name}</span>
+            </div>
+            <div class="text-xs text-gray-300">
+              Lvl {player.level}
+            </div>
+          </div>
+        <% end %>
+        
         <%= if Enum.empty?(@online_players) do %>
           <div class="text-gray-400 text-sm">No other players online</div>
-        <% else %>
-          <%= for player <- @online_players do %>
-            <div class="flex items-center justify-between bg-gray-600 rounded px-3 py-2">
-              <div class="flex items-center space-x-2">
-                <div class="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span class="text-sm font-medium">{player.name}</span>
-              </div>
-              <div class="text-xs text-gray-300">
-                Lvl {player.level}
-              </div>
-            </div>
-          <% end %>
         <% end %>
       </div>
     </div>
