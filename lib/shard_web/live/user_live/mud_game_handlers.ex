@@ -49,7 +49,7 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
 
       _ ->
         # Non-movement key, do nothing
-        {:noreply, socket}
+        {:noreply, socket, socket.assigns.game_state, socket.assigns.terminal_state, socket.assigns.game_state.player_position}
     end
   end
 
