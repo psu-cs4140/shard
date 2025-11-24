@@ -316,7 +316,7 @@ defmodule ShardWeb.UserLive.QuestHandlers do
   end
 
   # Create a new quest entry for the game state
-  defp create_new_quest_entry(quest, npc_name, quest_title) do
+  def create_new_quest_entry(quest, npc_name, quest_title) do
     %{
       id: quest.id,
       title: quest_title,
