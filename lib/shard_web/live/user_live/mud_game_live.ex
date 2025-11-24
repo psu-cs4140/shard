@@ -335,9 +335,6 @@ defmodule ShardWeb.MudGameLive do
       {:noreply, socket, terminal_state} ->
         {:noreply, assign(socket, terminal_state: terminal_state)}
 
-      {:noreply, socket} ->
-        {:noreply, socket}
-
       result ->
         result
     end
