@@ -377,11 +377,11 @@ defmodule ShardWeb.UserLive.Commands1 do
                           {:ok, direction, item_name} ->
                             execute_unlock_command(game_state, direction, item_name)
 
-                              :error ->
-                                # Check if it's a poke command
-                                case parse_poke_command(command) do
-                                  {:ok, character_name} ->
-                                    execute_poke_command(game_state, character_name)
+                          :error ->
+                            # Check if it's a poke command
+                            case parse_poke_command(command) do
+                              {:ok, character_name} ->
+                                execute_poke_command(game_state, character_name)
 
                               :error ->
                                 # Check if it's an equipped command

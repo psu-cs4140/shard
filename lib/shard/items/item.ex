@@ -4,6 +4,7 @@ defmodule Shard.Items.Item do
 
   alias Shard.Items.{CharacterInventory, RoomItem, HotbarSlot}
   alias Shard.Spells.Spells
+
   @moduledoc """
   New schema for items
   """
@@ -171,7 +172,7 @@ defmodule Shard.Items.Item do
       :pickup,
       :location,
       :map,
-      :spell_id
+      :spell_id,
       :map,
       :sellable
     ])
