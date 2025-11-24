@@ -167,11 +167,9 @@ defmodule Shard.Items.Item do
     |> validate_inclusion(:item_type, @item_types)
     # Validate rarity is in allowed list
     |> validate_inclusion(:rarity, @rarities)
-    |> validate_inclusion(:map, @maps)
     |> validate_number(:value, greater_than_or_equal_to: 0)
     |> validate_number(:weight, greater_than_or_equal_to: 0)
     |> validate_number(:max_stack_size, greater_than: 0)
-    |> validate_equipment_slot()
     |> foreign_key_constraint(:spell_id)
     # Validate equipment_slot when present
     |> validate_inclusion(:equipment_slot, @equipment_slots)
