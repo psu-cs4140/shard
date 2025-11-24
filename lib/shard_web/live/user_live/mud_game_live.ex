@@ -404,49 +404,25 @@ defmodule ShardWeb.MudGameLive do
   end
 
   def handle_event("use_hotbar_item", params, socket) do
-    case handle_use_hotbar_item(params, socket) do
-      {:noreply, socket, updated_game_state, terminal_state} ->
-        {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
-
-      {:noreply, socket} ->
-        {:noreply, socket}
-
-      result ->
-        result
-    end
+    {:noreply, socket, updated_game_state, terminal_state} = handle_use_hotbar_item(params, socket)
+    {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
   end
 
   def handle_event("equip_item", params, socket) do
-    case handle_equip_item(params, socket) do
-      {:noreply, socket, updated_game_state, terminal_state} ->
-        {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
-
-      {:noreply, socket} ->
-        {:noreply, socket}
-
-      result ->
-        result
-    end
+    {:noreply, socket, updated_game_state, terminal_state} = handle_equip_item(params, socket)
+    {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
   end
 
   # (C) Handle clicking an exit button to move rooms
   @impl true
   def handle_event("click_exit", params, socket) do
-    case handle_click_exit(params, socket) do
-      {:noreply, socket, game_state, terminal_state, player_position} ->
-        {:noreply,
-         assign(socket,
-           game_state: game_state,
-           terminal_state: terminal_state,
-           available_exits: compute_available_exits(player_position, game_state)
-         )}
-
-      {:noreply, socket} ->
-        {:noreply, socket}
-
-      result ->
-        result
-    end
+    {:noreply, socket, game_state, terminal_state, player_position} = handle_click_exit(params, socket)
+    {:noreply,
+     assign(socket,
+       game_state: game_state,
+       terminal_state: terminal_state,
+       available_exits: compute_available_exits(player_position, game_state)
+     )}
   end
 
   @impl true
