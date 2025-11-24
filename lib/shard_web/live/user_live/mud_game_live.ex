@@ -293,8 +293,9 @@ defmodule ShardWeb.MudGameLive do
 
   # Handle keypresses for navigation, inventory, etc.
   def handle_event("keypress", params, socket) do
-    {:noreply, socket, updated_game_state, terminal_state, player_position} = handle_keypress(params, socket)
-    
+    {:noreply, socket, updated_game_state, terminal_state, player_position} =
+      handle_keypress(params, socket)
+
     {:noreply,
      assign(socket,
        game_state: updated_game_state,
@@ -404,7 +405,9 @@ defmodule ShardWeb.MudGameLive do
   end
 
   def handle_event("use_hotbar_item", params, socket) do
-    {:noreply, socket, updated_game_state, terminal_state} = handle_use_hotbar_item(params, socket)
+    {:noreply, socket, updated_game_state, terminal_state} =
+      handle_use_hotbar_item(params, socket)
+
     {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
   end
 
@@ -416,7 +419,9 @@ defmodule ShardWeb.MudGameLive do
   # (C) Handle clicking an exit button to move rooms
   @impl true
   def handle_event("click_exit", params, socket) do
-    {:noreply, socket, game_state, terminal_state, player_position} = handle_click_exit(params, socket)
+    {:noreply, socket, game_state, terminal_state, player_position} =
+      handle_click_exit(params, socket)
+
     {:noreply,
      assign(socket,
        game_state: game_state,
