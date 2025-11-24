@@ -14,13 +14,8 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
     case key do
       arrow_key when arrow_key in ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"] ->
         # Use the same execute_movement function that terminal commands use
-        movement_result = execute_movement(socket.assigns.game_state, arrow_key)
-
-        {response, updated_game_state, popup_result} =
-          case movement_result do
-            {resp, state, popup} -> {resp, state, popup}
-            {resp, state} -> {resp, state, :no_popup}
-          end
+        {response, updated_game_state} = execute_movement(socket.assigns.game_state, arrow_key)
+        popup_result = :no_popup
 
         # Add the response to terminal output
         new_output = socket.assigns.terminal_state.output ++ response ++ [""]
