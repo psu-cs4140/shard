@@ -30,11 +30,37 @@ defmodule Shard.Repo.Migrations.CreateTreasureRoomKeyBZItem do
       true,
       NOW(),
       NOW()
+    )
+    ON CONFLICT (name) DO NOTHING;
+    """
+
+    # Then, place the Key in the bonezone room at (2,0)
+    execute """
+    INSERT INTO room_items (
+      item_id,
+      location,
+      quantity,
+      inserted_at,
+      updated_at
+    ) VALUES (
+      (SELECT id FROM items WHERE name = 'Treasure Room Key' LIMIT 1),
+      '2,0,0',
+      1,
+      NOW(),
+      NOW()
     );
     """
   end
 
   def down do
-    execute "DELETE FROM items WHERE name = 'Treasure Room Key';"
+    # Remove the Treasure Room Key from the bonezone room
+    execute """
+    DELETE FROM room_items
+    WHERE item_id = (SELECT id FROM items WHERE name = 'Treasure Room Key' LIMIT 1)
+    AND location = '2,0,0';
+    """
+
+    # Optionally remove the Treasure Room Key item entirely (uncomment if desired)
+    # execute "DELETE FROM items WHERE name = 'Treasure Room Key';"
   end
 end

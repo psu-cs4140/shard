@@ -109,7 +109,7 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
         location_y: -1,
         location_z: 0
       }
-       ]
+    ]
 
     Enum.each(tutorial_npcs, &ensure_npc_exists/1)
   end

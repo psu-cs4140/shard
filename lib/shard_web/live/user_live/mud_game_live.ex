@@ -227,7 +227,6 @@ defmodule ShardWeb.MudGameLive do
             :if={@modal_state.show && @modal_state.type == "settings"}
             game_state={@game_state}
           />
-
         </div>
       </div>
       

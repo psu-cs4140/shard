@@ -1,5 +1,4 @@
 defmodule Shard.Achievements.Achievement do
-
   @moduledoc """
   Schema for game achievements that players can earn.
 

@@ -2,7 +2,6 @@ defmodule ShardWeb.UserLive.Components2 do
   use ShardWeb, :live_view
   import ShardWeb.UserLive.MinimapComponents
 
-
   # ───────────── Terminal ─────────────
   attr :terminal_state, :map, required: true
 

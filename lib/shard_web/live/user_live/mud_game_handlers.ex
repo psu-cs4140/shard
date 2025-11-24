@@ -36,12 +36,14 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
               socket.assigns.modal_state
           end
 
-        socket = assign(socket, 
-          game_state: updated_game_state,
-          terminal_state: terminal_state,
-          modal_state: modal_state,
-          available_exits: compute_available_exits(updated_game_state.player_position, updated_game_state)
-        )
+        socket =
+          assign(socket,
+            game_state: updated_game_state,
+            terminal_state: terminal_state,
+            modal_state: modal_state,
+            available_exits:
+              compute_available_exits(updated_game_state.player_position, updated_game_state)
+          )
 
         {:noreply, socket}
 
@@ -92,10 +94,11 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
       current_command: ""
     }
 
-    socket = assign(socket, 
-      game_state: final_game_state,
-      terminal_state: terminal_state
-    )
+    socket =
+      assign(socket,
+        game_state: final_game_state,
+        terminal_state: terminal_state
+      )
 
     {:noreply, socket}
   end
@@ -252,11 +255,12 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
       | player_position: new_position
     }
 
-    socket = assign(socket, 
-      game_state: game_state,
-      terminal_state: terminal_state,
-      available_exits: compute_available_exits(game_state.player_position, game_state)
-    )
+    socket =
+      assign(socket,
+        game_state: game_state,
+        terminal_state: terminal_state,
+        available_exits: compute_available_exits(game_state.player_position, game_state)
+      )
 
     {:noreply, socket}
   end

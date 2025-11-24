@@ -327,7 +327,6 @@ defmodule Shard.Map do
     )
   end
 
-
   # Player Position functions
 
   @doc """

@@ -45,7 +45,7 @@ defmodule ShardWeb.UserLive.Movement do
     end
   end
 
-  defp execute_movement_with_room(game_state, direction, current_pos, new_pos, room) do
+  defp execute_movement_with_room(game_state, direction, current_pos, new_pos, _room) do
     try do
       direction_name =
         case direction do
@@ -60,7 +60,7 @@ defmodule ShardWeb.UserLive.Movement do
           _ -> "unknown"
         end
 
-      {curr_x, curr_y} = current_pos
+      {_curr_x, _curr_y} = current_pos
       {new_x, new_y} = new_pos
 
       zone_id = game_state.character.current_zone_id || 1
