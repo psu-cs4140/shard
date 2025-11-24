@@ -45,7 +45,7 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
               compute_available_exits(updated_game_state.player_position, updated_game_state)
           )
 
-        {:noreply, socket}
+        {:noreply, socket, updated_game_state, terminal_state, updated_game_state.player_position}
 
       _ ->
         # Non-movement key, do nothing
