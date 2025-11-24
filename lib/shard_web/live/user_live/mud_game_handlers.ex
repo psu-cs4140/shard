@@ -2,6 +2,7 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   @moduledoc """
   Event handlers and helper functions for MudGameLive
   """
+  use ShardWeb, :live_view
   import ShardWeb.UserLive.Movement
   import ShardWeb.UserLive.Commands1
   import ShardWeb.UserLive.LegacyMap
