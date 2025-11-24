@@ -227,11 +227,6 @@ defmodule ShardWeb.MudGameLive do
             :if={@modal_state.show && @modal_state.type == "settings"}
             game_state={@game_state}
           />
-
-          <.dungeon_completion
-            :if={@modal_state.show && @modal_state.type == "dungeon_completion"}
-            message={@modal_state.completion_message}
-          />
         </div>
       </div>
       
@@ -298,19 +293,15 @@ defmodule ShardWeb.MudGameLive do
 
   # Handle keypresses for navigation, inventory, etc.
   def handle_event("keypress", params, socket) do
-    case handle_keypress(params, socket) do
-      {:noreply, socket, updated_game_state, terminal_state, modal_state, player_position} ->
-        {:noreply,
-         assign(socket,
-           game_state: updated_game_state,
-           terminal_state: terminal_state,
-           modal_state: modal_state,
-           available_exits: compute_available_exits(player_position, updated_game_state)
-         )}
+    {:noreply, socket, updated_game_state, terminal_state, player_position} =
+      handle_keypress(params, socket)
 
-      result ->
-        result
-    end
+    {:noreply,
+     assign(socket,
+       game_state: updated_game_state,
+       terminal_state: terminal_state,
+       available_exits: compute_available_exits(player_position, updated_game_state)
+     )}
   end
 
   def handle_event("submit_command", params, socket) do
@@ -329,6 +320,9 @@ defmodule ShardWeb.MudGameLive do
         # Auto-scroll terminal to bottom
         socket = push_event(socket, "scroll_to_bottom", %{target: "terminal-output"})
 
+        {:noreply, socket}
+
+      {:noreply, socket} ->
         {:noreply, socket}
 
       result ->
@@ -408,40 +402,29 @@ defmodule ShardWeb.MudGameLive do
   end
 
   def handle_event("use_hotbar_item", params, socket) do
-    case handle_use_hotbar_item(params, socket) do
-      {:noreply, socket, updated_game_state, terminal_state} ->
-        {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+    {:noreply, socket, updated_game_state, terminal_state} =
+      handle_use_hotbar_item(params, socket)
 
-      result ->
-        result
-    end
+    {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
   end
 
   def handle_event("equip_item", params, socket) do
-    case handle_equip_item(params, socket) do
-      {:noreply, socket, updated_game_state, terminal_state} ->
-        {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
-
-      result ->
-        result
-    end
+    {:noreply, socket, updated_game_state, terminal_state} = handle_equip_item(params, socket)
+    {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
   end
 
   # (C) Handle clicking an exit button to move rooms
   @impl true
   def handle_event("click_exit", params, socket) do
-    case handle_click_exit(params, socket) do
-      {:noreply, socket, game_state, terminal_state, player_position} ->
-        {:noreply,
-         assign(socket,
-           game_state: game_state,
-           terminal_state: terminal_state,
-           available_exits: compute_available_exits(player_position, game_state)
-         )}
+    {:noreply, socket, game_state, terminal_state, player_position} =
+      handle_click_exit(params, socket)
 
-      result ->
-        result
-    end
+    {:noreply,
+     assign(socket,
+       game_state: game_state,
+       terminal_state: terminal_state,
+       available_exits: compute_available_exits(player_position, game_state)
+     )}
   end
 
   @impl true

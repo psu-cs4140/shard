@@ -108,32 +108,6 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
         location_x: 1,
         location_y: -1,
         location_z: 0
-      },
-      %{
-        name: "Tombguard",
-        description:
-          "An ancient sentinel clad in tarnished armor, standing vigil over the tomb's entrance. His hollow eyes burn with an otherworldly light, and his presence commands both respect and unease.",
-        npc_type: "quest_giver",
-        level: 25,
-        health: 300,
-        max_health: 300,
-        mana: 150,
-        max_mana: 150,
-        strength: 15,
-        dexterity: 8,
-        intelligence: 12,
-        constitution: 18,
-        experience_reward: 0,
-        gold_reward: 0,
-        faction: "neutral",
-        aggression_level: 0,
-        movement_pattern: "stationary",
-        is_active: true,
-        dialogue:
-          "Before you face the Bone Zone beyond, you must arm yourself. A blade once rested beside your coffin — your blade — but the lesser dead have claimed it for themselves. They skulk in the lower chambers, drawn to its lingering power.",
-        location_x: 0,
-        location_y: 3,
-        location_z: 0
       }
     ]
 
