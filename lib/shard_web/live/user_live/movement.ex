@@ -65,11 +65,6 @@ defmodule ShardWeb.UserLive.Movement do
 
       zone_id = game_state.character.current_zone_id || 1
 
-      current_room =
-        GameMap.get_room_by_coordinates(zone_id, curr_x, curr_y, 0)
-
-      completion_result = GameMap.check_dungeon_completion(current_room, room)
-
       npcs_here = get_npcs_at_location(new_x, new_y, zone_id)
       items_here = get_items_at_location(new_x, new_y, zone_id)
       monsters = Enum.filter(game_state.monsters, fn m -> m[:position] == new_pos end)
@@ -109,13 +104,7 @@ defmodule ShardWeb.UserLive.Movement do
       {combat_msgs, updated_game_state} = Shard.Combat.start_combat(updated_game_state)
       final_response = response ++ combat_msgs
 
-      case completion_result do
-        {:completed, msg} ->
-          {final_response, updated_game_state, {:show_completion_popup, msg}}
-
-        :no_completion ->
-          {final_response, updated_game_state, :no_popup}
-      end
+      {final_response, updated_game_state}
     rescue
       _ ->
         {["You can't move that way."], game_state}

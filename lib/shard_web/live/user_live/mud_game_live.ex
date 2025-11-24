@@ -228,10 +228,6 @@ defmodule ShardWeb.MudGameLive do
             game_state={@game_state}
           />
 
-          <.dungeon_completion
-            :if={@modal_state.show && @modal_state.type == "dungeon_completion"}
-            message={@modal_state.completion_message}
-          />
         </div>
       </div>
       
@@ -299,12 +295,11 @@ defmodule ShardWeb.MudGameLive do
   # Handle keypresses for navigation, inventory, etc.
   def handle_event("keypress", params, socket) do
     case handle_keypress(params, socket) do
-      {:noreply, socket, updated_game_state, terminal_state, modal_state, player_position} ->
+      {:noreply, socket, updated_game_state, terminal_state, player_position} ->
         {:noreply,
          assign(socket,
            game_state: updated_game_state,
            terminal_state: terminal_state,
-           modal_state: modal_state,
            available_exits: compute_available_exits(player_position, updated_game_state)
          )}
 
