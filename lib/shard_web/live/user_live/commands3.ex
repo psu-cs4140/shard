@@ -92,13 +92,6 @@ defmodule ShardWeb.UserLive.Commands3 do
       target_channel,
       {:poke_notification, poker_name}
     )
-
-    # Also broadcast to a global player channel in case the character-specific channel isn't working
-    PubSub.broadcast(
-      Shard.PubSub,
-      "player:#{target_character.name}",
-      {:poke_notification, poker_name}
-    )
   end
 
   @doc """

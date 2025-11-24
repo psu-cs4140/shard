@@ -29,7 +29,7 @@ defmodule Shard.CombatTest do
         player_position: {0, 0},
         player_stats: %{strength: 10},
         equipped_weapon: %{damage: 5},
-        character: %{name: "TestPlayer", id: "player1"},
+        character: %{name: "TestPlayer", id: 1},
         monsters: []
       }
 
@@ -43,13 +43,20 @@ defmodule Shard.CombatTest do
     end
 
     test "handles attack action with no monsters", %{game_state: game_state} do
+      # Use integer ID instead of string
+      game_state = put_in(game_state.character.id, 1)
       {messages, updated_state} = Combat.execute_action(game_state, "attack")
       assert messages == ["There are no monsters here to attack."]
       assert updated_state == game_state
     end
 
     test "handles flee action", %{game_state: game_state} do
-      game_state = Map.put(game_state, :combat, true)
+      # Use integer ID instead of string
+      game_state =
+        game_state
+        |> Map.put(:combat, true)
+        |> put_in([:character, :id], 1)
+
       {messages, updated_state} = Combat.execute_action(game_state, "flee")
       assert messages == ["You flee from combat!"]
       assert updated_state.combat == false
@@ -129,7 +136,7 @@ defmodule Shard.CombatTest do
 
     test "handles state with monsters and players" do
       monster = %{position: {0, 0}, hp: 10, is_alive: true}
-      player = %{id: "player1", position: {0, 0}, hp: 10}
+      player = %{id: 1, position: {0, 0}, hp: 10}
 
       state = %{
         monsters: [monster],
@@ -184,12 +191,12 @@ defmodule Shard.CombatTest do
 
     test "applies special damage effects to players" do
       monster = %{position: {0, 0}, hp: 10, is_alive: true}
-      player = %{id: "player1", position: {0, 0}, hp: 10}
+      player = %{id: 1, position: {0, 0}, hp: 10}
 
       # Create a poison effect targeting the player
       effect = %{
         kind: "special_damage",
-        target: {:player, "player1"},
+        target: {:player, 1},
         remaining_ticks: 3,
         magnitude: 2,
         damage_type: "poison"
@@ -220,12 +227,12 @@ defmodule Shard.CombatTest do
   describe "Engine.add_player/2" do
     test "adds new player to combat" do
       state = %{players: []}
-      player = %{id: "player1", name: "TestPlayer"}
+      player = %{id: 1, name: "TestPlayer"}
 
       new_state = Engine.add_player(state, player)
 
       assert length(new_state.players) == 1
-      assert hd(new_state.players).id == "player1"
+      assert hd(new_state.players).id == 1
     end
 
     test "doesn't add duplicate player" do
@@ -240,23 +247,23 @@ defmodule Shard.CombatTest do
 
   describe "Engine.remove_player/2" do
     test "removes player from combat" do
-      player1 = %{id: "player1", name: "TestPlayer1"}
-      player2 = %{id: "player2", name: "TestPlayer2"}
+      player1 = %{id: 1, name: "TestPlayer1"}
+      player2 = %{id: 2, name: "TestPlayer2"}
       state = %{players: [player1, player2]}
 
-      new_state = Engine.remove_player(state, "player1")
+      new_state = Engine.remove_player(state, 1)
 
       assert length(new_state.players) == 1
-      assert hd(new_state.players).id == "player2"
+      assert hd(new_state.players).id == 2
     end
   end
 
   describe "Engine.update_player/3" do
     test "updates player stats" do
-      player = %{id: "player1", name: "TestPlayer", hp: 10}
+      player = %{id: 1, name: "TestPlayer", hp: 10}
       state = %{players: [player]}
 
-      new_state = Engine.update_player(state, "player1", %{hp: 5, name: "UpdatedPlayer"})
+      new_state = Engine.update_player(state, 1, %{hp: 5, name: "UpdatedPlayer"})
 
       updated_player = hd(new_state.players)
       assert updated_player.hp == 5
@@ -268,12 +275,12 @@ defmodule Shard.CombatTest do
     test "adds special damage effect to combat state" do
       state = %{effects: []}
 
-      new_state = Engine.apply_special_damage_effect(state, {:player, "player1"}, "poison", 2, 3)
+      new_state = Engine.apply_special_damage_effect(state, {:player, 1}, "poison", 2, 3)
 
       assert length(new_state.effects) == 1
       effect = hd(new_state.effects)
       assert effect.kind == "special_damage"
-      assert effect.target == {:player, "player1"}
+      assert effect.target == {:player, 1}
       assert effect.magnitude == 2
       assert effect.remaining_ticks == 3
       assert effect.damage_type == "poison"
@@ -348,7 +355,7 @@ defmodule Shard.CombatTest do
         player_position: {0, 0},
         player_stats: %{strength: 10, health: 100},
         equipped_weapon: %{damage: 5},
-        character: %{name: "TestPlayer", id: "player1"},
+        character: %{name: "TestPlayer", id: 1},
         combat: false,
         monsters: [
           %{position: {0, 0}, is_alive: true, name: "TestMonster", hp: 10, armor: 0}

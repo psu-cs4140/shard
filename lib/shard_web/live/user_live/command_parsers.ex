@@ -170,6 +170,15 @@ defmodule ShardWeb.UserLive.CommandParsers do
     end
   end
 
+  # Parse accept_quest command to extract NPC name and quest title
+  def parse_accept_quest_command(command) do
+    # Match pattern: accept_quest "npc name" "quest title"
+    case Regex.run(~r/^accept_quest\s+"([^"]+)"\s+"([^"]+)"\s*$/i, command) do
+      [_, npc_name, quest_title] -> {:ok, String.trim(npc_name), String.trim(quest_title)}
+      _ -> :error
+    end
+  end
+
   # Parse create room command: "create room <direction>"
   def parse_create_room_command(command) do
     # Match patterns like: create room north, create room "north"
@@ -391,8 +400,8 @@ defmodule ShardWeb.UserLive.CommandParsers do
 
   # Execute equipped command to show equipped items
   def execute_equipped_command(game_state) do
-    # Get all available equipment slots
-    all_slots = Shard.Items.Item.equipment_slots()
+    # Get all available equipment slots including main_hand for weapons
+    all_slots = ["main_hand"] ++ Shard.Items.Item.equipment_slots()
 
     # Use the same data source as the inventory management page
     inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
@@ -412,7 +421,14 @@ defmodule ShardWeb.UserLive.CommandParsers do
       ["Your equipment slots:"] ++
         Enum.map(all_slots, fn slot ->
           item_name = Map.get(equipped_map, slot, "None")
-          "  #{String.capitalize(slot)}: #{item_name}"
+
+          slot_display =
+            case slot do
+              "main_hand" -> "Main Hand"
+              other -> String.capitalize(other)
+            end
+
+          "  #{slot_display}: #{item_name}"
         end)
 
     {response, game_state}

@@ -4,7 +4,7 @@ defmodule ShardWeb.UserLive.Commands1 do
   @moduledoc false
   import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.Movement
-  import ShardWeb.UserLive.QuestHandlers
+  import ShardWeb.UserLive.QuestHandlers, except: [execute_quest_command: 2]
   import ShardWeb.UserLive.Movement
 
   # import ShardWeb.UserLive.Commands2,
@@ -18,9 +18,9 @@ defmodule ShardWeb.UserLive.Commands1 do
   #  import ShardWeb.UserLive.ItemCommands
 
   alias Shard.Map, as: GameMap
+  alias Shard.Repo
+  import Ecto.Query
   # alias Shard.Items.Item
-  # alias Shard.Repo
-  # import Ecto.Query
 
   # Process terminal commands
   def process_command(command, game_state) do
@@ -40,8 +40,7 @@ defmodule ShardWeb.UserLive.Commands1 do
           "  npc - Show descriptions of NPCs in this room",
           "  talk \"npc_name\" - Talk to a specific NPC",
           "  quest \"npc_name\" - Get quest from a specific NPC",
-          "  accept - Accept a quest offer",
-          "  deny - Deny a quest offer",
+          "  accept_quest \"npc_name\" \"quest_title\" - Accept a specific quest from an NPC",
           "  deliver_quest \"npc_name\" - Deliver completed quest to NPC",
           "  poke \"character_name\" - Poke another player",
           "  equipped - Show your currently equipped items",
@@ -114,6 +113,15 @@ defmodule ShardWeb.UserLive.Commands1 do
         # Check for NPCs at current location
         npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
 
+        # Check for other players at current location
+        other_players =
+          get_other_players_at_location(
+            x,
+            y,
+            game_state.character.current_zone_id,
+            game_state.character.id
+          )
+
         # Check for items at current location
         items_here =
           ShardWeb.UserLive.ItemCommands.get_items_at_location(
@@ -141,6 +149,24 @@ defmodule ShardWeb.UserLive.Commands1 do
               end)
 
             updated_lines ++ npc_descriptions
+          end
+
+        # Add other player descriptions if any are present
+        description_lines =
+          if Enum.empty?(other_players) do
+            description_lines
+          else
+            # Empty line for spacing
+            updated_lines = description_lines ++ [""]
+
+            # Add each player
+            player_descriptions =
+              Enum.map(other_players, fn player ->
+                player_name = Map.get(player, :name) || "Unknown Player"
+                "#{player_name} is here."
+              end)
+
+            updated_lines ++ player_descriptions
           end
 
         # Add item descriptions if any are present
@@ -318,12 +344,16 @@ defmodule ShardWeb.UserLive.Commands1 do
         # Check if it's a talk command
         case parse_talk_command(command) do
           {:ok, npc_name} ->
+            # Only create NPCs when player explicitly tries to talk
+            ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
             execute_talk_command(game_state, npc_name)
 
           :error ->
             # Check if it's a quest command
             case parse_quest_command(command) do
               {:ok, npc_name} ->
+                # Only create NPCs when player explicitly tries to get quests
+                ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
                 execute_quest_command(game_state, npc_name)
 
               :error ->
@@ -372,9 +402,23 @@ defmodule ShardWeb.UserLive.Commands1 do
                                             execute_unequip_command(game_state, item_name)
 
                                           :error ->
-                                            {[
-                                               "Unknown command: '#{command}'. Type 'help' for available commands."
-                                             ], game_state}
+                                            # Check if it's an accept_quest command
+                                            case parse_accept_quest_command(command) do
+                                              {:ok, npc_name, quest_title} ->
+                                                # Only create NPCs when player explicitly tries to accept quests
+                                                ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
+
+                                                execute_accept_quest_command(
+                                                  game_state,
+                                                  npc_name,
+                                                  quest_title
+                                                )
+
+                                              :error ->
+                                                {[
+                                                   "Unknown command: '#{command}'. Type 'help' for available commands."
+                                                 ], game_state}
+                                            end
                                         end
                                     end
                                 end
@@ -384,6 +428,33 @@ defmodule ShardWeb.UserLive.Commands1 do
                 end
             end
         end
+    end
+  end
+
+  # Helper function to get other players at the same location
+  defp get_other_players_at_location(x, y, zone_id, current_character_id) do
+    try do
+      # Get the room at the current coordinates
+      room = GameMap.get_room_by_coordinates(zone_id, x, y, 0)
+
+      case room do
+        nil ->
+          []
+
+        room ->
+          # Get all player positions in this room, excluding the current character
+          query =
+            from(pp in GameMap.PlayerPosition,
+              join: c in Shard.Characters.Character,
+              on: pp.character_id == c.id,
+              where: pp.room_id == ^room.id and pp.character_id != ^current_character_id,
+              select: c
+            )
+
+          Repo.all(query)
+      end
+    rescue
+      _ -> []
     end
   end
 end
