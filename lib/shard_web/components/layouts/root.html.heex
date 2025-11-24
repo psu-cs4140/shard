@@ -4,6 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
+    <meta name="logout-alias" content={~p"/users/log-out"} />
+    <link rel="alternate" href={~p"/users/log-out"} />
     <.live_title default="Crimson Shard" suffix=" · Dark Realm">
       {assigns[:page_title]}
     </.live_title>
