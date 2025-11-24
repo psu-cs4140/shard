@@ -75,7 +75,7 @@ defmodule ShardWeb.UserLive.AdminCommands do
   end
 
   # Parse create room command: "create room <direction>"
-  defp parse_create_room_command(command) do
+  def parse_create_room_command(command) do
     # Match patterns like: create room north, create room "north"
     if Regex.match?(~r/^create\s+room\s+["']?(\w+)["']?\s*$/i, command) do
       case Regex.run(~r/^create\s+room\s+["']?(\w+)["']?\s*$/i, command) do
@@ -88,7 +88,7 @@ defmodule ShardWeb.UserLive.AdminCommands do
   end
 
   # Parse delete room command: "delete room <direction>"
-  defp parse_delete_room_command(command) do
+  def parse_delete_room_command(command) do
     # Match patterns like: delete room north, delete room "north"
     if Regex.match?(~r/^delete\s+room\s+["']?(\w+)["']?\s*$/i, command) do
       case Regex.run(~r/^delete\s+room\s+["']?(\w+)["']?\s*$/i, command) do
@@ -101,7 +101,7 @@ defmodule ShardWeb.UserLive.AdminCommands do
   end
 
   # Parse create door command: "create door <direction>"
-  defp parse_create_door_command(command) do
+  def parse_create_door_command(command) do
     # Match patterns like: create door north, create door "north"
     if Regex.match?(~r/^create\s+door\s+["']?(\w+)["']?\s*$/i, command) do
       case Regex.run(~r/^create\s+door\s+["']?(\w+)["']?\s*$/i, command) do
@@ -114,7 +114,7 @@ defmodule ShardWeb.UserLive.AdminCommands do
   end
 
   # Parse delete door command: "delete door <direction>"
-  defp parse_delete_door_command(command) do
+  def parse_delete_door_command(command) do
     # Match patterns like: delete door north, delete door "north"
     if Regex.match?(~r/^delete\s+door\s+["']?(\w+)["']?\s*$/i, command) do
       case Regex.run(~r/^delete\s+door\s+["']?(\w+)["']?\s*$/i, command) do

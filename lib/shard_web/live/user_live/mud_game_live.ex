@@ -26,7 +26,6 @@ defmodule ShardWeb.MudGameLive do
     with {:ok, character} <- get_character_from_params(params),
          character_name <- get_character_name(params, character),
          {:ok, character} <- load_character_with_associations(character),
-         :ok <- setup_tutorial_content(character_id),
          {:ok, socket} <- initialize_game_state(socket, character, character_id, character_name) do
       # Ensure player position is saved for first-time zone entry
       zone_id = character.current_zone_id || 1
@@ -162,7 +161,11 @@ defmodule ShardWeb.MudGameLive do
             hotbar={@game_state.hotbar}
           />
 
-          <.online_players online_players={@online_players} />
+          <.online_players
+            online_players={@online_players}
+            character_name={@character_name}
+            current_player_level={@game_state.player_stats.level}
+          />
 
           <h2 class="text-xl font-semibold mb-4">Game Controls</h2>
 

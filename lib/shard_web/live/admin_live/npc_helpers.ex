@@ -3,6 +3,9 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
   alias Shard.Npcs
 
   def ensure_tutorial_npcs_exist do
+    # Silently ensure required rooms exist first
+    ensure_bone_zone_rooms_exist()
+
     tutorial_npcs = [
       %{
         name: "Goldie",
@@ -105,6 +108,32 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
         location_x: 1,
         location_y: -1,
         location_z: 0
+      },
+      %{
+        name: "Tombguard",
+        description:
+          "An ancient sentinel clad in tarnished armor, standing vigil over the tomb's entrance. His hollow eyes burn with an otherworldly light, and his presence commands both respect and unease.",
+        npc_type: "quest_giver",
+        level: 25,
+        health: 300,
+        max_health: 300,
+        mana: 150,
+        max_mana: 150,
+        strength: 15,
+        dexterity: 8,
+        intelligence: 12,
+        constitution: 18,
+        experience_reward: 0,
+        gold_reward: 0,
+        faction: "neutral",
+        aggression_level: 0,
+        movement_pattern: "stationary",
+        is_active: true,
+        dialogue:
+          "Before you face the Bone Zone beyond, you must arm yourself. A blade once rested beside your coffin — your blade — but the lesser dead have claimed it for themselves. They skulk in the lower chambers, drawn to its lingering power.",
+        location_x: 0,
+        location_y: 3,
+        location_z: 0
       }
     ]
 
@@ -114,9 +143,11 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
   defp ensure_npc_exists(npc_params) do
     case Npcs.get_npc_by_name(npc_params.name) do
       nil ->
+        # Silently create new NPC without any output
         create_new_npc(npc_params)
 
       existing_npc ->
+        # Silently ensure NPC location without any output
         ensure_npc_location(existing_npc, npc_params)
     end
   end
@@ -154,5 +185,149 @@ defmodule ShardWeb.AdminLive.NpcHelpers do
       location_z: z
     })
     |> Repo.update()
+  end
+
+  # Ensure the Bone Zone rooms exist for proper navigation
+  defp ensure_bone_zone_rooms_exist do
+    alias Shard.Map, as: GameMap
+
+    # Define the rooms that should exist in the Bone Zone (zone_id: 1)
+    bone_zone_rooms = [
+      # Existing rooms that should be there
+      %{
+        zone_id: 1,
+        x_coordinate: 2,
+        y_coordinate: 4,
+        z_coordinate: 0,
+        name: "Bone Zone - Southern Chamber",
+        description: "A dark chamber filled with ancient bones and the whispers of the dead."
+      },
+      %{
+        zone_id: 1,
+        x_coordinate: 2,
+        y_coordinate: 3,
+        z_coordinate: 0,
+        name: "Bone Zone - Central Passage",
+        description: "A narrow passage between chambers, bones crunch underfoot."
+      },
+      %{
+        zone_id: 1,
+        x_coordinate: 2,
+        y_coordinate: 2,
+        z_coordinate: 0,
+        name: "Bone Zone - Northern Passage",
+        description: "The passage continues north, growing darker and more ominous."
+      },
+      %{
+        zone_id: 1,
+        x_coordinate: 2,
+        y_coordinate: 1,
+        z_coordinate: 0,
+        name: "Bone Zone - Upper Chamber",
+        description:
+          "A large chamber with high ceilings, filled with the echoes of ancient battles."
+      },
+      %{
+        zone_id: 1,
+        x_coordinate: 2,
+        y_coordinate: 0,
+        z_coordinate: 0,
+        name: "Bone Zone - Northernmost Chamber",
+        description: "The final chamber to the north, where shadows dance in the dim light."
+      }
+    ]
+
+    # Silently create rooms and doors
+    Enum.each(bone_zone_rooms, &ensure_room_exists/1)
+    ensure_bone_zone_doors_exist()
+  end
+
+  defp ensure_room_exists(room_params) do
+    alias Shard.Map, as: GameMap
+
+    x = room_params.x_coordinate
+    y = room_params.y_coordinate
+    z = room_params.z_coordinate
+
+    case GameMap.get_room_by_coordinates(room_params.zone_id, x, y, z) do
+      nil ->
+        # Silently create room without output
+        create_new_room(room_params)
+
+      _existing_room ->
+        # Silently skip existing room
+        :ok
+    end
+  end
+
+  defp create_new_room(room_params) do
+    alias Shard.Map, as: GameMap
+
+    case GameMap.create_room(room_params) do
+      {:ok, _room} ->
+        # Silently succeed
+        :ok
+
+      {:error, _changeset} ->
+        # Silently fail
+        :error
+    end
+  end
+
+  defp ensure_bone_zone_doors_exist do
+    alias Shard.Map, as: GameMap
+
+    # Define door connections for the Bone Zone vertical path
+    door_connections = [
+      # From (2,4) to (2,3) - north/south
+      {1, 2, 4, 0, 2, 3, 0, "north", "south"},
+      # From (2,3) to (2,2) - north/south  
+      {1, 2, 3, 0, 2, 2, 0, "north", "south"},
+      # From (2,2) to (2,1) - north/south
+      {1, 2, 2, 0, 2, 1, 0, "north", "south"},
+      # From (2,1) to (2,0) - north/south
+      {1, 2, 1, 0, 2, 0, 0, "north", "south"}
+    ]
+
+    Enum.each(door_connections, &ensure_door_connection_exists/1)
+  end
+
+  defp ensure_door_connection_exists(
+         {zone_id, from_x, from_y, from_z, to_x, to_y, to_z, direction, opposite_direction}
+       ) do
+    alias Shard.Map, as: GameMap
+
+    from_room = GameMap.get_room_by_coordinates(zone_id, from_x, from_y, from_z)
+    to_room = GameMap.get_room_by_coordinates(zone_id, to_x, to_y, to_z)
+
+    if from_room && to_room do
+      # Check if door already exists
+      existing_door = GameMap.get_door_in_direction(from_room.id, direction)
+
+      unless existing_door do
+        # Silently create the door from -> to
+        GameMap.create_door(%{
+          from_room_id: from_room.id,
+          to_room_id: to_room.id,
+          direction: direction,
+          is_locked: false,
+          is_hidden: false
+        })
+      end
+
+      # Check if return door already exists
+      existing_return_door = GameMap.get_door_in_direction(to_room.id, opposite_direction)
+
+      unless existing_return_door do
+        # Silently create the return door to -> from
+        GameMap.create_door(%{
+          from_room_id: to_room.id,
+          to_room_id: from_room.id,
+          direction: opposite_direction,
+          is_locked: false,
+          is_hidden: false
+        })
+      end
+    end
   end
 end

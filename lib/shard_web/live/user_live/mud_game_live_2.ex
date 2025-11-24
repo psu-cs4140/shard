@@ -42,38 +42,6 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
     end
   end
 
-  def setup_tutorial_content("tutorial_terrain") do
-    setup_tutorial_key()
-    setup_tutorial_npc()
-    setup_tutorial_door()
-    :ok
-  end
-
-  def setup_tutorial_content(_map_id), do: :ok
-
-  defp setup_tutorial_key do
-    case Shard.Items.create_tutorial_key() do
-      {:ok, _result} -> :ok
-      {:error, _reason} -> :error
-      _other -> :error
-    end
-  end
-
-  defp setup_tutorial_npc do
-    case Shard.Npcs.create_tutorial_npc_goldie() do
-      {:ok, _result} -> :ok
-      {:error, _reason} -> :error
-      _other -> :error
-    end
-  end
-
-  defp setup_tutorial_door do
-    case Shard.Items.create_dungeon_door() do
-      {:ok, _result} -> :ok
-      {:error, _reason} -> :error
-    end
-  end
-
   def initialize_game_state(socket, character, map_id, character_name) do
     # Load saved player position or use default
     zone_id = character.current_zone_id || 1
