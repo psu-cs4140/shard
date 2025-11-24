@@ -8,51 +8,36 @@ defmodule Shard.Items.Item do
   New schema for items
   """
 
-  defmodule JsonMap do
-    @moduledoc """
-    Custom Ecto type for handling JSON strings stored in the database as maps
-    """
+  # Custom type to handle list -> map conversion
+  defmodule MapField do
+    @moduledoc false
     use Ecto.Type
 
     def type, do: :map
 
     def cast(value) when is_map(value), do: {:ok, value}
-
-    def cast(value) when is_binary(value) do
-      case Jason.decode(value) do
-        {:ok, decoded} when is_map(decoded) -> {:ok, decoded}
-        {:ok, _} -> {:ok, %{}}
-        {:error, _} -> {:ok, %{}}
-      end
-    end
-
-    def cast(nil), do: {:ok, %{}}
+    def cast([]), do: {:ok, %{}}
+    def cast(value) when is_list(value), do: {:ok, %{}}
     def cast(_), do: :error
 
     def load(value) when is_map(value), do: {:ok, value}
+    def load([]), do: {:ok, %{}}
+    def load(value) when is_list(value), do: {:ok, %{}}
 
     def load(value) when is_binary(value) do
       case Jason.decode(value) do
         {:ok, decoded} when is_map(decoded) -> {:ok, decoded}
-        {:ok, _} -> {:ok, %{}}
-        {:error, _} -> {:ok, %{}}
+        {:ok, []} -> {:ok, %{}}
+        {:ok, decoded} when is_list(decoded) -> {:ok, %{}}
+        _ -> {:ok, %{}}
       end
     end
 
-    def load(nil), do: {:ok, %{}}
     def load(_), do: {:ok, %{}}
 
     def dump(value) when is_map(value), do: {:ok, value}
-
-    def dump(value) when is_binary(value) do
-      case Jason.decode(value) do
-        {:ok, decoded} when is_map(decoded) -> {:ok, decoded}
-        {:ok, _} -> {:ok, %{}}
-        {:error, _} -> {:ok, %{}}
-      end
-    end
-
-    def dump(nil), do: {:ok, %{}}
+    def dump([]), do: {:ok, %{}}
+    def dump(value) when is_list(value), do: {:ok, %{}}
     def dump(_), do: :error
   end
 
@@ -129,9 +114,9 @@ defmodule Shard.Items.Item do
     field :usable, :boolean, default: false
     field :equippable, :boolean, default: false
     field :equipment_slot, :string
-    field :stats, JsonMap
-    field :requirements, JsonMap
-    field :effects, JsonMap
+    field :stats, MapField
+    field :requirements, MapField
+    field :effects, MapField
     field :icon, :string
     field :is_active, :boolean, default: true
     field :pickup, :boolean, default: true
