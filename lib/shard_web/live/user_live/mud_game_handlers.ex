@@ -24,9 +24,6 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
         # Handle completion popup
         modal_state =
           case popup_result do
-            {:show_completion_popup, message} ->
-              %{show: true, type: "dungeon_completion", completion_message: message}
-
             :no_popup ->
               socket.assigns.modal_state
           end
