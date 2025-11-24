@@ -29,11 +29,11 @@
             setTheme(e.newValue || "system");
           }
         });
-        
+
         window.addEventListener("phx:set-theme", function(e) {
           var theme = e.target.dataset.phxTheme;
           setTheme(theme);
-          
+
           // Update the toggle slider position
           var slider = document.getElementById("theme-toggle-slider");
           if (slider) {
@@ -46,7 +46,7 @@
             }
           }
         });
-        
+
         // Initialize slider position on page load
         document.addEventListener("DOMContentLoaded", function() {
           var currentTheme = localStorage.getItem("phx:theme") || "system";
@@ -144,7 +144,7 @@
             <.link href={~p"/users/settings"}>Settings</.link>
           </li>
           <li>
-            <.link href={~p"/users/log-out"} method="delete">Log out</.link>
+            <.link href={~p"/users/log_out"} method="delete">Log out</.link>
           </li>
         <% else %>
           <li>
