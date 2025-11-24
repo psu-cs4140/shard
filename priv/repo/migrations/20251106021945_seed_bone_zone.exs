@@ -216,7 +216,7 @@ defmodule Shard.Repo.Migrations.SeedBoneZone do
 
         key_required =
           cond do
-            from_x == 2 && from_y == 3 && to_x == 2 && to_y == 4 -> "Tomb Key"
+            from_x == 2 && from_y == 3 && to_x == 2 && to_y == 4 -> "Bone Zone Key"
             from_x == 5 && from_y == 0 && to_x == 5 && to_y == 1 -> "Treasure Room Key"
             true -> nil
           end
