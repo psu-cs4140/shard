@@ -35,8 +35,14 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
               socket.assigns.modal_state
           end
 
-        {:noreply, socket, updated_game_state, terminal_state, modal_state,
-         updated_game_state.player_position}
+        socket = assign(socket, 
+          game_state: updated_game_state,
+          terminal_state: terminal_state,
+          modal_state: modal_state,
+          available_exits: compute_available_exits(updated_game_state.player_position, updated_game_state)
+        )
+
+        {:noreply, socket}
 
       _ ->
         # Non-movement key, do nothing
@@ -85,7 +91,12 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
       current_command: ""
     }
 
-    {:noreply, socket, final_game_state, terminal_state}
+    socket = assign(socket, 
+      game_state: final_game_state,
+      terminal_state: terminal_state
+    )
+
+    {:noreply, socket}
   end
 
   defp handle_quest_completion(command, updated_game_state, new_stats) do
@@ -110,7 +121,8 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
 
   def handle_update_command(%{"command" => %{"text" => command_text}}, socket) do
     terminal_state = Map.put(socket.assigns.terminal_state, :current_command, command_text)
-    {:noreply, socket, terminal_state}
+    socket = assign(socket, terminal_state: terminal_state)
+    {:noreply, socket}
   end
 
   def handle_save_character_stats(_params, socket) do
@@ -138,8 +150,9 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
           socket.assigns.terminal_state.output ++ ["Hotbar slot #{slot_number} is empty"] ++ [""]
 
         terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+        socket = assign(socket, terminal_state: terminal_state)
 
-        {:noreply, socket, socket.assigns.game_state, terminal_state}
+        {:noreply, socket}
 
       item ->
         {response, updated_game_state} = use_item(socket.assigns.game_state, item)
@@ -147,8 +160,9 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
         # Add response to terminal
         new_output = socket.assigns.terminal_state.output ++ response ++ [""]
         terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+        socket = assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
 
-        {:noreply, socket, updated_game_state, terminal_state}
+        {:noreply, socket}
     end
   end
 
@@ -167,8 +181,9 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
           socket.assigns.terminal_state.output ++ ["Item not found in inventory."] ++ [""]
 
         terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+        socket = assign(socket, terminal_state: terminal_state)
 
-        {:noreply, socket, socket.assigns.game_state, terminal_state}
+        {:noreply, socket}
 
       item ->
         {response, updated_game_state} = use_item(socket.assigns.game_state, item)
@@ -176,8 +191,9 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
         # Add response to terminal
         new_output = socket.assigns.terminal_state.output ++ response ++ [""]
         terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+        socket = assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
 
-        {:noreply, socket, updated_game_state, terminal_state}
+        {:noreply, socket}
     end
   end
 
@@ -195,8 +211,9 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
           socket.assigns.terminal_state.output ++ ["Item not found in inventory."] ++ [""]
 
         terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+        socket = assign(socket, terminal_state: terminal_state)
 
-        {:noreply, socket, socket.assigns.game_state, terminal_state}
+        {:noreply, socket}
 
       item ->
         {response, updated_game_state} = equip_item(socket.assigns.game_state, item)
@@ -204,8 +221,9 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
         # Add response to terminal
         new_output = socket.assigns.terminal_state.output ++ response ++ [""]
         terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+        socket = assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
 
-        {:noreply, socket, updated_game_state, terminal_state}
+        {:noreply, socket}
     end
   end
 
@@ -233,7 +251,13 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
       | player_position: new_position
     }
 
-    {:noreply, socket, game_state, terminal_state, game_state.player_position}
+    socket = assign(socket, 
+      game_state: game_state,
+      terminal_state: terminal_state,
+      available_exits: compute_available_exits(game_state.player_position, game_state)
+    )
+
+    {:noreply, socket}
   end
 
   def add_message_to_output(terminal_state, message) do
@@ -243,7 +267,8 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
 
   def handle_noise_info({:noise, text}, socket) do
     terminal_state = add_message_to_output(socket.assigns.terminal_state, text)
-    {:noreply, socket, terminal_state}
+    socket = assign(socket, terminal_state: terminal_state)
+    {:noreply, socket}
   end
 
   def handle_area_heal_info({:area_heal, xx, msg}, socket) do
@@ -265,14 +290,17 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
       # Save updated stats to database
       save_character_stats(socket.assigns.game_state.character, updated_stats)
 
-      {:noreply, socket, updated_game_state, terminal_state}
+      socket = assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
+      {:noreply, socket}
     else
-      {:noreply, socket, terminal_state}
+      socket = assign(socket, terminal_state: terminal_state)
+      {:noreply, socket}
     end
   end
 
   def handle_update_game_state_info({:update_game_state, new_game_state}, socket) do
-    {:noreply, socket, new_game_state}
+    socket = assign(socket, game_state: new_game_state)
+    {:noreply, socket}
   end
 
   def handle_combat_event_info({:combat_event, event}, socket) do
@@ -288,7 +316,8 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
           terminal_state =
             add_message_to_output(socket.assigns.terminal_state, "You take #{dmg} bleed damage!")
 
-          {:noreply, socket, updated_game_state, terminal_state}
+          socket = assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
+          {:noreply, socket}
         else
           terminal_state =
             add_message_to_output(
@@ -296,7 +325,8 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
               "Another player takes bleed damage!"
             )
 
-          {:noreply, socket, terminal_state}
+          socket = assign(socket, terminal_state: terminal_state)
+          {:noreply, socket}
         end
 
       %{type: :victory} ->
@@ -307,14 +337,16 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
           )
 
         updated_game_state = %{socket.assigns.game_state | combat: false}
-        {:noreply, socket, updated_game_state, terminal_state}
+        socket = assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
+        {:noreply, socket}
 
       %{type: :defeat} ->
         terminal_state =
           add_message_to_output(socket.assigns.terminal_state, "Defeat! All players have fallen!")
 
         updated_game_state = %{socket.assigns.game_state | combat: false}
-        {:noreply, socket, updated_game_state, terminal_state}
+        socket = assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
+        {:noreply, socket}
 
       _other ->
         {:noreply, socket}
@@ -325,14 +357,16 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
     terminal_state =
       add_message_to_output(socket.assigns.terminal_state, "#{player_name} joins the battle!")
 
-    {:noreply, socket, terminal_state}
+    socket = assign(socket, terminal_state: terminal_state)
+    {:noreply, socket}
   end
 
   def handle_player_left_combat_info({:player_left_combat, player_name}, socket) do
     terminal_state =
       add_message_to_output(socket.assigns.terminal_state, "#{player_name} leaves the battle!")
 
-    {:noreply, socket, terminal_state}
+    socket = assign(socket, terminal_state: terminal_state)
+    {:noreply, socket}
   end
 
   def handle_combat_action_info({:combat_action, event}, socket) do
@@ -358,7 +392,8 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
         end
 
       terminal_state = add_message_to_output(socket.assigns.terminal_state, message)
-      {:noreply, socket, terminal_state}
+      socket = assign(socket, terminal_state: terminal_state)
+      {:noreply, socket}
     end
   end
 
@@ -373,7 +408,8 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
       end
 
     terminal_state = add_message_to_output(socket.assigns.terminal_state, message)
-    {:noreply, socket, terminal_state}
+    socket = assign(socket, terminal_state: terminal_state)
+    {:noreply, socket}
   end
 
   defp handle_monster_attack(_event, _socket), do: nil
@@ -389,7 +425,8 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
           "#{player_name} flees from combat!"
         )
 
-      {:noreply, socket, terminal_state}
+      socket = assign(socket, terminal_state: terminal_state)
+      {:noreply, socket}
     end
   end
 
