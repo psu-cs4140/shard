@@ -81,7 +81,7 @@ defmodule Shard.SpellScrollsTest do
 
       # Get the inventory item
       inventory_items = Items.get_character_inventory(character.id)
-      assert length(inventory_items) == 1
+      assert Enum.count(inventory_items) == 1
       inventory_item = hd(inventory_items)
 
       # Use the scroll to learn the spell
@@ -93,12 +93,12 @@ defmodule Shard.SpellScrollsTest do
 
       # Verify the spell is in character's spell list
       character_spells = Spells.list_character_spells(character.id)
-      assert length(character_spells) == 1
+      assert Enum.count(character_spells) == 1
       assert hd(character_spells).name == "Test Spell"
 
       # Verify the scroll was consumed
       inventory_items_after = Items.get_character_inventory(character.id)
-      assert length(inventory_items_after) == 0
+      assert Enum.empty?(inventory_items_after)
     end
 
     test "picking up a spell scroll when already knowing the spell doesn't duplicate", %{
@@ -124,7 +124,7 @@ defmodule Shard.SpellScrollsTest do
 
       # Should still only have one spell
       character_spells = Spells.list_character_spells(character.id)
-      assert length(character_spells) == 1
+      assert Enum.count(character_spells) == 1
     end
 
     test "picking up a regular item (non-scroll) doesn't affect spells", %{character: character} do
@@ -154,7 +154,7 @@ defmodule Shard.SpellScrollsTest do
 
       # Should not have learned any spells
       character_spells = Spells.list_character_spells(character.id)
-      assert length(character_spells) == 0
+      assert Enum.empty?(character_spells)
     end
 
     test "spell scrolls are properly seeded" do
@@ -162,7 +162,7 @@ defmodule Shard.SpellScrollsTest do
       scrolls = Repo.all(from i in Item, where: not is_nil(i.spell_id))
 
       # Should have at least some spell scrolls from seeds
-      assert length(scrolls) > 0
+      refute Enum.empty?(scrolls)
 
       # Check one scroll has the expected properties
       scroll = hd(scrolls)

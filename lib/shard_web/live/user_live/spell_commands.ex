@@ -80,7 +80,7 @@ defmodule ShardWeb.UserLive.SpellCommands do
     character_id = game_state.character.id
     known_spells = Spells.list_character_spells(character_id)
 
-    if length(known_spells) == 0 do
+    if Enum.empty?(known_spells) do
       response = [
         "You don't know any spells yet.",
         "Find spell scrolls to learn new spells!"

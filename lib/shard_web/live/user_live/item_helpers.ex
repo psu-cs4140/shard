@@ -35,7 +35,7 @@ defmodule ShardWeb.UserLive.ItemHelpers do
   # Use a consumable item (like health potions or spell scrolls)
   def use_consumable_item(game_state, item) do
     # Check if it's a spell scroll
-    if is_spell_scroll?(item) do
+    if spell_scroll?(item) do
       use_spell_scroll_item(game_state, item)
     else
       case item.effect do
@@ -49,7 +49,7 @@ defmodule ShardWeb.UserLive.ItemHelpers do
     end
   end
 
-  defp is_spell_scroll?(item) do
+  defp spell_scroll?(item) do
     Map.has_key?(item, :spell_id) and not is_nil(item.spell_id)
   end
 

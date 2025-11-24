@@ -164,7 +164,7 @@ defmodule Shard.SpellsTest do
       Spells.remove_spell_from_character(character.id, holy_incantation.id)
 
       character_spells = Spells.list_character_spells(character.id)
-      assert length(character_spells) == 0
+      assert Enum.empty?(character_spells)
     end
   end
 end

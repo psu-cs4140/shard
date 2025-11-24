@@ -395,7 +395,7 @@ defmodule Shard.Items do
   @doc """
   Check if an item is a spell scroll.
   """
-  def is_spell_scroll?(item) do
+  def spell_scroll?(item) do
     not is_nil(item.spell_id) and item.usable
   end
 
