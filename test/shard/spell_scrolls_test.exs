@@ -74,7 +74,7 @@ defmodule Shard.SpellScrollsTest do
       refute Spells.character_knows_spell?(character.id, spell.id)
 
       # Pick up the scroll
-      {:ok, {:ok, :picked_up}} = Items.pick_up_item(character.id, room_item.id)
+      {:ok, :picked_up} = Items.pick_up_item(character.id, room_item.id)
 
       # Character should NOT know the spell yet (not auto-learned on pickup)
       refute Spells.character_knows_spell?(character.id, spell.id)
@@ -120,7 +120,7 @@ defmodule Shard.SpellScrollsTest do
         |> Repo.insert()
 
       # Pick up the scroll
-      {:ok, {:ok, :picked_up}} = Items.pick_up_item(character.id, room_item.id)
+      {:ok, :picked_up} = Items.pick_up_item(character.id, room_item.id)
 
       # Should still only have one spell
       character_spells = Spells.list_character_spells(character.id)
@@ -150,7 +150,7 @@ defmodule Shard.SpellScrollsTest do
         |> Repo.insert()
 
       # Pick up the regular item
-      {:ok, {:ok, :picked_up}} = Items.pick_up_item(character.id, room_item.id)
+      {:ok, :picked_up} = Items.pick_up_item(character.id, room_item.id)
 
       # Should not have learned any spells
       character_spells = Spells.list_character_spells(character.id)
