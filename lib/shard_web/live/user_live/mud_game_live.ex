@@ -293,21 +293,14 @@ defmodule ShardWeb.MudGameLive do
 
   # Handle keypresses for navigation, inventory, etc.
   def handle_event("keypress", params, socket) do
-    case handle_keypress(params, socket) do
-      {:noreply, socket, updated_game_state, terminal_state, player_position} ->
-        {:noreply,
-         assign(socket,
-           game_state: updated_game_state,
-           terminal_state: terminal_state,
-           available_exits: compute_available_exits(player_position, updated_game_state)
-         )}
-
-      {:noreply, socket} ->
-        {:noreply, socket}
-
-      result ->
-        result
-    end
+    {:noreply, socket, updated_game_state, terminal_state, player_position} = handle_keypress(params, socket)
+    
+    {:noreply,
+     assign(socket,
+       game_state: updated_game_state,
+       terminal_state: terminal_state,
+       available_exits: compute_available_exits(player_position, updated_game_state)
+     )}
   end
 
   def handle_event("submit_command", params, socket) do
