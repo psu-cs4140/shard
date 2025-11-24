@@ -3,6 +3,8 @@ defmodule Shard.CombatTest do
 
   alias Shard.Combat
   alias Shard.Combat.Engine
+  alias Shard.Repo
+  alias Shard.Weapons.DamageTypes
 
   describe "in_combat?/1" do
     test "returns false when combat is not set" do
@@ -27,7 +29,7 @@ defmodule Shard.CombatTest do
         player_position: {0, 0},
         player_stats: %{strength: 10},
         equipped_weapon: %{damage: 5},
-        character: %{name: "TestPlayer"},
+        character: %{name: "TestPlayer", id: 1},
         monsters: []
       }
 
@@ -41,13 +43,20 @@ defmodule Shard.CombatTest do
     end
 
     test "handles attack action with no monsters", %{game_state: game_state} do
+      # Use integer ID instead of string
+      game_state = put_in(game_state.character.id, 1)
       {messages, updated_state} = Combat.execute_action(game_state, "attack")
       assert messages == ["There are no monsters here to attack."]
       assert updated_state == game_state
     end
 
     test "handles flee action", %{game_state: game_state} do
-      game_state = Map.put(game_state, :combat, true)
+      # Use integer ID instead of string
+      game_state =
+        game_state
+        |> Map.put(:combat, true)
+        |> put_in([:character, :id], 1)
+
       {messages, updated_state} = Combat.execute_action(game_state, "flee")
       assert messages == ["You flee from combat!"]
       assert updated_state.combat == false
@@ -127,7 +136,7 @@ defmodule Shard.CombatTest do
 
     test "handles state with monsters and players" do
       monster = %{position: {0, 0}, hp: 10, is_alive: true}
-      player = %{id: "player1", position: {0, 0}, hp: 10}
+      player = %{id: 1, position: {0, 0}, hp: 10}
 
       state = %{
         monsters: [monster],
@@ -145,17 +154,85 @@ defmodule Shard.CombatTest do
       assert new_state.players == [player]
       assert events == []
     end
+
+    test "applies special damage effects to monsters" do
+      monster = %{position: {0, 0}, hp: 10, is_alive: true}
+      player = %{id: "player1", position: {0, 0}, hp: 10}
+
+      # Create a poison effect
+      effect = %{
+        kind: "special_damage",
+        target: {:monster, 0},
+        remaining_ticks: 3,
+        magnitude: 2,
+        damage_type: "poison"
+      }
+
+      state = %{
+        monsters: [monster],
+        players: [player],
+        effects: [effect],
+        events: [],
+        combat: true,
+        room_position: {0, 0}
+      }
+
+      {:ok, new_state, events} = Engine.step(state)
+
+      # Monster should have taken 2 damage
+      assert hd(new_state.monsters).hp == 8
+      # Effect should have one less tick
+      assert hd(new_state.effects).remaining_ticks == 2
+      # Should have an event for the effect tick
+      assert length(events) == 1
+      assert hd(events).type == :effect_tick
+      assert hd(events).effect == "poison"
+    end
+
+    test "applies special damage effects to players" do
+      monster = %{position: {0, 0}, hp: 10, is_alive: true}
+      player = %{id: 1, position: {0, 0}, hp: 10}
+
+      # Create a poison effect targeting the player
+      effect = %{
+        kind: "special_damage",
+        target: {:player, 1},
+        remaining_ticks: 3,
+        magnitude: 2,
+        damage_type: "poison"
+      }
+
+      state = %{
+        monsters: [monster],
+        players: [player],
+        effects: [effect],
+        events: [],
+        combat: true,
+        room_position: {0, 0}
+      }
+
+      {:ok, new_state, events} = Engine.step(state)
+
+      # Player should have taken 2 damage
+      assert hd(new_state.players).hp == 8
+      # Effect should have one less tick
+      assert hd(new_state.effects).remaining_ticks == 2
+      # Should have an event for the effect tick
+      assert length(events) == 1
+      assert hd(events).type == :effect_tick
+      assert hd(events).effect == "poison"
+    end
   end
 
   describe "Engine.add_player/2" do
     test "adds new player to combat" do
       state = %{players: []}
-      player = %{id: "player1", name: "TestPlayer"}
+      player = %{id: 1, name: "TestPlayer"}
 
       new_state = Engine.add_player(state, player)
 
       assert length(new_state.players) == 1
-      assert hd(new_state.players).id == "player1"
+      assert hd(new_state.players).id == 1
     end
 
     test "doesn't add duplicate player" do
@@ -170,27 +247,104 @@ defmodule Shard.CombatTest do
 
   describe "Engine.remove_player/2" do
     test "removes player from combat" do
-      player1 = %{id: "player1", name: "TestPlayer1"}
-      player2 = %{id: "player2", name: "TestPlayer2"}
+      player1 = %{id: 1, name: "TestPlayer1"}
+      player2 = %{id: 2, name: "TestPlayer2"}
       state = %{players: [player1, player2]}
 
-      new_state = Engine.remove_player(state, "player1")
+      new_state = Engine.remove_player(state, 1)
 
       assert length(new_state.players) == 1
-      assert hd(new_state.players).id == "player2"
+      assert hd(new_state.players).id == 2
     end
   end
 
   describe "Engine.update_player/3" do
     test "updates player stats" do
-      player = %{id: "player1", name: "TestPlayer", hp: 10}
+      player = %{id: 1, name: "TestPlayer", hp: 10}
       state = %{players: [player]}
 
-      new_state = Engine.update_player(state, "player1", %{hp: 5, name: "UpdatedPlayer"})
+      new_state = Engine.update_player(state, 1, %{hp: 5, name: "UpdatedPlayer"})
 
       updated_player = hd(new_state.players)
       assert updated_player.hp == 5
       assert updated_player.name == "UpdatedPlayer"
+    end
+  end
+
+  describe "Engine.apply_special_damage_effect/5" do
+    test "adds special damage effect to combat state" do
+      state = %{effects: []}
+
+      new_state = Engine.apply_special_damage_effect(state, {:player, 1}, "poison", 2, 3)
+
+      assert length(new_state.effects) == 1
+      effect = hd(new_state.effects)
+      assert effect.kind == "special_damage"
+      assert effect.target == {:player, 1}
+      assert effect.magnitude == 2
+      assert effect.remaining_ticks == 3
+      assert effect.damage_type == "poison"
+    end
+  end
+
+  describe "special damage monsters" do
+    setup do
+      # Create a poison damage type for testing
+      {:ok, poison_type} =
+        %DamageTypes{}
+        |> DamageTypes.changeset(%{name: "Poison"})
+        |> Repo.insert()
+
+      %{
+        poison_type: poison_type
+      }
+    end
+
+    test "creates monster with special damage attributes", %{poison_type: poison_type} do
+      attrs = %{
+        name: "Poison Spider",
+        race: "Arachnid",
+        health: 20,
+        max_health: 20,
+        attack_damage: 3,
+        xp_amount: 10,
+        level: 2,
+        description: "A venomous spider",
+        special_damage_type_id: poison_type.id,
+        special_damage_amount: 2,
+        special_damage_duration: 3,
+        special_damage_chance: 50
+      }
+
+      {:ok, monster} = Shard.Monsters.create_monster(attrs)
+
+      assert monster.name == "Poison Spider"
+      assert monster.special_damage_type_id == poison_type.id
+      assert monster.special_damage_amount == 2
+      assert monster.special_damage_duration == 3
+      assert monster.special_damage_chance == 50
+    end
+
+    test "validates special damage attributes", %{poison_type: poison_type} do
+      attrs = %{
+        name: "Invalid Spider",
+        race: "Arachnid",
+        health: 20,
+        max_health: 20,
+        attack_damage: 3,
+        xp_amount: 10,
+        special_damage_type_id: poison_type.id,
+        # Invalid: negative amount
+        special_damage_amount: -1,
+        special_damage_duration: 3,
+        # Invalid: over 100
+        special_damage_chance: 150
+      }
+
+      {:error, changeset} = Shard.Monsters.create_monster(attrs)
+
+      assert changeset.errors[:special_damage_amount] != nil
+      assert changeset.errors[:special_damage_chance] != nil
     end
   end
 
@@ -201,7 +355,7 @@ defmodule Shard.CombatTest do
         player_position: {0, 0},
         player_stats: %{strength: 10, health: 100},
         equipped_weapon: %{damage: 5},
-        character: %{name: "TestPlayer"},
+        character: %{name: "TestPlayer", id: 1},
         combat: false,
         monsters: [
           %{position: {0, 0}, is_alive: true, name: "TestMonster", hp: 10, armor: 0}

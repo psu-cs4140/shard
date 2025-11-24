@@ -26,8 +26,32 @@ defmodule ShardWeb.MudGameLive do
     with {:ok, character} <- get_character_from_params(params),
          character_name <- get_character_name(params, character),
          {:ok, character} <- load_character_with_associations(character),
-         :ok <- setup_tutorial_content(character_id),
          {:ok, socket} <- initialize_game_state(socket, character, character_id, character_name) do
+      # Ensure player position is saved for first-time zone entry
+      zone_id = character.current_zone_id || 1
+      {x, y} = socket.assigns.game_state.player_position
+
+      case Shard.Map.get_room_by_coordinates(zone_id, x, y, 0) do
+        nil ->
+          # If no room exists at current position, find starting room and save it
+          case Shard.Map.get_zone_starting_room(zone_id) do
+            # No starting room found, continue without saving
+            nil ->
+              :ok
+
+            room ->
+              Shard.Map.update_player_position(character.id, zone_id, room)
+          end
+
+        room ->
+          # Save current position if player doesn't have a saved position
+          case Shard.Map.get_player_position(character.id, zone_id) do
+            nil -> Shard.Map.update_player_position(character.id, zone_id, room)
+            # Position already exists, don't overwrite
+            _existing -> :ok
+          end
+      end
+
       # Subscribe to the global chat topic
       Phoenix.PubSub.subscribe(Shard.PubSub, "global_chat")
       # Subscribe to player presence updates
@@ -288,7 +312,15 @@ defmodule ShardWeb.MudGameLive do
   def handle_event("submit_command", params, socket) do
     case handle_submit_command(params, socket) do
       {:noreply, socket, updated_game_state, terminal_state} ->
-        socket = assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
+        # Reload inventory to ensure it's synced with database
+        updated_inventory =
+          ShardWeb.UserLive.CharacterHelpers.load_character_inventory(
+            updated_game_state.character
+          )
+
+        final_game_state = %{updated_game_state | inventory_items: updated_inventory}
+
+        socket = assign(socket, game_state: final_game_state, terminal_state: terminal_state)
 
         # Auto-scroll terminal to bottom
         socket = push_event(socket, "scroll_to_bottom", %{target: "terminal-output"})

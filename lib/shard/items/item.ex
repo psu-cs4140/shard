@@ -1,29 +1,137 @@
 defmodule Shard.Items.Item do
-  @moduledoc """
-  The item module defines the scheme and some functions related to items/
-  """
-
   use Ecto.Schema
   import Ecto.Changeset
 
   alias Shard.Items.{CharacterInventory, RoomItem, HotbarSlot}
   alias Shard.Spells.Spells
+  @moduledoc """
+  New schema for items
+  """
+
+  defmodule JsonMap do
+    @moduledoc """
+    Custom Ecto type for handling JSON strings stored in the database as maps
+    """
+    use Ecto.Type
+
+    def type, do: :map
+
+    def cast(value) when is_map(value), do: {:ok, value}
+
+    def cast(value) when is_binary(value) do
+      case Jason.decode(value) do
+        {:ok, decoded} when is_map(decoded) -> {:ok, decoded}
+        {:ok, _} -> {:ok, %{}}
+        {:error, _} -> {:ok, %{}}
+      end
+    end
+
+    def cast(nil), do: {:ok, %{}}
+    def cast(_), do: :error
+
+    def load(value) when is_map(value), do: {:ok, value}
+
+    def load(value) when is_binary(value) do
+      case Jason.decode(value) do
+        {:ok, decoded} when is_map(decoded) -> {:ok, decoded}
+        {:ok, _} -> {:ok, %{}}
+        {:error, _} -> {:ok, %{}}
+      end
+    end
+
+    def load(nil), do: {:ok, %{}}
+    def load(_), do: {:ok, %{}}
+
+    def dump(value) when is_map(value), do: {:ok, value}
+
+    def dump(value) when is_binary(value) do
+      case Jason.decode(value) do
+        {:ok, decoded} when is_map(decoded) -> {:ok, decoded}
+        {:ok, _} -> {:ok, %{}}
+        {:error, _} -> {:ok, %{}}
+      end
+    end
+
+    def dump(nil), do: {:ok, %{}}
+    def dump(_), do: :error
+  end
+
+  # Define valid item types and rarities
+  @item_types [
+    "weapon",
+    "shield",
+    "head",
+    "body",
+    "legs",
+    "feet",
+    "ring",
+    "necklace",
+    "consumable",
+    "misc",
+    "material",
+    "tool",
+    "quest"
+  ]
+  @rarities ["common", "uncommon", "rare", "epic", "legendary"]
+  @equipment_slots [
+    "head",
+    "body",
+    "legs",
+    "feet",
+    "weapon",
+    "shield",
+    "ring",
+    "necklace"
+  ]
+
+  # Define valid stat types for weapons and armor
+  @weapon_stats [
+    "attack_power",
+    "critical_chance",
+    "critical_damage",
+    "attack_speed",
+    "accuracy",
+    "durability"
+  ]
+  @armor_stats [
+    "defense",
+    "magic_resistance",
+    "health_bonus",
+    "mana_bonus",
+    "durability"
+  ]
+  @general_stats [
+    "strength",
+    "agility",
+    "intelligence",
+    "vitality",
+    "luck"
+  ]
+
+  # Expose these for other modules to use
+  def item_types, do: @item_types
+  def rarities, do: @rarities
+  def equipment_slots, do: @equipment_slots
+  def weapon_stats, do: @weapon_stats
+  def armor_stats, do: @armor_stats
+  def general_stats, do: @general_stats
+  def all_stats, do: @weapon_stats ++ @armor_stats ++ @general_stats
 
   schema "items" do
     field :name, :string
     field :description, :string
     field :item_type, :string
-    field :rarity, :string, default: "common"
-    field :value, :integer, default: 0
-    field :weight, :decimal, default: Decimal.new("0.0")
+    field :rarity, :string
+    field :value, :integer
+    field :weight, :decimal
     field :stackable, :boolean, default: false
-    field :max_stack_size, :integer, default: 1
+    field :max_stack_size, :integer
     field :usable, :boolean, default: false
     field :equippable, :boolean, default: false
     field :equipment_slot, :string
-    field :stats, :map, default: %{}
-    field :requirements, :map, default: %{}
-    field :effects, :map, default: %{}
+    field :stats, JsonMap
+    field :requirements, JsonMap
+    field :effects, JsonMap
     field :icon, :string
     field :is_active, :boolean, default: true
     field :pickup, :boolean, default: true
@@ -35,15 +143,12 @@ defmodule Shard.Items.Item do
     has_many :character_inventories, CharacterInventory
     has_many :room_items, RoomItem
     has_many :hotbar_slots, HotbarSlot
+    field :sellable, :boolean, default: true
 
     timestamps(type: :utc_datetime)
   end
 
-  @item_types ~w(weapon armor consumable material quest misc key)
-  @rarities ~w(common uncommon rare epic legendary)
-  @equipment_slots ~w(head chest legs feet hands weapon shield ring necklace)
-  @maps ~w(tutorial_terrain dark_forest crystal_caves volcanic_peaks frozen_wastes shadow_realm)
-
+  @doc false
   def changeset(item, attrs) do
     item
     |> cast(attrs, [
@@ -67,10 +172,14 @@ defmodule Shard.Items.Item do
       :location,
       :map,
       :spell_id
+      :map,
+      :sellable
     ])
+    # Added :item_type to required fields
     |> validate_required([:name, :item_type])
-    |> validate_length(:name, min: 2, max: 100)
+    # Validate item_type is in allowed list
     |> validate_inclusion(:item_type, @item_types)
+    # Validate rarity is in allowed list
     |> validate_inclusion(:rarity, @rarities)
     |> validate_inclusion(:map, @maps)
     |> validate_number(:value, greater_than_or_equal_to: 0)
@@ -78,30 +187,114 @@ defmodule Shard.Items.Item do
     |> validate_number(:max_stack_size, greater_than: 0)
     |> validate_equipment_slot()
     |> foreign_key_constraint(:spell_id)
+    # Validate equipment_slot when present
+    |> validate_inclusion(:equipment_slot, @equipment_slots)
+    # Add unique constraint on name
     |> unique_constraint(:name)
+    # Auto-set equippable and equipment_slot for armor pieces
+    |> set_equipment_defaults()
+    # Validate stats format and values
+    |> validate_stats()
   end
 
-  defp validate_equipment_slot(changeset) do
-    equippable = get_field(changeset, :equippable)
-    equipment_slot = get_field(changeset, :equipment_slot)
+  # Automatically set equippable=true and equipment_slot for armor pieces
+  defp set_equipment_defaults(changeset) do
+    item_type = get_field(changeset, :item_type)
 
-    cond do
-      equippable && is_nil(equipment_slot) ->
-        add_error(changeset, :equipment_slot, "must be specified for equippable items")
+    case item_type do
+      type
+      when type in ["head", "body", "legs", "feet", "weapon", "shield", "ring", "necklace"] ->
+        changeset
+        |> put_change(:equippable, true)
+        |> maybe_set_equipment_slot(type)
 
-      equippable && equipment_slot not in @equipment_slots ->
-        add_error(changeset, :equipment_slot, "is not a valid equipment slot")
-
-      !equippable && equipment_slot ->
-        put_change(changeset, :equipment_slot, nil)
-
-      true ->
+      _ ->
         changeset
     end
   end
 
-  def item_types, do: @item_types
-  def rarities, do: @rarities
-  def equipment_slots, do: @equipment_slots
-  def maps, do: @maps
+  # Set equipment_slot if not already set
+  defp maybe_set_equipment_slot(changeset, item_type) do
+    current_slot = get_field(changeset, :equipment_slot)
+
+    if is_nil(current_slot) do
+      put_change(changeset, :equipment_slot, item_type)
+    else
+      changeset
+    end
+  end
+
+  # Validate stats based on item type
+  defp validate_stats(changeset) do
+    stats = get_field(changeset, :stats)
+    item_type = get_field(changeset, :item_type)
+
+    case {stats, item_type} do
+      {nil, _} ->
+        changeset
+
+      {stats, item_type} when is_map(stats) ->
+        validate_stat_values(changeset, stats, item_type)
+
+      _ ->
+        add_error(changeset, :stats, "must be a map")
+    end
+  end
+
+  # Validate individual stat values and types
+  defp validate_stat_values(changeset, stats, item_type) do
+    valid_stats = get_valid_stats_for_type(item_type)
+
+    Enum.reduce(stats, changeset, fn {stat_name, stat_value}, acc ->
+      cond do
+        not is_binary(stat_name) ->
+          add_error(acc, :stats, "stat names must be strings")
+
+        stat_name not in valid_stats ->
+          add_error(acc, :stats, "#{stat_name} is not a valid stat for #{item_type}")
+
+        not is_number(stat_value) ->
+          add_error(acc, :stats, "#{stat_name} value must be a number")
+
+        stat_value < 0 ->
+          add_error(acc, :stats, "#{stat_name} value cannot be negative")
+
+        true ->
+          acc
+      end
+    end)
+  end
+
+  # Get valid stats for a given item type
+  defp get_valid_stats_for_type("weapon"), do: @weapon_stats ++ @general_stats
+
+  defp get_valid_stats_for_type(type) when type in ["shield", "head", "body", "legs", "feet"],
+    do: @armor_stats ++ @general_stats
+
+  defp get_valid_stats_for_type(type) when type in ["ring", "necklace"], do: @general_stats
+  defp get_valid_stats_for_type(_), do: []
+
+  @doc """
+  Get the total stats for an item, combining base stats with any bonuses
+  """
+  def get_total_stats(%__MODULE__{stats: stats}) when is_map(stats), do: stats
+  def get_total_stats(%__MODULE__{stats: nil}), do: %{}
+
+  @doc """
+  Check if an item has a specific stat
+  """
+  def has_stat?(%__MODULE__{stats: stats}, stat_name) when is_map(stats) do
+    Map.has_key?(stats, stat_name)
+  end
+
+  def has_stat?(%__MODULE__{stats: nil}, _stat_name), do: false
+
+  @doc """
+  Get a specific stat value from an item
+  """
+  def get_stat(%__MODULE__{stats: stats}, stat_name) when is_map(stats) do
+    Map.get(stats, stat_name, 0)
+  end
+
+  def get_stat(%__MODULE__{stats: nil}, _stat_name), do: 0
 end

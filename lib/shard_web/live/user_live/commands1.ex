@@ -4,26 +4,23 @@ defmodule ShardWeb.UserLive.Commands1 do
   @moduledoc false
   import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.Movement
-  import ShardWeb.UserLive.QuestHandlers
+  import ShardWeb.UserLive.QuestHandlers, except: [execute_quest_command: 2]
   import ShardWeb.UserLive.Movement
-  import ShardWeb.UserLive.Commands2
+
+  # import ShardWeb.UserLive.Commands2,
+  #   except: [execute_talk_command: 2, execute_deliver_quest_command: 2, execute_quest_command: 2]
+
   import ShardWeb.UserLive.Commands3
 
-  import ShardWeb.UserLive.CommandParsers,
-    except: [
-      parse_talk_command: 1,
-      parse_quest_command: 1,
-      parse_pickup_command: 1,
-      parse_deliver_quest_command: 1,
-      execute_pickup_command: 2
-    ]
+  import ShardWeb.UserLive.NpcCommands
+  import ShardWeb.UserLive.CommandParsers
 
   #  import ShardWeb.UserLive.ItemCommands
 
   alias Shard.Map, as: GameMap
+  alias Shard.Repo
+  import Ecto.Query
   # alias Shard.Items.Item
-  # alias Shard.Repo
-  # import Ecto.Query
 
   # Process terminal commands
   def process_command(command, game_state) do
@@ -43,10 +40,12 @@ defmodule ShardWeb.UserLive.Commands1 do
           "  npc - Show descriptions of NPCs in this room",
           "  talk \"npc_name\" - Talk to a specific NPC",
           "  quest \"npc_name\" - Get quest from a specific NPC",
-          "  accept - Accept a quest offer",
-          "  deny - Deny a quest offer",
+          "  accept_quest \"npc_name\" \"quest_title\" - Accept a specific quest from an NPC",
           "  deliver_quest \"npc_name\" - Deliver completed quest to NPC",
           "  poke \"character_name\" - Poke another player",
+          "  equipped - Show your currently equipped items",
+          "  equip \"item_name\" - Equip an item from your inventory",
+          "  unequip \"item_name\" - Unequip an equipped item",
           "  north/south/east/west - Move in cardinal directions",
           "  northeast/southeast/northwest/southwest - Move diagonally",
           "  Shortcuts: n/s/e/w/ne/se/nw/sw",
@@ -95,97 +94,33 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         # Get room from database
         room = GameMap.get_room_by_coordinates(game_state.character.current_zone_id, x, y, 0)
-        # Build room description - always use predetermined descriptions for tutorial terrain
+        # Build room description from database
         room_description =
-          if game_state.map_id == "tutorial_terrain" do
-            # Provide tutorial-specific descriptions based on coordinates
-            case {x, y} do
-              {0, 0} ->
-                "Tutorial Starting Chamber\nYou are in a small stone chamber with rough-hewn walls. Ancient torches mounted on iron brackets cast flickering light across the weathered stones. This appears to be the beginning of your adventure. You can see worn footprints in the dust, suggesting others have passed this way before."
+          case room do
+            nil ->
+              "Empty Space\nYou are in an empty area with no defined room. The ground beneath your feet feels uncertain, as if this space exists between the cracks of reality."
 
-              {1, 0} ->
-                "Eastern Alcove\nA narrow alcove extends eastward from the starting chamber. The walls here are carved with simple symbols that seem to glow faintly in the torchlight. The air carries a hint of something ancient and mysterious."
+            room ->
+              room_title = room.name || "Unnamed Room"
 
-              {0, 1} ->
-                "Southern Passage\nA short passage leads south from the starting chamber. The stone floor is worn smooth by countless footsteps. Moisture drips steadily from somewhere in the darkness ahead."
+              room_desc =
+                room.description ||
+                  "A mysterious room with no particular features. The walls are bare stone, and the air is still and quiet."
 
-              {1, 1} ->
-                "Corner Junction\nYou stand at a junction where two passages meet. The walls here show signs of careful construction, with fitted stones and mortar still holding strong after unknown years. A cool breeze flows through the intersection."
-
-              {5, 5} ->
-                "Central Treasure Chamber\nYou stand in a magnificent circular chamber with a high vaulted ceiling. Ornate pillars support graceful arches, and in the center sits an elaborate treasure chest made of dark wood bound with brass. The chest gleams with an inner light, and precious gems are scattered around its base."
-
-              {2, 2} ->
-                "Training Grounds\nThis rectangular chamber appears to have been used for combat training. Wooden practice dummies stand against the walls, and the floor is marked with scuff marks from countless sparring sessions. Weapon racks line the eastern wall."
-
-              {3, 3} ->
-                "Meditation Garden\nA peaceful underground garden with carefully tended moss growing in geometric patterns on the floor. A small fountain in the center provides the gentle sound of flowing water. The air here feels calm and restorative."
-
-              {4, 4} ->
-                "Library Ruins\nThe remains of what was once a grand library. Broken shelves line the walls, and scattered parchments lie across the floor. A few intact books rest on a reading table, their pages yellowed with age but still legible."
-
-              {6, 6} ->
-                "Armory\nA well-organized armory with weapons and armor displayed on stands and hanging from hooks. Most of the equipment shows signs of age, but some pieces still gleam with careful maintenance. A forge in the corner appears recently used."
-
-              {7, 7} ->
-                "Crystal Cavern\nA natural cavern where the walls are embedded with glowing crystals that provide a soft, blue-white light. The crystals hum with a barely audible resonance, and the air shimmers with magical energy."
-
-              {8, 8} ->
-                "Underground Lake\nYou stand on the shore of a vast underground lake. The water is crystal clear and so still it perfectly reflects the cavern ceiling above. Strange fish with luminescent scales can be seen swimming in the depths."
-
-              {9, 9} ->
-                "Ancient Shrine\nA small shrine dedicated to forgotten deities. Stone statues stand in alcoves around the room, their faces worn smooth by time. An altar in the center holds offerings left by previous visitors - coins, flowers, and small trinkets."
-
-              _ ->
-                # Check tile type for other positions
-                if y >= 0 and y < length(game_state.map_data) do
-                  row = Enum.at(game_state.map_data, y)
-
-                  if x >= 0 and x < length(row) do
-                    tile = Enum.at(row, x)
-
-                    case tile do
-                      0 ->
-                        "Solid Stone Wall\nYou face an impenetrable wall of fitted stone blocks. The craftsmanship is excellent, with no gaps or weaknesses visible. There's no passage here."
-
-                      1 ->
-                        "Stone Corridor\nYou are in a well-constructed stone corridor. The walls are made of carefully fitted blocks, and the floor is worn smooth by the passage of many feet over the years. Torch brackets line the walls, though most are empty. The air is cool and carries the faint scent of old stone and distant moisture."
-
-                      2 ->
-                        "Underground Pool\nYou stand beside a clear underground pool fed by a natural spring. The water is deep and perfectly still, reflecting the ceiling above like a mirror. Small ripples occasionally disturb the surface as drops fall from stalactites overhead. The air here is humid and fresh."
-
-                      3 ->
-                        "Treasure Alcove\nA small alcove has been carved into the stone wall here. The niche shows signs of having once held something valuable - there are mounting brackets and a small pedestal. Scratches on the floor suggest heavy objects were once moved in and out of this space."
-
-                      _ ->
-                        "Mystical Chamber\nYou are in a chamber that defies easy description. The very air seems to shimmer with arcane energy, and the walls appear to shift slightly when you're not looking directly at them. Strange symbols carved into the stone pulse with a faint, otherworldly light."
-                    end
-                  else
-                    "The Void\nYou have somehow moved beyond the boundaries of the known world. Reality becomes uncertain here, and the very ground beneath your feet feels insubstantial. Wisps of strange energy drift through the air, and distant sounds echo from nowhere."
-                  end
-                else
-                  "The Void\nYou have somehow moved beyond the boundaries of the known world. Reality becomes uncertain here, and the very ground beneath your feet feels insubstantial. Wisps of strange energy drift through the air, and distant sounds echo from nowhere."
-                end
-            end
-          else
-            # For non-tutorial maps, use room data from database if available
-            case room do
-              nil ->
-                "Empty Space\nYou are in an empty area with no defined room. The ground beneath your feet feels uncertain, as if this space exists between the cracks of reality."
-
-              room ->
-                room_title = room.name || "Unnamed Room"
-
-                room_desc =
-                  room.description ||
-                    "A mysterious room with no particular features. The walls are bare stone, and the air is still and quiet."
-
-                "#{room_title}\n#{room_desc}"
-            end
+              "#{room_title}\n#{room_desc}"
           end
 
         # Check for NPCs at current location
         npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
+
+        # Check for other players at current location
+        other_players =
+          get_other_players_at_location(
+            x,
+            y,
+            game_state.character.current_zone_id,
+            game_state.character.id
+          )
 
         # Check for items at current location
         items_here =
@@ -199,7 +134,9 @@ defmodule ShardWeb.UserLive.Commands1 do
 
         # Add NPC descriptions if any are present
         description_lines =
-          if length(npcs_here) > 0 do
+          if Enum.empty?(npcs_here) do
+            description_lines
+          else
             # Empty line for spacing
             updated_lines = description_lines ++ [""]
 
@@ -212,13 +149,31 @@ defmodule ShardWeb.UserLive.Commands1 do
               end)
 
             updated_lines ++ npc_descriptions
-          else
+          end
+
+        # Add other player descriptions if any are present
+        description_lines =
+          if Enum.empty?(other_players) do
             description_lines
+          else
+            # Empty line for spacing
+            updated_lines = description_lines ++ [""]
+
+            # Add each player
+            player_descriptions =
+              Enum.map(other_players, fn player ->
+                player_name = Map.get(player, :name) || "Unknown Player"
+                "#{player_name} is here."
+              end)
+
+            updated_lines ++ player_descriptions
           end
 
         # Add item descriptions if any are present
         description_lines =
-          if length(items_here) > 0 do
+          if Enum.empty?(items_here) do
+            description_lines
+          else
             # Empty line for spacing
             updated_lines = description_lines ++ [""]
 
@@ -230,20 +185,18 @@ defmodule ShardWeb.UserLive.Commands1 do
               end)
 
             updated_lines ++ item_descriptions
-          else
-            description_lines
           end
 
         # Add available exits information
         exits = get_available_exits(x, y, room, game_state)
 
         description_lines =
-          if length(exits) > 0 do
+          if Enum.empty?(exits) do
+            description_lines ++ ["", "There are no obvious exits."]
+          else
             updated_lines = description_lines ++ [""]
             exit_text = "Exits: " <> Enum.join(exits, ", ")
             updated_lines ++ [exit_text]
-          else
-            description_lines ++ ["", "There are no obvious exits."]
           end
 
         # To see if there are monsters
@@ -330,7 +283,9 @@ defmodule ShardWeb.UserLive.Commands1 do
         {x, y} = game_state.player_position
         npcs_here = get_npcs_at_location(x, y, game_state.character.current_zone_id)
 
-        if length(npcs_here) > 0 do
+        if Enum.empty?(npcs_here) do
+          {["There are no NPCs in this area."], game_state}
+        else
           response =
             ["NPCs in this area:"] ++
               Enum.flat_map(npcs_here, fn npc ->
@@ -340,8 +295,6 @@ defmodule ShardWeb.UserLive.Commands1 do
               end)
 
           {response, game_state}
-        else
-          {["There are no NPCs in this area."], game_state}
         end
 
       downcased_command in ["north", "n"] ->
@@ -391,12 +344,16 @@ defmodule ShardWeb.UserLive.Commands1 do
         # Check if it's a talk command
         case parse_talk_command(command) do
           {:ok, npc_name} ->
+            # Only create NPCs when player explicitly tries to talk
+            ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
             execute_talk_command(game_state, npc_name)
 
           :error ->
             # Check if it's a quest command
             case parse_quest_command(command) do
               {:ok, npc_name} ->
+                # Only create NPCs when player explicitly tries to get quests
+                ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
                 execute_quest_command(game_state, npc_name)
 
               :error ->
@@ -415,16 +372,10 @@ defmodule ShardWeb.UserLive.Commands1 do
                         )
 
                       :error ->
-                        # Check if it's a use command
-                        case parse_use_command(command) do
-                          {:ok, item_name} ->
-                            execute_use_command(game_state, item_name)
-
-                          :error ->
-                            # Check if it's an unlock command
-                            case parse_unlock_command(command) do
-                              {:ok, direction, item_name} ->
-                                execute_unlock_command(game_state, direction, item_name)
+                        # Check if it's an unlock command
+                        case parse_unlock_command(command) do
+                          {:ok, direction, item_name} ->
+                            execute_unlock_command(game_state, direction, item_name)
 
                               :error ->
                                 # Check if it's a poke command
@@ -432,10 +383,44 @@ defmodule ShardWeb.UserLive.Commands1 do
                                   {:ok, character_name} ->
                                     execute_poke_command(game_state, character_name)
 
+                              :error ->
+                                # Check if it's an equipped command
+                                case parse_equipped_command(command) do
+                                  :ok ->
+                                    execute_equipped_command(game_state)
+
                                   :error ->
-                                    {[
-                                       "Unknown command: '#{command}'. Type 'help' for available commands."
-                                     ], game_state}
+                                    # Check if it's an equip command
+                                    case parse_equip_command(command) do
+                                      {:ok, item_name} ->
+                                        execute_equip_command(game_state, item_name)
+
+                                      :error ->
+                                        # Check if it's an unequip command
+                                        case parse_unequip_command(command) do
+                                          {:ok, item_name} ->
+                                            execute_unequip_command(game_state, item_name)
+
+                                          :error ->
+                                            # Check if it's an accept_quest command
+                                            case parse_accept_quest_command(command) do
+                                              {:ok, npc_name, quest_title} ->
+                                                # Only create NPCs when player explicitly tries to accept quests
+                                                ShardWeb.AdminLive.NpcHelpers.ensure_tutorial_npcs_exist()
+
+                                                execute_accept_quest_command(
+                                                  game_state,
+                                                  npc_name,
+                                                  quest_title
+                                                )
+
+                                              :error ->
+                                                {[
+                                                   "Unknown command: '#{command}'. Type 'help' for available commands."
+                                                 ], game_state}
+                                            end
+                                        end
+                                    end
                                 end
                             end
                         end
@@ -446,255 +431,30 @@ defmodule ShardWeb.UserLive.Commands1 do
     end
   end
 
-  # Parse talk command to extract NPC name
-  def parse_talk_command(command) do
-    # Match patterns like: talk "npc name", talk 'npc name', talk npc_name
-    cond do
-      # Match talk "npc name" or talk 'npc name'
-      Regex.match?(~r/^talk\s+["'](.+)["']\s*$/i, command) ->
-        case Regex.run(~r/^talk\s+["'](.+)["']\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
+  # Helper function to get other players at the same location
+  defp get_other_players_at_location(x, y, zone_id, current_character_id) do
+    try do
+      # Get the room at the current coordinates
+      room = GameMap.get_room_by_coordinates(zone_id, x, y, 0)
 
-      # Match talk npc_name (single word, no quotes)
-      Regex.match?(~r/^talk\s+(\w+)\s*$/i, command) ->
-        case Regex.run(~r/^talk\s+(\w+)\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
+      case room do
+        nil ->
+          []
 
-      true ->
-        :error
-    end
-  end
+        room ->
+          # Get all player positions in this room, excluding the current character
+          query =
+            from(pp in GameMap.PlayerPosition,
+              join: c in Shard.Characters.Character,
+              on: pp.character_id == c.id,
+              where: pp.room_id == ^room.id and pp.character_id != ^current_character_id,
+              select: c
+            )
 
-  # Parse quest command to extract NPC name
-  def parse_quest_command(command) do
-    # Match patterns like: quest "npc name", quest 'npc name', quest npc_name
-    cond do
-      # Match quest "npc name" or quest 'npc name'
-      Regex.match?(~r/^quest\s+["'](.+)["']\s*$/i, command) ->
-        case Regex.run(~r/^quest\s+["'](.+)["']\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
-
-      # Match quest npc_name (single word, no quotes)
-      Regex.match?(~r/^quest\s+(\w+)\s*$/i, command) ->
-        case Regex.run(~r/^quest\s+(\w+)\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
-
-      true ->
-        :error
-    end
-  end
-
-  # Parse deliver_quest command to extract NPC name
-  def parse_deliver_quest_command(command) do
-    # Match patterns like: deliver_quest "npc name", deliver_quest 'npc name', deliver_quest npc_name
-    cond do
-      # Match deliver_quest "npc name" or deliver_quest 'npc name'
-      Regex.match?(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) ->
-        case Regex.run(~r/^deliver_quest\s+["'](.+)["']\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
-
-      # Match deliver_quest npc_name (single word, no quotes)
-      Regex.match?(~r/^deliver_quest\s+(\w+)\s*$/i, command) ->
-        case Regex.run(~r/^deliver_quest\s+(\w+)\s*$/i, command) do
-          [_, npc_name] -> {:ok, String.trim(npc_name)}
-          _ -> :error
-        end
-
-      true ->
-        :error
-    end
-  end
-
-  # Parse pickup command to extract item name
-  def parse_pickup_command(command) do
-    # Match patterns like: pickup "item name", pickup 'item name', pickup item_name
-    cond do
-      # Match pickup "item name" or pickup 'item name'
-      Regex.match?(~r/^pickup\s+["'](.+)["']\s*$/i, command) ->
-        case Regex.run(~r/^pickup\s+["'](.+)["']\s*$/i, command) do
-          [_, item_name] -> {:ok, String.trim(item_name)}
-          _ -> :error
-        end
-
-      # Match pickup item_name (single word, no quotes)
-      Regex.match?(~r/^pickup\s+(\w+)\s*$/i, command) ->
-        case Regex.run(~r/^pickup\s+(\w+)\s*$/i, command) do
-          [_, item_name] -> {:ok, String.trim(item_name)}
-          _ -> :error
-        end
-
-      true ->
-        :error
-    end
-  end
-
-  # Execute pickup command with a specific item name
-  def execute_pickup_command(game_state, item_name) do
-    {x, y} = game_state.player_position
-    items_here = get_items_at_location(x, y, game_state.character.current_zone_id)
-
-    # Find the item by name (case-insensitive)
-    target_item =
-      Enum.find(items_here, fn item ->
-        String.downcase(item.name || "") == String.downcase(item_name)
-      end)
-
-    case target_item do
-      nil ->
-        if length(items_here) > 0 do
-          # credo:disable-for-next-line Credo.Check.Refactor.EnumMapJoin
-          available_names = Enum.map_join(items_here, ", ", & &1.name)
-
-          response = [
-            "There is no item named '#{item_name}' here.",
-            "Available items: #{available_names}"
-          ]
-
-          {response, game_state}
-        else
-          {["There are no items here to pick up."], game_state}
-        end
-
-      item ->
-        # Check if item can be picked up (assuming all items can be picked up for now)
-        # In the future, you might want to add a "pickupable" field to items
-
-        # Add item to player's inventory
-        updated_inventory = [
-          %{
-            id: item[:id],
-            name: item.name,
-            type: item.item_type || "misc",
-            quantity: item.quantity || 1,
-            damage: item[:damage],
-            defense: item[:defense],
-            effect: item[:effect],
-            description: item[:description]
-          }
-          | game_state.inventory_items
-        ]
-
-        # Remove item from the room (this would need database implementation)
-        # For now, we'll just update the game state
-
-        response = [
-          "You pick up #{item.name}.",
-          "#{item.name} has been added to your inventory."
-        ]
-
-        updated_game_state = %{game_state | inventory_items: updated_inventory}
-
-        # NOTE: Remove item from database room/location
-        # This would require calling something like:
-        # Shard.Items.remove_item_from_location(item.id, "#{x},#{y},0")
-
-        {response, updated_game_state}
-    end
-  end
-
-  # Parse use command to extract item name
-  def parse_use_command(command) do
-    # Match patterns like: use "item name", use 'item name', use item_name
-    cond do
-      # Match use "item name" or use 'item name'
-      Regex.match?(~r/^use\s+["'](.+)["']\s*$/i, command) ->
-        case Regex.run(~r/^use\s+["'](.+)["']\s*$/i, command) do
-          [_, item_name] -> {:ok, String.trim(item_name)}
-          _ -> :error
-        end
-
-      # Match use item_name (can be multi-word without quotes)
-      Regex.match?(~r/^use\s+([a-z\s']+)\s*$/i, command) ->
-        case Regex.run(~r/^use\s+([a-z\s']+)\s*$/i, command) do
-          [_, item_name] -> {:ok, String.trim(item_name)}
-          _ -> :error
-        end
-
-      true ->
-        :error
-    end
-  end
-
-  # Execute use command with a specific item name
-  def execute_use_command(game_state, item_name) do
-    # Get character inventory from database
-    inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
-
-    # Find the item by name (case-insensitive)
-    target_inventory =
-      Enum.find(inventory_items, fn inv ->
-        String.downcase(inv.item.name || "") == String.downcase(item_name)
-      end)
-
-    case target_inventory do
-      nil ->
-        if length(inventory_items) > 0 do
-          available_names = Enum.map_join(inventory_items, ", ", & &1.item.name)
-
-          response = [
-            "You don't have an item named '#{item_name}' in your inventory.",
-            "Available items: #{available_names}"
-          ]
-
-          {response, game_state}
-        else
-          {["Your inventory is empty."], game_state}
-        end
-
-      inventory ->
-        item = inventory.item
-
-        # Check if it's a spell scroll
-        if Shard.Items.is_spell_scroll?(item) do
-          character_id = game_state.character.id
-
-          case Shard.Items.use_spell_scroll(character_id, inventory.id) do
-            {:ok, :learned, spell} ->
-              response = [
-                "You read the #{item.name}!",
-                "You have learned the spell: #{spell.name}",
-                "The scroll crumbles to dust as its magic is absorbed.",
-                "Use 'spells' to see your known spells."
-              ]
-
-              {response, game_state}
-
-            {:ok, :already_known, spell} ->
-              response = [
-                "You read the #{item.name}.",
-                "You already know the spell: #{spell.name}",
-                "The scroll crumbles to dust, its magic already within you."
-              ]
-
-              {response, game_state}
-
-            {:error, :not_a_spell_scroll} ->
-              response = ["This is not a spell scroll."]
-              {response, game_state}
-
-            {:error, _reason} ->
-              response = ["Failed to use #{item.name}."]
-              {response, game_state}
-          end
-        else
-          # For other consumable items, would need additional logic here
-          response = [
-            "You cannot use #{item.name} from the terminal yet.",
-            "Try using it from the inventory UI or hotbar."
-          ]
-
-          {response, game_state}
-        end
+          Repo.all(query)
+      end
+    rescue
+      _ -> []
     end
   end
 end

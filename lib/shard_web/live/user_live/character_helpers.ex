@@ -48,42 +48,35 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
       abs(old_stats.mana - new_stats.mana) >= 15
   end
 
-  # Load character inventory from database
+  # Load character inventory from database using the Items context
   def load_character_inventory(character) do
     try do
-      # Check if character_inventories is loaded and has items
-      case Map.get(character, :character_inventories) do
-        inventories when is_list(inventories) ->
-          loaded_items =
-            Enum.map(inventories, fn inventory ->
-              item = Shard.Repo.get(Shard.Items.Item, inventory.item_id)
+      # Use the proper Items context function to get inventory
+      inventory_items = Shard.Items.get_character_inventory(character.id)
 
-              if item do
-                %{
-                  id: item.id,
-                  name: item.name,
-                  item_type: item.item_type || "misc",
-                  quantity: inventory.quantity,
-                  damage: item.damage,
-                  defense: item.defense,
-                  effect: item.effect,
-                  description: item.description
-                }
-              else
-                nil
-              end
-            end)
-            |> Enum.filter(&(&1 != nil))
-
-          loaded_items
-
-        _ ->
-          # Return empty list if no inventory loaded or association not loaded
-          []
-      end
+      # Transform to the format expected by the game state
+      Enum.map(inventory_items, fn inventory ->
+        %{
+          inventory_id: inventory.id,
+          id: inventory.item.id,
+          name: inventory.item.name,
+          item_type: inventory.item.item_type || "misc",
+          quantity: inventory.quantity,
+          damage:
+            get_in(inventory.item.stats, ["damage"]) || get_in(inventory.item.effects, ["damage"]),
+          defense:
+            get_in(inventory.item.stats, ["defense"]) ||
+              get_in(inventory.item.effects, ["defense"]),
+          effect: get_in(inventory.item.effects, ["effect"]) || inventory.item.description,
+          description: inventory.item.description,
+          equipped: inventory.equipped || false,
+          slot_position: inventory.slot_position
+        }
+      end)
     rescue
-      _ ->
-        # Return empty list on error instead of fallback items
+      error ->
+        require Logger
+        Logger.error("Failed to load character inventory: #{inspect(error)}")
         []
     end
   end
@@ -105,7 +98,7 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
 
             %{
               name: item.name,
-              damage: item.damage || "1d6",
+              damage: get_in(item.stats, ["damage"]) || get_in(item.effects, ["damage"]) || "1d6",
               item_type: "weapon"
             }
           else
@@ -127,57 +120,61 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
     try do
       case character.hotbar_slots do
         slots when is_list(slots) ->
-          # Convert list of hotbar slots to map
-          hotbar_map =
-            Enum.reduce(1..5, %{}, fn slot_num, acc ->
-              slot_key = String.to_atom("slot_#{slot_num}")
-
-              slot_data = Enum.find(slots, fn slot -> slot.slot_number == slot_num end)
-
-              slot_content =
-                if slot_data && slot_data.item_id do
-                  item = Shard.Repo.get(Shard.Items.Item, slot_data.item_id)
-
-                  if item do
-                    %{
-                      id: item.id,
-                      name: item.name,
-                      item_type: item.item_type || "misc",
-                      damage: item.damage,
-                      effect: item.effect
-                    }
-                  else
-                    nil
-                  end
-                else
-                  nil
-                end
-
-              Map.put(acc, slot_key, slot_content)
-            end)
-
-          hotbar_map
+          build_hotbar_from_slots(slots)
 
         _ ->
-          # Empty hotbar if no slots loaded
-          %{
-            slot_1: nil,
-            slot_2: nil,
-            slot_3: nil,
-            slot_4: nil,
-            slot_5: nil
-          }
+          empty_hotbar()
       end
     rescue
       _ ->
-        # Empty hotbar on error
+        empty_hotbar()
+    end
+  end
+
+  # Helper function to build hotbar map from slots
+  defp build_hotbar_from_slots(slots) do
+    Enum.reduce(1..5, %{}, fn slot_num, acc ->
+      slot_key = String.to_atom("slot_#{slot_num}")
+      slot_data = Enum.find(slots, fn slot -> slot.slot_number == slot_num end)
+      slot_content = build_slot_content(slot_data)
+      Map.put(acc, slot_key, slot_content)
+    end)
+  end
+
+  # Helper function to build content for a single hotbar slot
+  defp build_slot_content(slot_data) do
+    if slot_data && slot_data.item_id do
+      build_item_content(slot_data.item_id)
+    else
+      nil
+    end
+  end
+
+  # Helper function to build item content from item ID
+  defp build_item_content(item_id) do
+    case Shard.Repo.get(Shard.Items.Item, item_id) do
+      nil ->
+        nil
+
+      item ->
         %{
-          slot_1: nil,
-          slot_2: nil,
-          slot_3: nil,
-          slot_4: nil,
-          slot_5: nil
+          id: item.id,
+          name: item.name,
+          item_type: item.item_type || "misc",
+          damage: get_in(item.stats, ["damage"]) || get_in(item.effects, ["damage"]),
+          effect: get_in(item.effects, ["effect"]) || item.description
         }
     end
+  end
+
+  # Helper function to return empty hotbar
+  defp empty_hotbar do
+    %{
+      slot_1: nil,
+      slot_2: nil,
+      slot_3: nil,
+      slot_4: nil,
+      slot_5: nil
+    }
   end
 end

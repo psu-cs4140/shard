@@ -26,6 +26,17 @@ defmodule Shard.Weapons.Weapon do
   end
 
   @doc """
+  Gets a weapon with its stats from the items table.
+  """
+  def get_weapon_with_stats!(id) do
+    alias Shard.Items.Item
+
+    Item
+    |> where([i], i.id == ^id and i.item_type == "weapon")
+    |> Repo.one!()
+  end
+
+  @doc """
   Lists all weapons.
   """
   def list_weapons do
@@ -57,5 +68,46 @@ defmodule Shard.Weapons.Weapon do
       rarity_id: w.rarity_id
     })
     |> Repo.one()
+  end
+
+  @doc """
+  Calculate total weapon damage including stats bonuses.
+  """
+  def calculate_total_damage(weapon) do
+    alias Shard.Items.Item
+
+    base_damage = weapon.damage || 0
+    attack_power = Item.get_stat(weapon, "attack_power")
+
+    base_damage + attack_power
+  end
+
+  @doc """
+  Get weapon stats summary for display.
+  """
+  def get_weapon_stats_summary(weapon) do
+    alias Shard.Items.Item
+
+    stats = Item.get_total_stats(weapon)
+
+    %{
+      attack_power: Map.get(stats, "attack_power", 0),
+      critical_chance: Map.get(stats, "critical_chance", 0),
+      critical_damage: Map.get(stats, "critical_damage", 0),
+      attack_speed: Map.get(stats, "attack_speed", 0),
+      accuracy: Map.get(stats, "accuracy", 0),
+      durability: Map.get(stats, "durability", 100)
+    }
+  end
+
+  @doc """
+  Lists weapons with their stats.
+  """
+  def list_weapons_with_stats do
+    alias Shard.Items.Item
+
+    Item
+    |> where([i], i.item_type == "weapon")
+    |> Repo.all()
   end
 end

@@ -9,12 +9,6 @@ defmodule Shard.Quests do
 
   @doc """
   Returns the list of quests.
-
-  ## Examples
-
-      iex> list_quests()
-      [%Quest{}, ...]
-
   """
   def list_quests do
     Repo.all(Quest)
@@ -32,15 +26,6 @@ defmodule Shard.Quests do
   Gets a single quest.
 
   Raises `Ecto.NoResultsError` if the Quest does not exist.
-
-  ## Examples
-
-      iex> get_quest!(123)
-      %Quest{}
-
-      iex> get_quest!(456)
-      ** (Ecto.NoResultsError)
-
   """
   def get_quest!(id), do: Repo.get!(Quest, id)
 
@@ -92,15 +77,6 @@ defmodule Shard.Quests do
 
   @doc """
   Checks if a user has already accepted a specific quest.
-
-  ## Examples
-
-      iex> quest_accepted_by_user?(user_id, quest_id)
-      true
-
-      iex> quest_accepted_by_user?(user_id, quest_id)
-      false
-
   """
   def quest_accepted_by_user?(user_id, quest_id) do
     from(qa in QuestAcceptance,
@@ -111,15 +87,6 @@ defmodule Shard.Quests do
 
   @doc """
   Checks if a user has already accepted or is in progress on a specific quest.
-
-  ## Examples
-
-      iex> quest_in_progress_by_user?(user_id, quest_id)
-      true
-
-      iex> quest_in_progress_by_user?(user_id, quest_id)
-      false
-
   """
   def quest_in_progress_by_user?(user_id, quest_id) do
     from(qa in QuestAcceptance,
@@ -131,16 +98,22 @@ defmodule Shard.Quests do
   end
 
   @doc """
+  Checks if a user has an active quest of a specific quest type.
+  """
+  def user_has_active_quest_of_type?(user_id, quest_type) do
+    from(qa in QuestAcceptance,
+      join: q in Quest,
+      on: qa.quest_id == q.id,
+      where:
+        qa.user_id == ^user_id and
+          qa.status in ["accepted", "in_progress"] and
+          q.quest_type == ^quest_type
+    )
+    |> Repo.exists?()
+  end
+
+  @doc """
   Checks if a user has already completed a specific quest.
-
-  ## Examples
-
-      iex> quest_completed_by_user?(user_id, quest_id)
-      true
-
-      iex> quest_completed_by_user?(user_id, quest_id)
-      false
-
   """
   def quest_completed_by_user?(user_id, quest_id) do
     from(qa in QuestAcceptance,
@@ -151,15 +124,6 @@ defmodule Shard.Quests do
 
   @doc """
   Checks if a user has ever accepted a quest (regardless of current status).
-
-  ## Examples
-
-      iex> quest_ever_accepted_by_user?(user_id, quest_id)
-      true
-
-      iex> quest_ever_accepted_by_user?(user_id, quest_id)
-      false
-
   """
   def quest_ever_accepted_by_user?(user_id, quest_id) do
     from(qa in QuestAcceptance,
@@ -170,38 +134,37 @@ defmodule Shard.Quests do
 
   @doc """
   Accepts a quest for a user.
-
-  ## Examples
-
-      iex> accept_quest(user_id, quest_id)
-      {:ok, %QuestAcceptance{}}
-
-      iex> accept_quest(user_id, quest_id)
-      {:error, %Ecto.Changeset{}}
-
   """
   def accept_quest(user_id, quest_id) do
-    # Check if the user has already completed this quest
-    if quest_completed_by_user?(user_id, quest_id) do
-      {:error, :quest_already_completed}
-    else
-      %QuestAcceptance{}
-      |> QuestAcceptance.accept_changeset(%{user_id: user_id, quest_id: quest_id})
-      |> Repo.insert()
+    # Check if the user has already completed this quest or has it in progress
+    cond do
+      quest_completed_by_user?(user_id, quest_id) ->
+        {:error, :quest_already_completed}
+
+      quest_in_progress_by_user?(user_id, quest_id) ->
+        {:error, :quest_already_accepted}
+
+      quest_ever_accepted_by_user?(user_id, quest_id) ->
+        # Additional safety check - if quest was ever accepted, don't allow duplicate
+        {:error, :quest_already_accepted}
+
+      true ->
+        changeset =
+          %QuestAcceptance{}
+          |> QuestAcceptance.accept_changeset(%{user_id: user_id, quest_id: quest_id})
+
+        case Repo.insert(changeset) do
+          {:ok, quest_acceptance} ->
+            {:ok, quest_acceptance}
+
+          {:error, changeset} ->
+            {:error, changeset}
+        end
     end
   end
 
   @doc """
   Completes a quest for a user.
-
-  ## Examples
-
-      iex> complete_quest(user_id, quest_id)
-      {:ok, %QuestAcceptance{}}
-
-      iex> complete_quest(user_id, quest_id)
-      {:error, %Ecto.Changeset{}}
-
   """
   def complete_quest(user_id, quest_id) do
     case from(qa in QuestAcceptance,
@@ -216,7 +179,10 @@ defmodule Shard.Quests do
       quest_acceptance ->
         result =
           quest_acceptance
-          |> QuestAcceptance.changeset(%{status: "completed", completed_at: DateTime.utc_now()})
+          |> QuestAcceptance.changeset(%{
+            status: "completed",
+            completed_at: DateTime.utc_now() |> DateTime.truncate(:second)
+          })
           |> Repo.update()
 
         # After completing a quest, check if any locked quests should be unlocked
@@ -249,21 +215,20 @@ defmodule Shard.Quests do
       )
       |> Repo.all()
 
-    Enum.each(locked_quests, fn quest ->
-      if check_quest_prerequisites(quest, completed_quest_titles) do
-        update_quest(quest, %{status: "available"})
+    Enum.each(locked_quests, &unlock_quest_if_eligible(&1, completed_quest_titles))
+  end
+
+  defp unlock_quest_if_eligible(quest, completed_quest_titles) do
+    if check_quest_prerequisites(quest, completed_quest_titles) do
+      case update_quest(quest, %{status: "available"}) do
+        {:ok, _updated_quest} -> :ok
+        {:error, _changeset} -> :error
       end
-    end)
+    end
   end
 
   @doc """
   Gets all quest acceptances for a user.
-
-  ## Examples
-
-      iex> get_user_quest_acceptances(user_id)
-      [%QuestAcceptance{}, ...]
-
   """
   def get_user_quest_acceptances(user_id) do
     from(qa in QuestAcceptance,
@@ -275,12 +240,6 @@ defmodule Shard.Quests do
 
   @doc """
   Gets all active (accepted/in_progress) quest acceptances for a user.
-
-  ## Examples
-
-      iex> get_user_active_quests(user_id)
-      [%QuestAcceptance{}, ...]
-
   """
   def get_user_active_quests(user_id) do
     from(qa in QuestAcceptance,
@@ -292,12 +251,6 @@ defmodule Shard.Quests do
 
   @doc """
   Gets quests available to a user (not yet accepted).
-
-  ## Examples
-
-      iex> get_available_quests_for_user(user_id)
-      [%Quest{}, ...]
-
   """
   def get_available_quests_for_user(user_id) do
     accepted_quest_ids =
@@ -314,12 +267,6 @@ defmodule Shard.Quests do
 
   @doc """
   Gets quests by giver NPC that are available to a user.
-
-  ## Examples
-
-      iex> get_available_quests_by_giver(user_id, npc_id)
-      [%Quest{}, ...]
-
   """
   def get_available_quests_by_giver(user_id, npc_id) do
     accepted_quest_ids =
@@ -342,56 +289,96 @@ defmodule Shard.Quests do
   @doc """
   Gets quests by giver NPC that are available to a user and haven't been completed.
   This excludes quests that have been completed to prevent repetition.
-
-  ## Examples
-
-      iex> get_available_quests_by_giver_excluding_completed(user_id, npc_id)
-      [%Quest{}, ...]
-
   """
   def get_available_quests_by_giver_excluding_completed(user_id, npc_id) do
-    # Get all quest IDs that the user has ever accepted (including completed ones)
-    ever_accepted_quest_ids =
-      from(qa in QuestAcceptance,
-        where: qa.user_id == ^user_id,
-        select: qa.quest_id
-      )
+    user_quest_data = get_user_quest_data(user_id)
+    all_npc_quests = get_npc_quests(npc_id)
 
-    # Get completed quest titles for prerequisite checking
-    completed_quest_titles =
-      from(qa in QuestAcceptance,
-        join: q in Quest,
-        on: qa.quest_id == q.id,
-        where: qa.user_id == ^user_id and qa.status == "completed",
-        select: q.title
-      )
-      |> Repo.all()
+    Enum.filter(all_npc_quests, &quest_available_for_user?(&1, user_quest_data))
+  end
 
-    # Get all quests from this NPC
-    all_npc_quests =
-      from(q in Quest,
-        where:
-          q.giver_npc_id == ^npc_id and
-            q.is_active == true and
-            q.id not in subquery(ever_accepted_quest_ids),
-        order_by: [asc: q.sort_order, asc: q.id]
-      )
-      |> Repo.all()
+  defp get_user_quest_data(user_id) do
+    %{
+      completed_non_repeatable_quest_ids: get_completed_non_repeatable_quest_ids(user_id),
+      active_quest_ids: get_active_quest_ids(user_id),
+      completed_quest_titles: get_completed_quest_titles(user_id),
+      active_quest_types: get_active_quest_types(user_id)
+    }
+  end
 
-    # Filter quests based on prerequisites and status
-    Enum.filter(all_npc_quests, fn quest ->
-      case quest.status do
-        "available" ->
-          true
+  defp get_completed_non_repeatable_quest_ids(user_id) do
+    from(qa in QuestAcceptance,
+      join: q in Quest,
+      on: qa.quest_id == q.id,
+      where: qa.user_id == ^user_id and qa.status == "completed" and q.is_repeatable == false,
+      select: qa.quest_id
+    )
+    |> Repo.all()
+  end
 
-        "locked" ->
-          # Check if prerequisites are met
-          check_quest_prerequisites(quest, completed_quest_titles)
+  defp get_active_quest_ids(user_id) do
+    from(qa in QuestAcceptance,
+      where: qa.user_id == ^user_id and qa.status in ["accepted", "in_progress"],
+      select: qa.quest_id
+    )
+    |> Repo.all()
+  end
 
-        _ ->
-          false
-      end
-    end)
+  defp get_completed_quest_titles(user_id) do
+    from(qa in QuestAcceptance,
+      join: q in Quest,
+      on: qa.quest_id == q.id,
+      where: qa.user_id == ^user_id and qa.status == "completed",
+      select: q.title
+    )
+    |> Repo.all()
+  end
+
+  defp get_active_quest_types(user_id) do
+    from(qa in QuestAcceptance,
+      join: q in Quest,
+      on: qa.quest_id == q.id,
+      where:
+        qa.user_id == ^user_id and
+          qa.status in ["accepted", "in_progress"],
+      select: q.quest_type
+    )
+    |> Repo.all()
+  end
+
+  defp get_npc_quests(npc_id) do
+    from(q in Quest,
+      where:
+        q.giver_npc_id == ^npc_id and
+          q.is_active == true,
+      order_by: [asc: q.sort_order, asc: q.id]
+    )
+    |> Repo.all()
+  end
+
+  defp quest_available_for_user?(quest, user_quest_data) do
+    quest_not_taken?(quest, user_quest_data) and
+      quest_type_available?(quest, user_quest_data) and
+      quest_status_available?(quest, user_quest_data)
+  end
+
+  defp quest_not_taken?(quest, %{
+         completed_non_repeatable_quest_ids: completed_ids,
+         active_quest_ids: active_ids
+       }) do
+    quest.id not in completed_ids and quest.id not in active_ids
+  end
+
+  defp quest_type_available?(quest, %{active_quest_types: active_types}) do
+    quest.quest_type not in active_types
+  end
+
+  defp quest_status_available?(quest, %{completed_quest_titles: completed_titles}) do
+    case quest.status do
+      "available" -> true
+      "locked" -> check_quest_prerequisites(quest, completed_titles)
+      _ -> false
+    end
   end
 
   defp check_quest_prerequisites(quest, completed_quest_titles) do
@@ -412,15 +399,6 @@ defmodule Shard.Quests do
 
   @doc """
   Creates a quest.
-
-  ## Examples
-
-      iex> create_quest(%{field: value})
-      {:ok, %Quest{}}
-
-      iex> create_quest(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
   """
   def create_quest(attrs \\ %{}) do
     %Quest{}
@@ -430,15 +408,6 @@ defmodule Shard.Quests do
 
   @doc """
   Updates a quest.
-
-  ## Examples
-
-      iex> update_quest(quest, %{field: new_value})
-      {:ok, %Quest{}}
-
-      iex> update_quest(quest, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
   """
   def update_quest(%Quest{} = quest, attrs) do
     quest
@@ -448,15 +417,6 @@ defmodule Shard.Quests do
 
   @doc """
   Deletes a quest.
-
-  ## Examples
-
-      iex> delete_quest(quest)
-      {:ok, %Quest{}}
-
-      iex> delete_quest(quest)
-      {:error, %Ecto.Changeset{}}
-
   """
   def delete_quest(%Quest{} = quest) do
     Repo.delete(quest)
@@ -464,14 +424,57 @@ defmodule Shard.Quests do
 
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking quest changes.
-
-  ## Examples
-
-      iex> change_quest(quest)
-      %Ecto.Changeset{data: %Quest{}}
-
   """
   def change_quest(%Quest{} = quest, attrs \\ %{}) do
     Quest.changeset(quest, attrs)
+  end
+
+  @doc """
+  Checks if a user can turn in a quest based on quest objectives.
+  """
+  def can_turn_in_quest?(user_id, quest_id) do
+    Shard.Quest2.can_turn_in_quest?(user_id, quest_id)
+  end
+
+  @doc """
+  Checks if a user can turn in a quest based on quest objectives with explicit character_id.
+  """
+  def can_turn_in_quest_with_character_id?(user_id, character_id, quest_id) do
+    Shard.Quest2.can_turn_in_quest_with_character_id?(user_id, character_id, quest_id)
+  end
+
+  @doc """
+  Gets quests that can be turned in to a specific NPC by a user.
+  """
+  def get_turn_in_quests_by_npc(user_id, npc_id) do
+    Shard.Quest2.get_turn_in_quests_by_npc(user_id, npc_id)
+  end
+
+  @doc """
+  Processes quest turn-in, removing required items from inventory.
+  """
+  def turn_in_quest_with_items(user_id, quest_id) do
+    Shard.Quest2.turn_in_quest_with_items(user_id, quest_id)
+  end
+
+  @doc """
+  Processes quest turn-in with explicit character_id, removing required items from inventory.
+  """
+  def turn_in_quest_with_character_id(user_id, character_id, quest_id) do
+    Shard.Quest2.turn_in_quest_with_character_id(user_id, character_id, quest_id)
+  end
+
+  @doc """
+  Gives quest reward items to a character's inventory.
+  """
+  def give_quest_reward_items(character_id, item_rewards) do
+    Shard.Quest2.give_quest_reward_items(character_id, item_rewards)
+  end
+
+  @doc """
+  Applies experience and gold rewards to a character.
+  """
+  def apply_character_rewards(character_id, exp_reward, gold_reward) do
+    Shard.Quest2.apply_character_rewards(character_id, exp_reward, gold_reward)
   end
 end

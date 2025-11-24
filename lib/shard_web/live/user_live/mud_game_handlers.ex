@@ -47,37 +47,64 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   def handle_submit_command(%{"command" => %{"text" => command_text}}, socket) do
     trimmed_command = String.trim(command_text)
 
-    if trimmed_command != "" do
-      # Add command to history
-      new_history = [trimmed_command | socket.assigns.terminal_state.command_history]
-
-      # Process the command and get response and updated game state
-      {response, updated_game_state} = process_command(trimmed_command, socket.assigns.game_state)
-
-      # Check if stats changed significantly and save to database
-      old_stats = socket.assigns.game_state.player_stats
-      new_stats = updated_game_state.player_stats
-
-      if stats_changed_significantly?(old_stats, new_stats) do
-        save_character_stats(updated_game_state.character, new_stats)
-      end
-
-      # Add command and response to output
-      new_output =
-        socket.assigns.terminal_state.output ++
-          ["> #{trimmed_command}"] ++
-          response ++
-          [""]
-
-      terminal_state = %{
-        output: new_output,
-        command_history: new_history,
-        current_command: ""
-      }
-
-      {:noreply, socket, updated_game_state, terminal_state}
-    else
+    if trimmed_command == "" do
       {:noreply, socket}
+    else
+      process_non_empty_command(trimmed_command, socket)
+    end
+  end
+
+  defp process_non_empty_command(trimmed_command, socket) do
+    # Add command to history
+    new_history = [trimmed_command | socket.assigns.terminal_state.command_history]
+
+    # Process the command and get response and updated game state
+    {response, updated_game_state} = process_command(trimmed_command, socket.assigns.game_state)
+
+    # Check if stats changed significantly and save to database
+    old_stats = socket.assigns.game_state.player_stats
+    new_stats = updated_game_state.player_stats
+
+    if stats_changed_significantly?(old_stats, new_stats) do
+      save_character_stats(updated_game_state.character, new_stats)
+    end
+
+    # Check if this was a quest completion command and reload character data if needed
+    final_game_state = handle_quest_completion(trimmed_command, updated_game_state, new_stats)
+
+    # Add command and response to output
+    new_output =
+      socket.assigns.terminal_state.output ++
+        ["> #{trimmed_command}"] ++
+        response ++
+        [""]
+
+    terminal_state = %{
+      output: new_output,
+      command_history: new_history,
+      current_command: ""
+    }
+
+    {:noreply, socket, final_game_state, terminal_state}
+  end
+
+  defp handle_quest_completion(command, updated_game_state, new_stats) do
+    if quest_completion_command?(command) do
+      reload_character_if_needed(updated_game_state, new_stats)
+    else
+      updated_game_state
+    end
+  end
+
+  defp reload_character_if_needed(updated_game_state, new_stats) do
+    case reload_character_from_database(updated_game_state.character.id) do
+      nil ->
+        updated_game_state
+
+      reloaded_character ->
+        # Update game state with reloaded character and synced stats
+        synced_stats = sync_player_stats_with_character(new_stats, reloaded_character)
+        %{updated_game_state | character: reloaded_character, player_stats: synced_stats}
     end
   end
 
@@ -125,19 +152,33 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
     end
   end
 
-  # Handle use from inventory (when value is empty or not a slot number)
-  def handle_use_hotbar_item(%{"value" => _}, socket) do
-    # Inventory item use - just show a message since we can't determine which item
-    new_output =
-      socket.assigns.terminal_state.output ++
-        [
-          "Use items by typing commands in the terminal.",
-          "Spell scrolls auto-learn when picked up!"
-        ] ++ [""]
+  def handle_use_hotbar_item(%{"item_id" => item_id} = _params, socket) do
+    # Handle case where item_id is provided instead of slot
+    # Find item in inventory by item_id
+    item =
+      Enum.find(socket.assigns.game_state.inventory_items, fn inv_item ->
+        to_string(Map.get(inv_item, :id)) == item_id
+      end)
 
-    terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+    case item do
+      nil ->
+        # Add error message to terminal
+        new_output =
+          socket.assigns.terminal_state.output ++ ["Item not found in inventory."] ++ [""]
 
-    {:noreply, socket, socket.assigns.game_state, terminal_state}
+        terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+
+        {:noreply, socket, socket.assigns.game_state, terminal_state}
+
+      item ->
+        {response, updated_game_state} = use_item(socket.assigns.game_state, item)
+
+        # Add response to terminal
+        new_output = socket.assigns.terminal_state.output ++ response ++ [""]
+        terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+
+        {:noreply, socket, updated_game_state, terminal_state}
+    end
   end
 
   def handle_equip_item(%{"item_id" => item_id}, socket) do
@@ -353,4 +394,43 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   end
 
   defp handle_player_fled(_event, _socket), do: nil
+
+  # Helper function to detect if a command might have completed a quest
+  defp quest_completion_command?(command) do
+    command_lower = String.downcase(command)
+
+    String.contains?(command_lower, "deliver") or
+      String.contains?(command_lower, "turn in") or
+      String.contains?(command_lower, "complete") or
+      String.contains?(command_lower, "give")
+  end
+
+  # Helper function to reload character from database
+  defp reload_character_from_database(character_id) do
+    try do
+      case Shard.Repo.get(Shard.Characters.Character, character_id) do
+        nil ->
+          nil
+
+        character ->
+          # Preload associations to ensure we have complete character data
+          Shard.Repo.preload(character, [:character_inventories, :hotbar_slots])
+      end
+    rescue
+      _error -> nil
+    end
+  end
+
+  # Helper function to sync player stats with character data
+  defp sync_player_stats_with_character(current_stats, character) do
+    if character do
+      # Ensure we update all relevant fields from the character
+      current_stats
+      |> Map.put(:experience, character.experience || 0)
+      |> Map.put(:gold, character.gold || 0)
+      |> Map.put(:level, character.level || 1)
+    else
+      current_stats
+    end
+  end
 end

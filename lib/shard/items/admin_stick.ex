@@ -33,9 +33,9 @@ defmodule Shard.Items.AdminStick do
     admin_stick = get_admin_stick_item()
 
     if admin_stick do
-      # Check if character already has the Admin Stick
-      case get_character_admin_stick(character_id, admin_stick.id) do
-        nil ->
+      # Check if character already has the Admin Stick (bypass sellable filter)
+      case has_admin_stick?(character_id) do
+        false ->
           # Character doesn't have it, so add it to their inventory
           %CharacterInventory{}
           |> CharacterInventory.changeset(%{
@@ -46,7 +46,7 @@ defmodule Shard.Items.AdminStick do
           })
           |> Repo.insert()
 
-        _ ->
+        true ->
           # Character already has it
           {:ok, "Character already has Admin Stick"}
       end
@@ -62,15 +62,36 @@ defmodule Shard.Items.AdminStick do
     admin_stick = get_admin_stick_item()
 
     if admin_stick do
-      !!get_character_admin_stick(character_id, admin_stick.id)
+      # Direct query that bypasses sellable filter
+      from(ci in CharacterInventory,
+        where: ci.character_id == ^character_id and ci.item_id == ^admin_stick.id
+      )
+      |> Repo.exists?()
     else
       false
     end
   end
 
-  # Helper function to find a character's Admin Stick in their inventory
-  defp get_character_admin_stick(character_id, admin_stick_id) do
-    Repo.get_by(CharacterInventory, character_id: character_id, item_id: admin_stick_id)
+  @doc """
+  Gets the count of admin sticks a character has (for testing purposes).
+  """
+  def count_admin_sticks(character_id) do
+    admin_stick = get_admin_stick_item()
+
+    if admin_stick do
+      # Direct query that bypasses sellable filter
+      from(ci in CharacterInventory,
+        where: ci.character_id == ^character_id and ci.item_id == ^admin_stick.id,
+        select: sum(ci.quantity)
+      )
+      |> Repo.one()
+      |> case do
+        nil -> 0
+        count -> count
+      end
+    else
+      0
+    end
   end
 
   # Helper function to find next available inventory slot
