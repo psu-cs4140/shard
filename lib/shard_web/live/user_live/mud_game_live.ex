@@ -303,6 +303,9 @@ defmodule ShardWeb.MudGameLive do
            available_exits: compute_available_exits(player_position, updated_game_state)
          )}
 
+      {:noreply, socket} ->
+        {:noreply, socket}
+
       result ->
         result
     end
@@ -326,6 +329,9 @@ defmodule ShardWeb.MudGameLive do
 
         {:noreply, socket}
 
+      {:noreply, socket} ->
+        {:noreply, socket}
+
       result ->
         result
     end
@@ -335,6 +341,9 @@ defmodule ShardWeb.MudGameLive do
     case handle_update_command(params, socket) do
       {:noreply, socket, terminal_state} ->
         {:noreply, assign(socket, terminal_state: terminal_state)}
+
+      {:noreply, socket} ->
+        {:noreply, socket}
 
       result ->
         result
@@ -407,6 +416,9 @@ defmodule ShardWeb.MudGameLive do
       {:noreply, socket, updated_game_state, terminal_state} ->
         {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
 
+      {:noreply, socket} ->
+        {:noreply, socket}
+
       result ->
         result
     end
@@ -416,6 +428,9 @@ defmodule ShardWeb.MudGameLive do
     case handle_equip_item(params, socket) do
       {:noreply, socket, updated_game_state, terminal_state} ->
         {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+
+      {:noreply, socket} ->
+        {:noreply, socket}
 
       result ->
         result
@@ -433,6 +448,9 @@ defmodule ShardWeb.MudGameLive do
            terminal_state: terminal_state,
            available_exits: compute_available_exits(player_position, game_state)
          )}
+
+      {:noreply, socket} ->
+        {:noreply, socket}
 
       result ->
         result
