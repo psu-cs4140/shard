@@ -7,6 +7,7 @@ defmodule Shard.Quest2 do
 
   alias Shard.Quests.{Quest, QuestAcceptance}
   alias Shard.Items.{CharacterInventory, Item}
+  alias Shard.Users.User
 
   @doc """
   Checks if a user can turn in a quest based on quest objectives.
@@ -334,7 +335,9 @@ defmodule Shard.Quest2 do
 
   defp complete_quest_or_rollback(user_id, quest_id) do
     case Shard.Quests.complete_quest(user_id, quest_id) do
-      {:ok, quest_acceptance} -> quest_acceptance
+      {:ok, quest_acceptance} -> 
+        # Quest completion already handles achievement checking in Shard.Quests.complete_quest/2
+        quest_acceptance
       {:error, reason} -> Repo.rollback(reason)
     end
   end
