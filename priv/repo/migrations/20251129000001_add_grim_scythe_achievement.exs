@@ -22,7 +22,7 @@ defmodule Shard.Repo.Migrations.AddGrimScytheAchievement do
     execute """
     INSERT INTO user_achievements (user_id, achievement_id, earned_at, progress, inserted_at, updated_at)
     SELECT DISTINCT 
-      qa.character_id,
+      qa.user_id,
       a.id,
       qa.completed_at,
       '{"quest_completed": "Retrieve the Scythe of Severing"}'::jsonb,
@@ -36,7 +36,7 @@ defmodule Shard.Repo.Migrations.AddGrimScytheAchievement do
     AND a.name = 'What, did Grim lose this?'
     AND NOT EXISTS (
       SELECT 1 FROM user_achievements ua 
-      WHERE ua.user_id = qa.character_id 
+      WHERE ua.user_id = qa.user_id 
       AND ua.achievement_id = a.id
     )
     """
