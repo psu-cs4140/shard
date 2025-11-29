@@ -18,6 +18,22 @@ defmodule Shard.Repo.Migrations.AddCreateFirstCharacterAchievement do
     )
     """
 
+    # Insert the "Enter Beginner Bone Zone" achievement
+    execute """
+    INSERT INTO achievements (name, description, icon, category, points, hidden, requirements, inserted_at, updated_at)
+    VALUES (
+      'Enter Beginner Bone Zone',
+      'Take your first steps into the Beginner Bone Zone',
+      'zone-icon',
+      'exploration',
+      15,
+      false,
+      '{"type": "zone_entered", "zone": "Beginner Bone Zone"}',
+      NOW(),
+      NOW()
+    )
+    """
+
     # Award the achievement to users who already have characters
     execute """
     INSERT INTO user_achievements (user_id, achievement_id, earned_at, progress, inserted_at, updated_at)
@@ -48,9 +64,9 @@ defmodule Shard.Repo.Migrations.AddCreateFirstCharacterAchievement do
     )
     """
 
-    # Remove the achievement
+    # Remove the achievements
     execute """
-    DELETE FROM achievements WHERE name = 'Create First Character'
+    DELETE FROM achievements WHERE name IN ('Create First Character', 'Enter Beginner Bone Zone')
     """
   end
 end
