@@ -60,10 +60,10 @@ defmodule Shard.Characters do
       {:ok, character} ->
         # Create tutorial key when character is created
         Shard.Items.GameFeatures.create_tutorial_key()
-        
+
         # Check and award "Create First Character" achievement
         check_and_award_first_character_achievement(character)
-        
+
         {:ok, character}
 
       error ->
@@ -150,15 +150,19 @@ defmodule Shard.Characters do
     if user_id do
       # Get the user
       case Shard.Repo.get(Shard.Users.User, user_id) do
-        nil -> :ok
+        nil ->
+          :ok
+
         user ->
           # Get the "Create First Character" achievement
-          achievement = Shard.Repo.get_by(Shard.Achievements.Achievement, name: "Create First Character")
-          
+          achievement =
+            Shard.Repo.get_by(Shard.Achievements.Achievement, name: "Create First Character")
+
           if achievement && !Shard.Achievements.has_achievement?(user, achievement) do
             case Shard.Achievements.award_achievement(user, achievement) do
               {:ok, _user_achievement} -> :ok
-              {:error, _changeset} -> :ok  # Silently handle errors to not break character creation
+              # Silently handle errors to not break character creation
+              {:error, _changeset} -> :ok
             end
           end
       end

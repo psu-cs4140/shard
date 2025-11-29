@@ -193,6 +193,7 @@ defmodule Shard.Achievements do
           {:ok, _user_achievement} ->
             # Achievement awarded successfully
             :ok
+
           {:error, _changeset} ->
             # Achievement already exists or other error
             :ok
@@ -209,7 +210,7 @@ defmodule Shard.Achievements do
     case zone_name do
       "Beginner Bone Zone" ->
         award_achievement_by_name(user_id, "Enter Beginner Bone Zone")
-      
+
       _ ->
         {:ok, :no_achievement}
     end

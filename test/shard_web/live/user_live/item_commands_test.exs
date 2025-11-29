@@ -165,10 +165,11 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
   describe "execute_pickup_command/2" do
     setup do
       # Create a user first
-      {:ok, user} = Shard.Users.register_user(%{
-        email: "test@example.com",
-        password: "password123"
-      })
+      {:ok, user} =
+        Shard.Users.register_user(%{
+          email: "test@example.com",
+          password: "password123"
+        })
 
       # Create a character with the user_id
       {:ok, character} =
