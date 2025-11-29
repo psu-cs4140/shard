@@ -172,4 +172,32 @@ defmodule Shard.Achievements do
         )
     }
   end
+
+  @doc """
+  Checks and awards quest completion achievements for a user.
+  This should be called when a user completes a quest.
+  """
+  def check_quest_completion_achievements(%User{} = user, quest_title) do
+    # Find achievements that require this quest to be completed
+    quest_achievements =
+      from(a in Achievement,
+        where: fragment("?->>'type' = 'quest_completed'", a.requirements),
+        where: fragment("?->>'quest' = ?", a.requirements, ^quest_title)
+      )
+      |> Repo.all()
+
+    # Award each achievement if the user doesn't already have it
+    Enum.each(quest_achievements, fn achievement ->
+      unless has_achievement?(user, achievement) do
+        case award_achievement(user, achievement) do
+          {:ok, _user_achievement} ->
+            # Achievement awarded successfully
+            :ok
+          {:error, _changeset} ->
+            # Achievement already exists or other error
+            :ok
+        end
+      end
+    end)
+  end
 end

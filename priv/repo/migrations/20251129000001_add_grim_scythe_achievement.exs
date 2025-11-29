@@ -16,6 +16,7 @@ defmodule Shard.Repo.Migrations.AddGrimScytheAchievement do
       NOW(),
       NOW()
     )
+    ON CONFLICT (name) DO NOTHING
     """
 
     # Award the achievement to users who have already completed the quest
