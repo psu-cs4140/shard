@@ -200,4 +200,63 @@ defmodule Shard.Achievements do
       end
     end)
   end
+
+  @doc """
+  Checks and awards zone entry achievements for a user.
+  This should be called when a user enters a zone.
+  """
+  def check_zone_entry_achievements(user_id, zone_name) do
+    case zone_name do
+      "Beginner Bone Zone" ->
+        award_achievement_by_name(user_id, "Enter Beginner Bone Zone")
+      
+      _ ->
+        {:ok, :no_achievement}
+    end
+  end
+
+  @doc """
+  Awards an achievement to a user by achievement name.
+  """
+  def award_achievement_by_name(user_id, achievement_name) do
+    case get_achievement_by_name(achievement_name) do
+      nil ->
+        {:error, :achievement_not_found}
+
+      achievement ->
+        # Check if user already has this achievement
+        if user_has_achievement?(user_id, achievement_name) do
+          {:ok, :already_earned}
+        else
+          # Award the achievement
+          %UserAchievement{}
+          |> UserAchievement.changeset(%{
+            user_id: user_id,
+            achievement_id: achievement.id,
+            earned_at: DateTime.utc_now(),
+            progress: %{}
+          })
+          |> Repo.insert()
+        end
+    end
+  end
+
+  @doc """
+  Gets an achievement by name.
+  """
+  def get_achievement_by_name(name) do
+    Repo.get_by(Achievement, name: name)
+  end
+
+  @doc """
+  Checks if a user has earned a specific achievement by name.
+  """
+  def user_has_achievement?(user_id, achievement_name) do
+    from(ua in UserAchievement,
+      join: a in Achievement,
+      on: ua.achievement_id == a.id,
+      where: ua.user_id == ^user_id and a.name == ^achievement_name
+    )
+    |> Repo.exists?()
+  end
 end
