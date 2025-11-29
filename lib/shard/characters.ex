@@ -146,19 +146,22 @@ defmodule Shard.Characters do
 
   # Private function to check and award the "Create First Character" achievement
   defp check_and_award_first_character_achievement(%Character{user_id: user_id}) do
-    # Get the user
-    case Shard.Repo.get(Shard.Users.User, user_id) do
-      nil -> :ok
-      user ->
-        # Get the "Create First Character" achievement
-        achievement = Shard.Repo.get_by(Shard.Achievements.Achievement, name: "Create First Character")
-        
-        if achievement && !Shard.Achievements.has_achievement?(user, achievement) do
-          case Shard.Achievements.award_achievement(user, achievement) do
-            {:ok, _user_achievement} -> :ok
-            {:error, _changeset} -> :ok  # Silently handle errors to not break character creation
+    # Skip if user_id is nil (e.g., in tests)
+    if user_id do
+      # Get the user
+      case Shard.Repo.get(Shard.Users.User, user_id) do
+        nil -> :ok
+        user ->
+          # Get the "Create First Character" achievement
+          achievement = Shard.Repo.get_by(Shard.Achievements.Achievement, name: "Create First Character")
+          
+          if achievement && !Shard.Achievements.has_achievement?(user, achievement) do
+            case Shard.Achievements.award_achievement(user, achievement) do
+              {:ok, _user_achievement} -> :ok
+              {:error, _changeset} -> :ok  # Silently handle errors to not break character creation
+            end
           end
-        end
+      end
     end
   end
 end
