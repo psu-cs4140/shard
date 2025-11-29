@@ -327,19 +327,6 @@ defmodule Shard.Map do
     )
   end
 
-  @doc """
-  Checks if moving between two rooms represents completing the dungeon.
-  Returns a completion message if the movement is from (2,2) to (2,1).
-  """
-  def check_dungeon_completion(from_room, to_room) do
-    with %Room{x_coordinate: 2, y_coordinate: 2} <- from_room,
-         %Room{x_coordinate: 2, y_coordinate: 1} <- to_room do
-      {:completed, "Congratulations! You have completed the dungeon!"}
-    else
-      _ -> :no_completion
-    end
-  end
-
   # Player Position functions
 
   @doc """

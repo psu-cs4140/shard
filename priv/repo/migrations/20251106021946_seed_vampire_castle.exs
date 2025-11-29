@@ -48,7 +48,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
       {-2, 0, "Sewer Pipe Entrance", "standard"},
       {-3, 0, "Sewer Pipe Tunnel 1", "standard"},
       {-3, 1, "Sewer Pipe Tunnel 2", "standard"},
-      {-4, 1, "Sewer Lair", "dungeon"},
+      {-4, 1, "Sewer Lair", "standard"},
       {0, -2, "Manor Lobby SW", "standard"},
       {0, -3, "Manor Lobby CW", "standard"},
       {0, -4, "Manor Lobby NW", "standard"},
@@ -61,9 +61,11 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
       {4, -4, "Dining Hall W", "standard"},
       {5, -4, "Dining Hall E", "standard"},
       {5, -3, "Kitchen", "standard"},
-      {4, -3, "Freezer", "dungeon"},
-      {-1, -3, "Study", "treasure_room"},
-      {-1, -4, "Master Chamber", "dungeon"}
+      {4, -3, "Freezer", "standard"},
+      {-1, -3, "Study", "standard"},
+      {-1, -4, "Master Chamber", "standard"},
+      {-2, -4, "Cellar", "standard"},
+      {-2, -5, "Cellar Doors", "treasure_room"}
     ]
 
     manor_rooms =
@@ -125,6 +127,10 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
       {{0, -3}, {0, -4}, "north"},
       # Connect Manor Lobby NW (0,-4) to Master Chamber (-1,-4)
       {{0, -4}, {-1, -4}, "west"},
+      # Connect Master Chamber (-1,-4) to Cellar (-2,-4)
+      {{-1, -4}, {-2, -4}, "west"},
+      # Connect Cellar (-2,-4) to Cellar Doors (-2,-5)
+      {{-2, -4}, {-2, -5}, "north"},
       # Connect Manor Lobby CW (0,-3) to Hallway W (1,-3)
       {{0, -3}, {1, -3}, "east"},
       # Connect Hallway W (1,-3) to Hallway E (2,-3)
@@ -158,12 +164,14 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
         # Master chamber door
         # Study door
         # Library door
+        # Cellar door
         is_locked =
           (from_x == 0 && from_y == -1 && to_x == 0 && to_y == -2) ||
             (from_x == -1 && from_y == 0 && to_x == -2 && to_y == 0) ||
             (from_x == 0 && from_y == -4 && to_x == -1 && to_y == -4) ||
             (from_x == -1 && from_y == -2 && to_x == -1 && to_y == -3) ||
-            (from_x == 0 && from_y == -2 && to_x == -1 && to_y == -2)
+            (from_x == 0 && from_y == -2 && to_x == -1 && to_y == -2) ||
+            (from_x == -1 && from_y == -4 && to_x == -2 && to_y == -4)
 
         door_type = if is_locked, do: "locked_gate", else: "standard"
 
@@ -174,6 +182,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
             from_x == 0 && from_y == -4 && to_x == -1 && to_y == -4 -> "Master Key"
             from_x == 0 && from_y == -2 && to_x == -1 && to_y == -2 -> "Library Key"
             from_x == -1 && from_y == -2 && to_x == -1 && to_y == -3 -> "Study Key"
+            from_x == -1 && from_y == -4 && to_x == -2 && to_y == -4 -> "Cellar Key"
             true -> nil
           end
 
@@ -274,8 +283,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
           description: "A disgusting blob of sewage and filth that has gained sentience.",
           location_id: sewer_lair.id,
           potential_loot_drops: %{
-            "#{slippers_item.id}" => %{chance: 0.9, min_quantity: 1, max_quantity: 1},
-            "#{manor_key_item.id}" => %{chance: 1.0, min_quantity: 1, max_quantity: 1}
+            "#{slippers_item.id}" => %{chance: 1.0, min_quantity: 1, max_quantity: 1}
           }
         })
 
@@ -331,9 +339,12 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
         Enum.map(chainmail_items, fn item_spec ->
           case Repo.query("SELECT id FROM items WHERE name = $1", [item_spec.name]) do
             {:ok, %{rows: []}} ->
+              stats =
+                if item_spec.name == "Darkened Broadsword", do: %{"attack_power" => 20}, else: %{}
+
               {:ok, %{rows: [[item_id]]}} =
                 Repo.query(
-                  "INSERT INTO items (name, description, item_type, rarity, value, stackable, equippable, equipment_slot, is_active, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id",
+                  "INSERT INTO items (name, description, item_type, rarity, value, stackable, equippable, equipment_slot, stats, is_active, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id",
                   [
                     item_spec.name,
                     item_spec.description,
@@ -343,6 +354,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
                     false,
                     true,
                     item_spec.equipment_slot,
+                    Jason.encode!(stats),
                     true,
                     DateTime.utc_now(),
                     DateTime.utc_now()
@@ -389,7 +401,8 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
       loot_drops =
         created_chainmail_items
         |> Enum.map(fn item ->
-          {"#{item.id}", %{chance: 0.3, min_quantity: 1, max_quantity: 1}}
+          chance = if item.name == "Darkened Broadsword", do: 1.0, else: 0.3
+          {"#{item.id}", %{chance: chance, min_quantity: 1, max_quantity: 1}}
         end)
         |> Enum.into(%{})
         |> Kernel.put_in([Access.key("#{library_key_item.id}")], %{
@@ -450,6 +463,35 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
             %{id: item_id}
         end
 
+      # Create the Cellar Key item if it doesn't exist
+      cellar_key_item =
+        case Repo.query("SELECT * FROM items WHERE name = $1", ["Cellar Key"]) do
+          {:ok, %{rows: []}} ->
+            {:ok, %{rows: [[item_id | _]]}} =
+              Repo.query(
+                "INSERT INTO items (name, description, item_type, rarity, value, weight, equippable, equipment_slot, is_active, pickup, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id",
+                [
+                  "Cellar Key",
+                  "A heavy iron key stained with ancient blood. It bears the mark of the vampire lord and unlocks the deepest secrets of the manor.",
+                  "key",
+                  "rare",
+                  50,
+                  0.2,
+                  false,
+                  nil,
+                  true,
+                  true,
+                  DateTime.utc_now(),
+                  DateTime.utc_now()
+                ]
+              )
+
+            %{id: item_id}
+
+          {:ok, %{rows: [[item_id | _]]}} ->
+            %{id: item_id}
+        end
+
       # Create The Count monster with item drops
       {:ok, _count} =
         Shard.Monsters.create_monster(%{
@@ -464,7 +506,8 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
             "The ancient master of this manor, a powerful vampire lord with centuries of dark knowledge and supernatural strength.",
           location_id: master_chamber.id,
           potential_loot_drops: %{
-            "#{vampire_cloak_item.id}" => %{chance: 1.0, min_quantity: 1, max_quantity: 1}
+            "#{vampire_cloak_item.id}" => %{chance: 1.0, min_quantity: 1, max_quantity: 1},
+            "#{cellar_key_item.id}" => %{chance: 1.0, min_quantity: 1, max_quantity: 1}
           }
         })
 

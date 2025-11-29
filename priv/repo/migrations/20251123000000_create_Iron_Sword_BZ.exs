@@ -1,8 +1,8 @@
-defmodule Shard.Repo.Migrations.CreateBoneZoneKeyItem do
+defmodule Shard.Repo.Migrations.CreateIronSwordBZ do
   use Ecto.Migration
 
   def up do
-    # Create the Bone Zone Key item
+    # Create the Spectral Iron Edge item
     execute """
     INSERT INTO items (
       name,
@@ -18,10 +18,10 @@ defmodule Shard.Repo.Migrations.CreateBoneZoneKeyItem do
       inserted_at,
       updated_at
     ) VALUES (
-      'Bone Zone Key',
-      'An ancient skeletal key that glows with eerie blue light. This key grants access to deeper areas of the Bone Zone.',
-      'key',
-      'rare',
+      'Spectral Iron Edge',
+      'A sturdy iron sword, its edge worn but reliable. Though simple in design, it carries the mark of a skilled smith and feels well-balanced in the hand.',
+      'weapon',
+      'uncommon',
       100,
       0.1,
       true,
@@ -35,6 +35,6 @@ defmodule Shard.Repo.Migrations.CreateBoneZoneKeyItem do
   end
 
   def down do
-    execute "DELETE FROM items WHERE name = 'Bone Zone Key';"
+    execute "DELETE FROM items WHERE name = 'Spectral Iron Edge';"
   end
 end

@@ -44,7 +44,7 @@ defmodule Shard.Repo.Migrations.AddChaliceToBonezone do
       updated_at
     ) VALUES (
       (SELECT id FROM items WHERE name = 'Chalice' LIMIT 1),
-      '2,0,0',
+      '0,0,0',
       1,
       NOW(),
       NOW()
@@ -57,7 +57,7 @@ defmodule Shard.Repo.Migrations.AddChaliceToBonezone do
     execute """
     DELETE FROM room_items 
     WHERE item_id = (SELECT id FROM items WHERE name = 'Chalice' LIMIT 1)
-    AND location = '2,0,0';
+    AND location = '0,0,0';
     """
 
     # Optionally remove the Chalice item entirely (uncomment if desired)
