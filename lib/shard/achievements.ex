@@ -286,15 +286,16 @@ defmodule Shard.Achievements do
     # 1. Send a Phoenix PubSub message to the user's LiveView
     # 2. Trigger a sound notification in the frontend
     # 3. Show a popup notification
-    
+
     Phoenix.PubSub.broadcast(
       Shard.PubSub,
       "user:#{user_id}",
-      {:achievement_unlocked, %{
-        achievement: achievement,
-        sound: true,
-        timestamp: DateTime.utc_now()
-      }}
+      {:achievement_unlocked,
+       %{
+         achievement: achievement,
+         sound: true,
+         timestamp: DateTime.utc_now()
+       }}
     )
   end
 end
