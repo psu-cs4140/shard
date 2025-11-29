@@ -122,13 +122,21 @@ defmodule Shard.Achievements do
   Awards an achievement to a user.
   """
   def award_achievement(%User{} = user, %Achievement{} = achievement) do
-    %UserAchievement{}
-    |> UserAchievement.changeset(%{
-      user_id: user.id,
-      achievement_id: achievement.id,
-      earned_at: DateTime.utc_now()
-    })
-    |> Repo.insert()
+    case %UserAchievement{}
+         |> UserAchievement.changeset(%{
+           user_id: user.id,
+           achievement_id: achievement.id,
+           earned_at: DateTime.utc_now()
+         })
+         |> Repo.insert() do
+      {:ok, user_achievement} ->
+        # Trigger achievement notification sound
+        trigger_achievement_notification(user.id, achievement)
+        {:ok, user_achievement}
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -230,14 +238,22 @@ defmodule Shard.Achievements do
           {:ok, :already_earned}
         else
           # Award the achievement
-          %UserAchievement{}
-          |> UserAchievement.changeset(%{
-            user_id: user_id,
-            achievement_id: achievement.id,
-            earned_at: DateTime.utc_now(),
-            progress: %{}
-          })
-          |> Repo.insert()
+          case %UserAchievement{}
+               |> UserAchievement.changeset(%{
+                 user_id: user_id,
+                 achievement_id: achievement.id,
+                 earned_at: DateTime.utc_now(),
+                 progress: %{}
+               })
+               |> Repo.insert() do
+            {:ok, user_achievement} ->
+              # Trigger achievement notification sound
+              trigger_achievement_notification(user_id, achievement)
+              {:ok, user_achievement}
+
+            error ->
+              error
+          end
         end
     end
   end
@@ -259,5 +275,26 @@ defmodule Shard.Achievements do
       where: ua.user_id == ^user_id and a.name == ^achievement_name
     )
     |> Repo.exists?()
+  end
+
+  @doc """
+  Triggers an achievement notification sound for a user.
+  This function can be extended to send real-time notifications to the frontend.
+  """
+  def trigger_achievement_notification(user_id, achievement) do
+    # For now, this is a placeholder that could be extended to:
+    # 1. Send a Phoenix PubSub message to the user's LiveView
+    # 2. Trigger a sound notification in the frontend
+    # 3. Show a popup notification
+    
+    Phoenix.PubSub.broadcast(
+      Shard.PubSub,
+      "user:#{user_id}",
+      {:achievement_unlocked, %{
+        achievement: achievement,
+        sound: true,
+        timestamp: DateTime.utc_now()
+      }}
+    )
   end
 end
