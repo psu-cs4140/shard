@@ -164,7 +164,14 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
 
   describe "execute_pickup_command/2" do
     setup do
-      # Create a character
+      # Create a user first
+      {:ok, user} =
+        Shard.Users.register_user(%{
+          email: "test@example.com",
+          password: "password123"
+        })
+
+      # Create a character with the user_id
       {:ok, character} =
         Characters.create_character(%{
           name: "Test Character",
@@ -173,7 +180,8 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
           max_health: 100,
           experience: 0,
           class: "warrior",
-          race: "human"
+          race: "human",
+          user_id: user.id
         })
 
       # Create test items

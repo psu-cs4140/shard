@@ -104,3 +104,18 @@
 
 /* This file is for your main application CSS */
 @import "./prairie-theme.css";
+
+/* Achievement notification styles */
+.achievement-notification {
+  animation: achievement-glow 2s ease-in-out;
+}
+
+@keyframes achievement-glow {
+  0%, 100% { box-shadow: 0 4px 20px rgba(255, 193, 7, 0.3); }
+  50% { box-shadow: 0 8px 30px rgba(255, 193, 7, 0.6); }
+}
+
+.achievement-notification:hover {
+  transform: scale(1.02);
+  transition: transform 0.2s ease;
+}
