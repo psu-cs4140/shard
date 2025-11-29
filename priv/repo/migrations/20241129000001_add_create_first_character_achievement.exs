@@ -25,7 +25,7 @@ defmodule Shard.Repo.Migrations.AddCreateFirstCharacterAchievement do
       c.user_id,
       a.id,
       NOW(),
-      '{"characters_created": 1}',
+      '{"characters_created": 1}'::jsonb,
       NOW(),
       NOW()
     FROM characters c
