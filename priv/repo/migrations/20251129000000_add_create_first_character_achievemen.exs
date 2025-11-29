@@ -2,7 +2,7 @@ defmodule Shard.Repo.Migrations.AddCreateFirstCharacterAchievement do
   use Ecto.Migration
 
   def up do
-    # Insert the "Create First Character" achievement
+    # Insert the "Create First Character" achievement (skip if already exists)
     execute """
     INSERT INTO achievements (name, description, icon, category, points, hidden, requirements, inserted_at, updated_at)
     VALUES (
@@ -16,9 +16,10 @@ defmodule Shard.Repo.Migrations.AddCreateFirstCharacterAchievement do
       NOW(),
       NOW()
     )
+    ON CONFLICT (name) DO NOTHING
     """
 
-    # Insert the "Enter Beginner Bone Zone" achievement
+    # Insert the "Enter Beginner Bone Zone" achievement (skip if already exists)
     execute """
     INSERT INTO achievements (name, description, icon, category, points, hidden, requirements, inserted_at, updated_at)
     VALUES (
@@ -32,6 +33,7 @@ defmodule Shard.Repo.Migrations.AddCreateFirstCharacterAchievement do
       NOW(),
       NOW()
     )
+    ON CONFLICT (name) DO NOTHING
     """
 
     # Award the achievement to users who already have characters
