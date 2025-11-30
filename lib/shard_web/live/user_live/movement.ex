@@ -70,13 +70,12 @@ defmodule ShardWeb.UserLive.Movement do
       monsters = Enum.filter(game_state.monsters, fn m -> m[:position] == new_pos end)
       monster_count = Enum.count(monsters)
 
+      # Get NPC descriptions using the same logic as the look command
+      npc_descriptions = ShardWeb.UserLive.Commands1.get_npc_descriptions(npcs_here)
+
       response =
         ["You traversed #{direction_name}."] ++
-          if length(npcs_here) > 0 do
-            ["You see #{Enum.map_join(npcs_here, ", ", & &1.name)} here."]
-          else
-            []
-          end ++
+          npc_descriptions ++
           if length(items_here) > 0 do
             Enum.map(items_here, fn item ->
               "You see a #{item.name || "unknown item"} on the ground."
