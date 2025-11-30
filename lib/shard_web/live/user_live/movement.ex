@@ -282,8 +282,8 @@ defmodule ShardWeb.UserLive.Movement do
     "room:#{xx},#{yy}"
   end
 
-  defp get_npcs_at_location(_x, _y, _zone_id) do
-    []
+  defp get_npcs_at_location(x, y, zone_id) do
+    ShardWeb.UserLive.MapHelpers.get_npcs_at_location(x, y, zone_id)
   end
 
   defp get_items_at_location(x, y, _zone_id) do
