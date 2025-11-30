@@ -421,8 +421,8 @@ defmodule ShardWeb.UserLive.Commands1 do
       []
     else
       # Empty line for spacing
+      # Add each NPC with their description
       [""] ++
-        # Add each NPC with their description
         Enum.map(npcs_here, fn npc ->
           npc_name = Map.get(npc, :name) || "Unknown NPC"
           npc_desc = Map.get(npc, :description) || "They look at you with interest."
