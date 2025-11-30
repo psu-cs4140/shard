@@ -524,26 +524,20 @@ defmodule ShardWeb.UserLive.CommandParsers do
 
   # Remove item from player's inventory
   defp remove_item_from_inventory(game_state, item_name) do
-    # Find the inventory item to remove from the character's actual inventory records
-    character_inventory_item =
-      Enum.find(game_state.character.character_inventories, fn char_inv ->
-        # We need to get the item name, but the association might not be loaded
-        # So we'll match by item_id from our flattened inventory data
-        flattened_item = Enum.find(game_state.inventory_items, fn inv_item ->
-          String.downcase(inv_item.name || "") == String.downcase(item_name)
-        end)
-        
-        flattened_item && char_inv.item_id == flattened_item.id
+    # Find the inventory item to remove from the flattened inventory data
+    inventory_item =
+      Enum.find(game_state.inventory_items, fn inv_item ->
+        String.downcase(inv_item.name || "") == String.downcase(item_name)
       end)
 
-    case character_inventory_item do
+    case inventory_item do
       nil ->
         # Item not found, return unchanged state
         game_state
 
-      char_inv_item ->
-        # Remove one quantity of the item using the correct CharacterInventory ID
-        case Shard.Items.remove_item_from_inventory(char_inv_item.id, 1) do
+      inv_item ->
+        # Use the inventory_id from the flattened data to remove the item
+        case Shard.Items.remove_item_from_inventory(inv_item.inventory_id, 1) do
           {:ok, _} ->
             # Reload inventory from database to sync with game state
             updated_inventory =
