@@ -278,8 +278,9 @@ defmodule Shard.Users do
         confirmed_user = User.confirm_changeset(user) |> Repo.update!()
 
         # Generate magic login link
-        {encoded_token, _user_token} = UserToken.build_email_token(confirmed_user, "login")
-        login_url = fn token -> "/users/log-in/#{token}" end.(encoded_token)  # Placeholder URL; adjust as needed for full URL generation
+        {encoded_token, user_token} = UserToken.build_email_token(confirmed_user, "login")
+        Repo.insert!(user_token)
+        login_url = "/users/log-in/#{encoded_token}"
 
         {:ok, {confirmed_user, login_url}}
 
