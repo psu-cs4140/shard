@@ -3,8 +3,11 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
 
   import Phoenix.LiveViewTest
   import Shard.UsersFixtures
+  import Ecto.Query
 
+  alias Shard.Repo
   alias Shard.Users
+  alias Shard.Users.User
 
   describe "mount" do
     test "loads users and assigns current user", %{conn: conn} do
