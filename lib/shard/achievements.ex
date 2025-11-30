@@ -122,13 +122,21 @@ defmodule Shard.Achievements do
   Awards an achievement to a user.
   """
   def award_achievement(%User{} = user, %Achievement{} = achievement) do
-    %UserAchievement{}
-    |> UserAchievement.changeset(%{
-      user_id: user.id,
-      achievement_id: achievement.id,
-      earned_at: DateTime.utc_now()
-    })
-    |> Repo.insert()
+    case %UserAchievement{}
+         |> UserAchievement.changeset(%{
+           user_id: user.id,
+           achievement_id: achievement.id,
+           earned_at: DateTime.utc_now()
+         })
+         |> Repo.insert() do
+      {:ok, user_achievement} ->
+        # Trigger achievement notification sound
+        trigger_achievement_notification(user.id, achievement)
+        {:ok, user_achievement}
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -171,5 +179,123 @@ defmodule Shard.Achievements do
           else: 0.0
         )
     }
+  end
+
+  @doc """
+  Checks and awards quest completion achievements for a user.
+  This should be called when a user completes a quest.
+  """
+  def check_quest_completion_achievements(%User{} = user, quest_title) do
+    # Find achievements that require this quest to be completed
+    quest_achievements =
+      from(a in Achievement,
+        where: fragment("?->>'type' = 'quest_completed'", a.requirements),
+        where: fragment("?->>'quest' = ?", a.requirements, ^quest_title)
+      )
+      |> Repo.all()
+
+    # Award each achievement if the user doesn't already have it
+    Enum.each(quest_achievements, fn achievement ->
+      unless has_achievement?(user, achievement) do
+        case award_achievement(user, achievement) do
+          {:ok, _user_achievement} ->
+            # Achievement awarded successfully
+            :ok
+
+          {:error, _changeset} ->
+            # Achievement already exists or other error
+            :ok
+        end
+      end
+    end)
+  end
+
+  @doc """
+  Checks and awards zone entry achievements for a user.
+  This should be called when a user enters a zone.
+  """
+  def check_zone_entry_achievements(user_id, zone_name) do
+    case zone_name do
+      "Beginner Bone Zone" ->
+        award_achievement_by_name(user_id, "Enter Beginner Bone Zone")
+
+      _ ->
+        {:ok, :no_achievement}
+    end
+  end
+
+  @doc """
+  Awards an achievement to a user by achievement name.
+  """
+  def award_achievement_by_name(user_id, achievement_name) do
+    case get_achievement_by_name(achievement_name) do
+      nil ->
+        {:error, :achievement_not_found}
+
+      achievement ->
+        # Check if user already has this achievement
+        if user_has_achievement?(user_id, achievement_name) do
+          {:ok, :already_earned}
+        else
+          # Award the achievement
+          case %UserAchievement{}
+               |> UserAchievement.changeset(%{
+                 user_id: user_id,
+                 achievement_id: achievement.id,
+                 earned_at: DateTime.utc_now(),
+                 progress: %{}
+               })
+               |> Repo.insert() do
+            {:ok, user_achievement} ->
+              # Trigger achievement notification sound
+              trigger_achievement_notification(user_id, achievement)
+              {:ok, user_achievement}
+
+            error ->
+              error
+          end
+        end
+    end
+  end
+
+  @doc """
+  Gets an achievement by name.
+  """
+  def get_achievement_by_name(name) do
+    Repo.get_by(Achievement, name: name)
+  end
+
+  @doc """
+  Checks if a user has earned a specific achievement by name.
+  """
+  def user_has_achievement?(user_id, achievement_name) do
+    from(ua in UserAchievement,
+      join: a in Achievement,
+      on: ua.achievement_id == a.id,
+      where: ua.user_id == ^user_id and a.name == ^achievement_name
+    )
+    |> Repo.exists?()
+  end
+
+  @doc """
+  Triggers an achievement notification sound for a user.
+  This function can be extended to send real-time notifications to the frontend.
+  """
+  def trigger_achievement_notification(user_id, achievement) do
+    # For now, this is a placeholder that could be extended to:
+    # 1. Send a Phoenix PubSub message to the user's LiveView
+    # 2. Trigger a sound notification in the frontend
+    # 3. Show a popup notification
+
+    Phoenix.PubSub.broadcast(
+      Shard.PubSub,
+      "user:#{user_id}",
+      {:achievement_unlocked,
+       %{
+         achievement: achievement,
+         sound: true,
+         timestamp: DateTime.utc_now()
+       }}
+    )
   end
 end
