@@ -248,6 +248,47 @@ defmodule Shard.Users do
   end
 
   @doc """
+  Creates a new user, marks them as confirmed, and generates a login link URL.
+
+  This is intended for admin use to manually invite users without automated emails.
+  """
+  def create_user_with_login_link(attrs) do
+    # Check if this is the first user (though unlikely in admin context)
+    is_first_user = Repo.aggregate(User, :count, :id) == 0
+
+    # Convert all keys to strings to avoid mixed key types
+    attrs =
+      attrs
+      |> Enum.into(%{}, fn {k, v} -> {to_string(k), v} end)
+
+    # Set admin to true for the first user (fallback, but admin should handle manually if needed)
+    attrs =
+      if is_first_user do
+        Map.put(attrs, "admin", true)
+      else
+        attrs
+      end
+
+    # Create changeset and insert user
+    changeset = User.email_changeset(%User{}, attrs)
+
+    case Repo.insert(changeset) do
+      {:ok, user} ->
+        # Mark as confirmed
+        confirmed_user = User.confirm_changeset(user) |> Repo.update!()
+
+        # Generate magic login link
+        {encoded_token, _user_token} = UserToken.build_email_token(confirmed_user, "login")
+        login_url = fn token -> "/users/log-in/#{token}" end.(encoded_token)  # Placeholder URL; adjust as needed for full URL generation
+
+        {:ok, {confirmed_user, login_url}}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
+  end
+
+  @doc """
   Gets the first user ever created (by ID).
   This user should always remain an admin.
   """

@@ -20,7 +20,9 @@ defmodule ShardWeb.AdminLive.UserManagement do
      socket
      |> assign(:users, users)
      |> assign(:first_user, first_user)
-     |> assign(:current_user, current_user)}
+     |> assign(:current_user, current_user)
+     |> assign(:create_user_form, to_form(%{"email" => ""}))
+     |> assign(:login_link, nil)}
   end
 
   @impl true
@@ -68,6 +70,25 @@ defmodule ShardWeb.AdminLive.UserManagement do
         {:noreply,
          socket
          |> put_flash(:error, "User not found.")}
+    end
+  end
+
+  @impl true
+  def handle_event("create_user", %{"email" => email}, socket) do
+    case Users.create_user_with_login_link(%{email: email}) do
+      {:ok, {user, login_url}} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "User #{user.email} created successfully. Share the login link below.")
+         |> assign(:users, Users.list_users())
+         |> assign(:login_link, login_url)
+         |> assign(:create_user_form, to_form(%{"email" => ""}))}
+
+      {:error, changeset} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to create user.")
+         |> assign(:create_user_form, to_form(changeset))}
     end
   end
 
@@ -134,6 +155,19 @@ defmodule ShardWeb.AdminLive.UserManagement do
     </.header>
 
     <div class="mt-8">
+      <.form for={@create_user_form} id="create-user-form" phx-submit="create_user" class="mb-6">
+        <div class="flex gap-4 items-end">
+          <.input field={@create_user_form[:email]} type="email" label="New User Email" placeholder="user@example.com" required />
+          <.button type="submit" class="btn btn-primary">Create User</.button>
+        </div>
+      </.form>
+
+      <%= if @login_link do %>
+        <div class="alert alert-info mb-6">
+          <strong>Login Link:</strong> <a href={@login_link} target="_blank" class="link">{@login_link}</a>
+          <p class="text-sm mt-2">Copy and send this link to the user for their first login.</p>
+        </div>
+      <% end %>
       <div class="overflow-x-auto">
         <table class="table table-zebra w-full">
           <thead>
