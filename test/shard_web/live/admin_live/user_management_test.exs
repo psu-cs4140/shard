@@ -113,9 +113,12 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
 
       render_click(view, "delete_user", %{"user_id" => regular_user.id})
 
-      # Check that the user no longer appears in the rendered HTML
+      # Check that the user no longer appears in the table (not in flash)
       updated_html = render(view)
-      refute updated_html =~ regular_user.email
+      document = LazyHTML.from_fragment(updated_html)
+      table_matches = LazyHTML.filter(document, "table tbody td")
+      table_text = Enum.map(table_matches, &LazyHTML.text/1) |> Enum.join(" ")
+      refute table_text =~ regular_user.email
 
       # Check that the user was actually deleted from the database
       assert_raise Ecto.NoResultsError, fn ->
@@ -314,10 +317,13 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
 
       # Test the login link works
       test_conn = get(conn, login_url)
+      # The link leads to the confirmation page; submit the form to log in
+      token = Regex.run(~r|value="([^"]+)"|, test_conn.resp_body) |> List.last()  # Extract token from hidden input
+      login_conn = post(test_conn, "/users/log-in", %{"user" => %{"token" => token}})
       # After login, should have user_token in session
-      assert get_session(test_conn, :user_token)
-      # And should redirect or be logged in
-      assert redirected_to(test_conn) =~ ~p"/"
+      assert get_session(login_conn, :user_token)
+      # And should redirect to home
+      assert redirected_to(login_conn) =~ ~p"/"
     end
 
     test "fails to create user with invalid email", %{conn: conn} do
