@@ -318,7 +318,7 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       # Test the login link works
       test_conn = get(conn, login_url)
       # The link leads to the confirmation page; submit the form to log in
-      token = Regex.run(~r|value="([^"]+)"|, test_conn.resp_body) |> List.last()  # Extract token from hidden input
+      token = Regex.run(~r|name="user\[token\]" value="([^"]+)"|, test_conn.resp_body) |> List.last()  # Extract token from hidden input
       login_conn = post(test_conn, "/users/log-in", %{"user" => %{"token" => token}})
       # After login, should have user_token in session
       assert get_session(login_conn, :user_token)
