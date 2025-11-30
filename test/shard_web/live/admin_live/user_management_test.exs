@@ -370,6 +370,39 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       # Check no login link displayed
       refute html =~ "/users/log-in/"
     end
+
+    test "shows login link for existing user", %{conn: conn} do
+      admin_user = user_fixture(%{admin: true})
+      regular_user = user_fixture(%{admin: false})
+
+      {:ok, view, _html} =
+        conn
+        |> log_in_user(admin_user)
+        |> live(~p"/admin/user_management")
+
+      # Click the show login link button
+      html = render_click(view, "show_login_link", %{"user_id" => regular_user.id})
+
+      # Check success flash
+      assert html =~ "Login link generated for #{regular_user.email}"
+
+      # Check login link is displayed
+      assert html =~ "/users/log-in/"
+      assert html =~ "Copy and send this link to the user"
+
+      # Extract the login URL from HTML
+      login_url = Regex.run(~r|href="([^"]*/users/log-in/[^"]*)|, html) |> List.last()
+
+      # Test the login link works
+      test_conn = get(conn, login_url)
+      # The link leads to the confirmation page; submit the form to log in
+      token = Regex.run(~r|name="user\[token\]" value="([^"]+)"|, test_conn.resp_body) |> List.last()  # Extract token from hidden input
+      login_conn = post(test_conn, "/users/log-in", %{"user" => %{"token" => token}})
+      # After login, should have user_token in session
+      assert get_session(login_conn, :user_token)
+      # And should redirect to home
+      assert redirected_to(login_conn) =~ ~p"/"
+    end
   end
 
   describe "render" do

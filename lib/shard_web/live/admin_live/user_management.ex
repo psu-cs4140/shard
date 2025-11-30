@@ -22,7 +22,8 @@ defmodule ShardWeb.AdminLive.UserManagement do
      |> assign(:first_user, first_user)
      |> assign(:current_user, current_user)
      |> assign(:create_user_form, to_form(%{"email" => ""}))
-     |> assign(:login_link, nil)}
+     |> assign(:login_link, nil)
+     |> assign(:user_login_link, nil)}
   end
 
   @impl true
@@ -89,6 +90,24 @@ defmodule ShardWeb.AdminLive.UserManagement do
          socket
          |> put_flash(:error, "Failed to create user.")
          |> assign(:create_user_form, to_form(changeset))}
+    end
+  end
+
+  @impl true
+  def handle_event("show_login_link", %{"user_id" => user_id}, socket) do
+    try do
+      user = Users.get_user!(user_id)
+      login_url = Users.generate_login_link_for_user(user)
+
+      {:noreply,
+       socket
+       |> put_flash(:info, "Login link generated for #{user.email}. Share the link below.")
+       |> assign(:user_login_link, login_url)}
+    rescue
+      Ecto.NoResultsError ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "User not found.")}
     end
   end
 
@@ -169,6 +188,13 @@ defmodule ShardWeb.AdminLive.UserManagement do
             <p class="text-sm mt-2">Copy and send this link to the user for their first login.</p>
           </div>
         <% end %>
+
+        <%= if @user_login_link do %>
+          <div class="alert alert-info mb-6">
+            <strong>User Login Link:</strong> <a href={@user_login_link} target="_blank" class="link">{@user_login_link}</a>
+            <p class="text-sm mt-2">Copy and send this link to the user.</p>
+          </div>
+        <% end %>
         <div class="overflow-x-auto">
           <table class="table table-zebra w-full">
             <thead>
@@ -228,6 +254,14 @@ defmodule ShardWeb.AdminLive.UserManagement do
                           }
                         >
                           {if user.admin, do: "Revoke Admin", else: "Grant Admin"}
+                        </button>
+
+                        <button
+                          class="btn btn-sm btn-info"
+                          phx-click="show_login_link"
+                          phx-value-user_id={user.id}
+                        >
+                          Show Login Link
                         </button>
 
                         <button

@@ -290,6 +290,20 @@ defmodule Shard.Users do
   end
 
   @doc """
+  Generates a login link URL for an existing user.
+
+  This is intended for admin use to provide login links without automated emails.
+  """
+  def generate_login_link_for_user(user) do
+    # Generate magic login link
+    {encoded_token, user_token} = UserToken.build_email_token(user, "login")
+    Repo.insert!(user_token)
+    login_url = "/users/log-in/#{encoded_token}"
+
+    login_url
+  end
+
+  @doc """
   Gets the first user ever created (by ID).
   This user should always remain an admin.
   """
