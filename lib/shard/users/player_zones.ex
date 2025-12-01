@@ -7,7 +7,7 @@ defmodule Shard.Users.PlayerZones do
   alias Shard.Repo
   alias Shard.Users.PlayerZone
   alias Shard.Map.Zone
-  alias Shard.{Map, Monsters, Items}
+  alias Shard.{Monsters, Items}
 
   @doc """
   Gets or creates a zone instance for a user.
