@@ -35,6 +35,7 @@ defmodule ShardWeb.FriendsLive.ChatTab do
     end
   end
 
+
   defp validate_selected_friends([]), do: :error
   defp validate_selected_friends(_), do: :ok
 
