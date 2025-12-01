@@ -333,8 +333,7 @@ defmodule Shard.Map do
   def list_doors_by_zone(zone_id) do
     Repo.all(
       from d in Door,
-        join: r in Room, on: d.from_room_id == r.id,
-        where: r.zone_id == ^zone_id,
+        where: d.zone_id == ^zone_id,
         preload: [:from_room, :to_room]
     )
   end
