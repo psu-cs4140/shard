@@ -1051,10 +1051,10 @@ defmodule ShardWeb.FriendsLive.Index do
                 <div class="flex items-center space-x-3">
                   <div class="avatar placeholder">
                     <div class="bg-neutral text-neutral-content rounded-full w-8">
-                      <span class="text-xs">{String.first(member.user.email)}</span>
+                      <span class="text-xs">{if member.user.id == @current_scope.user.id, do: "Y", else: String.first(member.user.email)}</span>
                     </div>
                   </div>
-                  <span>{member.user.email}</span>
+                  <span>{if member.user.id == @current_scope.user.id, do: "You", else: member.user.email}</span>
                   <span :if={member.user.id == @party.leader_id} class="badge badge-warning">Leader</span>
                 </div>
                 <button 
@@ -1107,7 +1107,7 @@ defmodule ShardWeb.FriendsLive.Index do
                     <span>{friend_data.friend.email}</span>
                   </div>
                   <div :if={friend_data.in_party} class="badge badge-neutral">
-                    In Party
+                    In Party, Can't Invite
                   </div>
                   <div :if={!friend_data.in_party}>
                     <div :if={friend_data.friend.id in Enum.map(@sent_party_invitations, & &1.invitee.id)} class="badge badge-warning">
