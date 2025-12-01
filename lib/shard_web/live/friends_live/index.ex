@@ -24,7 +24,12 @@ defmodule ShardWeb.FriendsLive.Index do
      |> assign(:party, Social.get_user_party(user_id))
      |> assign(:new_message, "")
      |> assign(:show_new_conversation_form, false)
-     |> assign(:selected_friends, [])}
+     |> assign(:selected_friends, [])
+     |> assign(:show_conversation_settings, false)
+     |> assign(:editing_conversation_name, false)
+     |> assign(:new_conversation_name, "")
+     |> assign(:show_add_participants, false)
+     |> assign(:selected_new_participants, [])}
   end
 
   @impl true
@@ -220,6 +225,141 @@ defmodule ShardWeb.FriendsLive.Index do
       end
     
     {:noreply, assign(socket, :selected_friends, new_selected)}
+  end
+
+  def handle_event("show_conversation_settings", _params, socket) do
+    {:noreply, assign(socket, :show_conversation_settings, true)}
+  end
+
+  def handle_event("hide_conversation_settings", _params, socket) do
+    {:noreply, 
+     socket
+     |> assign(:show_conversation_settings, false)
+     |> assign(:editing_conversation_name, false)
+     |> assign(:new_conversation_name, "")
+     |> assign(:show_add_participants, false)
+     |> assign(:selected_new_participants, [])}
+  end
+
+  def handle_event("start_edit_conversation_name", _params, socket) do
+    current_name = socket.assigns.active_conversation.name || ""
+    {:noreply, 
+     socket
+     |> assign(:editing_conversation_name, true)
+     |> assign(:new_conversation_name, current_name)}
+  end
+
+  def handle_event("cancel_edit_conversation_name", _params, socket) do
+    {:noreply, 
+     socket
+     |> assign(:editing_conversation_name, false)
+     |> assign(:new_conversation_name, "")}
+  end
+
+  def handle_event("update_conversation_name", %{"name" => name}, socket) do
+    conversation = socket.assigns.active_conversation
+    
+    case Social.update_conversation_name(conversation.id, String.trim(name)) do
+      {:ok, updated_conversation} ->
+        user_id = socket.assigns.current_scope.user.id
+        
+        {:noreply,
+         socket
+         |> put_flash(:info, "Conversation name updated!")
+         |> assign(:editing_conversation_name, false)
+         |> assign(:new_conversation_name, "")
+         |> assign(:active_conversation, Social.get_conversation_with_messages(updated_conversation.id))
+         |> assign(:conversations, Social.list_user_conversations(user_id))}
+      
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not update conversation name")}
+    end
+  end
+
+  def handle_event("delete_conversation", _params, socket) do
+    conversation = socket.assigns.active_conversation
+    user_id = socket.assigns.current_scope.user.id
+    
+    case Social.delete_conversation(conversation.id, user_id) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Conversation deleted")
+         |> assign(:active_conversation, nil)
+         |> assign(:show_conversation_settings, false)
+         |> assign(:conversations, Social.list_user_conversations(user_id))}
+      
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not delete conversation")}
+    end
+  end
+
+  def handle_event("show_add_participants", _params, socket) do
+    {:noreply, assign(socket, :show_add_participants, true)}
+  end
+
+  def handle_event("hide_add_participants", _params, socket) do
+    {:noreply, 
+     socket
+     |> assign(:show_add_participants, false)
+     |> assign(:selected_new_participants, [])}
+  end
+
+  def handle_event("toggle_new_participant_selection", %{"friend_id" => friend_id}, socket) do
+    friend_id = String.to_integer(friend_id)
+    selected = socket.assigns.selected_new_participants
+    
+    new_selected = 
+      if friend_id in selected do
+        List.delete(selected, friend_id)
+      else
+        [friend_id | selected]
+      end
+    
+    {:noreply, assign(socket, :selected_new_participants, new_selected)}
+  end
+
+  def handle_event("add_participants", _params, socket) do
+    conversation = socket.assigns.active_conversation
+    new_participant_ids = socket.assigns.selected_new_participants
+    
+    if new_participant_ids == [] do
+      {:noreply, put_flash(socket, :error, "Please select at least one participant")}
+    else
+      case Social.add_participants_to_conversation(conversation.id, new_participant_ids) do
+        {:ok, _} ->
+          user_id = socket.assigns.current_scope.user.id
+          
+          {:noreply,
+           socket
+           |> put_flash(:info, "Participants added!")
+           |> assign(:show_add_participants, false)
+           |> assign(:selected_new_participants, [])
+           |> assign(:active_conversation, Social.get_conversation_with_messages(conversation.id))
+           |> assign(:conversations, Social.list_user_conversations(user_id))}
+        
+        {:error, _} ->
+          {:noreply, put_flash(socket, :error, "Could not add participants")}
+      end
+    end
+  end
+
+  def handle_event("remove_participant", %{"user_id" => user_id}, socket) do
+    conversation = socket.assigns.active_conversation
+    participant_id = String.to_integer(user_id)
+    current_user_id = socket.assigns.current_scope.user.id
+    
+    case Social.remove_participant_from_conversation(conversation.id, participant_id) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Participant removed")
+         |> assign(:active_conversation, Social.get_conversation_with_messages(conversation.id))
+         |> assign(:conversations, Social.list_user_conversations(current_user_id))}
+      
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not remove participant")}
+    end
   end
 
   def handle_event("create_conversation", %{"name" => name}, socket) do
@@ -550,9 +690,148 @@ defmodule ShardWeb.FriendsLive.Index do
               Select a conversation to start chatting
             </div>
             <div :if={@active_conversation != nil} class="flex flex-col h-full">
-              <h2 class="card-title mb-4 flex-shrink-0">
-                {@active_conversation.name || "Direct Message"}
-              </h2>
+              <div class="flex items-center justify-between mb-4 flex-shrink-0">
+                <h2 class="card-title">
+                  {@active_conversation.name || "Direct Message"}
+                </h2>
+                <button 
+                  class="btn btn-ghost btn-sm"
+                  phx-click="show_conversation_settings"
+                >
+                  ⚙️
+                </button>
+              </div>
+
+              <!-- Conversation Settings Modal -->
+              <div :if={@show_conversation_settings} class="mb-4 p-4 bg-base-200 rounded-lg">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="font-semibold">Conversation Settings</h3>
+                  <button 
+                    class="btn btn-ghost btn-xs"
+                    phx-click="hide_conversation_settings"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <!-- Edit Name Section -->
+                <div class="mb-4">
+                  <div :if={!@editing_conversation_name} class="flex items-center justify-between">
+                    <span class="text-sm">Name: {@active_conversation.name || "Direct Message"}</span>
+                    <button 
+                      class="btn btn-primary btn-xs"
+                      phx-click="start_edit_conversation_name"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                  
+                  <div :if={@editing_conversation_name}>
+                    <form phx-submit="update_conversation_name">
+                      <div class="flex space-x-2">
+                        <input
+                          type="text"
+                          name="name"
+                          value={@new_conversation_name}
+                          placeholder="Enter conversation name..."
+                          class="input input-bordered input-xs flex-1"
+                          required
+                        />
+                        <button type="submit" class="btn btn-primary btn-xs">Save</button>
+                        <button 
+                          type="button" 
+                          class="btn btn-ghost btn-xs"
+                          phx-click="cancel_edit_conversation_name"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                <!-- Participants Section -->
+                <div class="mb-4">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium">Participants ({length(@active_conversation.participants)})</span>
+                    <button 
+                      class="btn btn-primary btn-xs"
+                      phx-click="show_add_participants"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  
+                  <div class="space-y-1 max-h-24 overflow-y-auto">
+                    <div 
+                      :for={participant <- @active_conversation.participants}
+                      class="flex items-center justify-between text-xs p-1 bg-base-100 rounded"
+                    >
+                      <span>{participant.email}</span>
+                      <button 
+                        :if={participant.id != @current_scope.user.id && length(@active_conversation.participants) > 2}
+                        class="btn btn-error btn-xs"
+                        phx-click="remove_participant"
+                        phx-value-user_id={participant.id}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Add Participants Form -->
+                  <div :if={@show_add_participants} class="mt-3 p-3 bg-base-100 rounded">
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-xs font-medium">Add Friends</span>
+                      <button 
+                        class="btn btn-ghost btn-xs"
+                        phx-click="hide_add_participants"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    
+                    <div :if={@friends == []} class="text-xs text-base-content/60">
+                      No friends available to add.
+                    </div>
+                    
+                    <div :if={@friends != []} class="space-y-1 max-h-20 overflow-y-auto mb-2">
+                      <label 
+                        :for={%{friend: friend} <- @friends}
+                        :if={friend.id not in Enum.map(@active_conversation.participants, & &1.id)}
+                        class="flex items-center space-x-2 text-xs hover:bg-base-200 rounded cursor-pointer p-1"
+                      >
+                        <input
+                          type="checkbox"
+                          class="checkbox checkbox-xs"
+                          phx-click="toggle_new_participant_selection"
+                          phx-value-friend_id={friend.id}
+                          checked={friend.id in @selected_new_participants}
+                        />
+                        <span>{friend.email}</span>
+                      </label>
+                    </div>
+                    
+                    <button 
+                      class="btn btn-primary btn-xs w-full"
+                      phx-click="add_participants"
+                    >
+                      Add Selected
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Delete Conversation -->
+                <div class="border-t pt-3">
+                  <button 
+                    class="btn btn-error btn-sm w-full"
+                    phx-click="delete_conversation"
+                    onclick="return confirm('Are you sure you want to delete this conversation? This action cannot be undone.')"
+                  >
+                    Delete Conversation
+                  </button>
+                </div>
+              </div>
               
               <!-- Messages Container -->
               <div 

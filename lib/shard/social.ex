@@ -276,6 +276,84 @@ defmodule Shard.Social do
     end
   end
 
+  def update_conversation_name(conversation_id, name) do
+    conversation = Repo.get!(Conversation, conversation_id)
+    
+    conversation
+    |> Conversation.changeset(%{name: name})
+    |> Repo.update()
+  end
+
+  def delete_conversation(conversation_id, user_id) do
+    conversation = Repo.get!(Conversation, conversation_id)
+    
+    # Check if user is a participant
+    participant = Repo.get_by(ConversationParticipant, conversation_id: conversation_id, user_id: user_id)
+    
+    if participant do
+      Repo.transaction(fn ->
+        # Delete all messages
+        from(m in Message, where: m.conversation_id == ^conversation_id)
+        |> Repo.delete_all()
+        
+        # Delete all participants
+        from(cp in ConversationParticipant, where: cp.conversation_id == ^conversation_id)
+        |> Repo.delete_all()
+        
+        # Delete conversation
+        Repo.delete!(conversation)
+      end)
+    else
+      {:error, :not_participant}
+    end
+  end
+
+  def add_participants_to_conversation(conversation_id, user_ids) do
+    Repo.transaction(fn ->
+      Enum.each(user_ids, fn user_id ->
+        # Check if user is already a participant
+        existing = Repo.get_by(ConversationParticipant, conversation_id: conversation_id, user_id: user_id)
+        
+        unless existing do
+          %ConversationParticipant{}
+          |> ConversationParticipant.changeset(%{
+            conversation_id: conversation_id,
+            user_id: user_id
+          })
+          |> Repo.insert!()
+        end
+      end)
+      
+      # Notify new participants
+      Enum.each(user_ids, fn user_id ->
+        Phoenix.PubSub.broadcast(
+          Shard.PubSub,
+          "user:#{user_id}:conversations",
+          {:conversation_created, Repo.get!(Conversation, conversation_id)}
+        )
+      end)
+    end)
+  end
+
+  def remove_participant_from_conversation(conversation_id, user_id) do
+    participant = Repo.get_by(ConversationParticipant, conversation_id: conversation_id, user_id: user_id)
+    
+    if participant do
+      # Check if this would leave less than 2 participants
+      remaining_count = 
+        from(cp in ConversationParticipant, where: cp.conversation_id == ^conversation_id)
+        |> Repo.aggregate(:count, :id)
+      
+      if remaining_count <= 2 do
+        {:error, :minimum_participants}
+      else
+        Repo.delete(participant)
+      end
+    else
+      {:error, :not_participant}
+    end
+  end
+
   def send_message(conversation_id, user_id, content) do
     case %Message{}
          |> Message.changeset(%{
