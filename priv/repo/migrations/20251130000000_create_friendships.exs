@@ -2,19 +2,25 @@ defmodule Shard.Repo.Migrations.CreateFriendships do
   use Ecto.Migration
 
   def change do
-    create table(:friendships, if_not_exists: true) do
-      add :user_id, references(:users, on_delete: :delete_all), null: false
-      add :friend_id, references(:users, on_delete: :delete_all), null: false
-      add :status, :string, default: "pending", null: false
+    execute """
+    CREATE TABLE IF NOT EXISTS friendships (
+      id bigserial PRIMARY KEY,
+      user_id bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      friend_id bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status varchar(255) DEFAULT 'pending' NOT NULL,
+      inserted_at timestamp(0) NOT NULL,
+      updated_at timestamp(0) NOT NULL,
+      CONSTRAINT no_self_friendship CHECK (user_id != friend_id)
+    )
+    """, "DROP TABLE IF EXISTS friendships"
 
-      timestamps(type: :utc_datetime)
-    end
-
-    create index(:friendships, [:user_id])
-    create index(:friendships, [:friend_id])
-    create unique_index(:friendships, [:user_id, :friend_id])
-
-    # Ensure users can't friend themselves
-    create constraint(:friendships, :no_self_friendship, check: "user_id != friend_id")
+    execute "CREATE INDEX IF NOT EXISTS friendships_user_id_index ON friendships (user_id)", 
+            "DROP INDEX IF EXISTS friendships_user_id_index"
+    
+    execute "CREATE INDEX IF NOT EXISTS friendships_friend_id_index ON friendships (friend_id)", 
+            "DROP INDEX IF EXISTS friendships_friend_id_index"
+    
+    execute "CREATE UNIQUE INDEX IF NOT EXISTS friendships_user_id_friend_id_index ON friendships (user_id, friend_id)", 
+            "DROP INDEX IF EXISTS friendships_user_id_friend_id_index"
   end
 end
