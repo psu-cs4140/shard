@@ -23,29 +23,15 @@ defmodule ShardWeb.ZoneSelectionLive do
         nil
       end
 
-    zones = Map.list_active_zones()
-    # Group zones by name to show zone types, not individual instances
-    zone_types = 
-      zones
-      |> Enum.group_by(& &1.name)
-      |> Enum.map(fn {name, zone_instances} ->
-        # Use the first instance as the representative for display
-        representative = List.first(zone_instances)
-        %{
-          name: name,
-          description: representative.description,
-          zone_type: representative.zone_type,
-          min_level: representative.min_level,
-          max_level: representative.max_level,
-          instances: zone_instances,
-          room_count: zone_instances |> Enum.map(&length(Map.list_rooms_by_zone(&1.id))) |> Enum.sum()
-        }
-      end)
-      |> Enum.sort_by(& &1.name)
+    # Get template zones (zones ending with "-template")
+    template_zones = 
+      Map.list_active_zones()
+      |> Enum.filter(&String.ends_with?(&1.zone_id, "-template"))
+      |> Enum.sort_by(& &1.display_order)
 
     {:noreply,
      socket
-     |> assign(:zone_types, zone_types)
+     |> assign(:template_zones, template_zones)
      |> assign(:character, character)
      |> assign(:page_title, "Select Zone")}
   end
@@ -66,20 +52,20 @@ defmodule ShardWeb.ZoneSelectionLive do
       </.header>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-        <%= for zone_type <- @zone_types do %>
+        <%= for zone <- @template_zones do %>
           <div class="card bg-base-200 shadow-xl hover:shadow-2xl transition-shadow">
             <div class="card-body">
               <h2 class="card-title">
-                {zone_type.name}
+                {zone.name}
                 <div class={[
                   "badge",
-                  get_zone_type_color(zone_type.zone_type)
+                  get_zone_type_color(zone.zone_type)
                 ]}>
-                  {String.capitalize(zone_type.zone_type)}
+                  {String.capitalize(zone.zone_type)}
                 </div>
               </h2>
 
-              <p class="text-sm opacity-80 min-h-[4rem]">{zone_type.description}</p>
+              <p class="text-sm opacity-80 min-h-[4rem]">{zone.description}</p>
 
               <div class="divider my-2"></div>
 
@@ -87,45 +73,40 @@ defmodule ShardWeb.ZoneSelectionLive do
                 <div>
                   <span class="font-semibold">Level Range:</span>
                   <br />
-                  {zone_type.min_level}-{zone_type.max_level || "∞"}
+                  {zone.min_level}-{zone.max_level || "∞"}
                 </div>
                 <div>
-                  <span class="font-semibold">Total Rooms:</span>
+                  <span class="font-semibold">Rooms:</span>
                   <br />
-                  {zone_type.room_count}
-                </div>
-              </div>
-
-              <div class="mt-2">
-                <span class="font-semibold text-sm">Available Instances:</span>
-                <div class="flex flex-wrap gap-1 mt-1">
-                  <%= for instance <- zone_type.instances do %>
-                    <div class="badge badge-outline text-xs">{instance.zone_id}</div>
-                  <% end %>
+                  {length(Map.list_rooms_by_zone(zone.id))}
                 </div>
               </div>
 
               <div class="card-actions justify-end mt-4">
                 <%= if @character do %>
-                  <div class="dropdown dropdown-top dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-primary">
-                      Enter Zone
-                      <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  <div class="flex gap-2">
+                    <.button
+                      phx-click="enter_zone"
+                      phx-value-zone-name={zone.name}
+                      phx-value-instance-type="singleplayer"
+                      class="btn-primary flex-1"
+                    >
+                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                       </svg>
-                    </div>
-                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-                      <%= for instance <- zone_type.instances do %>
-                        <li>
-                          <a phx-click="enter_zone" phx-value-zone-id={instance.id}>
-                            {instance.zone_id}
-                            <span class="text-xs opacity-60">
-                              ({length(Map.list_rooms_by_zone(instance.id))} rooms)
-                            </span>
-                          </a>
-                        </li>
-                      <% end %>
-                    </ul>
+                      Singleplayer
+                    </.button>
+                    <.button
+                      phx-click="enter_zone"
+                      phx-value-zone-name={zone.name}
+                      phx-value-instance-type="multiplayer"
+                      class="btn-secondary flex-1"
+                    >
+                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                      </svg>
+                      Multiplayer
+                    </.button>
                   </div>
                 <% else %>
                   <div class="flex flex-col gap-2">
@@ -143,7 +124,7 @@ defmodule ShardWeb.ZoneSelectionLive do
         <% end %>
       </div>
 
-      <%= if Enum.empty?(@zone_types) do %>
+      <%= if Enum.empty?(@template_zones) do %>
         <div class="alert alert-warning mt-8">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -166,49 +147,64 @@ defmodule ShardWeb.ZoneSelectionLive do
   end
 
   @impl true
-  def handle_event("enter_zone", %{"zone-id" => zone_id}, socket) do
+  def handle_event("enter_zone", %{"zone-name" => zone_name, "instance-type" => instance_type}, socket) do
     character = socket.assigns.character
-    zone_id = String.to_integer(zone_id)
+    user = Users.get_user_by_character_id(character.id)
 
-    # Update character's current zone
-    case Characters.update_character(character, %{current_zone_id: zone_id}) do
-      {:ok, updated_character} ->
-        handle_admin_stick_granting(character)
+    # Get or create the player's zone instance
+    case Shard.Users.PlayerZones.get_or_create_player_zone(user.id, zone_name, instance_type) do
+      {:ok, player_zone} ->
+        zone = player_zone.zone
 
-        # Check for zone entry achievements
-        zone = Map.get_zone!(zone_id)
-        handle_zone_entry_achievement(updated_character, zone)
+        # Update character's current zone
+        case Characters.update_character(character, %{current_zone_id: zone.id}) do
+          {:ok, updated_character} ->
+            handle_admin_stick_granting(character)
 
-        # Get the first room in the zone to start at
-        rooms = Map.list_rooms_by_zone(zone_id)
+            # Check for zone entry achievements
+            handle_zone_entry_achievement(updated_character, zone)
 
-        starting_room =
-          Enum.min_by(
-            rooms,
-            fn room ->
-              {room.x_coordinate, room.y_coordinate, room.z_coordinate}
-            end,
-            fn -> nil end
-          )
+            # Get the first room in the zone to start at
+            rooms = Map.list_rooms_by_zone(zone.id)
 
-        if starting_room do
-          # Redirect to play interface with zone context
-          {:noreply,
-           socket
-           |> put_flash(:info, "Entering #{zone.name}...")
-           |> push_navigate(
-             to: ~p"/play/#{updated_character.id}?zone_id=#{zone_id}&refresh_inventory=true"
-           )}
-        else
-          {:noreply,
-           socket
-           |> put_flash(:error, "This zone has no rooms yet. Please notify an administrator.")}
+            starting_room =
+              Enum.min_by(
+                rooms,
+                fn room ->
+                  {room.x_coordinate, room.y_coordinate, room.z_coordinate}
+                end,
+                fn -> nil end
+              )
+
+            if starting_room do
+              # Redirect to play interface with zone context
+              {:noreply,
+               socket
+               |> put_flash(:info, "Entering #{zone.name} (#{instance_type})...")
+               |> push_navigate(
+                 to: ~p"/play/#{updated_character.id}?zone_id=#{zone.id}&refresh_inventory=true"
+               )}
+            else
+              {:noreply,
+               socket
+               |> put_flash(:error, "This zone has no rooms yet. Please notify an administrator.")}
+            end
+
+          {:error, _changeset} ->
+            {:noreply,
+             socket
+             |> put_flash(:error, "Failed to enter zone. Please try again.")}
         end
+
+      {:error, :zone_template_not_found} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Zone template not found. Please notify an administrator.")}
 
       {:error, _changeset} ->
         {:noreply,
          socket
-         |> put_flash(:error, "Failed to enter zone. Please try again.")}
+         |> put_flash(:error, "Failed to create zone instance. Please try again.")}
     end
   end
 

@@ -7,6 +7,7 @@ defmodule Shard.Users.PlayerZones do
   alias Shard.Repo
   alias Shard.Users.PlayerZone
   alias Shard.Map.Zone
+  alias Shard.{Map, Monsters, Items}
 
   @doc """
   Gets or creates a zone instance for a user.
@@ -54,38 +55,24 @@ defmodule Shard.Users.PlayerZones do
   """
   defp create_player_zone_instance(user_id, zone_name, instance_type) do
     # Generate a unique zone_id for this instance
-    zone_id = generate_zone_instance_id(zone_name, instance_type, user_id)
+    zone_instance_id = generate_zone_instance_id(zone_name, instance_type, user_id)
     
-    # Get the zone template (first zone with this name)
+    # Get the zone template (zone with matching name ending in "-template")
     zone_template = Repo.one(
       from z in Zone,
-        where: z.name == ^zone_name,
+        where: z.name == ^zone_name and like(z.zone_id, "%-template"),
         limit: 1
     )
     
     if zone_template do
-      # Create the actual zone instance
-      zone_attrs = %{
-        name: zone_name,
-        zone_id: zone_id,
-        slug: "#{zone_template.slug}-#{zone_id}",
-        description: zone_template.description,
-        zone_type: zone_template.zone_type,
-        min_level: zone_template.min_level,
-        max_level: zone_template.max_level,
-        is_public: instance_type == "multiplayer",
-        is_active: true,
-        properties: Map.put(zone_template.properties || %{}, "instance_type", instance_type),
-        display_order: zone_template.display_order
-      }
-      
-      case Shard.Map.create_zone(zone_attrs) do
+      # Create the zone instance using the template
+      case create_zone_from_template(zone_template, zone_instance_id, instance_type) do
         {:ok, zone} ->
           # Create the player zone association
           player_zone_attrs = %{
             zone_name: zone_name,
             instance_type: instance_type,
-            zone_instance_id: zone_id,
+            zone_instance_id: zone_instance_id,
             user_id: user_id,
             zone_id: zone.id
           }
@@ -131,6 +118,120 @@ defmodule Shard.Users.PlayerZones do
       # Delete the player zone association
       Repo.delete(player_zone)
     end)
+  end
+
+  defp create_zone_from_template(template_zone, zone_instance_id, instance_type) do
+    # Create the zone instance
+    zone_attrs = %{
+      name: template_zone.name,
+      zone_id: zone_instance_id,
+      slug: "#{template_zone.slug}-#{zone_instance_id}",
+      description: template_zone.description,
+      zone_type: template_zone.zone_type,
+      min_level: template_zone.min_level,
+      max_level: template_zone.max_level,
+      is_public: instance_type == "multiplayer",
+      is_active: true,
+      properties: Map.put(template_zone.properties || %{}, "instance_type", instance_type),
+      display_order: template_zone.display_order
+    }
+    
+    case Shard.Map.create_zone(zone_attrs) do
+      {:ok, new_zone} ->
+        # Copy all rooms from the template zone
+        template_rooms = Shard.Map.list_rooms_by_zone(template_zone.id)
+        
+        room_mapping = 
+          Enum.reduce(template_rooms, %{}, fn template_room, acc ->
+            room_attrs = %{
+              name: template_room.name,
+              description: template_room.description,
+              zone_id: new_zone.id,
+              x_coordinate: template_room.x_coordinate,
+              y_coordinate: template_room.y_coordinate,
+              z_coordinate: template_room.z_coordinate,
+              is_public: template_room.is_public,
+              room_type: template_room.room_type,
+              properties: template_room.properties
+            }
+            
+            case Shard.Map.create_room(room_attrs) do
+              {:ok, new_room} ->
+                Map.put(acc, template_room.id, new_room)
+              {:error, _} ->
+                acc
+            end
+          end)
+        
+        # Copy all doors from the template zone
+        template_doors = Shard.Map.list_doors_by_zone(template_zone.id)
+        
+        Enum.each(template_doors, fn template_door ->
+          from_room = Map.get(room_mapping, template_door.from_room_id)
+          to_room = Map.get(room_mapping, template_door.to_room_id)
+          
+          if from_room && to_room do
+            door_attrs = %{
+              from_room_id: from_room.id,
+              to_room_id: to_room.id,
+              direction: template_door.direction,
+              door_type: template_door.door_type,
+              is_locked: template_door.is_locked,
+              key_required: template_door.key_required,
+              properties: template_door.properties
+            }
+            
+            Shard.Map.create_door(door_attrs)
+          end
+        end)
+        
+        # Copy monsters from the template zone
+        template_monsters = Shard.Monsters.list_monsters_by_zone(template_zone.id)
+        
+        Enum.each(template_monsters, fn template_monster ->
+          new_room = Map.get(room_mapping, template_monster.location_id)
+          
+          if new_room do
+            monster_attrs = %{
+              name: template_monster.name,
+              race: template_monster.race,
+              health: template_monster.max_health,
+              max_health: template_monster.max_health,
+              attack_damage: template_monster.attack_damage,
+              xp_amount: template_monster.xp_amount,
+              level: template_monster.level,
+              description: template_monster.description,
+              location_id: new_room.id,
+              potential_loot_drops: template_monster.potential_loot_drops
+            }
+            
+            Shard.Monsters.create_monster(monster_attrs)
+          end
+        end)
+        
+        # Copy room items from the template zone
+        template_room_items = Shard.Items.list_room_items_by_zone(template_zone.id)
+        
+        Enum.each(template_room_items, fn template_room_item ->
+          new_room = Map.get(room_mapping, template_room_item.room_id)
+          
+          if new_room do
+            room_item_attrs = %{
+              item_id: template_room_item.item_id,
+              room_id: new_room.id,
+              quantity: template_room_item.quantity,
+              map: template_room_item.map
+            }
+            
+            Shard.Items.create_room_item(room_item_attrs)
+          end
+        end)
+        
+        {:ok, new_zone}
+      
+      {:error, changeset} ->
+        {:error, changeset}
+    end
   end
 
   defp generate_zone_instance_id(zone_name, instance_type, user_id) do
