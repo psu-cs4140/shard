@@ -177,6 +177,10 @@ defmodule Shard.Quests do
         {:error, :quest_not_found}
 
       quest_acceptance ->
+        # Get the quest details for achievement checking
+        quest = Repo.get!(Quest, quest_id)
+        user = Repo.get!(Shard.Users.User, user_id)
+
         result =
           quest_acceptance
           |> QuestAcceptance.changeset(%{
@@ -186,9 +190,12 @@ defmodule Shard.Quests do
           |> Repo.update()
 
         # After completing a quest, check if any locked quests should be unlocked
+        # and check for quest completion achievements
         case result do
           {:ok, _} ->
             unlock_eligible_quests(user_id)
+            # Check for quest completion achievements
+            Shard.Achievements.check_quest_completion_achievements(user, quest.title)
             result
 
           error ->

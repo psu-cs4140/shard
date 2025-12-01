@@ -4,7 +4,7 @@ defmodule ShardWeb.ZoneSelectionLive do
   """
   use ShardWeb, :live_view
 
-  alias Shard.{Map, Characters, Users}
+  alias Shard.{Map, Characters, Users, Achievements}
   alias Shard.Items.AdminStick
 
   @impl true
@@ -135,6 +135,10 @@ defmodule ShardWeb.ZoneSelectionLive do
       {:ok, updated_character} ->
         handle_admin_stick_granting(character)
 
+        # Check for zone entry achievements
+        zone = Map.get_zone!(zone_id)
+        handle_zone_entry_achievement(updated_character, zone)
+
         # Get the first room in the zone to start at
         rooms = Map.list_rooms_by_zone(zone_id)
 
@@ -151,7 +155,7 @@ defmodule ShardWeb.ZoneSelectionLive do
           # Redirect to play interface with zone context
           {:noreply,
            socket
-           |> put_flash(:info, "Entering #{Map.get_zone!(zone_id).name}...")
+           |> put_flash(:info, "Entering #{zone.name}...")
            |> push_navigate(
              to: ~p"/play/#{updated_character.id}?zone_id=#{zone_id}&refresh_inventory=true"
            )}
@@ -180,6 +184,33 @@ defmodule ShardWeb.ZoneSelectionLive do
           {:error, reason} ->
             # Log the error but don't prevent zone entry
             IO.warn("Failed to grant admin stick: #{reason}")
+        end
+
+      _ ->
+        :ok
+    end
+  end
+
+  # Helper function to handle zone entry achievements
+  defp handle_zone_entry_achievement(character, zone) do
+    case Users.get_user_by_character_id(character.id) do
+      %{id: user_id} ->
+        case Achievements.check_zone_entry_achievements(user_id, zone.name) do
+          {:ok, %Achievements.UserAchievement{}} ->
+            # Achievement was awarded
+            :ok
+
+          {:ok, :already_earned} ->
+            # User already has this achievement
+            :ok
+
+          {:ok, :no_achievement} ->
+            # No achievement for this zone
+            :ok
+
+          {:error, _reason} ->
+            # Log error but don't prevent zone entry
+            :ok
         end
 
       _ ->
