@@ -121,6 +121,7 @@ defmodule Shard.Items.Item do
     field :location, :string
     field :map, :string
     field :sellable, :boolean, default: true
+    field :zone_id, :string
 
     timestamps(type: :utc_datetime)
   end
@@ -148,7 +149,8 @@ defmodule Shard.Items.Item do
       :pickup,
       :location,
       :map,
-      :sellable
+      :sellable,
+      :zone_id
     ])
     # Added :item_type to required fields
     |> validate_required([:name, :item_type])
