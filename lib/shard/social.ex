@@ -212,15 +212,31 @@ defmodule Shard.Social do
               
               case existing_invitation do
                 nil ->
-                  # Send party invitation
-                  %PartyInvitation{}
-                  |> PartyInvitation.changeset(%{
-                    party_id: party.id,
-                    inviter_id: leader_id,
-                    invitee_id: friend_id,
-                    status: "pending"
-                  })
-                  |> Repo.insert()
+                  # Check if there's a declined invitation we can reuse
+                  declined_invitation = 
+                    from(pi in PartyInvitation,
+                      where: pi.party_id == ^party.id and pi.invitee_id == ^friend_id and pi.status == "declined"
+                    )
+                    |> Repo.one()
+                  
+                  case declined_invitation do
+                    nil ->
+                      # Send new party invitation
+                      %PartyInvitation{}
+                      |> PartyInvitation.changeset(%{
+                        party_id: party.id,
+                        inviter_id: leader_id,
+                        invitee_id: friend_id,
+                        status: "pending"
+                      })
+                      |> Repo.insert()
+                    
+                    declined ->
+                      # Reactivate the declined invitation
+                      declined
+                      |> PartyInvitation.changeset(%{status: "pending"})
+                      |> Repo.update()
+                  end
                 
                 _existing ->
                   {:error, :invitation_already_sent}
@@ -334,6 +350,13 @@ defmodule Shard.Social do
     invitation
     |> PartyInvitation.changeset(%{status: "declined"})
     |> Repo.update()
+  end
+
+  def delete_declined_party_invitation(party_id, invitee_id) do
+    from(pi in PartyInvitation,
+      where: pi.party_id == ^party_id and pi.invitee_id == ^invitee_id and pi.status == "declined"
+    )
+    |> Repo.delete_all()
   end
 
   # ───────────────────────── Conversations ─────────────────────────
