@@ -133,23 +133,7 @@ defmodule ShardWeb.UserLive.Commands1 do
         description_lines = [room_description]
 
         # Add NPC descriptions if any are present
-        description_lines =
-          if Enum.empty?(npcs_here) do
-            description_lines
-          else
-            # Empty line for spacing
-            updated_lines = description_lines ++ [""]
-
-            # Add each NPC with their description
-            npc_descriptions =
-              Enum.map(npcs_here, fn npc ->
-                npc_name = Map.get(npc, :name) || "Unknown NPC"
-                npc_desc = Map.get(npc, :description) || "They look at you with interest."
-                "#{npc_name} is here.\n#{npc_desc}"
-              end)
-
-            updated_lines ++ npc_descriptions
-          end
+        description_lines = description_lines ++ get_npc_descriptions(npcs_here)
 
         # Add other player descriptions if any are present
         description_lines =
@@ -428,6 +412,22 @@ defmodule ShardWeb.UserLive.Commands1 do
                 end
             end
         end
+    end
+  end
+
+  # Helper function to get NPC descriptions for a location
+  def get_npc_descriptions(npcs_here) do
+    if Enum.empty?(npcs_here) do
+      []
+    else
+      # Empty line for spacing
+      # Add each NPC with their description
+      [""] ++
+        Enum.map(npcs_here, fn npc ->
+          npc_name = Map.get(npc, :name) || "Unknown NPC"
+          npc_desc = Map.get(npc, :description) || "They look at you with interest."
+          "#{npc_name} is here.\n#{npc_desc}"
+        end)
     end
   end
 
