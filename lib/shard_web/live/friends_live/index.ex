@@ -19,7 +19,9 @@ defmodule ShardWeb.FriendsLive.Index do
      |> assign(:conversations, Social.list_user_conversations(user_id))
      |> assign(:active_conversation, nil)
      |> assign(:party, Social.get_user_party(user_id))
-     |> assign(:new_message, "")}
+     |> assign(:new_message, "")
+     |> assign(:show_new_conversation_form, false)
+     |> assign(:selected_friends, [])}
   end
 
   @impl true
@@ -181,6 +183,56 @@ defmodule ShardWeb.FriendsLive.Index do
       
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not remove friend")}
+    end
+  end
+
+  def handle_event("show_new_conversation_form", _params, socket) do
+    {:noreply, assign(socket, :show_new_conversation_form, true)}
+  end
+
+  def handle_event("hide_new_conversation_form", _params, socket) do
+    {:noreply, 
+     socket
+     |> assign(:show_new_conversation_form, false)
+     |> assign(:selected_friends, [])}
+  end
+
+  def handle_event("toggle_friend_selection", %{"friend_id" => friend_id}, socket) do
+    friend_id = String.to_integer(friend_id)
+    selected_friends = socket.assigns.selected_friends
+    
+    new_selected = 
+      if friend_id in selected_friends do
+        List.delete(selected_friends, friend_id)
+      else
+        [friend_id | selected_friends]
+      end
+    
+    {:noreply, assign(socket, :selected_friends, new_selected)}
+  end
+
+  def handle_event("create_conversation", %{"name" => name}, socket) do
+    user_id = socket.assigns.current_scope.user.id
+    selected_friends = socket.assigns.selected_friends
+    
+    if selected_friends == [] do
+      {:noreply, put_flash(socket, :error, "Please select at least one friend")}
+    else
+      participant_ids = [user_id | selected_friends]
+      attrs = if String.trim(name) != "", do: %{name: String.trim(name)}, else: %{}
+      
+      case Social.create_conversation(participant_ids, attrs) do
+        {:ok, _conversation} ->
+          {:noreply,
+           socket
+           |> put_flash(:info, "Conversation created!")
+           |> assign(:show_new_conversation_form, false)
+           |> assign(:selected_friends, [])
+           |> assign(:conversations, Social.list_user_conversations(user_id))}
+        
+        {:error, _} ->
+          {:noreply, put_flash(socket, :error, "Could not create conversation")}
+      end
     end
   end
 
@@ -354,7 +406,72 @@ defmodule ShardWeb.FriendsLive.Index do
         <!-- Conversations List -->
         <div class="card bg-base-100 shadow-xl">
           <div class="card-body">
-            <h2 class="card-title">Conversations</h2>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="card-title">Conversations</h2>
+              <button 
+                class="btn btn-primary btn-sm"
+                phx-click="show_new_conversation_form"
+              >
+                New Chat
+              </button>
+            </div>
+            
+            <!-- New Conversation Form -->
+            <div :if={@show_new_conversation_form} class="mb-4 p-4 bg-base-200 rounded-lg">
+              <form phx-submit="create_conversation">
+                <div class="space-y-3">
+                  <div>
+                    <label class="label">
+                      <span class="label-text">Conversation Name (optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      placeholder="Enter conversation name..."
+                      class="input input-bordered input-sm w-full"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label class="label">
+                      <span class="label-text">Select Friends</span>
+                    </label>
+                    <div :if={@friends == []} class="text-sm text-base-content/60">
+                      No friends available. Add friends first!
+                    </div>
+                    <div :if={@friends != []} class="space-y-1 max-h-32 overflow-y-auto">
+                      <label 
+                        :for={%{friend: friend} <- @friends}
+                        class="flex items-center space-x-2 p-1 hover:bg-base-300 rounded cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          class="checkbox checkbox-sm"
+                          phx-click="toggle_friend_selection"
+                          phx-value-friend_id={friend.id}
+                          checked={friend.id in @selected_friends}
+                        />
+                        <span class="text-sm">{friend.email}</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div class="flex space-x-2">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                      Create
+                    </button>
+                    <button 
+                      type="button" 
+                      class="btn btn-ghost btn-sm"
+                      phx-click="hide_new_conversation_form"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+            
             <div :if={@conversations == []} class="text-center text-base-content/60 py-8">
               No conversations yet
             </div>
