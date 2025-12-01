@@ -198,7 +198,8 @@ defmodule ShardWeb.FriendsLive.Index do
         {:noreply,
          socket
          |> put_flash(:info, "Party invitation sent!")
-         |> assign(:party, Social.get_user_party(user_id))}
+         |> assign(:party, Social.get_user_party(user_id))
+         |> assign(:sent_party_invitations, Social.list_sent_party_invitations(user_id))}
       
       {:error, :friend_already_in_party} ->
         {:noreply, put_flash(socket, :error, "Friend is already in a party")}
@@ -1053,6 +1054,24 @@ defmodule ShardWeb.FriendsLive.Index do
 
             <!-- Invite Friends Section (only for party leader) -->
             <div :if={@party.leader_id == @current_scope.user.id} class="border-t pt-4">
+              <!-- Pending Invitations -->
+              <div :if={@sent_party_invitations != []} class="mb-4">
+                <h3 class="font-semibold mb-3">Pending Invitations</h3>
+                <div class="space-y-2">
+                  <div :for={invitation <- @sent_party_invitations} class="flex items-center justify-between p-2 bg-yellow-50 border border-yellow-200 rounded">
+                    <div class="flex items-center space-x-3">
+                      <div class="avatar placeholder">
+                        <div class="bg-neutral text-neutral-content rounded-full w-8">
+                          <span class="text-xs">{String.first(invitation.invitee.email)}</span>
+                        </div>
+                      </div>
+                      <span>{invitation.invitee.email}</span>
+                    </div>
+                    <span class="badge badge-warning">Pending</span>
+                  </div>
+                </div>
+              </div>
+
               <h3 class="font-semibold mb-3">Invite Friends</h3>
               <div :if={@friends == []} class="text-center text-base-content/60 py-4">
                 No friends available to invite.
@@ -1060,7 +1079,7 @@ defmodule ShardWeb.FriendsLive.Index do
               <div :if={@friends != []} class="space-y-2">
                 <div 
                   :for={%{friend: friend} <- @friends}
-                  :if={friend.id not in Enum.map(@party.party_members, & &1.user.id)}
+                  :if={friend.id not in Enum.map(@party.party_members, & &1.user.id) && friend.id not in Enum.map(@sent_party_invitations, & &1.invitee.id)}
                   class="flex items-center justify-between p-2 bg-base-100 rounded"
                 >
                   <div class="flex items-center space-x-3">
