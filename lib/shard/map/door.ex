@@ -25,6 +25,7 @@ defmodule Shard.Map.Door do
 
     belongs_to :from_room, Shard.Map.Room, foreign_key: :from_room_id
     belongs_to :to_room, Shard.Map.Room, foreign_key: :to_room_id
+    belongs_to :zone, Shard.Map.Zone
 
     timestamps(type: :utc_datetime)
   end
@@ -42,7 +43,8 @@ defmodule Shard.Map.Door do
       :key_required,
       :door_type,
       :properties,
-      :new_dungeon
+      :new_dungeon,
+      :zone_id
     ])
     |> validate_required([:from_room_id, :to_room_id, :direction])
     |> validate_length(:name, max: 100)
@@ -68,6 +70,7 @@ defmodule Shard.Map.Door do
       "locked_gate"
     ])
     |> validate_different_rooms()
+    |> foreign_key_constraint(:zone_id)
     |> unique_constraint(:from_room_id, name: :doors_from_room_id_direction_index)
   end
 
