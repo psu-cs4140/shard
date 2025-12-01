@@ -15,6 +15,7 @@ defmodule ShardWeb.FriendsLive.Index do
      |> assign(:show_search_dropdown, false)
      |> assign(:friends, Social.list_friends(user_id))
      |> assign(:pending_requests, Social.list_pending_friend_requests(user_id))
+     |> assign(:sent_requests, Social.list_sent_friend_requests(user_id))
      |> assign(:conversations, Social.list_user_conversations(user_id))
      |> assign(:active_conversation, nil)
      |> assign(:party, Social.get_user_party(user_id))
@@ -85,7 +86,8 @@ defmodule ShardWeb.FriendsLive.Index do
          socket
          |> put_flash(:info, "Friend request accepted!")
          |> assign(:friends, Social.list_friends(user_id))
-         |> assign(:pending_requests, Social.list_pending_friend_requests(user_id))}
+         |> assign(:pending_requests, Social.list_pending_friend_requests(user_id))
+         |> assign(:sent_requests, Social.list_sent_friend_requests(user_id))}
       
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not accept friend request")}
@@ -100,7 +102,8 @@ defmodule ShardWeb.FriendsLive.Index do
         {:noreply,
          socket
          |> put_flash(:info, "Friend request declined")
-         |> assign(:pending_requests, Social.list_pending_friend_requests(user_id))}
+         |> assign(:pending_requests, Social.list_pending_friend_requests(user_id))
+         |> assign(:sent_requests, Social.list_sent_friend_requests(user_id))}
       
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not decline friend request")}
@@ -263,7 +266,7 @@ defmodule ShardWeb.FriendsLive.Index do
         <!-- Pending Requests -->
         <div :if={@pending_requests != []} class="card bg-base-100 shadow-xl">
           <div class="card-body">
-            <h2 class="card-title">Pending Friend Requests</h2>
+            <h2 class="card-title">Incoming Friend Requests</h2>
             <div class="space-y-2">
               <div :for={%{friendship: friendship, requester: user} <- @pending_requests} class="flex items-center justify-between p-2 bg-base-200 rounded">
                 <span>{user.email}</span>
@@ -283,6 +286,19 @@ defmodule ShardWeb.FriendsLive.Index do
                     Decline
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sent Requests -->
+        <div :if={@sent_requests != []} class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title">Sent Friend Requests</h2>
+            <div class="space-y-2">
+              <div :for={%{friendship: friendship, recipient: user} <- @sent_requests} class="flex items-center justify-between p-2 bg-base-200 rounded">
+                <span>{user.email}</span>
+                <span class="badge badge-warning">Pending</span>
               </div>
             </div>
           </div>

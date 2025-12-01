@@ -31,6 +31,16 @@ defmodule Shard.Social do
     |> Repo.all()
   end
 
+  def list_sent_friend_requests(user_id) do
+    from(f in Friendship,
+      where: f.user_id == ^user_id and f.status == "pending",
+      join: u in User,
+      on: u.id == f.friend_id,
+      select: %{friendship: f, recipient: u}
+    )
+    |> Repo.all()
+  end
+
   def search_users(query, current_user_id) when byte_size(query) >= 1 do
     # Get existing friend IDs to exclude them from search
     existing_friend_ids = 
