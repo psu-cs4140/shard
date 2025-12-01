@@ -107,7 +107,17 @@ defmodule Shard.Social do
 
   def decline_friend_request(friendship_id) do
     friendship = Repo.get!(Friendship, friendship_id)
-    Repo.delete(friendship)
+    
+    Repo.transaction(fn ->
+      # Delete the original request
+      Repo.delete!(friendship)
+      
+      # Also delete any reciprocal friendship if it exists
+      from(f in Friendship,
+        where: f.user_id == ^friendship.friend_id and f.friend_id == ^friendship.user_id
+      )
+      |> Repo.delete_all()
+    end)
   end
 
   def remove_friend(user_id, friend_id) do
