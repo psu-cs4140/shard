@@ -408,45 +408,55 @@ defmodule ShardWeb.UserLive.Components do
   # Helper functions to safely extract item data from different structures
   defp get_item_name(item) do
     cond do
-      item.item && item.item.name -> item.item.name
-      item.name -> item.name
-      true -> "Unknown Item"
+      Map.get(item, :item) && Map.get(Map.get(item, :item), :name) -> 
+        Map.get(Map.get(item, :item), :name)
+      Map.get(item, :name) -> 
+        Map.get(item, :name)
+      true -> 
+        "Unknown Item"
     end
   end
 
   defp get_item_quantity(item) do
-    item.quantity || 1
+    Map.get(item, :quantity, 1)
   end
 
   defp get_item_type(item) do
     cond do
-      item.item && item.item.item_type -> item.item.item_type
-      item.item_type -> item.item_type
-      true -> "misc"
+      Map.get(item, :item) && Map.get(Map.get(item, :item), :item_type) -> 
+        Map.get(Map.get(item, :item), :item_type)
+      Map.get(item, :item_type) -> 
+        Map.get(item, :item_type)
+      true -> 
+        "misc"
     end
   end
 
   defp get_item_damage(item) do
-    Map.get(item.item || item, :damage)
+    item_data = Map.get(item, :item, item)
+    Map.get(item_data, :damage)
   end
 
   defp get_item_defense(item) do
-    Map.get(item.item || item, :defense)
+    item_data = Map.get(item, :item, item)
+    Map.get(item_data, :defense)
   end
 
   defp get_item_effect(item) do
-    Map.get(item.item || item, :effect)
+    item_data = Map.get(item, :item, item)
+    Map.get(item_data, :effect)
   end
 
   defp get_item_description(item) do
-    Map.get(item.item || item, :description)
+    item_data = Map.get(item, :item, item)
+    Map.get(item_data, :description)
   end
 
   defp get_item_id(item) do
     cond do
-      item.inventory_id -> item.inventory_id
-      item.id -> item.id
-      true -> nil
+      Map.get(item, :inventory_id) -> Map.get(item, :inventory_id)
+      Map.get(item, :id) -> Map.get(item, :id)
+      true -> "unknown"
     end
   end
 
@@ -457,6 +467,10 @@ defmodule ShardWeb.UserLive.Components do
   end
 
   defp get_inventory_items(game_state) do
-    game_state.inventory_items || []
+    case Map.get(game_state, :inventory_items) do
+      nil -> []
+      items when is_list(items) -> items
+      _ -> []
+    end
   end
 end
