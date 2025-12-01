@@ -29,35 +29,53 @@ defmodule ShardWeb.FriendsLive.ChatTab do
     user_id = socket.assigns.current_user_id
     selected_friends = socket.assigns.selected_friends
 
-    if selected_friends == [] do
-      send(self(), {:error, "Please select at least one friend"})
-      {:noreply, socket}
-    else
-      participant_ids = [user_id | selected_friends]
-
-      case Social.find_existing_conversation(participant_ids) do
-        nil ->
-          attrs = if String.trim(name) != "", do: %{name: String.trim(name)}, else: %{}
-
-          case Social.create_conversation(participant_ids, attrs) do
-            {:ok, conversation} ->
-              send(self(), {:conversation_created, conversation, "Conversation created!"})
-              {:noreply, socket}
-
-            {:error, _} ->
-              send(self(), {:error, "Could not create conversation"})
-              {:noreply, socket}
-          end
-
-        existing_conversation ->
-          send(
-            self(),
-            {:existing_conversation_opened, existing_conversation, "Opened existing conversation"}
-          )
-
-          {:noreply, socket}
-      end
+    case validate_selected_friends(selected_friends) do
+      :ok -> handle_conversation_creation(user_id, selected_friends, name, socket)
+      :error -> send_error_and_reply(socket, "Please select at least one friend")
     end
+  end
+
+  defp validate_selected_friends([]), do: :error
+  defp validate_selected_friends(_), do: :ok
+
+  defp handle_conversation_creation(user_id, selected_friends, name, socket) do
+    participant_ids = [user_id | selected_friends]
+
+    case Social.find_existing_conversation(participant_ids) do
+      nil -> create_new_conversation(participant_ids, name, socket)
+      existing -> open_existing_conversation(existing, socket)
+    end
+  end
+
+  defp create_new_conversation(participant_ids, name, socket) do
+    attrs = build_conversation_attrs(name)
+
+    case Social.create_conversation(participant_ids, attrs) do
+      {:ok, conversation} ->
+        send(self(), {:conversation_created, conversation, "Conversation created!"})
+        {:noreply, socket}
+
+      {:error, _} ->
+        send_error_and_reply(socket, "Could not create conversation")
+    end
+  end
+
+  defp build_conversation_attrs(name) do
+    if String.trim(name) != "", do: %{name: String.trim(name)}, else: %{}
+  end
+
+  defp open_existing_conversation(existing_conversation, socket) do
+    send(
+      self(),
+      {:existing_conversation_opened, existing_conversation, "Opened existing conversation"}
+    )
+
+    {:noreply, socket}
+  end
+
+  defp send_error_and_reply(socket, message) do
+    send(self(), {:error, message})
+    {:noreply, socket}
   end
 
   def handle_event("open_conversation", %{"conversation_id" => conversation_id}, socket) do
