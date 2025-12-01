@@ -132,7 +132,7 @@ defmodule Shard.Users.PlayerZones do
       max_level: template_zone.max_level,
       is_public: instance_type == "multiplayer",
       is_active: true,
-      properties: Map.put(template_zone.properties || %{}, "instance_type", instance_type),
+      properties: Kernel.put_in(template_zone.properties || %{}, ["instance_type"], instance_type),
       display_order: template_zone.display_order
     }
     
