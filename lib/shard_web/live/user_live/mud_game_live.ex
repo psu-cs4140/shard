@@ -472,20 +472,38 @@ defmodule ShardWeb.MudGameLive do
   end
 
   def handle_event("show_hotbar_modal", %{"item_id" => item_id}, socket) do
-    # Show hotbar slot selection modal
-    modal_state = %{show: true, type: "hotbar_selection", item_id: item_id}
-    socket = assign(socket, modal_state: modal_state)
+    # Find the inventory item to get the correct inventory_id
+    inventory_item = Enum.find(socket.assigns.game_state.inventory_items, fn inv_item ->
+      to_string(Map.get(inv_item, :id)) == item_id
+    end)
 
-    {:noreply, socket}
+    case inventory_item do
+      nil ->
+        new_output =
+          socket.assigns.terminal_state.output ++ ["Item not found in inventory."] ++ [""]
+
+        terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+        socket = assign(socket, terminal_state: terminal_state)
+
+        {:noreply, socket}
+
+      inventory_item ->
+        # Show hotbar slot selection modal with the inventory ID
+        modal_state = %{show: true, type: "hotbar_selection", item_id: to_string(inventory_item.id)}
+        socket = assign(socket, modal_state: modal_state)
+
+        {:noreply, socket}
+    end
   end
 
   def handle_event("set_hotbar_from_modal", %{"item_id" => item_id, "slot" => slot}, socket) do
     character = socket.assigns.game_state.character
+    inventory_id = String.to_integer(item_id)
 
     case Shard.Items.set_hotbar_slot(
            character.id,
            String.to_integer(slot),
-           String.to_integer(item_id)
+           inventory_id
          ) do
       {:ok, _} ->
         # Reload hotbar and inventory
@@ -518,7 +536,8 @@ defmodule ShardWeb.MudGameLive do
             ["Failed to set hotbar slot: #{reason}"] ++ [""]
 
         terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
-        socket = assign(socket, terminal_state: terminal_state)
+        modal_state = %{show: false, type: "", item_id: nil}
+        socket = assign(socket, terminal_state: terminal_state, modal_state: modal_state)
 
         {:noreply, socket}
     end
