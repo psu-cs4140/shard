@@ -80,7 +80,7 @@ defmodule Shard.Users.PlayerZones do
             
             {:error, changeset} ->
               # Clean up the zone if player_zone creation failed
-              Map.delete_zone(zone)
+              Shard.Map.delete_zone(zone)
               {:error, changeset}
           end
         
