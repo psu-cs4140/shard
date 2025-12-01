@@ -4,7 +4,7 @@ defmodule Shard.Repo.Migrations.AddInventoryIdToHotbarSlots do
   def change do
     # This migration is a no-op since inventory_id already exists in the hotbar_slots table
     # from the original create_hotbar_slots migration (20250925000004)
-    
+
     # Only add the column if it doesn't already exist
     execute """
     DO $$
