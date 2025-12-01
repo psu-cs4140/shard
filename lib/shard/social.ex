@@ -212,14 +212,14 @@ defmodule Shard.Social do
               
               case existing_invitation do
                 nil ->
-                  # Check if there's a declined invitation we can reuse
-                  declined_invitation = 
+                  # Check if there's a previous invitation we can reuse (declined or accepted)
+                  previous_invitation = 
                     from(pi in PartyInvitation,
-                      where: pi.party_id == ^party.id and pi.invitee_id == ^friend_id and pi.status == "declined"
+                      where: pi.party_id == ^party.id and pi.invitee_id == ^friend_id and pi.status in ["declined", "accepted"]
                     )
                     |> Repo.one()
                   
-                  case declined_invitation do
+                  case previous_invitation do
                     nil ->
                       # Send new party invitation
                       %PartyInvitation{}
@@ -231,10 +231,13 @@ defmodule Shard.Social do
                       })
                       |> Repo.insert()
                     
-                    declined ->
-                      # Reactivate the declined invitation
-                      declined
-                      |> PartyInvitation.changeset(%{status: "pending"})
+                    previous ->
+                      # Reactivate the previous invitation
+                      previous
+                      |> PartyInvitation.changeset(%{
+                        status: "pending",
+                        inviter_id: leader_id
+                      })
                       |> Repo.update()
                   end
                 
@@ -354,7 +357,7 @@ defmodule Shard.Social do
 
   def delete_declined_party_invitation(party_id, invitee_id) do
     from(pi in PartyInvitation,
-      where: pi.party_id == ^party_id and pi.invitee_id == ^invitee_id and pi.status == "declined"
+      where: pi.party_id == ^party_id and pi.invitee_id == ^invitee_id and pi.status in ["declined", "accepted"]
     )
     |> Repo.delete_all()
   end
