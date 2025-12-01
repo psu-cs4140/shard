@@ -2,7 +2,7 @@ defmodule Shard.Repo.Migrations.CreatePartyInvitationsTable do
   use Ecto.Migration
 
   def change do
-    create table(:party_invitations) do
+    create table(:party_invitations, if_not_exists: true) do
       add :status, :string, default: "pending", null: false
       add :party_id, references(:parties, on_delete: :delete_all), null: false
       add :inviter_id, references(:users, on_delete: :delete_all), null: false
