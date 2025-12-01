@@ -7,7 +7,15 @@ defmodule Shard.Social do
   alias Shard.Repo
 
   alias Shard.Users.{User, Friendship}
-  alias Shard.Social.{Party, PartyMember, PartyInvitation, Conversation, ConversationParticipant, Message}
+
+  alias Shard.Social.{
+    Party,
+    PartyMember,
+    PartyInvitation,
+    Conversation,
+    ConversationParticipant,
+    Message
+  }
 
   # ───────────────────────── Friendships ─────────────────────────
 
@@ -44,10 +52,19 @@ defmodule Shard.Social do
   def search_users(query, current_user_id) when byte_size(query) >= 1 do
     # Get existing friend IDs to exclude them from search
     # This includes: friends, pending requests sent BY current user, pending requests sent TO current user
-    existing_relationships = 
+    existing_relationships =
       from(f in Friendship,
-        where: (f.user_id == ^current_user_id or f.friend_id == ^current_user_id) and f.status in ["pending", "accepted"],
-        select: fragment("CASE WHEN ? = ? THEN ? ELSE ? END", f.user_id, ^current_user_id, f.friend_id, f.user_id)
+        where:
+          (f.user_id == ^current_user_id or f.friend_id == ^current_user_id) and
+            f.status in ["pending", "accepted"],
+        select:
+          fragment(
+            "CASE WHEN ? = ? THEN ? ELSE ? END",
+            f.user_id,
+            ^current_user_id,
+            f.friend_id,
+            f.user_id
+          )
       )
       |> Repo.all()
 
@@ -71,7 +88,7 @@ defmodule Shard.Social do
 
   def accept_friend_request(friendship_id) do
     friendship = Repo.get!(Friendship, friendship_id)
-    
+
     Repo.transaction(fn ->
       # Accept the original request
       friendship
@@ -79,7 +96,7 @@ defmodule Shard.Social do
       |> Repo.update!()
 
       # Check if reciprocal friendship already exists
-      existing_reciprocal = 
+      existing_reciprocal =
         from(f in Friendship,
           where: f.user_id == ^friendship.friend_id and f.friend_id == ^friendship.user_id
         )
@@ -95,7 +112,7 @@ defmodule Shard.Social do
             status: "accepted"
           })
           |> Repo.insert!()
-        
+
         existing ->
           # Update existing reciprocal friendship to accepted
           existing
@@ -107,11 +124,11 @@ defmodule Shard.Social do
 
   def decline_friend_request(friendship_id) do
     friendship = Repo.get!(Friendship, friendship_id)
-    
+
     Repo.transaction(fn ->
       # Delete the original request
       Repo.delete!(friendship)
-      
+
       # Also delete any reciprocal friendship if it exists
       from(f in Friendship,
         where: f.user_id == ^friendship.friend_id and f.friend_id == ^friendship.user_id
@@ -124,8 +141,9 @@ defmodule Shard.Social do
     Repo.transaction(fn ->
       # Remove both directions of the friendship
       from(f in Friendship,
-        where: (f.user_id == ^user_id and f.friend_id == ^friend_id) or
-               (f.user_id == ^friend_id and f.friend_id == ^user_id)
+        where:
+          (f.user_id == ^user_id and f.friend_id == ^friend_id) or
+            (f.user_id == ^friend_id and f.friend_id == ^user_id)
       )
       |> Repo.delete_all()
     end)
@@ -142,8 +160,10 @@ defmodule Shard.Social do
     )
     |> Repo.one()
     |> case do
-      nil -> nil
-      party -> 
+      nil ->
+        nil
+
+      party ->
         party
         |> Repo.preload(party_members: :user)
     end
@@ -170,19 +190,23 @@ defmodule Shard.Social do
 
   def leave_party(user_id) do
     case get_user_party(user_id) do
-      nil -> {:error, :not_in_party}
+      nil ->
+        {:error, :not_in_party}
+
       party ->
         member = Repo.get_by!(PartyMember, party_id: party.id, user_id: user_id)
         Repo.delete(member)
-        
+
         # If leader left, disband party or transfer leadership
         if party.leader_id == user_id do
-          remaining_members = 
+          remaining_members =
             from(pm in PartyMember, where: pm.party_id == ^party.id)
             |> Repo.all()
-            
+
           case remaining_members do
-            [] -> Repo.delete(party)
+            [] ->
+              Repo.delete(party)
+
             [new_leader | _] ->
               party
               |> Party.changeset(%{leader_id: new_leader.user_id})
@@ -194,7 +218,9 @@ defmodule Shard.Social do
 
   def invite_to_party(leader_id, friend_id) do
     case get_user_party(leader_id) do
-      nil -> {:error, :not_in_party}
+      nil ->
+        {:error, :not_in_party}
+
       party ->
         # Check if user is the party leader
         if party.leader_id != leader_id do
@@ -204,21 +230,25 @@ defmodule Shard.Social do
           case get_user_party(friend_id) do
             nil ->
               # Check if there's already a pending invitation
-              existing_invitation = 
+              existing_invitation =
                 from(pi in PartyInvitation,
-                  where: pi.party_id == ^party.id and pi.invitee_id == ^friend_id and pi.status == "pending"
+                  where:
+                    pi.party_id == ^party.id and pi.invitee_id == ^friend_id and
+                      pi.status == "pending"
                 )
                 |> Repo.one()
-              
+
               case existing_invitation do
                 nil ->
                   # Check if there's a previous invitation we can reuse (declined or accepted)
-                  previous_invitation = 
+                  previous_invitation =
                     from(pi in PartyInvitation,
-                      where: pi.party_id == ^party.id and pi.invitee_id == ^friend_id and pi.status in ["declined", "accepted"]
+                      where:
+                        pi.party_id == ^party.id and pi.invitee_id == ^friend_id and
+                          pi.status in ["declined", "accepted"]
                     )
                     |> Repo.one()
-                  
+
                   case previous_invitation do
                     nil ->
                       # Send new party invitation
@@ -230,7 +260,7 @@ defmodule Shard.Social do
                         status: "pending"
                       })
                       |> Repo.insert()
-                    
+
                     previous ->
                       # Reactivate the previous invitation
                       previous
@@ -240,11 +270,11 @@ defmodule Shard.Social do
                       })
                       |> Repo.update()
                   end
-                
+
                 _existing ->
                   {:error, :invitation_already_sent}
               end
-            
+
             _existing_party ->
               {:error, :friend_already_in_party}
           end
@@ -254,7 +284,9 @@ defmodule Shard.Social do
 
   def disband_party(leader_id) do
     case get_user_party(leader_id) do
-      nil -> {:error, :not_in_party}
+      nil ->
+        {:error, :not_in_party}
+
       party ->
         if party.leader_id != leader_id do
           {:error, :not_party_leader}
@@ -263,7 +295,7 @@ defmodule Shard.Social do
             # Delete all party members
             from(pm in PartyMember, where: pm.party_id == ^party.id)
             |> Repo.delete_all()
-            
+
             # Delete the party
             Repo.delete!(party)
           end)
@@ -273,7 +305,9 @@ defmodule Shard.Social do
 
   def kick_from_party(leader_id, member_id) do
     case get_user_party(leader_id) do
-      nil -> {:error, :not_in_party}
+      nil ->
+        {:error, :not_in_party}
+
       party ->
         if party.leader_id != leader_id do
           {:error, :not_party_leader}
@@ -316,7 +350,7 @@ defmodule Shard.Social do
 
   def accept_party_invitation(invitation_id) do
     invitation = Repo.get!(PartyInvitation, invitation_id)
-    
+
     # Check if invitee is already in a party
     case get_user_party(invitation.invitee_id) do
       nil ->
@@ -325,7 +359,7 @@ defmodule Shard.Social do
           invitation
           |> PartyInvitation.changeset(%{status: "accepted"})
           |> Repo.update!()
-          
+
           # Add user to party
           %PartyMember{}
           |> PartyMember.changeset(%{
@@ -334,14 +368,14 @@ defmodule Shard.Social do
             joined_at: DateTime.utc_now()
           })
           |> Repo.insert!()
-          
+
           # Delete any other pending invitations for this user
           from(pi in PartyInvitation,
             where: pi.invitee_id == ^invitation.invitee_id and pi.status == "pending"
           )
           |> Repo.delete_all()
         end)
-      
+
       _existing_party ->
         {:error, :already_in_party}
     end
@@ -349,7 +383,7 @@ defmodule Shard.Social do
 
   def decline_party_invitation(invitation_id) do
     invitation = Repo.get!(PartyInvitation, invitation_id)
-    
+
     invitation
     |> PartyInvitation.changeset(%{status: "declined"})
     |> Repo.update()
@@ -357,7 +391,9 @@ defmodule Shard.Social do
 
   def delete_declined_party_invitation(party_id, invitee_id) do
     from(pi in PartyInvitation,
-      where: pi.party_id == ^party_id and pi.invitee_id == ^invitee_id and pi.status in ["declined", "accepted"]
+      where:
+        pi.party_id == ^party_id and pi.invitee_id == ^invitee_id and
+          pi.status in ["declined", "accepted"]
     )
     |> Repo.delete_all()
   end
@@ -388,7 +424,7 @@ defmodule Shard.Social do
 
   def find_existing_conversation(participant_ids) do
     participant_count = length(participant_ids)
-    
+
     # Find conversations where all participants match exactly
     from(c in Conversation,
       join: cp in ConversationParticipant,
@@ -401,14 +437,14 @@ defmodule Shard.Social do
     |> Repo.all()
     |> Enum.find(fn conversation ->
       # Double-check that the conversation has exactly the same participants
-      conversation_participant_ids = 
+      conversation_participant_ids =
         from(cp in ConversationParticipant,
           where: cp.conversation_id == ^conversation.id,
           select: cp.user_id
         )
         |> Repo.all()
         |> Enum.sort()
-      
+
       Enum.sort(participant_ids) == conversation_participant_ids
     end)
   end
@@ -440,9 +476,9 @@ defmodule Shard.Social do
             {:conversation_created, conversation}
           )
         end)
-        
+
         {:ok, conversation}
-      
+
       error ->
         error
     end
@@ -450,7 +486,7 @@ defmodule Shard.Social do
 
   def update_conversation_name(conversation_id, name) do
     conversation = Repo.get!(Conversation, conversation_id)
-    
+
     conversation
     |> Conversation.changeset(%{name: name})
     |> Repo.update()
@@ -458,20 +494,21 @@ defmodule Shard.Social do
 
   def delete_conversation(conversation_id, user_id) do
     conversation = Repo.get!(Conversation, conversation_id)
-    
+
     # Check if user is a participant
-    participant = Repo.get_by(ConversationParticipant, conversation_id: conversation_id, user_id: user_id)
-    
+    participant =
+      Repo.get_by(ConversationParticipant, conversation_id: conversation_id, user_id: user_id)
+
     if participant do
       Repo.transaction(fn ->
         # Delete all messages
         from(m in Message, where: m.conversation_id == ^conversation_id)
         |> Repo.delete_all()
-        
+
         # Delete all participants
         from(cp in ConversationParticipant, where: cp.conversation_id == ^conversation_id)
         |> Repo.delete_all()
-        
+
         # Delete conversation
         Repo.delete!(conversation)
       end)
@@ -484,8 +521,9 @@ defmodule Shard.Social do
     Repo.transaction(fn ->
       Enum.each(user_ids, fn user_id ->
         # Check if user is already a participant
-        existing = Repo.get_by(ConversationParticipant, conversation_id: conversation_id, user_id: user_id)
-        
+        existing =
+          Repo.get_by(ConversationParticipant, conversation_id: conversation_id, user_id: user_id)
+
         unless existing do
           %ConversationParticipant{}
           |> ConversationParticipant.changeset(%{
@@ -495,7 +533,7 @@ defmodule Shard.Social do
           |> Repo.insert!()
         end
       end)
-      
+
       # Notify new participants
       Enum.each(user_ids, fn user_id ->
         Phoenix.PubSub.broadcast(
@@ -508,14 +546,15 @@ defmodule Shard.Social do
   end
 
   def remove_participant_from_conversation(conversation_id, user_id) do
-    participant = Repo.get_by(ConversationParticipant, conversation_id: conversation_id, user_id: user_id)
-    
+    participant =
+      Repo.get_by(ConversationParticipant, conversation_id: conversation_id, user_id: user_id)
+
     if participant do
       # Check if this would leave less than 2 participants
-      remaining_count = 
+      remaining_count =
         from(cp in ConversationParticipant, where: cp.conversation_id == ^conversation_id)
         |> Repo.aggregate(:count, :id)
-      
+
       if remaining_count <= 2 do
         {:error, :minimum_participants}
       else
@@ -541,9 +580,9 @@ defmodule Shard.Social do
           "conversation:#{conversation_id}",
           {:new_message, conversation_id}
         )
-        
+
         {:ok, message}
-      
+
       error ->
         error
     end

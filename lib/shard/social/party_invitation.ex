@@ -17,6 +17,8 @@ defmodule Shard.Social.PartyInvitation do
     |> cast(attrs, [:party_id, :inviter_id, :invitee_id, :status])
     |> validate_required([:party_id, :inviter_id, :invitee_id])
     |> validate_inclusion(:status, ["pending", "accepted", "declined"])
-    |> unique_constraint([:party_id, :invitee_id], name: :party_invitations_party_id_invitee_id_index)
+    |> unique_constraint([:party_id, :invitee_id],
+      name: :party_invitations_party_id_invitee_id_index
+    )
   end
 end

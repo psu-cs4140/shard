@@ -14,6 +14,9 @@ defmodule Shard.Repo.Migrations.CreatePartyInvitationsTable do
     create index(:party_invitations, [:party_id])
     create index(:party_invitations, [:inviter_id])
     create index(:party_invitations, [:invitee_id])
-    create unique_index(:party_invitations, [:party_id, :invitee_id], name: :party_invitations_party_id_invitee_id_index)
+
+    create unique_index(:party_invitations, [:party_id, :invitee_id],
+             name: :party_invitations_party_id_invitee_id_index
+           )
   end
 end

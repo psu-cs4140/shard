@@ -60,7 +60,7 @@ defmodule ShardWeb.FriendsLive.Index do
     user_id = socket.assigns.current_scope.user.id
     results = Social.search_users(query, user_id)
     show_dropdown = byte_size(query) >= 1 && results != []
-    
+
     {:noreply,
      socket
      |> assign(:search_query, query)
@@ -85,7 +85,7 @@ defmodule ShardWeb.FriendsLive.Index do
 
   def handle_event("send_friend_request", %{"user_id" => friend_id}, socket) do
     user_id = socket.assigns.current_scope.user.id
-    
+
     case Social.send_friend_request(user_id, String.to_integer(friend_id)) do
       {:ok, _friendship} ->
         {:noreply,
@@ -94,7 +94,7 @@ defmodule ShardWeb.FriendsLive.Index do
          |> assign(:search_query, "")
          |> assign(:search_results, [])
          |> assign(:show_search_dropdown, false)}
-      
+
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Could not send friend request")}
     end
@@ -106,14 +106,14 @@ defmodule ShardWeb.FriendsLive.Index do
         user_id = socket.assigns.current_scope.user.id
         friends = Social.list_friends(user_id)
         friends_with_party_status = add_party_status_to_friends(friends)
-        
+
         {:noreply,
          socket
          |> put_flash(:info, "Friend request accepted!")
          |> assign(:friends, friends_with_party_status)
          |> assign(:pending_requests, Social.list_pending_friend_requests(user_id))
          |> assign(:sent_requests, Social.list_sent_friend_requests(user_id))}
-      
+
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not accept friend request")}
     end
@@ -123,13 +123,13 @@ defmodule ShardWeb.FriendsLive.Index do
     case Social.decline_friend_request(String.to_integer(friendship_id)) do
       {:ok, _} ->
         user_id = socket.assigns.current_scope.user.id
-        
+
         {:noreply,
          socket
          |> put_flash(:info, "Friend request declined")
          |> assign(:pending_requests, Social.list_pending_friend_requests(user_id))
          |> assign(:sent_requests, Social.list_sent_friend_requests(user_id))}
-      
+
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not decline friend request")}
     end
@@ -138,10 +138,10 @@ defmodule ShardWeb.FriendsLive.Index do
   def handle_event("open_conversation", %{"conversation_id" => conversation_id}, socket) do
     conversation_id = String.to_integer(conversation_id)
     conversation = Social.get_conversation_with_messages(conversation_id)
-    
+
     # Subscribe to this specific conversation for real-time updates
     Phoenix.PubSub.subscribe(Shard.PubSub, "conversation:#{conversation_id}")
-    
+
     {:noreply, assign(socket, :active_conversation, conversation)}
   end
 
@@ -153,19 +153,19 @@ defmodule ShardWeb.FriendsLive.Index do
     case socket.assigns.active_conversation do
       nil ->
         {:noreply, socket}
-      
+
       conversation ->
         user_id = socket.assigns.current_scope.user.id
-        
+
         case Social.send_message(conversation.id, user_id, content) do
           {:ok, _message} ->
             updated_conversation = Social.get_conversation_with_messages(conversation.id)
-            
+
             {:noreply,
              socket
              |> assign(:active_conversation, updated_conversation)
              |> assign(:new_message, "")}
-          
+
           {:error, _} ->
             {:noreply, put_flash(socket, :error, "Could not send message")}
         end
@@ -174,14 +174,14 @@ defmodule ShardWeb.FriendsLive.Index do
 
   def handle_event("create_party", _params, socket) do
     user_id = socket.assigns.current_scope.user.id
-    
+
     case Social.create_party(user_id) do
       {:ok, party} ->
         {:noreply,
          socket
          |> put_flash(:info, "Party created!")
          |> assign(:party, party)}
-      
+
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not create party")}
     end
@@ -189,14 +189,14 @@ defmodule ShardWeb.FriendsLive.Index do
 
   def handle_event("leave_party", _params, socket) do
     user_id = socket.assigns.current_scope.user.id
-    
+
     case Social.leave_party(user_id) do
       {:ok, _} ->
         {:noreply,
          socket
          |> put_flash(:info, "Left party")
          |> assign(:party, nil)}
-      
+
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not leave party")}
     end
@@ -205,7 +205,7 @@ defmodule ShardWeb.FriendsLive.Index do
   def handle_event("invite_to_party", %{"friend_id" => friend_id}, socket) do
     user_id = socket.assigns.current_scope.user.id
     friend_id = String.to_integer(friend_id)
-    
+
     case Social.invite_to_party(user_id, friend_id) do
       {:ok, _} ->
         {:noreply,
@@ -213,16 +213,16 @@ defmodule ShardWeb.FriendsLive.Index do
          |> put_flash(:info, "Party invitation sent!")
          |> assign(:party, Social.get_user_party(user_id))
          |> assign(:sent_party_invitations, Social.list_sent_party_invitations(user_id))}
-      
+
       {:error, :friend_already_in_party} ->
         {:noreply, put_flash(socket, :error, "Friend is already in a party")}
-      
+
       {:error, :invitation_already_sent} ->
         {:noreply, put_flash(socket, :error, "Invitation already sent to this friend")}
-      
+
       {:error, :not_party_leader} ->
         {:noreply, put_flash(socket, :error, "Only the party leader can invite members")}
-      
+
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not send party invitation")}
     end
@@ -230,17 +230,17 @@ defmodule ShardWeb.FriendsLive.Index do
 
   def handle_event("disband_party", _params, socket) do
     user_id = socket.assigns.current_scope.user.id
-    
+
     case Social.disband_party(user_id) do
       {:ok, _} ->
         {:noreply,
          socket
          |> put_flash(:info, "Party disbanded")
          |> assign(:party, nil)}
-      
+
       {:error, :not_party_leader} ->
         {:noreply, put_flash(socket, :error, "Only the party leader can disband the party")}
-      
+
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not disband party")}
     end
@@ -249,17 +249,17 @@ defmodule ShardWeb.FriendsLive.Index do
   def handle_event("kick_from_party", %{"member_id" => member_id}, socket) do
     user_id = socket.assigns.current_scope.user.id
     member_id = String.to_integer(member_id)
-    
+
     case Social.kick_from_party(user_id, member_id) do
       {:ok, _} ->
         {:noreply,
          socket
          |> put_flash(:info, "Member removed from party")
          |> assign(:party, Social.get_user_party(user_id))}
-      
+
       {:error, :not_party_leader} ->
         {:noreply, put_flash(socket, :error, "Only the party leader can remove members")}
-      
+
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not remove member from party")}
     end
@@ -269,16 +269,16 @@ defmodule ShardWeb.FriendsLive.Index do
     case Social.accept_party_invitation(String.to_integer(invitation_id)) do
       {:ok, _} ->
         user_id = socket.assigns.current_scope.user.id
-        
+
         {:noreply,
          socket
          |> put_flash(:info, "Party invitation accepted!")
          |> assign(:party, Social.get_user_party(user_id))
          |> assign(:pending_party_invitations, Social.list_pending_party_invitations(user_id))}
-      
+
       {:error, :already_in_party} ->
         {:noreply, put_flash(socket, :error, "You are already in a party")}
-      
+
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not accept party invitation")}
     end
@@ -288,12 +288,12 @@ defmodule ShardWeb.FriendsLive.Index do
     case Social.decline_party_invitation(String.to_integer(invitation_id)) do
       {:ok, _} ->
         user_id = socket.assigns.current_scope.user.id
-        
+
         {:noreply,
          socket
          |> put_flash(:info, "Party invitation declined")
          |> assign(:pending_party_invitations, Social.list_pending_party_invitations(user_id))}
-      
+
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not decline party invitation")}
     end
@@ -301,17 +301,17 @@ defmodule ShardWeb.FriendsLive.Index do
 
   def handle_event("remove_friend", %{"friend_id" => friend_id}, socket) do
     user_id = socket.assigns.current_scope.user.id
-    
+
     case Social.remove_friend(user_id, String.to_integer(friend_id)) do
       {:ok, _} ->
         friends = Social.list_friends(user_id)
         friends_with_party_status = add_party_status_to_friends(friends)
-        
+
         {:noreply,
          socket
          |> put_flash(:info, "Friend removed")
          |> assign(:friends, friends_with_party_status)}
-      
+
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not remove friend")}
     end
@@ -322,7 +322,7 @@ defmodule ShardWeb.FriendsLive.Index do
   end
 
   def handle_event("hide_new_conversation_form", _params, socket) do
-    {:noreply, 
+    {:noreply,
      socket
      |> assign(:show_new_conversation_form, false)
      |> assign(:selected_friends, [])}
@@ -331,14 +331,14 @@ defmodule ShardWeb.FriendsLive.Index do
   def handle_event("toggle_friend_selection", %{"friend_id" => friend_id}, socket) do
     friend_id = String.to_integer(friend_id)
     selected_friends = socket.assigns.selected_friends
-    
-    new_selected = 
+
+    new_selected =
       if friend_id in selected_friends do
         List.delete(selected_friends, friend_id)
       else
         [friend_id | selected_friends]
       end
-    
+
     {:noreply, assign(socket, :selected_friends, new_selected)}
   end
 
@@ -347,7 +347,7 @@ defmodule ShardWeb.FriendsLive.Index do
   end
 
   def handle_event("hide_conversation_settings", _params, socket) do
-    {:noreply, 
+    {:noreply,
      socket
      |> assign(:show_conversation_settings, false)
      |> assign(:editing_conversation_name, false)
@@ -358,14 +358,15 @@ defmodule ShardWeb.FriendsLive.Index do
 
   def handle_event("start_edit_conversation_name", _params, socket) do
     current_name = socket.assigns.active_conversation.name || ""
-    {:noreply, 
+
+    {:noreply,
      socket
      |> assign(:editing_conversation_name, true)
      |> assign(:new_conversation_name, current_name)}
   end
 
   def handle_event("cancel_edit_conversation_name", _params, socket) do
-    {:noreply, 
+    {:noreply,
      socket
      |> assign(:editing_conversation_name, false)
      |> assign(:new_conversation_name, "")}
@@ -373,19 +374,22 @@ defmodule ShardWeb.FriendsLive.Index do
 
   def handle_event("update_conversation_name", %{"name" => name}, socket) do
     conversation = socket.assigns.active_conversation
-    
+
     case Social.update_conversation_name(conversation.id, String.trim(name)) do
       {:ok, updated_conversation} ->
         user_id = socket.assigns.current_scope.user.id
-        
+
         {:noreply,
          socket
          |> put_flash(:info, "Conversation name updated!")
          |> assign(:editing_conversation_name, false)
          |> assign(:new_conversation_name, "")
-         |> assign(:active_conversation, Social.get_conversation_with_messages(updated_conversation.id))
+         |> assign(
+           :active_conversation,
+           Social.get_conversation_with_messages(updated_conversation.id)
+         )
          |> assign(:conversations, Social.list_user_conversations(user_id))}
-      
+
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not update conversation name")}
     end
@@ -394,7 +398,7 @@ defmodule ShardWeb.FriendsLive.Index do
   def handle_event("delete_conversation", _params, socket) do
     conversation = socket.assigns.active_conversation
     user_id = socket.assigns.current_scope.user.id
-    
+
     case Social.delete_conversation(conversation.id, user_id) do
       {:ok, _} ->
         {:noreply,
@@ -403,7 +407,7 @@ defmodule ShardWeb.FriendsLive.Index do
          |> assign(:active_conversation, nil)
          |> assign(:show_conversation_settings, false)
          |> assign(:conversations, Social.list_user_conversations(user_id))}
-      
+
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not delete conversation")}
     end
@@ -414,7 +418,7 @@ defmodule ShardWeb.FriendsLive.Index do
   end
 
   def handle_event("hide_add_participants", _params, socket) do
-    {:noreply, 
+    {:noreply,
      socket
      |> assign(:show_add_participants, false)
      |> assign(:selected_new_participants, [])}
@@ -423,28 +427,28 @@ defmodule ShardWeb.FriendsLive.Index do
   def handle_event("toggle_new_participant_selection", %{"friend_id" => friend_id}, socket) do
     friend_id = String.to_integer(friend_id)
     selected = socket.assigns.selected_new_participants
-    
-    new_selected = 
+
+    new_selected =
       if friend_id in selected do
         List.delete(selected, friend_id)
       else
         [friend_id | selected]
       end
-    
+
     {:noreply, assign(socket, :selected_new_participants, new_selected)}
   end
 
   def handle_event("add_participants", _params, socket) do
     conversation = socket.assigns.active_conversation
     new_participant_ids = socket.assigns.selected_new_participants
-    
+
     if new_participant_ids == [] do
       {:noreply, put_flash(socket, :error, "Please select at least one participant")}
     else
       case Social.add_participants_to_conversation(conversation.id, new_participant_ids) do
         {:ok, _} ->
           user_id = socket.assigns.current_scope.user.id
-          
+
           {:noreply,
            socket
            |> put_flash(:info, "Participants added!")
@@ -452,7 +456,7 @@ defmodule ShardWeb.FriendsLive.Index do
            |> assign(:selected_new_participants, [])
            |> assign(:active_conversation, Social.get_conversation_with_messages(conversation.id))
            |> assign(:conversations, Social.list_user_conversations(user_id))}
-        
+
         {:error, _} ->
           {:noreply, put_flash(socket, :error, "Could not add participants")}
       end
@@ -463,7 +467,7 @@ defmodule ShardWeb.FriendsLive.Index do
     conversation = socket.assigns.active_conversation
     participant_id = String.to_integer(user_id)
     current_user_id = socket.assigns.current_scope.user.id
-    
+
     case Social.remove_participant_from_conversation(conversation.id, participant_id) do
       {:ok, _} ->
         {:noreply,
@@ -471,7 +475,7 @@ defmodule ShardWeb.FriendsLive.Index do
          |> put_flash(:info, "Participant removed")
          |> assign(:active_conversation, Social.get_conversation_with_messages(conversation.id))
          |> assign(:conversations, Social.list_user_conversations(current_user_id))}
-      
+
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not remove participant")}
     end
@@ -480,18 +484,18 @@ defmodule ShardWeb.FriendsLive.Index do
   def handle_event("create_conversation", %{"name" => name}, socket) do
     user_id = socket.assigns.current_scope.user.id
     selected_friends = socket.assigns.selected_friends
-    
+
     if selected_friends == [] do
       {:noreply, put_flash(socket, :error, "Please select at least one friend")}
     else
       participant_ids = [user_id | selected_friends]
-      
+
       # Check if conversation already exists with these participants
       case Social.find_existing_conversation(participant_ids) do
         nil ->
           # No existing conversation, create new one
           attrs = if String.trim(name) != "", do: %{name: String.trim(name)}, else: %{}
-          
+
           case Social.create_conversation(participant_ids, attrs) do
             {:ok, conversation} ->
               {:noreply,
@@ -500,17 +504,22 @@ defmodule ShardWeb.FriendsLive.Index do
                |> assign(:show_new_conversation_form, false)
                |> assign(:selected_friends, [])
                |> assign(:conversations, Social.list_user_conversations(user_id))
-               |> assign(:active_conversation, Social.get_conversation_with_messages(conversation.id))}
-            
+               |> assign(
+                 :active_conversation,
+                 Social.get_conversation_with_messages(conversation.id)
+               )}
+
             {:error, _} ->
               {:noreply, put_flash(socket, :error, "Could not create conversation")}
           end
-        
+
         existing_conversation ->
           # Conversation already exists, open it instead
-          conversation_with_messages = Social.get_conversation_with_messages(existing_conversation.id)
+          conversation_with_messages =
+            Social.get_conversation_with_messages(existing_conversation.id)
+
           Phoenix.PubSub.subscribe(Shard.PubSub, "conversation:#{existing_conversation.id}")
-          
+
           {:noreply,
            socket
            |> put_flash(:info, "Opened existing conversation")
@@ -533,7 +542,7 @@ defmodule ShardWeb.FriendsLive.Index do
       %{id: ^conversation_id} ->
         updated_conversation = Social.get_conversation_with_messages(conversation_id)
         {:noreply, assign(socket, :active_conversation, updated_conversation)}
-      
+
       _ ->
         {:noreply, socket}
     end
@@ -552,7 +561,7 @@ defmodule ShardWeb.FriendsLive.Index do
     <div class="container mx-auto p-6">
       <h1 class="text-3xl font-bold mb-6">Social</h1>
       
-      <!-- Tab Navigation -->
+    <!-- Tab Navigation -->
       <div class="tabs tabs-boxed mb-6">
         <button
           class={["tab", @active_tab == "friends" && "tab-active"]}
@@ -576,8 +585,8 @@ defmodule ShardWeb.FriendsLive.Index do
           Party
         </button>
       </div>
-
-      <!-- Friends Tab -->
+      
+    <!-- Friends Tab -->
       <div :if={@active_tab == "friends"} class="space-y-6">
         <!-- Search Bar -->
         <div class="card bg-base-100 shadow-xl">
@@ -597,13 +606,13 @@ defmodule ShardWeb.FriendsLive.Index do
                 />
               </form>
               
-              <!-- Search Dropdown -->
-              <div 
-                :if={@show_search_dropdown && @search_results != []} 
+    <!-- Search Dropdown -->
+              <div
+                :if={@show_search_dropdown && @search_results != []}
                 class="absolute top-full left-0 right-0 z-50 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
               >
-                <div 
-                  :for={user <- @search_results} 
+                <div
+                  :for={user <- @search_results}
                   class="flex items-center justify-between p-3 hover:bg-base-200 border-b border-base-300 last:border-b-0"
                 >
                   <div class="flex items-center space-x-3">
@@ -624,8 +633,8 @@ defmodule ShardWeb.FriendsLive.Index do
                 </div>
               </div>
               
-              <!-- No results message -->
-              <div 
+    <!-- No results message -->
+              <div
                 :if={@show_search_dropdown && @search_results == [] && @search_query != ""}
                 class="absolute top-full left-0 right-0 z-50 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg p-3 text-center text-base-content/60"
               >
@@ -634,13 +643,16 @@ defmodule ShardWeb.FriendsLive.Index do
             </div>
           </div>
         </div>
-
-        <!-- Pending Requests -->
+        
+    <!-- Pending Requests -->
         <div :if={@pending_requests != []} class="card bg-base-100 shadow-xl">
           <div class="card-body">
             <h2 class="card-title">Incoming Friend Requests</h2>
             <div class="space-y-2">
-              <div :for={%{friendship: friendship, requester: user} <- @pending_requests} class="flex items-center justify-between p-2 bg-base-200 rounded">
+              <div
+                :for={%{friendship: friendship, requester: user} <- @pending_requests}
+                class="flex items-center justify-between p-2 bg-base-200 rounded"
+              >
                 <span>{user.email}</span>
                 <div class="space-x-2">
                   <button
@@ -662,21 +674,24 @@ defmodule ShardWeb.FriendsLive.Index do
             </div>
           </div>
         </div>
-
-        <!-- Sent Requests -->
+        
+    <!-- Sent Requests -->
         <div :if={@sent_requests != []} class="card bg-base-100 shadow-xl">
           <div class="card-body">
             <h2 class="card-title">Sent Friend Requests</h2>
             <div class="space-y-2">
-              <div :for={%{friendship: friendship, recipient: user} <- @sent_requests} class="flex items-center justify-between p-2 bg-base-200 rounded">
+              <div
+                :for={%{friendship: friendship, recipient: user} <- @sent_requests}
+                class="flex items-center justify-between p-2 bg-base-200 rounded"
+              >
                 <span>{user.email}</span>
                 <span class="badge badge-warning">Pending</span>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Friends List -->
+        
+    <!-- Friends List -->
         <div class="card bg-base-100 shadow-xl">
           <div class="card-body">
             <h2 class="card-title">Friends</h2>
@@ -684,7 +699,10 @@ defmodule ShardWeb.FriendsLive.Index do
               No friends yet. Search for users above to add friends!
             </div>
             <div :if={@friends != []} class="space-y-2">
-              <div :for={%{friend: friend} <- @friends} class="flex items-center justify-between p-2 bg-base-200 rounded">
+              <div
+                :for={%{friend: friend} <- @friends}
+                class="flex items-center justify-between p-2 bg-base-200 rounded"
+              >
                 <div class="flex items-center space-x-3">
                   <div class="avatar placeholder">
                     <div class="bg-neutral text-neutral-content rounded-full w-8">
@@ -705,15 +723,15 @@ defmodule ShardWeb.FriendsLive.Index do
           </div>
         </div>
       </div>
-
-      <!-- Chat Tab -->
+      
+    <!-- Chat Tab -->
       <div :if={@active_tab == "chat"} class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
         <!-- Conversations List -->
         <div class="card bg-base-100 shadow-xl">
           <div class="card-body">
             <div class="flex items-center justify-between mb-4">
               <h2 class="card-title">Conversations</h2>
-              <button 
+              <button
                 class="btn btn-primary btn-sm"
                 phx-click="show_new_conversation_form"
               >
@@ -721,7 +739,7 @@ defmodule ShardWeb.FriendsLive.Index do
               </button>
             </div>
             
-            <!-- New Conversation Form -->
+    <!-- New Conversation Form -->
             <div :if={@show_new_conversation_form} class="mb-4 p-4 bg-base-200 rounded-lg">
               <form phx-submit="create_conversation">
                 <div class="space-y-3">
@@ -736,7 +754,7 @@ defmodule ShardWeb.FriendsLive.Index do
                       class="input input-bordered input-sm w-full"
                     />
                   </div>
-                  
+
                   <div>
                     <label class="label">
                       <span class="label-text">Select Friends</span>
@@ -745,7 +763,7 @@ defmodule ShardWeb.FriendsLive.Index do
                       No friends available. Add friends first!
                     </div>
                     <div :if={@friends != []} class="space-y-1 max-h-32 overflow-y-auto">
-                      <label 
+                      <label
                         :for={%{friend: friend} <- @friends}
                         class="flex items-center space-x-2 p-1 hover:bg-base-300 rounded cursor-pointer"
                       >
@@ -760,13 +778,13 @@ defmodule ShardWeb.FriendsLive.Index do
                       </label>
                     </div>
                   </div>
-                  
+
                   <div class="flex space-x-2">
                     <button type="submit" class="btn btn-primary btn-sm">
                       Create
                     </button>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       class="btn btn-ghost btn-sm"
                       phx-click="hide_new_conversation_form"
                     >
@@ -776,7 +794,7 @@ defmodule ShardWeb.FriendsLive.Index do
                 </div>
               </form>
             </div>
-            
+
             <div :if={@conversations == []} class="text-center text-base-content/60 py-8">
               No conversations yet
             </div>
@@ -785,7 +803,10 @@ defmodule ShardWeb.FriendsLive.Index do
                 :for={conversation <- @conversations}
                 class={[
                   "p-2 rounded cursor-pointer hover:bg-base-300",
-                  if(@active_conversation && @active_conversation.id == conversation.id, do: "bg-primary text-primary-content", else: "bg-base-200")
+                  if(@active_conversation && @active_conversation.id == conversation.id,
+                    do: "bg-primary text-primary-content",
+                    else: "bg-base-200"
+                  )
                 ]}
                 phx-click="open_conversation"
                 phx-value-conversation_id={conversation.id}
@@ -797,11 +818,14 @@ defmodule ShardWeb.FriendsLive.Index do
             </div>
           </div>
         </div>
-
-        <!-- Active Conversation -->
+        
+    <!-- Active Conversation -->
         <div class="lg:col-span-2 card bg-base-100 shadow-xl h-full">
           <div class="card-body h-full flex flex-col">
-            <div :if={@active_conversation == nil} class="flex-1 flex items-center justify-center text-center text-base-content/60">
+            <div
+              :if={@active_conversation == nil}
+              class="flex-1 flex items-center justify-center text-center text-base-content/60"
+            >
               Select a conversation to start chatting
             </div>
             <div :if={@active_conversation != nil} class="flex flex-col h-full">
@@ -809,38 +833,38 @@ defmodule ShardWeb.FriendsLive.Index do
                 <h2 class="card-title">
                   {@active_conversation.name || "Direct Message"}
                 </h2>
-                <button 
+                <button
                   class="btn btn-ghost btn-sm"
                   phx-click="show_conversation_settings"
                 >
                   ⚙️
                 </button>
               </div>
-
-              <!-- Conversation Settings Modal -->
+              
+    <!-- Conversation Settings Modal -->
               <div :if={@show_conversation_settings} class="mb-4 p-4 bg-base-200 rounded-lg">
                 <div class="flex items-center justify-between mb-3">
                   <h3 class="font-semibold">Conversation Settings</h3>
-                  <button 
+                  <button
                     class="btn btn-ghost btn-xs"
                     phx-click="hide_conversation_settings"
                   >
                     ✕
                   </button>
                 </div>
-
-                <!-- Edit Name Section -->
+                
+    <!-- Edit Name Section -->
                 <div class="mb-4">
                   <div :if={!@editing_conversation_name} class="flex items-center justify-between">
                     <span class="text-sm">Name: {@active_conversation.name || "Direct Message"}</span>
-                    <button 
+                    <button
                       class="btn btn-primary btn-xs"
                       phx-click="start_edit_conversation_name"
                     >
                       Edit
                     </button>
                   </div>
-                  
+
                   <div :if={@editing_conversation_name}>
                     <form phx-submit="update_conversation_name">
                       <div class="flex space-x-2">
@@ -853,8 +877,8 @@ defmodule ShardWeb.FriendsLive.Index do
                           required
                         />
                         <button type="submit" class="btn btn-primary btn-xs">Save</button>
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           class="btn btn-ghost btn-xs"
                           phx-click="cancel_edit_conversation_name"
                         >
@@ -864,27 +888,32 @@ defmodule ShardWeb.FriendsLive.Index do
                     </form>
                   </div>
                 </div>
-
-                <!-- Participants Section -->
+                
+    <!-- Participants Section -->
                 <div class="mb-4">
                   <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm font-medium">Participants ({length(@active_conversation.participants)})</span>
-                    <button 
+                    <span class="text-sm font-medium">
+                      Participants ({length(@active_conversation.participants)})
+                    </span>
+                    <button
                       class="btn btn-primary btn-xs"
                       phx-click="show_add_participants"
                     >
                       Add
                     </button>
                   </div>
-                  
+
                   <div class="space-y-1 max-h-24 overflow-y-auto">
-                    <div 
+                    <div
                       :for={participant <- @active_conversation.participants}
                       class="flex items-center justify-between text-xs p-1 bg-base-100 rounded"
                     >
                       <span>{participant.email}</span>
-                      <button 
-                        :if={participant.id != @current_scope.user.id && length(@active_conversation.participants) > 2}
+                      <button
+                        :if={
+                          participant.id != @current_scope.user.id &&
+                            length(@active_conversation.participants) > 2
+                        }
                         class="btn btn-error btn-xs"
                         phx-click="remove_participant"
                         phx-value-user_id={participant.id}
@@ -893,25 +922,25 @@ defmodule ShardWeb.FriendsLive.Index do
                       </button>
                     </div>
                   </div>
-
-                  <!-- Add Participants Form -->
+                  
+    <!-- Add Participants Form -->
                   <div :if={@show_add_participants} class="mt-3 p-3 bg-base-100 rounded">
                     <div class="flex items-center justify-between mb-2">
                       <span class="text-xs font-medium">Add Friends</span>
-                      <button 
+                      <button
                         class="btn btn-ghost btn-xs"
                         phx-click="hide_add_participants"
                       >
                         ✕
                       </button>
                     </div>
-                    
+
                     <div :if={@friends == []} class="text-xs text-base-content/60">
                       No friends available to add.
                     </div>
-                    
+
                     <div :if={@friends != []} class="space-y-1 max-h-20 overflow-y-auto mb-2">
-                      <label 
+                      <label
                         :for={%{friend: friend} <- @friends}
                         :if={friend.id not in Enum.map(@active_conversation.participants, & &1.id)}
                         class="flex items-center space-x-2 text-xs hover:bg-base-200 rounded cursor-pointer p-1"
@@ -926,8 +955,8 @@ defmodule ShardWeb.FriendsLive.Index do
                         <span>{friend.email}</span>
                       </label>
                     </div>
-                    
-                    <button 
+
+                    <button
                       class="btn btn-primary btn-xs w-full"
                       phx-click="add_participants"
                     >
@@ -935,10 +964,10 @@ defmodule ShardWeb.FriendsLive.Index do
                     </button>
                   </div>
                 </div>
-
-                <!-- Delete Conversation -->
+                
+    <!-- Delete Conversation -->
                 <div class="border-t pt-3">
-                  <button 
+                  <button
                     class="btn btn-error btn-sm w-full"
                     phx-click="delete_conversation"
                     onclick="return confirm('Are you sure you want to delete this conversation? This action cannot be undone.')"
@@ -948,23 +977,35 @@ defmodule ShardWeb.FriendsLive.Index do
                 </div>
               </div>
               
-              <!-- Messages Container -->
-              <div 
+    <!-- Messages Container -->
+              <div
                 id="messages-container"
                 class="h-96 overflow-y-auto space-y-2 mb-4 p-3 border border-base-300 rounded-lg bg-base-50"
                 phx-hook="AutoScroll"
               >
-                <div :for={message <- @active_conversation.messages} class="p-3 bg-base-100 rounded-lg shadow-sm">
+                <div
+                  :for={message <- @active_conversation.messages}
+                  class="p-3 bg-base-100 rounded-lg shadow-sm"
+                >
                   <div class="flex items-center justify-between text-xs text-base-content/60 mb-1">
                     <span>{message.user.email}</span>
-                    <span>{Calendar.strftime(DateTime.add(message.inserted_at, -5, :hour), "%m/%d %I:%M %p")}</span>
+                    <span>
+                      {Calendar.strftime(
+                        DateTime.add(message.inserted_at, -5, :hour),
+                        "%m/%d %I:%M %p"
+                      )}
+                    </span>
                   </div>
                   <div class="text-sm">{message.content}</div>
                 </div>
               </div>
               
-              <!-- Message Input -->
-              <form phx-submit="send_message" phx-change="update_message" class="flex space-x-2 flex-shrink-0">
+    <!-- Message Input -->
+              <form
+                phx-submit="send_message"
+                phx-change="update_message"
+                class="flex space-x-2 flex-shrink-0"
+              >
                 <input
                   type="text"
                   name="message"
@@ -979,15 +1020,18 @@ defmodule ShardWeb.FriendsLive.Index do
           </div>
         </div>
       </div>
-
-      <!-- Party Tab -->
+      
+    <!-- Party Tab -->
       <div :if={@active_tab == "party"} class="space-y-6">
         <!-- Pending Party Invitations -->
         <div :if={@pending_party_invitations != []} class="card bg-base-100 shadow-xl">
           <div class="card-body">
             <h2 class="card-title">Party Invitations</h2>
             <div class="space-y-2">
-              <div :for={invitation <- @pending_party_invitations} class="flex items-center justify-between p-2 bg-base-200 rounded">
+              <div
+                :for={invitation <- @pending_party_invitations}
+                class="flex items-center justify-between p-2 bg-base-200 rounded"
+              >
                 <div class="flex items-center space-x-3">
                   <div class="avatar placeholder">
                     <div class="bg-neutral text-neutral-content rounded-full w-8">
@@ -1037,7 +1081,11 @@ defmodule ShardWeb.FriendsLive.Index do
             <div class="flex items-center justify-between">
               <h2 class="card-title">Your Party</h2>
               <div class="space-x-2">
-                <button :if={@party.leader_id == @current_scope.user.id} class="btn btn-warning btn-sm" phx-click="disband_party">
+                <button
+                  :if={@party.leader_id == @current_scope.user.id}
+                  class="btn btn-warning btn-sm"
+                  phx-click="disband_party"
+                >
                   Disband Party
                 </button>
                 <button class="btn btn-error btn-sm" phx-click="leave_party">
@@ -1045,20 +1093,34 @@ defmodule ShardWeb.FriendsLive.Index do
                 </button>
               </div>
             </div>
-            
+
             <div class="space-y-2 mb-4">
-              <div :for={member <- @party.party_members} class="flex items-center justify-between p-2 bg-base-200 rounded">
+              <div
+                :for={member <- @party.party_members}
+                class="flex items-center justify-between p-2 bg-base-200 rounded"
+              >
                 <div class="flex items-center space-x-3">
                   <div class="avatar placeholder">
                     <div class="bg-neutral text-neutral-content rounded-full w-8">
-                      <span class="text-xs">{if member.user.id == @current_scope.user.id, do: "Y", else: String.first(member.user.email)}</span>
+                      <span class="text-xs">
+                        {if member.user.id == @current_scope.user.id,
+                          do: "Y",
+                          else: String.first(member.user.email)}
+                      </span>
                     </div>
                   </div>
-                  <span>{if member.user.id == @current_scope.user.id, do: "You", else: member.user.email}</span>
-                  <span :if={member.user.id == @party.leader_id} class="badge badge-warning">Leader</span>
+                  <span>
+                    {if member.user.id == @current_scope.user.id, do: "You", else: member.user.email}
+                  </span>
+                  <span :if={member.user.id == @party.leader_id} class="badge badge-warning">
+                    Leader
+                  </span>
                 </div>
-                <button 
-                  :if={@party.leader_id == @current_scope.user.id && member.user.id != @current_scope.user.id}
+                <button
+                  :if={
+                    @party.leader_id == @current_scope.user.id &&
+                      member.user.id != @current_scope.user.id
+                  }
                   class="btn btn-error btn-xs"
                   phx-click="kick_from_party"
                   phx-value-member_id={member.user.id}
@@ -1067,14 +1129,17 @@ defmodule ShardWeb.FriendsLive.Index do
                 </button>
               </div>
             </div>
-
-            <!-- Invite Friends Section (only for party leader) -->
+            
+    <!-- Invite Friends Section (only for party leader) -->
             <div :if={@party.leader_id == @current_scope.user.id} class="border-t pt-4">
               <!-- Pending Invitations -->
               <div :if={@sent_party_invitations != []} class="mb-4">
                 <h3 class="font-semibold mb-3">Pending Invitations</h3>
                 <div class="space-y-2">
-                  <div :for={invitation <- @sent_party_invitations} class="flex items-center justify-between p-2 bg-yellow-50 border border-yellow-200 rounded">
+                  <div
+                    :for={invitation <- @sent_party_invitations}
+                    class="flex items-center justify-between p-2 bg-yellow-50 border border-yellow-200 rounded"
+                  >
                     <div class="flex items-center space-x-3">
                       <div class="avatar placeholder">
                         <div class="bg-neutral text-neutral-content rounded-full w-8">
@@ -1093,7 +1158,7 @@ defmodule ShardWeb.FriendsLive.Index do
                 No friends available to invite.
               </div>
               <div :if={@friends != []} class="space-y-2">
-                <div 
+                <div
                   :for={friend_data <- @friends}
                   :if={friend_data.friend.id not in Enum.map(@party.party_members, & &1.user.id)}
                   class="flex items-center justify-between p-2 bg-base-100 rounded"
@@ -1110,11 +1175,21 @@ defmodule ShardWeb.FriendsLive.Index do
                     In Party, Can't Invite
                   </div>
                   <div :if={!friend_data.in_party}>
-                    <div :if={friend_data.friend.id in Enum.map(@sent_party_invitations, & &1.invitee.id)} class="badge badge-warning">
+                    <div
+                      :if={
+                        friend_data.friend.id in Enum.map(@sent_party_invitations, & &1.invitee.id)
+                      }
+                      class="badge badge-warning"
+                    >
                       Pending
                     </div>
                     <button
-                      :if={friend_data.friend.id not in Enum.map(@sent_party_invitations, & &1.invitee.id)}
+                      :if={
+                        friend_data.friend.id not in Enum.map(
+                          @sent_party_invitations,
+                          & &1.invitee.id
+                        )
+                      }
                       class="btn btn-primary btn-sm"
                       phx-click="invite_to_party"
                       phx-value-friend_id={friend_data.friend.id}
