@@ -152,7 +152,7 @@ defmodule ShardWeb.UserLive.Components do
             </button>
           </div>
 
-          <%= if Enum.empty?(@game_state.inventory_items) do %>
+          <%= if Enum.empty?(@game_state.inventory_items || []) do %>
             <div class="text-center text-gray-400 py-8">
               <.icon name="hero-shopping-bag" class="w-16 h-16 mx-auto mb-4 opacity-50" />
               <p class="text-lg">Your inventory is empty</p>
@@ -160,10 +160,10 @@ defmodule ShardWeb.UserLive.Components do
             </div>
           <% else %>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <%= for item <- @game_state.inventory_items do %>
+              <%= for item <- (@game_state.inventory_items || []) do %>
                 <div class="bg-gray-800 rounded-lg p-4 flex items-center">
                   <div class="mr-4">
-                    <%= case item.item_type do %>
+                    <%= case get_item_type(item) do %>
                       <% "weapon" -> %>
                         <.icon name="hero-sword" class="w-10 h-10 text-red-400" />
                       <% "armor" -> %>
@@ -182,40 +182,40 @@ defmodule ShardWeb.UserLive.Components do
                   </div>
                   <div class="flex-1">
                     <div class="flex justify-between items-start">
-                      <div class="font-semibold">{item.name}</div>
-                      <%= if item.quantity && item.quantity > 1 do %>
-                        <span class="text-sm bg-gray-600 px-2 py-1 rounded">x{item.quantity}</span>
+                      <div class="font-semibold">{get_item_name(item)}</div>
+                      <%= if get_item_quantity(item) > 1 do %>
+                        <span class="text-sm bg-gray-600 px-2 py-1 rounded">x{get_item_quantity(item)}</span>
                       <% end %>
                     </div>
-                    <div class="text-sm text-gray-300 capitalize">{item.item_type}</div>
-                    <%= if Map.get(item, :damage) do %>
-                      <div class="text-sm text-red-300">Damage: {item.damage}</div>
+                    <div class="text-sm text-gray-300 capitalize">{get_item_type(item)}</div>
+                    <%= if get_item_damage(item) do %>
+                      <div class="text-sm text-red-300">Damage: {get_item_damage(item)}</div>
                     <% end %>
-                    <%= if Map.get(item, :defense) do %>
-                      <div class="text-sm text-blue-300">Defense: {item.defense}</div>
+                    <%= if get_item_defense(item) do %>
+                      <div class="text-sm text-blue-300">Defense: {get_item_defense(item)}</div>
                     <% end %>
-                    <%= if Map.get(item, :effect) do %>
-                      <div class="text-sm text-green-300">Effect: {item.effect}</div>
+                    <%= if get_item_effect(item) do %>
+                      <div class="text-sm text-green-300">Effect: {get_item_effect(item)}</div>
                     <% end %>
-                    <%= if Map.get(item, :description) do %>
-                      <div class="text-xs text-gray-400 mt-1">{item.description}</div>
+                    <%= if get_item_description(item) do %>
+                      <div class="text-xs text-gray-400 mt-1">{get_item_description(item)}</div>
                     <% end %>
                     
     <!-- Action buttons -->
                     <div class="flex gap-2 mt-2">
-                      <%= if item.item_type in ["weapon", "armor"] do %>
+                      <%= if get_item_type(item) in ["weapon", "armor"] do %>
                         <button
                           phx-click="equip_item"
-                          phx-value-item_id={item.id}
+                          phx-value-item_id={get_item_id(item)}
                           class="text-xs bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded transition-colors"
                         >
                           Equip
                         </button>
                       <% end %>
-                      <%= if item.item_type in ["consumable", "key"] do %>
+                      <%= if get_item_type(item) in ["consumable", "key"] do %>
                         <button
                           phx-click="use_hotbar_item"
-                          phx-value-item_id={item.id}
+                          phx-value-item_id={get_item_id(item)}
                           class="text-xs bg-green-600 hover:bg-green-700 px-2 py-1 rounded transition-colors"
                         >
                           Use
