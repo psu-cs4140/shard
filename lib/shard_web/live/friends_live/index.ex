@@ -511,7 +511,7 @@ defmodule ShardWeb.FriendsLive.Index do
               <!-- Messages Container -->
               <div 
                 id="messages-container"
-                class="flex-1 overflow-y-auto space-y-2 mb-4 min-h-0 p-3 border border-base-300 rounded-lg bg-base-50"
+                class="h-96 overflow-y-auto space-y-2 mb-4 p-3 border border-base-300 rounded-lg bg-base-50"
                 phx-hook="AutoScroll"
               >
                 <div :for={message <- @active_conversation.messages} class="p-3 bg-base-100 rounded-lg shadow-sm">
