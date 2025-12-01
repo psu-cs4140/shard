@@ -118,6 +118,10 @@ defmodule ShardWeb.FriendsLive.Index do
     {:noreply, assign(socket, :active_conversation, conversation)}
   end
 
+  def handle_event("update_message", %{"message" => content}, socket) do
+    {:noreply, assign(socket, :new_message, content)}
+  end
+
   def handle_event("send_message", %{"message" => content}, socket) do
     case socket.assigns.active_conversation do
       nil ->
@@ -513,7 +517,7 @@ defmodule ShardWeb.FriendsLive.Index do
               </div>
               
               <!-- Message Input -->
-              <form phx-submit="send_message" class="flex space-x-2">
+              <form phx-submit="send_message" phx-change="update_message" class="flex space-x-2">
                 <input
                   type="text"
                   name="message"
