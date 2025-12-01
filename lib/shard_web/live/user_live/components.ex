@@ -221,6 +221,20 @@ defmodule ShardWeb.UserLive.Components do
                           Use
                         </button>
                       <% end %>
+                      <button
+                        phx-click="drop_item"
+                        phx-value-item_id={get_item_id(item)}
+                        class="text-xs bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded transition-colors"
+                      >
+                        Drop
+                      </button>
+                      <button
+                        phx-click="show_hotbar_modal"
+                        phx-value-item_id={get_item_id(item)}
+                        class="text-xs bg-purple-600 hover:bg-purple-700 px-2 py-1 rounded transition-colors"
+                      >
+                        Add to Hotbar
+                      </button>
                     </div>
                   </div>
                 </div>

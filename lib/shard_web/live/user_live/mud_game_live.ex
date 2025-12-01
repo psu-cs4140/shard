@@ -413,6 +413,71 @@ defmodule ShardWeb.MudGameLive do
     {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
   end
 
+  def handle_event("drop_item", %{"item_id" => item_id}, socket) do
+    # Find item in inventory
+    item =
+      Enum.find(socket.assigns.game_state.inventory_items, fn inv_item ->
+        to_string(Map.get(inv_item, :id)) == item_id
+      end)
+
+    case item do
+      nil ->
+        # Add error message to terminal
+        new_output =
+          socket.assigns.terminal_state.output ++ ["Item not found in inventory."] ++ [""]
+
+        terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+        socket = assign(socket, terminal_state: terminal_state)
+
+        {:noreply, socket}
+
+      item ->
+        character = socket.assigns.game_state.character
+        {x, y} = socket.assigns.game_state.player_position
+        location = "#{x},#{y},0"
+
+        case Shard.Items.drop_item_in_room(character.id, item.id, location, 1) do
+          {:ok, _} ->
+            # Reload inventory
+            updated_inventory =
+              ShardWeb.UserLive.CharacterHelpers.load_character_inventory(character)
+
+            updated_game_state = %{socket.assigns.game_state | inventory_items: updated_inventory}
+
+            new_output =
+              socket.assigns.terminal_state.output ++ ["You drop #{get_item_name(item)}."] ++ [""]
+
+            terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+
+            socket = assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
+            {:noreply, socket}
+
+          {:error, reason} ->
+            new_output =
+              socket.assigns.terminal_state.output ++
+                ["Failed to drop item: #{reason}"] ++ [""]
+
+            terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+            socket = assign(socket, terminal_state: terminal_state)
+
+            {:noreply, socket}
+        end
+    end
+  end
+
+  def handle_event("show_hotbar_modal", %{"item_id" => item_id}, socket) do
+    # For now, just add a message to terminal since we don't have the hotbar modal in this view
+    new_output =
+      socket.assigns.terminal_state.output ++
+        ["Hotbar functionality not available in this view. Use the inventory page for hotbar management."] ++
+        [""]
+
+    terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+    socket = assign(socket, terminal_state: terminal_state)
+
+    {:noreply, socket}
+  end
+
   # (C) Handle clicking an exit button to move rooms
   @impl true
   def handle_event("click_exit", params, socket) do
@@ -595,5 +660,14 @@ defmodule ShardWeb.MudGameLive do
     end
 
     :ok
+  end
+
+  # Helper function to get item name safely
+  defp get_item_name(item) do
+    cond do
+      item.item && item.item.name -> item.item.name
+      item.name -> item.name
+      true -> "Unknown Item"
+    end
   end
 end
