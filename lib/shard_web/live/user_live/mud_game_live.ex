@@ -227,6 +227,12 @@ defmodule ShardWeb.MudGameLive do
             :if={@modal_state.show && @modal_state.type == "settings"}
             game_state={@game_state}
           />
+
+          <.hotbar_selection_modal
+            :if={@modal_state.show && @modal_state.type == "hotbar_selection"}
+            game_state={@game_state}
+            item_id={@modal_state.item_id}
+          />
         </div>
       </div>
       
@@ -466,16 +472,56 @@ defmodule ShardWeb.MudGameLive do
   end
 
   def handle_event("show_hotbar_modal", %{"item_id" => item_id}, socket) do
-    # For now, just add a message to terminal since we don't have the hotbar modal in this view
-    new_output =
-      socket.assigns.terminal_state.output ++
-        ["Hotbar functionality not available in this view. Use the inventory page for hotbar management."] ++
-        [""]
-
-    terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
-    socket = assign(socket, terminal_state: terminal_state)
+    # Show hotbar slot selection modal
+    modal_state = %{show: true, type: "hotbar_selection", item_id: item_id}
+    socket = assign(socket, modal_state: modal_state)
 
     {:noreply, socket}
+  end
+
+  def handle_event("set_hotbar_from_modal", %{"item_id" => item_id, "slot" => slot}, socket) do
+    character = socket.assigns.game_state.character
+
+    case Shard.Items.set_hotbar_slot(
+           character.id,
+           String.to_integer(slot),
+           String.to_integer(item_id)
+         ) do
+      {:ok, _} ->
+        # Reload hotbar and inventory
+        updated_hotbar = ShardWeb.UserLive.CharacterHelpers.load_character_hotbar(character)
+        updated_inventory = ShardWeb.UserLive.CharacterHelpers.load_character_inventory(character)
+        
+        updated_game_state = %{
+          socket.assigns.game_state 
+          | hotbar: updated_hotbar, 
+            inventory_items: updated_inventory
+        }
+
+        new_output =
+          socket.assigns.terminal_state.output ++ ["Item added to hotbar slot #{slot}"] ++ [""]
+
+        terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+        modal_state = %{show: false, type: "", item_id: nil}
+
+        socket = assign(socket, 
+          game_state: updated_game_state, 
+          terminal_state: terminal_state,
+          modal_state: modal_state
+        )
+
+        {:noreply, socket}
+
+      {:error, reason} ->
+        new_output =
+          socket.assigns.terminal_state.output ++
+            ["Failed to set hotbar slot: #{reason}"] ++ [""]
+
+        terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+        socket = assign(socket, terminal_state: terminal_state)
+
+        {:noreply, socket}
+    end
   end
 
   # (C) Handle clicking an exit button to move rooms

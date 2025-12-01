@@ -405,6 +405,54 @@ defmodule ShardWeb.UserLive.Components do
     """
   end
 
+  def hotbar_selection_modal(assigns) do
+    ~H"""
+    <div class="fixed inset-0 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
+      <div class="bg-gray-700 rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-medium text-white mb-4">Select Hotbar Slot</h3>
+        <p class="text-sm text-gray-300 mb-4">
+          Choose which hotbar slot to place this item in:
+        </p>
+        <div class="grid grid-cols-4 gap-2 mb-4">
+          <%= for slot_num <- 1..12 do %>
+            <% hotbar_item = get_hotbar_item_for_slot(@game_state.hotbar, slot_num) %>
+            <button
+              phx-click="set_hotbar_from_modal"
+              phx-value-item_id={@item_id}
+              phx-value-slot={slot_num}
+              class={[
+                "border-2 rounded p-2 h-16 flex flex-col justify-center items-center text-xs",
+                if(hotbar_item,
+                  do: "border-yellow-500 bg-yellow-500/10 hover:bg-yellow-500/20",
+                  else: "border-gray-500 hover:bg-gray-600"
+                )
+              ]}
+            >
+              <div class="font-bold text-gray-400">{slot_num}</div>
+              <%= if hotbar_item do %>
+                <div class="text-center text-yellow-400">
+                  {String.slice(get_item_name(hotbar_item), 0..5)}
+                </div>
+                <div class="text-xs text-yellow-500">Replace?</div>
+              <% else %>
+                <div class="text-gray-500">Empty</div>
+              <% end %>
+            </button>
+          <% end %>
+        </div>
+        <div class="flex justify-end space-x-2">
+          <button
+            phx-click="hide_modal"
+            class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
   # Helper functions to safely extract item data from different structures
   defp get_item_name(item) do
     cond do
@@ -471,6 +519,19 @@ defmodule ShardWeb.UserLive.Components do
       nil -> []
       items when is_list(items) -> items
       _ -> []
+    end
+  end
+
+  defp get_hotbar_item_for_slot(hotbar, slot_num) do
+    case hotbar do
+      hotbar when is_list(hotbar) ->
+        Enum.find(hotbar, fn item -> 
+          Map.get(item, :slot_number) == slot_num 
+        end)
+      hotbar when is_map(hotbar) ->
+        Map.get(hotbar, String.to_atom("slot_#{slot_num}"))
+      _ ->
+        nil
     end
   end
 end
