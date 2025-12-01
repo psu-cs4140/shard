@@ -842,7 +842,7 @@ defmodule ShardWeb.FriendsLive.Index do
                 <div :for={message <- @active_conversation.messages} class="p-3 bg-base-100 rounded-lg shadow-sm">
                   <div class="flex items-center justify-between text-xs text-base-content/60 mb-1">
                     <span>{message.user.email}</span>
-                    <span>{Calendar.strftime(message.inserted_at, "%m/%d %I:%M %p")}</span>
+                    <span>{Calendar.strftime(DateTime.add(message.inserted_at, -4, :hour), "%m/%d %I:%M %p")}</span>
                   </div>
                   <div class="text-sm">{message.content}</div>
                 </div>
