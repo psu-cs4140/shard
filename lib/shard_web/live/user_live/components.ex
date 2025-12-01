@@ -152,7 +152,7 @@ defmodule ShardWeb.UserLive.Components do
             </button>
           </div>
 
-          <%= if Enum.empty?(@game_state.inventory_items || []) do %>
+          <%= if inventory_empty?(@game_state) do %>
             <div class="text-center text-gray-400 py-8">
               <.icon name="hero-shopping-bag" class="w-16 h-16 mx-auto mb-4 opacity-50" />
               <p class="text-lg">Your inventory is empty</p>
@@ -160,7 +160,7 @@ defmodule ShardWeb.UserLive.Components do
             </div>
           <% else %>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <%= for item <- (@game_state.inventory_items || []) do %>
+              <%= for item <- get_inventory_items(@game_state) do %>
                 <div class="bg-gray-800 rounded-lg p-4 flex items-center">
                   <div class="mr-4">
                     <%= case get_item_type(item) do %>
@@ -434,5 +434,15 @@ defmodule ShardWeb.UserLive.Components do
       item.id -> item.id
       true -> nil
     end
+  end
+
+  # Helper functions to safely access inventory data
+  defp inventory_empty?(game_state) do
+    inventory_items = get_inventory_items(game_state)
+    Enum.empty?(inventory_items)
+  end
+
+  defp get_inventory_items(game_state) do
+    game_state.inventory_items || []
   end
 end
