@@ -478,7 +478,10 @@ defmodule ShardWeb.FriendsLive.Index do
             <div :if={@conversations != []} class="space-y-2">
               <div
                 :for={conversation <- @conversations}
-                class="p-2 bg-base-200 rounded cursor-pointer hover:bg-base-300"
+                class={[
+                  "p-2 rounded cursor-pointer hover:bg-base-300",
+                  if(@active_conversation && @active_conversation.id == conversation.id, do: "bg-primary text-primary-content", else: "bg-base-200")
+                ]}
                 phx-click="open_conversation"
                 phx-value-conversation_id={conversation.id}
               >
