@@ -506,6 +506,14 @@ defmodule ShardWeb.MudGameLive do
     end
 
     if inventory_id do
+      # Find the item name for better feedback
+      item_name = case Enum.find(socket.assigns.game_state.inventory_items, fn inv_item ->
+        inv_item.id == inventory_id
+      end) do
+        nil -> "Unknown Item"
+        inv_item -> get_item_name(inv_item)
+      end
+
       case Shard.Items.set_hotbar_slot(
              character.id,
              String.to_integer(slot),
@@ -523,7 +531,7 @@ defmodule ShardWeb.MudGameLive do
           }
 
           new_output =
-            socket.assigns.terminal_state.output ++ ["Item added to hotbar slot #{slot}"] ++ [""]
+            socket.assigns.terminal_state.output ++ ["#{item_name} added to hotbar slot #{slot}"] ++ [""]
 
           terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
           modal_state = %{show: false, type: "", item_id: nil}
@@ -537,9 +545,14 @@ defmodule ShardWeb.MudGameLive do
           {:noreply, socket}
 
         {:error, reason} ->
+          error_message = case reason do
+            :inventory_not_found -> "Item not found in inventory"
+            :item_not_found -> "Item data not found"
+            _ -> "Failed to add item to hotbar: #{inspect(reason)}"
+          end
+
           new_output =
-            socket.assigns.terminal_state.output ++
-              ["Failed to set hotbar slot: #{inspect(reason)}"] ++ [""]
+            socket.assigns.terminal_state.output ++ [error_message] ++ [""]
 
           terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
           modal_state = %{show: false, type: "", item_id: nil}

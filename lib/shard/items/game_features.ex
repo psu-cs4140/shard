@@ -141,17 +141,26 @@ defmodule Shard.Items.GameFeatures do
           inventory_id: inventory_id
         }
 
-        case Repo.get_by(HotbarSlot, character_id: character_id, slot_number: slot_number) do
-          nil ->
-            %HotbarSlot{}
-            |> HotbarSlot.changeset(attrs)
-            |> Repo.insert()
+        # Use a transaction to ensure consistency
+        Repo.transaction(fn ->
+          case Repo.get_by(HotbarSlot, character_id: character_id, slot_number: slot_number) do
+            nil ->
+              case %HotbarSlot{}
+                   |> HotbarSlot.changeset(attrs)
+                   |> Repo.insert() do
+                {:ok, hotbar_slot} -> hotbar_slot
+                {:error, changeset} -> Repo.rollback(changeset)
+              end
 
-          existing ->
-            existing
-            |> HotbarSlot.changeset(attrs)
-            |> Repo.update()
-        end
+            existing ->
+              case existing
+                   |> HotbarSlot.changeset(attrs)
+                   |> Repo.update() do
+                {:ok, hotbar_slot} -> hotbar_slot
+                {:error, changeset} -> Repo.rollback(changeset)
+              end
+          end
+        end)
 
       {:error, reason} ->
         {:error, reason}
@@ -169,8 +178,16 @@ defmodule Shard.Items.GameFeatures do
 
   defp validate_inventory_for_hotbar(inventory_id) when is_integer(inventory_id) do
     case Repo.get(CharacterInventory, inventory_id) do
-      nil -> {:error, :inventory_not_found}
-      inventory -> {:ok, inventory}
+      nil -> 
+        {:error, :inventory_not_found}
+      inventory -> 
+        # Ensure the inventory item has an associated item
+        inventory_with_item = Repo.preload(inventory, :item)
+        if inventory_with_item.item do
+          {:ok, inventory_with_item}
+        else
+          {:error, :item_not_found}
+        end
     end
   end
 
