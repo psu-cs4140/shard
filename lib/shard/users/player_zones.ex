@@ -187,7 +187,12 @@ defmodule Shard.Users.PlayerZones do
         
         # Copy monsters from the template zone (if the function exists)
         try do
-          template_monsters = Shard.Monsters.list_monsters_by_zone(template_zone.id)
+          # Get monsters from all rooms in the template zone
+          template_monsters = 
+            template_rooms
+            |> Enum.flat_map(fn room -> 
+              Shard.Monsters.list_monsters_by_location(room.id)
+            end)
           
           Enum.each(template_monsters, fn template_monster ->
             new_room = Map.get(room_mapping, template_monster.location_id)
