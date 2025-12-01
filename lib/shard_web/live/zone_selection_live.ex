@@ -24,10 +24,28 @@ defmodule ShardWeb.ZoneSelectionLive do
       end
 
     zones = Map.list_active_zones()
+    # Group zones by name to show zone types, not individual instances
+    zone_types = 
+      zones
+      |> Enum.group_by(& &1.name)
+      |> Enum.map(fn {name, zone_instances} ->
+        # Use the first instance as the representative for display
+        representative = List.first(zone_instances)
+        %{
+          name: name,
+          description: representative.description,
+          zone_type: representative.zone_type,
+          min_level: representative.min_level,
+          max_level: representative.max_level,
+          instances: zone_instances,
+          room_count: zone_instances |> Enum.map(&length(Map.list_rooms_by_zone(&1.id))) |> Enum.sum()
+        }
+      end)
+      |> Enum.sort_by(& &1.name)
 
     {:noreply,
      socket
-     |> assign(:zones, zones)
+     |> assign(:zone_types, zone_types)
      |> assign(:character, character)
      |> assign(:page_title, "Select Zone")}
   end
@@ -48,20 +66,20 @@ defmodule ShardWeb.ZoneSelectionLive do
       </.header>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-        <%= for zone <- @zones do %>
+        <%= for zone_type <- @zone_types do %>
           <div class="card bg-base-200 shadow-xl hover:shadow-2xl transition-shadow">
             <div class="card-body">
               <h2 class="card-title">
-                {zone.name}
+                {zone_type.name}
                 <div class={[
                   "badge",
-                  get_zone_type_color(zone.zone_type)
+                  get_zone_type_color(zone_type.zone_type)
                 ]}>
-                  {String.capitalize(zone.zone_type)}
+                  {String.capitalize(zone_type.zone_type)}
                 </div>
               </h2>
 
-              <p class="text-sm opacity-80 min-h-[4rem]">{zone.description}</p>
+              <p class="text-sm opacity-80 min-h-[4rem]">{zone_type.description}</p>
 
               <div class="divider my-2"></div>
 
@@ -69,24 +87,46 @@ defmodule ShardWeb.ZoneSelectionLive do
                 <div>
                   <span class="font-semibold">Level Range:</span>
                   <br />
-                  {zone.min_level}-{zone.max_level || "∞"}
+                  {zone_type.min_level}-{zone_type.max_level || "∞"}
                 </div>
                 <div>
-                  <span class="font-semibold">Rooms:</span>
+                  <span class="font-semibold">Total Rooms:</span>
                   <br />
-                  {length(Map.list_rooms_by_zone(zone.id))}
+                  {zone_type.room_count}
+                </div>
+              </div>
+
+              <div class="mt-2">
+                <span class="font-semibold text-sm">Available Instances:</span>
+                <div class="flex flex-wrap gap-1 mt-1">
+                  <%= for instance <- zone_type.instances do %>
+                    <div class="badge badge-outline text-xs">{instance.zone_id}</div>
+                  <% end %>
                 </div>
               </div>
 
               <div class="card-actions justify-end mt-4">
                 <%= if @character do %>
-                  <.button
-                    phx-click="enter_zone"
-                    phx-value-zone-id={zone.id}
-                    class="btn-primary"
-                  >
-                    Enter Zone
-                  </.button>
+                  <div class="dropdown dropdown-top dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-primary">
+                      Enter Zone
+                      <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                      </svg>
+                    </div>
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                      <%= for instance <- zone_type.instances do %>
+                        <li>
+                          <a phx-click="enter_zone" phx-value-zone-id={instance.id}>
+                            {instance.zone_id}
+                            <span class="text-xs opacity-60">
+                              ({length(Map.list_rooms_by_zone(instance.id))} rooms)
+                            </span>
+                          </a>
+                        </li>
+                      <% end %>
+                    </ul>
+                  </div>
                 <% else %>
                   <div class="flex flex-col gap-2">
                     <.link navigate={~p"/characters"} class="btn btn-primary">
@@ -103,7 +143,7 @@ defmodule ShardWeb.ZoneSelectionLive do
         <% end %>
       </div>
 
-      <%= if Enum.empty?(@zones) do %>
+      <%= if Enum.empty?(@zone_types) do %>
         <div class="alert alert-warning mt-8">
           <svg
             xmlns="http://www.w3.org/2000/svg"
