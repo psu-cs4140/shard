@@ -104,6 +104,17 @@ defmodule Shard.Social do
     |> Repo.update()
   end
 
+  def remove_friend(user_id, friend_id) do
+    Repo.transaction(fn ->
+      # Remove both directions of the friendship
+      from(f in Friendship,
+        where: (f.user_id == ^user_id and f.friend_id == ^friend_id) or
+               (f.user_id == ^friend_id and f.friend_id == ^user_id)
+      )
+      |> Repo.delete_all()
+    end)
+  end
+
   # ───────────────────────── Parties ─────────────────────────
 
   def get_user_party(user_id) do

@@ -169,6 +169,21 @@ defmodule ShardWeb.FriendsLive.Index do
     end
   end
 
+  def handle_event("remove_friend", %{"friend_id" => friend_id}, socket) do
+    user_id = socket.assigns.current_scope.user.id
+    
+    case Social.remove_friend(user_id, String.to_integer(friend_id)) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Friend removed")
+         |> assign(:friends, Social.list_friends(user_id))}
+      
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not remove friend")}
+    end
+  end
+
   @impl true
   def handle_info(:hide_dropdown, socket) do
     {:noreply, assign(socket, :show_search_dropdown, false)}
@@ -322,6 +337,13 @@ defmodule ShardWeb.FriendsLive.Index do
                   <span>{friend.email}</span>
                   <span class="badge badge-success">Online</span>
                 </div>
+                <button
+                  class="btn btn-error btn-sm"
+                  phx-click="remove_friend"
+                  phx-value-friend_id={friend.id}
+                >
+                  Remove
+                </button>
               </div>
             </div>
           </div>
