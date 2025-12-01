@@ -110,9 +110,11 @@ defmodule Shard.Users.PlayerZones do
   def delete_player_zone(%PlayerZone{} = player_zone) do
     Repo.transaction(fn ->
       # Delete the zone instance
-      case Map.get_zone!(player_zone.zone_id) do
-        nil -> :ok
-        zone -> Map.delete_zone(zone)
+      try do
+        zone = Map.get_zone!(player_zone.zone_id)
+        Map.delete_zone(zone)
+      rescue
+        Ecto.NoResultsError -> :ok
       end
       
       # Delete the player zone association
