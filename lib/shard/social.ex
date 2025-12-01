@@ -42,23 +42,16 @@ defmodule Shard.Social do
   end
 
   def search_users(query, current_user_id) when byte_size(query) >= 1 do
-    # Get existing friend IDs to exclude them from search (only pending and accepted)
-    existing_friend_ids = 
+    # Get existing friend IDs to exclude them from search
+    # This includes: friends, pending requests sent BY current user, pending requests sent TO current user
+    existing_relationships = 
       from(f in Friendship,
-        where: f.user_id == ^current_user_id and f.status in ["pending", "accepted"],
-        select: f.friend_id
+        where: (f.user_id == ^current_user_id or f.friend_id == ^current_user_id) and f.status in ["pending", "accepted"],
+        select: fragment("CASE WHEN ? = ? THEN ? ELSE ? END", f.user_id, ^current_user_id, f.friend_id, f.user_id)
       )
       |> Repo.all()
 
-    # Also exclude pending requests sent to current user
-    pending_request_ids =
-      from(f in Friendship,
-        where: f.friend_id == ^current_user_id and f.status == "pending",
-        select: f.user_id
-      )
-      |> Repo.all()
-
-    excluded_ids = [current_user_id | existing_friend_ids ++ pending_request_ids]
+    excluded_ids = [current_user_id | existing_relationships]
 
     from(u in User,
       where: ilike(u.email, ^"%#{query}%") and u.id not in ^excluded_ids,
