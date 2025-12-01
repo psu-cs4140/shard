@@ -1,4 +1,8 @@
 defmodule Shard.Social.PartyMember do
+  @moduledoc """
+  Creates the schema for party members, like who's in a party
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

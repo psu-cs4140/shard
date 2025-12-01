@@ -1,4 +1,8 @@
 defmodule Shard.Social.Conversation do
+  @moduledoc """
+  Creates the schema for a conversation. A conversation includes many participants and messages.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

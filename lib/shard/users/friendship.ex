@@ -1,4 +1,8 @@
 defmodule Shard.Users.Friendship do
+  @moduledoc """
+  Creates the schema for the friendships database table.  
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

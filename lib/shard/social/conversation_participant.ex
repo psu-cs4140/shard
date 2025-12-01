@@ -1,4 +1,8 @@
 defmodule Shard.Social.ConversationParticipant do
+  @moduledoc """
+  Creates the schema for a conversation participant, basically who is in a conversation.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

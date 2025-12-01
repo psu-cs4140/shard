@@ -50,7 +50,11 @@ defmodule ShardWeb.FriendsLive.ChatTab do
           end
 
         existing_conversation ->
-          send(self(), {:existing_conversation_opened, existing_conversation, "Opened existing conversation"})
+          send(
+            self(),
+            {:existing_conversation_opened, existing_conversation, "Opened existing conversation"}
+          )
+
           {:noreply, socket}
       end
     end
@@ -113,7 +117,11 @@ defmodule ShardWeb.FriendsLive.ChatTab do
 
     case Social.update_conversation_name(conversation.id, String.trim(name)) do
       {:ok, updated_conversation} ->
-        send(self(), {:conversation_name_updated, updated_conversation, "Conversation name updated!"})
+        send(
+          self(),
+          {:conversation_name_updated, updated_conversation, "Conversation name updated!"}
+        )
+
         {:noreply, socket}
 
       {:error, _} ->
@@ -206,7 +214,7 @@ defmodule ShardWeb.FriendsLive.ChatTab do
             </button>
           </div>
           
-          <!-- New Conversation Form -->
+    <!-- New Conversation Form -->
           <div :if={@show_new_conversation_form} class="mb-4 p-4 bg-base-200 rounded-lg">
             <form phx-submit="create_conversation" phx-target={@myself}>
               <div class="space-y-3">
@@ -289,7 +297,7 @@ defmodule ShardWeb.FriendsLive.ChatTab do
         </div>
       </div>
       
-      <!-- Active Conversation -->
+    <!-- Active Conversation -->
       <div class="lg:col-span-2 card bg-base-100 shadow-xl h-full">
         <div class="card-body h-full flex flex-col">
           <div
@@ -312,7 +320,7 @@ defmodule ShardWeb.FriendsLive.ChatTab do
               </button>
             </div>
             
-            <!-- Conversation Settings Modal -->
+    <!-- Conversation Settings Modal -->
             <div :if={@show_conversation_settings} class="mb-4 p-4 bg-base-200 rounded-lg">
               <div class="flex items-center justify-between mb-3">
                 <h3 class="font-semibold">Conversation Settings</h3>
@@ -325,7 +333,7 @@ defmodule ShardWeb.FriendsLive.ChatTab do
                 </button>
               </div>
               
-              <!-- Edit Name Section -->
+    <!-- Edit Name Section -->
               <div class="mb-4">
                 <div :if={!@editing_conversation_name} class="flex items-center justify-between">
                   <span class="text-sm">Name: {@active_conversation.name || "Direct Message"}</span>
@@ -363,7 +371,7 @@ defmodule ShardWeb.FriendsLive.ChatTab do
                 </div>
               </div>
               
-              <!-- Participants Section -->
+    <!-- Participants Section -->
               <div class="mb-4">
                 <div class="flex items-center justify-between mb-2">
                   <span class="text-sm font-medium">
@@ -399,7 +407,7 @@ defmodule ShardWeb.FriendsLive.ChatTab do
                   </div>
                 </div>
                 
-                <!-- Add Participants Form -->
+    <!-- Add Participants Form -->
                 <div :if={@show_add_participants} class="mt-3 p-3 bg-base-100 rounded">
                   <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium">Add Friends</span>
@@ -444,7 +452,7 @@ defmodule ShardWeb.FriendsLive.ChatTab do
                 </div>
               </div>
               
-              <!-- Delete Conversation -->
+    <!-- Delete Conversation -->
               <div class="border-t pt-3">
                 <button
                   class="btn btn-error btn-sm w-full"
@@ -457,7 +465,7 @@ defmodule ShardWeb.FriendsLive.ChatTab do
               </div>
             </div>
             
-            <!-- Messages Container -->
+    <!-- Messages Container -->
             <div
               id="messages-container"
               class="h-96 overflow-y-auto space-y-2 mb-4 p-3 border border-base-300 rounded-lg bg-base-50"
@@ -480,7 +488,7 @@ defmodule ShardWeb.FriendsLive.ChatTab do
               </div>
             </div>
             
-            <!-- Message Input -->
+    <!-- Message Input -->
             <form
               phx-submit="send_message"
               phx-change="update_message"

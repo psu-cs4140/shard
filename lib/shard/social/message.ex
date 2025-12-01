@@ -1,4 +1,8 @@
 defmodule Shard.Social.Message do
+  @moduledoc """
+  Creates the schema for a message in a conversation.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

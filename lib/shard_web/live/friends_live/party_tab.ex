@@ -244,7 +244,7 @@ defmodule ShardWeb.FriendsLive.PartyTab do
             </div>
           </div>
           
-          <!-- Invite Friends Section (only for party leader) -->
+    <!-- Invite Friends Section (only for party leader) -->
           <div :if={@party.leader_id == @current_user_id} class="border-t pt-4">
             <!-- Pending Invitations -->
             <div :if={@sent_party_invitations != []} class="mb-4">
@@ -290,9 +290,7 @@ defmodule ShardWeb.FriendsLive.PartyTab do
                 </div>
                 <div :if={!friend_data.in_party}>
                   <div
-                    :if={
-                      friend_data.friend.id in Enum.map(@sent_party_invitations, & &1.invitee.id)
-                    }
+                    :if={friend_data.friend.id in Enum.map(@sent_party_invitations, & &1.invitee.id)}
                     class="badge badge-warning"
                   >
                     Pending

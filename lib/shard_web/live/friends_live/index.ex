@@ -228,7 +228,10 @@ defmodule ShardWeb.FriendsLive.Index do
      |> put_flash(:info, message)
      |> assign(:editing_conversation_name, false)
      |> assign(:new_conversation_name, "")
-     |> assign(:active_conversation, Social.get_conversation_with_messages(updated_conversation.id))
+     |> assign(
+       :active_conversation,
+       Social.get_conversation_with_messages(updated_conversation.id)
+     )
      |> assign(:conversations, Social.list_user_conversations(user_id))}
   end
 
@@ -378,7 +381,7 @@ defmodule ShardWeb.FriendsLive.Index do
     <div class="container mx-auto p-6">
       <h1 class="text-3xl font-bold mb-6">Social</h1>
       
-      <!-- Tab Navigation -->
+    <!-- Tab Navigation -->
       <div class="tabs tabs-boxed mb-6">
         <button
           class={["tab", @active_tab == "friends" && "tab-active"]}
@@ -403,7 +406,7 @@ defmodule ShardWeb.FriendsLive.Index do
         </button>
       </div>
       
-      <!-- Friends Tab -->
+    <!-- Friends Tab -->
       <div :if={@active_tab == "friends"}>
         <.live_component
           module={ShardWeb.FriendsLive.FriendsTab}
@@ -418,7 +421,7 @@ defmodule ShardWeb.FriendsLive.Index do
         />
       </div>
       
-      <!-- Chat Tab -->
+    <!-- Chat Tab -->
       <div :if={@active_tab == "chat"}>
         <.live_component
           module={ShardWeb.FriendsLive.ChatTab}
@@ -438,7 +441,7 @@ defmodule ShardWeb.FriendsLive.Index do
         />
       </div>
       
-      <!-- Party Tab -->
+    <!-- Party Tab -->
       <div :if={@active_tab == "party"}>
         <.live_component
           module={ShardWeb.FriendsLive.PartyTab}

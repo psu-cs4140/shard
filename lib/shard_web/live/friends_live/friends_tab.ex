@@ -104,7 +104,7 @@ defmodule ShardWeb.FriendsLive.FriendsTab do
               />
             </form>
             
-            <!-- Search Dropdown -->
+    <!-- Search Dropdown -->
             <div
               :if={@show_search_dropdown && @search_results != []}
               class="absolute top-full left-0 right-0 z-50 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
@@ -132,7 +132,7 @@ defmodule ShardWeb.FriendsLive.FriendsTab do
               </div>
             </div>
             
-            <!-- No results message -->
+    <!-- No results message -->
             <div
               :if={@show_search_dropdown && @search_results == [] && @search_query != ""}
               class="absolute top-full left-0 right-0 z-50 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg p-3 text-center text-base-content/60"
@@ -143,7 +143,7 @@ defmodule ShardWeb.FriendsLive.FriendsTab do
         </div>
       </div>
       
-      <!-- Pending Requests -->
+    <!-- Pending Requests -->
       <div :if={@pending_requests != []} class="card bg-base-100 shadow-xl">
         <div class="card-body">
           <h2 class="card-title">Incoming Friend Requests</h2>
@@ -176,7 +176,7 @@ defmodule ShardWeb.FriendsLive.FriendsTab do
         </div>
       </div>
       
-      <!-- Sent Requests -->
+    <!-- Sent Requests -->
       <div :if={@sent_requests != []} class="card bg-base-100 shadow-xl">
         <div class="card-body">
           <h2 class="card-title">Sent Friend Requests</h2>
@@ -192,7 +192,7 @@ defmodule ShardWeb.FriendsLive.FriendsTab do
         </div>
       </div>
       
-      <!-- Friends List -->
+    <!-- Friends List -->
       <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
           <h2 class="card-title">Friends</h2>

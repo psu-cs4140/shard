@@ -1,4 +1,8 @@
 defmodule Shard.Social.PartyInvitation do
+  @moduledoc """
+  Creates the schema for the party invitations, inviting users to join a party.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 
