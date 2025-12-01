@@ -15,7 +15,7 @@ defmodule Shard.Users.PlayerZone do
   schema "player_zones" do
     field :zone_name, :string
     field :instance_type, :string
-    field :zone_id, :string
+    field :zone_instance_id, :string
 
     belongs_to :user, User
     belongs_to :zone, Zone
@@ -28,11 +28,11 @@ defmodule Shard.Users.PlayerZone do
   @doc false
   def changeset(player_zone, attrs) do
     player_zone
-    |> cast(attrs, [:zone_name, :instance_type, :zone_id, :user_id, :zone_id])
-    |> validate_required([:zone_name, :instance_type, :zone_id, :user_id, :zone_id])
+    |> cast(attrs, [:zone_name, :instance_type, :zone_instance_id, :user_id, :zone_id])
+    |> validate_required([:zone_name, :instance_type, :zone_instance_id, :user_id, :zone_id])
     |> validate_inclusion(:instance_type, @instance_types)
     |> validate_length(:zone_name, min: 2, max: 100)
-    |> validate_length(:zone_id, min: 2, max: 100)
+    |> validate_length(:zone_instance_id, min: 2, max: 100)
     |> unique_constraint([:user_id, :zone_name, :instance_type],
       name: :player_zones_user_zone_instance_index,
       message: "user already has a #{:instance_type} instance for this zone"

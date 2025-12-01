@@ -85,7 +85,7 @@ defmodule Shard.Users.PlayerZones do
           player_zone_attrs = %{
             zone_name: zone_name,
             instance_type: instance_type,
-            zone_id: zone_id,
+            zone_instance_id: zone_id,
             user_id: user_id,
             zone_id: zone.id
           }
