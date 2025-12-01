@@ -138,12 +138,14 @@ defmodule Shard.Social do
       where: pm.user_id == ^user_id,
       join: p in Party,
       on: p.id == pm.party_id,
-      preload: [party: [party_members: :user]]
+      select: p
     )
     |> Repo.one()
     |> case do
-      %{party: party} -> party
       nil -> nil
+      party -> 
+        party
+        |> Repo.preload(party_members: :user)
     end
   end
 
