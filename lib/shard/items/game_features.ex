@@ -129,41 +129,43 @@ defmodule Shard.Items.GameFeatures do
   end
 
   def set_hotbar_slot(character_id, slot_number, inventory_id \\ nil) do
-    case validate_inventory_for_hotbar(inventory_id) do
-      {:ok, inventory} ->
-        # Preload the item association to get the item_id
-        inventory_with_item = if inventory, do: Repo.preload(inventory, :item), else: nil
+    with {:ok, inventory} <- validate_inventory_for_hotbar(inventory_id),
+         attrs <- build_hotbar_attrs(character_id, slot_number, inventory_id, inventory) do
+      upsert_hotbar_slot(character_id, slot_number, attrs)
+    end
+  end
 
-        attrs = %{
-          character_id: character_id,
-          slot_number: slot_number,
-          item_id: inventory_with_item && inventory_with_item.item_id,
-          inventory_id: inventory_id
-        }
+  defp build_hotbar_attrs(character_id, slot_number, inventory_id, inventory) do
+    inventory_with_item = if inventory, do: Repo.preload(inventory, :item), else: nil
 
-        # Use a transaction to ensure consistency
-        Repo.transaction(fn ->
-          case Repo.get_by(HotbarSlot, character_id: character_id, slot_number: slot_number) do
-            nil ->
-              case %HotbarSlot{}
-                   |> HotbarSlot.changeset(attrs)
-                   |> Repo.insert() do
-                {:ok, hotbar_slot} -> hotbar_slot
-                {:error, changeset} -> Repo.rollback(changeset)
-              end
+    %{
+      character_id: character_id,
+      slot_number: slot_number,
+      item_id: inventory_with_item && inventory_with_item.item_id,
+      inventory_id: inventory_id
+    }
+  end
 
-            existing ->
-              case existing
-                   |> HotbarSlot.changeset(attrs)
-                   |> Repo.update() do
-                {:ok, hotbar_slot} -> hotbar_slot
-                {:error, changeset} -> Repo.rollback(changeset)
-              end
-          end
-        end)
+  defp upsert_hotbar_slot(character_id, slot_number, attrs) do
+    Repo.transaction(fn ->
+      case Repo.get_by(HotbarSlot, character_id: character_id, slot_number: slot_number) do
+        nil -> create_hotbar_slot(attrs)
+        existing -> update_hotbar_slot(existing, attrs)
+      end
+    end)
+  end
 
-      {:error, reason} ->
-        {:error, reason}
+  defp create_hotbar_slot(attrs) do
+    case %HotbarSlot{} |> HotbarSlot.changeset(attrs) |> Repo.insert() do
+      {:ok, hotbar_slot} -> hotbar_slot
+      {:error, changeset} -> Repo.rollback(changeset)
+    end
+  end
+
+  defp update_hotbar_slot(existing, attrs) do
+    case existing |> HotbarSlot.changeset(attrs) |> Repo.update() do
+      {:ok, hotbar_slot} -> hotbar_slot
+      {:error, changeset} -> Repo.rollback(changeset)
     end
   end
 
