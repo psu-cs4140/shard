@@ -455,7 +455,9 @@ defmodule ShardWeb.MudGameLive do
 
             terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
 
-            socket = assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
+            socket =
+              assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
+
             {:noreply, socket}
 
           {:error, reason} ->
@@ -473,9 +475,10 @@ defmodule ShardWeb.MudGameLive do
 
   def handle_event("show_hotbar_modal", %{"item_id" => item_id}, socket) do
     # Find the inventory item to get the correct inventory_id
-    inventory_item = Enum.find(socket.assigns.game_state.inventory_items, fn inv_item ->
-      to_string(Map.get(inv_item, :id)) == item_id
-    end)
+    inventory_item =
+      Enum.find(socket.assigns.game_state.inventory_items, fn inv_item ->
+        to_string(Map.get(inv_item, :id)) == item_id
+      end)
 
     case inventory_item do
       nil ->
@@ -489,7 +492,12 @@ defmodule ShardWeb.MudGameLive do
 
       inventory_item ->
         # Show hotbar slot selection modal with the inventory ID
-        modal_state = %{show: true, type: "hotbar_selection", item_id: to_string(inventory_item.id)}
+        modal_state = %{
+          show: true,
+          type: "hotbar_selection",
+          item_id: to_string(inventory_item.id)
+        }
+
         socket = assign(socket, modal_state: modal_state)
 
         {:noreply, socket}
@@ -498,21 +506,23 @@ defmodule ShardWeb.MudGameLive do
 
   def handle_event("set_hotbar_from_modal", %{"item_id" => item_id, "slot" => slot}, socket) do
     character = socket.assigns.game_state.character
-    
+
     # Parse the inventory_id safely
-    inventory_id = case Integer.parse(item_id) do
-      {id, ""} -> id
-      _ -> nil
-    end
+    inventory_id =
+      case Integer.parse(item_id) do
+        {id, ""} -> id
+        _ -> nil
+      end
 
     if inventory_id do
       # Find the item name for better feedback
-      item_name = case Enum.find(socket.assigns.game_state.inventory_items, fn inv_item ->
-        inv_item.id == inventory_id
-      end) do
-        nil -> "Unknown Item"
-        inv_item -> get_item_name(inv_item)
-      end
+      item_name =
+        case Enum.find(socket.assigns.game_state.inventory_items, fn inv_item ->
+               inv_item.id == inventory_id
+             end) do
+          nil -> "Unknown Item"
+          inv_item -> get_item_name(inv_item)
+        end
 
       case Shard.Items.set_hotbar_slot(
              character.id,
@@ -522,34 +532,39 @@ defmodule ShardWeb.MudGameLive do
         {:ok, _} ->
           # Reload hotbar and inventory
           updated_hotbar = ShardWeb.UserLive.CharacterHelpers.load_character_hotbar(character)
-          updated_inventory = ShardWeb.UserLive.CharacterHelpers.load_character_inventory(character)
-          
+
+          updated_inventory =
+            ShardWeb.UserLive.CharacterHelpers.load_character_inventory(character)
+
           updated_game_state = %{
-            socket.assigns.game_state 
-            | hotbar: updated_hotbar, 
+            socket.assigns.game_state
+            | hotbar: updated_hotbar,
               inventory_items: updated_inventory
           }
 
           new_output =
-            socket.assigns.terminal_state.output ++ ["#{item_name} added to hotbar slot #{slot}"] ++ [""]
+            socket.assigns.terminal_state.output ++
+              ["#{item_name} added to hotbar slot #{slot}"] ++ [""]
 
           terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
           modal_state = %{show: false, type: "", item_id: nil}
 
-          socket = assign(socket, 
-            game_state: updated_game_state, 
-            terminal_state: terminal_state,
-            modal_state: modal_state
-          )
+          socket =
+            assign(socket,
+              game_state: updated_game_state,
+              terminal_state: terminal_state,
+              modal_state: modal_state
+            )
 
           {:noreply, socket}
 
         {:error, reason} ->
-          error_message = case reason do
-            :inventory_not_found -> "Item not found in inventory"
-            :item_not_found -> "Item data not found"
-            _ -> "Failed to add item to hotbar: #{inspect(reason)}"
-          end
+          error_message =
+            case reason do
+              :inventory_not_found -> "Item not found in inventory"
+              :item_not_found -> "Item data not found"
+              _ -> "Failed to add item to hotbar: #{inspect(reason)}"
+            end
 
           new_output =
             socket.assigns.terminal_state.output ++ [error_message] ++ [""]

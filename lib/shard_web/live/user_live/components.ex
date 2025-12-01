@@ -184,7 +184,9 @@ defmodule ShardWeb.UserLive.Components do
                     <div class="flex justify-between items-start">
                       <div class="font-semibold">{get_item_name(item)}</div>
                       <%= if get_item_quantity(item) > 1 do %>
-                        <span class="text-sm bg-gray-600 px-2 py-1 rounded">x{get_item_quantity(item)}</span>
+                        <span class="text-sm bg-gray-600 px-2 py-1 rounded">
+                          x{get_item_quantity(item)}
+                        </span>
                       <% end %>
                     </div>
                     <div class="text-sm text-gray-300 capitalize">{get_item_type(item)}</div>
@@ -407,7 +409,10 @@ defmodule ShardWeb.UserLive.Components do
 
   def hotbar_selection_modal(assigns) do
     ~H"""
-    <div class="fixed inset-0 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div
+      class="fixed inset-0 flex items-center justify-center"
+      style="background-color: rgba(0, 0, 0, 0.5);"
+    >
       <div class="bg-gray-700 rounded-lg p-6 max-w-md w-full mx-4">
         <h3 class="text-lg font-medium text-white mb-4">Select Hotbar Slot</h3>
         <p class="text-sm text-gray-300 mb-4">
@@ -456,11 +461,13 @@ defmodule ShardWeb.UserLive.Components do
   # Helper functions to safely extract item data from different structures
   defp get_item_name(item) do
     cond do
-      Map.get(item, :item) && Map.get(Map.get(item, :item), :name) -> 
+      Map.get(item, :item) && Map.get(Map.get(item, :item), :name) ->
         Map.get(Map.get(item, :item), :name)
-      Map.get(item, :name) -> 
+
+      Map.get(item, :name) ->
         Map.get(item, :name)
-      true -> 
+
+      true ->
         "Unknown Item"
     end
   end
@@ -471,11 +478,13 @@ defmodule ShardWeb.UserLive.Components do
 
   defp get_item_type(item) do
     cond do
-      Map.get(item, :item) && Map.get(Map.get(item, :item), :item_type) -> 
+      Map.get(item, :item) && Map.get(Map.get(item, :item), :item_type) ->
         Map.get(Map.get(item, :item), :item_type)
-      Map.get(item, :item_type) -> 
+
+      Map.get(item, :item_type) ->
         Map.get(item, :item_type)
-      true -> 
+
+      true ->
         "misc"
     end
   end
@@ -525,11 +534,13 @@ defmodule ShardWeb.UserLive.Components do
   defp get_hotbar_item_for_slot(hotbar, slot_num) do
     case hotbar do
       hotbar when is_list(hotbar) ->
-        Enum.find(hotbar, fn item -> 
+        Enum.find(hotbar, fn item ->
           Map.get(item, :slot_number) == slot_num
         end)
+
       hotbar when is_map(hotbar) ->
         Map.get(hotbar, String.to_atom("slot_#{slot_num}"))
+
       _ ->
         nil
     end

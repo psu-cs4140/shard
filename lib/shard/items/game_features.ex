@@ -133,7 +133,7 @@ defmodule Shard.Items.GameFeatures do
       {:ok, inventory} ->
         # Preload the item association to get the item_id
         inventory_with_item = if inventory, do: Repo.preload(inventory, :item), else: nil
-        
+
         attrs = %{
           character_id: character_id,
           slot_number: slot_number,
@@ -178,11 +178,13 @@ defmodule Shard.Items.GameFeatures do
 
   defp validate_inventory_for_hotbar(inventory_id) when is_integer(inventory_id) do
     case Repo.get(CharacterInventory, inventory_id) do
-      nil -> 
+      nil ->
         {:error, :inventory_not_found}
-      inventory -> 
+
+      inventory ->
         # Ensure the inventory item has an associated item
         inventory_with_item = Repo.preload(inventory, :item)
+
         if inventory_with_item.item do
           {:ok, inventory_with_item}
         else

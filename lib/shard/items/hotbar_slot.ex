@@ -39,7 +39,8 @@ defmodule Shard.Items.HotbarSlot do
 
     case {item_id, inventory_id} do
       {nil, nil} -> changeset
-      {_, nil} -> changeset  # Allow item without inventory_id for backward compatibility
+      # Allow item without inventory_id for backward compatibility
+      {_, nil} -> changeset
       {nil, _} -> add_error(changeset, :item_id, "must be specified when inventory is set")
       _ -> changeset
     end
