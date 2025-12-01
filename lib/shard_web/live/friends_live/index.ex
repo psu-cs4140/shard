@@ -230,19 +230,38 @@ defmodule ShardWeb.FriendsLive.Index do
       {:noreply, put_flash(socket, :error, "Please select at least one friend")}
     else
       participant_ids = [user_id | selected_friends]
-      attrs = if String.trim(name) != "", do: %{name: String.trim(name)}, else: %{}
       
-      case Social.create_conversation(participant_ids, attrs) do
-        {:ok, _conversation} ->
+      # Check if conversation already exists with these participants
+      case Social.find_existing_conversation(participant_ids) do
+        nil ->
+          # No existing conversation, create new one
+          attrs = if String.trim(name) != "", do: %{name: String.trim(name)}, else: %{}
+          
+          case Social.create_conversation(participant_ids, attrs) do
+            {:ok, conversation} ->
+              {:noreply,
+               socket
+               |> put_flash(:info, "Conversation created!")
+               |> assign(:show_new_conversation_form, false)
+               |> assign(:selected_friends, [])
+               |> assign(:conversations, Social.list_user_conversations(user_id))
+               |> assign(:active_conversation, Social.get_conversation_with_messages(conversation.id))}
+            
+            {:error, _} ->
+              {:noreply, put_flash(socket, :error, "Could not create conversation")}
+          end
+        
+        existing_conversation ->
+          # Conversation already exists, open it instead
+          conversation_with_messages = Social.get_conversation_with_messages(existing_conversation.id)
+          Phoenix.PubSub.subscribe(Shard.PubSub, "conversation:#{existing_conversation.id}")
+          
           {:noreply,
            socket
-           |> put_flash(:info, "Conversation created!")
+           |> put_flash(:info, "Opened existing conversation")
            |> assign(:show_new_conversation_form, false)
            |> assign(:selected_friends, [])
-           |> assign(:conversations, Social.list_user_conversations(user_id))}
-        
-        {:error, _} ->
-          {:noreply, put_flash(socket, :error, "Could not create conversation")}
+           |> assign(:active_conversation, conversation_with_messages)}
       end
     end
   end
@@ -542,7 +561,10 @@ defmodule ShardWeb.FriendsLive.Index do
                 phx-hook="AutoScroll"
               >
                 <div :for={message <- @active_conversation.messages} class="p-3 bg-base-100 rounded-lg shadow-sm">
-                  <div class="text-xs text-base-content/60 mb-1">{message.user.email}</div>
+                  <div class="flex items-center justify-between text-xs text-base-content/60 mb-1">
+                    <span>{message.user.email}</span>
+                    <span>{Calendar.strftime(message.inserted_at, "%m/%d %I:%M %p")}</span>
+                  </div>
                   <div class="text-sm">{message.content}</div>
                 </div>
               </div>

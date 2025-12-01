@@ -214,6 +214,33 @@ defmodule Shard.Social do
     |> Repo.one()
   end
 
+  def find_existing_conversation(participant_ids) do
+    participant_count = length(participant_ids)
+    
+    # Find conversations where all participants match exactly
+    from(c in Conversation,
+      join: cp in ConversationParticipant,
+      on: cp.conversation_id == c.id,
+      where: cp.user_id in ^participant_ids,
+      group_by: c.id,
+      having: count(cp.user_id) == ^participant_count,
+      select: c
+    )
+    |> Repo.all()
+    |> Enum.find(fn conversation ->
+      # Double-check that the conversation has exactly the same participants
+      conversation_participant_ids = 
+        from(cp in ConversationParticipant,
+          where: cp.conversation_id == ^conversation.id,
+          select: cp.user_id
+        )
+        |> Repo.all()
+        |> Enum.sort()
+      
+      Enum.sort(participant_ids) == conversation_participant_ids
+    end)
+  end
+
   def create_conversation(user_ids, attrs \\ %{}) do
     case Repo.transaction(fn ->
            conversation =
