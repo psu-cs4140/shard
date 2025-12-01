@@ -12,6 +12,7 @@ defmodule ShardWeb.FriendsLive.Index do
      |> assign(:active_tab, "friends")
      |> assign(:search_query, "")
      |> assign(:search_results, [])
+     |> assign(:show_search_dropdown, false)
      |> assign(:friends, Social.list_friends(user_id))
      |> assign(:pending_requests, Social.list_pending_friend_requests(user_id))
      |> assign(:conversations, Social.list_user_conversations(user_id))
@@ -31,21 +32,31 @@ defmodule ShardWeb.FriendsLive.Index do
     {:noreply, push_patch(socket, to: ~p"/friends?tab=#{tab}")}
   end
 
-  def handle_event("search_users", %{"query" => query}, socket) when byte_size(query) >= 2 do
+  def handle_event("search_users", %{"query" => query}, socket) do
     user_id = socket.assigns.current_scope.user.id
     results = Social.search_users(query, user_id)
+    show_dropdown = byte_size(query) >= 1 && results != []
     
     {:noreply,
      socket
      |> assign(:search_query, query)
-     |> assign(:search_results, results)}
+     |> assign(:search_results, results)
+     |> assign(:show_search_dropdown, show_dropdown)}
   end
 
-  def handle_event("search_users", %{"query" => query}, socket) do
-    {:noreply,
-     socket
-     |> assign(:search_query, query)
-     |> assign(:search_results, [])}
+  def handle_event("focus_search", _params, socket) do
+    show_dropdown = socket.assigns.search_query != "" && socket.assigns.search_results != []
+    {:noreply, assign(socket, :show_search_dropdown, show_dropdown)}
+  end
+
+  def handle_event("blur_search", _params, socket) do
+    # Delay hiding dropdown to allow clicks on dropdown items
+    Process.send_after(self(), :hide_dropdown, 200)
+    {:noreply, socket}
+  end
+
+  def handle_event("hide_search_dropdown", _params, socket) do
+    {:noreply, assign(socket, :show_search_dropdown, false)}
   end
 
   def handle_event("send_friend_request", %{"user_id" => friend_id}, socket) do
@@ -56,7 +67,9 @@ defmodule ShardWeb.FriendsLive.Index do
         {:noreply,
          socket
          |> put_flash(:info, "Friend request sent!")
-         |> assign(:search_results, [])}
+         |> assign(:search_query, "")
+         |> assign(:search_results, [])
+         |> assign(:show_search_dropdown, false)}
       
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Could not send friend request")}
@@ -154,6 +167,11 @@ defmodule ShardWeb.FriendsLive.Index do
   end
 
   @impl true
+  def handle_info(:hide_dropdown, socket) do
+    {:noreply, assign(socket, :show_search_dropdown, false)}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="container mx-auto p-6">
@@ -190,26 +208,53 @@ defmodule ShardWeb.FriendsLive.Index do
         <div class="card bg-base-100 shadow-xl">
           <div class="card-body">
             <h2 class="card-title">Find Friends</h2>
-            <form phx-change="search_users" phx-submit="search_users">
-              <input
-                type="text"
-                name="query"
-                value={@search_query}
-                placeholder="Search by email..."
-                class="input input-bordered w-full"
-              />
-            </form>
-            
-            <div :if={@search_results != []} class="mt-4 space-y-2">
-              <div :for={user <- @search_results} class="flex items-center justify-between p-2 bg-base-200 rounded">
-                <span>{user.email}</span>
-                <button
-                  class="btn btn-primary btn-sm"
-                  phx-click="send_friend_request"
-                  phx-value-user_id={user.id}
+            <div class="relative">
+              <form phx-change="search_users" phx-submit="search_users">
+                <input
+                  type="text"
+                  name="query"
+                  value={@search_query}
+                  placeholder="Search by email..."
+                  class="input input-bordered w-full"
+                  phx-focus="focus_search"
+                  phx-blur="blur_search"
+                  autocomplete="off"
+                />
+              </form>
+              
+              <!-- Search Dropdown -->
+              <div 
+                :if={@show_search_dropdown && @search_results != []} 
+                class="absolute top-full left-0 right-0 z-50 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+              >
+                <div 
+                  :for={user <- @search_results} 
+                  class="flex items-center justify-between p-3 hover:bg-base-200 border-b border-base-300 last:border-b-0"
                 >
-                  Add Friend
-                </button>
+                  <div class="flex items-center space-x-3">
+                    <div class="avatar placeholder">
+                      <div class="bg-neutral text-neutral-content rounded-full w-8">
+                        <span class="text-xs">{String.first(user.email)}</span>
+                      </div>
+                    </div>
+                    <span class="text-sm">{user.email}</span>
+                  </div>
+                  <button
+                    class="btn btn-primary btn-xs"
+                    phx-click="send_friend_request"
+                    phx-value-user_id={user.id}
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+              
+              <!-- No results message -->
+              <div 
+                :if={@show_search_dropdown && @search_results == [] && @search_query != ""}
+                class="absolute top-full left-0 right-0 z-50 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg p-3 text-center text-base-content/60"
+              >
+                No users found
               </div>
             </div>
           </div>
