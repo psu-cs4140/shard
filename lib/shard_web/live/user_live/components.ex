@@ -390,4 +390,49 @@ defmodule ShardWeb.UserLive.Components do
     </div>
     """
   end
+
+  # Helper functions to safely extract item data from different structures
+  defp get_item_name(item) do
+    cond do
+      item.item && item.item.name -> item.item.name
+      item.name -> item.name
+      true -> "Unknown Item"
+    end
+  end
+
+  defp get_item_quantity(item) do
+    item.quantity || 1
+  end
+
+  defp get_item_type(item) do
+    cond do
+      item.item && item.item.item_type -> item.item.item_type
+      item.item_type -> item.item_type
+      true -> "misc"
+    end
+  end
+
+  defp get_item_damage(item) do
+    Map.get(item.item || item, :damage)
+  end
+
+  defp get_item_defense(item) do
+    Map.get(item.item || item, :defense)
+  end
+
+  defp get_item_effect(item) do
+    Map.get(item.item || item, :effect)
+  end
+
+  defp get_item_description(item) do
+    Map.get(item.item || item, :description)
+  end
+
+  defp get_item_id(item) do
+    cond do
+      item.inventory_id -> item.inventory_id
+      item.id -> item.id
+      true -> nil
+    end
+  end
 end
