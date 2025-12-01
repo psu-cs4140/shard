@@ -187,6 +187,65 @@ defmodule ShardWeb.FriendsLive.Index do
     end
   end
 
+  def handle_event("invite_to_party", %{"friend_id" => friend_id}, socket) do
+    user_id = socket.assigns.current_scope.user.id
+    friend_id = String.to_integer(friend_id)
+    
+    case Social.invite_to_party(user_id, friend_id) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Party invitation sent!")
+         |> assign(:party, Social.get_user_party(user_id))}
+      
+      {:error, :friend_already_in_party} ->
+        {:noreply, put_flash(socket, :error, "Friend is already in a party")}
+      
+      {:error, :not_party_leader} ->
+        {:noreply, put_flash(socket, :error, "Only the party leader can invite members")}
+      
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not send party invitation")}
+    end
+  end
+
+  def handle_event("disband_party", _params, socket) do
+    user_id = socket.assigns.current_scope.user.id
+    
+    case Social.disband_party(user_id) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Party disbanded")
+         |> assign(:party, nil)}
+      
+      {:error, :not_party_leader} ->
+        {:noreply, put_flash(socket, :error, "Only the party leader can disband the party")}
+      
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not disband party")}
+    end
+  end
+
+  def handle_event("kick_from_party", %{"member_id" => member_id}, socket) do
+    user_id = socket.assigns.current_scope.user.id
+    member_id = String.to_integer(member_id)
+    
+    case Social.kick_from_party(user_id, member_id) do
+      {:ok, _} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Member removed from party")
+         |> assign(:party, Social.get_user_party(user_id))}
+      
+      {:error, :not_party_leader} ->
+        {:noreply, put_flash(socket, :error, "Only the party leader can remove members")}
+      
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not remove member from party")}
+    end
+  end
+
   def handle_event("remove_friend", %{"friend_id" => friend_id}, socket) do
     user_id = socket.assigns.current_scope.user.id
     
@@ -883,20 +942,66 @@ defmodule ShardWeb.FriendsLive.Index do
           <div class="card-body">
             <div class="flex items-center justify-between">
               <h2 class="card-title">Your Party</h2>
-              <button class="btn btn-error btn-sm" phx-click="leave_party">
-                Leave Party
-              </button>
+              <div class="space-x-2">
+                <button :if={@party.leader_id == @current_scope.user.id} class="btn btn-warning btn-sm" phx-click="disband_party">
+                  Disband Party
+                </button>
+                <button class="btn btn-error btn-sm" phx-click="leave_party">
+                  Leave Party
+                </button>
+              </div>
             </div>
             
-            <div class="space-y-2">
-              <div :for={member <- @party.party_members} class="flex items-center space-x-3 p-2 bg-base-200 rounded">
-                <div class="avatar placeholder">
-                  <div class="bg-neutral text-neutral-content rounded-full w-8">
-                    <span class="text-xs">{String.first(member.user.email)}</span>
+            <div class="space-y-2 mb-4">
+              <div :for={member <- @party.party_members} class="flex items-center justify-between p-2 bg-base-200 rounded">
+                <div class="flex items-center space-x-3">
+                  <div class="avatar placeholder">
+                    <div class="bg-neutral text-neutral-content rounded-full w-8">
+                      <span class="text-xs">{String.first(member.user.email)}</span>
+                    </div>
                   </div>
+                  <span>{member.user.email}</span>
+                  <span :if={member.user.id == @party.leader_id} class="badge badge-warning">Leader</span>
                 </div>
-                <span>{member.user.email}</span>
-                <span :if={member.user.id == @party.leader_id} class="badge badge-warning">Leader</span>
+                <button 
+                  :if={@party.leader_id == @current_scope.user.id && member.user.id != @current_scope.user.id}
+                  class="btn btn-error btn-xs"
+                  phx-click="kick_from_party"
+                  phx-value-member_id={member.user.id}
+                >
+                  Kick
+                </button>
+              </div>
+            </div>
+
+            <!-- Invite Friends Section (only for party leader) -->
+            <div :if={@party.leader_id == @current_scope.user.id} class="border-t pt-4">
+              <h3 class="font-semibold mb-3">Invite Friends</h3>
+              <div :if={@friends == []} class="text-center text-base-content/60 py-4">
+                No friends available to invite.
+              </div>
+              <div :if={@friends != []} class="space-y-2">
+                <div 
+                  :for={%{friend: friend} <- @friends}
+                  :if={friend.id not in Enum.map(@party.party_members, & &1.user.id)}
+                  class="flex items-center justify-between p-2 bg-base-100 rounded"
+                >
+                  <div class="flex items-center space-x-3">
+                    <div class="avatar placeholder">
+                      <div class="bg-neutral text-neutral-content rounded-full w-8">
+                        <span class="text-xs">{String.first(friend.email)}</span>
+                      </div>
+                    </div>
+                    <span>{friend.email}</span>
+                  </div>
+                  <button
+                    class="btn btn-primary btn-sm"
+                    phx-click="invite_to_party"
+                    phx-value-friend_id={friend.id}
+                  >
+                    Invite
+                  </button>
+                </div>
               </div>
             </div>
           </div>
