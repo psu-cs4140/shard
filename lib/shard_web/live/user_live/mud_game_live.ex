@@ -498,48 +498,65 @@ defmodule ShardWeb.MudGameLive do
 
   def handle_event("set_hotbar_from_modal", %{"item_id" => item_id, "slot" => slot}, socket) do
     character = socket.assigns.game_state.character
-    inventory_id = String.to_integer(item_id)
+    
+    # Parse the inventory_id safely
+    inventory_id = case Integer.parse(item_id) do
+      {id, ""} -> id
+      _ -> nil
+    end
 
-    case Shard.Items.set_hotbar_slot(
-           character.id,
-           String.to_integer(slot),
-           inventory_id
-         ) do
-      {:ok, _} ->
-        # Reload hotbar and inventory
-        updated_hotbar = ShardWeb.UserLive.CharacterHelpers.load_character_hotbar(character)
-        updated_inventory = ShardWeb.UserLive.CharacterHelpers.load_character_inventory(character)
-        
-        updated_game_state = %{
-          socket.assigns.game_state 
-          | hotbar: updated_hotbar, 
-            inventory_items: updated_inventory
-        }
+    if inventory_id do
+      case Shard.Items.set_hotbar_slot(
+             character.id,
+             String.to_integer(slot),
+             inventory_id
+           ) do
+        {:ok, _} ->
+          # Reload hotbar and inventory
+          updated_hotbar = ShardWeb.UserLive.CharacterHelpers.load_character_hotbar(character)
+          updated_inventory = ShardWeb.UserLive.CharacterHelpers.load_character_inventory(character)
+          
+          updated_game_state = %{
+            socket.assigns.game_state 
+            | hotbar: updated_hotbar, 
+              inventory_items: updated_inventory
+          }
 
-        new_output =
-          socket.assigns.terminal_state.output ++ ["Item added to hotbar slot #{slot}"] ++ [""]
+          new_output =
+            socket.assigns.terminal_state.output ++ ["Item added to hotbar slot #{slot}"] ++ [""]
 
-        terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
-        modal_state = %{show: false, type: "", item_id: nil}
+          terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+          modal_state = %{show: false, type: "", item_id: nil}
 
-        socket = assign(socket, 
-          game_state: updated_game_state, 
-          terminal_state: terminal_state,
-          modal_state: modal_state
-        )
+          socket = assign(socket, 
+            game_state: updated_game_state, 
+            terminal_state: terminal_state,
+            modal_state: modal_state
+          )
 
-        {:noreply, socket}
+          {:noreply, socket}
 
-      {:error, reason} ->
-        new_output =
-          socket.assigns.terminal_state.output ++
-            ["Failed to set hotbar slot: #{reason}"] ++ [""]
+        {:error, reason} ->
+          new_output =
+            socket.assigns.terminal_state.output ++
+              ["Failed to set hotbar slot: #{inspect(reason)}"] ++ [""]
 
-        terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
-        modal_state = %{show: false, type: "", item_id: nil}
-        socket = assign(socket, terminal_state: terminal_state, modal_state: modal_state)
+          terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+          modal_state = %{show: false, type: "", item_id: nil}
+          socket = assign(socket, terminal_state: terminal_state, modal_state: modal_state)
 
-        {:noreply, socket}
+          {:noreply, socket}
+      end
+    else
+      new_output =
+        socket.assigns.terminal_state.output ++
+          ["Invalid item ID provided"] ++ [""]
+
+      terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
+      modal_state = %{show: false, type: "", item_id: nil}
+      socket = assign(socket, terminal_state: terminal_state, modal_state: modal_state)
+
+      {:noreply, socket}
     end
   end
 

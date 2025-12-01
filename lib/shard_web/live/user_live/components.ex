@@ -526,7 +526,7 @@ defmodule ShardWeb.UserLive.Components do
     case hotbar do
       hotbar when is_list(hotbar) ->
         Enum.find(hotbar, fn item -> 
-          Map.get(item, :slot_number) == slot_num 
+          Map.get(item, :slot_number) == slot_num && Map.get(item, :item)
         end)
       hotbar when is_map(hotbar) ->
         Map.get(hotbar, String.to_atom("slot_#{slot_num}"))

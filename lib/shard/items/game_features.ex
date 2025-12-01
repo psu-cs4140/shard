@@ -131,10 +131,13 @@ defmodule Shard.Items.GameFeatures do
   def set_hotbar_slot(character_id, slot_number, inventory_id \\ nil) do
     case validate_inventory_for_hotbar(inventory_id) do
       {:ok, inventory} ->
+        # Preload the item association to get the item_id
+        inventory_with_item = if inventory, do: Repo.preload(inventory, :item), else: nil
+        
         attrs = %{
           character_id: character_id,
           slot_number: slot_number,
-          item_id: inventory && inventory.item_id,
+          item_id: inventory_with_item && inventory_with_item.item_id,
           inventory_id: inventory_id
         }
 
@@ -157,12 +160,21 @@ defmodule Shard.Items.GameFeatures do
 
   defp validate_inventory_for_hotbar(nil), do: {:ok, nil}
 
-  defp validate_inventory_for_hotbar(inventory_id) do
+  defp validate_inventory_for_hotbar(inventory_id) when is_binary(inventory_id) do
+    case Integer.parse(inventory_id) do
+      {id, ""} -> validate_inventory_for_hotbar(id)
+      _ -> {:error, :invalid_inventory_id}
+    end
+  end
+
+  defp validate_inventory_for_hotbar(inventory_id) when is_integer(inventory_id) do
     case Repo.get(CharacterInventory, inventory_id) do
       nil -> {:error, :inventory_not_found}
       inventory -> {:ok, inventory}
     end
   end
+
+  defp validate_inventory_for_hotbar(_), do: {:error, :invalid_inventory_id}
 
   def clear_hotbar_slot(character_id, slot_number) do
     case Repo.get_by(HotbarSlot, character_id: character_id, slot_number: slot_number) do
