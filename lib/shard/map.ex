@@ -327,6 +327,18 @@ defmodule Shard.Map do
     )
   end
 
+  @doc """
+  Returns all doors in a specific zone.
+  """
+  def list_doors_by_zone(zone_id) do
+    Repo.all(
+      from d in Door,
+        join: r in Room, on: d.from_room_id == r.id,
+        where: r.zone_id == ^zone_id,
+        preload: [:from_room, :to_room]
+    )
+  end
+
   # Player Position functions
 
   @doc """

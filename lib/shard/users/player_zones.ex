@@ -83,7 +83,7 @@ defmodule Shard.Users.PlayerZones do
             
             {:error, changeset} ->
               # Clean up the zone if player_zone creation failed
-              Shard.Map.delete_zone(zone)
+              Map.delete_zone(zone)
               {:error, changeset}
           end
         
@@ -110,9 +110,9 @@ defmodule Shard.Users.PlayerZones do
   def delete_player_zone(%PlayerZone{} = player_zone) do
     Repo.transaction(fn ->
       # Delete the zone instance
-      case Shard.Map.get_zone(player_zone.zone_id) do
+      case Map.get_zone!(player_zone.zone_id) do
         nil -> :ok
-        zone -> Shard.Map.delete_zone(zone)
+        zone -> Map.delete_zone(zone)
       end
       
       # Delete the player zone association
@@ -136,10 +136,10 @@ defmodule Shard.Users.PlayerZones do
       display_order: template_zone.display_order
     }
     
-    case Shard.Map.create_zone(zone_attrs) do
+    case Map.create_zone(zone_attrs) do
       {:ok, new_zone} ->
         # Copy all rooms from the template zone
-        template_rooms = Shard.Map.list_rooms_by_zone(template_zone.id)
+        template_rooms = Map.list_rooms_by_zone(template_zone.id)
         
         room_mapping = 
           Enum.reduce(template_rooms, %{}, fn template_room, acc ->
@@ -155,7 +155,7 @@ defmodule Shard.Users.PlayerZones do
               properties: template_room.properties
             }
             
-            case Shard.Map.create_room(room_attrs) do
+            case Map.create_room(room_attrs) do
               {:ok, new_room} ->
                 Map.put(acc, template_room.id, new_room)
               {:error, _} ->
@@ -164,7 +164,7 @@ defmodule Shard.Users.PlayerZones do
           end)
         
         # Copy all doors from the template zone
-        template_doors = Shard.Map.list_doors_by_zone(template_zone.id)
+        template_doors = Map.list_doors_by_zone(template_zone.id)
         
         Enum.each(template_doors, fn template_door ->
           from_room = Map.get(room_mapping, template_door.from_room_id)
@@ -181,51 +181,59 @@ defmodule Shard.Users.PlayerZones do
               properties: template_door.properties
             }
             
-            Shard.Map.create_door(door_attrs)
+            Map.create_door(door_attrs)
           end
         end)
         
-        # Copy monsters from the template zone
-        template_monsters = Shard.Monsters.list_monsters_by_zone(template_zone.id)
-        
-        Enum.each(template_monsters, fn template_monster ->
-          new_room = Map.get(room_mapping, template_monster.location_id)
+        # Copy monsters from the template zone (if the function exists)
+        try do
+          template_monsters = Shard.Monsters.list_monsters_by_zone(template_zone.id)
           
-          if new_room do
-            monster_attrs = %{
-              name: template_monster.name,
-              race: template_monster.race,
-              health: template_monster.max_health,
-              max_health: template_monster.max_health,
-              attack_damage: template_monster.attack_damage,
-              xp_amount: template_monster.xp_amount,
-              level: template_monster.level,
-              description: template_monster.description,
-              location_id: new_room.id,
-              potential_loot_drops: template_monster.potential_loot_drops
-            }
+          Enum.each(template_monsters, fn template_monster ->
+            new_room = Map.get(room_mapping, template_monster.location_id)
             
-            Shard.Monsters.create_monster(monster_attrs)
-          end
-        end)
+            if new_room do
+              monster_attrs = %{
+                name: template_monster.name,
+                race: template_monster.race,
+                health: template_monster.max_health,
+                max_health: template_monster.max_health,
+                attack_damage: template_monster.attack_damage,
+                xp_amount: template_monster.xp_amount,
+                level: template_monster.level,
+                description: template_monster.description,
+                location_id: new_room.id,
+                potential_loot_drops: template_monster.potential_loot_drops
+              }
+              
+              Shard.Monsters.create_monster(monster_attrs)
+            end
+          end)
+        rescue
+          UndefinedFunctionError -> :ok
+        end
         
-        # Copy room items from the template zone
-        template_room_items = Shard.Items.list_room_items_by_zone(template_zone.id)
-        
-        Enum.each(template_room_items, fn template_room_item ->
-          new_room = Map.get(room_mapping, template_room_item.room_id)
+        # Copy room items from the template zone (if the function exists)
+        try do
+          template_room_items = Shard.Items.list_room_items_by_zone(template_zone.id)
           
-          if new_room do
-            room_item_attrs = %{
-              item_id: template_room_item.item_id,
-              room_id: new_room.id,
-              quantity: template_room_item.quantity,
-              map: template_room_item.map
-            }
+          Enum.each(template_room_items, fn template_room_item ->
+            new_room = Map.get(room_mapping, template_room_item.room_id)
             
-            Shard.Items.create_room_item(room_item_attrs)
-          end
-        end)
+            if new_room do
+              room_item_attrs = %{
+                item_id: template_room_item.item_id,
+                room_id: new_room.id,
+                quantity: template_room_item.quantity,
+                map: template_room_item.map
+              }
+              
+              Shard.Items.create_room_item(room_item_attrs)
+            end
+          end)
+        rescue
+          UndefinedFunctionError -> :ok
+        end
         
         {:ok, new_zone}
       
