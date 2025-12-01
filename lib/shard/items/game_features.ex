@@ -122,7 +122,7 @@ defmodule Shard.Items.GameFeatures do
   def get_character_hotbar(character_id) do
     from(hs in HotbarSlot,
       where: hs.character_id == ^character_id,
-      preload: [:item, :inventory],
+      preload: [:item],
       order_by: [asc: :slot_number]
     )
     |> Repo.all()
