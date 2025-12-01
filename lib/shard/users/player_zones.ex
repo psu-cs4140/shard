@@ -108,8 +108,8 @@ defmodule Shard.Users.PlayerZones do
     Repo.transaction(fn ->
       # Delete the zone instance
       try do
-        zone = Map.get_zone!(player_zone.zone_id)
-        Map.delete_zone(zone)
+        zone = Shard.Map.get_zone!(player_zone.zone_id)
+        Shard.Map.delete_zone(zone)
       rescue
         Ecto.NoResultsError -> :ok
       end
@@ -135,10 +135,10 @@ defmodule Shard.Users.PlayerZones do
       display_order: template_zone.display_order
     }
     
-    case Map.create_zone(zone_attrs) do
+    case Shard.Map.create_zone(zone_attrs) do
       {:ok, new_zone} ->
         # Copy all rooms from the template zone
-        template_rooms = Map.list_rooms_by_zone(template_zone.id)
+        template_rooms = Shard.Map.list_rooms_by_zone(template_zone.id)
         
         room_mapping = 
           Enum.reduce(template_rooms, %{}, fn template_room, acc ->
@@ -154,7 +154,7 @@ defmodule Shard.Users.PlayerZones do
               properties: template_room.properties
             }
             
-            case Map.create_room(room_attrs) do
+            case Shard.Map.create_room(room_attrs) do
               {:ok, new_room} ->
                 Map.put(acc, template_room.id, new_room)
               {:error, _} ->
@@ -163,7 +163,7 @@ defmodule Shard.Users.PlayerZones do
           end)
         
         # Copy all doors from the template zone
-        template_doors = Map.list_doors_by_zone(template_zone.id)
+        template_doors = Shard.Map.list_doors_by_zone(template_zone.id)
         
         Enum.each(template_doors, fn template_door ->
           from_room = Map.get(room_mapping, template_door.from_room_id)
@@ -180,7 +180,7 @@ defmodule Shard.Users.PlayerZones do
               properties: template_door.properties
             }
             
-            Map.create_door(door_attrs)
+            Shard.Map.create_door(door_attrs)
           end
         end)
         
