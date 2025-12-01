@@ -22,6 +22,8 @@ defmodule ShardWeb.FriendsLive.Index do
      |> assign(:conversations, Social.list_user_conversations(user_id))
      |> assign(:active_conversation, nil)
      |> assign(:party, Social.get_user_party(user_id))
+     |> assign(:pending_party_invitations, Social.list_pending_party_invitations(user_id))
+     |> assign(:sent_party_invitations, Social.list_sent_party_invitations(user_id))
      |> assign(:new_message, "")
      |> assign(:show_new_conversation_form, false)
      |> assign(:selected_friends, [])
@@ -201,6 +203,9 @@ defmodule ShardWeb.FriendsLive.Index do
       {:error, :friend_already_in_party} ->
         {:noreply, put_flash(socket, :error, "Friend is already in a party")}
       
+      {:error, :invitation_already_sent} ->
+        {:noreply, put_flash(socket, :error, "Invitation already sent to this friend")}
+      
       {:error, :not_party_leader} ->
         {:noreply, put_flash(socket, :error, "Only the party leader can invite members")}
       
@@ -243,6 +248,40 @@ defmodule ShardWeb.FriendsLive.Index do
       
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not remove member from party")}
+    end
+  end
+
+  def handle_event("accept_party_invitation", %{"invitation_id" => invitation_id}, socket) do
+    case Social.accept_party_invitation(String.to_integer(invitation_id)) do
+      {:ok, _} ->
+        user_id = socket.assigns.current_scope.user.id
+        
+        {:noreply,
+         socket
+         |> put_flash(:info, "Party invitation accepted!")
+         |> assign(:party, Social.get_user_party(user_id))
+         |> assign(:pending_party_invitations, Social.list_pending_party_invitations(user_id))}
+      
+      {:error, :already_in_party} ->
+        {:noreply, put_flash(socket, :error, "You are already in a party")}
+      
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not accept party invitation")}
+    end
+  end
+
+  def handle_event("decline_party_invitation", %{"invitation_id" => invitation_id}, socket) do
+    case Social.decline_party_invitation(String.to_integer(invitation_id)) do
+      {:ok, _} ->
+        user_id = socket.assigns.current_scope.user.id
+        
+        {:noreply,
+         socket
+         |> put_flash(:info, "Party invitation declined")
+         |> assign(:pending_party_invitations, Social.list_pending_party_invitations(user_id))}
+      
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not decline party invitation")}
     end
   end
 
@@ -926,6 +965,44 @@ defmodule ShardWeb.FriendsLive.Index do
 
       <!-- Party Tab -->
       <div :if={@active_tab == "party"} class="space-y-6">
+        <!-- Pending Party Invitations -->
+        <div :if={@pending_party_invitations != []} class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title">Party Invitations</h2>
+            <div class="space-y-2">
+              <div :for={invitation <- @pending_party_invitations} class="flex items-center justify-between p-2 bg-base-200 rounded">
+                <div class="flex items-center space-x-3">
+                  <div class="avatar placeholder">
+                    <div class="bg-neutral text-neutral-content rounded-full w-8">
+                      <span class="text-xs">{String.first(invitation.inviter.email)}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <span class="font-medium">{invitation.inviter.email}</span>
+                    <p class="text-sm text-base-content/60">invited you to join their party</p>
+                  </div>
+                </div>
+                <div class="space-x-2">
+                  <button
+                    class="btn btn-success btn-sm"
+                    phx-click="accept_party_invitation"
+                    phx-value-invitation_id={invitation.id}
+                  >
+                    Accept
+                  </button>
+                  <button
+                    class="btn btn-error btn-sm"
+                    phx-click="decline_party_invitation"
+                    phx-value-invitation_id={invitation.id}
+                  >
+                    Decline
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div :if={@party == nil} class="card bg-base-100 shadow-xl">
           <div class="card-body text-center">
             <h2 class="card-title">No Party</h2>

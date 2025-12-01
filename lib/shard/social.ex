@@ -7,7 +7,7 @@ defmodule Shard.Social do
   alias Shard.Repo
 
   alias Shard.Users.{User, Friendship}
-  alias Shard.Social.{Party, PartyMember, Conversation, ConversationParticipant, Message}
+  alias Shard.Social.{Party, PartyMember, PartyInvitation, Conversation, ConversationParticipant, Message}
 
   # ───────────────────────── Friendships ─────────────────────────
 
@@ -203,14 +203,28 @@ defmodule Shard.Social do
           # Check if friend is already in a party
           case get_user_party(friend_id) do
             nil ->
-              # Friend is not in a party, add them
-              %PartyMember{}
-              |> PartyMember.changeset(%{
-                party_id: party.id,
-                user_id: friend_id,
-                joined_at: DateTime.utc_now()
-              })
-              |> Repo.insert()
+              # Check if there's already a pending invitation
+              existing_invitation = 
+                from(pi in PartyInvitation,
+                  where: pi.party_id == ^party.id and pi.invitee_id == ^friend_id and pi.status == "pending"
+                )
+                |> Repo.one()
+              
+              case existing_invitation do
+                nil ->
+                  # Send party invitation
+                  %PartyInvitation{}
+                  |> PartyInvitation.changeset(%{
+                    party_id: party.id,
+                    inviter_id: leader_id,
+                    invitee_id: friend_id,
+                    status: "pending"
+                  })
+                  |> Repo.insert()
+                
+                _existing ->
+                  {:error, :invitation_already_sent}
+              end
             
             _existing_party ->
               {:error, :friend_already_in_party}
@@ -257,6 +271,69 @@ defmodule Shard.Social do
           end
         end
     end
+  end
+
+  def list_pending_party_invitations(user_id) do
+    from(pi in PartyInvitation,
+      where: pi.invitee_id == ^user_id and pi.status == "pending",
+      join: p in Party,
+      on: p.id == pi.party_id,
+      join: inviter in User,
+      on: inviter.id == pi.inviter_id,
+      preload: [party: [party_members: :user], inviter: []]
+    )
+    |> Repo.all()
+  end
+
+  def list_sent_party_invitations(user_id) do
+    from(pi in PartyInvitation,
+      where: pi.inviter_id == ^user_id and pi.status == "pending",
+      join: invitee in User,
+      on: invitee.id == pi.invitee_id,
+      preload: [invitee: []]
+    )
+    |> Repo.all()
+  end
+
+  def accept_party_invitation(invitation_id) do
+    invitation = Repo.get!(PartyInvitation, invitation_id)
+    
+    # Check if invitee is already in a party
+    case get_user_party(invitation.invitee_id) do
+      nil ->
+        Repo.transaction(fn ->
+          # Accept the invitation
+          invitation
+          |> PartyInvitation.changeset(%{status: "accepted"})
+          |> Repo.update!()
+          
+          # Add user to party
+          %PartyMember{}
+          |> PartyMember.changeset(%{
+            party_id: invitation.party_id,
+            user_id: invitation.invitee_id,
+            joined_at: DateTime.utc_now()
+          })
+          |> Repo.insert!()
+          
+          # Delete any other pending invitations for this user
+          from(pi in PartyInvitation,
+            where: pi.invitee_id == ^invitation.invitee_id and pi.status == "pending"
+          )
+          |> Repo.delete_all()
+        end)
+      
+      _existing_party ->
+        {:error, :already_in_party}
+    end
+  end
+
+  def decline_party_invitation(invitation_id) do
+    invitation = Repo.get!(PartyInvitation, invitation_id)
+    
+    invitation
+    |> PartyInvitation.changeset(%{status: "declined"})
+    |> Repo.update()
   end
 
   # ───────────────────────── Conversations ─────────────────────────
