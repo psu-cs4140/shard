@@ -10,13 +10,16 @@ defmodule ShardWeb.FriendsLive.Index do
     # Subscribe to user's conversation updates
     Phoenix.PubSub.subscribe(Shard.PubSub, "user:#{user_id}:conversations")
 
+    friends = Social.list_friends(user_id)
+    friends_with_party_status = add_party_status_to_friends(friends)
+
     {:ok,
      socket
      |> assign(:active_tab, "friends")
      |> assign(:search_query, "")
      |> assign(:search_results, [])
      |> assign(:show_search_dropdown, false)
-     |> assign(:friends, Social.list_friends(user_id))
+     |> assign(:friends, friends_with_party_status)
      |> assign(:pending_requests, Social.list_pending_friend_requests(user_id))
      |> assign(:sent_requests, Social.list_sent_friend_requests(user_id))
      |> assign(:conversations, Social.list_user_conversations(user_id))
@@ -32,6 +35,14 @@ defmodule ShardWeb.FriendsLive.Index do
      |> assign(:new_conversation_name, "")
      |> assign(:show_add_participants, false)
      |> assign(:selected_new_participants, [])}
+  end
+
+  # Helper function to add party status to friends
+  defp add_party_status_to_friends(friends) do
+    Enum.map(friends, fn %{friend: friend} = friend_data ->
+      party = Social.get_user_party(friend.id)
+      Map.put(friend_data, :in_party, !is_nil(party))
+    end)
   end
 
   @impl true
@@ -93,11 +104,13 @@ defmodule ShardWeb.FriendsLive.Index do
     case Social.accept_friend_request(String.to_integer(friendship_id)) do
       {:ok, _} ->
         user_id = socket.assigns.current_scope.user.id
+        friends = Social.list_friends(user_id)
+        friends_with_party_status = add_party_status_to_friends(friends)
         
         {:noreply,
          socket
          |> put_flash(:info, "Friend request accepted!")
-         |> assign(:friends, Social.list_friends(user_id))
+         |> assign(:friends, friends_with_party_status)
          |> assign(:pending_requests, Social.list_pending_friend_requests(user_id))
          |> assign(:sent_requests, Social.list_sent_friend_requests(user_id))}
       
@@ -291,10 +304,13 @@ defmodule ShardWeb.FriendsLive.Index do
     
     case Social.remove_friend(user_id, String.to_integer(friend_id)) do
       {:ok, _} ->
+        friends = Social.list_friends(user_id)
+        friends_with_party_status = add_party_status_to_friends(friends)
+        
         {:noreply,
          socket
          |> put_flash(:info, "Friend removed")
-         |> assign(:friends, Social.list_friends(user_id))}
+         |> assign(:friends, friends_with_party_status)}
       
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not remove friend")}
@@ -1078,25 +1094,34 @@ defmodule ShardWeb.FriendsLive.Index do
               </div>
               <div :if={@friends != []} class="space-y-2">
                 <div 
-                  :for={%{friend: friend} <- @friends}
-                  :if={friend.id not in Enum.map(@party.party_members, & &1.user.id) && friend.id not in Enum.map(@sent_party_invitations, & &1.invitee.id)}
+                  :for={friend_data <- @friends}
+                  :if={friend_data.friend.id not in Enum.map(@party.party_members, & &1.user.id)}
                   class="flex items-center justify-between p-2 bg-base-100 rounded"
                 >
                   <div class="flex items-center space-x-3">
                     <div class="avatar placeholder">
                       <div class="bg-neutral text-neutral-content rounded-full w-8">
-                        <span class="text-xs">{String.first(friend.email)}</span>
+                        <span class="text-xs">{String.first(friend_data.friend.email)}</span>
                       </div>
                     </div>
-                    <span>{friend.email}</span>
+                    <span>{friend_data.friend.email}</span>
                   </div>
-                  <button
-                    class="btn btn-primary btn-sm"
-                    phx-click="invite_to_party"
-                    phx-value-friend_id={friend.id}
-                  >
-                    Invite
-                  </button>
+                  <div :if={friend_data.in_party} class="badge badge-neutral">
+                    In Party
+                  </div>
+                  <div :if={!friend_data.in_party}>
+                    <div :if={friend_data.friend.id in Enum.map(@sent_party_invitations, & &1.invitee.id)} class="badge badge-warning">
+                      Pending
+                    </div>
+                    <button
+                      :if={friend_data.friend.id not in Enum.map(@sent_party_invitations, & &1.invitee.id)}
+                      class="btn btn-primary btn-sm"
+                      phx-click="invite_to_party"
+                      phx-value-friend_id={friend_data.friend.id}
+                    >
+                      Invite
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
