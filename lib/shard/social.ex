@@ -215,32 +215,60 @@ defmodule Shard.Social do
   end
 
   def create_conversation(user_ids, attrs \\ %{}) do
-    Repo.transaction(fn ->
-      conversation =
-        %Conversation{}
-        |> Conversation.changeset(attrs)
-        |> Repo.insert!()
+    case Repo.transaction(fn ->
+           conversation =
+             %Conversation{}
+             |> Conversation.changeset(attrs)
+             |> Repo.insert!()
 
-      Enum.each(user_ids, fn user_id ->
-        %ConversationParticipant{}
-        |> ConversationParticipant.changeset(%{
-          conversation_id: conversation.id,
-          user_id: user_id
-        })
-        |> Repo.insert!()
-      end)
+           Enum.each(user_ids, fn user_id ->
+             %ConversationParticipant{}
+             |> ConversationParticipant.changeset(%{
+               conversation_id: conversation.id,
+               user_id: user_id
+             })
+             |> Repo.insert!()
+           end)
 
-      conversation
-    end)
+           conversation
+         end) do
+      {:ok, conversation} ->
+        # Notify all participants about the new conversation
+        Enum.each(user_ids, fn user_id ->
+          Phoenix.PubSub.broadcast(
+            Shard.PubSub,
+            "user:#{user_id}:conversations",
+            {:conversation_created, conversation}
+          )
+        end)
+        
+        {:ok, conversation}
+      
+      error ->
+        error
+    end
   end
 
   def send_message(conversation_id, user_id, content) do
-    %Message{}
-    |> Message.changeset(%{
-      conversation_id: conversation_id,
-      user_id: user_id,
-      content: content
-    })
-    |> Repo.insert()
+    case %Message{}
+         |> Message.changeset(%{
+           conversation_id: conversation_id,
+           user_id: user_id,
+           content: content
+         })
+         |> Repo.insert() do
+      {:ok, message} ->
+        # Broadcast the new message to all participants in the conversation
+        Phoenix.PubSub.broadcast(
+          Shard.PubSub,
+          "conversation:#{conversation_id}",
+          {:new_message, conversation_id}
+        )
+        
+        {:ok, message}
+      
+      error ->
+        error
+    end
   end
 end

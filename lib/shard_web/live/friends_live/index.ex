@@ -7,6 +7,9 @@ defmodule ShardWeb.FriendsLive.Index do
   def mount(_params, _session, socket) do
     user_id = socket.assigns.current_scope.user.id
 
+    # Subscribe to user's conversation updates
+    Phoenix.PubSub.subscribe(Shard.PubSub, "user:#{user_id}:conversations")
+
     {:ok,
      socket
      |> assign(:active_tab, "friends")
@@ -113,7 +116,11 @@ defmodule ShardWeb.FriendsLive.Index do
   end
 
   def handle_event("open_conversation", %{"conversation_id" => conversation_id}, socket) do
-    conversation = Social.get_conversation_with_messages(String.to_integer(conversation_id))
+    conversation_id = String.to_integer(conversation_id)
+    conversation = Social.get_conversation_with_messages(conversation_id)
+    
+    # Subscribe to this specific conversation for real-time updates
+    Phoenix.PubSub.subscribe(Shard.PubSub, "conversation:#{conversation_id}")
     
     {:noreply, assign(socket, :active_conversation, conversation)}
   end
@@ -243,6 +250,26 @@ defmodule ShardWeb.FriendsLive.Index do
   @impl true
   def handle_info(:hide_dropdown, socket) do
     {:noreply, assign(socket, :show_search_dropdown, false)}
+  end
+
+  @impl true
+  def handle_info({:new_message, conversation_id}, socket) do
+    # Update the active conversation if it matches the one that received a new message
+    case socket.assigns.active_conversation do
+      %{id: ^conversation_id} ->
+        updated_conversation = Social.get_conversation_with_messages(conversation_id)
+        {:noreply, assign(socket, :active_conversation, updated_conversation)}
+      
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_info({:conversation_created, _conversation}, socket) do
+    # Refresh conversations list when a new conversation is created
+    user_id = socket.assigns.current_scope.user.id
+    {:noreply, assign(socket, :conversations, Social.list_user_conversations(user_id))}
   end
 
   @impl true
