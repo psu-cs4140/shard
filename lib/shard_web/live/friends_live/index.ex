@@ -406,7 +406,7 @@ defmodule ShardWeb.FriendsLive.Index do
       </div>
 
       <!-- Chat Tab -->
-      <div :if={@active_tab == "chat"} class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-96">
+      <div :if={@active_tab == "chat"} class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
         <!-- Conversations List -->
         <div class="card bg-base-100 shadow-xl">
           <div class="card-body">
@@ -498,26 +498,30 @@ defmodule ShardWeb.FriendsLive.Index do
         </div>
 
         <!-- Active Conversation -->
-        <div class="lg:col-span-2 card bg-base-100 shadow-xl">
-          <div class="card-body">
-            <div :if={@active_conversation == nil} class="text-center text-base-content/60 py-8">
+        <div class="lg:col-span-2 card bg-base-100 shadow-xl h-full">
+          <div class="card-body h-full flex flex-col">
+            <div :if={@active_conversation == nil} class="flex-1 flex items-center justify-center text-center text-base-content/60">
               Select a conversation to start chatting
             </div>
             <div :if={@active_conversation != nil} class="flex flex-col h-full">
-              <h2 class="card-title mb-4">
+              <h2 class="card-title mb-4 flex-shrink-0">
                 {@active_conversation.name || "Direct Message"}
               </h2>
               
-              <!-- Messages -->
-              <div class="flex-1 overflow-y-auto space-y-2 mb-4">
-                <div :for={message <- @active_conversation.messages} class="p-2 bg-base-200 rounded">
-                  <div class="text-sm text-base-content/60">{message.user.email}</div>
-                  <div>{message.content}</div>
+              <!-- Messages Container -->
+              <div 
+                id="messages-container"
+                class="flex-1 overflow-y-auto space-y-2 mb-4 min-h-0 p-3 border border-base-300 rounded-lg bg-base-50"
+                phx-hook="AutoScroll"
+              >
+                <div :for={message <- @active_conversation.messages} class="p-3 bg-base-100 rounded-lg shadow-sm">
+                  <div class="text-xs text-base-content/60 mb-1">{message.user.email}</div>
+                  <div class="text-sm">{message.content}</div>
                 </div>
               </div>
               
               <!-- Message Input -->
-              <form phx-submit="send_message" phx-change="update_message" class="flex space-x-2">
+              <form phx-submit="send_message" phx-change="update_message" class="flex space-x-2 flex-shrink-0">
                 <input
                   type="text"
                   name="message"
