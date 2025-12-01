@@ -204,11 +204,14 @@ defmodule Shard.Social do
   end
 
   def get_conversation_with_messages(conversation_id) do
-    Repo.get(Conversation, conversation_id)
-    |> Repo.preload([
-      messages: [:user],
-      participants: [:user]
-    ])
+    from(c in Conversation,
+      where: c.id == ^conversation_id,
+      preload: [
+        messages: :user,
+        participants: :user
+      ]
+    )
+    |> Repo.one()
   end
 
   def create_conversation(user_ids, attrs \\ %{}) do
