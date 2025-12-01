@@ -42,7 +42,7 @@ defmodule Shard.Social do
   end
 
   def search_users(query, current_user_id) when byte_size(query) >= 1 do
-    # Get existing friend IDs to exclude them from search
+    # Get existing friend IDs to exclude them from search (only pending and accepted)
     existing_friend_ids = 
       from(f in Friendship,
         where: f.user_id == ^current_user_id and f.status in ["pending", "accepted"],
@@ -98,10 +98,7 @@ defmodule Shard.Social do
 
   def decline_friend_request(friendship_id) do
     friendship = Repo.get!(Friendship, friendship_id)
-    
-    friendship
-    |> Friendship.changeset(%{status: "declined"})
-    |> Repo.update()
+    Repo.delete(friendship)
   end
 
   def remove_friend(user_id, friend_id) do
