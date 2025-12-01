@@ -190,6 +190,73 @@ defmodule Shard.Social do
     end
   end
 
+  def invite_to_party(leader_id, friend_id) do
+    case get_user_party(leader_id) do
+      nil -> {:error, :not_in_party}
+      party ->
+        # Check if user is the party leader
+        if party.leader_id != leader_id do
+          {:error, :not_party_leader}
+        else
+          # Check if friend is already in a party
+          case get_user_party(friend_id) do
+            nil ->
+              # Friend is not in a party, add them
+              %PartyMember{}
+              |> PartyMember.changeset(%{
+                party_id: party.id,
+                user_id: friend_id,
+                joined_at: DateTime.utc_now()
+              })
+              |> Repo.insert()
+            
+            _existing_party ->
+              {:error, :friend_already_in_party}
+          end
+        end
+    end
+  end
+
+  def disband_party(leader_id) do
+    case get_user_party(leader_id) do
+      nil -> {:error, :not_in_party}
+      party ->
+        if party.leader_id != leader_id do
+          {:error, :not_party_leader}
+        else
+          Repo.transaction(fn ->
+            # Delete all party members
+            from(pm in PartyMember, where: pm.party_id == ^party.id)
+            |> Repo.delete_all()
+            
+            # Delete the party
+            Repo.delete!(party)
+          end)
+        end
+    end
+  end
+
+  def kick_from_party(leader_id, member_id) do
+    case get_user_party(leader_id) do
+      nil -> {:error, :not_in_party}
+      party ->
+        if party.leader_id != leader_id do
+          {:error, :not_party_leader}
+        else
+          # Cannot kick yourself
+          if leader_id == member_id do
+            {:error, :cannot_kick_self}
+          else
+            # Check if member is actually in the party
+            case Repo.get_by(PartyMember, party_id: party.id, user_id: member_id) do
+              nil -> {:error, :member_not_in_party}
+              member -> Repo.delete(member)
+            end
+          end
+        end
+    end
+  end
+
   # ───────────────────────── Conversations ─────────────────────────
 
   def list_user_conversations(user_id) do
