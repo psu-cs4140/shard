@@ -335,7 +335,6 @@ defmodule ShardWeb.FriendsLive.Index do
                     </div>
                   </div>
                   <span>{friend.email}</span>
-                  <span class="badge badge-success">Online</span>
                 </div>
                 <button
                   class="btn btn-error btn-sm"
