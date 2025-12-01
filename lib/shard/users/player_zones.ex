@@ -50,9 +50,6 @@ defmodule Shard.Users.PlayerZones do
     )
   end
 
-  @doc """
-  Creates a new zone instance for a player.
-  """
   defp create_player_zone_instance(user_id, zone_name, instance_type) do
     # Generate a unique zone_id for this instance
     zone_instance_id = generate_zone_instance_id(zone_name, instance_type, user_id)
