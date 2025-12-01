@@ -78,14 +78,30 @@ defmodule Shard.Social do
       |> Friendship.changeset(%{status: "accepted"})
       |> Repo.update!()
 
-      # Create the reciprocal friendship
-      %Friendship{}
-      |> Friendship.changeset(%{
-        user_id: friendship.friend_id,
-        friend_id: friendship.user_id,
-        status: "accepted"
-      })
-      |> Repo.insert!()
+      # Check if reciprocal friendship already exists
+      existing_reciprocal = 
+        from(f in Friendship,
+          where: f.user_id == ^friendship.friend_id and f.friend_id == ^friendship.user_id
+        )
+        |> Repo.one()
+
+      case existing_reciprocal do
+        nil ->
+          # Create the reciprocal friendship
+          %Friendship{}
+          |> Friendship.changeset(%{
+            user_id: friendship.friend_id,
+            friend_id: friendship.user_id,
+            status: "accepted"
+          })
+          |> Repo.insert!()
+        
+        existing ->
+          # Update existing reciprocal friendship to accepted
+          existing
+          |> Friendship.changeset(%{status: "accepted"})
+          |> Repo.update!()
+      end
     end)
   end
 
