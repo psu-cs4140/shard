@@ -207,8 +207,8 @@ defmodule Shard.Social do
     from(c in Conversation,
       where: c.id == ^conversation_id,
       preload: [
-        messages: :user,
-        :participants
+        :participants,
+        messages: :user
       ]
     )
     |> Repo.one()
