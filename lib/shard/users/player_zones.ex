@@ -177,7 +177,8 @@ defmodule Shard.Users.PlayerZones do
               door_type: template_door.door_type,
               is_locked: template_door.is_locked,
               key_required: template_door.key_required,
-              properties: template_door.properties
+              properties: template_door.properties,
+              zone_id: new_zone.id
             }
             
             Shard.Map.create_door(door_attrs)
