@@ -70,7 +70,7 @@ defmodule ShardWeb.ZoneSelectionLive do
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
         <%= for zone <- @template_zones do %>
-          <% zone_progress = Map.get(@zone_progress_map, zone.id, "locked") %>
+          <% zone_progress = Kernel.get_in(@zone_progress_map, [zone.id]) || "locked" %>
           <% is_accessible = zone_progress in ["in_progress", "completed"] %>
           <div class={[
             "card shadow-xl transition-all duration-300 rounded-2xl border-2",
