@@ -46,8 +46,8 @@ defmodule Shard.Users.UserZoneProgressTest do
   describe "initialize_for_user/2" do
     test "creates progress records for all zones" do
       user = insert(:user)
-      zone1 = insert(:zone, name: "Zone 1")
-      zone2 = insert(:zone, name: "Zone 2")
+      _zone1 = insert(:zone, name: "Zone 1")
+      _zone2 = insert(:zone, name: "Zone 2")
 
       UserZoneProgress.initialize_for_user(user.id)
 
