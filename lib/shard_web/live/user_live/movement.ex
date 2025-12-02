@@ -310,7 +310,7 @@ defmodule ShardWeb.UserLive.Movement do
             # Already completed, no need to do anything
             {[], game_state}
           
-          progress_record ->
+          _progress_record ->
             # Mark zone as completed
             case Shard.Users.update_zone_progress(user.id, zone_id, "completed") do
               {:ok, _} ->
