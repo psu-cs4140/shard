@@ -285,8 +285,13 @@ defmodule Shard.Combat do
         add_player_to_shared_combat(combat_id, player_data)
 
         # Check if there are monsters at current location
-        # Use the monsters from the combat state, but fall back to game_state.monsters if needed
-        monsters_to_check = combat_state.monsters || game_state.monsters || []
+        # Use the monsters from the combat state first, then fall back to game_state.monsters
+        monsters_to_check = 
+          case combat_state.monsters do
+            nil -> game_state.monsters || []
+            [] -> game_state.monsters || []
+            monsters -> monsters
+          end
         
         monsters_here =
           Enum.filter(monsters_to_check, fn monster ->
@@ -666,7 +671,7 @@ defmodule Shard.Combat do
         initial_state = %{
           combat_id: combat_id,
           room_position: position,
-          monsters: monsters,
+          monsters: monsters || [],
           players: [],
           effects: [],
           combat: true
@@ -675,7 +680,7 @@ defmodule Shard.Combat do
         # Check if supervisor is available before trying to start child
         case Process.whereis(Shard.Combat.Supervisor) do
           nil ->
-            # Supervisor not available, fall back to local state
+            # Supervisor not available, fall back to local state with monsters
             {:ok, initial_state}
           
           _pid ->
