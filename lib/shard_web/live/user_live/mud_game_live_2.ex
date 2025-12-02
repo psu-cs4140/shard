@@ -5,7 +5,7 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
 
   import Phoenix.Component
   import ShardWeb.UserLive.Movement
-  import ShardWeb.UserLive.Commands3
+  # import ShardWeb.UserLive.Commands3
   alias Phoenix.PubSub
 
   def get_character_from_params(params) do
@@ -77,7 +77,7 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
     )
 
     # Subscribe to character-specific notifications for poke commands
-    subscribe_to_character_notifications(character.id)
+    # subscribe_to_character_notifications(character.id)
 
     # Also subscribe to player name-based channel as backup
     PubSub.subscribe(Shard.PubSub, "player:#{character.name}")
@@ -99,5 +99,23 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
     new_output = socket.assigns.terminal_state.output ++ [message] ++ [""]
     ts1 = Map.put(socket.assigns.terminal_state, :output, new_output)
     assign(socket, :terminal_state, ts1)
+  end
+
+  def subscribe_to_character_notifications(character_id) do
+    Phoenix.PubSub.subscribe(Shard.PubSub, "character:#{character_id}")
+  end
+
+  def unsubscribe_from_character_notifications(character_id) do
+    Phoenix.PubSub.unsubscribe(Shard.PubSub, "character:#{character_id}")
+  end
+
+  def unsubscribe_from_player_notifications(player_name) do
+    Phoenix.PubSub.unsubscribe(Shard.PubSub, "player:#{player_name}")
+  end
+
+  def handle_poke_notification(terminal_state, poker_name) do
+    message = "#{poker_name} pokes you!"
+    new_output = terminal_state.output ++ [message] ++ [""]
+    Map.put(terminal_state, :output, new_output)
   end
 end
