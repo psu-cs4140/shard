@@ -151,12 +151,18 @@ defmodule ShardWeb.ZoneSelectionLive do
     character = socket.assigns.character
     user = Users.get_user_by_character_id(character.id)
 
-    # Get or create the player's zone instance
-    case Shard.Users.PlayerZones.get_or_create_player_zone(user.id, zone_name, instance_type) do
-      {:ok, player_zone} ->
-        zone = player_zone.zone
+    # Find the template zone by name
+    template_zone = Enum.find(socket.assigns.template_zones, &(&1.name == zone_name))
 
-        # Update character's current zone
+    case template_zone do
+      nil ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Zone '#{zone_name}' not found. Please try again.")}
+
+      zone ->
+        # For singleplayer, we can directly use the template zone
+        # Update character's current zone to point to the template zone
         case Characters.update_character(character, %{current_zone_id: zone.id}) do
           {:ok, updated_character} ->
             handle_admin_stick_granting(character)
@@ -195,16 +201,6 @@ defmodule ShardWeb.ZoneSelectionLive do
              socket
              |> put_flash(:error, "Failed to enter zone. Please try again.")}
         end
-
-      {:error, :zone_template_not_found} ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "Zone template not found. Please notify an administrator.")}
-
-      {:error, _changeset} ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "Failed to create zone instance. Please try again.")}
     end
   end
 
