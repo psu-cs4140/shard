@@ -228,19 +228,30 @@ defmodule Shard.Users.PlayerZones do
           template_room_items = Shard.Items.list_room_items_by_zone(template_zone.id)
           
           Enum.each(template_room_items, fn template_room_item ->
-            # Get the correct room field name from the room item schema
-            room_field = Map.get(template_room_item, :room_id) || Map.get(template_room_item, :location_id)
-            new_room = Map.get(room_mapping, room_field)
+            # RoomItem uses location field (string) instead of room_id
+            # We need to find the corresponding new room by matching the template location
+            template_location = template_room_item.location
             
-            if new_room && room_field do
-              room_item_attrs = %{
-                item_id: template_room_item.item_id,
-                room_id: new_room.id,
-                quantity: template_room_item.quantity || 1,
-                map: template_room_item.map
-              }
+            # Find the template room that matches this location
+            template_room = Enum.find(template_rooms, fn room -> 
+              to_string(room.id) == template_location 
+            end)
+            
+            if template_room do
+              new_room = Map.get(room_mapping, template_room.id)
               
-              Shard.Items.create_room_item(room_item_attrs)
+              if new_room do
+                room_item_attrs = %{
+                  item_id: template_room_item.item_id,
+                  location: to_string(new_room.id),
+                  quantity: template_room_item.quantity || 1,
+                  x_position: template_room_item.x_position || Decimal.new("0.0"),
+                  y_position: template_room_item.y_position || Decimal.new("0.0"),
+                  is_permanent: template_room_item.is_permanent || false
+                }
+                
+                Shard.Items.create_room_item(room_item_attrs)
+              end
             end
           end)
         rescue
