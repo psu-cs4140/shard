@@ -431,6 +431,31 @@ defmodule Shard.Users do
   end
 
   @doc """
+  Unlocks the next zone for a user when they complete the current one.
+  """
+  def unlock_next_zone(user_id, completed_zone_id) do
+    # Get the completed zone to find the next one
+    completed_zone = Repo.get!(Zone, completed_zone_id)
+    
+    # Find the next zone by display_order
+    next_zone = 
+      Repo.one(
+        from z in Zone,
+        where: z.display_order > ^completed_zone.display_order,
+        order_by: [asc: z.display_order],
+        limit: 1
+      )
+    
+    case next_zone do
+      nil -> 
+        {:ok, :no_next_zone}
+      
+      zone ->
+        update_zone_progress(user_id, zone.id, "in_progress")
+    end
+  end
+
+  @doc """
   Creates zone progress records for existing users when new zones are added.
   """
   def create_zone_progress_for_existing_users(zone_id) do
@@ -439,6 +464,7 @@ defmodule Shard.Users do
     Enum.each(users, fn user ->
       case get_user_zone_progress(user.id, zone_id) do
         nil ->
+          # New zones should always start as locked for existing users
           %UserZoneProgress{}
           |> UserZoneProgress.changeset(%{
             user_id: user.id,
@@ -455,12 +481,14 @@ defmodule Shard.Users do
   ## Token helper
 
   defp create_initial_zone_progress(user) do
-    zones = Repo.all(Zone)
+    zones = Repo.all(from z in Zone, order_by: [asc: z.display_order])
     
     progress_records = 
-      Enum.map(zones, fn zone ->
-        # First zone should be unlocked, others locked
-        progress = if zone.display_order == 0, do: "in_progress", else: "locked"
+      zones
+      |> Enum.with_index()
+      |> Enum.map(fn {zone, index} ->
+        # First zone (index 0) should be unlocked, others locked
+        progress = if index == 0, do: "in_progress", else: "locked"
         
         %UserZoneProgress{}
         |> UserZoneProgress.changeset(%{
