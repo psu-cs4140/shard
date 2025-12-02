@@ -8,16 +8,6 @@ defmodule Shard.Map.AdminStickTest do
 
   describe "admin stick item" do
     setup do
-      # Ensure database is migrated for tests
-      Ecto.Adapters.SQL.Sandbox.checkout(Shard.Repo)
-      
-      # Ensure the zones table has the zone_id column by running any pending migrations
-      try do
-        Ecto.Migrator.run(Shard.Repo, :up, all: true)
-      rescue
-        _ -> :ok
-      end
-      
       :ok
     end
     test "admin stick item exists in database" do
@@ -72,16 +62,6 @@ defmodule Shard.Map.AdminStickTest do
 
   describe "admin stick functions" do
     setup do
-      # Ensure database is migrated for tests
-      Ecto.Adapters.SQL.Sandbox.checkout(Shard.Repo)
-      
-      # Ensure the zones table has the zone_id column by running any pending migrations
-      try do
-        Ecto.Migrator.run(Shard.Repo, :up, all: true)
-      rescue
-        _ -> :ok
-      end
-      
       # Create a user and character for testing
       user = UsersFixtures.user_fixture()
       unique_name = "Test Character #{System.system_time(:millisecond)}"
