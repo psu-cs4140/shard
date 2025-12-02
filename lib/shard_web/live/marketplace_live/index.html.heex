@@ -195,11 +195,11 @@
                   <div class="flex items-center gap-3">
                     <div class="avatar placeholder">
                       <div class="bg-primary text-primary-content rounded-full w-10">
-                        <span>{String.first(listing.item.name)}</span>
+                        <span>{String.first(listing.character_inventory.item.name)}</span>
                       </div>
                     </div>
                     <div>
-                      <h3 class="font-semibold">{listing.item.name}</h3>
+                      <h3 class="font-semibold">{listing.character_inventory.item.name}</h3>
                       <p class="text-sm opacity-70">
                         Listed {time_ago_in_words(listing.inserted_at)} ago
                       </p>

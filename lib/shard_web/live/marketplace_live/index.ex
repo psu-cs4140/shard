@@ -36,6 +36,9 @@ defmodule ShardWeb.MarketplaceLive.Index do
           []
       end
 
+    # Get the user's active listings
+    user_listings = Marketplace.list_seller_listings(current_scope.user.id)
+
     {:ok,
      socket
      |> assign(:form, to_form(%{}, as: :listing))
@@ -48,7 +51,7 @@ defmodule ShardWeb.MarketplaceLive.Index do
      |> assign(:rarity_filter, "all")
      |> assign(:selected_listing, nil)
      |> assign(:active_tab, "browse")
-     |> stream(:listings, [])}
+     |> stream(:listings, user_listings)}
   end
 
   @impl true
@@ -58,11 +61,15 @@ defmodule ShardWeb.MarketplaceLive.Index do
     case Marketplace.create_listing(params, current_user) do
       {:ok, _listing} ->
         all_listings = Marketplace.list_active_listings() |> format_listings_for_display()
+        user_listings = Marketplace.list_seller_listings(current_user.id)
 
         {:noreply,
          socket
          |> assign(:all_listings, all_listings)
          |> assign(:filtered_listings, all_listings)
+         |> stream(:listings, user_listings, reset: true)
+         |> assign(:selected_item, nil)
+         |> assign(:form, to_form(%{}, as: :listing))
          |> put_flash(:info, "Item listed successfully!")}
 
       {:error, :no_item_selected} ->
@@ -92,11 +99,13 @@ defmodule ShardWeb.MarketplaceLive.Index do
     case Marketplace.cancel_listing(id, current_user) do
       {:ok, _listing} ->
         all_listings = Marketplace.list_active_listings() |> format_listings_for_display()
+        user_listings = Marketplace.list_seller_listings(current_user.id)
 
         {:noreply,
          socket
          |> assign(:all_listings, all_listings)
          |> assign(:filtered_listings, all_listings)
+         |> stream(:listings, user_listings, reset: true)
          |> put_flash(:info, "Listing cancelled successfully")}
 
       {:error, :listing_not_found} ->
@@ -148,9 +157,14 @@ defmodule ShardWeb.MarketplaceLive.Index do
   end
 
   @impl true
-  def handle_event("preview_item", %{"listing" => %{"item_id" => item_id}}, socket)
-      when item_id != "" do
-    item = Items.get_item(item_id)
+  def handle_event("preview_item", %{"listing" => %{"item_id" => inventory_id}}, socket)
+      when inventory_id != "" do
+    # Get the CharacterInventory record and preload the associated item
+    inventory_item =
+      Shard.Repo.get(Shard.Items.CharacterInventory, inventory_id)
+      |> Shard.Repo.preload(:item)
+
+    item = if inventory_item, do: inventory_item.item, else: nil
     {:noreply, assign(socket, :selected_item, item)}
   end
 
@@ -159,6 +173,32 @@ defmodule ShardWeb.MarketplaceLive.Index do
   end
 
   @impl true
+  def handle_event("switch_tab", %{"tab" => "listings"}, socket) do
+    current_user = socket.assigns.current_scope.user
+
+    # Reload user's active listings
+    user_listings = Marketplace.list_seller_listings(current_user.id)
+
+    # Reload inventory items (in case some were listed and should no longer appear)
+    inventory_items =
+      case socket.assigns.characters do
+        [first_character | _] ->
+          Items.get_character_inventory(first_character.id)
+          |> Enum.map(&{&1.item.name, &1.id})
+
+        [] ->
+          []
+      end
+
+    {:noreply,
+     socket
+     |> assign(:active_tab, "listings")
+     |> assign(:inventory_items, inventory_items)
+     |> stream(:listings, user_listings, reset: true)
+     |> assign(:selected_item, nil)
+     |> assign(:form, to_form(%{}, as: :listing))}
+  end
+
   def handle_event("switch_tab", %{"tab" => tab}, socket) do
     {:noreply, assign(socket, :active_tab, tab)}
   end
