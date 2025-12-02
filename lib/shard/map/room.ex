@@ -48,7 +48,8 @@ defmodule Shard.Map.Room do
       "shop",
       "dungeon",
       "treasure_room",
-      "trap_room"
+      "trap_room",
+      "end_room"
     ])
     |> foreign_key_constraint(:zone_id)
     |> unique_constraint(:name)

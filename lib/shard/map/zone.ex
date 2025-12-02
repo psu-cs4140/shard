@@ -10,7 +10,6 @@ defmodule Shard.Map.Zone do
 
   schema "zones" do
     field :name, :string
-    field :zone_id, :string
     field :slug, :string
     field :description, :string
     field :zone_type, :string, default: "standard"
@@ -22,6 +21,7 @@ defmodule Shard.Map.Zone do
     field :display_order, :integer, default: 0
 
     has_many :rooms, Shard.Map.Room
+    has_many :user_zone_progress, Shard.Users.UserZoneProgress
 
     timestamps(type: :utc_datetime)
   end
@@ -33,7 +33,6 @@ defmodule Shard.Map.Zone do
     zone
     |> cast(attrs, [
       :name,
-      :zone_id,
       :slug,
       :description,
       :zone_type,
@@ -44,9 +43,8 @@ defmodule Shard.Map.Zone do
       :properties,
       :display_order
     ])
-    |> validate_required([:name, :zone_id, :slug])
+    |> validate_required([:name, :slug])
     |> validate_length(:name, min: 2, max: 100)
-    |> validate_length(:zone_id, min: 2, max: 100)
     |> validate_length(:slug, min: 2, max: 100)
     |> validate_format(:slug, ~r/^[a-z0-9-]+$/,
       message: "must be lowercase alphanumeric with hyphens"
@@ -57,7 +55,6 @@ defmodule Shard.Map.Zone do
     |> validate_number(:max_level, greater_than_or_equal_to: 1)
     |> validate_level_range()
     |> validate_number(:display_order, greater_than_or_equal_to: 0)
-    |> unique_constraint(:zone_id)
     |> unique_constraint(:slug)
   end
 
