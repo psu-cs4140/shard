@@ -211,6 +211,10 @@ defmodule ShardWeb.UserLive.MapComponents do
                       <div class="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
                       <span>End Room</span>
                     </div>
+                    <div class="flex items-center">
+                      <div class="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
+                      <span>End Room</span>
+                    </div>
                   </div>
                 </div>
                 
