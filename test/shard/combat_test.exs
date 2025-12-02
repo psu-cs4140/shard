@@ -45,12 +45,14 @@ defmodule Shard.CombatTest do
 
     test "handles attack action with no monsters", %{base_game_state: base_game_state} do
       # Create fresh game state with no monsters at player position
-      game_state = 
+      game_state =
         base_game_state
         |> put_in([:character, :id], 1)
-        |> Map.put(:monsters, [])  # Explicitly set empty monsters list
-        |> Map.put(:player_position, {0, 0})  # Ensure player position is set
-      
+        # Explicitly set empty monsters list
+        |> Map.put(:monsters, [])
+        # Ensure player position is set
+        |> Map.put(:player_position, {0, 0})
+
       {messages, updated_state} = Combat.execute_action(game_state, "attack")
       assert messages == ["There are no monsters here to attack."]
       assert updated_state == game_state
@@ -73,7 +75,7 @@ defmodule Shard.CombatTest do
     test "does nothing when no monsters at position" do
       # Create fresh monster at different position
       fresh_monster = %{position: {1, 1}, is_alive: true, name: "Goblin", hp: 10}
-      
+
       game_state = %{
         player_position: {0, 0},
         monsters: [fresh_monster],
@@ -384,9 +386,10 @@ defmodule Shard.CombatTest do
 
       # Should handle the case gracefully (either attack or no monsters message)
       assert length(messages) > 0
+
       # Accept either successful attack or no monsters message since shared combat may not be available in tests
-      assert String.contains?(Enum.join(messages), "attack") or 
-             String.contains?(Enum.join(messages), "There are no monsters here to attack")
+      assert String.contains?(Enum.join(messages), "attack") or
+               String.contains?(Enum.join(messages), "There are no monsters here to attack")
     end
   end
 end

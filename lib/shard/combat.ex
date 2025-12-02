@@ -25,14 +25,14 @@ defmodule Shard.Combat do
   defp execute_attack(game_state) do
     {x, y} = game_state.player_position
     combat_id = "#{x},#{y}"
-    
+
     # Get shared combat state instead of individual monster list
     case get_shared_combat_state(combat_id) do
       nil ->
         # Fall back to local monster list for testing or when shared combat isn't available
         local_monsters = game_state.monsters || []
         monsters_here = find_monsters_at_position(local_monsters, {x, y})
-        
+
         case monsters_here do
           [] ->
             {["There are no monsters here to attack."], game_state}
@@ -40,10 +40,10 @@ defmodule Shard.Combat do
           [monster | _] ->
             perform_local_attack(game_state, monster, {x, y})
         end
-        
+
       combat_state ->
         monsters_here = find_monsters_at_position(combat_state.monsters || [], {x, y})
-        
+
         case monsters_here do
           [] ->
             {["There are no monsters here to attack."], game_state}
@@ -75,7 +75,7 @@ defmodule Shard.Combat do
           calculate_attack_damage(player_stats_with_id, monster, game_state.equipped_weapon)
 
         updated_monster = apply_damage_to_monster(monster, damage_result.final_damage)
-        
+
         # Update local monster list for testing
         updated_monsters = update_monsters_list(game_state.monsters, monster, updated_monster)
 
@@ -91,15 +91,17 @@ defmodule Shard.Combat do
             handle_monster_death_local(game_state, updated_monster)
 
           final_response = response ++ messages
-          
+
           # Remove dead monster from local list
           final_monsters = Enum.reject(updated_monsters, fn m -> not m[:is_alive] end)
 
           updated_game_state =
-            %{game_state | 
-              player_stats: updated_player_stats, 
-              character: updated_character,
-              monsters: final_monsters}
+            %{
+              game_state
+              | player_stats: updated_player_stats,
+                character: updated_character,
+                monsters: final_monsters
+            }
 
           {final_response, updated_game_state}
         end
@@ -121,7 +123,7 @@ defmodule Shard.Combat do
           calculate_attack_damage(player_stats_with_id, monster, game_state.equipped_weapon)
 
         updated_monster = apply_damage_to_monster(monster, damage_result.final_damage)
-        
+
         # Update the shared combat state instead of local monster list
         update_shared_monster_state(combat_id, monster, updated_monster)
 
@@ -137,7 +139,13 @@ defmodule Shard.Combat do
 
         # NEW: Check for special damage effect
         final_response =
-          case check_special_damage_effect(game_state, monster, updated_monster, response, combat_id) do
+          case check_special_damage_effect(
+                 game_state,
+                 monster,
+                 updated_monster,
+                 response,
+                 combat_id
+               ) do
             {resp, _} -> resp
             nil -> response
           end
@@ -239,7 +247,6 @@ defmodule Shard.Combat do
     })
   end
 
-
   defp execute_flee(game_state) do
     # Simple flee mechanic - always succeeds for now
     updated_game_state = %{game_state | combat: false}
@@ -274,7 +281,7 @@ defmodule Shard.Combat do
           hp: game_state.player_stats.health,
           max_hp: game_state.player_stats.max_health
         }
-        
+
         add_player_to_shared_combat(combat_id, player_data)
 
         # Check if there are monsters at current location
@@ -282,15 +289,15 @@ defmodule Shard.Combat do
         # So we need to check both sources, but always filter by position first
         combat_monsters = combat_state.monsters || []
         game_monsters = game_state.monsters || []
-        
+
         # Filter combat monsters by position first
-        combat_monsters_here = 
+        combat_monsters_here =
           Enum.filter(combat_monsters, fn monster ->
             monster[:position] == {x, y} && monster[:is_alive] != false
           end)
-        
+
         # If no combat monsters at position, check game monsters at position
-        monsters_here = 
+        monsters_here =
           if length(combat_monsters_here) > 0 do
             combat_monsters_here
           else
@@ -574,7 +581,13 @@ defmodule Shard.Combat do
   end
 
   # NEW: Check for special damage effect
-  defp check_special_damage_effect(game_state, original_monster, updated_monster, base_response, combat_id) do
+  defp check_special_damage_effect(
+         game_state,
+         original_monster,
+         updated_monster,
+         base_response,
+         combat_id
+       ) do
     # Check if monster has special damage and is still alive
     if updated_monster[:is_alive] &&
          original_monster[:special_damage_type_id] &&
@@ -649,9 +662,10 @@ defmodule Shard.Combat do
     try do
       # Check if the process exists first
       case Registry.lookup(Shard.Registry, {:combat, combat_id}) do
-        [] -> 
+        [] ->
           # Process doesn't exist
           nil
+
         [{_pid, _}] ->
           # Process exists, try to get state
           Shard.Combat.Server.get_combat_state(combat_id)
@@ -668,10 +682,10 @@ defmodule Shard.Combat do
       nil ->
         # Ensure we only work with the provided monsters list, not any cached state
         provided_monsters = monsters || []
-        
+
         # Filter monsters to only include those at the current position
         # Create deep copies to avoid test state pollution
-        monsters_at_position = 
+        monsters_at_position =
           provided_monsters
           |> Enum.filter(fn monster ->
             monster[:position] == position && monster[:is_alive] != false
@@ -680,7 +694,7 @@ defmodule Shard.Combat do
             # Create a fresh copy of each monster to avoid shared state in tests
             Map.new(monster)
           end)
-        
+
         # Start new combat server
         initial_state = %{
           combat_id: combat_id,
@@ -690,29 +704,32 @@ defmodule Shard.Combat do
           effects: [],
           combat: true
         }
-        
+
         # Check if supervisor is available before trying to start child
         case Process.whereis(Shard.Combat.Supervisor) do
           nil ->
             # Supervisor not available, fall back to local state with monsters
             {:ok, initial_state}
-          
+
           _pid ->
             # Use the correct child spec format for DynamicSupervisor
             child_spec = %{
-              id: {Shard.Combat.Server, combat_id},  # Make ID unique per combat
+              # Make ID unique per combat
+              id: {Shard.Combat.Server, combat_id},
               start: {Shard.Combat.Server, :start_link, [initial_state]},
               restart: :temporary
             }
-            
+
             case DynamicSupervisor.start_child(Shard.Combat.Supervisor, child_spec) do
-              {:ok, _pid} -> 
+              {:ok, _pid} ->
                 # Wait a moment for the process to initialize
                 :timer.sleep(10)
                 {:ok, initial_state}
-              {:error, {:already_started, _pid}} -> 
+
+              {:error, {:already_started, _pid}} ->
                 {:ok, get_shared_combat_state(combat_id) || initial_state}
-              _error -> 
+
+              _error ->
                 # Fall back to local state if server start fails
                 {:ok, initial_state}
             end
@@ -727,8 +744,9 @@ defmodule Shard.Combat do
     try do
       # Check if the process exists first
       case Registry.lookup(Shard.Registry, {:combat, combat_id}) do
-        [] -> 
+        [] ->
           :error
+
         [{_pid, _}] ->
           Shard.Combat.Server.add_player(combat_id, player_data)
       end
@@ -743,18 +761,29 @@ defmodule Shard.Combat do
     try do
       # Check if the process exists first
       case Registry.lookup(Shard.Registry, {:combat, combat_id}) do
-        [] -> 
+        [] ->
           :error
+
         [{_pid, _}] ->
           # Get current combat state
           case get_shared_combat_state(combat_id) do
-            nil -> :error
+            nil ->
+              :error
+
             combat_state ->
               # Update the monster in the monsters list
-              updated_monsters = update_monsters_list(combat_state.monsters || [], original_monster, updated_monster)
-              
+              updated_monsters =
+                update_monsters_list(
+                  combat_state.monsters || [],
+                  original_monster,
+                  updated_monster
+                )
+
               # Update the combat state
-              GenServer.call(Shard.Combat.Server.via(combat_id), {:update_monsters, updated_monsters})
+              GenServer.call(
+                Shard.Combat.Server.via(combat_id),
+                {:update_monsters, updated_monsters}
+              )
           end
       end
     rescue
@@ -768,8 +797,9 @@ defmodule Shard.Combat do
     try do
       # Check if the process exists first
       case Registry.lookup(Shard.Registry, {:combat, combat_id}) do
-        [] -> 
+        [] ->
           :error
+
         [{_pid, _}] ->
           Shard.Combat.Server.update_player(combat_id, player_id, updates)
       end
@@ -784,19 +814,25 @@ defmodule Shard.Combat do
     try do
       # Check if the process exists first
       case Registry.lookup(Shard.Registry, {:combat, combat_id}) do
-        [] -> 
+        [] ->
           :error
+
         [{_pid, _}] ->
           case get_shared_combat_state(combat_id) do
-            nil -> :error
+            nil ->
+              :error
+
             combat_state ->
-              updated_monsters = 
+              updated_monsters =
                 Enum.reject(combat_state.monsters || [], fn m ->
                   m[:position] == dead_monster[:position] and
                     m[:monster_id] == dead_monster[:monster_id]
                 end)
-              
-              GenServer.call(Shard.Combat.Server.via(combat_id), {:update_monsters, updated_monsters})
+
+              GenServer.call(
+                Shard.Combat.Server.via(combat_id),
+                {:update_monsters, updated_monsters}
+              )
           end
       end
     rescue
