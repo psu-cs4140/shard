@@ -106,7 +106,7 @@ defmodule Shard.Users.UserZoneProgressTest do
           email: "test#{System.unique_integer()}@example.com",
           hashed_password: "hashed_password"
         }
-        |> Users.User.changeset(attrs)
+        |> Users.User.email_changeset(attrs)
         |> Repo.insert!()
 
       :zone ->
