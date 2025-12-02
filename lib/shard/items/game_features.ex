@@ -385,4 +385,24 @@ defmodule Shard.Items.GameFeatures do
     # or has the required permissions/items to access it
     false
   end
+
+  ## Room Item Management
+
+  def create_room_item(attrs) do
+    %RoomItem{}
+    |> RoomItem.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def list_room_items_by_zone(zone_id) do
+    from(ri in RoomItem,
+      join: r in Shard.Map.Room,
+      on:
+        ri.location ==
+          fragment("? || ',' || ? || ',' || ?", r.x_coordinate, r.y_coordinate, r.z_coordinate),
+      where: r.zone_id == ^zone_id,
+      preload: [:item]
+    )
+    |> Repo.all()
+  end
 end
