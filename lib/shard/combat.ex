@@ -665,11 +665,17 @@ defmodule Shard.Combat do
   defp ensure_shared_combat_state(combat_id, position, monsters) do
     case get_shared_combat_state(combat_id) do
       nil ->
+        # Filter monsters to only include those at the current position
+        monsters_at_position = 
+          Enum.filter(monsters || [], fn monster ->
+            monster[:position] == position && monster[:is_alive] != false
+          end)
+        
         # Start new combat server
         initial_state = %{
           combat_id: combat_id,
           room_position: position,
-          monsters: monsters || [],
+          monsters: monsters_at_position,
           players: [],
           effects: [],
           combat: true
