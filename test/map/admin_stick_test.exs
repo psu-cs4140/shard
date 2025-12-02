@@ -2,7 +2,7 @@ defmodule Shard.Map.AdminStickTest do
   use Shard.DataCase
 
   alias Shard.Items
-  alias Shard.Items.AdminStick
+  alias Shard.Items.AdminSticks
   alias Shard.Characters
   alias Shard.UsersFixtures
 
@@ -10,6 +10,7 @@ defmodule Shard.Map.AdminStickTest do
     setup do
       :ok
     end
+
     test "admin stick item exists in database" do
       # Check that the admin stick item was created by migration
       admin_stick = AdminStick.get_admin_stick_item()
@@ -25,22 +26,23 @@ defmodule Shard.Map.AdminStickTest do
     test "admin_stick? function works correctly" do
       admin_stick = AdminStick.get_admin_stick_item()
       assert AdminStick.admin_stick?(admin_stick) == true
-      
+
       # Create a different item
-      {:ok, other_item} = Items.create_item(%{
-        name: "Regular Stick",
-        description: "Just a regular stick",
-        item_type: "tool",
-        rarity: "common",
-        equippable: false,
-        stackable: true,
-        usable: false,
-        is_active: true
-      })
-      
+      {:ok, other_item} =
+        Items.create_item(%{
+          name: "Regular Stick",
+          description: "Just a regular stick",
+          item_type: "tool",
+          rarity: "common",
+          equippable: false,
+          stackable: true,
+          usable: false,
+          is_active: true
+        })
+
       assert AdminStick.admin_stick?(other_item) == false
       assert AdminStick.admin_stick?(nil) == false
-      
+
       # Clean up
       Items.delete_item(other_item)
     end
@@ -88,9 +90,10 @@ defmodule Shard.Map.AdminStickTest do
       }
 
       # Insert character directly to avoid any zone-related triggers
-      character = %Shard.Characters.Character{}
-      |> Shard.Characters.Character.changeset(character_attrs)
-      |> Shard.Repo.insert!()
+      character =
+        %Shard.Characters.Character{}
+        |> Shard.Characters.Character.changeset(character_attrs)
+        |> Shard.Repo.insert!()
 
       %{character: character}
     end
@@ -148,9 +151,10 @@ defmodule Shard.Map.AdminStickTest do
       }
 
       # Insert character directly to avoid any zone-related triggers
-      character = %Shard.Characters.Character{}
-      |> Shard.Characters.Character.changeset(character_attrs)
-      |> Shard.Repo.insert!()
+      character =
+        %Shard.Characters.Character{}
+        |> Shard.Characters.Character.changeset(character_attrs)
+        |> Shard.Repo.insert!()
 
       # Temporarily delete the admin stick item if it exists
       case AdminStick.get_admin_stick_item() do
