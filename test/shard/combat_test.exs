@@ -25,27 +25,28 @@ defmodule Shard.CombatTest do
 
   describe "execute_action/2" do
     setup do
-      game_state = %{
-        player_position: {0, 0},
-        player_stats: %{strength: 10, health: 100, max_health: 100},
-        equipped_weapon: %{damage: 5},
-        character: %{name: "TestPlayer", id: 1},
-        monsters: []
+      # Create fresh game state for each test
+      %{
+        base_game_state: %{
+          player_position: {0, 0},
+          player_stats: %{strength: 10, health: 100, max_health: 100},
+          equipped_weapon: %{damage: 5},
+          character: %{name: "TestPlayer", id: 1},
+          monsters: []
+        }
       }
-
-      %{game_state: game_state}
     end
 
-    test "returns error message for unknown action", %{game_state: game_state} do
-      {messages, updated_state} = Combat.execute_action(game_state, "unknown")
+    test "returns error message for unknown action", %{base_game_state: base_game_state} do
+      {messages, updated_state} = Combat.execute_action(base_game_state, "unknown")
       assert messages == ["Unknown combat action."]
-      assert updated_state == game_state
+      assert updated_state == base_game_state
     end
 
-    test "handles attack action with no monsters", %{game_state: game_state} do
-      # Use integer ID instead of string and explicitly ensure no monsters
+    test "handles attack action with no monsters", %{base_game_state: base_game_state} do
+      # Create fresh game state with no monsters
       game_state = 
-        game_state
+        base_game_state
         |> put_in([:character, :id], 1)
         |> Map.put(:monsters, [])  # Explicitly set empty monsters list
       
@@ -54,10 +55,10 @@ defmodule Shard.CombatTest do
       assert updated_state == game_state
     end
 
-    test "handles flee action", %{game_state: game_state} do
-      # Use integer ID instead of string
+    test "handles flee action", %{base_game_state: base_game_state} do
+      # Create fresh game state for flee test
       game_state =
-        game_state
+        base_game_state
         |> Map.put(:combat, true)
         |> put_in([:character, :id], 1)
 
@@ -69,9 +70,12 @@ defmodule Shard.CombatTest do
 
   describe "start_combat/1" do
     test "does nothing when no monsters at position" do
+      # Create fresh monster at different position
+      fresh_monster = %{position: {1, 1}, is_alive: true, name: "Goblin", hp: 10}
+      
       game_state = %{
         player_position: {0, 0},
-        monsters: [%{position: {1, 1}, is_alive: true, name: "Goblin", hp: 10}],
+        monsters: [fresh_monster],
         character: %{id: 1, name: "TestPlayer"},
         player_stats: %{health: 100, max_health: 100},
         combat: false
@@ -83,7 +87,8 @@ defmodule Shard.CombatTest do
     end
 
     test "starts combat when monsters are present" do
-      monster = %{
+      # Create fresh monster at same position
+      fresh_monster = %{
         position: {0, 0},
         is_alive: true,
         name: "Goblin",
@@ -93,7 +98,7 @@ defmodule Shard.CombatTest do
 
       game_state = %{
         player_position: {0, 0},
-        monsters: [monster],
+        monsters: [fresh_monster],
         combat: false,
         character: %{id: 1, name: "TestPlayer"},
         player_stats: %{health: 100, max_health: 100}

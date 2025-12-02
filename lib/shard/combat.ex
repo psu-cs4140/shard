@@ -666,9 +666,15 @@ defmodule Shard.Combat do
     case get_shared_combat_state(combat_id) do
       nil ->
         # Filter monsters to only include those at the current position
+        # Create deep copies to avoid test state pollution
         monsters_at_position = 
-          Enum.filter(monsters || [], fn monster ->
+          monsters
+          |> Enum.filter(fn monster ->
             monster[:position] == position && monster[:is_alive] != false
+          end)
+          |> Enum.map(fn monster ->
+            # Create a fresh copy of each monster to avoid shared state in tests
+            Map.new(monster)
           end)
         
         # Start new combat server
