@@ -296,7 +296,7 @@ defmodule Shard.Combat do
 
           monsters_here ->
             messages = build_combat_start_messages(monsters_here)
-            updated_game_state = %{game_state | combat: true}
+            updated_game_state = Map.put(game_state, :combat, true)
             {messages, updated_game_state}
         end
     end
@@ -332,8 +332,9 @@ defmodule Shard.Combat do
     final_damage = max(monster_damage, 1)
 
     # Update player health
-    new_health = max(game_state.player_stats.health - final_damage, 0)
-    updated_stats = %{game_state.player_stats | health: new_health}
+    current_health = Map.get(game_state.player_stats, :health, 100)
+    new_health = max(current_health - final_damage, 0)
+    updated_stats = Map.put(game_state.player_stats, :health, new_health)
 
     # Update player in shared combat state
     update_shared_player_state(combat_id, game_state.character.id, %{hp: new_health})

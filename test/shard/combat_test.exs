@@ -27,7 +27,7 @@ defmodule Shard.CombatTest do
     setup do
       game_state = %{
         player_position: {0, 0},
-        player_stats: %{strength: 10},
+        player_stats: %{strength: 10, health: 100, max_health: 100},
         equipped_weapon: %{damage: 5},
         character: %{name: "TestPlayer", id: 1},
         monsters: []
@@ -73,7 +73,8 @@ defmodule Shard.CombatTest do
         player_position: {0, 0},
         monsters: [%{position: {1, 1}, is_alive: true}],
         character: %{id: 1, name: "TestPlayer"},
-        player_stats: %{health: 100, max_health: 100}
+        player_stats: %{health: 100, max_health: 100},
+        combat: false
       }
 
       {messages, updated_state} = Combat.start_combat(game_state)
