@@ -375,18 +375,4 @@ defmodule ShardWeb.ZoneSelectionLive do
   defp get_zone_type_color("safe_zone"), do: "bg-gray-600 text-white"
   defp get_zone_type_color(_), do: "bg-gray-900 text-white"
 
-  # Helper function for progress badge colors
-  defp get_progress_badge_color("locked"), do: "bg-gray-700 text-gray-300 border-gray-600"
-
-  defp get_progress_badge_color("in_progress"),
-    do: "bg-yellow-700 text-yellow-200 border-yellow-600"
-
-  defp get_progress_badge_color("completed"), do: "bg-green-700 text-green-200 border-green-600"
-  defp get_progress_badge_color(_), do: "bg-gray-700 text-gray-300 border-gray-600"
-
-  # Helper function for progress labels
-  defp get_progress_label("locked"), do: "🔒 Locked"
-  defp get_progress_label("in_progress"), do: "⚡ Available"
-  defp get_progress_label("completed"), do: "✅ Completed"
-  defp get_progress_label(_), do: "🔒 Locked"
 end
