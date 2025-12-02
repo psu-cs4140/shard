@@ -60,7 +60,7 @@ defmodule Shard.Combat do
           [] ->
             {[], game_state}
 
-          monsters_here ->
+          _monsters_here ->
             messages = build_combat_start_messages(monsters_here)
             updated_game_state = Map.put(game_state, :combat, true)
             {messages, updated_game_state}
