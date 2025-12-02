@@ -54,19 +54,22 @@ defmodule ShardWeb.ZoneSelectionLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="container mx-auto px-6 py-12 max-w-7xl bg-black min-h-screen">
-      <.header>
-        <span class="text-red-400">Select a Dungeon to Explore</span>
-        <:subtitle>
-          <%= if @character do %>
-            <span class="text-red-300">
-              Playing as: {@character.name} (Level {@character.level} {@character.class})
-            </span>
-          <% else %>
-            <span class="text-red-500">Choose a dungeon to begin your dark adventure</span>
-          <% end %>
-        </:subtitle>
-      </.header>
+    <div class="min-h-screen bg-black">
+      <div class="container mx-auto px-6 py-12 max-w-7xl">
+        <.header>
+          <span class="text-gray-900">Select a Dungeon to Explore</span>
+          <:subtitle>
+            <%= if @character do %>
+              <span class="text-gray-700">
+                Playing as: {@character.name} (Level {@character.level} {@character.class})
+              </span>
+            <% else %>
+              <span class="text-gray-800">Choose a dungeon to begin your dark adventure</span>
+            <% end %>
+          </:subtitle>
+        </.header>
+      </div>
+    </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
         <%= for zone <- @template_zones do %>
@@ -75,21 +78,21 @@ defmodule ShardWeb.ZoneSelectionLive do
           <div class={[
             "card shadow-xl transition-all duration-300 rounded-2xl border-2",
             if(is_accessible,
-              do: "bg-red-950 hover:shadow-2xl hover:shadow-red-900/50 border-red-800",
-              else: "bg-gray-900 border-gray-700 opacity-60"
+              do: "bg-white hover:shadow-2xl hover:shadow-gray-400/50 border-gray-300",
+              else: "bg-gray-200 border-gray-400 opacity-60"
             )
           ]}>
             <div class="card-body p-8">
               <h2 class={[
                 "card-title",
-                if(is_accessible, do: "text-red-300", else: "text-gray-400")
+                if(is_accessible, do: "text-gray-900", else: "text-gray-500")
               ]}>
                 {zone.name}
                 <div class={[
                   "badge",
                   if(is_accessible,
-                    do: "border-red-700 " <> get_zone_type_color(zone.zone_type),
-                    else: "border-gray-600 bg-gray-800 text-gray-400"
+                    do: "border-gray-400 " <> get_zone_type_color(zone.zone_type),
+                    else: "border-gray-500 bg-gray-300 text-gray-600"
                   )
                 ]}>
                   <%= if !is_accessible do %>
@@ -101,34 +104,34 @@ defmodule ShardWeb.ZoneSelectionLive do
 
               <p class={[
                 "text-sm min-h-[4rem]",
-                if(is_accessible, do: "text-red-200 opacity-90", else: "text-gray-500")
+                if(is_accessible, do: "text-gray-700", else: "text-gray-500")
               ]}>
                 {if is_accessible, do: zone.description, else: "This zone is locked. Complete previous zones to unlock."}
               </p>
 
-              <div class="divider my-4 border-red-800"></div>
+              <div class="divider my-4 border-gray-300"></div>
 
               <div class={[
                 "grid grid-cols-2 gap-2 text-sm",
-                if(is_accessible, do: "text-red-300", else: "text-gray-500")
+                if(is_accessible, do: "text-gray-700", else: "text-gray-500")
               ]}>
                 <div>
                   <span class={[
                     "font-semibold",
-                    if(is_accessible, do: "text-red-400", else: "text-gray-400")
+                    if(is_accessible, do: "text-gray-900", else: "text-gray-400")
                   ]}>Level Range:</span>
                   <br />
-                  <span class={if(is_accessible, do: "text-red-200", else: "text-gray-500")}>
+                  <span class={if(is_accessible, do: "text-gray-700", else: "text-gray-500")}>
                     {zone.min_level}-{zone.max_level || "∞"}
                   </span>
                 </div>
                 <div>
                   <span class={[
                     "font-semibold",
-                    if(is_accessible, do: "text-red-400", else: "text-gray-400")
+                    if(is_accessible, do: "text-gray-900", else: "text-gray-400")
                   ]}>Rooms:</span>
                   <br />
-                  <span class={if(is_accessible, do: "text-red-200", else: "text-gray-500")}>
+                  <span class={if(is_accessible, do: "text-gray-700", else: "text-gray-500")}>
                     {if is_accessible, do: length(Map.list_rooms_by_zone(zone.id)), else: "???"}
                   </span>
                 </div>
@@ -142,7 +145,7 @@ defmodule ShardWeb.ZoneSelectionLive do
                         phx-click="enter_zone"
                         phx-value-zone_name={zone.name}
                         phx-value-instance_type="singleplayer"
-                        class="bg-red-700 hover:bg-red-600 text-red-100 border-red-600 hover:border-red-500 flex-1 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-red-500/25 hover:brightness-110 active:scale-95 rounded-xl px-4 py-3"
+                        class="bg-gray-800 hover:bg-gray-700 text-white border-gray-600 hover:border-gray-500 flex-1 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-gray-500/25 hover:brightness-110 active:scale-95 rounded-xl px-4 py-3"
                       >
                         <svg
                           class="w-4 h-4 mr-1 transition-transform duration-300 group-hover:rotate-12"
@@ -164,7 +167,7 @@ defmodule ShardWeb.ZoneSelectionLive do
                         phx-click="enter_zone"
                         phx-value-zone_name={zone.name}
                         phx-value-instance_type="multiplayer"
-                        class="bg-red-800 hover:bg-red-700 text-red-100 border-red-700 hover:border-red-600 flex-1 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-red-500/25 hover:brightness-110 active:scale-95 rounded-xl px-4 py-3"
+                        class="bg-gray-900 hover:bg-gray-800 text-white border-gray-700 hover:border-gray-600 flex-1 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-gray-500/25 hover:brightness-110 active:scale-95 rounded-xl px-4 py-3"
                       >
                         <svg
                           class="w-4 h-4 mr-1 transition-transform duration-300 group-hover:rotate-12"
@@ -197,13 +200,13 @@ defmodule ShardWeb.ZoneSelectionLive do
                   <div class="flex flex-col gap-3">
                     <.link
                       navigate={~p"/characters"}
-                      class="btn bg-red-700 hover:bg-red-600 text-red-100 border-red-600 rounded-xl px-4 py-3"
+                      class="btn bg-gray-800 hover:bg-gray-700 text-white border-gray-600 rounded-xl px-4 py-3"
                     >
                       Select Existing Character
                     </.link>
                     <.link
                       navigate={~p"/characters/new"}
-                      class="btn bg-red-900 hover:bg-red-800 text-red-200 border-red-700 rounded-xl px-4 py-3"
+                      class="btn bg-gray-900 hover:bg-gray-800 text-white border-gray-700 rounded-xl px-4 py-3"
                     >
                       Create New Character
                     </.link>
@@ -216,10 +219,10 @@ defmodule ShardWeb.ZoneSelectionLive do
       </div>
 
       <%= if Enum.empty?(@template_zones) do %>
-        <div class="alert bg-red-950 border-2 border-red-800 text-red-300 mt-12 rounded-2xl shadow-lg">
+        <div class="alert bg-gray-100 border-2 border-gray-300 text-gray-800 mt-12 rounded-2xl shadow-lg">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            class="stroke-current shrink-0 h-6 w-6 text-red-400"
+            class="stroke-current shrink-0 h-6 w-6 text-gray-600"
             fill="none"
             viewBox="0 0 24 24"
           >
@@ -355,13 +358,13 @@ defmodule ShardWeb.ZoneSelectionLive do
   end
 
   # Helper function for zone type badge colors
-  defp get_zone_type_color("dungeon"), do: "bg-red-800 text-red-200"
-  defp get_zone_type_color("town"), do: "bg-red-700 text-red-100"
-  defp get_zone_type_color("wilderness"), do: "bg-red-900 text-red-300"
-  defp get_zone_type_color("raid"), do: "bg-red-600 text-red-100"
-  defp get_zone_type_color("pvp"), do: "bg-red-800 text-red-200"
-  defp get_zone_type_color("safe_zone"), do: "bg-red-700 text-red-100"
-  defp get_zone_type_color(_), do: "bg-red-950 text-red-400"
+  defp get_zone_type_color("dungeon"), do: "bg-gray-700 text-white"
+  defp get_zone_type_color("town"), do: "bg-gray-600 text-white"
+  defp get_zone_type_color("wilderness"), do: "bg-gray-800 text-white"
+  defp get_zone_type_color("raid"), do: "bg-gray-500 text-white"
+  defp get_zone_type_color("pvp"), do: "bg-gray-700 text-white"
+  defp get_zone_type_color("safe_zone"), do: "bg-gray-600 text-white"
+  defp get_zone_type_color(_), do: "bg-gray-900 text-white"
 
   # Helper function for progress badge colors
   defp get_progress_badge_color("locked"), do: "bg-gray-700 text-gray-300 border-gray-600"
