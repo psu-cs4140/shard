@@ -30,7 +30,8 @@ defmodule Shard.Combat do
     case get_shared_combat_state(combat_id) do
       nil ->
         # Fall back to local monster list for testing or when shared combat isn't available
-        monsters_here = find_monsters_at_position(game_state.monsters || [], {x, y})
+        local_monsters = game_state.monsters || []
+        monsters_here = find_monsters_at_position(local_monsters, {x, y})
         
         case monsters_here do
           [] ->
@@ -665,10 +666,13 @@ defmodule Shard.Combat do
   defp ensure_shared_combat_state(combat_id, position, monsters) do
     case get_shared_combat_state(combat_id) do
       nil ->
+        # Ensure we only work with the provided monsters list, not any cached state
+        provided_monsters = monsters || []
+        
         # Filter monsters to only include those at the current position
         # Create deep copies to avoid test state pollution
         monsters_at_position = 
-          monsters
+          provided_monsters
           |> Enum.filter(fn monster ->
             monster[:position] == position && monster[:is_alive] != false
           end)

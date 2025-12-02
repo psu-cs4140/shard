@@ -44,11 +44,12 @@ defmodule Shard.CombatTest do
     end
 
     test "handles attack action with no monsters", %{base_game_state: base_game_state} do
-      # Create fresh game state with no monsters
+      # Create fresh game state with no monsters at player position
       game_state = 
         base_game_state
         |> put_in([:character, :id], 1)
         |> Map.put(:monsters, [])  # Explicitly set empty monsters list
+        |> Map.put(:player_position, {0, 0})  # Ensure player position is set
       
       {messages, updated_state} = Combat.execute_action(game_state, "attack")
       assert messages == ["There are no monsters here to attack."]
