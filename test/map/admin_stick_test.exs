@@ -2,7 +2,7 @@ defmodule Shard.Map.AdminStickTest do
   use Shard.DataCase
 
   alias Shard.Items
-  alias Shard.Items.AdminSticks
+  alias Shard.Items.AdminStick
   alias Shard.Characters
   alias Shard.UsersFixtures
 
