@@ -260,7 +260,7 @@ defmodule ShardWeb.ZoneSelectionLive do
 
       zone ->
         # Check if user has access to this zone
-        zone_progress = Enum.find_value(socket.assigns.zone_progress_map, "locked", fn {k, v} -> if k == zone.id, do: v end)
+        zone_progress = socket.assigns.zone_progress_map[zone.id] || "locked"
         
         if zone_progress in ["in_progress", "completed"] do
           # For singleplayer, we can directly use the template zone
