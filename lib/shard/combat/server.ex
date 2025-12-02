@@ -69,6 +69,11 @@ defmodule Shard.Combat.Server do
     {:reply, :ok, new_state}
   end
 
+  def handle_call({:update_monsters, monsters}, _from, state) do
+    new_state = Map.put(state, :monsters, monsters)
+    {:reply, :ok, new_state}
+  end
+
   defp broadcast_combat_events(state, events) do
     room_pos = state[:room_position]
 

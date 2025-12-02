@@ -24,14 +24,23 @@ defmodule Shard.Combat do
 
   defp execute_attack(game_state) do
     {x, y} = game_state.player_position
-    monsters_here = find_monsters_at_position(game_state.monsters, {x, y})
-
-    case monsters_here do
-      [] ->
+    combat_id = "#{x},#{y}"
+    
+    # Get shared combat state instead of individual monster list
+    case get_shared_combat_state(combat_id) do
+      nil ->
         {["There are no monsters here to attack."], game_state}
+        
+      combat_state ->
+        monsters_here = find_monsters_at_position(combat_state.monsters || [], {x, y})
+        
+        case monsters_here do
+          [] ->
+            {["There are no monsters here to attack."], game_state}
 
-      [monster | _] ->
-        perform_attack(game_state, monster, {x, y})
+          [monster | _] ->
+            perform_shared_attack(game_state, monster, {x, y}, combat_id)
+        end
     end
   end
 
@@ -41,7 +50,7 @@ defmodule Shard.Combat do
     end)
   end
 
-  defp perform_attack(game_state, monster, position) do
+  defp perform_shared_attack(game_state, monster, position, combat_id) do
     # Check if this is The Count and player has required item
     case check_count_attack_requirements(game_state, monster) do
       {:error, message} ->
@@ -56,7 +65,9 @@ defmodule Shard.Combat do
           calculate_attack_damage(player_stats_with_id, monster, game_state.equipped_weapon)
 
         updated_monster = apply_damage_to_monster(monster, damage_result.final_damage)
-        updated_monsters = update_monsters_list(game_state.monsters, monster, updated_monster)
+        
+        # Update the shared combat state instead of local monster list
+        update_shared_monster_state(combat_id, monster, updated_monster)
 
         response = create_attack_response(monster, damage_result, updated_monster)
 
@@ -69,10 +80,10 @@ defmodule Shard.Combat do
         )
 
         # NEW: Check for special damage effect
-        {final_response, final_monsters} =
-          case check_special_damage_effect(game_state, monster, updated_monster, response) do
-            {resp, mons} -> {resp, mons}
-            nil -> {response, updated_monsters}
+        final_response =
+          case check_special_damage_effect(game_state, monster, updated_monster, response, combat_id) do
+            {resp, _} -> resp
+            nil -> response
           end
 
         if updated_monster[:is_alive] do
@@ -82,21 +93,17 @@ defmodule Shard.Combat do
             updated_monster,
             position,
             final_response,
-            final_monsters
+            combat_id
           )
         else
           # Monster died - handle death and rewards
-          {messages, final_monsters, updated_player_stats, updated_character} =
-            handle_monster_death(game_state, updated_monster, final_monsters)
+          {messages, updated_player_stats, updated_character} =
+            handle_monster_death(game_state, updated_monster, combat_id)
 
           final_response = final_response ++ messages
 
           updated_game_state =
-            update_combat_state(
-              %{game_state | player_stats: updated_player_stats, character: updated_character},
-              final_monsters,
-              position
-            )
+            %{game_state | player_stats: updated_player_stats, character: updated_character}
 
           {final_response, updated_game_state}
         end
@@ -206,21 +213,40 @@ defmodule Shard.Combat do
   """
   def start_combat(game_state) do
     {x, y} = game_state.player_position
+    combat_id = "#{x},#{y}"
 
-    # Check if there are monsters at current location
-    monsters_here =
-      Enum.filter(game_state.monsters, fn monster ->
-        monster[:position] == {x, y} && monster[:is_alive] != false
-      end)
+    # Initialize or join shared combat state
+    case ensure_shared_combat_state(combat_id, {x, y}, game_state.monsters) do
+      {:ok, combat_state} ->
+        # Add player to shared combat
+        player_data = %{
+          id: game_state.character.id,
+          name: game_state.character.name,
+          position: {x, y},
+          hp: game_state.player_stats.health,
+          max_hp: game_state.player_stats.max_health
+        }
+        
+        add_player_to_shared_combat(combat_id, player_data)
 
-    case monsters_here do
-      [] ->
+        # Check if there are monsters at current location in shared state
+        monsters_here =
+          Enum.filter(combat_state.monsters || [], fn monster ->
+            monster[:position] == {x, y} && monster[:is_alive] != false
+          end)
+
+        case monsters_here do
+          [] ->
+            {[], game_state}
+
+          monsters_here ->
+            messages = build_combat_start_messages(monsters_here)
+            updated_game_state = %{game_state | combat: true}
+            {messages, updated_game_state}
+        end
+
+      {:error, _} ->
         {[], game_state}
-
-      monsters_here ->
-        messages = build_combat_start_messages(monsters_here)
-        updated_game_state = %{game_state | combat: true}
-        {messages, updated_game_state}
     end
   end
 
@@ -244,7 +270,7 @@ defmodule Shard.Combat do
          monster,
          position,
          attack_messages,
-         updated_monsters
+         combat_id
        ) do
     # Calculate monster damage
     monster_damage = monster[:attack_damage] || monster[:attack] || 1
@@ -257,6 +283,9 @@ defmodule Shard.Combat do
     new_health = max(game_state.player_stats.health - final_damage, 0)
     updated_stats = %{game_state.player_stats | health: new_health}
 
+    # Update player in shared combat state
+    update_shared_player_state(combat_id, game_state.character.id, %{hp: new_health})
+
     # Broadcast monster attack event for all players (including attacker)
     monster_name = monster[:name] || "monster"
 
@@ -266,23 +295,14 @@ defmodule Shard.Combat do
     )
 
     # Update game state and return response (counterattack message comes through broadcast)
-    updated_game_state =
-      update_combat_state(
-        %{game_state | player_stats: updated_stats},
-        updated_monsters,
-        position
-      )
+    updated_game_state = %{game_state | player_stats: updated_stats}
 
     {attack_messages, updated_game_state}
   end
 
-  defp handle_monster_death(game_state, dead_monster, monsters_list) do
-    # Remove the monster from the list
-    updated_monsters =
-      Enum.reject(monsters_list, fn m ->
-        m[:position] == dead_monster[:position] and
-          m[:monster_id] == dead_monster[:monster_id]
-      end)
+  defp handle_monster_death(game_state, dead_monster, combat_id) do
+    # Remove the monster from the shared combat state
+    remove_shared_monster(combat_id, dead_monster)
 
     # Award XP and Gold (use defaults if not specified)
     xp_reward = dead_monster[:xp_reward] || dead_monster[:xp_amount] || 10
@@ -304,7 +324,7 @@ defmodule Shard.Combat do
         "You find #{gold_reward} gold on the corpse."
       ] ++ loot_messages
 
-    {death_messages, updated_monsters, updated_stats, updated_character}
+    {death_messages, updated_stats, updated_character}
   end
 
   # NEW: Process loot drops when monster dies
@@ -472,7 +492,7 @@ defmodule Shard.Combat do
   end
 
   # NEW: Check for special damage effect
-  defp check_special_damage_effect(game_state, original_monster, updated_monster, base_response) do
+  defp check_special_damage_effect(game_state, original_monster, updated_monster, base_response, combat_id) do
     # Check if monster has special damage and is still alive
     if updated_monster[:is_alive] &&
          original_monster[:special_damage_type_id] &&
@@ -482,9 +502,6 @@ defmodule Shard.Combat do
       damage_type = get_damage_type_name(original_monster[:special_damage_type_id])
       amount = original_monster[:special_damage_amount]
       duration = original_monster[:special_damage_duration] || 3
-
-      # Apply special damage effect to combat server
-      combat_id = "#{elem(game_state.player_position, 0)},#{elem(game_state.player_position, 1)}"
 
       # Create effect
       effect = %{
@@ -500,10 +517,10 @@ defmodule Shard.Combat do
         :ok ->
           effect_message = "The #{original_monster[:name]}'s attack #{damage_type}s you!"
           effect_response = base_response ++ [effect_message]
-          {effect_response, game_state.monsters}
+          {effect_response, nil}
 
         _ ->
-          {base_response, game_state.monsters}
+          {base_response, nil}
       end
     else
       nil
@@ -542,6 +559,93 @@ defmodule Shard.Combat do
 
       _ ->
         :ok
+    end
+  end
+
+  # Helper functions for shared combat state management
+  defp get_shared_combat_state(combat_id) do
+    try do
+      Shard.Combat.Server.get_combat_state(combat_id)
+    rescue
+      _ -> nil
+    end
+  end
+
+  defp ensure_shared_combat_state(combat_id, position, monsters) do
+    case get_shared_combat_state(combat_id) do
+      nil ->
+        # Start new combat server
+        initial_state = %{
+          combat_id: combat_id,
+          room_position: position,
+          monsters: monsters,
+          players: [],
+          effects: [],
+          combat: true
+        }
+        
+        case DynamicSupervisor.start_child(
+               Shard.Combat.Supervisor,
+               {Shard.Combat.Server, initial_state}
+             ) do
+          {:ok, _pid} -> {:ok, initial_state}
+          {:error, {:already_started, _pid}} -> {:ok, get_shared_combat_state(combat_id)}
+          error -> error
+        end
+
+      state ->
+        {:ok, state}
+    end
+  end
+
+  defp add_player_to_shared_combat(combat_id, player_data) do
+    try do
+      Shard.Combat.Server.add_player(combat_id, player_data)
+    rescue
+      _ -> :error
+    end
+  end
+
+  defp update_shared_monster_state(combat_id, original_monster, updated_monster) do
+    try do
+      # Get current combat state
+      case get_shared_combat_state(combat_id) do
+        nil -> :error
+        combat_state ->
+          # Update the monster in the monsters list
+          updated_monsters = update_monsters_list(combat_state.monsters || [], original_monster, updated_monster)
+          
+          # Update the combat state (this would need a new API method in Combat.Server)
+          GenServer.call(Shard.Combat.Server.via(combat_id), {:update_monsters, updated_monsters})
+      end
+    rescue
+      _ -> :error
+    end
+  end
+
+  defp update_shared_player_state(combat_id, player_id, updates) do
+    try do
+      Shard.Combat.Server.update_player(combat_id, player_id, updates)
+    rescue
+      _ -> :error
+    end
+  end
+
+  defp remove_shared_monster(combat_id, dead_monster) do
+    try do
+      case get_shared_combat_state(combat_id) do
+        nil -> :error
+        combat_state ->
+          updated_monsters = 
+            Enum.reject(combat_state.monsters || [], fn m ->
+              m[:position] == dead_monster[:position] and
+                m[:monster_id] == dead_monster[:monster_id]
+            end)
+          
+          GenServer.call(Shard.Combat.Server.via(combat_id), {:update_monsters, updated_monsters})
+      end
+    rescue
+      _ -> :error
     end
   end
 end
