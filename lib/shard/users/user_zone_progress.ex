@@ -31,4 +31,63 @@ defmodule Shard.Users.UserZoneProgress do
   end
 
   def progress_states, do: @progress_states
+
+  @doc """
+  Creates initial zone progress records for a new user.
+  All zones start as "locked" except for any starter zones.
+  """
+  def initialize_for_user(user_id, starter_zone_ids \\ []) do
+    alias Shard.{Repo, Map}
+    
+    zones = Repo.all(Map.Zone)
+    
+    progress_records = 
+      Enum.map(zones, fn zone ->
+        progress = if zone.id in starter_zone_ids, do: "in_progress", else: "locked"
+        
+        %{
+          user_id: user_id,
+          zone_id: zone.id,
+          progress: progress,
+          inserted_at: DateTime.utc_now(),
+          updated_at: DateTime.utc_now()
+        }
+      end)
+    
+    Repo.insert_all(__MODULE__, progress_records, on_conflict: :nothing)
+  end
+
+  @doc """
+  Gets all zone progress for a user, ordered by zone name.
+  """
+  def for_user(user_id) do
+    alias Shard.{Repo, Map}
+    
+    Repo.all(
+      from uzp in __MODULE__,
+      join: z in Map.Zone, on: uzp.zone_id == z.id,
+      where: uzp.user_id == ^user_id,
+      order_by: z.name,
+      preload: [:zone]
+    )
+  end
+
+  @doc """
+  Updates progress for a specific user and zone.
+  """
+  def update_progress(user_id, zone_id, new_progress) when new_progress in @progress_states do
+    alias Shard.Repo
+    
+    case Repo.get_by(__MODULE__, user_id: user_id, zone_id: zone_id) do
+      nil ->
+        %__MODULE__{}
+        |> changeset(%{user_id: user_id, zone_id: zone_id, progress: new_progress})
+        |> Repo.insert()
+        
+      existing ->
+        existing
+        |> changeset(%{progress: new_progress})
+        |> Repo.update()
+    end
+  end
 end
