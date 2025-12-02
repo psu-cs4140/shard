@@ -43,8 +43,12 @@ defmodule Shard.CombatTest do
     end
 
     test "handles attack action with no monsters", %{game_state: game_state} do
-      # Use integer ID instead of string
-      game_state = put_in(game_state.character.id, 1)
+      # Use integer ID instead of string and explicitly ensure no monsters
+      game_state = 
+        game_state
+        |> put_in([:character, :id], 1)
+        |> Map.put(:monsters, [])  # Explicitly set empty monsters list
+      
       {messages, updated_state} = Combat.execute_action(game_state, "attack")
       assert messages == ["There are no monsters here to attack."]
       assert updated_state == game_state
