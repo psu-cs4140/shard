@@ -35,8 +35,19 @@ defmodule ShardWeb.UserLive.Movement do
             # Save position to database
             GameMap.update_player_position(game_state.character.id, zone_id, room)
 
+            # Check if this is an end room and handle zone completion
+            {zone_completion_msgs, updated_game_state} = 
+              if room.room_type == "end_room" do
+                handle_zone_completion(game_state, zone_id)
+              else
+                {[], game_state}
+              end
+
             # Continue with existing movement logic
-            execute_movement_with_room(game_state, direction, current_pos, new_pos, room)
+            {movement_msgs, final_game_state} = execute_movement_with_room(updated_game_state, direction, current_pos, new_pos, room)
+            
+            # Combine messages
+            {zone_completion_msgs ++ movement_msgs, final_game_state}
         end
       end
     rescue
@@ -284,6 +295,42 @@ defmodule ShardWeb.UserLive.Movement do
 
   defp get_npcs_at_location(x, y, zone_id) do
     ShardWeb.UserLive.MapHelpers.get_npcs_at_location(x, y, zone_id)
+  end
+
+  defp handle_zone_completion(game_state, zone_id) do
+    # Get the user for this character
+    case Shard.Users.get_user_by_character_id(game_state.character.id) do
+      nil ->
+        {[], game_state}
+      
+      user ->
+        # Check current zone progress
+        case Shard.Users.get_user_zone_progress(user.id, zone_id) do
+          %{progress: "completed"} ->
+            # Already completed, no need to do anything
+            {[], game_state}
+          
+          progress_record ->
+            # Mark zone as completed
+            case Shard.Users.update_zone_progress(user.id, zone_id, "completed") do
+              {:ok, _} ->
+                # Try to unlock next zone
+                case Shard.Users.unlock_next_zone(user.id, zone_id) do
+                  {:ok, :no_next_zone} ->
+                    {["🎉 Congratulations! You have completed this zone! This was the final zone available."], game_state}
+                  
+                  {:ok, _next_zone_progress} ->
+                    {["🎉 Congratulations! You have completed this zone! The next zone has been unlocked."], game_state}
+                  
+                  {:error, _} ->
+                    {["🎉 Congratulations! You have completed this zone!"], game_state}
+                end
+              
+              {:error, _} ->
+                {["You have reached the end of this zone!"], game_state}
+            end
+        end
+    end
   end
 
   defp get_items_at_location(x, y, _zone_id) do
