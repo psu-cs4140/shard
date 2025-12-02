@@ -29,7 +29,16 @@ defmodule Shard.Combat do
     # Get shared combat state instead of individual monster list
     case get_shared_combat_state(combat_id) do
       nil ->
-        {["There are no monsters here to attack."], game_state}
+        # Fall back to local monster list for testing or when shared combat isn't available
+        monsters_here = find_monsters_at_position(game_state.monsters || [], {x, y})
+        
+        case monsters_here do
+          [] ->
+            {["There are no monsters here to attack."], game_state}
+
+          [monster | _] ->
+            perform_local_attack(game_state, monster, {x, y})
+        end
         
       combat_state ->
         monsters_here = find_monsters_at_position(combat_state.monsters || [], {x, y})
@@ -48,6 +57,52 @@ defmodule Shard.Combat do
     Enum.filter(monsters, fn monster ->
       monster[:position] == position && monster[:is_alive] != false
     end)
+  end
+
+  defp perform_local_attack(game_state, monster, position) do
+    # Check if this is The Count and player has required item
+    case check_count_attack_requirements(game_state, monster) do
+      {:error, message} ->
+        {[message], game_state}
+
+      :ok ->
+        # Add character_id to player_stats for weapon lookup
+        player_stats_with_id =
+          Map.put(game_state.player_stats, :character_id, game_state.character.id)
+
+        damage_result =
+          calculate_attack_damage(player_stats_with_id, monster, game_state.equipped_weapon)
+
+        updated_monster = apply_damage_to_monster(monster, damage_result.final_damage)
+        
+        # Update local monster list for testing
+        updated_monsters = update_monsters_list(game_state.monsters, monster, updated_monster)
+
+        response = create_attack_response(monster, damage_result, updated_monster)
+
+        if updated_monster[:is_alive] do
+          # Monster survived - simple response for local testing
+          updated_game_state = %{game_state | monsters: updated_monsters}
+          {response, updated_game_state}
+        else
+          # Monster died - handle death and rewards
+          {messages, updated_player_stats, updated_character} =
+            handle_monster_death_local(game_state, updated_monster)
+
+          final_response = response ++ messages
+          
+          # Remove dead monster from local list
+          final_monsters = Enum.reject(updated_monsters, fn m -> not m[:is_alive] end)
+
+          updated_game_state =
+            %{game_state | 
+              player_stats: updated_player_stats, 
+              character: updated_character,
+              monsters: final_monsters}
+
+          {final_response, updated_game_state}
+        end
+    end
   end
 
   defp perform_shared_attack(game_state, monster, position, combat_id) do
@@ -298,6 +353,26 @@ defmodule Shard.Combat do
     updated_game_state = %{game_state | player_stats: updated_stats}
 
     {attack_messages, updated_game_state}
+  end
+
+  defp handle_monster_death_local(game_state, dead_monster) do
+    # Award XP and Gold (use defaults if not specified)
+    xp_reward = dead_monster[:xp_reward] || dead_monster[:xp_amount] || 10
+    gold_reward = dead_monster[:gold_reward] || 5
+
+    # Update player stats - add XP
+    updated_stats = Map.update(game_state.player_stats, :experience, 0, &(&1 + xp_reward))
+
+    # Update character - add gold
+    updated_character = Map.update(game_state.character, :gold, 0, &(&1 + gold_reward))
+
+    # Generate reward messages (skip loot processing for local testing)
+    death_messages = [
+      "You gain #{xp_reward} experience.",
+      "You find #{gold_reward} gold on the corpse."
+    ]
+
+    {death_messages, updated_stats, updated_character}
   end
 
   defp handle_monster_death(game_state, dead_monster, combat_id) do
