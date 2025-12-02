@@ -147,8 +147,8 @@ defmodule ShardWeb.UserLive.Components2 do
       disabled={is_nil(@slot_data)}
     >
       <!-- Slot number -->
-      <span class="absolute top-0 left-1 text-xs text-gray-400">{@slot_number}</span>
-      
+      <!-- <span class="absolute top-0 left-1 text-xs text-gray-400">{@slot_number}</span> -->
+
     <!-- Item content -->
       <%= if @slot_data do %>
         <div class="text-center">
