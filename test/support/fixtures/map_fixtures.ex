@@ -27,7 +27,7 @@ defmodule Shard.MapFixtures do
   """
   def room_fixture(attrs \\ %{}) do
     # Create a zone if zone_id is not provided
-    zone = 
+    zone =
       case Map.get(attrs, :zone_id) do
         nil -> zone_fixture()
         zone_id when is_integer(zone_id) -> Shard.Map.get_zone!(zone_id)

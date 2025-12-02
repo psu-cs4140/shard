@@ -1,7 +1,7 @@
 defmodule Shard.Users.PlayerZone do
   @moduledoc """
   Tracks zone instances that belong to specific players.
-  
+
   Each user can have one singleplayer instance and one multiplayer instance
   per zone type (zone name). This allows for personal progression in singleplayer
   while also participating in shared multiplayer instances.

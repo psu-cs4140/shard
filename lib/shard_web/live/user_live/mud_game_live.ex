@@ -22,16 +22,16 @@ defmodule ShardWeb.MudGameLive do
   @impl true
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity, Credo.Check.Refactor.Nesting
   def mount(%{"character_id" => character_id} = params, _session, socket) do
-    IO.inspect(params, label: "MudGameLive mount params")
     with {:ok, character} <- get_character_from_params(params),
          character_name <- get_character_name(params, character),
          {:ok, character} <- load_character_with_associations(character),
          {:ok, socket} <- initialize_game_state(socket, character, character_id, character_name) do
       # Use zone_id from URL params if provided, otherwise fall back to character's current_zone_id
-      zone_id = case params["zone_id"] do
-        nil -> character.current_zone_id || 1
-        zone_id_str -> String.to_integer(zone_id_str)
-      end
+      zone_id =
+        case params["zone_id"] do
+          nil -> character.current_zone_id || 1
+          zone_id_str -> String.to_integer(zone_id_str)
+        end
 
       # Load the zone information to get the zone name
       zone = Shard.Map.get_zone!(zone_id)
@@ -525,7 +525,11 @@ defmodule ShardWeb.MudGameLive do
   end
 
   def handle_info({:poke_notification, poker_name}, socket) do
-    terminal_state = ShardWeb.UserLive.MudGameLive2.handle_poke_notification(socket.assigns.terminal_state, poker_name)
+    terminal_state =
+      ShardWeb.UserLive.MudGameLive2.handle_poke_notification(
+        socket.assigns.terminal_state,
+        poker_name
+      )
 
     # Auto-scroll terminal to bottom
     socket = push_event(socket, "scroll_to_bottom", %{target: "terminal-output"})

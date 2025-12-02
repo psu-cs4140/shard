@@ -13,8 +13,9 @@ defmodule Shard.Repo.Migrations.CreatePlayerZones do
     end
 
     create unique_index(:player_zones, [:user_id, :zone_name, :instance_type],
-      name: :player_zones_user_zone_instance_index
-    )
+             name: :player_zones_user_zone_instance_index
+           )
+
     create index(:player_zones, [:user_id])
     create index(:player_zones, [:zone_name])
     create index(:player_zones, [:instance_type])

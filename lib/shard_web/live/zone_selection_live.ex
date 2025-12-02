@@ -24,7 +24,7 @@ defmodule ShardWeb.ZoneSelectionLive do
       end
 
     # Get template zones (zones ending with "-template")
-    template_zones = 
+    template_zones =
       Map.list_active_zones()
       |> Enum.filter(&String.ends_with?(&1.zone_id, "-template"))
       |> Enum.sort_by(& &1.display_order)
@@ -44,7 +44,9 @@ defmodule ShardWeb.ZoneSelectionLive do
         <span class="text-red-400">Select a Dungeon to Explore</span>
         <:subtitle>
           <%= if @character do %>
-            <span class="text-red-300">Playing as: {@character.name} (Level {@character.level} {@character.class})</span>
+            <span class="text-red-300">
+              Playing as: {@character.name} (Level {@character.level} {@character.class})
+            </span>
           <% else %>
             <span class="text-red-500">Choose a dungeon to begin your dark adventure</span>
           <% end %>
@@ -91,8 +93,19 @@ defmodule ShardWeb.ZoneSelectionLive do
                       phx-value-instance_type="singleplayer"
                       class="bg-red-700 hover:bg-red-600 text-red-100 border-red-600 hover:border-red-500 flex-1 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-red-500/25 hover:brightness-110 active:scale-95 rounded-xl px-4 py-3"
                     >
-                      <svg class="w-4 h-4 mr-1 transition-transform duration-300 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                      <svg
+                        class="w-4 h-4 mr-1 transition-transform duration-300 group-hover:rotate-12"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        >
+                        </path>
                       </svg>
                       <span class="transition-all duration-300">Singleplayer</span>
                     </.button>
@@ -102,18 +115,35 @@ defmodule ShardWeb.ZoneSelectionLive do
                       phx-value-instance_type="multiplayer"
                       class="bg-red-800 hover:bg-red-700 text-red-100 border-red-700 hover:border-red-600 flex-1 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-red-500/25 hover:brightness-110 active:scale-95 rounded-xl px-4 py-3"
                     >
-                      <svg class="w-4 h-4 mr-1 transition-transform duration-300 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                      <svg
+                        class="w-4 h-4 mr-1 transition-transform duration-300 group-hover:rotate-12"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                        >
+                        </path>
                       </svg>
                       <span class="transition-all duration-300">Multiplayer</span>
                     </.button>
                   </div>
                 <% else %>
                   <div class="flex flex-col gap-3">
-                    <.link navigate={~p"/characters"} class="btn bg-red-700 hover:bg-red-600 text-red-100 border-red-600 rounded-xl px-4 py-3">
+                    <.link
+                      navigate={~p"/characters"}
+                      class="btn bg-red-700 hover:bg-red-600 text-red-100 border-red-600 rounded-xl px-4 py-3"
+                    >
                       Select Existing Character
                     </.link>
-                    <.link navigate={~p"/characters/new"} class="btn bg-red-900 hover:bg-red-800 text-red-200 border-red-700 rounded-xl px-4 py-3">
+                    <.link
+                      navigate={~p"/characters/new"}
+                      class="btn bg-red-900 hover:bg-red-800 text-red-200 border-red-700 rounded-xl px-4 py-3"
+                    >
                       Create New Character
                     </.link>
                   </div>
@@ -147,9 +177,13 @@ defmodule ShardWeb.ZoneSelectionLive do
   end
 
   @impl true
-  def handle_event("enter_zone", %{"zone_name" => zone_name, "instance_type" => instance_type}, socket) do
+  def handle_event(
+        "enter_zone",
+        %{"zone_name" => zone_name, "instance_type" => instance_type},
+        socket
+      ) do
     character = socket.assigns.character
-    user = Users.get_user_by_character_id(character.id)
+    _user = Users.get_user_by_character_id(character.id)
 
     # Find the template zone by name
     template_zone = Enum.find(socket.assigns.template_zones, &(&1.name == zone_name))

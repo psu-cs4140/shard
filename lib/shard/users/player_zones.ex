@@ -7,11 +7,11 @@ defmodule Shard.Users.PlayerZones do
   alias Shard.Repo
   alias Shard.Users.PlayerZone
   alias Shard.Map.Zone
-  alias Shard.{Monsters, Items}
+  # alias Shard.{Monsters, Items}
 
   @doc """
   Gets or creates a zone instance for a user.
-  
+
   If the user doesn't have an instance of the specified type for this zone,
   creates a new zone instance and associates it with the user.
   """
@@ -19,7 +19,7 @@ defmodule Shard.Users.PlayerZones do
     case get_player_zone(user_id, zone_name, instance_type) do
       nil ->
         create_player_zone_instance(user_id, zone_name, instance_type)
-      
+
       player_zone ->
         {:ok, player_zone}
     end
@@ -31,9 +31,10 @@ defmodule Shard.Users.PlayerZones do
   def get_player_zone(user_id, zone_name, instance_type) do
     Repo.one(
       from pz in PlayerZone,
-        where: pz.user_id == ^user_id and 
-               pz.zone_name == ^zone_name and 
-               pz.instance_type == ^instance_type,
+        where:
+          pz.user_id == ^user_id and
+            pz.zone_name == ^zone_name and
+            pz.instance_type == ^instance_type,
         preload: [:zone]
     )
   end
@@ -53,14 +54,15 @@ defmodule Shard.Users.PlayerZones do
   defp create_player_zone_instance(user_id, zone_name, instance_type) do
     # Generate a unique zone_id for this instance
     zone_instance_id = generate_zone_instance_id(zone_name, instance_type, user_id)
-    
+
     # Get the zone template (zone with matching name ending in "-template")
-    zone_template = Repo.one(
-      from z in Zone,
-        where: z.name == ^zone_name and like(z.zone_id, "%-template"),
-        limit: 1
-    )
-    
+    zone_template =
+      Repo.one(
+        from z in Zone,
+          where: z.name == ^zone_name and like(z.zone_id, "%-template"),
+          limit: 1
+      )
+
     if zone_template do
       # Create the zone instance using the template
       case create_zone_from_template(zone_template, zone_instance_id, instance_type) do
@@ -73,17 +75,17 @@ defmodule Shard.Users.PlayerZones do
             user_id: user_id,
             zone_id: zone.id
           }
-          
+
           case create_player_zone(player_zone_attrs) do
             {:ok, player_zone} ->
               {:ok, Repo.preload(player_zone, :zone)}
-            
+
             {:error, changeset} ->
               # Clean up the zone if player_zone creation failed
               Shard.Map.delete_zone(zone)
               {:error, changeset}
           end
-        
+
         {:error, changeset} ->
           {:error, changeset}
       end
@@ -113,7 +115,7 @@ defmodule Shard.Users.PlayerZones do
       rescue
         Ecto.NoResultsError -> :ok
       end
-      
+
       # Delete the player zone association
       Repo.delete(player_zone)
     end)
@@ -131,16 +133,17 @@ defmodule Shard.Users.PlayerZones do
       max_level: template_zone.max_level,
       is_public: instance_type == "multiplayer",
       is_active: true,
-      properties: Kernel.put_in(template_zone.properties || %{}, ["instance_type"], instance_type),
+      properties:
+        Kernel.put_in(template_zone.properties || %{}, ["instance_type"], instance_type),
       display_order: template_zone.display_order
     }
-    
+
     case Shard.Map.create_zone(zone_attrs) do
       {:ok, new_zone} ->
         # Copy all rooms from the template zone
         template_rooms = Shard.Map.list_rooms_by_zone(template_zone.id)
-        
-        room_mapping = 
+
+        room_mapping =
           Enum.reduce(template_rooms, %{}, fn template_room, acc ->
             room_attrs = %{
               name: template_room.name,
@@ -153,28 +156,29 @@ defmodule Shard.Users.PlayerZones do
               room_type: template_room.room_type,
               properties: template_room.properties
             }
-            
+
             case Shard.Map.create_room(room_attrs) do
               {:ok, new_room} ->
                 Map.put(acc, template_room.id, new_room)
+
               {:error, _} ->
                 acc
             end
           end)
-        
+
         # Copy all doors from the template zone
         # Get doors by querying from the template rooms
-        template_doors = 
+        template_doors =
           template_rooms
           |> Enum.flat_map(fn room ->
             Shard.Map.get_doors_from_room(room.id)
           end)
           |> Enum.uniq_by(& &1.id)
-        
+
         Enum.each(template_doors, fn template_door ->
           from_room = Map.get(room_mapping, template_door.from_room_id)
           to_room = Map.get(room_mapping, template_door.to_room_id)
-          
+
           if from_room && to_room do
             door_attrs = %{
               from_room_id: from_room.id,
@@ -185,23 +189,23 @@ defmodule Shard.Users.PlayerZones do
               key_required: template_door.key_required,
               properties: template_door.properties
             }
-            
+
             Shard.Map.create_door(door_attrs)
           end
         end)
-        
+
         # Copy monsters from the template zone (if the function exists)
         try do
           # Get monsters from all rooms in the template zone
-          template_monsters = 
+          template_monsters =
             template_rooms
-            |> Enum.flat_map(fn room -> 
+            |> Enum.flat_map(fn room ->
               Shard.Monsters.list_monsters_by_location(room.id)
             end)
-          
+
           Enum.each(template_monsters, fn template_monster ->
             new_room = Map.get(room_mapping, template_monster.location_id)
-            
+
             if new_room do
               monster_attrs = %{
                 name: template_monster.name,
@@ -215,31 +219,32 @@ defmodule Shard.Users.PlayerZones do
                 location_id: new_room.id,
                 potential_loot_drops: template_monster.potential_loot_drops
               }
-              
+
               Shard.Monsters.create_monster(monster_attrs)
             end
           end)
         rescue
           UndefinedFunctionError -> :ok
         end
-        
+
         # Copy room items from the template zone (if the function exists)
         try do
           template_room_items = Shard.Items.list_room_items_by_zone(template_zone.id)
-          
+
           Enum.each(template_room_items, fn template_room_item ->
             # RoomItem uses location field (string) instead of room_id
             # We need to find the corresponding new room by matching the template location
             template_location = template_room_item.location
-            
+
             # Find the template room that matches this location
-            template_room = Enum.find(template_rooms, fn room -> 
-              to_string(room.id) == template_location 
-            end)
-            
+            template_room =
+              Enum.find(template_rooms, fn room ->
+                to_string(room.id) == template_location
+              end)
+
             if template_room do
               new_room = Map.get(room_mapping, template_room.id)
-              
+
               if new_room do
                 room_item_attrs = %{
                   item_id: template_room_item.item_id,
@@ -249,7 +254,7 @@ defmodule Shard.Users.PlayerZones do
                   y_position: template_room_item.y_position || Decimal.new("0.0"),
                   is_permanent: template_room_item.is_permanent || false
                 }
-                
+
                 Shard.Items.create_room_item(room_item_attrs)
               end
             end
@@ -258,9 +263,9 @@ defmodule Shard.Users.PlayerZones do
           UndefinedFunctionError -> :ok
           KeyError -> :ok
         end
-        
+
         {:ok, new_zone}
-      
+
       {:error, changeset} ->
         {:error, changeset}
     end
@@ -269,7 +274,7 @@ defmodule Shard.Users.PlayerZones do
   defp generate_zone_instance_id(zone_name, instance_type, user_id) do
     base = zone_name |> String.downcase() |> String.replace(" ", "-")
     timestamp = System.system_time(:second)
-    
+
     case instance_type do
       "singleplayer" -> "#{base}-sp-#{user_id}-#{timestamp}"
       "multiplayer" -> "#{base}-mp-#{timestamp}"
