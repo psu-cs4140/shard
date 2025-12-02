@@ -6,6 +6,9 @@ defmodule ShardWeb.InventoryLive.IndexTest do
 
   describe "Index" do
     setup do
+      # Ensure database is migrated for tests
+      Ecto.Adapters.SQL.Sandbox.checkout(Shard.Repo)
+      
       user = user_fixture()
 
       %{user: user}
