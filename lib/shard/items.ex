@@ -448,4 +448,18 @@ defmodule Shard.Items do
   def character_has_quest_items?(character_id, objectives) do
     Shard.Items.GameFeatures.character_has_quest_items?(character_id, objectives)
   end
+
+  @doc """
+  Delegates to Shard.Items.GameFeatures.create_room_item/1
+  """
+  def create_room_item(attrs) do
+    Shard.Items.GameFeatures.create_room_item(attrs)
+  end
+
+  @doc """
+  Delegates to Shard.Items.GameFeatures.list_room_items_by_zone/1
+  """
+  def list_room_items_by_zone(zone_id) do
+    Shard.Items.GameFeatures.list_room_items_by_zone(zone_id)
+  end
 end
