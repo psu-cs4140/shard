@@ -57,14 +57,14 @@ defmodule ShardWeb.ZoneSelectionLive do
     <div class="min-h-screen bg-black">
       <div class="container mx-auto px-6 py-12 max-w-7xl">
         <.header>
-          <span class="text-gray-900">Select a Dungeon to Explore</span>
+          <span class="text-white">Select a Dungeon to Explore</span>
           <:subtitle>
             <%= if @character do %>
-              <span class="text-gray-700">
+              <span class="text-gray-300">
                 Playing as: {@character.name} (Level {@character.level} {@character.class})
               </span>
             <% else %>
-              <span class="text-gray-800">Choose a dungeon to begin your dark adventure</span>
+              <span class="text-gray-400">Choose a dungeon to begin your dark adventure</span>
             <% end %>
           </:subtitle>
         </.header>

@@ -97,18 +97,18 @@ defmodule ShardWeb.MudGameLive do
   def render(assigns) do
     ~H"""
     <div
-      class="flex flex-col h-screen bg-black text-red-100 overflow-hidden"
+      class="flex flex-col h-screen bg-black text-white overflow-hidden"
       phx-window-keydown="keypress"
     >
       <!-- "phx-window-keydown="keypress" -->
       <!-- Header -->
-      <header class="bg-red-950 border-b-2 border-red-800 p-4 shadow-lg flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-red-400">{@zone_name}</h1>
+      <header class="bg-gray-900 border-b-2 border-gray-700 p-4 shadow-lg flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-white">{@zone_name}</h1>
         <div class="text-right">
-          <div class="text-lg font-semibold text-red-300">
+          <div class="text-lg font-semibold text-gray-300">
             {@character_name}
           </div>
-          <div class="text-sm text-red-500">
+          <div class="text-sm text-gray-400">
             Level {@game_state.player_stats.level}
           </div>
         </div>
@@ -117,15 +117,15 @@ defmodule ShardWeb.MudGameLive do
     <!-- Main Content -->
       <div class="flex flex-1 overflow-hidden">
         <!-- Left Panel - Terminal/Chat -->
-        <div class="flex-1 p-4 flex flex-col min-h-0 bg-gray-950">
+        <div class="flex-1 p-4 flex flex-col min-h-0 bg-black">
           <!-- Tab Navigation -->
-          <div class="flex mb-4 border-b border-red-800 flex-shrink-0">
+          <div class="flex mb-4 border-b border-gray-700 flex-shrink-0">
             <button
               class={[
                 "px-4 py-2 font-medium transition-colors",
                 if(@active_tab == "terminal",
-                  do: "text-red-400 border-b-2 border-red-400",
-                  else: "text-red-600 hover:text-red-300"
+                  do: "text-white border-b-2 border-white",
+                  else: "text-gray-400 hover:text-gray-200"
                 )
               ]}
               phx-click="switch_tab"
@@ -137,8 +137,8 @@ defmodule ShardWeb.MudGameLive do
               class={[
                 "px-4 py-2 font-medium transition-colors",
                 if(@active_tab == "chat",
-                  do: "text-red-400 border-b-2 border-red-400",
-                  else: "text-red-600 hover:text-red-300"
+                  do: "text-white border-b-2 border-white",
+                  else: "text-gray-400 hover:text-gray-200"
                 )
               ]}
               phx-click="switch_tab"
@@ -173,7 +173,7 @@ defmodule ShardWeb.MudGameLive do
             current_player_level={@game_state.player_stats.level}
           />
 
-          <h2 class="text-xl font-semibold mb-4 text-red-400">Game Controls</h2>
+          <h2 class="text-xl font-semibold mb-4 text-white">Game Controls</h2>
 
           <.control_button
             text="Character Sheet"
