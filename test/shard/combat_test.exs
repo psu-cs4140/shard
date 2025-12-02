@@ -71,7 +71,7 @@ defmodule Shard.CombatTest do
     test "does nothing when no monsters at position" do
       game_state = %{
         player_position: {0, 0},
-        monsters: [%{position: {1, 1}, is_alive: true}],
+        monsters: [%{position: {1, 1}, is_alive: true, name: "Goblin", hp: 10}],
         character: %{id: 1, name: "TestPlayer"},
         player_stats: %{health: 100, max_health: 100},
         combat: false
