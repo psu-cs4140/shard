@@ -117,6 +117,7 @@ defmodule ShardWeb.UserLive.MapComponents.RoomComponents do
       "dungeon" -> {"#7c2d12", "#dc2626"}
       "treasure_room" -> {"#eab308", "#facc15"}
       "trap_room" -> {"#991b1b", "#ef4444"}
+      "end_room" -> {"#8b5cf6", "#a78bfa"}
       _ -> {"#3b82f6", "#60a5fa"}
     end
   end
