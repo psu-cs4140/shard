@@ -565,9 +565,19 @@ defmodule Shard.Combat do
   # Helper functions for shared combat state management
   defp get_shared_combat_state(combat_id) do
     try do
-      Shard.Combat.Server.get_combat_state(combat_id)
+      # Check if the process exists first
+      case Registry.lookup(Shard.Registry, {:combat, combat_id}) do
+        [] -> 
+          # Process doesn't exist
+          nil
+        [{_pid, _}] ->
+          # Process exists, try to get state
+          Shard.Combat.Server.get_combat_state(combat_id)
+      end
     rescue
       _ -> nil
+    catch
+      :exit, _ -> nil
     end
   end
 
@@ -584,17 +594,31 @@ defmodule Shard.Combat do
           combat: true
         }
         
-        # Use the correct child spec format for DynamicSupervisor
-        child_spec = %{
-          id: Shard.Combat.Server,
-          start: {Shard.Combat.Server, :start_link, [initial_state]},
-          restart: :temporary
-        }
-        
-        case DynamicSupervisor.start_child(Shard.Combat.Supervisor, child_spec) do
-          {:ok, _pid} -> {:ok, initial_state}
-          {:error, {:already_started, _pid}} -> {:ok, get_shared_combat_state(combat_id)}
-          error -> error
+        # Check if supervisor is available before trying to start child
+        case Process.whereis(Shard.Combat.Supervisor) do
+          nil ->
+            # Supervisor not available, fall back to local state
+            {:ok, initial_state}
+          
+          _pid ->
+            # Use the correct child spec format for DynamicSupervisor
+            child_spec = %{
+              id: {Shard.Combat.Server, combat_id},  # Make ID unique per combat
+              start: {Shard.Combat.Server, :start_link, [initial_state]},
+              restart: :temporary
+            }
+            
+            case DynamicSupervisor.start_child(Shard.Combat.Supervisor, child_spec) do
+              {:ok, _pid} -> 
+                # Wait a moment for the process to initialize
+                :timer.sleep(10)
+                {:ok, initial_state}
+              {:error, {:already_started, _pid}} -> 
+                {:ok, get_shared_combat_state(combat_id) || initial_state}
+              _error -> 
+                # Fall back to local state if server start fails
+                {:ok, initial_state}
+            end
         end
 
       state ->
@@ -604,52 +628,84 @@ defmodule Shard.Combat do
 
   defp add_player_to_shared_combat(combat_id, player_data) do
     try do
-      Shard.Combat.Server.add_player(combat_id, player_data)
+      # Check if the process exists first
+      case Registry.lookup(Shard.Registry, {:combat, combat_id}) do
+        [] -> 
+          :error
+        [{_pid, _}] ->
+          Shard.Combat.Server.add_player(combat_id, player_data)
+      end
     rescue
       _ -> :error
+    catch
+      :exit, _ -> :error
     end
   end
 
   defp update_shared_monster_state(combat_id, original_monster, updated_monster) do
     try do
-      # Get current combat state
-      case get_shared_combat_state(combat_id) do
-        nil -> :error
-        combat_state ->
-          # Update the monster in the monsters list
-          updated_monsters = update_monsters_list(combat_state.monsters || [], original_monster, updated_monster)
-          
-          # Update the combat state (this would need a new API method in Combat.Server)
-          GenServer.call(Shard.Combat.Server.via(combat_id), {:update_monsters, updated_monsters})
+      # Check if the process exists first
+      case Registry.lookup(Shard.Registry, {:combat, combat_id}) do
+        [] -> 
+          :error
+        [{_pid, _}] ->
+          # Get current combat state
+          case get_shared_combat_state(combat_id) do
+            nil -> :error
+            combat_state ->
+              # Update the monster in the monsters list
+              updated_monsters = update_monsters_list(combat_state.monsters || [], original_monster, updated_monster)
+              
+              # Update the combat state
+              GenServer.call(Shard.Combat.Server.via(combat_id), {:update_monsters, updated_monsters})
+          end
       end
     rescue
       _ -> :error
+    catch
+      :exit, _ -> :error
     end
   end
 
   defp update_shared_player_state(combat_id, player_id, updates) do
     try do
-      Shard.Combat.Server.update_player(combat_id, player_id, updates)
+      # Check if the process exists first
+      case Registry.lookup(Shard.Registry, {:combat, combat_id}) do
+        [] -> 
+          :error
+        [{_pid, _}] ->
+          Shard.Combat.Server.update_player(combat_id, player_id, updates)
+      end
     rescue
       _ -> :error
+    catch
+      :exit, _ -> :error
     end
   end
 
   defp remove_shared_monster(combat_id, dead_monster) do
     try do
-      case get_shared_combat_state(combat_id) do
-        nil -> :error
-        combat_state ->
-          updated_monsters = 
-            Enum.reject(combat_state.monsters || [], fn m ->
-              m[:position] == dead_monster[:position] and
-                m[:monster_id] == dead_monster[:monster_id]
-            end)
-          
-          GenServer.call(Shard.Combat.Server.via(combat_id), {:update_monsters, updated_monsters})
+      # Check if the process exists first
+      case Registry.lookup(Shard.Registry, {:combat, combat_id}) do
+        [] -> 
+          :error
+        [{_pid, _}] ->
+          case get_shared_combat_state(combat_id) do
+            nil -> :error
+            combat_state ->
+              updated_monsters = 
+                Enum.reject(combat_state.monsters || [], fn m ->
+                  m[:position] == dead_monster[:position] and
+                    m[:monster_id] == dead_monster[:monster_id]
+                end)
+              
+              GenServer.call(Shard.Combat.Server.via(combat_id), {:update_monsters, updated_monsters})
+          end
       end
     rescue
       _ -> :error
+    catch
+      :exit, _ -> :error
     end
   end
 end
