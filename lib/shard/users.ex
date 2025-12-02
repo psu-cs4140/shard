@@ -412,7 +412,8 @@ defmodule Shard.Users do
   @doc """
   Updates a user's progress in a zone.
   """
-  def update_zone_progress(user_id, zone_id, progress) when progress in ["locked", "in_progress", "completed"] do
+  def update_zone_progress(user_id, zone_id, progress)
+      when progress in ["locked", "in_progress", "completed"] do
     case get_user_zone_progress(user_id, zone_id) do
       nil ->
         %UserZoneProgress{}
@@ -436,20 +437,20 @@ defmodule Shard.Users do
   def unlock_next_zone(user_id, completed_zone_id) do
     # Get the completed zone to find the next one
     completed_zone = Repo.get!(Zone, completed_zone_id)
-    
+
     # Find the next zone by display_order
-    next_zone = 
+    next_zone =
       Repo.one(
         from z in Zone,
-        where: z.display_order > ^completed_zone.display_order,
-        order_by: [asc: z.display_order],
-        limit: 1
+          where: z.display_order > ^completed_zone.display_order,
+          order_by: [asc: z.display_order],
+          limit: 1
       )
-    
+
     case next_zone do
-      nil -> 
+      nil ->
         {:ok, :no_next_zone}
-      
+
       zone ->
         update_zone_progress(user_id, zone.id, "in_progress")
     end
@@ -460,7 +461,7 @@ defmodule Shard.Users do
   """
   def create_zone_progress_for_existing_users(zone_id) do
     users = list_users()
-    
+
     Enum.each(users, fn user ->
       case get_user_zone_progress(user.id, zone_id) do
         nil ->
@@ -472,8 +473,9 @@ defmodule Shard.Users do
             progress: "locked"
           })
           |> Repo.insert()
-        
-        _existing -> :ok
+
+        _existing ->
+          :ok
       end
     end)
   end
@@ -482,14 +484,14 @@ defmodule Shard.Users do
 
   defp create_initial_zone_progress(user) do
     zones = Repo.all(from z in Zone, order_by: [asc: z.display_order])
-    
-    progress_records = 
+
+    progress_records =
       zones
       |> Enum.with_index()
       |> Enum.map(fn {zone, index} ->
         # First zone (index 0) should be unlocked, others locked
         progress = if index == 0, do: "in_progress", else: "locked"
-        
+
         %UserZoneProgress{}
         |> UserZoneProgress.changeset(%{
           user_id: user.id,

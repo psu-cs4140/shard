@@ -1,7 +1,7 @@
 defmodule Mix.Tasks.PopulateZoneProgress do
   @moduledoc """
   Populates zone progress for existing users.
-  
+
   Run with: mix populate_zone_progress
   """
   use Mix.Task
@@ -25,7 +25,7 @@ defmodule Mix.Tasks.PopulateZoneProgress do
         case Users.get_user_zone_progress(user.id, zone.id) do
           nil ->
             progress = if zone.display_order == 0, do: "in_progress", else: "locked"
-            
+
             %UserZoneProgress{}
             |> UserZoneProgress.changeset(%{
               user_id: user.id,
@@ -33,7 +33,7 @@ defmodule Mix.Tasks.PopulateZoneProgress do
               progress: progress
             })
             |> Repo.insert()
-            
+
             IO.puts("Created progress record for user #{user.id}, zone #{zone.name}")
 
           _existing ->

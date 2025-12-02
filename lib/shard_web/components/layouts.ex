@@ -50,7 +50,10 @@ defmodule ShardWeb.Layouts do
           <li>
             <a href="https://github.com/phoenixframework/phoenix" class="btn btn-ghost">GitHub</a>
           </li>
-          <li :if={assigns[:current_scope] && assigns[:current_scope].user && assigns[:current_scope].user.admin}>
+          <li :if={
+            assigns[:current_scope] && assigns[:current_scope].user &&
+              assigns[:current_scope].user.admin
+          }>
             <.link href={~p"/admin"} class="btn btn-ghost">Admin</.link>
           </li>
           <li>

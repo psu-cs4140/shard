@@ -8,13 +8,13 @@ defmodule Shard.Users.UserZoneProgressTest do
     test "valid changeset with all required fields" do
       user = insert(:user)
       zone = insert(:zone)
-      
+
       attrs = %{
         user_id: user.id,
         zone_id: zone.id,
         progress: "in_progress"
       }
-      
+
       changeset = UserZoneProgress.changeset(%UserZoneProgress{}, attrs)
       assert changeset.valid?
     end
@@ -22,13 +22,13 @@ defmodule Shard.Users.UserZoneProgressTest do
     test "invalid changeset with invalid progress state" do
       user = insert(:user)
       zone = insert(:zone)
-      
+
       attrs = %{
         user_id: user.id,
         zone_id: zone.id,
         progress: "invalid_state"
       }
-      
+
       changeset = UserZoneProgress.changeset(%UserZoneProgress{}, attrs)
       refute changeset.valid?
       assert "is invalid" in errors_on(changeset).progress
@@ -48,12 +48,12 @@ defmodule Shard.Users.UserZoneProgressTest do
       user = insert(:user)
       zone1 = insert(:zone, name: "Zone 1")
       zone2 = insert(:zone, name: "Zone 2")
-      
+
       UserZoneProgress.initialize_for_user(user.id)
-      
+
       progress_records = UserZoneProgress.for_user(user.id)
       assert length(progress_records) == 2
-      
+
       # All should be locked by default
       assert Enum.all?(progress_records, &(&1.progress == "locked"))
     end
@@ -62,13 +62,13 @@ defmodule Shard.Users.UserZoneProgressTest do
       user = insert(:user)
       starter_zone = insert(:zone, name: "Starter Zone")
       other_zone = insert(:zone, name: "Other Zone")
-      
+
       UserZoneProgress.initialize_for_user(user.id, [starter_zone.id])
-      
+
       progress_records = UserZoneProgress.for_user(user.id)
       starter_progress = Enum.find(progress_records, &(&1.zone_id == starter_zone.id))
       other_progress = Enum.find(progress_records, &(&1.zone_id == other_zone.id))
-      
+
       assert starter_progress.progress == "in_progress"
       assert other_progress.progress == "locked"
     end
@@ -78,10 +78,10 @@ defmodule Shard.Users.UserZoneProgressTest do
     test "updates existing progress record" do
       user = insert(:user)
       zone = insert(:zone)
-      
+
       # Create initial progress
       UserZoneProgress.initialize_for_user(user.id)
-      
+
       # Update progress
       {:ok, updated} = UserZoneProgress.update_progress(user.id, zone.id, "completed")
       assert updated.progress == "completed"
@@ -90,7 +90,7 @@ defmodule Shard.Users.UserZoneProgressTest do
     test "creates new progress record if none exists" do
       user = insert(:user)
       zone = insert(:zone)
-      
+
       {:ok, created} = UserZoneProgress.update_progress(user.id, zone.id, "in_progress")
       assert created.progress == "in_progress"
       assert created.user_id == user.id
@@ -108,13 +108,13 @@ defmodule Shard.Users.UserZoneProgressTest do
         }
         |> Users.User.changeset(attrs)
         |> Repo.insert!()
-        
+
       :zone ->
         default_attrs = %{
           name: "Test Zone #{System.unique_integer()}",
           description: "A test zone"
         }
-        
+
         %Map.Zone{}
         |> Map.Zone.changeset(Map.merge(default_attrs, attrs))
         |> Repo.insert!()

@@ -253,7 +253,7 @@ defmodule ShardWeb.ZoneSelectionLive do
         socket
       ) do
     character = socket.assigns.character
-    user = Users.get_user_by_character_id(character.id)
+    _user = Users.get_user_by_character_id(character.id)
 
     # Find the template zone by name
     template_zone = Enum.find(socket.assigns.template_zones, &(&1.name == zone_name))

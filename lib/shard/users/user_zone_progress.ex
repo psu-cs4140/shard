@@ -1,7 +1,7 @@
 defmodule Shard.Users.UserZoneProgress do
   @moduledoc """
   Tracks a user's progress through different zones in the game.
-  
+
   Progress states:
   - "locked" - Zone is not yet accessible to the user
   - "in_progress" - Zone is accessible and user has started exploring
@@ -13,7 +13,7 @@ defmodule Shard.Users.UserZoneProgress do
 
   schema "user_zone_progress" do
     field :progress, :string, default: "locked"
-    
+
     belongs_to :user, Shard.Users.User
     belongs_to :zone, Shard.Map.Zone
 
@@ -39,13 +39,13 @@ defmodule Shard.Users.UserZoneProgress do
   """
   def initialize_for_user(user_id, starter_zone_ids \\ []) do
     alias Shard.{Repo, Map}
-    
+
     zones = Repo.all(Map.Zone)
-    
-    progress_records = 
+
+    progress_records =
       Enum.map(zones, fn zone ->
         progress = if zone.id in starter_zone_ids, do: "in_progress", else: "locked"
-        
+
         %{
           user_id: user_id,
           zone_id: zone.id,
@@ -54,7 +54,7 @@ defmodule Shard.Users.UserZoneProgress do
           updated_at: DateTime.utc_now()
         }
       end)
-    
+
     Repo.insert_all(__MODULE__, progress_records, on_conflict: :nothing)
   end
 
@@ -63,13 +63,14 @@ defmodule Shard.Users.UserZoneProgress do
   """
   def for_user(user_id) do
     alias Shard.{Repo, Map}
-    
+
     Repo.all(
       from uzp in __MODULE__,
-      join: z in Map.Zone, on: uzp.zone_id == z.id,
-      where: uzp.user_id == ^user_id,
-      order_by: z.name,
-      preload: [:zone]
+        join: z in Map.Zone,
+        on: uzp.zone_id == z.id,
+        where: uzp.user_id == ^user_id,
+        order_by: z.name,
+        preload: [:zone]
     )
   end
 
@@ -78,13 +79,13 @@ defmodule Shard.Users.UserZoneProgress do
   """
   def update_progress(user_id, zone_id, new_progress) when new_progress in @progress_states do
     alias Shard.Repo
-    
+
     case Repo.get_by(__MODULE__, user_id: user_id, zone_id: zone_id) do
       nil ->
         %__MODULE__{}
         |> changeset(%{user_id: user_id, zone_id: zone_id, progress: new_progress})
         |> Repo.insert()
-        
+
       existing ->
         existing
         |> changeset(%{progress: new_progress})
