@@ -33,11 +33,18 @@ defmodule ShardWeb.UserLive.MudGameEventHandlers do
            socket.assigns.game_state.player_stats
          ) do
       {:ok, _character} ->
-        terminal_state = add_terminal_message(socket.assigns.terminal_state, "Character stats saved successfully.")
+        terminal_state =
+          add_terminal_message(
+            socket.assigns.terminal_state,
+            "Character stats saved successfully."
+          )
+
         {:noreply, Component.assign(socket, :terminal_state, terminal_state)}
 
       {:error, _error} ->
-        terminal_state = add_terminal_message(socket.assigns.terminal_state, "Failed to save character stats.")
+        terminal_state =
+          add_terminal_message(socket.assigns.terminal_state, "Failed to save character stats.")
+
         {:noreply, Component.assign(socket, :terminal_state, terminal_state)}
     end
   end
@@ -79,7 +86,9 @@ defmodule ShardWeb.UserLive.MudGameEventHandlers do
   end
 
   defp handle_item_not_found(socket) do
-    terminal_state = add_terminal_message(socket.assigns.terminal_state, "Item not found in inventory.")
+    terminal_state =
+      add_terminal_message(socket.assigns.terminal_state, "Item not found in inventory.")
+
     {:noreply, Component.assign(socket, terminal_state: terminal_state)}
   end
 
@@ -98,11 +107,13 @@ defmodule ShardWeb.UserLive.MudGameEventHandlers do
   defp handle_successful_drop(socket, item, character) do
     updated_inventory = CharacterHelpers.load_character_inventory(character)
     updated_game_state = %{socket.assigns.game_state | inventory_items: updated_inventory}
-    
+
     message = "You drop #{get_item_name(item)}."
     terminal_state = add_terminal_message(socket.assigns.terminal_state, message)
 
-    socket = Component.assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
+    socket =
+      Component.assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
+
     {:noreply, socket}
   end
 
@@ -130,7 +141,9 @@ defmodule ShardWeb.UserLive.MudGameEventHandlers do
   end
 
   defp handle_invalid_item_id(socket) do
-    terminal_state = add_terminal_message(socket.assigns.terminal_state, "Invalid item ID provided")
+    terminal_state =
+      add_terminal_message(socket.assigns.terminal_state, "Invalid item ID provided")
+
     modal_state = %{show: false, type: "", item_id: nil}
     {:noreply, Component.assign(socket, terminal_state: terminal_state, modal_state: modal_state)}
   end
@@ -166,11 +179,12 @@ defmodule ShardWeb.UserLive.MudGameEventHandlers do
     terminal_state = add_terminal_message(socket.assigns.terminal_state, message)
     modal_state = %{show: false, type: "", item_id: nil}
 
-    socket = Component.assign(socket,
-      game_state: updated_game_state,
-      terminal_state: terminal_state,
-      modal_state: modal_state
-    )
+    socket =
+      Component.assign(socket,
+        game_state: updated_game_state,
+        terminal_state: terminal_state,
+        modal_state: modal_state
+      )
 
     {:noreply, socket}
   end
