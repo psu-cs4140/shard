@@ -278,21 +278,25 @@ defmodule Shard.Combat do
 
         # Check if there are monsters at current location
         # In test environment, combat_state.monsters might be empty even when game_state has monsters
-        # So we need to check both sources
+        # So we need to check both sources, but always filter by position first
         combat_monsters = combat_state.monsters || []
         game_monsters = game_state.monsters || []
         
-        monsters_to_check = 
-          if length(combat_monsters) > 0 do
-            combat_monsters
-          else
-            game_monsters
-          end
-        
-        monsters_here =
-          Enum.filter(monsters_to_check, fn monster ->
+        # Filter combat monsters by position first
+        combat_monsters_here = 
+          Enum.filter(combat_monsters, fn monster ->
             monster[:position] == {x, y} && monster[:is_alive] != false
           end)
+        
+        # If no combat monsters at position, check game monsters at position
+        monsters_here = 
+          if length(combat_monsters_here) > 0 do
+            combat_monsters_here
+          else
+            Enum.filter(game_monsters, fn monster ->
+              monster[:position] == {x, y} && monster[:is_alive] != false
+            end)
+          end
 
         case monsters_here do
           [] ->
