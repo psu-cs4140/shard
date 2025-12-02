@@ -163,7 +163,13 @@ defmodule Shard.Users.PlayerZones do
           end)
         
         # Copy all doors from the template zone
-        template_doors = Shard.Map.list_doors_by_zone(template_zone.id)
+        # Get doors by querying from the template rooms
+        template_doors = 
+          template_rooms
+          |> Enum.flat_map(fn room ->
+            Shard.Map.list_doors_from_room(room.id)
+          end)
+          |> Enum.uniq_by(& &1.id)
         
         Enum.each(template_doors, fn template_door ->
           from_room = Map.get(room_mapping, template_door.from_room_id)
@@ -177,8 +183,7 @@ defmodule Shard.Users.PlayerZones do
               door_type: template_door.door_type,
               is_locked: template_door.is_locked,
               key_required: template_door.key_required,
-              properties: template_door.properties,
-              zone_id: new_zone.id
+              properties: template_door.properties
             }
             
             Shard.Map.create_door(door_attrs)
