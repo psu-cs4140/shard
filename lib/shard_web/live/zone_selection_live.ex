@@ -92,13 +92,10 @@ defmodule ShardWeb.ZoneSelectionLive do
                     else: "border-gray-600 bg-gray-800 text-gray-400"
                   )
                 ]}>
+                  <%= if !is_accessible do %>
+                    🔒 
+                  <% end %>
                   {String.capitalize(zone.zone_type)}
-                </div>
-                <div class={[
-                  "badge ml-2",
-                  get_progress_badge_color(zone_progress)
-                ]}>
-                  {get_progress_label(zone_progress)}
                 </div>
               </h2>
 
