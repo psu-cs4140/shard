@@ -16,7 +16,7 @@ defmodule Shard.Characters.Character do
     field :class, :string
     field :race, :string
     field :health, :integer, default: 100
-    field :mana, :integer, default: 50
+    field :mana, :integer, default: 80
     field :strength, :integer, default: 10
     field :dexterity, :integer, default: 10
     field :intelligence, :integer, default: 10

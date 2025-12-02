@@ -16,7 +16,6 @@ defmodule ShardWeb.MudGameLive do
   #  import ShardWeb.UserLive.ItemHelpers
   import ShardWeb.UserLive.MudGameHandlers
   import ShardWeb.UserLive.MudGameLive2
-  import ShardWeb.UserLive.Commands3
   # import ShardWeb.UserLive.MudGameHelpers
   import ShardWeb.UserLive.MudGameLiveMultiplayerComponents
 
@@ -27,8 +26,15 @@ defmodule ShardWeb.MudGameLive do
          character_name <- get_character_name(params, character),
          {:ok, character} <- load_character_with_associations(character),
          {:ok, socket} <- initialize_game_state(socket, character, character_id, character_name) do
-      # Ensure player position is saved for first-time zone entry
-      zone_id = character.current_zone_id || 1
+      # Use zone_id from URL params if provided, otherwise fall back to character's current_zone_id
+      zone_id =
+        case params["zone_id"] do
+          nil -> character.current_zone_id || 1
+          zone_id_str -> String.to_integer(zone_id_str)
+        end
+
+      # Load the zone information to get the zone name
+      zone = Shard.Map.get_zone!(zone_id)
       {x, y} = socket.assigns.game_state.player_position
 
       case Shard.Map.get_room_by_coordinates(zone_id, x, y, 0) do
@@ -58,7 +64,7 @@ defmodule ShardWeb.MudGameLive do
       Phoenix.PubSub.subscribe(Shard.PubSub, "player_presence")
 
       # Initialize online players list
-      socket = assign(socket, online_players: [])
+      socket = assign(socket, online_players: [], zone_name: zone.name)
 
       # Request current online players from existing players
       Phoenix.PubSub.broadcast(
@@ -91,18 +97,18 @@ defmodule ShardWeb.MudGameLive do
   def render(assigns) do
     ~H"""
     <div
-      class="flex flex-col h-screen bg-gray-900 text-white overflow-hidden"
+      class="flex flex-col h-screen bg-black text-red-100 overflow-hidden"
       phx-window-keydown="keypress"
     >
       <!-- "phx-window-keydown="keypress" -->
       <!-- Header -->
-      <header class="bg-gray-800 p-4 shadow-lg flex justify-between items-center">
-        <h1 class="text-2xl font-bold">MUD Game</h1>
+      <header class="bg-red-950 border-b-2 border-red-800 p-4 shadow-lg flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-red-400">{@zone_name}</h1>
         <div class="text-right">
-          <div class="text-lg font-semibold text-green-400">
+          <div class="text-lg font-semibold text-red-300">
             {@character_name}
           </div>
-          <div class="text-sm text-gray-400">
+          <div class="text-sm text-red-500">
             Level {@game_state.player_stats.level}
           </div>
         </div>
@@ -111,15 +117,15 @@ defmodule ShardWeb.MudGameLive do
     <!-- Main Content -->
       <div class="flex flex-1 overflow-hidden">
         <!-- Left Panel - Terminal/Chat -->
-        <div class="flex-1 p-4 flex flex-col min-h-0">
+        <div class="flex-1 p-4 flex flex-col min-h-0 bg-gray-950">
           <!-- Tab Navigation -->
-          <div class="flex mb-4 border-b border-gray-600 flex-shrink-0">
+          <div class="flex mb-4 border-b border-red-800 flex-shrink-0">
             <button
               class={[
                 "px-4 py-2 font-medium transition-colors",
                 if(@active_tab == "terminal",
-                  do: "text-blue-400 border-b-2 border-blue-400",
-                  else: "text-gray-400 hover:text-white"
+                  do: "text-red-400 border-b-2 border-red-400",
+                  else: "text-red-600 hover:text-red-300"
                 )
               ]}
               phx-click="switch_tab"
@@ -131,8 +137,8 @@ defmodule ShardWeb.MudGameLive do
               class={[
                 "px-4 py-2 font-medium transition-colors",
                 if(@active_tab == "chat",
-                  do: "text-blue-400 border-b-2 border-blue-400",
-                  else: "text-gray-400 hover:text-white"
+                  do: "text-red-400 border-b-2 border-red-400",
+                  else: "text-red-600 hover:text-red-300"
                 )
               ]}
               phx-click="switch_tab"
@@ -150,7 +156,7 @@ defmodule ShardWeb.MudGameLive do
         </div>
         
     <!-- Right Panel - Controls -->
-        <div class="w-100 bg-gray-800 px-4 py-4 flex flex-col space-y-4 overflow-y-auto">
+        <div class="w-100 bg-red-950 border-l-2 border-red-800 px-4 py-4 flex flex-col space-y-4 overflow-y-auto">
           <.minimap
             game_state={@game_state}
             player_position={@game_state.player_position}
@@ -167,7 +173,7 @@ defmodule ShardWeb.MudGameLive do
             current_player_level={@game_state.player_stats.level}
           />
 
-          <h2 class="text-xl font-semibold mb-4">Game Controls</h2>
+          <h2 class="text-xl font-semibold mb-4 text-red-400">Game Controls</h2>
 
           <.control_button
             text="Character Sheet"
@@ -231,8 +237,8 @@ defmodule ShardWeb.MudGameLive do
       </div>
       
     <!-- Footer -->
-      <footer class="bg-gray-800 p-2 text-center text-sm">
-        <p>MUD Game v1.0</p>
+      <footer class="bg-red-950 border-t-2 border-red-800 p-2 text-center text-sm">
+        <p class="text-red-500">Dungeon Crawler v1.0</p>
       </footer>
     </div>
 
@@ -519,7 +525,11 @@ defmodule ShardWeb.MudGameLive do
   end
 
   def handle_info({:poke_notification, poker_name}, socket) do
-    terminal_state = handle_poke_notification(socket.assigns.terminal_state, poker_name)
+    terminal_state =
+      ShardWeb.UserLive.MudGameLive2.handle_poke_notification(
+        socket.assigns.terminal_state,
+        poker_name
+      )
 
     # Auto-scroll terminal to bottom
     socket = push_event(socket, "scroll_to_bottom", %{target: "terminal-output"})

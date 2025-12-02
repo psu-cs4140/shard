@@ -4,6 +4,7 @@ defmodule Shard.Repo.Migrations.CreateZones do
   def change do
     create table(:zones) do
       add :name, :string, null: false
+      add :zone_id, :string, null: false
       add :slug, :string, null: false
       add :description, :text
       add :zone_type, :string, default: "standard", null: false
@@ -17,8 +18,9 @@ defmodule Shard.Repo.Migrations.CreateZones do
       timestamps(type: :utc_datetime)
     end
 
-    create unique_index(:zones, [:name])
+    create unique_index(:zones, [:zone_id])
     create unique_index(:zones, [:slug])
+    create index(:zones, [:name])
     create index(:zones, [:zone_type])
     create index(:zones, [:is_active])
     create index(:zones, [:display_order])

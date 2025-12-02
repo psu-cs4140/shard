@@ -55,7 +55,7 @@ defmodule Shard.CharactersTest do
       # Verify initial stats
       assert character.level == 1
       assert character.health == 100
-      assert character.mana == 50
+      assert character.mana == 80
       assert character.strength == 10
       assert character.dexterity == 10
       assert character.intelligence == 10
