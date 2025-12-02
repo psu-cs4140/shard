@@ -238,14 +238,6 @@ defmodule Shard.Combat do
     })
   end
 
-  defp update_combat_state(game_state, updated_monsters, position) do
-    combat_active =
-      Enum.any?(updated_monsters, fn m ->
-        m[:position] == position && m[:is_alive] != false
-      end)
-
-    %{game_state | monsters: updated_monsters, combat: combat_active}
-  end
 
   defp execute_flee(game_state) do
     # Simple flee mechanic - always succeeds for now
