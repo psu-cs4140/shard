@@ -584,10 +584,14 @@ defmodule Shard.Combat do
           combat: true
         }
         
-        case DynamicSupervisor.start_child(
-               Shard.Combat.Supervisor,
-               {Shard.Combat.Server, initial_state}
-             ) do
+        # Use the correct child spec format for DynamicSupervisor
+        child_spec = %{
+          id: Shard.Combat.Server,
+          start: {Shard.Combat.Server, :start_link, [initial_state]},
+          restart: :temporary
+        }
+        
+        case DynamicSupervisor.start_child(Shard.Combat.Supervisor, child_spec) do
           {:ok, _pid} -> {:ok, initial_state}
           {:error, {:already_started, _pid}} -> {:ok, get_shared_combat_state(combat_id)}
           error -> error
