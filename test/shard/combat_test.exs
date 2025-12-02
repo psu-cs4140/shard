@@ -66,8 +66,8 @@ defmodule Shard.CombatTest do
   describe "start_combat/1" do
     test "does nothing when no monsters at position" do
       game_state = %{
-        player_position: {1, 1},
-        monsters: [%{position: {1, 1}, is_alive: true}]
+        player_position: {0, 0},
+        monsters: [%{position: {2, 2}, is_alive: true}]
       }
 
       {messages, updated_state} = Combat.start_combat(game_state)
