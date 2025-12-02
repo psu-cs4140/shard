@@ -19,6 +19,7 @@ defmodule Shard.Repo.Migrations.CreateZones do
     end
 
     create unique_index(:zones, [:zone_id])
+    create unique_index(:zones, [:zone_id])
     create unique_index(:zones, [:slug])
     create index(:zones, [:name])
     create index(:zones, [:zone_type])
