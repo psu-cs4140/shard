@@ -100,7 +100,7 @@ defmodule ShardWeb.MudGameLive do
       <!-- "phx-window-keydown="keypress" -->
       <!-- Header -->
       <header class="bg-red-950 border-b-2 border-red-800 p-4 shadow-lg flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-red-400">⚔️ Dungeon Crawler</h1>
+        <h1 class="text-2xl font-bold text-red-400">Dungeon Crawler</h1>
         <div class="text-right">
           <div class="text-lg font-semibold text-red-300">
             {@character_name}
@@ -128,7 +128,7 @@ defmodule ShardWeb.MudGameLive do
               phx-click="switch_tab"
               phx-value-tab="terminal"
             >
-              🗡️ Terminal
+              Terminal
             </button>
             <button
               class={[
@@ -141,7 +141,7 @@ defmodule ShardWeb.MudGameLive do
               phx-click="switch_tab"
               phx-value-tab="chat"
             >
-              💬 Chat
+              Chat
             </button>
           </div>
           
@@ -170,7 +170,7 @@ defmodule ShardWeb.MudGameLive do
             current_player_level={@game_state.player_stats.level}
           />
 
-          <h2 class="text-xl font-semibold mb-4 text-red-400">⚔️ Game Controls</h2>
+          <h2 class="text-xl font-semibold mb-4 text-red-400">Game Controls</h2>
 
           <.control_button
             text="Character Sheet"
@@ -235,7 +235,7 @@ defmodule ShardWeb.MudGameLive do
       
     <!-- Footer -->
       <footer class="bg-red-950 border-t-2 border-red-800 p-2 text-center text-sm">
-        <p class="text-red-500">🏰 Dungeon Crawler v1.0 🏰</p>
+        <p class="text-red-500">Dungeon Crawler v1.0</p>
       </footer>
     </div>
 
