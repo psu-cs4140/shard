@@ -2,7 +2,7 @@ defmodule Shard.Repo.Migrations.AddIronSwordToBarracks do
   use Ecto.Migration
 
   def up do
-    # First, create the Iron Sword item if it doesn't exist
+    # First, create the Scythe of Severing item if it doesn't exist
     execute """
     INSERT INTO items (
       name,
@@ -18,7 +18,7 @@ defmodule Shard.Repo.Migrations.AddIronSwordToBarracks do
       inserted_at,
       updated_at
     ) VALUES (
-      'Iron Sword',
+      'Scythe of Severing',
       'A well-crafted iron sword with a sharp blade and sturdy hilt. This ancient weapon has seen many battles but remains reliable.',
       'weapon',
       'common',
@@ -34,7 +34,7 @@ defmodule Shard.Repo.Migrations.AddIronSwordToBarracks do
     ON CONFLICT (name) DO NOTHING;
     """
 
-    # Then, place the Iron Sword in the barracks room at (7,3)
+    # Then, place the Scythe of Severing in the barracks room at (7,3)
     execute """
     INSERT INTO room_items (
       item_id,
@@ -43,7 +43,7 @@ defmodule Shard.Repo.Migrations.AddIronSwordToBarracks do
       inserted_at,
       updated_at
     ) VALUES (
-      (SELECT id FROM items WHERE name = 'Iron Sword' LIMIT 1),
+      (SELECT id FROM items WHERE name = 'Scythe of Severing' LIMIT 1),
       '7,3,0',
       1,
       NOW(),
@@ -53,14 +53,14 @@ defmodule Shard.Repo.Migrations.AddIronSwordToBarracks do
   end
 
   def down do
-    # Remove the Iron Sword from the barracks room
+    # Remove the Scythe of Severing from the barracks room
     execute """
     DELETE FROM room_items 
-    WHERE item_id = (SELECT id FROM items WHERE name = 'Iron Sword' LIMIT 1)
+    WHERE item_id = (SELECT id FROM items WHERE name = 'Sycthe of Severing' LIMIT 1)
     AND location = '7,3,0';
     """
 
-    # Optionally remove the Iron Sword item entirely (uncomment if desired)
-    # execute "DELETE FROM items WHERE name = 'Iron Sword';"
+    # Optionally remove the Scythe of Severing item entirely (uncomment if desired)
+    # execute "DELETE FROM items WHERE name = 'Scythe of Severing';"
   end
 end

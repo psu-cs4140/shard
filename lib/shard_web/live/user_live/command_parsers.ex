@@ -363,7 +363,7 @@ defmodule ShardWeb.UserLive.CommandParsers do
   # Check if player has the specified item in inventory
   defp player_has_item?(game_state, item_name) do
     Enum.any?(game_state.inventory_items, fn inventory_item ->
-      String.downcase(inventory_item.item.name || "") == String.downcase(item_name)
+      String.downcase(inventory_item.name || "") == String.downcase(item_name)
     end)
   end
 
@@ -436,44 +436,57 @@ defmodule ShardWeb.UserLive.CommandParsers do
 
   # Execute equip command with a specific item name
   def execute_equip_command(game_state, item_name) do
-    # Get character's inventory
     inventory_items = Shard.Items.get_character_inventory(game_state.character.id)
-
-    # Find the item by name (case-insensitive)
-    target_item =
-      Enum.find(inventory_items, fn inv_item ->
-        String.downcase(inv_item.item.name || "") == String.downcase(item_name)
-      end)
+    target_item = find_item_by_name(inventory_items, item_name)
 
     case target_item do
-      nil ->
-        {["You don't have an item named '#{item_name}' in your inventory."], game_state}
-
-      inv_item ->
-        if inv_item.equipped do
-          {["#{inv_item.item.name} is already equipped."], game_state}
-        else
-          case Shard.Items.equip_item(inv_item.id) do
-            {:ok, _} ->
-              # Reload inventory to sync with game state
-              updated_inventory =
-                ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
-
-              updated_game_state = %{game_state | inventory_items: updated_inventory}
-
-              {["You equip #{inv_item.item.name}."], updated_game_state}
-
-            {:error, :not_equippable} ->
-              {["#{inv_item.item.name} cannot be equipped."], game_state}
-
-            {:error, :already_equipped} ->
-              {["#{inv_item.item.name} is already equipped."], game_state}
-
-            {:error, reason} ->
-              {["Failed to equip #{inv_item.item.name}: #{reason}"], game_state}
-          end
-        end
+      nil -> handle_item_not_found(item_name, game_state)
+      inv_item -> handle_item_equip_attempt(game_state, inv_item)
     end
+  end
+
+  defp find_item_by_name(inventory_items, item_name) do
+    Enum.find(inventory_items, fn inv_item ->
+      String.downcase(inv_item.name || "") == String.downcase(item_name)
+    end)
+  end
+
+  defp handle_item_not_found(item_name, game_state) do
+    {["You don't have an item named '#{item_name}' in your inventory."], game_state}
+  end
+
+  defp handle_item_equip_attempt(game_state, inv_item) do
+    if inv_item.equipped do
+      {["#{inv_item.item.name} is already equipped."], game_state}
+    else
+      attempt_equip_item(game_state, inv_item)
+    end
+  end
+
+  defp attempt_equip_item(game_state, inv_item) do
+    case Shard.Items.equip_item(inv_item.id) do
+      {:ok, _} -> handle_successful_equip_command(game_state, inv_item)
+      {:error, reason} -> handle_equip_command_error(inv_item, reason, game_state)
+    end
+  end
+
+  defp handle_successful_equip_command(game_state, inv_item) do
+    updated_inventory =
+      ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+
+    updated_game_state = %{game_state | inventory_items: updated_inventory}
+    {["You equip #{inv_item.name}."], updated_game_state}
+  end
+
+  defp handle_equip_command_error(inv_item, reason, game_state) do
+    message =
+      case reason do
+        :not_equippable -> "#{inv_item.name} cannot be equipped."
+        :already_equipped -> "#{inv_item.name} is already equipped."
+        _ -> "Failed to equip #{inv_item.name}: #{reason}"
+      end
+
+    {[message], game_state}
   end
 
   # Execute unequip command with a specific item name
@@ -485,7 +498,7 @@ defmodule ShardWeb.UserLive.CommandParsers do
     target_item =
       Enum.find(inventory_items, fn inv_item ->
         inv_item.equipped &&
-          String.downcase(inv_item.item.name || "") == String.downcase(item_name)
+          String.downcase(inv_item.name || "") == String.downcase(item_name)
       end)
 
     case target_item do
@@ -501,20 +514,20 @@ defmodule ShardWeb.UserLive.CommandParsers do
 
             updated_game_state = %{game_state | inventory_items: updated_inventory}
 
-            {["You unequip #{inv_item.item.name}."], updated_game_state}
+            {["You unequip #{inv_item.name}."], updated_game_state}
 
           {:error, reason} ->
-            {["Failed to unequip #{inv_item.item.name}: #{reason}"], game_state}
+            {["Failed to unequip #{inv_item.name}: #{reason}"], game_state}
         end
     end
   end
 
   # Remove item from player's inventory
   defp remove_item_from_inventory(game_state, item_name) do
-    # Find the inventory item to remove
+    # Find the inventory item to remove from the flattened inventory data
     inventory_item =
       Enum.find(game_state.inventory_items, fn inv_item ->
-        String.downcase(inv_item.item.name || "") == String.downcase(item_name)
+        String.downcase(inv_item.name || "") == String.downcase(item_name)
       end)
 
     case inventory_item do
@@ -523,8 +536,8 @@ defmodule ShardWeb.UserLive.CommandParsers do
         game_state
 
       inv_item ->
-        # Remove one quantity of the item
-        case Shard.Items.remove_item_from_inventory(inv_item.id, 1) do
+        # Use the inventory_id from the flattened data to remove the item
+        case Shard.Items.remove_item_from_inventory(inv_item.inventory_id, 1) do
           {:ok, _} ->
             # Reload inventory from database to sync with game state
             updated_inventory =

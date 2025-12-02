@@ -45,7 +45,7 @@ defmodule ShardWeb.UserLive.Movement do
     end
   end
 
-  defp execute_movement_with_room(game_state, direction, current_pos, new_pos, room) do
+  defp execute_movement_with_room(game_state, direction, current_pos, new_pos, _room) do
     try do
       direction_name =
         case direction do
@@ -60,28 +60,22 @@ defmodule ShardWeb.UserLive.Movement do
           _ -> "unknown"
         end
 
-      {curr_x, curr_y} = current_pos
+      {_curr_x, _curr_y} = current_pos
       {new_x, new_y} = new_pos
 
       zone_id = game_state.character.current_zone_id || 1
-
-      current_room =
-        GameMap.get_room_by_coordinates(zone_id, curr_x, curr_y, 0)
-
-      completion_result = GameMap.check_dungeon_completion(current_room, room)
 
       npcs_here = get_npcs_at_location(new_x, new_y, zone_id)
       items_here = get_items_at_location(new_x, new_y, zone_id)
       monsters = Enum.filter(game_state.monsters, fn m -> m[:position] == new_pos end)
       monster_count = Enum.count(monsters)
 
+      # Get NPC descriptions using the same logic as the look command
+      npc_descriptions = ShardWeb.UserLive.Commands1.get_npc_descriptions(npcs_here)
+
       response =
         ["You traversed #{direction_name}."] ++
-          if length(npcs_here) > 0 do
-            ["You see #{Enum.map_join(npcs_here, ", ", & &1.name)} here."]
-          else
-            []
-          end ++
+          npc_descriptions ++
           if length(items_here) > 0 do
             Enum.map(items_here, fn item ->
               "You see a #{item.name || "unknown item"} on the ground."
@@ -109,13 +103,7 @@ defmodule ShardWeb.UserLive.Movement do
       {combat_msgs, updated_game_state} = Shard.Combat.start_combat(updated_game_state)
       final_response = response ++ combat_msgs
 
-      case completion_result do
-        {:completed, msg} ->
-          {final_response, updated_game_state, {:show_completion_popup, msg}}
-
-        :no_completion ->
-          {final_response, updated_game_state, :no_popup}
-      end
+      {final_response, updated_game_state}
     rescue
       _ ->
         {["You can't move that way."], game_state}
@@ -294,8 +282,8 @@ defmodule ShardWeb.UserLive.Movement do
     "room:#{xx},#{yy}"
   end
 
-  defp get_npcs_at_location(_x, _y, _zone_id) do
-    []
+  defp get_npcs_at_location(x, y, zone_id) do
+    ShardWeb.UserLive.MapHelpers.get_npcs_at_location(x, y, zone_id)
   end
 
   defp get_items_at_location(x, y, _zone_id) do
