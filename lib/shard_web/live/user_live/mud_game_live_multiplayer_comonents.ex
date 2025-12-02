@@ -17,7 +17,7 @@ defmodule ShardWeb.UserLive.MudGameLiveMultiplayerComponents do
             Lvl {@current_player_level}
           </div>
         </div>
-
+        
     <!-- Show other players -->
         <%= for player <- @online_players do %>
           <div class="flex items-center justify-between bg-gray-600 rounded px-3 py-2">
@@ -57,7 +57,7 @@ defmodule ShardWeb.UserLive.MudGameLiveMultiplayerComponents do
           <% end %>
         </div>
       </div>
-
+      
     <!-- Chat Input -->
       <form phx-submit="submit_chat" class="mt-4 flex-shrink-0">
         <div class="flex">
