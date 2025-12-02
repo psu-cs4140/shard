@@ -498,8 +498,8 @@ defmodule Shard.Social.PartyTest do
       leader2 = UsersFixtures.user_fixture()
       invitee = UsersFixtures.user_fixture()
       
-      {:ok, _party1} = Social.create_party(leader1.id)
-      {:ok, _party2} = Social.create_party(leader2.id)
+      {:ok, party1} = Social.create_party(leader1.id)
+      {:ok, party2} = Social.create_party(leader2.id)
       
       # Add invitee to party2
       %PartyMember{}
@@ -528,8 +528,8 @@ defmodule Shard.Social.PartyTest do
       leader2 = UsersFixtures.user_fixture()
       invitee = UsersFixtures.user_fixture()
       
-      {:ok, party1} = Social.create_party(leader1.id)
-      {:ok, party2} = Social.create_party(leader2.id)
+      {:ok, _party1} = Social.create_party(leader1.id)
+      {:ok, _party2} = Social.create_party(leader2.id)
       
       {:ok, invitation1} = Social.invite_to_party(leader1.id, invitee.id)
       {:ok, invitation2} = Social.invite_to_party(leader2.id, invitee.id)
