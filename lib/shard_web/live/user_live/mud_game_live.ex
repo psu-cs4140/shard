@@ -94,18 +94,18 @@ defmodule ShardWeb.MudGameLive do
   def render(assigns) do
     ~H"""
     <div
-      class="flex flex-col h-screen bg-gray-900 text-white overflow-hidden"
+      class="flex flex-col h-screen bg-black text-red-100 overflow-hidden"
       phx-window-keydown="keypress"
     >
       <!-- "phx-window-keydown="keypress" -->
       <!-- Header -->
-      <header class="bg-gray-800 p-4 shadow-lg flex justify-between items-center">
-        <h1 class="text-2xl font-bold">MUD Game</h1>
+      <header class="bg-red-950 border-b-2 border-red-800 p-4 shadow-lg flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-red-400">⚔️ Dungeon Crawler</h1>
         <div class="text-right">
-          <div class="text-lg font-semibold text-green-400">
+          <div class="text-lg font-semibold text-red-300">
             {@character_name}
           </div>
-          <div class="text-sm text-gray-400">
+          <div class="text-sm text-red-500">
             Level {@game_state.player_stats.level}
           </div>
         </div>
@@ -170,7 +170,7 @@ defmodule ShardWeb.MudGameLive do
             current_player_level={@game_state.player_stats.level}
           />
 
-          <h2 class="text-xl font-semibold mb-4">Game Controls</h2>
+          <h2 class="text-xl font-semibold mb-4 text-red-400">⚔️ Game Controls</h2>
 
           <.control_button
             text="Character Sheet"
