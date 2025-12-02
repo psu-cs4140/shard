@@ -167,7 +167,7 @@ defmodule Shard.Users.PlayerZones do
         template_doors = 
           template_rooms
           |> Enum.flat_map(fn room ->
-            Shard.Map.list_doors_from_room(room.id)
+            Shard.Map.get_doors_from_room(room.id)
           end)
           |> Enum.uniq_by(& &1.id)
         
