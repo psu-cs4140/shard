@@ -87,8 +87,8 @@ defmodule ShardWeb.ZoneSelectionLive do
                   <div class="flex gap-2">
                     <.button
                       phx-click="enter_zone"
-                      phx-value-zone-name={zone.name}
-                      phx-value-instance-type="singleplayer"
+                      phx-value-zone_name={zone.name}
+                      phx-value-instance_type="singleplayer"
                       class="btn-primary flex-1"
                     >
                       <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,8 +98,8 @@ defmodule ShardWeb.ZoneSelectionLive do
                     </.button>
                     <.button
                       phx-click="enter_zone"
-                      phx-value-zone-name={zone.name}
-                      phx-value-instance-type="multiplayer"
+                      phx-value-zone_name={zone.name}
+                      phx-value-instance_type="multiplayer"
                       class="btn-secondary flex-1"
                     >
                       <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,7 +147,7 @@ defmodule ShardWeb.ZoneSelectionLive do
   end
 
   @impl true
-  def handle_event("enter_zone", %{"zone-name" => zone_name, "instance-type" => instance_type}, socket) do
+  def handle_event("enter_zone", %{"zone_name" => zone_name, "instance_type" => instance_type}, socket) do
     character = socket.assigns.character
     user = Users.get_user_by_character_id(character.id)
 
