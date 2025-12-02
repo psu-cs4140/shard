@@ -14,7 +14,6 @@ defmodule Shard.MapFixtures do
       attrs
       |> Enum.into(%{
         name: "Test Zone #{unique_id}",
-        zone_id: "test_zone_#{unique_id}",
         slug: "test-zone-#{unique_id}",
         description: "A test zone for the MUD game"
       })
