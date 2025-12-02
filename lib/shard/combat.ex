@@ -282,6 +282,7 @@ defmodule Shard.Combat do
           case combat_state.monsters do
             nil -> game_state.monsters || []
             [] -> game_state.monsters || []
+            monsters when length(monsters) == 0 -> game_state.monsters || []
             monsters -> monsters
           end
         
