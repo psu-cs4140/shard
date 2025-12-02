@@ -24,11 +24,13 @@ defmodule Shard.MapTest do
     end
 
     test "create_room/1 with valid data creates a room" do
-      valid_attrs = %{name: "Test Room", description: "A test room"}
+      zone = zone_fixture()
+      valid_attrs = %{name: "Test Room", description: "A test room", zone_id: zone.id}
 
       assert {:ok, %Room{} = room} = Map.create_room(valid_attrs)
       assert room.name == "Test Room"
       assert room.description == "A test room"
+      assert room.zone_id == zone.id
     end
 
     test "create_room/1 with invalid data returns error changeset" do
@@ -69,10 +71,11 @@ defmodule Shard.MapTest do
     @invalid_attrs %{from_room_id: nil, to_room_id: nil, direction: nil}
 
     setup do
-      # Create two rooms for door testing
-      room1 = room_fixture(%{name: "Room 1", x_coordinate: 0, y_coordinate: 0})
-      room2 = room_fixture(%{name: "Room 2", x_coordinate: 1, y_coordinate: 0})
-      %{room1: room1, room2: room2}
+      # Create a zone and two rooms for door testing
+      zone = zone_fixture()
+      room1 = room_fixture(%{name: "Room 1", x_coordinate: 0, y_coordinate: 0, zone_id: zone.id})
+      room2 = room_fixture(%{name: "Room 2", x_coordinate: 1, y_coordinate: 0, zone_id: zone.id})
+      %{zone: zone, room1: room1, room2: room2}
     end
 
     test "list_doors/0 returns all doors" do

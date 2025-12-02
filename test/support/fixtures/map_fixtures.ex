@@ -5,14 +5,42 @@ defmodule Shard.MapFixtures do
   """
 
   @doc """
+  Generate a test zone.
+  """
+  def zone_fixture(attrs \\ %{}) do
+    unique_id = System.unique_integer([:positive])
+
+    {:ok, zone} =
+      attrs
+      |> Enum.into(%{
+        name: "Test Zone #{unique_id}",
+        zone_id: "test_zone_#{unique_id}",
+        slug: "test-zone-#{unique_id}",
+        description: "A test zone for the MUD game"
+      })
+      |> Shard.Map.create_zone()
+
+    zone
+  end
+
+  @doc """
   Generate a room.
   """
   def room_fixture(attrs \\ %{}) do
+    # Create a zone if zone_id is not provided
+    zone = 
+      case Map.get(attrs, :zone_id) do
+        nil -> zone_fixture()
+        zone_id when is_integer(zone_id) -> Shard.Map.get_zone!(zone_id)
+        _ -> zone_fixture()
+      end
+
     {:ok, room} =
       attrs
       |> Enum.into(%{
         name: "Test Room",
-        description: "A test room for the MUD game"
+        description: "A test room for the MUD game",
+        zone_id: zone.id
       })
       |> Shard.Map.create_room()
 
@@ -23,8 +51,10 @@ defmodule Shard.MapFixtures do
   Generate a door.
   """
   def door_fixture(attrs \\ %{}) do
-    room1 = room_fixture(%{name: "Start Room"})
-    room2 = room_fixture(%{name: "End Room"})
+    # Create rooms in the same zone
+    zone = zone_fixture()
+    room1 = room_fixture(%{name: "Start Room", zone_id: zone.id})
+    room2 = room_fixture(%{name: "End Room", zone_id: zone.id})
 
     {:ok, door} =
       attrs
