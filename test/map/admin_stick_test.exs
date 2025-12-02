@@ -7,6 +7,11 @@ defmodule Shard.Map.AdminStickTest do
   alias Shard.UsersFixtures
 
   describe "admin stick item" do
+    setup do
+      # Ensure database is migrated for tests
+      Ecto.Adapters.SQL.Sandbox.checkout(Shard.Repo)
+      :ok
+    end
     test "admin stick item exists in database" do
       # Check that the admin stick item was created by migration
       admin_stick = AdminStick.get_admin_stick_item()
@@ -59,6 +64,9 @@ defmodule Shard.Map.AdminStickTest do
 
   describe "admin stick functions" do
     setup do
+      # Ensure database is migrated for tests
+      Ecto.Adapters.SQL.Sandbox.checkout(Shard.Repo)
+      
       # Create a user and character for testing
       user = UsersFixtures.user_fixture()
       unique_name = "Test Character #{System.system_time(:millisecond)}"
