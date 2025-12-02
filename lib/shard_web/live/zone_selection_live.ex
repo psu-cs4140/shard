@@ -89,7 +89,7 @@ defmodule ShardWeb.ZoneSelectionLive do
                       phx-click="enter_zone"
                       phx-value-zone_name={zone.name}
                       phx-value-instance_type="singleplayer"
-                      class="btn-primary flex-1 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-primary/25 hover:brightness-110 active:scale-95"
+                      class="bg-orange-600 hover:bg-orange-700 text-white border-orange-600 hover:border-orange-700 flex-1 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-orange-500/25 hover:brightness-110 active:scale-95"
                     >
                       <svg class="w-4 h-4 mr-1 transition-transform duration-300 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
