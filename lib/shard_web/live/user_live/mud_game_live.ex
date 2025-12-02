@@ -237,8 +237,8 @@ defmodule ShardWeb.MudGameLive do
       </div>
       
     <!-- Footer -->
-      <footer class="bg-red-950 border-t-2 border-red-800 p-2 text-center text-sm">
-        <p class="text-red-500">Dungeon Crawler v1.0</p>
+      <footer class="bg-gray-900 border-t-2 border-gray-700 p-2 text-center text-sm">
+        <p class="text-gray-400">Dungeon Crawler v1.0</p>
       </footer>
     </div>
 
