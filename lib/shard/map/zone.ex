@@ -22,6 +22,7 @@ defmodule Shard.Map.Zone do
     field :display_order, :integer, default: 0
 
     has_many :rooms, Shard.Map.Room
+    has_many :user_zone_progress, Shard.Users.UserZoneProgress
 
     timestamps(type: :utc_datetime)
   end
