@@ -39,7 +39,7 @@ defmodule ShardWeb.ZoneSelectionLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-6 py-12 max-w-7xl">
       <.header>
         Select a Zone to Explore
         <:subtitle>
@@ -51,10 +51,10 @@ defmodule ShardWeb.ZoneSelectionLive do
         </:subtitle>
       </.header>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
         <%= for zone <- @template_zones do %>
-          <div class="card bg-base-200 shadow-xl hover:shadow-2xl transition-shadow">
-            <div class="card-body">
+          <div class="card bg-base-200 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-2xl border border-base-300/50">
+            <div class="card-body p-8">
               <h2 class="card-title">
                 {zone.name}
                 <div class={[
@@ -67,7 +67,7 @@ defmodule ShardWeb.ZoneSelectionLive do
 
               <p class="text-sm opacity-80 min-h-[4rem]">{zone.description}</p>
 
-              <div class="divider my-2"></div>
+              <div class="divider my-4"></div>
 
               <div class="grid grid-cols-2 gap-2 text-sm">
                 <div>
@@ -84,12 +84,12 @@ defmodule ShardWeb.ZoneSelectionLive do
 
               <div class="card-actions justify-end mt-4">
                 <%= if @character do %>
-                  <div class="flex gap-2">
+                  <div class="flex gap-3">
                     <.button
                       phx-click="enter_zone"
                       phx-value-zone_name={zone.name}
                       phx-value-instance_type="singleplayer"
-                      class="bg-orange-600 hover:bg-orange-700 text-white border-orange-600 hover:border-orange-700 flex-1 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-orange-500/25 hover:brightness-110 active:scale-95"
+                      class="bg-orange-600 hover:bg-orange-700 text-white border-orange-600 hover:border-orange-700 flex-1 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-orange-500/25 hover:brightness-110 active:scale-95 rounded-xl px-4 py-3"
                     >
                       <svg class="w-4 h-4 mr-1 transition-transform duration-300 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
@@ -100,7 +100,7 @@ defmodule ShardWeb.ZoneSelectionLive do
                       phx-click="enter_zone"
                       phx-value-zone_name={zone.name}
                       phx-value-instance_type="multiplayer"
-                      class="btn-secondary flex-1 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-secondary/25 hover:brightness-110 active:scale-95"
+                      class="btn-secondary flex-1 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-secondary/25 hover:brightness-110 active:scale-95 rounded-xl px-4 py-3"
                     >
                       <svg class="w-4 h-4 mr-1 transition-transform duration-300 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
@@ -109,11 +109,11 @@ defmodule ShardWeb.ZoneSelectionLive do
                     </.button>
                   </div>
                 <% else %>
-                  <div class="flex flex-col gap-2">
-                    <.link navigate={~p"/characters"} class="btn btn-primary">
+                  <div class="flex flex-col gap-3">
+                    <.link navigate={~p"/characters"} class="btn btn-primary rounded-xl px-4 py-3">
                       Select Existing Character
                     </.link>
-                    <.link navigate={~p"/characters/new"} class="btn btn-outline">
+                    <.link navigate={~p"/characters/new"} class="btn btn-outline rounded-xl px-4 py-3">
                       Create New Character
                     </.link>
                   </div>
@@ -125,7 +125,7 @@ defmodule ShardWeb.ZoneSelectionLive do
       </div>
 
       <%= if Enum.empty?(@template_zones) do %>
-        <div class="alert alert-warning mt-8">
+        <div class="alert alert-warning mt-12 rounded-2xl border border-warning/20 shadow-lg">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="stroke-current shrink-0 h-6 w-6"
