@@ -23,6 +23,7 @@ defmodule ShardWeb.MudGameLive do
   @impl true
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity, Credo.Check.Refactor.Nesting
   def mount(%{"character_id" => character_id} = params, _session, socket) do
+    IO.inspect(params, label: "MudGameLive mount params")
     with {:ok, character} <- get_character_from_params(params),
          character_name <- get_character_name(params, character),
          {:ok, character} <- load_character_with_associations(character),
