@@ -9,6 +9,7 @@ defmodule Shard.Users.UserZoneProgress do
   """
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
 
   schema "user_zone_progress" do
     field :progress, :string, default: "locked"
