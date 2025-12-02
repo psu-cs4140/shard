@@ -346,65 +346,16 @@ defmodule ShardWeb.MudGameLive do
     end
   end
 
-  def handle_event("submit_chat", %{"chat" => %{"text" => message_text}}, socket) do
-    trimmed_message = String.trim(message_text)
-
-    if trimmed_message != "" do
-      # Create message data
-      timestamp =
-        DateTime.utc_now() |> DateTime.to_time() |> Time.to_string() |> String.slice(0, 8)
-
-      message_data = %{
-        timestamp: timestamp,
-        character_name: socket.assigns.character_name,
-        character_id: socket.assigns.game_state.character.id,
-        text: trimmed_message
-      }
-
-      # Broadcast message to all subscribers
-      Phoenix.PubSub.broadcast(Shard.PubSub, "global_chat", {:chat_message, message_data})
-
-      # Clear the input
-      chat_state = Map.put(socket.assigns.chat_state, :current_message, "")
-      socket = assign(socket, chat_state: chat_state)
-
-      {:noreply, socket}
-    else
-      {:noreply, socket}
-    end
+  def handle_event("submit_chat", params, socket) do
+    handle_submit_chat(params, socket)
   end
 
-  def handle_event("update_chat", %{"chat" => %{"text" => message_text}}, socket) do
-    chat_state = Map.put(socket.assigns.chat_state, :current_message, message_text)
-    {:noreply, assign(socket, chat_state: chat_state)}
+  def handle_event("update_chat", params, socket) do
+    handle_update_chat(params, socket)
   end
 
-  def handle_event("save_character_stats", _params, socket) do
-    # Manually save character stats to database
-    case save_character_stats(
-           socket.assigns.game_state.character,
-           socket.assigns.game_state.player_stats
-         ) do
-      {:ok, _character} ->
-        terminal_state =
-          ShardWeb.UserLive.MudGameHelpers.add_message(
-            socket.assigns.terminal_state,
-            "Character stats saved successfully."
-          )
-
-        socket = assign(socket, :terminal_state, terminal_state)
-        {:noreply, socket}
-
-      {:error, _error} ->
-        terminal_state =
-          ShardWeb.UserLive.MudGameHelpers.add_message(
-            socket.assigns.terminal_state,
-            "Failed to save character stats."
-          )
-
-        socket = assign(socket, :terminal_state, terminal_state)
-        {:noreply, socket}
-    end
+  def handle_event("save_character_stats", params, socket) do
+    handle_save_character_stats(params, socket)
   end
 
   def handle_event("use_hotbar_item", params, socket) do
@@ -419,173 +370,16 @@ defmodule ShardWeb.MudGameLive do
     {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
   end
 
-  def handle_event("drop_item", %{"item_id" => item_id}, socket) do
-    # Find item in inventory
-    item =
-      Enum.find(socket.assigns.game_state.inventory_items, fn inv_item ->
-        to_string(Map.get(inv_item, :id)) == item_id
-      end)
-
-    case item do
-      nil ->
-        # Add error message to terminal
-        new_output =
-          socket.assigns.terminal_state.output ++ ["Item not found in inventory."] ++ [""]
-
-        terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
-        socket = assign(socket, terminal_state: terminal_state)
-
-        {:noreply, socket}
-
-      item ->
-        character = socket.assigns.game_state.character
-        {x, y} = socket.assigns.game_state.player_position
-        location = "#{x},#{y},0"
-
-        case Shard.Items.drop_item_in_room(character.id, item.id, location, 1) do
-          {:ok, _} ->
-            # Reload inventory
-            updated_inventory =
-              ShardWeb.UserLive.CharacterHelpers.load_character_inventory(character)
-
-            updated_game_state = %{socket.assigns.game_state | inventory_items: updated_inventory}
-
-            new_output =
-              socket.assigns.terminal_state.output ++ ["You drop #{get_item_name(item)}."] ++ [""]
-
-            terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
-
-            socket =
-              assign(socket, game_state: updated_game_state, terminal_state: terminal_state)
-
-            {:noreply, socket}
-
-          {:error, reason} ->
-            new_output =
-              socket.assigns.terminal_state.output ++
-                ["Failed to drop item: #{reason}"] ++ [""]
-
-            terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
-            socket = assign(socket, terminal_state: terminal_state)
-
-            {:noreply, socket}
-        end
-    end
+  def handle_event("drop_item", params, socket) do
+    handle_drop_item(params, socket)
   end
 
-  def handle_event("show_hotbar_modal", %{"item_id" => item_id}, socket) do
-    # Find the inventory item to get the correct inventory_id
-    inventory_item =
-      Enum.find(socket.assigns.game_state.inventory_items, fn inv_item ->
-        to_string(Map.get(inv_item, :id)) == item_id
-      end)
-
-    case inventory_item do
-      nil ->
-        new_output =
-          socket.assigns.terminal_state.output ++ ["Item not found in inventory."] ++ [""]
-
-        terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
-        socket = assign(socket, terminal_state: terminal_state)
-
-        {:noreply, socket}
-
-      inventory_item ->
-        # Show hotbar slot selection modal with the inventory ID
-        modal_state = %{
-          show: true,
-          type: "hotbar_selection",
-          item_id: to_string(inventory_item.id)
-        }
-
-        socket = assign(socket, modal_state: modal_state)
-
-        {:noreply, socket}
-    end
+  def handle_event("show_hotbar_modal", params, socket) do
+    handle_show_hotbar_modal(params, socket)
   end
 
-  def handle_event("set_hotbar_from_modal", %{"item_id" => item_id, "slot" => slot}, socket) do
-    character = socket.assigns.game_state.character
-
-    # Parse the inventory_id safely
-    inventory_id =
-      case Integer.parse(item_id) do
-        {id, ""} -> id
-        _ -> nil
-      end
-
-    if inventory_id do
-      # Find the item name for better feedback
-      item_name =
-        case Enum.find(socket.assigns.game_state.inventory_items, fn inv_item ->
-               inv_item.id == inventory_id
-             end) do
-          nil -> "Unknown Item"
-          inv_item -> get_item_name(inv_item)
-        end
-
-      case Shard.Items.set_hotbar_slot(
-             character.id,
-             String.to_integer(slot),
-             inventory_id
-           ) do
-        {:ok, _} ->
-          # Reload hotbar and inventory
-          updated_hotbar = ShardWeb.UserLive.CharacterHelpers.load_character_hotbar(character)
-
-          updated_inventory =
-            ShardWeb.UserLive.CharacterHelpers.load_character_inventory(character)
-
-          updated_game_state = %{
-            socket.assigns.game_state
-            | hotbar: updated_hotbar,
-              inventory_items: updated_inventory
-          }
-
-          new_output =
-            socket.assigns.terminal_state.output ++
-              ["#{item_name} added to hotbar slot #{slot}"] ++ [""]
-
-          terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
-          modal_state = %{show: false, type: "", item_id: nil}
-
-          socket =
-            assign(socket,
-              game_state: updated_game_state,
-              terminal_state: terminal_state,
-              modal_state: modal_state
-            )
-
-          {:noreply, socket}
-
-        {:error, reason} ->
-          error_message =
-            case reason do
-              :inventory_not_found -> "Item not found in inventory"
-              :item_not_found -> "Item data not found"
-              _ -> "Failed to add item to hotbar: #{inspect(reason)}"
-            end
-
-          new_output =
-            socket.assigns.terminal_state.output ++ [error_message] ++ [""]
-
-          terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
-          modal_state = %{show: false, type: "", item_id: nil}
-          socket = assign(socket, terminal_state: terminal_state, modal_state: modal_state)
-
-          {:noreply, socket}
-      end
-    else
-      new_output =
-        socket.assigns.terminal_state.output ++
-          ["Invalid item ID provided"] ++ [""]
-
-      terminal_state = Map.put(socket.assigns.terminal_state, :output, new_output)
-      modal_state = %{show: false, type: "", item_id: nil}
-      socket = assign(socket, terminal_state: terminal_state, modal_state: modal_state)
-
-      {:noreply, socket}
-    end
+  def handle_event("set_hotbar_from_modal", params, socket) do
+    handle_set_hotbar_from_modal(params, socket)
   end
 
   # (C) Handle clicking an exit button to move rooms
@@ -680,81 +474,27 @@ defmodule ShardWeb.MudGameLive do
   end
 
   def handle_info({:chat_message, message_data}, socket) do
-    # Format the message with character_id embedded for color generation
-    formatted_message =
-      "[#{message_data.timestamp}] #{message_data.character_name}:#{message_data.character_id}: #{message_data.text}"
-
-    # Add the message to chat state
-    chat_state = socket.assigns.chat_state
-    updated_messages = chat_state.messages ++ [formatted_message]
-    updated_chat_state = Map.put(chat_state, :messages, updated_messages)
-
-    # Auto-scroll chat to bottom
-    {:noreply, assign(socket, chat_state: updated_chat_state)}
+    handle_chat_message(message_data, socket)
   end
 
   def handle_info({:poke_notification, poker_name}, socket) do
-    terminal_state = handle_poke_notification(socket.assigns.terminal_state, poker_name)
-
-    # Auto-scroll terminal to bottom
-    socket = push_event(socket, "scroll_to_bottom", %{target: "terminal-output"})
-
-    {:noreply, assign(socket, terminal_state: terminal_state)}
+    handle_poke_notification(poker_name, socket)
   end
 
   def handle_info({:player_joined, player_data}, socket) do
-    # Don't add ourselves to the list
-    if player_data.character_id != socket.assigns.game_state.character.id do
-      online_players =
-        [player_data | socket.assigns.online_players]
-        |> Enum.uniq_by(& &1.character_id)
-        |> Enum.sort_by(& &1.name)
-
-      {:noreply, assign(socket, online_players: online_players)}
-    else
-      {:noreply, socket}
-    end
+    handle_player_joined(player_data, socket)
   end
 
   def handle_info({:player_left, character_id}, socket) do
-    online_players =
-      Enum.reject(socket.assigns.online_players, &(&1.character_id == character_id))
-
-    {:noreply, assign(socket, online_players: online_players)}
+    handle_player_left(character_id, socket)
   end
 
   def handle_info({:request_online_players, requesting_character_id}, socket) do
-    # Don't respond to our own request
-    if requesting_character_id != socket.assigns.game_state.character.id do
-      # Send our player data to the requesting player
-      player_data = %{
-        name: socket.assigns.character_name,
-        level: socket.assigns.game_state.player_stats.level,
-        character_id: socket.assigns.game_state.character.id
-      }
-
-      Phoenix.PubSub.broadcast(
-        Shard.PubSub,
-        "player_presence",
-        {:player_response, player_data, requesting_character_id}
-      )
-    end
-
-    {:noreply, socket}
+    handle_request_online_players(requesting_character_id, socket)
   end
 
   def handle_info({:player_response, player_data, requesting_character_id}, socket) do
-    # Only process responses meant for us
-    if requesting_character_id == socket.assigns.game_state.character.id do
-      online_players =
-        [player_data | socket.assigns.online_players]
-        |> Enum.uniq_by(& &1.character_id)
-        |> Enum.sort_by(& &1.name)
-
-      {:noreply, assign(socket, online_players: online_players)}
-    else
-      {:noreply, socket}
-    end
+    handle_player_response(player_data, requesting_character_id, socket)
   end
 
   @impl true
