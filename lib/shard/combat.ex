@@ -277,13 +277,16 @@ defmodule Shard.Combat do
         add_player_to_shared_combat(combat_id, player_data)
 
         # Check if there are monsters at current location
-        # Use the monsters from the combat state first, then fall back to game_state.monsters
+        # In test environment, combat_state.monsters might be empty even when game_state has monsters
+        # So we need to check both sources
+        combat_monsters = combat_state.monsters || []
+        game_monsters = game_state.monsters || []
+        
         monsters_to_check = 
-          case combat_state.monsters do
-            nil -> game_state.monsters || []
-            [] -> game_state.monsters || []
-            monsters when length(monsters) == 0 -> game_state.monsters || []
-            monsters -> monsters
+          if length(combat_monsters) > 0 do
+            combat_monsters
+          else
+            game_monsters
           end
         
         monsters_here =
