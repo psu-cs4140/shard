@@ -22,15 +22,25 @@ defmodule ShardWeb.MarketplaceLive.Index do
     # Get all active marketplace listings
     all_listings = Marketplace.list_active_listings() |> format_listings_for_display()
 
-    # Get user's inventory items for the dropdown
+    # Get user's characters
+    characters = Shard.Characters.get_characters_by_user(current_scope.user.id)
+
+    # Get the first character's inventory items for the dropdown (if any characters exist)
     inventory_items =
-      Items.get_character_inventory(current_scope.user.id)
-      |> Enum.map(&{&1.item.name, &1.id})
+      case characters do
+        [first_character | _] ->
+          Items.get_character_inventory(first_character.id)
+          |> Enum.map(&{&1.item.name, &1.id})
+
+        [] ->
+          []
+      end
 
     {:ok,
      socket
      |> assign(:form, to_form(%{}, as: :listing))
      |> assign(:selected_item, nil)
+     |> assign(:characters, characters)
      |> assign(:inventory_items, inventory_items)
      |> assign(:all_listings, all_listings)
      |> assign(:filtered_listings, all_listings)
