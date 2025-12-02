@@ -32,6 +32,9 @@ defmodule ShardWeb.MudGameLive do
         nil -> character.current_zone_id || 1
         zone_id_str -> String.to_integer(zone_id_str)
       end
+
+      # Load the zone information to get the zone name
+      zone = Shard.Map.get_zone!(zone_id)
       {x, y} = socket.assigns.game_state.player_position
 
       case Shard.Map.get_room_by_coordinates(zone_id, x, y, 0) do
@@ -61,7 +64,7 @@ defmodule ShardWeb.MudGameLive do
       Phoenix.PubSub.subscribe(Shard.PubSub, "player_presence")
 
       # Initialize online players list
-      socket = assign(socket, online_players: [])
+      socket = assign(socket, online_players: [], zone_name: zone.name)
 
       # Request current online players from existing players
       Phoenix.PubSub.broadcast(
@@ -100,7 +103,7 @@ defmodule ShardWeb.MudGameLive do
       <!-- "phx-window-keydown="keypress" -->
       <!-- Header -->
       <header class="bg-red-950 border-b-2 border-red-800 p-4 shadow-lg flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-red-400">Dungeon Crawler</h1>
+        <h1 class="text-2xl font-bold text-red-400">{@zone_name}</h1>
         <div class="text-right">
           <div class="text-lg font-semibold text-red-300">
             {@character_name}
