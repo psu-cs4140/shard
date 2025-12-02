@@ -16,7 +16,8 @@ defmodule ShardWeb.UserLive.MovementTest do
           description: "A test zone",
           slug: "test-zone-calc",
           min_level: 1,
-          max_level: 10
+          max_level: 10,
+          zone_id: nil
         })
 
       # Create rooms
@@ -137,7 +138,8 @@ defmodule ShardWeb.UserLive.MovementTest do
           description: "A test zone",
           slug: "test-zone",
           min_level: 1,
-          max_level: 10
+          max_level: 10,
+          zone_id: nil
         })
 
       # Create rooms
@@ -223,7 +225,8 @@ defmodule ShardWeb.UserLive.MovementTest do
           description: "A test zone",
           slug: "test-zone-2",
           min_level: 1,
-          max_level: 10
+          max_level: 10,
+          zone_id: nil
         })
 
       # Create rooms
@@ -309,7 +312,8 @@ defmodule ShardWeb.UserLive.MovementTest do
           description: "A test zone",
           slug: "test-zone-3",
           min_level: 1,
-          max_level: 10
+          max_level: 10,
+          zone_id: nil
         })
 
       # Create character
