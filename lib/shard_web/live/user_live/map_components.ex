@@ -19,9 +19,18 @@ defmodule ShardWeb.UserLive.MapComponents do
   defp format_position(other), do: inspect(other)
 
   def map(assigns) do
-    # Get rooms and doors from database for dynamic rendering
-    rooms = Repo.all(GameMap.Room) |> Repo.preload([:doors_from, :doors_to])
-    doors = Repo.all(GameMap.Door) |> Repo.preload([:from_room, :to_room])
+    # Get rooms and doors from database for dynamic rendering - only current zone
+    zone_id = assigns.game_state.character.current_zone_id || 1
+    rooms = GameMap.list_rooms_by_zone(zone_id) |> Repo.preload([:doors_from, :doors_to])
+    room_ids = Enum.map(rooms, & &1.id)
+
+    doors =
+      Repo.all(
+        from(d in GameMap.Door,
+          where: d.from_room_id in ^room_ids and d.to_room_id in ^room_ids,
+          preload: [:from_room, :to_room]
+        )
+      )
 
     # Filter out rooms without coordinates
     valid_rooms =
