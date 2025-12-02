@@ -228,13 +228,15 @@ defmodule Shard.Users.PlayerZones do
           template_room_items = Shard.Items.list_room_items_by_zone(template_zone.id)
           
           Enum.each(template_room_items, fn template_room_item ->
-            new_room = Map.get(room_mapping, template_room_item.room_id)
+            # Get the correct room field name from the room item schema
+            room_field = Map.get(template_room_item, :room_id) || Map.get(template_room_item, :location_id)
+            new_room = Map.get(room_mapping, room_field)
             
-            if new_room do
+            if new_room && room_field do
               room_item_attrs = %{
                 item_id: template_room_item.item_id,
                 room_id: new_room.id,
-                quantity: template_room_item.quantity,
+                quantity: template_room_item.quantity || 1,
                 map: template_room_item.map
               }
               
@@ -243,6 +245,7 @@ defmodule Shard.Users.PlayerZones do
           end)
         rescue
           UndefinedFunctionError -> :ok
+          KeyError -> :ok
         end
         
         {:ok, new_zone}
