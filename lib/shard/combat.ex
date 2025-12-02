@@ -273,7 +273,7 @@ defmodule Shard.Combat do
     # Initialize or join shared combat state
     case ensure_shared_combat_state(combat_id, {x, y}, game_state.monsters) do
       {:ok, combat_state} ->
-        # Add player to shared combat
+        # Add player to shared combat (only if combat server is actually running)
         player_data = %{
           id: game_state.character.id,
           name: game_state.character.name,
@@ -284,9 +284,12 @@ defmodule Shard.Combat do
         
         add_player_to_shared_combat(combat_id, player_data)
 
-        # Check if there are monsters at current location in shared state
+        # Check if there are monsters at current location
+        # Use the monsters from the combat state, but fall back to game_state.monsters if needed
+        monsters_to_check = combat_state.monsters || game_state.monsters || []
+        
         monsters_here =
-          Enum.filter(combat_state.monsters || [], fn monster ->
+          Enum.filter(monsters_to_check, fn monster ->
             monster[:position] == {x, y} && monster[:is_alive] != false
           end)
 
