@@ -19,6 +19,11 @@ defmodule ShardWeb.MarketplaceLive.Index do
   def mount(_params, _session, socket) do
     current_scope = socket.assigns.current_scope
 
+    # Subscribe to user-specific marketplace events
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(Shard.PubSub, "user:#{current_scope.user.id}")
+    end
+
     # Get all active marketplace listings
     all_listings = Marketplace.list_active_listings() |> format_listings_for_display()
 
@@ -279,6 +284,24 @@ defmodule ShardWeb.MarketplaceLive.Index do
          |> assign(:selected_listing, nil)
          |> put_flash(:error, "Purchase failed. Please try again.")}
     end
+  end
+
+  @impl true
+  def handle_info({:item_sold, %{item_name: item_name, price: price}}, socket) do
+    current_user = socket.assigns.current_scope.user
+
+    # Reload user's active listings to remove the sold item
+    user_listings = Marketplace.list_seller_listings(current_user.id)
+
+    # Reload all listings for browse tab
+    all_listings = Marketplace.list_active_listings() |> format_listings_for_display()
+
+    {:noreply,
+     socket
+     |> assign(:all_listings, all_listings)
+     |> assign(:filtered_listings, all_listings)
+     |> stream(:listings, user_listings, reset: true)
+     |> put_flash(:info, "🎉 Your #{item_name} sold for #{price} gold!")}
   end
 
   # Helper functions
