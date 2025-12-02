@@ -10,8 +10,10 @@ defmodule ShardWeb.InventoryLive.IndexTest do
       Ecto.Adapters.SQL.Sandbox.checkout(Shard.Repo)
 
       user = user_fixture()
+      # Ensure user is confirmed for proper authentication
+      confirmed_user = %{user | confirmed_at: DateTime.utc_now()}
 
-      %{user: user}
+      %{user: confirmed_user}
     end
 
     test "renders inventory page", %{conn: conn, user: user} do
