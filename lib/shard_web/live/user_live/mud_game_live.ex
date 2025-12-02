@@ -114,34 +114,34 @@ defmodule ShardWeb.MudGameLive do
     <!-- Main Content -->
       <div class="flex flex-1 overflow-hidden">
         <!-- Left Panel - Terminal/Chat -->
-        <div class="flex-1 p-4 flex flex-col min-h-0">
+        <div class="flex-1 p-4 flex flex-col min-h-0 bg-gray-950">
           <!-- Tab Navigation -->
-          <div class="flex mb-4 border-b border-gray-600 flex-shrink-0">
+          <div class="flex mb-4 border-b border-red-800 flex-shrink-0">
             <button
               class={[
                 "px-4 py-2 font-medium transition-colors",
                 if(@active_tab == "terminal",
-                  do: "text-blue-400 border-b-2 border-blue-400",
-                  else: "text-gray-400 hover:text-white"
+                  do: "text-red-400 border-b-2 border-red-400",
+                  else: "text-red-600 hover:text-red-300"
                 )
               ]}
               phx-click="switch_tab"
               phx-value-tab="terminal"
             >
-              Terminal
+              🗡️ Terminal
             </button>
             <button
               class={[
                 "px-4 py-2 font-medium transition-colors",
                 if(@active_tab == "chat",
-                  do: "text-blue-400 border-b-2 border-blue-400",
-                  else: "text-gray-400 hover:text-white"
+                  do: "text-red-400 border-b-2 border-red-400",
+                  else: "text-red-600 hover:text-red-300"
                 )
               ]}
               phx-click="switch_tab"
               phx-value-tab="chat"
             >
-              Chat
+              💬 Chat
             </button>
           </div>
           
@@ -153,7 +153,7 @@ defmodule ShardWeb.MudGameLive do
         </div>
         
     <!-- Right Panel - Controls -->
-        <div class="w-100 bg-gray-800 px-4 py-4 flex flex-col space-y-4 overflow-y-auto">
+        <div class="w-100 bg-red-950 border-l-2 border-red-800 px-4 py-4 flex flex-col space-y-4 overflow-y-auto">
           <.minimap
             game_state={@game_state}
             player_position={@game_state.player_position}
@@ -234,8 +234,8 @@ defmodule ShardWeb.MudGameLive do
       </div>
       
     <!-- Footer -->
-      <footer class="bg-gray-800 p-2 text-center text-sm">
-        <p>MUD Game v1.0</p>
+      <footer class="bg-red-950 border-t-2 border-red-800 p-2 text-center text-sm">
+        <p class="text-red-500">🏰 Dungeon Crawler v1.0 🏰</p>
       </footer>
     </div>
 
