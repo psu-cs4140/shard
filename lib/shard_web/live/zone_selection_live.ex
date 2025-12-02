@@ -374,5 +374,4 @@ defmodule ShardWeb.ZoneSelectionLive do
   defp get_zone_type_color("pvp"), do: "bg-gray-700 text-white"
   defp get_zone_type_color("safe_zone"), do: "bg-gray-600 text-white"
   defp get_zone_type_color(_), do: "bg-gray-900 text-white"
-
 end

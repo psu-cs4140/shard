@@ -3,13 +3,13 @@ defmodule ShardWeb.CharacterControllerTest do
   use ExUnit.Case, async: false
 
   import Shard.UsersFixtures
-  import Ecto.Query
+  #  import Ecto.Query
 
   describe "character routes" do
     setup do
       # Reset the test database to ensure clean state
       Ecto.Adapters.SQL.Sandbox.checkout(Shard.Repo)
-      
+
       user = user_fixture()
       %{user: user}
     end

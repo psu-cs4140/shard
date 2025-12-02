@@ -3,7 +3,7 @@ defmodule Shard.Map.AdminStickTest do
 
   alias Shard.Items
   alias Shard.Items.AdminStick
-  alias Shard.Characters
+  # alias Shard.Characters
   alias Shard.UsersFixtures
 
   describe "admin stick item" do

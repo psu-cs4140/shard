@@ -2,7 +2,7 @@ defmodule ShardWeb.InventoryLive.IndexTest do
   use ShardWeb.ConnCase
 
   import Phoenix.LiveViewTest
-  import Shard.UsersFixtures
+  #  import Shard.UsersFixtures
 
   describe "Index" do
     setup %{conn: conn} do
