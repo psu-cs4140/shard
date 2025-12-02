@@ -59,7 +59,7 @@ defmodule Shard.Combat do
     end)
   end
 
-  defp perform_local_attack(game_state, monster, position) do
+  defp perform_local_attack(game_state, monster, _position) do
     # Check if this is The Count and player has required item
     case check_count_attack_requirements(game_state, monster) do
       {:error, message} ->
@@ -307,9 +307,6 @@ defmodule Shard.Combat do
             updated_game_state = %{game_state | combat: true}
             {messages, updated_game_state}
         end
-
-      {:error, _} ->
-        {[], game_state}
     end
   end
 
