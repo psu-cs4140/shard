@@ -16,7 +16,6 @@ defmodule ShardWeb.MudGameLive do
   #  import ShardWeb.UserLive.ItemHelpers
   import ShardWeb.UserLive.MudGameHandlers
   import ShardWeb.UserLive.MudGameLive2
-  import ShardWeb.UserLive.Commands3
   # import ShardWeb.UserLive.MudGameHelpers
   import ShardWeb.UserLive.MudGameLiveMultiplayerComponents
 
@@ -523,7 +522,7 @@ defmodule ShardWeb.MudGameLive do
   end
 
   def handle_info({:poke_notification, poker_name}, socket) do
-    terminal_state = handle_poke_notification(socket.assigns.terminal_state, poker_name)
+    terminal_state = ShardWeb.UserLive.MudGameLive2.handle_poke_notification(socket.assigns.terminal_state, poker_name)
 
     # Auto-scroll terminal to bottom
     socket = push_event(socket, "scroll_to_bottom", %{target: "terminal-output"})
