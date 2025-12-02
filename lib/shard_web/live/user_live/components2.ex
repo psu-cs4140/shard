@@ -12,7 +12,7 @@ defmodule ShardWeb.UserLive.Components2 do
       <div class="bg-gray-800 px-4 py-2 rounded-t-lg border-b border-gray-600">
         <h2 class="text-green-400 font-mono text-sm">MUD Terminal</h2>
       </div>
-
+      
     <!-- Terminal Output -->
       <div
         class="flex-1 p-4 overflow-y-auto font-mono text-sm text-green-400 bg-black"
@@ -23,7 +23,7 @@ defmodule ShardWeb.UserLive.Components2 do
           <div class="whitespace-pre-wrap">{line}</div>
         <% end %>
       </div>
-
+      
     <!-- Command Input -->
       <div class="p-4 border-t border-gray-600 bg-gray-900 rounded-b-lg">
         <.form
@@ -56,7 +56,7 @@ defmodule ShardWeb.UserLive.Components2 do
     ~H"""
     <div class="bg-gray-700 rounded-lg p-4 shadow-xl">
       <h2 class="text-xl font-semibold mb-4 text-center">Player Stats</h2>
-
+      
     <!-- Health Bar -->
       <div class="mb-3">
         <div class="flex justify-between text-sm mb-1">
@@ -70,7 +70,7 @@ defmodule ShardWeb.UserLive.Components2 do
           />
         </div>
       </div>
-
+      
     <!-- Stamina Bar -->
       <div class="mb-3">
         <div class="flex justify-between text-sm mb-1">
@@ -84,7 +84,7 @@ defmodule ShardWeb.UserLive.Components2 do
           />
         </div>
       </div>
-
+      
     <!-- Mana Bar -->
       <div class="mb-3">
         <div class="flex justify-between text-sm mb-1">
@@ -98,7 +98,7 @@ defmodule ShardWeb.UserLive.Components2 do
           />
         </div>
       </div>
-
+      
     <!-- Hotbar -->
       <div class="mt-4">
         <h3 class="text-lg font-semibold mb-2 text-center">Hotbar</h3>
