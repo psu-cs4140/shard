@@ -262,7 +262,7 @@ defmodule Shard.Social.PartyTest do
       leader = UsersFixtures.user_fixture()
       friend = UsersFixtures.user_fixture()
       
-      {:ok, party} = Social.create_party(leader.id)
+      {:ok, _party} = Social.create_party(leader.id)
       
       # Send first invitation
       {:ok, _invitation} = Social.invite_to_party(leader.id, friend.id)
@@ -418,7 +418,7 @@ defmodule Shard.Social.PartyTest do
       leader = UsersFixtures.user_fixture()
       invitee = UsersFixtures.user_fixture()
       
-      {:ok, party} = Social.create_party(leader.id, %{name: "Test Party"})
+      {:ok, _party} = Social.create_party(leader.id, %{name: "Test Party"})
       {:ok, _invitation} = Social.invite_to_party(leader.id, invitee.id)
       
       invitations = Social.list_pending_party_invitations(invitee.id)
@@ -498,8 +498,8 @@ defmodule Shard.Social.PartyTest do
       leader2 = UsersFixtures.user_fixture()
       invitee = UsersFixtures.user_fixture()
       
-      {:ok, party1} = Social.create_party(leader1.id)
-      {:ok, party2} = Social.create_party(leader2.id)
+      {:ok, _party1} = Social.create_party(leader1.id)
+      {:ok, _party2} = Social.create_party(leader2.id)
       
       # Add invitee to party2
       %PartyMember{}
