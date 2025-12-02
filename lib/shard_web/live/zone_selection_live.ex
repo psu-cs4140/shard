@@ -68,10 +68,8 @@ defmodule ShardWeb.ZoneSelectionLive do
             <% end %>
           </:subtitle>
         </.header>
-      </div>
-    </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
         <%= for zone <- @template_zones do %>
           <% zone_progress = Kernel.get_in(@zone_progress_map, [zone.id]) || "locked" %>
           <% is_accessible = zone_progress in ["in_progress", "completed"] %>
@@ -236,6 +234,7 @@ defmodule ShardWeb.ZoneSelectionLive do
           <span>No dungeons available yet. Please ask an administrator to create zones.</span>
         </div>
       <% end %>
+      </div>
     </div>
     """
   end
