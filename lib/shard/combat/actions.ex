@@ -69,7 +69,11 @@ defmodule Shard.Combat.Actions do
           Map.put(game_state.player_stats, :character_id, game_state.character.id)
 
         damage_result =
-          Damage.calculate_attack_damage(player_stats_with_id, monster, game_state.equipped_weapon)
+          Damage.calculate_attack_damage(
+            player_stats_with_id,
+            monster,
+            game_state.equipped_weapon
+          )
 
         updated_monster = Damage.apply_damage_to_monster(monster, damage_result.final_damage)
 
@@ -117,7 +121,11 @@ defmodule Shard.Combat.Actions do
           Map.put(game_state.player_stats, :character_id, game_state.character.id)
 
         damage_result =
-          Damage.calculate_attack_damage(player_stats_with_id, monster, game_state.equipped_weapon)
+          Damage.calculate_attack_damage(
+            player_stats_with_id,
+            monster,
+            game_state.equipped_weapon
+          )
 
         updated_monster = Damage.apply_damage_to_monster(monster, damage_result.final_damage)
 
