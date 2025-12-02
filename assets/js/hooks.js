@@ -13,6 +13,21 @@ export const TerminalScroll = {
   }
 };
 
+// Auto-scroll hook for chat messages
+export const AutoScroll = {
+  mounted() {
+    this.scrollToBottom();
+  },
+  
+  updated() {
+    this.scrollToBottom();
+  },
+  
+  scrollToBottom() {
+    this.el.scrollTop = this.el.scrollHeight;
+  }
+};
+
 // Achievement notification hook
 export const AchievementNotifications = {
   mounted() {

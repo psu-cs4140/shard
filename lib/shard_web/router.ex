@@ -100,6 +100,7 @@ defmodule ShardWeb.Router do
       live "/characters/new", CharacterLive.New, :new
       live "/characters/:id", CharacterLive.Show, :show
       live "/inventory", InventoryLive.Index, :index
+      live "/friends", FriendsLive.Index, :index
       live "/zones", ZoneSelectionLive, :index
       live "/play/:character_id", MudGameLive
       live "/marketplace", MarketplaceLive.Index, :index
