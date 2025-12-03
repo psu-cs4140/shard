@@ -503,7 +503,7 @@ defmodule ShardWeb.UserLive.Commands1 do
         if Enum.empty?(game_state.inventory_items) do
           {["Your inventory is empty."], game_state}
         else
-          available_items = 
+          available_items =
             game_state.inventory_items
             |> Enum.map(&get_item_display_name/1)
             |> Enum.join(", ")

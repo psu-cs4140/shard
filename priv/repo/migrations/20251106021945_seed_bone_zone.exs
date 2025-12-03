@@ -208,16 +208,18 @@ defmodule Shard.Repo.Migrations.SeedBoneZone do
 
       if from_room && to_room do
         # Determine if this door should be locked
+        # ||
         is_locked =
-          (from_x == 2 && from_y == 3 && to_x == 2 && to_y == 4) ||
-            (from_x == 5 && from_y == 0 && to_x == 5 && to_y == 1)
+          from_x == 2 && from_y == 3 && to_x == 2 && to_y == 4
+
+        # (from_x == 5 && from_y == 0 && to_x == 5 && to_y == 1)
 
         door_type = if is_locked, do: "locked_gate", else: "standard"
 
         key_required =
           cond do
             from_x == 2 && from_y == 3 && to_x == 2 && to_y == 4 -> "Bone Zone Key"
-            from_x == 5 && from_y == 0 && to_x == 5 && to_y == 1 -> "Treasure Room Key"
+            # from_x == 5 && from_y == 0 && to_x == 5 && to_y == 1 -> "Treasure Room Key"
             true -> nil
           end
 
