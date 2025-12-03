@@ -36,6 +36,9 @@ defmodule ShardWeb.AdminLive.Zones do
         <.button phx-click="new_zone">
           <.icon name="hero-plus" class="w-4 h-4 mr-1" /> Create Zone
         </.button>
+        <.button phx-click="new_template_zone" class="btn-secondary">
+          <.icon name="hero-document-duplicate" class="w-4 h-4 mr-1" /> Create Template Zone
+        </.button>
       </:actions>
     </.header>
 
@@ -105,8 +108,10 @@ defmodule ShardWeb.AdminLive.Zones do
 
     <.modal :if={@editing} id="zone-modal" show on_cancel={JS.push("cancel_zone")}>
       <.header>
-        {if @changeset.data.id, do: "Edit Zone", else: "New Zone"}
-        <:subtitle>Configure zone details</:subtitle>
+        {if @changeset.data.id, do: "Edit Zone", else: if(@is_template, do: "New Template Zone", else: "New Zone")}
+        <:subtitle>
+          {if @is_template, do: "Configure template zone details (slug will automatically end with '-template')", else: "Configure zone details"}
+        </:subtitle>
       </.header>
 
       <.simple_form
@@ -183,18 +188,32 @@ defmodule ShardWeb.AdminLive.Zones do
     {:noreply,
      socket
      |> assign(:editing, :new)
-     |> assign(:changeset, changeset)}
+     |> assign(:changeset, changeset)
+     |> assign(:is_template, false)}
+  end
+
+  @impl true
+  def handle_event("new_template_zone", _params, socket) do
+    changeset = Map.change_zone(%Zone{})
+
+    {:noreply,
+     socket
+     |> assign(:editing, :new)
+     |> assign(:changeset, changeset)
+     |> assign(:is_template, true)}
   end
 
   @impl true
   def handle_event("edit_zone", %{"id" => id}, socket) do
     zone = Map.get_zone!(id)
     changeset = Map.change_zone(zone)
+    is_template = String.ends_with?(zone.slug, "-template")
 
     {:noreply,
      socket
      |> assign(:editing, :edit)
-     |> assign(:changeset, changeset)}
+     |> assign(:changeset, changeset)
+     |> assign(:is_template, is_template)}
   end
 
   @impl true
@@ -210,9 +229,26 @@ defmodule ShardWeb.AdminLive.Zones do
 
   @impl true
   def handle_event("save_zone", %{"zone" => zone_params}, socket) do
+    # Modify slug if this is a template zone
+    modified_params = 
+      if socket.assigns[:is_template] do
+        case zone_params["slug"] do
+          nil -> zone_params
+          slug when is_binary(slug) ->
+            if String.ends_with?(slug, "-template") do
+              zone_params
+            else
+              Map.put(zone_params, "slug", slug <> "-template")
+            end
+          _ -> zone_params
+        end
+      else
+        zone_params
+      end
+
     case socket.assigns.editing do
       :new ->
-        case Map.create_zone(zone_params) do
+        case Map.create_zone(modified_params) do
           {:ok, _zone} ->
             {:noreply,
              socket
@@ -228,7 +264,7 @@ defmodule ShardWeb.AdminLive.Zones do
       :edit ->
         zone = socket.assigns.changeset.data
 
-        case Map.update_zone(zone, zone_params) do
+        case Map.update_zone(zone, modified_params) do
           {:ok, _zone} ->
             {:noreply,
              socket
@@ -248,7 +284,8 @@ defmodule ShardWeb.AdminLive.Zones do
     {:noreply,
      socket
      |> assign(:editing, nil)
-     |> assign(:changeset, nil)}
+     |> assign(:changeset, nil)
+     |> assign(:is_template, false)}
   end
 
   @impl true
