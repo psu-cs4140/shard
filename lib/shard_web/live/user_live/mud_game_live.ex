@@ -297,7 +297,7 @@ defmodule ShardWeb.MudGameLive do
   end
 
   def handle_info({:poke_notification, poker_name}, socket) do
-    handle_poke_notification(poker_name, socket)
+    ShardWeb.UserLive.MudGamePubSubHandlers.handle_poke_notification(poker_name, socket)
   end
 
   def handle_info({:player_joined, player_data}, socket) do
