@@ -25,13 +25,10 @@ defmodule ShardWeb.ZoneSelectionLive do
 
     # Get all active zones
     all_zones = Map.list_active_zones()
-    IO.inspect(all_zones, label: "All zones found")
-    
+
     zones =
       all_zones
       |> Enum.sort_by(& &1.display_order)
-    
-    IO.inspect(zones, label: "Zones after sorting")
 
     # Get user zone progress if character exists
     zone_progress_map =
