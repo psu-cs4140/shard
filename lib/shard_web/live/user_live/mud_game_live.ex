@@ -4,24 +4,14 @@ defmodule ShardWeb.MudGameLive do
   @moduledoc false
   use ShardWeb, :live_view
 
-  alias Phoenix.LiveView.JS
-  import ShardWeb.UserLive.Components
-  import ShardWeb.UserLive.Components2
   # import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.Movement
-  import ShardWeb.UserLive.MapComponents
-  # import ShardWeb.UserLive.LegacyMap
-  # import ShardWeb.UserLive.MonsterComponents
-  import ShardWeb.UserLive.CharacterHelpers
   #  import ShardWeb.UserLive.ItemHelpers
   import ShardWeb.UserLive.MudGameHandlers
   import ShardWeb.UserLive.MudGameLive2
-  import ShardWeb.UserLive.Commands3
-  import ShardWeb.UserLive.MudGameHelpers
   import ShardWeb.UserLive.MudGameEventHandlers
   import ShardWeb.UserLive.MudGamePubSubHandlers
   import ShardWeb.UserLive.MudGameRender
-  import ShardWeb.UserLive.MudGameLiveMultiplayerComponents
 
   @impl true
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity, Credo.Check.Refactor.Nesting
@@ -331,12 +321,4 @@ defmodule ShardWeb.MudGameLive do
     :ok
   end
 
-  # Helper function to get item name safely
-  defp get_item_name(item) do
-    cond do
-      item.item && item.item.name -> item.item.name
-      item.name -> item.name
-      true -> "Unknown Item"
-    end
-  end
 end
