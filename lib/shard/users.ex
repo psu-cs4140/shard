@@ -6,8 +6,9 @@ defmodule Shard.Users do
   import Ecto.Query, warn: false
   alias Shard.Repo
 
-  alias Shard.Users.{User, UserToken, UserNotifier}
+  alias Shard.Users.{User, UserToken, UserNotifier, UserZoneProgress}
   alias Shard.Characters.Character
+  alias Shard.Map.Zone
 
   ## Database getters
 
@@ -119,9 +120,15 @@ defmodule Shard.Users do
         attrs
       end
 
-    %User{}
-    |> User.email_changeset(attrs)
-    |> Repo.insert()
+    Repo.transact(fn ->
+      with {:ok, user} <- %User{} |> User.email_changeset(attrs) |> Repo.insert(),
+           {:ok, _progress_records} <- create_initial_zone_progress(user) do
+        {:ok, user}
+      else
+        {:error, changeset} -> {:error, changeset}
+        error -> error
+      end
+    end)
   end
 
   ## Settings
@@ -379,7 +386,131 @@ defmodule Shard.Users do
     :ok
   end
 
+  ## Zone Progress
+
+  @doc """
+  Gets a user's progress for a specific zone.
+  """
+  def get_user_zone_progress(user_id, zone_id) do
+    Repo.get_by(UserZoneProgress, user_id: user_id, zone_id: zone_id)
+  end
+
+  @doc """
+  Gets all zone progress for a user.
+  """
+  def list_user_zone_progress(user_id) do
+    from(uzp in UserZoneProgress,
+      where: uzp.user_id == ^user_id,
+      join: z in Zone,
+      on: uzp.zone_id == z.id,
+      order_by: [asc: z.display_order],
+      preload: [:zone]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Updates a user's progress in a zone.
+  """
+  def update_zone_progress(user_id, zone_id, progress)
+      when progress in ["locked", "in_progress", "completed"] do
+    case get_user_zone_progress(user_id, zone_id) do
+      nil ->
+        %UserZoneProgress{}
+        |> UserZoneProgress.changeset(%{
+          user_id: user_id,
+          zone_id: zone_id,
+          progress: progress
+        })
+        |> Repo.insert()
+
+      existing_progress ->
+        existing_progress
+        |> UserZoneProgress.changeset(%{progress: progress})
+        |> Repo.update()
+    end
+  end
+
+  @doc """
+  Unlocks the next zone for a user when they complete the current one.
+  """
+  def unlock_next_zone(user_id, completed_zone_id) do
+    # Get the completed zone to find the next one
+    completed_zone = Repo.get!(Zone, completed_zone_id)
+
+    # Find the next zone by display_order
+    next_zone =
+      Repo.one(
+        from z in Zone,
+          where: z.display_order > ^completed_zone.display_order,
+          order_by: [asc: z.display_order],
+          limit: 1
+      )
+
+    case next_zone do
+      nil ->
+        {:ok, :no_next_zone}
+
+      zone ->
+        update_zone_progress(user_id, zone.id, "in_progress")
+    end
+  end
+
+  @doc """
+  Creates zone progress records for existing users when new zones are added.
+  """
+  def create_zone_progress_for_existing_users(zone_id) do
+    users = list_users()
+
+    Enum.each(users, fn user ->
+      case get_user_zone_progress(user.id, zone_id) do
+        nil ->
+          # New zones should always start as locked for existing users
+          %UserZoneProgress{}
+          |> UserZoneProgress.changeset(%{
+            user_id: user.id,
+            zone_id: zone_id,
+            progress: "locked"
+          })
+          |> Repo.insert()
+
+        _existing ->
+          :ok
+      end
+    end)
+  end
+
   ## Token helper
+
+  defp create_initial_zone_progress(user) do
+    zones = Repo.all(from z in Zone, order_by: [asc: z.display_order])
+
+    progress_records =
+      zones
+      |> Enum.with_index()
+      |> Enum.map(fn {zone, index} ->
+        # First zone (index 0) should be unlocked, others locked
+        progress = if index == 0, do: "in_progress", else: "locked"
+
+        %UserZoneProgress{}
+        |> UserZoneProgress.changeset(%{
+          user_id: user.id,
+          zone_id: zone.id,
+          progress: progress
+        })
+      end)
+
+    # Insert all progress records
+    case Enum.reduce_while(progress_records, {:ok, []}, fn changeset, {:ok, acc} ->
+           case Repo.insert(changeset) do
+             {:ok, record} -> {:cont, {:ok, [record | acc]}}
+             {:error, error} -> {:halt, {:error, error}}
+           end
+         end) do
+      {:ok, records} -> {:ok, Enum.reverse(records)}
+      error -> error
+    end
+  end
 
   defp update_user_and_delete_all_tokens(changeset) do
     Repo.transact(fn ->

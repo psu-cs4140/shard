@@ -124,7 +124,12 @@ defmodule Shard.Gambling.CoinFlipServer do
       {:new_flip, %{flip_id: new_flip_id, next_flip_at: next_flip_at}}
     )
 
-    new_state = %{state | flip_id: new_flip_id, next_flip_at: next_flip_at, flip_timer: flip_timer}
+    new_state = %{
+      state
+      | flip_id: new_flip_id,
+        next_flip_at: next_flip_at,
+        flip_timer: flip_timer
+    }
 
     {:noreply, new_state}
   end

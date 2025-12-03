@@ -31,9 +31,10 @@ defmodule ShardWeb.GamblingLive.Index do
 
   @impl true
   def handle_event("select_character", %{"character_id" => character_id}, socket) do
-    socket = socket
-             |> assign(:selected_character_id, String.to_integer(character_id))
-             |> load_flip_data()
+    socket =
+      socket
+      |> assign(:selected_character_id, String.to_integer(character_id))
+      |> load_flip_data()
 
     {:noreply, socket}
   end
@@ -164,7 +165,8 @@ defmodule ShardWeb.GamblingLive.Index do
         statistics = Gambling.get_statistics(character_id)
         {current_bet, bet_history, statistics}
       else
-        {nil, [], %{total_bets: 0, total_won: 0, total_wagered: 0, total_winnings: 0, win_rate: 0}}
+        {nil, [],
+         %{total_bets: 0, total_won: 0, total_wagered: 0, total_winnings: 0, win_rate: 0}}
       end
 
     socket

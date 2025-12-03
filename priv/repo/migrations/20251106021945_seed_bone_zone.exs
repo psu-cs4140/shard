@@ -60,7 +60,7 @@ defmodule Shard.Repo.Migrations.SeedBoneZone do
       {5, 4, "Hallway14", "standard"},
       {5, 5, "Grand Statue", "standard"},
       {6, 0, "Treasure Room", "treasure_room"},
-      {7, 0, "Exit", "standard"},
+      {7, 0, "Exit", "end_room"},
       {6, 3, "Hallway16", "standard"},
       {7, 3, "Barracks", "standard"}
     ]

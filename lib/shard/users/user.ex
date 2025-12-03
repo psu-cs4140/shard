@@ -19,6 +19,7 @@ defmodule Shard.Users.User do
     field :admin, :boolean, default: false
 
     has_many :player_zones, Shard.Users.PlayerZone
+    has_many :user_zone_progress, Shard.Users.UserZoneProgress
 
     timestamps(type: :utc_datetime)
   end

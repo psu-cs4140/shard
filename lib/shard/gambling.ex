@@ -88,12 +88,14 @@ defmodule Shard.Gambling do
   # Private functions
 
   defp parse_amount(amount) when is_integer(amount), do: amount
+
   defp parse_amount(amount) when is_binary(amount) do
     case Integer.parse(amount) do
       {num, _} -> num
       :error -> :error
     end
   end
+
   defp parse_amount(_), do: :error
 
   defp validate_amount(amount) when is_integer(amount) and amount > 0, do: {:ok, amount}
@@ -148,23 +150,30 @@ defmodule Shard.Gambling do
   Get statistics for the gambling page.
   """
   def get_statistics(character_id) do
-    total_bets = from(b in Bet, where: b.character_id == ^character_id, select: count(b.id))
-                 |> Repo.one() || 0
+    total_bets =
+      from(b in Bet, where: b.character_id == ^character_id, select: count(b.id))
+      |> Repo.one() || 0
 
-    total_won = from(b in Bet,
-                  where: b.character_id == ^character_id and b.result == "won",
-                  select: count(b.id))
-                |> Repo.one() || 0
+    total_won =
+      from(b in Bet,
+        where: b.character_id == ^character_id and b.result == "won",
+        select: count(b.id)
+      )
+      |> Repo.one() || 0
 
-    total_wagered = from(b in Bet,
-                      where: b.character_id == ^character_id,
-                      select: sum(b.amount))
-                    |> Repo.one() || 0
+    total_wagered =
+      from(b in Bet,
+        where: b.character_id == ^character_id,
+        select: sum(b.amount)
+      )
+      |> Repo.one() || 0
 
-    total_winnings = from(b in Bet,
-                       where: b.character_id == ^character_id and b.result == "won",
-                       select: sum(b.payout))
-                     |> Repo.one() || 0
+    total_winnings =
+      from(b in Bet,
+        where: b.character_id == ^character_id and b.result == "won",
+        select: sum(b.payout)
+      )
+      |> Repo.one() || 0
 
     %{
       total_bets: total_bets,
