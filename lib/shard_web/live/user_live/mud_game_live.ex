@@ -322,7 +322,7 @@ defmodule ShardWeb.MudGameLive do
     if socket.assigns[:game_state] && socket.assigns.game_state[:character] do
       character = socket.assigns.game_state.character
       ShardWeb.UserLive.MudGameLive2.unsubscribe_from_character_notifications(character.id)
-      unsubscribe_from_player_notifications(character.name)
+      ShardWeb.UserLive.MudGameLive2.unsubscribe_from_player_notifications(character.name)
 
       # Broadcast that this player has left
       Phoenix.PubSub.broadcast(Shard.PubSub, "player_presence", {:player_left, character.id})
