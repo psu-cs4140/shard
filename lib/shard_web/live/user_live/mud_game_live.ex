@@ -28,7 +28,7 @@ defmodule ShardWeb.MudGameLive do
   def mount(%{"character_id" => character_id} = params, _session, socket) do
     with {:ok, character} <- ShardWeb.UserLive.MudGameHelpers.get_character_from_params(params),
          character_name <- ShardWeb.UserLive.MudGameHelpers.get_character_name(params, character),
-         {:ok, character} <- load_character_with_associations(character),
+         {:ok, character} <- ShardWeb.UserLive.MudGameHelpers.load_character_with_associations(character),
          {:ok, socket} <- initialize_game_state(socket, character, character_id, character_name) do
       # Use zone_id from URL params if provided, otherwise fall back to character's current_zone_id
       zone_id =
