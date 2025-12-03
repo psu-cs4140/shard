@@ -146,26 +146,38 @@ defmodule Shard.Characters do
 
   # Private function to check and award the "Create First Character" achievement
   defp check_and_award_first_character_achievement(%Character{user_id: user_id}) do
-    # Skip if user_id is nil (e.g., in tests)
-    if user_id do
-      # Get the user
-      case Shard.Repo.get(Shard.Users.User, user_id) do
-        nil ->
-          :ok
+    with {:ok, user_id} <- validate_user_id(user_id),
+         {:ok, user} <- get_user_for_achievement(user_id),
+         {:ok, achievement} <- get_first_character_achievement(),
+         false <- Shard.Achievements.has_achievement?(user, achievement) do
+      award_achievement_safely(user, achievement)
+    else
+      _ -> :ok
+    end
+  end
 
-        user ->
-          # Get the "Create First Character" achievement
-          achievement =
-            Shard.Repo.get_by(Shard.Achievements.Achievement, name: "Create First Character")
+  defp validate_user_id(nil), do: {:error, :no_user_id}
+  defp validate_user_id(user_id), do: {:ok, user_id}
 
-          if achievement && !Shard.Achievements.has_achievement?(user, achievement) do
-            case Shard.Achievements.award_achievement(user, achievement) do
-              {:ok, _user_achievement} -> :ok
-              # Silently handle errors to not break character creation
-              {:error, _changeset} -> :ok
-            end
-          end
-      end
+  defp get_user_for_achievement(user_id) do
+    case Shard.Repo.get(Shard.Users.User, user_id) do
+      nil -> {:error, :user_not_found}
+      user -> {:ok, user}
+    end
+  end
+
+  defp get_first_character_achievement do
+    case Shard.Repo.get_by(Shard.Achievements.Achievement, name: "Create First Character") do
+      nil -> {:error, :achievement_not_found}
+      achievement -> {:ok, achievement}
+    end
+  end
+
+  defp award_achievement_safely(user, achievement) do
+    case Shard.Achievements.award_achievement(user, achievement) do
+      {:ok, _user_achievement} -> :ok
+      # Silently handle errors to not break character creation
+      {:error, _changeset} -> :ok
     end
   end
 end

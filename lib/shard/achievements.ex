@@ -229,32 +229,34 @@ defmodule Shard.Achievements do
   """
   def award_achievement_by_name(user_id, achievement_name) do
     case get_achievement_by_name(achievement_name) do
-      nil ->
-        {:error, :achievement_not_found}
+      nil -> {:error, :achievement_not_found}
+      achievement -> handle_achievement_award(user_id, achievement_name, achievement)
+    end
+  end
 
-      achievement ->
-        # Check if user already has this achievement
-        if user_has_achievement?(user_id, achievement_name) do
-          {:ok, :already_earned}
-        else
-          # Award the achievement
-          case %UserAchievement{}
-               |> UserAchievement.changeset(%{
-                 user_id: user_id,
-                 achievement_id: achievement.id,
-                 earned_at: DateTime.utc_now(),
-                 progress: %{}
-               })
-               |> Repo.insert() do
-            {:ok, user_achievement} ->
-              # Trigger achievement notification sound
-              trigger_achievement_notification(user_id, achievement)
-              {:ok, user_achievement}
+  defp handle_achievement_award(user_id, achievement_name, achievement) do
+    if user_has_achievement?(user_id, achievement_name) do
+      {:ok, :already_earned}
+    else
+      create_user_achievement(user_id, achievement)
+    end
+  end
 
-            error ->
-              error
-          end
-        end
+  defp create_user_achievement(user_id, achievement) do
+    case %UserAchievement{}
+         |> UserAchievement.changeset(%{
+           user_id: user_id,
+           achievement_id: achievement.id,
+           earned_at: DateTime.utc_now(),
+           progress: %{}
+         })
+         |> Repo.insert() do
+      {:ok, user_achievement} ->
+        trigger_achievement_notification(user_id, achievement)
+        {:ok, user_achievement}
+
+      error ->
+        error
     end
   end
 
