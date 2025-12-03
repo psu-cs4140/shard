@@ -27,7 +27,7 @@ defmodule ShardWeb.MudGameLive do
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity, Credo.Check.Refactor.Nesting
   def mount(%{"character_id" => character_id} = params, _session, socket) do
     with {:ok, character} <- ShardWeb.UserLive.MudGameHelpers.get_character_from_params(params),
-         character_name <- get_character_name(params, character),
+         character_name <- ShardWeb.UserLive.MudGameHelpers.get_character_name(params, character),
          {:ok, character} <- load_character_with_associations(character),
          {:ok, socket} <- initialize_game_state(socket, character, character_id, character_name) do
       # Use zone_id from URL params if provided, otherwise fall back to character's current_zone_id
