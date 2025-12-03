@@ -13,6 +13,7 @@ defmodule Shard.Application do
         {Finch, name: Shard.Finch},
         {Registry, keys: :unique, name: Shard.Registry},
         Shard.Combat.Supervisor,
+        Shard.Gambling.CoinFlipServer,
         ShardWeb.Endpoint
       ] ++ local_mailbox_child()
 
