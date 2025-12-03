@@ -19,8 +19,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
     {:ok, manor_zone} =
       Map.create_zone(%{
         name: "Vampire's Manor",
-        zone_id: "vampires-manor-template",
-        slug: "vampires-manor",
+        slug: "vampires-manor-template",
         description:
           "A dark and foreboding castle ruled by ancient vampires. Danger lurks in every shadow.",
         zone_type: "dungeon",
@@ -571,7 +570,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
     end
 
     # Delete zone by slug (this will cascade to rooms and doors)
-    case Repo.get_by(Zone, slug: "vampires-manor") do
+    case Repo.get_by(Zone, slug: "vampires-manor-template") do
       nil ->
         IO.puts("Zone vampires-manor not found")
 
