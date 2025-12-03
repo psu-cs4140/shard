@@ -226,7 +226,7 @@ defmodule ShardWeb.AdminLive.Zones do
       (socket.assigns.changeset.data || %Zone{})
       |> Map.change_zone(zone_params)
 
-    changeset = Elixir.Map.put(changeset, :action, :validate)
+    changeset = %{changeset | action: :validate}
 
     {:noreply, assign(socket, :changeset, changeset)}
   end
