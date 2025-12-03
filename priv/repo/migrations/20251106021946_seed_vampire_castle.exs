@@ -572,7 +572,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
     # Delete zone by slug (this will cascade to rooms and doors)
     case Repo.get_by(Zone, slug: "vampires-manor-template") do
       nil ->
-        IO.puts("Zone vampires-manor not found")
+        IO.puts("Zone vampires-manor-template not found")
 
       zone ->
         Repo.delete!(zone)
