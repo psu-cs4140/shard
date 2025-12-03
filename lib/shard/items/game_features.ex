@@ -122,47 +122,80 @@ defmodule Shard.Items.GameFeatures do
   def get_character_hotbar(character_id) do
     from(hs in HotbarSlot,
       where: hs.character_id == ^character_id,
-      preload: [:item, :inventory],
+      preload: [:item],
       order_by: [asc: :slot_number]
     )
     |> Repo.all()
   end
 
   def set_hotbar_slot(character_id, slot_number, inventory_id \\ nil) do
-    case validate_inventory_for_hotbar(inventory_id) do
-      {:ok, inventory} ->
-        attrs = %{
-          character_id: character_id,
-          slot_number: slot_number,
-          item_id: inventory && inventory.item_id,
-          inventory_id: inventory_id
-        }
+    with {:ok, inventory} <- validate_inventory_for_hotbar(inventory_id),
+         attrs <- build_hotbar_attrs(character_id, slot_number, inventory_id, inventory) do
+      upsert_hotbar_slot(character_id, slot_number, attrs)
+    end
+  end
 
-        case Repo.get_by(HotbarSlot, character_id: character_id, slot_number: slot_number) do
-          nil ->
-            %HotbarSlot{}
-            |> HotbarSlot.changeset(attrs)
-            |> Repo.insert()
+  defp build_hotbar_attrs(character_id, slot_number, inventory_id, inventory) do
+    inventory_with_item = if inventory, do: Repo.preload(inventory, :item), else: nil
 
-          existing ->
-            existing
-            |> HotbarSlot.changeset(attrs)
-            |> Repo.update()
-        end
+    %{
+      character_id: character_id,
+      slot_number: slot_number,
+      item_id: inventory_with_item && inventory_with_item.item_id,
+      inventory_id: inventory_id
+    }
+  end
 
-      {:error, reason} ->
-        {:error, reason}
+  defp upsert_hotbar_slot(character_id, slot_number, attrs) do
+    Repo.transaction(fn ->
+      case Repo.get_by(HotbarSlot, character_id: character_id, slot_number: slot_number) do
+        nil -> create_hotbar_slot(attrs)
+        existing -> update_hotbar_slot(existing, attrs)
+      end
+    end)
+  end
+
+  defp create_hotbar_slot(attrs) do
+    case %HotbarSlot{} |> HotbarSlot.changeset(attrs) |> Repo.insert() do
+      {:ok, hotbar_slot} -> hotbar_slot
+      {:error, changeset} -> Repo.rollback(changeset)
+    end
+  end
+
+  defp update_hotbar_slot(existing, attrs) do
+    case existing |> HotbarSlot.changeset(attrs) |> Repo.update() do
+      {:ok, hotbar_slot} -> hotbar_slot
+      {:error, changeset} -> Repo.rollback(changeset)
     end
   end
 
   defp validate_inventory_for_hotbar(nil), do: {:ok, nil}
 
-  defp validate_inventory_for_hotbar(inventory_id) do
-    case Repo.get(CharacterInventory, inventory_id) do
-      nil -> {:error, :inventory_not_found}
-      inventory -> {:ok, inventory}
+  defp validate_inventory_for_hotbar(inventory_id) when is_binary(inventory_id) do
+    case Integer.parse(inventory_id) do
+      {id, ""} -> validate_inventory_for_hotbar(id)
+      _ -> {:error, :invalid_inventory_id}
     end
   end
+
+  defp validate_inventory_for_hotbar(inventory_id) when is_integer(inventory_id) do
+    case Repo.get(CharacterInventory, inventory_id) do
+      nil ->
+        {:error, :inventory_not_found}
+
+      inventory ->
+        # Ensure the inventory item has an associated item
+        inventory_with_item = Repo.preload(inventory, :item)
+
+        if inventory_with_item.item do
+          {:ok, inventory_with_item}
+        else
+          {:error, :item_not_found}
+        end
+    end
+  end
+
+  defp validate_inventory_for_hotbar(_), do: {:error, :invalid_inventory_id}
 
   def clear_hotbar_slot(character_id, slot_number) do
     case Repo.get_by(HotbarSlot, character_id: character_id, slot_number: slot_number) do

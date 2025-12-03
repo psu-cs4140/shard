@@ -16,6 +16,8 @@ defmodule ShardWeb.InventoryLive.Index do
       |> assign(:inventory, [])
       |> assign(:hotbar, [])
       |> assign(:room_items, [])
+      |> assign(:show_hotbar_modal, false)
+      |> assign(:selected_inventory_id, nil)
       |> load_character_data()
 
     {:ok, socket}
@@ -122,7 +124,9 @@ defmodule ShardWeb.InventoryLive.Index do
       {:ok, _} ->
         socket =
           socket
-          |> put_flash(:info, "Hotbar slot set successfully")
+          |> put_flash(:info, "Item added to hotbar slot #{slot}")
+          |> assign(:show_hotbar_modal, false)
+          |> assign(:selected_inventory_id, nil)
           |> load_character_data()
 
         {:noreply, socket}
@@ -147,6 +151,24 @@ defmodule ShardWeb.InventoryLive.Index do
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, "Failed to clear hotbar slot: #{reason}")}
     end
+  end
+
+  def handle_event("show_hotbar_modal", %{"inventory_id" => inventory_id}, socket) do
+    socket =
+      socket
+      |> assign(:show_hotbar_modal, true)
+      |> assign(:selected_inventory_id, inventory_id)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("hide_hotbar_modal", _params, socket) do
+    socket =
+      socket
+      |> assign(:show_hotbar_modal, false)
+      |> assign(:selected_inventory_id, nil)
+
+    {:noreply, socket}
   end
 
   defp load_character_data(socket) do

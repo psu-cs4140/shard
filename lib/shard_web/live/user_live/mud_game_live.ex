@@ -4,27 +4,22 @@ defmodule ShardWeb.MudGameLive do
   @moduledoc false
   use ShardWeb, :live_view
 
-  alias Phoenix.LiveView.JS
-  import ShardWeb.UserLive.Components
-  import ShardWeb.UserLive.Components2
   # import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.Movement
-  import ShardWeb.UserLive.MapComponents
-  # import ShardWeb.UserLive.LegacyMap
-  # import ShardWeb.UserLive.MonsterComponents
-  import ShardWeb.UserLive.CharacterHelpers
   #  import ShardWeb.UserLive.ItemHelpers
   import ShardWeb.UserLive.MudGameHandlers
   import ShardWeb.UserLive.MudGameLive2
-  # import ShardWeb.UserLive.MudGameHelpers
-  import ShardWeb.UserLive.MudGameLiveMultiplayerComponents
+  import ShardWeb.UserLive.MudGameEventHandlers
+  import ShardWeb.UserLive.MudGamePubSubHandlers
+  import ShardWeb.UserLive.MudGameRender
 
   @impl true
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity, Credo.Check.Refactor.Nesting
   def mount(%{"character_id" => character_id} = params, _session, socket) do
-    with {:ok, character} <- get_character_from_params(params),
-         character_name <- get_character_name(params, character),
-         {:ok, character} <- load_character_with_associations(character),
+    with {:ok, character} <- ShardWeb.UserLive.MudGameHelpers.get_character_from_params(params),
+         character_name <- ShardWeb.UserLive.MudGameHelpers.get_character_name(params, character),
+         {:ok, character} <-
+           ShardWeb.UserLive.MudGameHelpers.load_character_with_associations(character),
          {:ok, socket} <- initialize_game_state(socket, character, character_id, character_name) do
       # Use zone_id from URL params if provided, otherwise fall back to character's current_zone_id
       zone_id =
@@ -95,193 +90,7 @@ defmodule ShardWeb.MudGameLive do
   @impl true
   @spec render(any()) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
-    ~H"""
-    <div
-      class="flex flex-col h-screen bg-black text-white overflow-hidden"
-      phx-window-keydown="keypress"
-    >
-      <!-- "phx-window-keydown="keypress" -->
-      <!-- Header -->
-      <header class="bg-gray-900 border-b-2 border-gray-700 p-4 shadow-lg flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-white">{@zone_name}</h1>
-        <div class="text-right">
-          <div class="text-lg font-semibold text-gray-300">
-            {@character_name}
-          </div>
-          <div class="text-sm text-gray-400">
-            Level {@game_state.player_stats.level}
-          </div>
-        </div>
-      </header>
-      
-    <!-- Main Content -->
-      <div class="flex flex-1 overflow-hidden">
-        <!-- Left Panel - Terminal/Chat -->
-        <div class="flex-1 p-4 flex flex-col min-h-0 bg-black">
-          <!-- Tab Navigation -->
-          <div class="flex mb-4 border-b border-gray-700 flex-shrink-0">
-            <button
-              class={[
-                "px-4 py-2 font-medium transition-colors",
-                if(@active_tab == "terminal",
-                  do: "text-white border-b-2 border-white",
-                  else: "text-gray-400 hover:text-gray-200"
-                )
-              ]}
-              phx-click="switch_tab"
-              phx-value-tab="terminal"
-            >
-              Terminal
-            </button>
-            <button
-              class={[
-                "px-4 py-2 font-medium transition-colors",
-                if(@active_tab == "chat",
-                  do: "text-white border-b-2 border-white",
-                  else: "text-gray-400 hover:text-gray-200"
-                )
-              ]}
-              phx-click="switch_tab"
-              phx-value-tab="chat"
-            >
-              Chat
-            </button>
-          </div>
-          
-    <!-- Tab Content -->
-          <div class="flex-1 flex flex-col min-h-0">
-            <.terminal :if={@active_tab == "terminal"} terminal_state={@terminal_state} />
-            <.chat :if={@active_tab == "chat"} chat_state={@chat_state} />
-          </div>
-        </div>
-        
-    <!-- Right Panel - Controls -->
-        <div class="w-100 bg-red-950 border-l-2 border-red-800 px-4 py-4 flex flex-col space-y-4 overflow-y-auto">
-          <.minimap
-            game_state={@game_state}
-            player_position={@game_state.player_position}
-          />
-
-          <.player_stats
-            stats={@game_state.player_stats}
-            hotbar={@game_state.hotbar}
-          />
-
-          <.online_players
-            online_players={@online_players}
-            character_name={@character_name}
-            current_player_level={@game_state.player_stats.level}
-          />
-
-          <h2 class="text-xl font-semibold mb-4 text-white">Game Controls</h2>
-
-          <.control_button
-            text="Character Sheet"
-            icon="hero-user"
-            click={JS.push("open_modal")}
-            value="character_sheet"
-          />
-
-          <.control_button
-            text="Inventory"
-            icon="hero-shopping-bag"
-            click={JS.push("open_modal")}
-            value="inventory"
-          />
-
-          <.control_button
-            text="Quests"
-            icon="hero-document-text"
-            click={JS.push("open_modal")}
-            value="quests"
-          />
-
-          <.control_button
-            text="Map"
-            icon="hero-map"
-            click={JS.push("open_modal")}
-            value="map"
-          />
-
-          <.control_button
-            text="Settings"
-            icon="hero-cog"
-            click={JS.push("open_modal")}
-            value="settings"
-          />
-
-          <%!-- This is used to show char sheet, inventory, etc --%>
-          <.character_sheet
-            :if={@modal_state.show && @modal_state.type == "character_sheet"}
-            game_state={@game_state}
-          />
-
-          <.inventory
-            :if={@modal_state.show && @modal_state.type == "inventory"}
-            game_state={@game_state}
-          />
-
-          <.quests :if={@modal_state.show && @modal_state.type == "quests"} game_state={@game_state} />
-
-          <.map
-            :if={@modal_state.show && @modal_state.type == "map"}
-            game_state={@game_state}
-            available_exits={@available_exits}
-          />
-
-          <.settings
-            :if={@modal_state.show && @modal_state.type == "settings"}
-            game_state={@game_state}
-          />
-        </div>
-      </div>
-      
-    <!-- Footer -->
-      <footer class="bg-gray-900 border-t-2 border-gray-700 p-2 text-center text-sm">
-        <p class="text-gray-400">Dungeon Crawler v1.0</p>
-      </footer>
-    </div>
-
-    <script>
-      // LiveView hooks
-      window.Hooks = window.Hooks || {};
-
-      window.Hooks.ChatScroll = {
-        mounted() {
-          this.scrollToBottom();
-        },
-        updated() {
-          this.scrollToBottom();
-        },
-        scrollToBottom() {
-          // Force scroll to bottom with multiple approaches
-          const element = this.el;
-          element.scrollTop = element.scrollHeight;
-
-          // Also try with a small delay to ensure DOM is fully updated
-          setTimeout(() => {
-            element.scrollTop = element.scrollHeight;
-          }, 10);
-        }
-      };
-    </script>
-
-    <style>
-      @keyframes rainbow {
-        0% { background-position: 0% 50%; }
-        100% { background-position: 200% 50%; }
-      }
-
-      .animate-rainbow {
-        background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet, red);
-        background-size: 200% 200%;
-        animation: rainbow 4.0s linear infinite;
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-      }
-    </style>
-    """
+    render_main_layout(assigns)
   end
 
   @impl true
@@ -346,65 +155,16 @@ defmodule ShardWeb.MudGameLive do
     end
   end
 
-  def handle_event("submit_chat", %{"chat" => %{"text" => message_text}}, socket) do
-    trimmed_message = String.trim(message_text)
-
-    if trimmed_message != "" do
-      # Create message data
-      timestamp =
-        DateTime.utc_now() |> DateTime.to_time() |> Time.to_string() |> String.slice(0, 8)
-
-      message_data = %{
-        timestamp: timestamp,
-        character_name: socket.assigns.character_name,
-        character_id: socket.assigns.game_state.character.id,
-        text: trimmed_message
-      }
-
-      # Broadcast message to all subscribers
-      Phoenix.PubSub.broadcast(Shard.PubSub, "global_chat", {:chat_message, message_data})
-
-      # Clear the input
-      chat_state = Map.put(socket.assigns.chat_state, :current_message, "")
-      socket = assign(socket, chat_state: chat_state)
-
-      {:noreply, socket}
-    else
-      {:noreply, socket}
-    end
+  def handle_event("submit_chat", params, socket) do
+    handle_submit_chat(params, socket)
   end
 
-  def handle_event("update_chat", %{"chat" => %{"text" => message_text}}, socket) do
-    chat_state = Map.put(socket.assigns.chat_state, :current_message, message_text)
-    {:noreply, assign(socket, chat_state: chat_state)}
+  def handle_event("update_chat", params, socket) do
+    handle_update_chat(params, socket)
   end
 
-  def handle_event("save_character_stats", _params, socket) do
-    # Manually save character stats to database
-    case save_character_stats(
-           socket.assigns.game_state.character,
-           socket.assigns.game_state.player_stats
-         ) do
-      {:ok, _character} ->
-        terminal_state =
-          ShardWeb.UserLive.MudGameHelpers.add_message(
-            socket.assigns.terminal_state,
-            "Character stats saved successfully."
-          )
-
-        socket = assign(socket, :terminal_state, terminal_state)
-        {:noreply, socket}
-
-      {:error, _error} ->
-        terminal_state =
-          ShardWeb.UserLive.MudGameHelpers.add_message(
-            socket.assigns.terminal_state,
-            "Failed to save character stats."
-          )
-
-        socket = assign(socket, :terminal_state, terminal_state)
-        {:noreply, socket}
-    end
+  def handle_event("save_character_stats", params, socket) do
+    ShardWeb.UserLive.MudGameHandlers.handle_save_character_stats(params, socket)
   end
 
   def handle_event("use_hotbar_item", params, socket) do
@@ -417,6 +177,18 @@ defmodule ShardWeb.MudGameLive do
   def handle_event("equip_item", params, socket) do
     {:noreply, socket, updated_game_state, terminal_state} = handle_equip_item(params, socket)
     {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
+  end
+
+  def handle_event("drop_item", params, socket) do
+    handle_drop_item(params, socket)
+  end
+
+  def handle_event("show_hotbar_modal", params, socket) do
+    handle_show_hotbar_modal(params, socket)
+  end
+
+  def handle_event("set_hotbar_from_modal", params, socket) do
+    handle_set_hotbar_from_modal(params, socket)
   end
 
   # (C) Handle clicking an exit button to move rooms
@@ -511,85 +283,27 @@ defmodule ShardWeb.MudGameLive do
   end
 
   def handle_info({:chat_message, message_data}, socket) do
-    # Format the message with character_id embedded for color generation
-    formatted_message =
-      "[#{message_data.timestamp}] #{message_data.character_name}:#{message_data.character_id}: #{message_data.text}"
-
-    # Add the message to chat state
-    chat_state = socket.assigns.chat_state
-    updated_messages = chat_state.messages ++ [formatted_message]
-    updated_chat_state = Map.put(chat_state, :messages, updated_messages)
-
-    # Auto-scroll chat to bottom
-    {:noreply, assign(socket, chat_state: updated_chat_state)}
+    handle_chat_message(message_data, socket)
   end
 
   def handle_info({:poke_notification, poker_name}, socket) do
-    terminal_state =
-      ShardWeb.UserLive.MudGameLive2.handle_poke_notification(
-        socket.assigns.terminal_state,
-        poker_name
-      )
-
-    # Auto-scroll terminal to bottom
-    socket = push_event(socket, "scroll_to_bottom", %{target: "terminal-output"})
-
-    {:noreply, assign(socket, terminal_state: terminal_state)}
+    ShardWeb.UserLive.MudGamePubSubHandlers.handle_poke_notification(poker_name, socket)
   end
 
   def handle_info({:player_joined, player_data}, socket) do
-    # Don't add ourselves to the list
-    if player_data.character_id != socket.assigns.game_state.character.id do
-      online_players =
-        [player_data | socket.assigns.online_players]
-        |> Enum.uniq_by(& &1.character_id)
-        |> Enum.sort_by(& &1.name)
-
-      {:noreply, assign(socket, online_players: online_players)}
-    else
-      {:noreply, socket}
-    end
+    handle_player_joined(player_data, socket)
   end
 
   def handle_info({:player_left, character_id}, socket) do
-    online_players =
-      Enum.reject(socket.assigns.online_players, &(&1.character_id == character_id))
-
-    {:noreply, assign(socket, online_players: online_players)}
+    handle_player_left(character_id, socket)
   end
 
   def handle_info({:request_online_players, requesting_character_id}, socket) do
-    # Don't respond to our own request
-    if requesting_character_id != socket.assigns.game_state.character.id do
-      # Send our player data to the requesting player
-      player_data = %{
-        name: socket.assigns.character_name,
-        level: socket.assigns.game_state.player_stats.level,
-        character_id: socket.assigns.game_state.character.id
-      }
-
-      Phoenix.PubSub.broadcast(
-        Shard.PubSub,
-        "player_presence",
-        {:player_response, player_data, requesting_character_id}
-      )
-    end
-
-    {:noreply, socket}
+    handle_request_online_players(requesting_character_id, socket)
   end
 
   def handle_info({:player_response, player_data, requesting_character_id}, socket) do
-    # Only process responses meant for us
-    if requesting_character_id == socket.assigns.game_state.character.id do
-      online_players =
-        [player_data | socket.assigns.online_players]
-        |> Enum.uniq_by(& &1.character_id)
-        |> Enum.sort_by(& &1.name)
-
-      {:noreply, assign(socket, online_players: online_players)}
-    else
-      {:noreply, socket}
-    end
+    handle_player_response(player_data, requesting_character_id, socket)
   end
 
   @impl true
@@ -597,8 +311,8 @@ defmodule ShardWeb.MudGameLive do
     # Clean up PubSub subscriptions when the LiveView process ends
     if socket.assigns[:game_state] && socket.assigns.game_state[:character] do
       character = socket.assigns.game_state.character
-      unsubscribe_from_character_notifications(character.id)
-      unsubscribe_from_player_notifications(character.name)
+      ShardWeb.UserLive.MudGameLive2.unsubscribe_from_character_notifications(character.id)
+      ShardWeb.UserLive.MudGameLive2.unsubscribe_from_player_notifications(character.name)
 
       # Broadcast that this player has left
       Phoenix.PubSub.broadcast(Shard.PubSub, "player_presence", {:player_left, character.id})

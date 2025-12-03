@@ -29,171 +29,53 @@ defmodule ShardWeb.FriendsLive.ChatTab do
     user_id = socket.assigns.current_user_id
     selected_friends = socket.assigns.selected_friends
 
-    if selected_friends == [] do
-      send(self(), {:error, "Please select at least one friend"})
-      {:noreply, socket}
-    else
-      participant_ids = [user_id | selected_friends]
-
-      case Social.find_existing_conversation(participant_ids) do
-        nil ->
-          attrs = if String.trim(name) != "", do: %{name: String.trim(name)}, else: %{}
-
-          case Social.create_conversation(participant_ids, attrs) do
-            {:ok, conversation} ->
-              send(self(), {:conversation_created, conversation, "Conversation created!"})
-              {:noreply, socket}
-
-            {:error, _} ->
-              send(self(), {:error, "Could not create conversation"})
-              {:noreply, socket}
-          end
-
-        existing_conversation ->
-          send(
-            self(),
-            {:existing_conversation_opened, existing_conversation, "Opened existing conversation"}
-          )
-
-          {:noreply, socket}
-      end
+    case validate_selected_friends(selected_friends) do
+      :ok -> handle_conversation_creation(user_id, selected_friends, name, socket)
+      :error -> send_error_and_reply(socket, "Please select at least one friend")
     end
   end
 
-  def handle_event("open_conversation", %{"conversation_id" => conversation_id}, socket) do
-    conversation_id = String.to_integer(conversation_id)
-    send(self(), {:open_conversation, conversation_id})
-    {:noreply, socket}
-  end
+  defp validate_selected_friends([]), do: :error
+  defp validate_selected_friends(_), do: :ok
 
-  def handle_event("update_message", %{"message" => content}, socket) do
-    send(self(), {:update_message, content})
-    {:noreply, socket}
-  end
+  defp handle_conversation_creation(user_id, selected_friends, name, socket) do
+    participant_ids = [user_id | selected_friends]
 
-  def handle_event("send_message", %{"message" => content}, socket) do
-    case socket.assigns.active_conversation do
-      nil ->
-        {:noreply, socket}
-
-      conversation ->
-        user_id = socket.assigns.current_user_id
-
-        case Social.send_message(conversation.id, user_id, content) do
-          {:ok, _message} ->
-            send(self(), {:message_sent})
-            {:noreply, socket}
-
-          {:error, _} ->
-            send(self(), {:error, "Could not send message"})
-            {:noreply, socket}
-        end
+    case Social.find_existing_conversation(participant_ids) do
+      nil -> create_new_conversation(participant_ids, name, socket)
+      existing -> open_existing_conversation(existing, socket)
     end
   end
 
-  def handle_event("show_conversation_settings", _params, socket) do
-    send(self(), {:show_conversation_settings})
-    {:noreply, socket}
-  end
+  defp create_new_conversation(participant_ids, name, socket) do
+    attrs = build_conversation_attrs(name)
 
-  def handle_event("hide_conversation_settings", _params, socket) do
-    send(self(), {:hide_conversation_settings})
-    {:noreply, socket}
-  end
-
-  def handle_event("start_edit_conversation_name", _params, socket) do
-    current_name = socket.assigns.active_conversation.name || ""
-    send(self(), {:start_edit_conversation_name, current_name})
-    {:noreply, socket}
-  end
-
-  def handle_event("cancel_edit_conversation_name", _params, socket) do
-    send(self(), {:cancel_edit_conversation_name})
-    {:noreply, socket}
-  end
-
-  def handle_event("update_conversation_name", %{"name" => name}, socket) do
-    conversation = socket.assigns.active_conversation
-
-    case Social.update_conversation_name(conversation.id, String.trim(name)) do
-      {:ok, updated_conversation} ->
-        send(
-          self(),
-          {:conversation_name_updated, updated_conversation, "Conversation name updated!"}
-        )
-
+    case Social.create_conversation(participant_ids, attrs) do
+      {:ok, conversation} ->
+        send(self(), {:conversation_created, conversation, "Conversation created!"})
         {:noreply, socket}
 
       {:error, _} ->
-        send(self(), {:error, "Could not update conversation name"})
-        {:noreply, socket}
+        send_error_and_reply(socket, "Could not create conversation")
     end
   end
 
-  def handle_event("delete_conversation", _params, socket) do
-    conversation = socket.assigns.active_conversation
-    user_id = socket.assigns.current_user_id
-
-    case Social.delete_conversation(conversation.id, user_id) do
-      {:ok, _} ->
-        send(self(), {:conversation_deleted, "Conversation deleted"})
-        {:noreply, socket}
-
-      {:error, _} ->
-        send(self(), {:error, "Could not delete conversation"})
-        {:noreply, socket}
-    end
+  defp build_conversation_attrs(name) do
+    if String.trim(name) != "", do: %{name: String.trim(name)}, else: %{}
   end
 
-  def handle_event("show_add_participants", _params, socket) do
-    send(self(), {:show_add_participants})
+  defp open_existing_conversation(existing_conversation, socket) do
+    send(
+      self(),
+      {:existing_conversation_opened, existing_conversation, "Opened existing conversation"}
+    )
+
     {:noreply, socket}
   end
 
-  def handle_event("hide_add_participants", _params, socket) do
-    send(self(), {:hide_add_participants})
+  defp send_error_and_reply(socket, message) do
+    send(self(), {:error, message})
     {:noreply, socket}
-  end
-
-  def handle_event("toggle_new_participant_selection", %{"friend_id" => friend_id}, socket) do
-    friend_id = String.to_integer(friend_id)
-    send(self(), {:toggle_new_participant_selection, friend_id})
-    {:noreply, socket}
-  end
-
-  def handle_event("add_participants", _params, socket) do
-    conversation = socket.assigns.active_conversation
-    new_participant_ids = socket.assigns.selected_new_participants
-
-    if new_participant_ids == [] do
-      send(self(), {:error, "Please select at least one participant"})
-      {:noreply, socket}
-    else
-      case Social.add_participants_to_conversation(conversation.id, new_participant_ids) do
-        {:ok, _} ->
-          send(self(), {:participants_added, conversation.id, "Participants added!"})
-          {:noreply, socket}
-
-        {:error, _} ->
-          send(self(), {:error, "Could not add participants"})
-          {:noreply, socket}
-      end
-    end
-  end
-
-  def handle_event("remove_participant", %{"user_id" => user_id}, socket) do
-    conversation = socket.assigns.active_conversation
-    participant_id = String.to_integer(user_id)
-
-    case Social.remove_participant_from_conversation(conversation.id, participant_id) do
-      {:ok, _} ->
-        send(self(), {:participant_removed, conversation.id, "Participant removed"})
-        {:noreply, socket}
-
-      {:error, _} ->
-        send(self(), {:error, "Could not remove participant"})
-        {:noreply, socket}
-    end
   end
 
   @impl true

@@ -217,69 +217,83 @@ defmodule Shard.Social do
   end
 
   def invite_to_party(leader_id, friend_id) do
-    case get_user_party(leader_id) do
-      nil ->
-        {:error, :not_in_party}
-
-      party ->
-        # Check if user is the party leader
-        if party.leader_id != leader_id do
-          {:error, :not_party_leader}
-        else
-          # Check if friend is already in a party
-          case get_user_party(friend_id) do
-            nil ->
-              # Check if there's already a pending invitation
-              existing_invitation =
-                from(pi in PartyInvitation,
-                  where:
-                    pi.party_id == ^party.id and pi.invitee_id == ^friend_id and
-                      pi.status == "pending"
-                )
-                |> Repo.one()
-
-              case existing_invitation do
-                nil ->
-                  # Check if there's a previous invitation we can reuse (declined or accepted)
-                  previous_invitation =
-                    from(pi in PartyInvitation,
-                      where:
-                        pi.party_id == ^party.id and pi.invitee_id == ^friend_id and
-                          pi.status in ["declined", "accepted"]
-                    )
-                    |> Repo.one()
-
-                  case previous_invitation do
-                    nil ->
-                      # Send new party invitation
-                      %PartyInvitation{}
-                      |> PartyInvitation.changeset(%{
-                        party_id: party.id,
-                        inviter_id: leader_id,
-                        invitee_id: friend_id,
-                        status: "pending"
-                      })
-                      |> Repo.insert()
-
-                    previous ->
-                      # Reactivate the previous invitation
-                      previous
-                      |> PartyInvitation.changeset(%{
-                        status: "pending",
-                        inviter_id: leader_id
-                      })
-                      |> Repo.update()
-                  end
-
-                _existing ->
-                  {:error, :invitation_already_sent}
-              end
-
-            _existing_party ->
-              {:error, :friend_already_in_party}
-          end
-        end
+    with {:ok, party} <- get_leader_party(leader_id),
+         :ok <- validate_party_leader(party, leader_id),
+         :ok <- validate_friend_not_in_party(friend_id) do
+      handle_party_invitation(party, leader_id, friend_id)
     end
+  end
+
+  defp get_leader_party(leader_id) do
+    case get_user_party(leader_id) do
+      nil -> {:error, :not_in_party}
+      party -> {:ok, party}
+    end
+  end
+
+  defp validate_party_leader(party, leader_id) do
+    if party.leader_id == leader_id do
+      :ok
+    else
+      {:error, :not_party_leader}
+    end
+  end
+
+  defp validate_friend_not_in_party(friend_id) do
+    case get_user_party(friend_id) do
+      nil -> :ok
+      _existing_party -> {:error, :friend_already_in_party}
+    end
+  end
+
+  defp handle_party_invitation(party, leader_id, friend_id) do
+    case get_existing_invitation(party.id, friend_id) do
+      nil -> handle_previous_or_new_invitation(party, leader_id, friend_id)
+      _existing -> {:error, :invitation_already_sent}
+    end
+  end
+
+  defp get_existing_invitation(party_id, friend_id) do
+    from(pi in PartyInvitation,
+      where: pi.party_id == ^party_id and pi.invitee_id == ^friend_id and pi.status == "pending"
+    )
+    |> Repo.one()
+  end
+
+  defp handle_previous_or_new_invitation(party, leader_id, friend_id) do
+    case get_previous_invitation(party.id, friend_id) do
+      nil -> create_new_invitation(party, leader_id, friend_id)
+      previous -> reactivate_invitation(previous, leader_id)
+    end
+  end
+
+  defp get_previous_invitation(party_id, friend_id) do
+    from(pi in PartyInvitation,
+      where:
+        pi.party_id == ^party_id and pi.invitee_id == ^friend_id and
+          pi.status in ["declined", "accepted"]
+    )
+    |> Repo.one()
+  end
+
+  defp create_new_invitation(party, leader_id, friend_id) do
+    %PartyInvitation{}
+    |> PartyInvitation.changeset(%{
+      party_id: party.id,
+      inviter_id: leader_id,
+      invitee_id: friend_id,
+      status: "pending"
+    })
+    |> Repo.insert()
+  end
+
+  defp reactivate_invitation(previous, leader_id) do
+    previous
+    |> PartyInvitation.changeset(%{
+      status: "pending",
+      inviter_id: leader_id
+    })
+    |> Repo.update()
   end
 
   def disband_party(leader_id) do
@@ -304,25 +318,26 @@ defmodule Shard.Social do
   end
 
   def kick_from_party(leader_id, member_id) do
-    case get_user_party(leader_id) do
-      nil ->
-        {:error, :not_in_party}
+    with {:ok, party} <- get_leader_party(leader_id),
+         :ok <- validate_party_leader(party, leader_id),
+         :ok <- validate_not_kicking_self(leader_id, member_id),
+         {:ok, member} <- get_party_member(party.id, member_id) do
+      Repo.delete(member)
+    end
+  end
 
-      party ->
-        if party.leader_id != leader_id do
-          {:error, :not_party_leader}
-        else
-          # Cannot kick yourself
-          if leader_id == member_id do
-            {:error, :cannot_kick_self}
-          else
-            # Check if member is actually in the party
-            case Repo.get_by(PartyMember, party_id: party.id, user_id: member_id) do
-              nil -> {:error, :member_not_in_party}
-              member -> Repo.delete(member)
-            end
-          end
-        end
+  defp validate_not_kicking_self(leader_id, member_id) do
+    if leader_id == member_id do
+      {:error, :cannot_kick_self}
+    else
+      :ok
+    end
+  end
+
+  defp get_party_member(party_id, member_id) do
+    case Repo.get_by(PartyMember, party_id: party_id, user_id: member_id) do
+      nil -> {:error, :member_not_in_party}
+      member -> {:ok, member}
     end
   end
 
