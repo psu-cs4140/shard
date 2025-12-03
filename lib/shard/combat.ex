@@ -47,13 +47,17 @@ defmodule Shard.Combat do
           end)
 
         # If no combat monsters at position, check game monsters at position
+        game_monsters_here =
+          Enum.filter(game_monsters, fn monster ->
+            monster[:position] == {x, y} && monster[:is_alive] != false
+          end)
+
+        # Use combat monsters if available, otherwise use game monsters
         monsters_here =
           if length(combat_monsters_here) > 0 do
             combat_monsters_here
           else
-            Enum.filter(game_monsters, fn monster ->
-              monster[:position] == {x, y} && monster[:is_alive] != false
-            end)
+            game_monsters_here
           end
 
         case monsters_here do
