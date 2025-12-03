@@ -17,8 +17,8 @@ defmodule Shard.Repo.Migrations.CreateZones do
       timestamps(type: :utc_datetime)
     end
 
-    create unique_index(:zones, [:name])
     create unique_index(:zones, [:slug])
+    create index(:zones, [:name])
     create index(:zones, [:zone_type])
     create index(:zones, [:is_active])
     create index(:zones, [:display_order])

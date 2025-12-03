@@ -61,15 +61,14 @@ defmodule ShardWeb.UserLive.MudGameLiveMultiplayerComponents do
     <!-- Chat Input -->
       <form phx-submit="submit_chat" class="mt-4 flex-shrink-0">
         <div class="flex">
-          <input
-            type="text"
+          <textarea
             name="chat[text]"
-            value={@chat_state.current_message}
             phx-change="update_chat"
             placeholder="Type your message..."
             class="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-l text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
             autocomplete="off"
-          />
+          >
+          >{Phoenix.HTML.html_escape(@chat_state.current_message)}</textarea>
           <button
             type="submit"
             class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-r transition-colors"

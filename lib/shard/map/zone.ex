@@ -21,6 +21,7 @@ defmodule Shard.Map.Zone do
     field :display_order, :integer, default: 0
 
     has_many :rooms, Shard.Map.Room
+    has_many :user_zone_progress, Shard.Users.UserZoneProgress
 
     timestamps(type: :utc_datetime)
   end
@@ -54,7 +55,6 @@ defmodule Shard.Map.Zone do
     |> validate_number(:max_level, greater_than_or_equal_to: 1)
     |> validate_level_range()
     |> validate_number(:display_order, greater_than_or_equal_to: 0)
-    |> unique_constraint(:name)
     |> unique_constraint(:slug)
   end
 

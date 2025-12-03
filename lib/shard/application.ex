@@ -11,6 +11,8 @@ defmodule Shard.Application do
         {DNSCluster, query: Application.get_env(:shard, :dns_cluster_query) || :ignore},
         {Phoenix.PubSub, name: Shard.PubSub},
         {Finch, name: Shard.Finch},
+        {Registry, keys: :unique, name: Shard.Registry},
+        Shard.Combat.Supervisor,
         ShardWeb.Endpoint
       ] ++ local_mailbox_child()
 

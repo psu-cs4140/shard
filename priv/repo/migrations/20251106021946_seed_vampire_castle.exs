@@ -19,6 +19,7 @@ defmodule Shard.Repo.Migrations.SeedVampireManor do
     {:ok, manor_zone} =
       Map.create_zone(%{
         name: "Vampire's Manor",
+        zone_id: "vampires-manor-template",
         slug: "vampires-manor",
         description:
           "A dark and foreboding castle ruled by ancient vampires. Danger lurks in every shadow.",

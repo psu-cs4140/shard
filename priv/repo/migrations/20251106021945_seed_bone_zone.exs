@@ -19,6 +19,7 @@ defmodule Shard.Repo.Migrations.SeedBoneZone do
     {:ok, bone_zone} =
       Map.create_zone(%{
         name: "Beginner Bone Zone",
+        zone_id: "beginner-bone-zone-template",
         slug: "bone-zone",
         description:
           "A quiet cavern lined with old bones — eerie but safe enough for a first adventure.",
@@ -59,7 +60,7 @@ defmodule Shard.Repo.Migrations.SeedBoneZone do
       {5, 4, "Hallway14", "standard"},
       {5, 5, "Grand Statue", "standard"},
       {6, 0, "Treasure Room", "treasure_room"},
-      {7, 0, "Exit", "standard"},
+      {7, 0, "Exit", "end_room"},
       {6, 3, "Hallway16", "standard"},
       {7, 3, "Barracks", "standard"}
     ]
@@ -91,6 +92,7 @@ defmodule Shard.Repo.Migrations.SeedBoneZone do
     {:ok, forest_zone} =
       Map.create_zone(%{
         name: "Elven Forest",
+        zone_id: "elven-forest-template",
         slug: "elven-forest",
         description:
           "An ancient forest inhabited by elves. The trees whisper secrets of old magic.",

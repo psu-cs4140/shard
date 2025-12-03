@@ -30,8 +30,15 @@ defmodule ShardWeb.MudGameLive do
          character_name <- get_character_name(params, character),
          {:ok, character} <- load_character_with_associations(character),
          {:ok, socket} <- initialize_game_state(socket, character, character_id, character_name) do
-      # Ensure player position is saved for first-time zone entry
-      zone_id = character.current_zone_id || 1
+      # Use zone_id from URL params if provided, otherwise fall back to character's current_zone_id
+      zone_id =
+        case params["zone_id"] do
+          nil -> character.current_zone_id || 1
+          zone_id_str -> String.to_integer(zone_id_str)
+        end
+
+      # Load the zone information to get the zone name
+      zone = Shard.Map.get_zone!(zone_id)
       {x, y} = socket.assigns.game_state.player_position
 
       case Shard.Map.get_room_by_coordinates(zone_id, x, y, 0) do
@@ -61,7 +68,7 @@ defmodule ShardWeb.MudGameLive do
       Phoenix.PubSub.subscribe(Shard.PubSub, "player_presence")
 
       # Initialize online players list
-      socket = assign(socket, online_players: [])
+      socket = assign(socket, online_players: [], zone_name: zone.name)
 
       # Request current online players from existing players
       Phoenix.PubSub.broadcast(
