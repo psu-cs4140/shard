@@ -24,10 +24,15 @@ defmodule ShardWeb.ZoneSelectionLive do
       end
 
     # Get template zones (zones ending with "-template")
+    all_zones = Map.list_active_zones()
+    IO.inspect(all_zones, label: "All zones found")
+    
     template_zones =
-      Map.list_active_zones()
+      all_zones
       |> Enum.filter(&String.ends_with?(&1.slug, "-template"))
       |> Enum.sort_by(& &1.display_order)
+    
+    IO.inspect(template_zones, label: "Template zones after filtering")
 
     # Get user zone progress if character exists
     zone_progress_map =
