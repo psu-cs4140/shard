@@ -4,7 +4,7 @@ defmodule ShardWeb.AdminLive.Zones do
   """
   use ShardWeb, :live_view
 
-  alias Shard.Map
+  alias Shard.Map, as: GameMap
   alias Shard.Map.Zone
 
   @impl true
@@ -12,7 +12,7 @@ defmodule ShardWeb.AdminLive.Zones do
     current_user = socket.assigns[:current_scope] && socket.assigns.current_scope.user
 
     if current_user && current_user.admin do
-      zones = Map.list_zones()
+      zones = GameMap.list_zones()
 
       {:ok,
        socket
@@ -71,7 +71,7 @@ defmodule ShardWeb.AdminLive.Zones do
                     </span>
                     <span>
                       <strong>Rooms:</strong>
-                      {length(Map.list_rooms_by_zone(zone.id))}
+                      {length(GameMap.list_rooms_by_zone(zone.id))}
                     </span>
                   </div>
                 </div>
@@ -187,7 +187,7 @@ defmodule ShardWeb.AdminLive.Zones do
 
   @impl true
   def handle_event("new_zone", _params, socket) do
-    changeset = Map.change_zone(%Zone{})
+    changeset = GameMap.change_zone(%Zone{})
 
     {:noreply,
      socket
@@ -198,7 +198,7 @@ defmodule ShardWeb.AdminLive.Zones do
 
   @impl true
   def handle_event("new_template_zone", _params, socket) do
-    changeset = Map.change_zone(%Zone{})
+    changeset = GameMap.change_zone(%Zone{})
 
     {:noreply,
      socket
@@ -209,8 +209,8 @@ defmodule ShardWeb.AdminLive.Zones do
 
   @impl true
   def handle_event("edit_zone", %{"id" => id}, socket) do
-    zone = Map.get_zone!(id)
-    changeset = Map.change_zone(zone)
+    zone = GameMap.get_zone!(id)
+    changeset = GameMap.change_zone(zone)
     is_template = String.ends_with?(zone.slug, "-template")
 
     {:noreply,
@@ -224,7 +224,7 @@ defmodule ShardWeb.AdminLive.Zones do
   def handle_event("validate_zone", %{"zone" => zone_params}, socket) do
     changeset =
       (socket.assigns.changeset.data || %Zone{})
-      |> Map.change_zone(zone_params)
+      |> GameMap.change_zone(zone_params)
 
     changeset = %{changeset | action: :validate}
 
@@ -256,14 +256,14 @@ defmodule ShardWeb.AdminLive.Zones do
 
     case socket.assigns.editing do
       :new ->
-        case Map.create_zone(modified_params) do
+        case GameMap.create_zone(modified_params) do
           {:ok, _zone} ->
             {:noreply,
              socket
              |> put_flash(:info, "Zone created successfully")
              |> assign(:editing, nil)
              |> assign(:changeset, nil)
-             |> assign(:zones, Map.list_zones())}
+             |> assign(:zones, GameMap.list_zones())}
 
           {:error, changeset} ->
             {:noreply, assign(socket, :changeset, changeset)}
@@ -272,14 +272,14 @@ defmodule ShardWeb.AdminLive.Zones do
       :edit ->
         zone = socket.assigns.changeset.data
 
-        case Map.update_zone(zone, modified_params) do
+        case GameMap.update_zone(zone, modified_params) do
           {:ok, _zone} ->
             {:noreply,
              socket
              |> put_flash(:info, "Zone updated successfully")
              |> assign(:editing, nil)
              |> assign(:changeset, nil)
-             |> assign(:zones, Map.list_zones())}
+             |> assign(:zones, GameMap.list_zones())}
 
           {:error, changeset} ->
             {:noreply, assign(socket, :changeset, changeset)}
@@ -298,14 +298,14 @@ defmodule ShardWeb.AdminLive.Zones do
 
   @impl true
   def handle_event("delete_zone", %{"id" => id}, socket) do
-    zone = Map.get_zone!(id)
+    zone = GameMap.get_zone!(id)
 
-    case Map.delete_zone(zone) do
+    case GameMap.delete_zone(zone) do
       {:ok, _zone} ->
         {:noreply,
          socket
          |> put_flash(:info, "Zone deleted successfully")
-         |> assign(:zones, Map.list_zones())}
+         |> assign(:zones, GameMap.list_zones())}
 
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Failed to delete zone")}
