@@ -46,6 +46,7 @@ defmodule ShardWeb.UserLive.Commands1 do
           "  equipped - Show your currently equipped items",
           "  equip \"item_name\" - Equip an item from your inventory",
           "  unequip \"item_name\" - Unequip an equipped item",
+          "  use \"item_name\" - Use an item from your inventory",
           "  north/south/east/west - Move in cardinal directions",
           "  northeast/southeast/northwest/southwest - Move diagonally",
           "  Shortcuts: n/s/e/w/ne/se/nw/sw",
@@ -399,9 +400,16 @@ defmodule ShardWeb.UserLive.Commands1 do
                                                 )
 
                                               :error ->
-                                                {[
-                                                   "Unknown command: '#{command}'. Type 'help' for available commands."
-                                                 ], game_state}
+                                                # Check if it's a use command
+                                                case parse_use_command(command) do
+                                                  {:ok, item_name} ->
+                                                    execute_use_command(game_state, item_name)
+
+                                                  :error ->
+                                                    {[
+                                                       "Unknown command: '#{command}'. Type 'help' for available commands."
+                                                     ], game_state}
+                                                end
                                             end
                                         end
                                     end
@@ -455,6 +463,71 @@ defmodule ShardWeb.UserLive.Commands1 do
       end
     rescue
       _ -> []
+    end
+  end
+
+  # Parse use command to extract item name
+  defp parse_use_command(command) do
+    # Match patterns like: use "item name", use 'item name', use item_name
+    cond do
+      # Match use "item name" or use 'item name'
+      Regex.match?(~r/^use\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^use\s+["'](.+)["']\s*$/i, command) do
+          [_, item_name] -> {:ok, String.trim(item_name)}
+          _ -> :error
+        end
+
+      # Match use item_name (single word, no quotes)
+      Regex.match?(~r/^use\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^use\s+(\w+)\s*$/i, command) do
+          [_, item_name] -> {:ok, String.trim(item_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
+    end
+  end
+
+  # Execute use command with a specific item name
+  defp execute_use_command(game_state, item_name) do
+    # Find the item in inventory by name (case-insensitive)
+    target_item =
+      Enum.find(game_state.inventory_items, fn inv_item ->
+        item_display_name = get_item_display_name(inv_item)
+        String.downcase(item_display_name) == String.downcase(item_name)
+      end)
+
+    case target_item do
+      nil ->
+        if Enum.empty?(game_state.inventory_items) do
+          {["Your inventory is empty."], game_state}
+        else
+          available_items = 
+            game_state.inventory_items
+            |> Enum.map(&get_item_display_name/1)
+            |> Enum.join(", ")
+
+          response = [
+            "You don't have an item named '#{item_name}' in your inventory.",
+            "Available items: #{available_items}"
+          ]
+
+          {response, game_state}
+        end
+
+      item ->
+        # Use the item helper function
+        ShardWeb.UserLive.ItemHelpers.use_item(game_state, item)
+    end
+  end
+
+  # Helper function to get item display name from inventory item
+  defp get_item_display_name(inv_item) do
+    cond do
+      inv_item.item && inv_item.item.name -> inv_item.item.name
+      inv_item.name -> inv_item.name
+      true -> "Unknown Item"
     end
   end
 end
