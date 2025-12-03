@@ -174,7 +174,7 @@ defmodule ShardWeb.MudGameLive do
   end
 
   def handle_event("save_character_stats", params, socket) do
-    handle_save_character_stats(params, socket)
+    ShardWeb.UserLive.MudGameHandlers.handle_save_character_stats(params, socket)
   end
 
   def handle_event("use_hotbar_item", params, socket) do
