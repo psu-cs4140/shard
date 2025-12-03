@@ -23,16 +23,15 @@ defmodule ShardWeb.ZoneSelectionLive do
         nil
       end
 
-    # Get template zones (zones ending with "-template")
+    # Get all active zones
     all_zones = Map.list_active_zones()
     IO.inspect(all_zones, label: "All zones found")
     
-    template_zones =
+    zones =
       all_zones
-      |> Enum.filter(&String.ends_with?(&1.slug, "-template"))
       |> Enum.sort_by(& &1.display_order)
     
-    IO.inspect(template_zones, label: "Template zones after filtering")
+    IO.inspect(zones, label: "Zones after sorting")
 
     # Get user zone progress if character exists
     zone_progress_map =
@@ -51,7 +50,7 @@ defmodule ShardWeb.ZoneSelectionLive do
 
     {:noreply,
      socket
-     |> assign(:template_zones, template_zones)
+     |> assign(:zones, zones)
      |> assign(:character, character)
      |> assign(:zone_progress_map, zone_progress_map)
      |> assign(:page_title, "Select Zone")}
@@ -76,7 +75,7 @@ defmodule ShardWeb.ZoneSelectionLive do
         </.header>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
-          <%= for zone <- @template_zones do %>
+          <%= for zone <- @zones do %>
             <% zone_progress = Kernel.get_in(@zone_progress_map, [zone.id]) || "locked" %>
             <% is_accessible = zone_progress in ["in_progress", "completed"] %>
             <div class={[
@@ -228,7 +227,7 @@ defmodule ShardWeb.ZoneSelectionLive do
           <% end %>
         </div>
 
-        <%= if Enum.empty?(@template_zones) do %>
+        <%= if Enum.empty?(@zones) do %>
           <div class="alert bg-gray-100 border-2 border-gray-300 text-gray-800 mt-12 rounded-2xl shadow-lg">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -260,10 +259,10 @@ defmodule ShardWeb.ZoneSelectionLive do
     character = socket.assigns.character
     _user = Users.get_user_by_character_id(character.id)
 
-    # Find the template zone by name
-    template_zone = Enum.find(socket.assigns.template_zones, &(&1.name == zone_name))
+    # Find the zone by name
+    zone = Enum.find(socket.assigns.zones, &(&1.name == zone_name))
 
-    case template_zone do
+    case zone do
       nil ->
         {:noreply,
          socket
@@ -274,8 +273,8 @@ defmodule ShardWeb.ZoneSelectionLive do
         zone_progress = socket.assigns.zone_progress_map[zone.id] || "locked"
 
         if zone_progress in ["in_progress", "completed"] do
-          # For singleplayer, we can directly use the template zone
-          # Update character's current zone to point to the template zone
+          # For singleplayer, we can directly use the zone
+          # Update character's current zone to point to the zone
           case Characters.update_character(character, %{current_zone_id: zone.id}) do
             {:ok, updated_character} ->
               handle_admin_stick_granting(character)
