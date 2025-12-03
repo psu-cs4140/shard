@@ -26,7 +26,7 @@ defmodule ShardWeb.ZoneSelectionLive do
     # Get template zones (zones ending with "-template")
     template_zones =
       Map.list_active_zones()
-      |> Enum.filter(&String.ends_with?(&1.slug, "-template"))
+      |> Enum.filter(&String.ends_with?(&1.zone_id, "-template"))
       |> Enum.sort_by(& &1.display_order)
 
     # Get user zone progress if character exists

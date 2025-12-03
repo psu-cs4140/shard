@@ -11,6 +11,7 @@ defmodule Shard.Map.Zone do
   schema "zones" do
     field :name, :string
     field :slug, :string
+    field :zone_id, :string
     field :description, :string
     field :zone_type, :string, default: "standard"
     field :min_level, :integer, default: 1
@@ -34,6 +35,7 @@ defmodule Shard.Map.Zone do
     |> cast(attrs, [
       :name,
       :slug,
+      :zone_id,
       :description,
       :zone_type,
       :min_level,
@@ -43,10 +45,14 @@ defmodule Shard.Map.Zone do
       :properties,
       :display_order
     ])
-    |> validate_required([:name, :slug])
+    |> validate_required([:name, :slug, :zone_id])
     |> validate_length(:name, min: 2, max: 100)
     |> validate_length(:slug, min: 2, max: 100)
     |> validate_format(:slug, ~r/^[a-z0-9-]+$/,
+      message: "must be lowercase alphanumeric with hyphens"
+    )
+    |> validate_length(:zone_id, min: 2, max: 100)
+    |> validate_format(:zone_id, ~r/^[a-z0-9-]+$/,
       message: "must be lowercase alphanumeric with hyphens"
     )
     |> validate_length(:description, max: 1000)
@@ -56,6 +62,7 @@ defmodule Shard.Map.Zone do
     |> validate_level_range()
     |> validate_number(:display_order, greater_than_or_equal_to: 0)
     |> unique_constraint(:slug)
+    |> unique_constraint(:zone_id)
   end
 
   defp validate_level_range(changeset) do
