@@ -108,9 +108,13 @@ defmodule ShardWeb.AdminLive.Zones do
 
     <.modal :if={@editing} id="zone-modal" show on_cancel={JS.push("cancel_zone")}>
       <.header>
-        {if @changeset.data.id, do: "Edit Zone", else: if(@is_template, do: "New Template Zone", else: "New Zone")}
+        {if @changeset.data.id,
+          do: "Edit Zone",
+          else: if(@is_template, do: "New Template Zone", else: "New Zone")}
         <:subtitle>
-          {if @is_template, do: "Configure template zone details (slug will automatically end with '-template')", else: "Configure zone details"}
+          {if @is_template,
+            do: "Configure template zone details (slug will automatically end with '-template')",
+            else: "Configure zone details"}
         </:subtitle>
       </.header>
 
@@ -230,17 +234,21 @@ defmodule ShardWeb.AdminLive.Zones do
   @impl true
   def handle_event("save_zone", %{"zone" => zone_params}, socket) do
     # Modify slug if this is a template zone
-    modified_params = 
+    modified_params =
       if socket.assigns[:is_template] do
         case zone_params["slug"] do
-          nil -> zone_params
+          nil ->
+            zone_params
+
           slug when is_binary(slug) ->
             if String.ends_with?(slug, "-template") do
               zone_params
             else
               Map.put(zone_params, "slug", slug <> "-template")
             end
-          _ -> zone_params
+
+          _ ->
+            zone_params
         end
       else
         zone_params
