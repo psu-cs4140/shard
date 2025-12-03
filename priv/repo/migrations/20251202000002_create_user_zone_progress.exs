@@ -3,11 +3,11 @@ defmodule Shard.Repo.Migrations.CreateUserZoneProgress do
 
   def change do
     create table(:user_zone_progress) do
-      add :progress, :string, null: false, default: "locked"
       add :user_id, references(:users, on_delete: :delete_all), null: false
       add :zone_id, references(:zones, on_delete: :delete_all), null: false
+      add :progress, :string, null: false, default: "locked"
 
-      timestamps(type: :utc_datetime)
+      timestamps()
     end
 
     create unique_index(:user_zone_progress, [:user_id, :zone_id])
