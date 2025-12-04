@@ -19,8 +19,7 @@ defmodule Shard.Repo.Migrations.SeedBoneZone do
     {:ok, bone_zone} =
       Map.create_zone(%{
         name: "Beginner Bone Zone",
-        zone_id: "beginner-bone-zone-template",
-        slug: "bone-zone",
+        slug: "beginner-bone-zone-template",
         description:
           "A quiet cavern lined with old bones — eerie but safe enough for a first adventure.",
         zone_type: "dungeon",
@@ -92,8 +91,7 @@ defmodule Shard.Repo.Migrations.SeedBoneZone do
     {:ok, forest_zone} =
       Map.create_zone(%{
         name: "Elven Forest",
-        zone_id: "elven-forest-template",
-        slug: "elven-forest",
+        slug: "elven-forest-template",
         description:
           "An ancient forest inhabited by elves. The trees whisper secrets of old magic.",
         zone_type: "wilderness",
@@ -210,16 +208,18 @@ defmodule Shard.Repo.Migrations.SeedBoneZone do
 
       if from_room && to_room do
         # Determine if this door should be locked
+        # ||
         is_locked =
-          (from_x == 2 && from_y == 3 && to_x == 2 && to_y == 4) ||
-            (from_x == 5 && from_y == 0 && to_x == 5 && to_y == 1)
+          from_x == 2 && from_y == 3 && to_x == 2 && to_y == 4
+
+        # (from_x == 5 && from_y == 0 && to_x == 5 && to_y == 1)
 
         door_type = if is_locked, do: "locked_gate", else: "standard"
 
         key_required =
           cond do
             from_x == 2 && from_y == 3 && to_x == 2 && to_y == 4 -> "Bone Zone Key"
-            from_x == 5 && from_y == 0 && to_x == 5 && to_y == 1 -> "Treasure Room Key"
+            # from_x == 5 && from_y == 0 && to_x == 5 && to_y == 1 -> "Treasure Room Key"
             true -> nil
           end
 
@@ -313,7 +313,7 @@ defmodule Shard.Repo.Migrations.SeedBoneZone do
     IO.puts("Removing Bone Zone and Elven Forest...")
 
     # Delete zones by slug (this will cascade to rooms and doors)
-    ["bone-zone", "elven-forest"]
+    ["beginner-bone-zone-template", "elven-forest-template"]
     |> Enum.each(fn slug ->
       case Repo.get_by(Zone, slug: slug) do
         nil ->
