@@ -197,6 +197,7 @@ defmodule Shard.Items do
   """
   def sell_item(character, inventory_id) do
     alias Ecto.Multi
+    # alias Shard.Characters
     alias Shard.Characters.Character
 
     inventory_item =
