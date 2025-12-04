@@ -21,28 +21,11 @@ defmodule Shard.Application do
     Supervisor.start_link(children, opts)
   end
 
-  # Start Swoosh's in-memory mailbox when adapter is Local **and**
-  # the process isn't already running (dev usually starts it for you).
+  # Swoosh automatically starts the Local.Storage.Memory process when
+  # config :swoosh, local: true is set in dev.exs
+  # No need to manually start it here
   defp local_mailbox_child do
-    case Application.get_env(:shard, Shard.Mailer)[:adapter] do
-      Swoosh.Adapters.Local ->
-        case :global.whereis_name(Swoosh.Adapters.Local.Storage.Memory) do
-          :undefined ->
-            [
-              %{
-                id: Swoosh.Adapters.Local.Storage.Memory,
-                start: {Swoosh.Adapters.Local.Storage.Memory, :start, [[]]},
-                type: :worker
-              }
-            ]
-
-          _pid ->
-            []
-        end
-
-      _ ->
-        []
-    end
+    []
   end
 
   @impl true
