@@ -30,7 +30,7 @@ defmodule Shard.Mining do
   }
 
   # Tick interval in seconds
-  @tick_interval 10
+  @tick_interval 6
 
   @doc """
   Starts mining for a character.
