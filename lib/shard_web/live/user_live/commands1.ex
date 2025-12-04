@@ -477,7 +477,11 @@ defmodule ShardWeb.UserLive.Commands1 do
   end
 
   defp refresh_inventory(game_state) do
-    %{game_state | inventory_items: ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)}
+    %{
+      game_state
+      | inventory_items:
+          ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+    }
   end
 
   # Helper function to get NPC descriptions for a location

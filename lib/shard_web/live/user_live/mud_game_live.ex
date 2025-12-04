@@ -119,7 +119,7 @@ defmodule ShardWeb.MudGameLive do
      assign(socket,
        game_state: updated_game_state,
        terminal_state: terminal_state,
-      available_exits: compute_available_exits(player_position, updated_game_state)
+       available_exits: compute_available_exits(player_position, updated_game_state)
      )}
   end
 
@@ -170,8 +170,12 @@ defmodule ShardWeb.MudGameLive do
   def handle_event("use_hotbar_item", params, socket), do: handle_use_hotbar_item(params, socket)
   def handle_event("equip_item", params, socket), do: handle_equip_item(params, socket)
   def handle_event("drop_item", params, socket), do: handle_drop_item(params, socket)
-  def handle_event("show_hotbar_modal", params, socket), do: handle_show_hotbar_modal(params, socket)
-  def handle_event("set_hotbar_from_modal", params, socket), do: handle_set_hotbar_from_modal(params, socket)
+
+  def handle_event("show_hotbar_modal", params, socket),
+    do: handle_show_hotbar_modal(params, socket)
+
+  def handle_event("set_hotbar_from_modal", params, socket),
+    do: handle_set_hotbar_from_modal(params, socket)
 
   # (C) Handle clicking an exit button to move rooms
   @impl true
@@ -190,8 +194,17 @@ defmodule ShardWeb.MudGameLive do
   @impl true
   def handle_info(:mining_tick, socket) do
     socket =
-      case {socket.assigns.game_state.mining_active, Mining.apply_mining_ticks(socket.assigns.game_state.character)} do
-        {true, {:ok, %{character: char, mining_inventory: _inv, ticks_applied: _ticks, gained_resources: gained}}} when map_size(gained) > 0 ->
+      case {socket.assigns.game_state.mining_active,
+            Mining.apply_mining_ticks(socket.assigns.game_state.character)} do
+        {true,
+         {:ok,
+          %{
+            character: char,
+            mining_inventory: _inv,
+            ticks_applied: _ticks,
+            gained_resources: gained
+          }}}
+        when map_size(gained) > 0 ->
           messages =
             Enum.flat_map(gained, fn
               {:stone, qty} when qty > 0 -> ["You have acquired #{qty} Stone!"]
@@ -340,7 +353,11 @@ defmodule ShardWeb.MudGameLive do
   end
 
   defp refresh_inventory(game_state, character) do
-    %{game_state | character: character, inventory_items: ShardWeb.UserLive.CharacterHelpers.load_character_inventory(character)}
+    %{
+      game_state
+      | character: character,
+        inventory_items: ShardWeb.UserLive.CharacterHelpers.load_character_inventory(character)
+    }
   end
 
   defp maybe_add_mines_welcome(socket, zone) do

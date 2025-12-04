@@ -44,7 +44,9 @@ defmodule Shard.MiningTest do
 
     test "returns 0 ticks when mining_started_at is nil" do
       character = character_fixture()
-      {:ok, updated} = Characters.update_character(character, %{is_mining: true, mining_started_at: nil})
+
+      {:ok, updated} =
+        Characters.update_character(character, %{is_mining: true, mining_started_at: nil})
 
       {:ok, result} = Mining.apply_mining_ticks(updated)
 
@@ -56,7 +58,9 @@ defmodule Shard.MiningTest do
       character = character_fixture()
       # Set mining_started_at to 30 seconds ago (5 ticks at 6 seconds each)
       past_time = DateTime.add(DateTime.utc_now(), -30, :second)
-      {:ok, mining_char} = Characters.update_character(character, %{is_mining: true, mining_started_at: past_time})
+
+      {:ok, mining_char} =
+        Characters.update_character(character, %{is_mining: true, mining_started_at: past_time})
 
       {:ok, result} = Mining.apply_mining_ticks(mining_char)
 
@@ -64,14 +68,19 @@ defmodule Shard.MiningTest do
       assert result.gained_resources != %{}
       # Verify that some resources were added
       inventory = result.mining_inventory
-      total_resources = inventory.stone + inventory.coal + inventory.copper + inventory.iron + inventory.gems
+
+      total_resources =
+        inventory.stone + inventory.coal + inventory.copper + inventory.iron + inventory.gems
+
       assert total_resources == 5
     end
 
     test "updates mining_started_at to current time after applying ticks" do
       character = character_fixture()
       past_time = DateTime.add(DateTime.utc_now(), -30, :second)
-      {:ok, mining_char} = Characters.update_character(character, %{is_mining: true, mining_started_at: past_time})
+
+      {:ok, mining_char} =
+        Characters.update_character(character, %{is_mining: true, mining_started_at: past_time})
 
       {:ok, result} = Mining.apply_mining_ticks(mining_char)
 
@@ -84,8 +93,11 @@ defmodule Shard.MiningTest do
   describe "stop_mining/1" do
     test "applies pending ticks and sets is_mining to false" do
       character = character_fixture()
-      past_time = DateTime.add(DateTime.utc_now(), -18, :second) # 3 ticks
-      {:ok, mining_char} = Characters.update_character(character, %{is_mining: true, mining_started_at: past_time})
+      # 3 ticks
+      past_time = DateTime.add(DateTime.utc_now(), -18, :second)
+
+      {:ok, mining_char} =
+        Characters.update_character(character, %{is_mining: true, mining_started_at: past_time})
 
       {:ok, result} = Mining.stop_mining(mining_char)
 
@@ -93,9 +105,11 @@ defmodule Shard.MiningTest do
       assert result.character.is_mining == false
       assert result.character.mining_started_at == nil
       # Verify resources were added
-      total_resources = result.mining_inventory.stone + result.mining_inventory.coal +
-                        result.mining_inventory.copper + result.mining_inventory.iron +
-                        result.mining_inventory.gems
+      total_resources =
+        result.mining_inventory.stone + result.mining_inventory.coal +
+          result.mining_inventory.copper + result.mining_inventory.iron +
+          result.mining_inventory.gems
+
       assert total_resources == 3
     end
   end
@@ -173,13 +187,20 @@ defmodule Shard.MiningTest do
     test "calculates correct gold value for inventory" do
       character = character_fixture()
       {:ok, inventory} = Mining.get_or_create_mining_inventory(character)
-      {:ok, updated_inventory} = Mining.add_resources(inventory, %{
-        stone: 10,  # 10 * 1 = 10
-        coal: 5,    # 5 * 2 = 10
-        copper: 2,  # 2 * 4 = 8
-        iron: 1,    # 1 * 8 = 8
-        gem: 1      # 1 * 20 = 20
-      })
+
+      {:ok, updated_inventory} =
+        Mining.add_resources(inventory, %{
+          # 10 * 1 = 10
+          stone: 10,
+          # 5 * 2 = 10
+          coal: 5,
+          # 2 * 4 = 8
+          copper: 2,
+          # 1 * 8 = 8
+          iron: 1,
+          # 1 * 20 = 20
+          gem: 1
+        })
 
       total = Mining.total_gold_value(updated_inventory)
       assert total == 56
@@ -199,8 +220,11 @@ defmodule Shard.MiningTest do
 
     test "returns status with pending ticks for a mining character" do
       character = character_fixture()
-      past_time = DateTime.add(DateTime.utc_now(), -18, :second) # 3 ticks
-      {:ok, mining_char} = Characters.update_character(character, %{is_mining: true, mining_started_at: past_time})
+      # 3 ticks
+      past_time = DateTime.add(DateTime.utc_now(), -18, :second)
+
+      {:ok, mining_char} =
+        Characters.update_character(character, %{is_mining: true, mining_started_at: past_time})
 
       {:ok, status} = Mining.get_mining_status(mining_char)
 
@@ -217,8 +241,11 @@ defmodule Shard.MiningTest do
 
     test "calculates pending ticks correctly" do
       character = character_fixture()
-      past_time = DateTime.add(DateTime.utc_now(), -25, :second) # 4 ticks (25 / 6 = 4)
-      {:ok, mining_char} = Characters.update_character(character, %{is_mining: true, mining_started_at: past_time})
+      # 4 ticks (25 / 6 = 4)
+      past_time = DateTime.add(DateTime.utc_now(), -25, :second)
+
+      {:ok, mining_char} =
+        Characters.update_character(character, %{is_mining: true, mining_started_at: past_time})
 
       pending = Mining.calculate_pending_ticks(mining_char)
       assert pending == 4

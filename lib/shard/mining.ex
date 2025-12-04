@@ -126,7 +126,13 @@ defmodule Shard.Mining do
     # Not mining, return inventory unchanged
     case get_or_create_mining_inventory(character) do
       {:ok, inventory} ->
-        {:ok, %{character: character, mining_inventory: inventory, ticks_applied: 0, gained_resources: %{}}}
+        {:ok,
+         %{
+           character: character,
+           mining_inventory: inventory,
+           ticks_applied: 0,
+           gained_resources: %{}
+         }}
 
       {:error, reason} ->
         {:error, reason}
@@ -137,7 +143,13 @@ defmodule Shard.Mining do
     # No start time, return inventory unchanged
     case get_or_create_mining_inventory(character) do
       {:ok, inventory} ->
-        {:ok, %{character: character, mining_inventory: inventory, ticks_applied: 0, gained_resources: %{}}}
+        {:ok,
+         %{
+           character: character,
+           mining_inventory: inventory,
+           ticks_applied: 0,
+           gained_resources: %{}
+         }}
 
       {:error, reason} ->
         {:error, reason}
@@ -242,11 +254,14 @@ defmodule Shard.Mining do
   """
   @spec roll_resource() :: :stone | :coal | :copper | :iron | :gem
   def roll_resource do
-    total_weight = Enum.reduce(@resource_weights, 0, fn {_resource, weight}, acc -> acc + weight end)
+    total_weight =
+      Enum.reduce(@resource_weights, 0, fn {_resource, weight}, acc -> acc + weight end)
+
     rand = :rand.uniform(total_weight)
 
     {resource, _} =
-      Enum.reduce_while(@resource_weights, {nil, 0}, fn {resource, weight}, {_current, accumulated} ->
+      Enum.reduce_while(@resource_weights, {nil, 0}, fn {resource, weight},
+                                                        {_current, accumulated} ->
         new_accumulated = accumulated + weight
 
         if rand <= new_accumulated do
