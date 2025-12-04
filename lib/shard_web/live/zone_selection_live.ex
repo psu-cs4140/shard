@@ -44,7 +44,7 @@ defmodule ShardWeb.ZoneSelectionLive do
       else
         %{}
       end
-      |> ensure_mines_accessible(zones)
+      |> ensure_special_zones_accessible(zones)
 
     {:noreply,
      socket
@@ -269,18 +269,28 @@ defmodule ShardWeb.ZoneSelectionLive do
          |> put_flash(:error, "Zone '#{zone_name}' not found. Please try again.")}
 
       zone ->
-        # Special handling for Mines zone
-        if zone.slug == "mines" do
-          handle_mines_entry(socket, character, zone)
-        else
-          handle_standard_zone_entry(socket, character, zone, instance_type)
+        cond do
+          zone.slug == "mines" ->
+            handle_mines_entry(socket, character, zone)
+
+          zone.slug == "whispering_forest" ->
+            handle_forest_entry(socket, character, zone, instance_type)
+
+          true ->
+            handle_standard_zone_entry(socket, character, zone, instance_type)
         end
     end
   end
 
-  # Ensure Mines is always accessible regardless of progress or level
-  defp ensure_mines_accessible(progress_map, zones) do
-    case Enum.find(zones, &(&1.slug == "mines")) do
+  # Ensure Mines and Whispering Forest are always accessible regardless of progress or level
+  defp ensure_special_zones_accessible(progress_map, zones) do
+    progress_map
+    |> allow_zone(zones, "mines")
+    |> allow_zone(zones, "whispering_forest")
+  end
+
+  defp allow_zone(progress_map, zones, slug) do
+    case Enum.find(zones, &(&1.slug == slug)) do
       nil -> progress_map
       %{id: id} -> Elixir.Map.put(progress_map, id, "in_progress")
     end
@@ -305,6 +315,26 @@ defmodule ShardWeb.ZoneSelectionLive do
         {:noreply,
          socket
          |> put_flash(:error, "Failed to enter the Mines. Please try again.")}
+    end
+  end
+
+  defp handle_forest_entry(socket, character, zone, _instance_type) do
+    case Characters.update_character(character, %{current_zone_id: zone.id}) do
+      {:ok, updated_character} ->
+        {:noreply,
+         socket
+         |> put_flash(
+           :info,
+           "You step foot into the Whispering Forest.\nYour nose fills with the scent of pine and fresh earth.\nHere you can chop wood, gather sticks and seeds, and even find mushrooms and rare resin that you can collect and sell for gold.\nType chop start to start chopping\nType chop stop to stop chopping"
+         )
+         |> push_navigate(
+           to: ~p"/play/#{updated_character.id}?zone_id=#{zone.id}&refresh_inventory=true"
+         )}
+
+      {:error, _changeset} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to enter the Whispering Forest. Please try again.")}
     end
   end
 
