@@ -38,6 +38,12 @@
           </button>
         <% end %>
       </div>
+      <%= if @selected_character do %>
+        <div class="mt-4 text-sm text-base-content">
+          <span class="font-medium">Gold:</span>
+          <span class="text-warning font-bold">{@selected_character.gold}</span>
+        </div>
+      <% end %>
     </div>
   </div>
 
@@ -90,6 +96,13 @@
                   class="w-full text-xs bg-info/20 text-info-content px-2 py-1 rounded hover:bg-info/30"
                 >
                   Add to Hotbar
+                </button>
+                <button
+                  phx-click="sell_item"
+                  phx-value-inventory_id={inventory_item.id}
+                  class="w-full text-xs bg-warning/20 text-warning-content px-2 py-1 rounded hover:bg-warning/30"
+                >
+                  Sell
                 </button>
               </div>
             </div>
