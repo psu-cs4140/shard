@@ -52,6 +52,8 @@ defmodule Shard.CombatTest do
         |> Map.put(:monsters, [])
         # Ensure player position is set
         |> Map.put(:player_position, {0, 0})
+        # Add character_id to player_stats for consistency
+        |> put_in([:player_stats, :character_id], 1)
 
       {messages, updated_state} = Combat.execute_action(game_state, "attack")
       assert messages == ["There are no monsters here to attack."]
