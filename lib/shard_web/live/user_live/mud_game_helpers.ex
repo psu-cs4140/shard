@@ -143,7 +143,9 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
       quests: [],
       pending_quest_offer: nil,
       monsters: load_monsters_from_database(character.current_zone_id || 1, starting_position),
-      combat: false
+      combat: false,
+      mining_active: false,
+      chopping_active: false
     }
   end
 
