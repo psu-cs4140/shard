@@ -35,7 +35,7 @@ defmodule Shard.Combat do
         combat_id = "#{x},#{y}"
 
         case SharedState.ensure_shared_combat_state(combat_id, {x, y}, monsters_at_position) do
-          {:ok, combat_state} ->
+          {:ok, _combat_state} ->
             # Add player to shared combat (only if combat server is actually running)
             player_data = %{
               id: game_state.character.id,
