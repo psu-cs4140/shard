@@ -130,7 +130,8 @@ defmodule Shard.Map.ZoneTest do
       invalid_attrs = %{@valid_attrs | max_level: 0}
       changeset = Zone.changeset(%Zone{}, invalid_attrs)
       refute changeset.valid?
-      assert %{max_level: ["must be greater than or equal to 1"]} = errors_on(changeset)
+      errors = errors_on(changeset)
+      assert "must be greater than or equal to 1" in errors.max_level
     end
 
     test "validates level range - max_level >= min_level" do

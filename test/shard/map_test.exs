@@ -143,7 +143,7 @@ defmodule Shard.MapTest do
 
     test "create_room/1 with valid data creates a room" do
       zone = zone_fixture()
-      attrs = Map.put(@valid_room_attrs, :zone_id, zone.id)
+      attrs = Enum.into(%{zone_id: zone.id}, @valid_room_attrs)
 
       assert {:ok, %Room{} = room} = Map.create_room(attrs)
       assert room.name == "Test Room"
@@ -195,10 +195,10 @@ defmodule Shard.MapTest do
       from_room = room_fixture(%{zone_id: zone.id, x_coordinate: 0, y_coordinate: 0})
       to_room = room_fixture(%{zone_id: zone.id, x_coordinate: 0, y_coordinate: 1, name: "North Room"})
 
-      attrs = Map.merge(@valid_door_attrs, %{
+      attrs = Enum.into(%{
         from_room_id: from_room.id,
         to_room_id: to_room.id
-      })
+      }, @valid_door_attrs)
 
       assert {:ok, %Door{} = door} = Map.create_door(attrs)
       assert door.direction == "north"

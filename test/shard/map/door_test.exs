@@ -9,7 +9,10 @@ defmodule Shard.Map.DoorTest do
       to_room_id: 2,
       direction: "north",
       door_type: "standard",
-      is_locked: false
+      is_locked: false,
+      name: nil,
+      description: nil,
+      key_required: nil
     }
 
     test "changeset with valid attributes" do

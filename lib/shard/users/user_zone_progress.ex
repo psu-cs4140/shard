@@ -50,8 +50,8 @@ defmodule Shard.Users.UserZoneProgress do
           user_id: user_id,
           zone_id: zone.id,
           progress: progress,
-          inserted_at: DateTime.utc_now(),
-          updated_at: DateTime.utc_now()
+          inserted_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
         }
       end)
 

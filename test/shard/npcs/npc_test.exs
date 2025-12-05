@@ -205,7 +205,7 @@ defmodule Shard.Npcs.NpcTest do
 
     test "accepts datetime fields" do
       now = DateTime.utc_now()
-      attrs = %{@valid_attrs | last_death_at: now}
+      attrs = Map.put(@valid_attrs, :last_death_at, now)
       changeset = Npc.changeset(%Npc{}, attrs)
       assert changeset.valid?
     end

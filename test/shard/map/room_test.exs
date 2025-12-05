@@ -32,7 +32,7 @@ defmodule Shard.Map.RoomTest do
       short_attrs = %{@valid_attrs | name: ""}
       changeset = Room.changeset(%Room{}, short_attrs)
       refute changeset.valid?
-      assert %{name: ["should be at least 1 character(s)"]} = errors_on(changeset)
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
 
       # Too long
       long_name = String.duplicate("a", 101)
