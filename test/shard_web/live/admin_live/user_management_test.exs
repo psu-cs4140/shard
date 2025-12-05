@@ -3,8 +3,11 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
 
   import Phoenix.LiveViewTest
   import Shard.UsersFixtures
+  import Ecto.Query
 
+  alias Shard.Repo
   alias Shard.Users
+  alias Shard.Users.User
 
   describe "mount" do
     test "loads users and assigns current user", %{conn: conn} do
@@ -110,9 +113,12 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
 
       render_click(view, "delete_user", %{"user_id" => regular_user.id})
 
-      # Check that the user no longer appears in the rendered HTML
+      # Check that the user no longer appears in the table (not in flash)
       updated_html = render(view)
-      refute updated_html =~ regular_user.email
+      document = LazyHTML.from_fragment(updated_html)
+      table_matches = LazyHTML.filter(document, "table tbody td")
+      table_text = Enum.map(table_matches, &LazyHTML.text/1) |> Enum.join(" ")
+      refute table_text =~ regular_user.email
 
       # Check that the user was actually deleted from the database
       assert_raise Ecto.NoResultsError, fn ->
@@ -277,6 +283,125 @@ defmodule ShardWeb.AdminLive.UserManagementTest do
       # Verify admin user's status is unchanged
       updated_admin = Users.get_user!(admin_user.id)
       assert updated_admin.admin == true
+    end
+  end
+
+  describe "create_user event" do
+    test "successfully creates a new user with login link", %{conn: conn} do
+      admin_user = user_fixture(%{admin: true})
+      new_email = "newuser@example.com"
+
+      {:ok, view, _html} =
+        conn
+        |> log_in_user(admin_user)
+        |> live(~p"/admin/user_management")
+
+      # Submit the form
+      html = render_submit(view, "create_user", %{"email" => new_email})
+
+      # Check success flash
+      assert html =~ "User #{new_email} created successfully"
+      assert html =~ "Share the login link below"
+
+      # Check user was created and confirmed
+      new_user = Users.get_user_by_email(new_email)
+      assert new_user
+      assert new_user.confirmed_at
+
+      # Check login link is displayed
+      assert html =~ "/users/log-in/"
+      assert html =~ "Copy and send this link to the user for their first login"
+
+      # Extract the login URL from HTML (simple regex for href)
+      login_url = Regex.run(~r|href="([^"]*/users/log-in/[^"]*)|, html) |> List.last()
+
+      # Test the login link works
+      test_conn = get(conn, login_url)
+      # The link leads to the confirmation page; submit the form to log in
+      token = Regex.run(~r|name="user\[token\]" value="([^"]+)"|, test_conn.resp_body) |> List.last()  # Extract token from hidden input
+      login_conn = post(test_conn, "/users/log-in", %{"user" => %{"token" => token}})
+      # After login, should have user_token in session
+      assert get_session(login_conn, :user_token)
+      # And should redirect to home
+      assert redirected_to(login_conn) =~ ~p"/"
+    end
+
+    test "fails to create user with invalid email", %{conn: conn} do
+      admin_user = user_fixture(%{admin: true})
+      invalid_email = "invalid-email"
+
+      {:ok, view, _html} =
+        conn
+        |> log_in_user(admin_user)
+        |> live(~p"/admin/user_management")
+
+      # Submit the form with invalid email
+      html = render_submit(view, "create_user", %{"email" => invalid_email})
+
+      # Check error flash
+      assert html =~ "Failed to create user"
+
+      # Check user was not created
+      refute Users.get_user_by_email(invalid_email)
+
+      # Check no login link displayed
+      refute html =~ "/users/log-in/"
+    end
+
+    test "fails to create user with duplicate email", %{conn: conn} do
+      admin_user = user_fixture(%{admin: true})
+      existing_email = admin_user.email
+
+      {:ok, view, _html} =
+        conn
+        |> log_in_user(admin_user)
+        |> live(~p"/admin/user_management")
+
+      # Submit the form with existing email
+      html = render_submit(view, "create_user", %{"email" => existing_email})
+
+      # Check error flash
+      assert html =~ "Failed to create user"
+
+      # Check no additional user created
+      users_with_email = Repo.all(from u in User, where: u.email == ^existing_email)
+      assert length(users_with_email) == 1
+
+      # Check no login link displayed
+      refute html =~ "/users/log-in/"
+    end
+
+    test "shows login link for existing user", %{conn: conn} do
+      admin_user = user_fixture(%{admin: true})
+      regular_user = user_fixture(%{admin: false})
+
+      {:ok, view, _html} =
+        conn
+        |> log_in_user(admin_user)
+        |> live(~p"/admin/user_management")
+
+      # Click the show login link button
+      html = render_click(view, "show_login_link", %{"user_id" => regular_user.id})
+
+      # Check success flash
+      assert html =~ "Login link generated for #{regular_user.email}"
+
+      # Check login link is displayed
+      assert html =~ "/users/log-in/"
+      assert html =~ "Copy and send this link to the user"
+
+      # Extract the login URL from HTML
+      login_url = Regex.run(~r|href="([^"]*/users/log-in/[^"]*)|, html) |> List.last()
+
+      # Test the login link works
+      test_conn = get(conn, login_url)
+      # The link leads to the confirmation page; submit the form to log in
+      token = Regex.run(~r|name="user\[token\]" value="([^"]+)"|, test_conn.resp_body) |> List.last()  # Extract token from hidden input
+      login_conn = post(test_conn, "/users/log-in", %{"user" => %{"token" => token}})
+      # After login, should have user_token in session
+      assert get_session(login_conn, :user_token)
+      # And should redirect to home
+      assert redirected_to(login_conn) =~ ~p"/"
     end
   end
 

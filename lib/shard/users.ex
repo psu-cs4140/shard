@@ -255,6 +255,62 @@ defmodule Shard.Users do
   end
 
   @doc """
+  Creates a new user, marks them as confirmed, and generates a login link URL.
+
+  This is intended for admin use to manually invite users without automated emails.
+  """
+  def create_user_with_login_link(attrs) do
+    # Check if this is the first user (though unlikely in admin context)
+    is_first_user = Repo.aggregate(User, :count, :id) == 0
+
+    # Convert all keys to strings to avoid mixed key types
+    attrs =
+      attrs
+      |> Enum.into(%{}, fn {k, v} -> {to_string(k), v} end)
+
+    # Set admin to true for the first user (fallback, but admin should handle manually if needed)
+    attrs =
+      if is_first_user do
+        Map.put(attrs, "admin", true)
+      else
+        attrs
+      end
+
+    # Create changeset and insert user
+    changeset = User.email_changeset(%User{}, attrs)
+
+    case Repo.insert(changeset) do
+      {:ok, user} ->
+        # Mark as confirmed
+        confirmed_user = User.confirm_changeset(user) |> Repo.update!()
+
+        # Generate magic login link
+        {encoded_token, user_token} = UserToken.build_email_token(confirmed_user, "login")
+        Repo.insert!(user_token)
+        login_url = "/users/log-in/#{encoded_token}"
+
+        {:ok, {confirmed_user, login_url}}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
+  end
+
+  @doc """
+  Generates a login link URL for an existing user.
+
+  This is intended for admin use to provide login links without automated emails.
+  """
+  def generate_login_link_for_user(user) do
+    # Generate magic login link
+    {encoded_token, user_token} = UserToken.build_email_token(user, "login")
+    Repo.insert!(user_token)
+    login_url = "/users/log-in/#{encoded_token}"
+
+    login_url
+  end
+
+  @doc """
   Gets the first user ever created (by ID).
   This user should always remain an admin.
   """
