@@ -114,12 +114,6 @@ defmodule Shard.Users.UserTest do
   end
 
   describe "admin_changeset/2" do
-    test "requires admin field to be explicitly set" do
-      changeset = User.admin_changeset(%User{}, %{})
-      refute changeset.valid?
-      assert %{admin: ["can't be blank"]} = errors_on(changeset)
-    end
-
     test "accepts boolean admin values" do
       changeset = User.admin_changeset(%User{}, %{admin: true})
       assert changeset.valid?
@@ -128,6 +122,12 @@ defmodule Shard.Users.UserTest do
       changeset = User.admin_changeset(%User{}, %{admin: false})
       assert changeset.valid?
       assert get_field(changeset, :admin) == false
+    end
+
+    test "requires admin field to be explicitly provided" do
+      changeset = User.admin_changeset(%User{}, %{})
+      refute changeset.valid?
+      assert %{admin: ["can't be blank"]} = errors_on(changeset)
     end
   end
 
