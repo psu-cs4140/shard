@@ -22,10 +22,11 @@ defmodule Shard.Combat do
 
     # Initialize or join shared combat state
     # Only pass monsters that are actually at this position
-    monsters_at_position = Enum.filter(game_state.monsters || [], fn monster ->
-      monster[:position] == {x, y} && monster[:is_alive] != false
-    end)
-    
+    monsters_at_position =
+      Enum.filter(game_state.monsters || [], fn monster ->
+        monster[:position] == {x, y} && monster[:is_alive] != false
+      end)
+
     case SharedState.ensure_shared_combat_state(combat_id, {x, y}, monsters_at_position) do
       {:ok, combat_state} ->
         # Add player to shared combat (only if combat server is actually running)
