@@ -2,7 +2,7 @@ defmodule Shard.MapTest do
   use Shard.DataCase
 
   alias Shard.Map
-  alias Shard.Map.{Room, Door, Zone, PlayerPosition}
+  alias Shard.Map.{Door, PlayerPosition, Room, Zone}
 
   describe "zones" do
     @valid_zone_attrs %{

@@ -2,8 +2,8 @@ defmodule Shard.GamblingTest do
   use Shard.DataCase
 
   alias Shard.Gambling
-  alias Shard.Gambling.Bet
   alias Shard.Characters.Character
+  alias Shard.Gambling.Bet
 
   describe "create_bet/1" do
     setup do

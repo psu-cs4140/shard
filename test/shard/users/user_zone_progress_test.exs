@@ -2,7 +2,7 @@ defmodule Shard.Users.UserZoneProgressTest do
   use Shard.DataCase
 
   alias Shard.Users.UserZoneProgress
-  alias Shard.{Users, Map}
+  alias Shard.{Map, Users}
 
   describe "changeset/2" do
     @valid_attrs %{

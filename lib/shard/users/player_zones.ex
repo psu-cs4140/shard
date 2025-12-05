@@ -4,9 +4,9 @@ defmodule Shard.Users.PlayerZones do
   """
 
   import Ecto.Query, warn: false
+  alias Shard.Map.Zone
   alias Shard.Repo
   alias Shard.Users.PlayerZone
-  alias Shard.Map.Zone
   # alias Shard.{Monsters, Items}
 
   @doc """
