@@ -2,8 +2,6 @@ defmodule Shard.MarketplaceTest do
   use Shard.DataCase
 
   alias Shard.Marketplace
-  alias Shard.Marketplace.Listing
-  alias Shard.Items.CharacterInventory
 
   describe "list_active_listings/0" do
     test "returns empty list when no listings exist" do

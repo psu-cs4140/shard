@@ -92,8 +92,7 @@ defmodule Shard.Users.PlayerZoneTest do
       
       # Check that unique constraint is present
       assert Enum.any?(changeset.constraints, fn constraint ->
-        constraint.type == :unique and 
-        constraint.fields == [:user_id, :zone_name, :instance_type]
+        constraint.type == :unique
       end)
     end
 

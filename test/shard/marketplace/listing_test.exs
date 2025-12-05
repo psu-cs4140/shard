@@ -8,7 +8,10 @@ defmodule Shard.Marketplace.ListingTest do
       price: 100,
       status: "active",
       seller_id: 1,
-      character_inventory_id: 1
+      character_inventory_id: 1,
+      sold_at: nil,
+      cancelled_at: nil,
+      buyer_id: nil
     }
 
     test "changeset with valid attributes" do

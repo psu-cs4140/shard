@@ -30,7 +30,7 @@ defmodule Shard.Social.MessageTest do
       short_attrs = %{@valid_attrs | content: ""}
       changeset = Message.changeset(%Message{}, short_attrs)
       refute changeset.valid?
-      assert %{content: ["should be at least 1 character(s)"]} = errors_on(changeset)
+      assert %{content: ["can't be blank"]} = errors_on(changeset)
 
       # Too long
       long_content = String.duplicate("a", 1001)
