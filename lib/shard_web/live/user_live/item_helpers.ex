@@ -32,14 +32,57 @@ defmodule ShardWeb.UserLive.ItemHelpers do
     end
   end
 
-  # Use a consumable item (like health potions)
+  # Use a consumable item (like health potions or spell scrolls)
   def use_consumable_item(game_state, item) do
-    case item.effect do
-      effect when is_binary(effect) ->
-        handle_string_effect(game_state, item, effect)
+    # Check if it's a spell scroll
+    if spell_scroll?(item) do
+      use_spell_scroll_item(game_state, item)
+    else
+      case item.effect do
+        effect when is_binary(effect) ->
+          handle_string_effect(game_state, item, effect)
 
-      _ ->
-        response = ["You use #{item.name}, but nothing happens."]
+        _ ->
+          response = ["You use #{item.name}, but nothing happens."]
+          {response, game_state}
+      end
+    end
+  end
+
+  defp spell_scroll?(item) do
+    Map.has_key?(item, :spell_id) and not is_nil(item.spell_id)
+  end
+
+  defp use_spell_scroll_item(game_state, item) do
+    character_id = game_state.character.id
+    inventory_id = item[:inventory_id] || item[:id]
+
+    case Shard.Items.use_spell_scroll(character_id, inventory_id) do
+      {:ok, :learned, spell} ->
+        response = [
+          "You read the #{item.name}!",
+          "You have learned the spell: #{spell.name}",
+          "The scroll crumbles to dust as its magic is absorbed.",
+          "Use 'spells' to see your known spells."
+        ]
+
+        {response, game_state}
+
+      {:ok, :already_known, spell} ->
+        response = [
+          "You read the #{item.name}.",
+          "You already know the spell: #{spell.name}",
+          "The scroll crumbles to dust, its magic already within you."
+        ]
+
+        {response, game_state}
+
+      {:error, :not_a_spell_scroll} ->
+        response = ["This is not a spell scroll."]
+        {response, game_state}
+
+      {:error, _reason} ->
+        response = ["Failed to use #{item.name}."]
         {response, game_state}
     end
   end
