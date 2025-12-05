@@ -202,7 +202,8 @@ defmodule ShardWeb.MudGameLive do
             character: char,
             mining_inventory: _inv,
             ticks_applied: _ticks,
-            gained_resources: gained
+            gained_resources: gained,
+            pet_message: pet_msg
           }}}
         when map_size(gained) > 0 ->
           messages =
@@ -217,7 +218,7 @@ defmodule ShardWeb.MudGameLive do
 
           socket
           |> assign(:game_state, Map.put(socket.assigns.game_state, :character, char))
-          |> add_message(Enum.join(messages, " "))
+          |> add_message(Enum.join(messages ++ ((pet_msg && [pet_msg]) || []), " "))
           |> assign(:game_state, refresh_inventory(socket.assigns.game_state, char))
 
         {true, {:ok, _}} ->
@@ -250,8 +251,18 @@ defmodule ShardWeb.MudGameLive do
 
   def handle_info(:chopping_tick, socket) do
     socket =
-      case {socket.assigns.game_state.chopping_active, Shard.Forest.apply_chopping_ticks(socket.assigns.game_state.character)} do
-        {true, {:ok, %{character: char, chopping_inventory: _inv, ticks_applied: _ticks, gained_resources: gained}}} when map_size(gained) > 0 ->
+      case {socket.assigns.game_state.chopping_active,
+            Shard.Forest.apply_chopping_ticks(socket.assigns.game_state.character)} do
+        {true,
+         {:ok,
+          %{
+            character: char,
+            chopping_inventory: _inv,
+            ticks_applied: _ticks,
+            gained_resources: gained,
+            pet_message: pet_msg
+          }}}
+        when map_size(gained) > 0 ->
           messages =
             Enum.flat_map(gained, fn
               {:wood, qty} when qty > 0 -> ["You have acquired #{qty} Wood!"]
@@ -264,7 +275,7 @@ defmodule ShardWeb.MudGameLive do
 
           socket
           |> assign(:game_state, Map.put(socket.assigns.game_state, :character, char))
-          |> add_message(Enum.join(messages, " "))
+          |> add_message(Enum.join(messages ++ ((pet_msg && [pet_msg]) || []), " "))
           |> assign(:game_state, refresh_inventory(socket.assigns.game_state, char))
 
         {true, {:ok, _}} ->
@@ -416,13 +427,38 @@ defmodule ShardWeb.MudGameLive do
       "mines" ->
         add_message(
           socket,
-          "You Descend into the dark, echoing mines.\nThe walls shimmer with minerals waiting to be unearthed.\nEverything you gather here can be sold for gold once you return to town.\nTo begin mining, type mine start\nTo pack up and leave, type mine stop"
+          [
+            "You Descend into the dark, echoing mines.",
+            "The walls shimmer with minerals waiting to be unearthed.",
+            "Everything you gather here can be sold for gold once you return to town.",
+            "To begin mining, type mine start",
+            "To pack up and leave, type mine stop",
+            if(socket.assigns.game_state.character.has_pet_rock,
+              do: "Your Pet Rock is with you. It sometimes doubles your mining haul.",
+              else: nil
+            )
+          ]
+          |> Enum.reject(&is_nil/1)
+          |> Enum.join("\n")
         )
 
       "whispering_forest" ->
         add_message(
           socket,
-          "You step foot into the Whispering Forest.\nYour nose fills with the scent of pine and fresh earth.\nHere you can chop wood, gather sticks and seeds, and even find mushrooms and rare resin that you can collect and sell for gold.\nType chop start to start chopping\nType chop stop to stop chopping"
+          [
+            "You step foot into the Whispering Forest.",
+            "Your nose fills with the scent of pine and fresh earth.",
+            "Here you can chop wood, gather sticks and seeds, and even find mushrooms and rare resin that you can collect and sell for gold.",
+            "Type chop start to start chopping",
+            "Type chop stop to stop chopping",
+            if(socket.assigns.game_state.character.has_shroomling,
+              do:
+                "Your Shroomling companion follows along, occasionally doubling your forest harvest.",
+              else: nil
+            )
+          ]
+          |> Enum.reject(&is_nil/1)
+          |> Enum.join("\n")
         )
 
       _ ->

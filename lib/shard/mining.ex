@@ -131,7 +131,8 @@ defmodule Shard.Mining do
            character: character,
            mining_inventory: inventory,
            ticks_applied: 0,
-           gained_resources: %{}
+           gained_resources: %{},
+           pet_message: nil
          }}
 
       {:error, reason} ->
@@ -148,7 +149,8 @@ defmodule Shard.Mining do
            character: character,
            mining_inventory: inventory,
            ticks_applied: 0,
-           gained_resources: %{}
+           gained_resources: %{},
+           pet_message: nil
          }}
 
       {:error, reason} ->
@@ -178,7 +180,7 @@ defmodule Shard.Mining do
       end
     else
       # Roll resources for each tick
-      resources = roll_multiple_resources(ticks)
+      resources = roll_multiple_resources(ticks, character)
 
       # Get or create inventory
       case get_or_create_mining_inventory(character) do
@@ -190,12 +192,15 @@ defmodule Shard.Mining do
               # Update character's mining_started_at to now
               case Characters.update_character(character, %{mining_started_at: now}) do
                 {:ok, updated_character} ->
+                  {updated_character, pet_message} = maybe_drop_pet_rock(updated_character)
+
                   {:ok,
                    %{
                      character: updated_character,
                      mining_inventory: updated_inventory,
                      ticks_applied: ticks,
-                     gained_resources: resources
+                     gained_resources: resources,
+                     pet_message: pet_message
                    }}
 
                 {:error, reason} ->
@@ -283,12 +288,15 @@ defmodule Shard.Mining do
       %{stone: 4, coal: 3, copper: 2, iron: 1, gem: 0}
 
   """
-  @spec roll_multiple_resources(non_neg_integer()) :: %{optional(atom()) => non_neg_integer()}
-  def roll_multiple_resources(count) do
+  @spec roll_multiple_resources(non_neg_integer(), Character.t()) :: %{
+          optional(atom()) => non_neg_integer()
+        }
+  def roll_multiple_resources(count, character) do
     1..count
     |> Enum.reduce(%{stone: 0, coal: 0, copper: 0, iron: 0, gem: 0}, fn _, acc ->
       resource = roll_resource()
-      Map.update(acc, resource, 1, &(&1 + 1))
+      bonus = if character.has_pet_rock && :rand.uniform(10) == 1, do: 1, else: 0
+      Map.update(acc, resource, 1 + bonus, &(&1 + 1 + bonus))
     end)
   end
 
@@ -447,5 +455,22 @@ defmodule Shard.Mining do
     now = DateTime.utc_now()
     elapsed_seconds = DateTime.diff(now, started_at, :second)
     div(elapsed_seconds, @tick_interval)
+  end
+
+  defp maybe_drop_pet_rock(%Character{has_pet_rock: true} = character), do: {character, nil}
+
+  defp maybe_drop_pet_rock(%Character{} = character) do
+    if :rand.uniform(500) == 1 do
+      case Characters.update_character(character, %{has_pet_rock: true}) do
+        {:ok, updated} ->
+          {updated,
+           "Wow! You found a pet rock! Rumor has it that it sometimes doubles your mining haul."}
+
+        _ ->
+          {character, nil}
+      end
+    else
+      {character, nil}
+    end
   end
 end
