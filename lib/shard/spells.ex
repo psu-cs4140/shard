@@ -5,7 +5,7 @@ defmodule Shard.Spells do
 
   import Ecto.Query, warn: false
   alias Shard.Repo
-  alias Shard.Spells.{Spells, SpellTypes, SpellEffects, CharacterSpell}
+  alias Shard.Spells.{CharacterSpell, SpellEffects, Spells, SpellTypes}
 
   # Spell Type functions
 

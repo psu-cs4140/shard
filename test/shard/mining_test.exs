@@ -2,8 +2,8 @@ defmodule Shard.MiningTest do
   use Shard.DataCase
 
   alias Shard.Mining
-  alias Shard.Mining.MiningInventory
   alias Shard.Characters
+  alias Shard.Mining.MiningInventory
 
   describe "start_mining/1" do
     test "sets is_mining to true for a character not currently mining" do

@@ -2,8 +2,8 @@ defmodule Shard.SpellsTest do
   use Shard.DataCase
 
   alias Shard.Spells
-  alias Shard.Repo
   alias Shard.Characters.Character
+  alias Shard.Repo
   import Shard.UsersFixtures
 
   # Helper function to ensure test data exists

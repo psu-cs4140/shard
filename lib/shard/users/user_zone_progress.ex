@@ -38,7 +38,7 @@ defmodule Shard.Users.UserZoneProgress do
   All zones start as "locked" except for any starter zones.
   """
   def initialize_for_user(user_id, starter_zone_ids \\ []) do
-    alias Shard.{Repo, Map}
+    alias Shard.{Map, Repo}
 
     zones = Repo.all(Map.Zone)
 
@@ -50,8 +50,8 @@ defmodule Shard.Users.UserZoneProgress do
           user_id: user_id,
           zone_id: zone.id,
           progress: progress,
-          inserted_at: DateTime.utc_now(),
-          updated_at: DateTime.utc_now()
+          inserted_at: DateTime.utc_now() |> DateTime.truncate(:second),
+          updated_at: DateTime.utc_now() |> DateTime.truncate(:second)
         }
       end)
 
@@ -62,7 +62,7 @@ defmodule Shard.Users.UserZoneProgress do
   Gets all zone progress for a user, ordered by zone name.
   """
   def for_user(user_id) do
-    alias Shard.{Repo, Map}
+    alias Shard.{Map, Repo}
 
     Repo.all(
       from uzp in __MODULE__,

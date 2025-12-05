@@ -4,9 +4,9 @@ defmodule Shard.Gambling do
   """
 
   import Ecto.Query
-  alias Shard.Repo
-  alias Shard.Gambling.Bet
   alias Shard.Characters.Character
+  alias Shard.Gambling.Bet
+  alias Shard.Repo
 
   @doc """
   Creates a new bet for a character.
