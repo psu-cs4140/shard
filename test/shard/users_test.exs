@@ -383,18 +383,12 @@ defmodule Shard.UsersTest do
       # Unlock next zone
       result = Users.unlock_next_zone(user.id, zone1.id)
       
-      case result do
-        {:ok, _} ->
-          # Check that zone2 is now unlocked
-          zone2_progress = Users.get_user_zone_progress(user.id, zone2.id)
-          assert zone2_progress.progress == "in_progress"
-        {:ok, :no_next_zone} ->
-          # This is also acceptable if there's no next zone
-          assert true
-        {:error, _} ->
-          # Handle any errors gracefully
-          assert true
-      end
+      # The function should return success
+      assert match?({:ok, _}, result)
+
+      # Check that zone2 is now unlocked
+      zone2_progress = Users.get_user_zone_progress(user.id, zone2.id)
+      assert zone2_progress.progress == "in_progress"
     end
 
     test "unlock_next_zone/2 returns :no_next_zone when no next zone exists", %{user: user, zone: zone} do
