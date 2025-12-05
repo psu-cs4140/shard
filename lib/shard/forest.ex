@@ -94,7 +94,7 @@ defmodule Shard.Forest do
            chopping_inventory: inventory,
            ticks_applied: 0,
            gained_resources: %{},
-           pet_message: nil
+           pet_messages: []
          }}
 
       {:error, reason} ->
@@ -111,7 +111,7 @@ defmodule Shard.Forest do
            chopping_inventory: inventory,
            ticks_applied: 0,
            gained_resources: %{},
-           pet_message: nil
+           pet_messages: []
          }}
 
       {:error, reason} ->
@@ -135,7 +135,7 @@ defmodule Shard.Forest do
              chopping_inventory: inventory,
              ticks_applied: 0,
              gained_resources: %{},
-             pet_message: nil
+             pet_messages: []
            }}
 
         {:error, reason} ->
@@ -148,19 +148,24 @@ defmodule Shard.Forest do
         {:ok, inventory} ->
           case add_resources(inventory, resources) do
             {:ok, updated_inventory} ->
-              add_resources_to_character_inventory(character, resources)
+              {character_after_xp, pet_level_messages} = maybe_grant_pet_xp(character, ticks)
 
-              case Characters.update_character(character, %{chopping_started_at: now}) do
+              case Characters.update_character(character_after_xp, %{chopping_started_at: now}) do
                 {:ok, updated_character} ->
-                  {updated_character, pet_message} = maybe_drop_shroomling(updated_character)
+                  {char_after_drop, pet_message} = maybe_drop_shroomling(updated_character)
+
+                  pet_messages =
+                    pet_level_messages
+                    |> Enum.reject(&is_nil/1)
+                    |> Kernel.++((pet_message && [pet_message]) || [])
 
                   {:ok,
                    %{
-                     character: updated_character,
+                     character: char_after_drop,
                      chopping_inventory: updated_inventory,
                      ticks_applied: ticks,
                      gained_resources: resources,
-                     pet_message: pet_message
+                     pet_messages: pet_messages
                    }}
 
                 {:error, reason} ->
@@ -230,7 +235,15 @@ defmodule Shard.Forest do
     1..count
     |> Enum.reduce(%{wood: 0, sticks: 0, seeds: 0, mushrooms: 0, resin: 0}, fn _, acc ->
       resource = roll_resource()
-      bonus = if character.has_shroomling && :rand.uniform(10) == 1, do: 1, else: 0
+
+      bonus =
+        if character.has_shroomling do
+          chance = pet_double_chance(character.shroomling_level)
+          if :rand.uniform(100) <= chance, do: 1, else: 0
+        else
+          0
+        end
+
       Map.update(acc, resource, 1 + bonus, &(&1 + 1 + bonus))
     end)
   end
@@ -261,6 +274,7 @@ defmodule Shard.Forest do
     div(elapsed_seconds, @tick_interval)
   end
 
+<<<<<<< HEAD
   defp add_resources_to_character_inventory(%Character{id: character_id}, resources) do
     resource_items = ensure_chopping_resource_items()
 
@@ -316,6 +330,51 @@ defmodule Shard.Forest do
 
       item ->
         item
+=======
+  defp pet_double_chance(level) do
+    min(10 + (level - 1), 50)
+  end
+
+  defp maybe_grant_pet_xp(%Character{has_shroomling: false} = character, _ticks),
+    do: {character, []}
+
+  defp maybe_grant_pet_xp(%Character{} = character, ticks) do
+    xp = character.shroomling_xp + ticks
+
+    {level, remaining_xp, level_messages} =
+      level_up_pet(character.shroomling_level, xp, "Shroomling")
+
+    updated =
+      if level != character.shroomling_level or remaining_xp != character.shroomling_xp do
+        {:ok, c} =
+          Characters.update_character(character, %{
+            shroomling_level: level,
+            shroomling_xp: remaining_xp
+          })
+
+        c
+      else
+        character
+      end
+
+    {updated, level_messages}
+  end
+
+  defp level_up_pet(level, xp, pet_name) do
+    required = 100 + (level - 1) * 20
+
+    if xp >= required do
+      new_level = level + 1
+      {final_level, remaining_xp, messages} = level_up_pet(new_level, xp - required, pet_name)
+      chance = pet_double_chance(final_level)
+
+      message =
+        "Your #{pet_name} levels up! It is now Level #{final_level}. Double chance increased to #{chance}%."
+
+      {final_level, remaining_xp, [message | messages]}
+    else
+      {level, xp, []}
+>>>>>>> 92f16d0 (Add a leveling system to the pets that increase buffs)
     end
   end
 

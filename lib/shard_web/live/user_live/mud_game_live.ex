@@ -204,7 +204,7 @@ defmodule ShardWeb.MudGameLive do
             mining_inventory: _inv,
             ticks_applied: _ticks,
             gained_resources: gained,
-            pet_message: pet_msg
+            pet_messages: pet_msg
           }}}
         when map_size(gained) > 0 ->
           messages =
@@ -219,7 +219,7 @@ defmodule ShardWeb.MudGameLive do
 
           socket
           |> assign(:game_state, Map.put(socket.assigns.game_state, :character, char))
-          |> add_message(Enum.join(messages ++ ((pet_msg && [pet_msg]) || []), " "))
+          |> add_message(Enum.join(messages ++ (pet_msg || []), " "))
           |> assign(:game_state, refresh_inventory(socket.assigns.game_state, char))
 
         {true, {:ok, _}} ->
@@ -261,7 +261,7 @@ defmodule ShardWeb.MudGameLive do
             chopping_inventory: _inv,
             ticks_applied: _ticks,
             gained_resources: gained,
-            pet_message: pet_msg
+            pet_messages: pet_msg
           }}}
         when map_size(gained) > 0 ->
           messages =
@@ -276,7 +276,7 @@ defmodule ShardWeb.MudGameLive do
 
           socket
           |> assign(:game_state, Map.put(socket.assigns.game_state, :character, char))
-          |> add_message(Enum.join(messages ++ ((pet_msg && [pet_msg]) || []), " "))
+          |> add_message(Enum.join(messages ++ (pet_msg || []), " "))
           |> assign(:game_state, refresh_inventory(socket.assigns.game_state, char))
 
         {true, {:ok, _}} ->
@@ -423,11 +423,15 @@ defmodule ShardWeb.MudGameLive do
     }
   end
 
+<<<<<<< HEAD
   # currently unused but keeping around for future pet buffs
   # defp pet_chance(level) do
   #   lvl = Kernel.max(level || 1, 1)
   #   Kernel.min(10 + (lvl - 1), 50)
   # end
+=======
+  defp pet_chance(level), do: min(10 + (level - 1), 50)
+>>>>>>> 92f16d0 (Add a leveling system to the pets that increase buffs)
 
   defp maybe_add_zone_welcome(socket, zone) do
     case zone.slug do
@@ -441,7 +445,8 @@ defmodule ShardWeb.MudGameLive do
             "To begin mining, type mine start",
             "To pack up and leave, type mine stop",
             if(socket.assigns.game_state.character.has_pet_rock,
-              do: "Your Pet Rock is with you. It sometimes doubles your mining haul.",
+              do:
+                "Your Pet Rock is with you. (Level #{socket.assigns.game_state.character.pet_rock_level} – #{pet_chance(socket.assigns.game_state.character.pet_rock_level)}% chance to double your mining haul.)",
               else: nil
             )
           ]
@@ -460,7 +465,7 @@ defmodule ShardWeb.MudGameLive do
             "Type chop stop to stop chopping",
             if(socket.assigns.game_state.character.has_shroomling,
               do:
-                "Your Shroomling companion follows along, occasionally doubling your forest harvest.",
+                "Your Shroomling companion bounces beside you. (Level #{socket.assigns.game_state.character.shroomling_level} – #{pet_chance(socket.assigns.game_state.character.shroomling_level)}% chance to double your forest harvest.)",
               else: nil
             )
           ]
