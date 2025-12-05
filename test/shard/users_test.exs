@@ -2,8 +2,7 @@ defmodule Shard.UsersTest do
   use Shard.DataCase
 
   alias Shard.Users
-  alias Shard.Users.{User, UserZoneProgress}
-  alias Shard.Map.Zone
+  alias Shard.Users.User
 
   import Shard.UsersFixtures
 
@@ -105,7 +104,7 @@ defmodule Shard.UsersTest do
 
     test "creates zone progress for new user" do
       # Create a test zone first
-      {:ok, zone} = Shard.Map.create_zone(%{
+      {:ok, _zone} = Shard.Map.create_zone(%{
         name: "Test Zone",
         slug: "test-zone-#{System.unique_integer([:positive])}"
       })
@@ -163,7 +162,7 @@ defmodule Shard.UsersTest do
 
     test "updates the email with a valid token", %{user: user, token: token, email: email} do
       case Users.update_user_email(user, token) do
-        {:ok, updated_user} ->
+        {:ok, _updated_user} ->
           changed_user = Repo.get!(User, user.id)
           assert changed_user.email != user.email
           assert changed_user.email == email
@@ -261,7 +260,7 @@ defmodule Shard.UsersTest do
       %{user: user_fixture()}
     end
 
-    test "grant_admin/1 grants admin privileges", %{user: user} do
+    test "grant_admin/1 grants admin privileges", %{user: _user} do
       # Create a non-admin user
       non_admin_user = user_fixture()
       {:ok, updated_user} = Users.update_user_admin_status(non_admin_user, false)
@@ -302,7 +301,7 @@ defmodule Shard.UsersTest do
       assert Users.get_first_user().id == first_user.id
     end
 
-    test "first_user?/1 identifies the first user", %{user: user} do
+    test "first_user?/1 identifies the first user", %{user: _user} do
       # This test depends on whether user is actually the first user
       # We'll create a controlled scenario
       Repo.delete_all(User)

@@ -12,7 +12,9 @@ defmodule Shard.Map.DoorTest do
       is_locked: false,
       name: nil,
       description: nil,
-      key_required: nil
+      key_required: nil,
+      properties: %{},
+      new_dungeon: false
     }
 
     test "changeset with valid attributes" do
