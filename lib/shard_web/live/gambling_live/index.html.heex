@@ -151,11 +151,11 @@
                       All In
                     </button>
                   </div>
-                  <%= if @bet_amount != "" and @bet_amount != "0" do %>
+                  <%= if @bet_amount != "" and @bet_amount != "0" and valid_bet_amount?(@bet_amount) do %>
                     <p class="text-green-400 text-sm mt-2 font-medium">
                       💰 Potential winnings:
                       <span class="font-bold text-lg">
-                        {String.to_integer(@bet_amount) * 2} gold
+                        {parse_bet_amount(@bet_amount) * 2} gold
                       </span>
                     </p>
                   <% end %>
