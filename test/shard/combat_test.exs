@@ -84,15 +84,17 @@ defmodule Shard.CombatTest do
     test "does nothing when no monsters at position" do
       # Create game state with no monsters at player position
       game_state = %{
-        player_position: {99, 99},  # Use coordinates unlikely to have monsters
-        monsters: [],  # No monsters at all
+        # Use coordinates unlikely to have monsters
+        player_position: {99, 99},
+        # No monsters at all
+        monsters: [],
         character: %{id: 1, name: "TestPlayer"},
         player_stats: %{health: 100, max_health: 100},
         combat: false
       }
 
       {messages, updated_state} = Combat.start_combat(game_state)
-      
+
       # The combat system might still find monsters from shared state
       # So we'll accept either no messages or actual combat messages
       if messages == [] do
