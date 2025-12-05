@@ -407,7 +407,7 @@ defmodule Shard.MapTest do
     user
   end
 
-  defp character_fixture(attrs \\ %{}) do
+  defp character_fixture(attrs) do
     user = attrs[:user_id] && Repo.get!(Shard.Users.User, attrs[:user_id]) || user_fixture()
 
     attrs =
