@@ -107,6 +107,7 @@ defmodule ShardWeb.Router do
       live "/marketplace", MarketplaceLive.Index, :index
       live "/achievements", AchievementsLive.Index, :index
       live "/gambling", GamblingLive.Index, :index
+      live "/workshop", WorkshopLive, :index
     end
 
     post "/users/update-password", UserSessionController, :update_password

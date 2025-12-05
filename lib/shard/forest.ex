@@ -11,6 +11,34 @@ defmodule Shard.Forest do
   alias Shard.Items
   alias Shard.Items.Item
 
+  @resource_item_specs %{
+    wood: %{
+      name: "Wood",
+      description: "Freshly chopped timber from the Whispering Forest.",
+      value: 2
+    },
+    sticks: %{
+      name: "Stick",
+      description: "A sturdy stick perfect for crafting.",
+      value: 1
+    },
+    seeds: %{
+      name: "Seed",
+      description: "A handful of wild seeds gathered from the forest floor.",
+      value: 1
+    },
+    mushrooms: %{
+      name: "Mushroom",
+      description: "An edible forest mushroom prized by alchemists.",
+      value: 3
+    },
+    resin: %{
+      name: "Resin",
+      description: "Sticky tree resin used for torches and adhesives.",
+      value: 4
+    }
+  }
+
   @resource_weights [
     {:wood, 40},
     {:sticks, 30},
@@ -260,10 +288,104 @@ defmodule Shard.Forest do
       resin: (inventory.resin || 0) + Map.get(resources, :resin, 0)
     }
 
-    inventory
-    |> ChoppingInventory.changeset(updates)
-    |> Repo.update()
+    Repo.transaction(fn ->
+      case inventory
+           |> ChoppingInventory.changeset(updates)
+           |> Repo.update() do
+        {:ok, updated_inventory} ->
+          case grant_items_to_main_inventory(inventory.character_id, resources) do
+            :ok -> updated_inventory
+            {:error, reason} -> Repo.rollback(reason)
+          end
+
+        {:error, changeset} ->
+          Repo.rollback(changeset)
+      end
+    end)
+    |> case do
+      {:ok, updated_inventory} -> {:ok, updated_inventory}
+      {:error, reason} -> {:error, reason}
+    end
   end
+
+  defp grant_items_to_main_inventory(_character_id, resources)
+       when resources == %{} or map_size(resources) == 0,
+       do: :ok
+
+  defp grant_items_to_main_inventory(character_id, resources) do
+    resources
+    |> Enum.reduce_while(:ok, fn
+      {_resource, quantity}, :ok when quantity <= 0 ->
+        {:cont, :ok}
+
+      {resource, quantity}, :ok ->
+        with {:ok, item} <- fetch_resource_item(resource),
+             {:ok, _} <- Items.add_item_to_inventory(character_id, item.id, quantity) do
+          {:cont, :ok}
+        else
+          {:error, reason} -> {:halt, {:error, reason}}
+        end
+    end)
+    |> case do
+      :ok -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp fetch_resource_item(resource) do
+    case Map.fetch(@resource_item_specs, resource) do
+      :error ->
+        {:error, {:unknown_resource, resource}}
+
+      {:ok, spec} ->
+        case Repo.get_by(Item, name: spec.name) do
+          %Item{} = item ->
+            {:ok, item}
+
+          nil ->
+            spec
+            |> build_resource_item_attrs()
+            |> Items.create_item()
+            |> case do
+              {:ok, item} ->
+                {:ok, item}
+
+              {:error, changeset} ->
+                if name_taken?(changeset) do
+                  case Repo.get_by(Item, name: spec.name) do
+                    %Item{} = item -> {:ok, item}
+                    nil -> {:error, changeset}
+                  end
+                else
+                  {:error, changeset}
+                end
+            end
+        end
+    end
+  end
+
+  defp build_resource_item_attrs(spec) do
+    %{
+      name: spec.name,
+      description: spec.description,
+      item_type: "material",
+      rarity: "common",
+      value: spec.value,
+      weight: Decimal.new("0.1"),
+      stackable: true,
+      max_stack_size: 99,
+      sellable: true
+    }
+  end
+
+  defp name_taken?(%Ecto.Changeset{errors: errors}) do
+    Enum.any?(errors, fn
+      {:name, {_, [constraint: :unique, constraint_name: _]}} -> true
+      _ -> false
+    end)
+  end
+
+  defp name_taken?(_), do: false
 
   @spec calculate_pending_ticks(Character.t()) :: non_neg_integer()
   def calculate_pending_ticks(%Character{is_chopping: false}), do: 0
