@@ -49,11 +49,21 @@ defmodule Shard.Marketplace.ListingTest do
     end
 
     test "accepts all valid statuses" do
-      for status <- ["active", "sold", "cancelled"] do
-        attrs = %{@valid_attrs | status: status}
-        changeset = Listing.changeset(%Listing{}, attrs)
-        assert changeset.valid?, "Expected #{status} to be valid"
-      end
+      # Test active status
+      attrs = %{@valid_attrs | status: "active"}
+      changeset = Listing.changeset(%Listing{}, attrs)
+      assert changeset.valid?, "Expected active to be valid"
+
+      # Test sold status with sold_at
+      now = DateTime.utc_now()
+      attrs = %{@valid_attrs | status: "sold", sold_at: now, buyer_id: 2}
+      changeset = Listing.changeset(%Listing{}, attrs)
+      assert changeset.valid?, "Expected sold to be valid"
+
+      # Test cancelled status with cancelled_at
+      attrs = %{@valid_attrs | status: "cancelled", cancelled_at: now}
+      changeset = Listing.changeset(%Listing{}, attrs)
+      assert changeset.valid?, "Expected cancelled to be valid"
     end
 
     test "validates sold status requires sold_at" do
