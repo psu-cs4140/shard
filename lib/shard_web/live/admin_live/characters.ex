@@ -4,6 +4,7 @@ defmodule ShardWeb.AdminLive.Characters do
 
   alias Shard.Characters
   alias Shard.Characters.Character
+  alias Shard.Spells
   alias Shard.Repo
 
   @impl true
@@ -49,6 +50,42 @@ defmodule ShardWeb.AdminLive.Characters do
     save_character(socket, socket.assigns.live_action, character_params)
   end
 
+  @impl true
+  def handle_event("add_spell", %{"spell_id" => spell_id}, socket) do
+    character_id = socket.assigns.character.id
+
+    case Spells.add_spell_to_character(character_id, String.to_integer(spell_id)) do
+      {:ok, _} ->
+        character_spells = Spells.list_character_spells(character_id)
+
+        {:noreply,
+         socket
+         |> put_flash(:info, "Spell added successfully")
+         |> assign(:character_spells, character_spells)}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Failed to add spell")}
+    end
+  end
+
+  @impl true
+  def handle_event("remove_spell", %{"spell_id" => spell_id}, socket) do
+    character_id = socket.assigns.character.id
+
+    case Spells.remove_spell_from_character(character_id, String.to_integer(spell_id)) do
+      {1, _} ->
+        character_spells = Spells.list_character_spells(character_id)
+
+        {:noreply,
+         socket
+         |> put_flash(:info, "Spell removed successfully")
+         |> assign(:character_spells, character_spells)}
+
+      _ ->
+        {:noreply, put_flash(socket, :error, "Failed to remove spell")}
+    end
+  end
+
   defp apply_action(socket, :edit, %{"id" => id}) do
     character = Characters.get_character!(id)
     changeset = Characters.change_character(character)
@@ -71,10 +108,14 @@ defmodule ShardWeb.AdminLive.Characters do
 
   defp apply_action(socket, :show, %{"id" => id}) do
     character = Characters.get_character!(id)
+    character_spells = Spells.list_character_spells(id)
+    all_spells = Spells.list_spells()
 
     socket
     |> assign(:page_title, "Character Details")
     |> assign(:character, character)
+    |> assign(:character_spells, character_spells)
+    |> assign(:all_spells, all_spells)
   end
 
   defp apply_action(socket, :index, _params) do
