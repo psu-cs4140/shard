@@ -93,7 +93,8 @@ defmodule Shard.Forest do
            character: character,
            chopping_inventory: inventory,
            ticks_applied: 0,
-           gained_resources: %{}
+           gained_resources: %{},
+           pet_message: nil
          }}
 
       {:error, reason} ->
@@ -109,7 +110,8 @@ defmodule Shard.Forest do
            character: character,
            chopping_inventory: inventory,
            ticks_applied: 0,
-           gained_resources: %{}
+           gained_resources: %{},
+           pet_message: nil
          }}
 
       {:error, reason} ->
@@ -132,14 +134,15 @@ defmodule Shard.Forest do
              character: character,
              chopping_inventory: inventory,
              ticks_applied: 0,
-             gained_resources: %{}
+             gained_resources: %{},
+             pet_message: nil
            }}
 
         {:error, reason} ->
           {:error, reason}
       end
     else
-      resources = roll_multiple_resources(ticks)
+      resources = roll_multiple_resources(ticks, character)
 
       case get_or_create_chopping_inventory(character) do
         {:ok, inventory} ->
@@ -149,12 +152,15 @@ defmodule Shard.Forest do
 
               case Characters.update_character(character, %{chopping_started_at: now}) do
                 {:ok, updated_character} ->
+                  {updated_character, pet_message} = maybe_drop_shroomling(updated_character)
+
                   {:ok,
                    %{
                      character: updated_character,
                      chopping_inventory: updated_inventory,
                      ticks_applied: ticks,
-                     gained_resources: resources
+                     gained_resources: resources,
+                     pet_message: pet_message
                    }}
 
                 {:error, reason} ->
@@ -217,12 +223,15 @@ defmodule Shard.Forest do
     resource
   end
 
-  @spec roll_multiple_resources(non_neg_integer()) :: %{optional(atom()) => non_neg_integer()}
-  def roll_multiple_resources(count) do
+  @spec roll_multiple_resources(non_neg_integer(), Character.t()) :: %{
+          optional(atom()) => non_neg_integer()
+        }
+  def roll_multiple_resources(count, character) do
     1..count
     |> Enum.reduce(%{wood: 0, sticks: 0, seeds: 0, mushrooms: 0, resin: 0}, fn _, acc ->
       resource = roll_resource()
-      Map.update(acc, resource, 1, &(&1 + 1))
+      bonus = if character.has_shroomling && :rand.uniform(10) == 1, do: 1, else: 0
+      Map.update(acc, resource, 1 + bonus, &(&1 + 1 + bonus))
     end)
   end
 
@@ -307,6 +316,23 @@ defmodule Shard.Forest do
 
       item ->
         item
+    end
+  end
+
+  defp maybe_drop_shroomling(%Character{has_shroomling: true} = character), do: {character, nil}
+
+  defp maybe_drop_shroomling(%Character{} = character) do
+    if :rand.uniform(500) == 1 do
+      case Characters.update_character(character, %{has_shroomling: true}) do
+        {:ok, updated} ->
+          {updated,
+           "A mischievous Shroomling appears and begins following you. He will sometimes help you out by doubling your resources. *If it feels like it*."}
+
+        _ ->
+          {character, nil}
+      end
+    else
+      {character, nil}
     end
   end
 end
