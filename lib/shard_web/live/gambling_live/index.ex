@@ -40,7 +40,7 @@ defmodule ShardWeb.GamblingLive.Index do
   end
 
   @impl true
-  def handle_event("update_bet_amount", %{"amount" => amount}, socket) do
+  def handle_event("update_bet_amount", %{"value" => amount}, socket) do
     {:noreply, assign(socket, :bet_amount, amount)}
   end
 
@@ -196,4 +196,24 @@ defmodule ShardWeb.GamblingLive.Index do
   def result_label("won"), do: "Won"
   def result_label("lost"), do: "Lost"
   def result_label(_), do: "Pending"
+
+  # Helper functions for bet amount parsing (same logic as Gambling module)
+  def valid_bet_amount?(amount) when is_binary(amount) do
+    case Integer.parse(amount) do
+      {num, _} when num > 0 -> true
+      _ -> false
+    end
+  end
+
+  def valid_bet_amount?(_), do: false
+
+  def parse_bet_amount(amount) when is_binary(amount) do
+    case Integer.parse(amount) do
+      {num, _} -> num
+      _ -> 0
+    end
+  end
+
+  def parse_bet_amount(amount) when is_integer(amount), do: amount
+  def parse_bet_amount(_), do: 0
 end
