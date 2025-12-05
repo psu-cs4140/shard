@@ -128,7 +128,7 @@ defmodule Shard.Users.PlayerZones do
       {:ok, new_zone} ->
         template_rooms = Shard.Map.list_rooms_by_zone(template_zone.id)
         room_mapping = copy_rooms_from_template(template_rooms, new_zone.id)
-        
+
         copy_doors_from_template(template_rooms, room_mapping)
         copy_monsters_from_template(template_rooms, room_mapping)
         copy_room_items_from_template(template_zone, template_rooms, room_mapping)
@@ -151,7 +151,8 @@ defmodule Shard.Users.PlayerZones do
       max_level: template_zone.max_level,
       is_public: instance_type == "multiplayer",
       is_active: true,
-      properties: Kernel.put_in(template_zone.properties || %{}, ["instance_type"], instance_type),
+      properties:
+        Kernel.put_in(template_zone.properties || %{}, ["instance_type"], instance_type),
       display_order: template_zone.display_order
     }
   end

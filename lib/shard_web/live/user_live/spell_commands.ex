@@ -145,13 +145,25 @@ defmodule ShardWeb.UserLive.SpellCommands do
 
   defp handle_damage_spell(game_state, spell_result, response, monsters_here, spell_type) do
     if length(monsters_here) > 0 do
-      process_damage_spell_with_target(game_state, spell_result, response, monsters_here, spell_type)
+      process_damage_spell_with_target(
+        game_state,
+        spell_result,
+        response,
+        monsters_here,
+        spell_type
+      )
     else
       {response ++ ["The spell dissipates harmlessly - there are no enemies here."], game_state}
     end
   end
 
-  defp process_damage_spell_with_target(game_state, spell_result, response, monsters_here, spell_type) do
+  defp process_damage_spell_with_target(
+         game_state,
+         spell_result,
+         response,
+         monsters_here,
+         spell_type
+       ) do
     target = hd(monsters_here)
     damage = spell_result.damage || 0
 
@@ -239,13 +251,25 @@ defmodule ShardWeb.UserLive.SpellCommands do
 
   defp handle_stun_spell(game_state, spell_result, response, monsters_here, spell_type) do
     if length(monsters_here) > 0 do
-      process_stun_spell_with_target(game_state, spell_result, response, monsters_here, spell_type)
+      process_stun_spell_with_target(
+        game_state,
+        spell_result,
+        response,
+        monsters_here,
+        spell_type
+      )
     else
       {response ++ ["The spell dissipates harmlessly - there are no enemies here."], game_state}
     end
   end
 
-  defp process_stun_spell_with_target(game_state, spell_result, response, monsters_here, spell_type) do
+  defp process_stun_spell_with_target(
+         game_state,
+         spell_result,
+         response,
+         monsters_here,
+         spell_type
+       ) do
     target = hd(monsters_here)
     damage = spell_result.damage || 0
 
