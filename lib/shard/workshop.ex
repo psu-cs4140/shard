@@ -355,23 +355,29 @@ defmodule Shard.Workshop do
 
   def material_counts(character_id) do
     recipe_materials = recipes() |> Enum.flat_map(&ingredient_names/1)
-
-    names =
-      (recipe_materials ++ furnace_material_names())
-      |> Enum.uniq()
+    names = recipe_materials ++ furnace_material_names()
+    canonical_lookup = Enum.into(names, %{}, fn name -> {name, canonical_item_name(name)} end)
+    query_names = canonical_lookup |> Map.values() |> Enum.uniq()
 
     if names == [] do
       %{}
     else
-      from(ci in CharacterInventory,
-        join: item in Item,
-        on: ci.item_id == item.id,
-        where: ci.character_id == ^character_id and item.name in ^names and ci.equipped == false,
-        group_by: item.name,
-        select: {item.name, coalesce(sum(ci.quantity), 0)}
-      )
-      |> Repo.all()
-      |> Map.new()
+      raw_counts =
+        from(ci in CharacterInventory,
+          join: item in Item,
+          on: ci.item_id == item.id,
+          where:
+            ci.character_id == ^character_id and item.name in ^query_names and
+              ci.equipped == false,
+          group_by: item.name,
+          select: {item.name, coalesce(sum(ci.quantity), 0)}
+        )
+        |> Repo.all()
+        |> Map.new()
+
+      Enum.reduce(canonical_lookup, %{}, fn {display, canonical}, acc ->
+        Map.put(acc, display, Map.get(raw_counts, canonical, 0))
+      end)
     end
   end
 
@@ -436,7 +442,9 @@ defmodule Shard.Workshop do
 
   defp load_ingredient_items(ingredients) do
     Enum.reduce_while(ingredients, {:ok, []}, fn ingredient, {:ok, acc} ->
-      case fetch_item_by_name(ingredient.name) do
+      lookup_name = canonical_item_name(ingredient.name)
+
+      case fetch_item_by_name(lookup_name) do
         {:ok, item} ->
           entry = Map.put(ingredient, :item, item)
           {:cont, {:ok, [entry | acc]}}
@@ -499,7 +507,8 @@ defmodule Shard.Workshop do
       max_stack_size: Map.get(spec, :max_stack_size, 1),
       equippable: Map.get(spec, :equippable, false),
       equipment_slot: Map.get(spec, :equipment_slot),
-      sellable: true
+      sellable: true,
+      effects: Map.get(spec, :effects, %{})
     }
   end
 
@@ -572,8 +581,10 @@ defmodule Shard.Workshop do
   defp ensure_has_ingredients(character_id, ingredients) do
     has_all? =
       Enum.all?(ingredients, fn ingredient ->
-        available = Items.get_character_item_quantity(character_id, ingredient.name)
-        available >= ingredient.quantity
+        Items.get_character_item_quantity(
+          character_id,
+          canonical_item_name(ingredient.name)
+        ) >= ingredient.quantity
       end)
 
     if has_all? do
@@ -629,4 +640,7 @@ defmodule Shard.Workshop do
         {:error, reason}
     end
   end
+
+  defp canonical_item_name("Gem"), do: "Gemstone"
+  defp canonical_item_name(name), do: name
 end
