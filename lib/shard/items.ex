@@ -197,10 +197,11 @@ defmodule Shard.Items do
       iex> sell_item(character, invalid_id)
       {:error, :item_not_found}
   """
-  def sell_item(character, inventory_id) do
+  def sell_item(character, inventory_id, quantity \\ 1) do
     alias Ecto.Multi
     # alias Shard.Characters
     alias Shard.Characters.Character
+    quantity_int = max(1, quantity)
 
     inventory_item =
       Repo.get(CharacterInventory, inventory_id)
@@ -220,31 +221,41 @@ defmodule Shard.Items do
         {:error, :item_not_sellable}
 
       inventory_item ->
+        if quantity_int > inventory_item.quantity do
+          {:error, :invalid_quantity}
+        else
         # Get the sell value from the item, default to 1 if not set
-        sell_value = inventory_item.item.value || 1
+          sell_value = inventory_item.item.value || 1
+          total_value = sell_value * quantity_int
 
         Multi.new()
-        |> Multi.run(:remove_item, fn _repo, _changes ->
-          if inventory_item.quantity > 1 do
-            # Reduce quantity by 1
-            update_inventory_quantity(inventory_item, inventory_item.quantity - 1)
-          else
-            # Remove the item completely
-            Repo.delete(inventory_item)
-          end
-        end)
-        |> Multi.run(:update_character, fn _repo, _changes ->
-          character
-          |> Character.changeset(%{gold: character.gold + sell_value})
-          |> Repo.update()
-        end)
-        |> Repo.transaction()
-        |> case do
-          {:ok, %{update_character: updated_character}} ->
-            {:ok, %{character: updated_character, gold_earned: sell_value}}
+          |> Multi.run(:remove_item, fn _repo, _changes ->
+            remaining = inventory_item.quantity - quantity_int
 
-          {:error, _failed_operation, failed_value, _changes_so_far} ->
-            {:error, failed_value}
+            cond do
+              remaining > 0 ->
+                update_inventory_quantity(inventory_item, remaining)
+
+              remaining == 0 ->
+                Repo.delete(inventory_item)
+
+              true ->
+                {:error, :invalid_quantity}
+            end
+          end)
+          |> Multi.run(:update_character, fn _repo, _changes ->
+            character
+            |> Character.changeset(%{gold: character.gold + total_value})
+            |> Repo.update()
+          end)
+          |> Repo.transaction()
+          |> case do
+            {:ok, %{update_character: updated_character}} ->
+              {:ok, %{character: updated_character, gold_earned: total_value}}
+
+            {:error, _failed_operation, failed_value, _changes_so_far} ->
+              {:error, failed_value}
+          end
         end
     end
   end

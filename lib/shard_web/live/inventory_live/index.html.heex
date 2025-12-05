@@ -61,6 +61,12 @@
               <div class="text-xs text-base-content/70">
                 Qty: {inventory_item.quantity}
               </div>
+              <div class="text-xs text-base-content/70">
+                Value: {(inventory_item.item.value || 1)} gold each
+              </div>
+              <div class="text-xs text-base-content/70">
+                Total value: {(inventory_item.quantity * (inventory_item.item.value || 1))} gold
+              </div>
               <%= if inventory_item.equipped do %>
                 <div class="text-xs text-success font-medium">Equipped</div>
               <% end %>
@@ -93,14 +99,14 @@
                 <button
                   phx-click="show_hotbar_modal"
                   phx-value-inventory_id={inventory_item.id}
-                  class="w-full text-xs bg-info/20 text-info-content px-2 py-1 rounded hover:bg-info/30"
+                  class="w-full text-xs bg-info text-info-content px-2 py-1 rounded hover:bg-info/80"
                 >
                   Add to Hotbar
                 </button>
                 <button
                   phx-click="sell_item"
                   phx-value-inventory_id={inventory_item.id}
-                  class="w-full text-xs bg-warning/20 text-warning-content px-2 py-1 rounded hover:bg-warning/30"
+                  class="w-full text-xs bg-warning text-warning-content px-2 py-1 rounded hover:bg-warning/80"
                 >
                   Sell
                 </button>
@@ -188,9 +194,63 @@
       <div class="bg-base-100 shadow rounded-lg p-8 text-center">
         <p class="text-base-content/70">Select a character to view their inventory.</p>
       </div>
-    </div>
-  <% end %>
+  </div>
+<% end %>
 </div>
+
+<%= if @show_sell_modal do %>
+  <% inv = Enum.find(@inventory, &(&1.id == @sell_inventory_id)) %>
+  <% max_qty = inv && inv.quantity || 1 %>
+  <% item_value = inv && (inv.item.value || 1) || 1 %>
+  <% total_stack = max_qty * item_value %>
+  <% sell_total = @sell_quantity * item_value %>
+  <div class="fixed inset-0 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
+    <div class="bg-base-100 rounded-lg p-6 max-w-md w-full mx-4">
+      <h3 class="text-lg font-medium text-base-content mb-2">Sell Item</h3>
+      <p class="text-sm text-base-content/80 mb-2">{inv.item.name}</p>
+      <p class="text-sm text-base-content/70">Current stack: {max_qty}</p>
+      <p class="text-sm text-base-content/70">Value per item: {item_value} gold</p>
+      <p class="text-sm text-base-content/70">Total value of full stack: {total_stack} gold</p>
+
+      <form phx-change="change_sell_quantity" phx-submit="confirm_sell" class="mt-4 space-y-2">
+        <label class="text-sm font-medium text-base-content">How many to sell?</label>
+        <input
+          type="number"
+          name="sell[quantity]"
+          value={@sell_quantity}
+          min="1"
+          max={max_qty}
+          class="input input-bordered w-full"
+        />
+        <%= if @sell_error do %>
+          <p class="text-error text-xs">{@sell_error}</p>
+        <% end %>
+        <p class="text-sm text-base-content/70">
+          You will receive: {sell_total} gold
+        </p>
+        <div class="flex justify-end gap-2 mt-4">
+          <button
+            type="button"
+            phx-click="hide_sell_modal"
+            class="btn btn-ghost btn-sm"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class={[
+              "btn btn-warning btn-sm",
+              @sell_error && "btn-disabled opacity-50"
+            ]}
+            disabled={@sell_error != nil}
+          >
+            Sell
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+<% end %>
 
 <!-- Hotbar Slot Selection Modal -->
 <%= if @show_hotbar_modal do %>
