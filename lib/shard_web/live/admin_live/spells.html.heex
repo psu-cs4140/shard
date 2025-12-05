@@ -1,0 +1,56 @@
+<div style="padding-left: 3rem;">
+  <.header>
+    Spells
+    <:actions>
+      <.link patch={~p"/admin/spells/new"}>
+        <.button>New Spell</.button>
+      </.link>
+    </:actions>
+  </.header>
+</div>
+
+<.table
+  id="spells"
+  rows={@streams.spells}
+  row_click={fn {_id, spell} -> JS.navigate(~p"/admin/spells/#{spell}") end}
+>
+  <:col :let={{_id, spell}} label="Name">{spell.name}</:col>
+  <:col :let={{_id, spell}} label="Description">{spell.description}</:col>
+  <:col :let={{_id, spell}} label="Mana Cost">{spell.mana_cost}</:col>
+  <:col :let={{_id, spell}} label="Damage">{spell.damage || "-"}</:col>
+  <:col :let={{_id, spell}} label="Healing">{spell.healing || "-"}</:col>
+  <:col :let={{_id, spell}} label="Level Required">{spell.level_required}</:col>
+  <:action :let={{_id, spell}}>
+    <div class="sr-only">
+      <.link navigate={~p"/admin/spells/#{spell}"}>Show</.link>
+    </div>
+    <.link patch={~p"/admin/spells/#{spell}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{id, spell}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: spell.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<%= if @live_action in [:new, :edit] do %>
+  <div class="fixed inset-0 z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75" phx-click={JS.patch(~p"/admin/spells")}>
+      </div>
+      <div class="relative bg-base-100 rounded-lg shadow-xl max-w-lg w-full p-6">
+        <.live_component
+          module={ShardWeb.AdminLive.SpellFormComponent}
+          id={@spell.id || :new}
+          title={@page_title}
+          action={@live_action}
+          spell={@spell}
+          patch={~p"/admin/spells"}
+        />
+      </div>
+    </div>
+  </div>
+<% end %>

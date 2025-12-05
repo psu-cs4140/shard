@@ -9,7 +9,7 @@ defmodule Shard.Repo.Migrations.AddPoisonSpiderMonster do
     alias Shard.Repo
     alias Shard.Monsters
     alias Shard.Weapons.DamageTypes
-    alias Shard.Items.Item
+    import Ecto.Query
 
     # Find the Bone Zone
     bone_zone = Repo.get_by(Shard.Map.Zone, slug: "bone-zone")
@@ -37,28 +37,36 @@ defmodule Shard.Repo.Migrations.AddPoisonSpiderMonster do
           end
 
         # Create the Spider Silk item if it doesn't exist
+        # Query the items table directly to avoid schema issues with spell_id column
         spider_silk_item =
-          case Repo.get_by(Item, name: "Spider Silk") do
+          case Repo.one(from(i in "items", where: i.name == "Spider Silk", select: i.id)) do
             nil ->
-              {:ok, new_item} =
-                %Item{}
-                |> Item.changeset(%{
-                  name: "Spider Silk",
-                  description: "Fine, strong silk harvested from a giant spider.",
-                  # Changed from "crafting" to "material"
-                  item_type: "material",
-                  rarity: "common",
-                  value: 5,
-                  stackable: true,
-                  max_stack_size: 10,
-                  is_active: true
-                })
-                |> Repo.insert()
+              # Insert directly into the items table
+              {:ok, result} =
+                Repo.query(
+                  """
+                  INSERT INTO items (name, description, item_type, rarity, value, stackable, max_stack_size, is_active, inserted_at, updated_at)
+                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                  RETURNING id
+                  """,
+                  [
+                    "Spider Silk",
+                    "Fine, strong silk harvested from a giant spider.",
+                    "material",
+                    "common",
+                    5,
+                    true,
+                    10,
+                    true,
+                    NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second),
+                    NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+                  ]
+                )
 
-              new_item
+              %{id: result.rows |> List.first() |> List.first()}
 
-            existing ->
-              existing
+            existing_id ->
+              %{id: existing_id}
           end
 
         # Create the poison spider monster
@@ -94,7 +102,6 @@ defmodule Shard.Repo.Migrations.AddPoisonSpiderMonster do
   defp down do
     alias Shard.Repo
     alias Shard.Monsters
-    alias Shard.Items.Item
 
     # Find and delete the poison spider
     spider = Repo.get_by(Shard.Monsters.Monster, name: "Giant Poison Spider")
@@ -106,14 +113,8 @@ defmodule Shard.Repo.Migrations.AddPoisonSpiderMonster do
       IO.puts("Poison spider not found")
     end
 
-    # Find and delete the spider silk item
-    spider_silk = Repo.get_by(Item, name: "Spider Silk")
-
-    if spider_silk do
-      Repo.delete(spider_silk)
-      IO.puts("Deleted Spider Silk item")
-    else
-      IO.puts("Spider Silk item not found")
-    end
+    # Find and delete the spider silk item using raw query
+    Repo.query("DELETE FROM items WHERE name = $1", ["Spider Silk"])
+    IO.puts("Deleted Spider Silk item (if it existed)")
   end
 end
