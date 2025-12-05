@@ -4,41 +4,69 @@
     <:subtitle>Build your character for the realm</:subtitle>
   </.header>
 
-  <.simple_form
-    for={@form}
-    id="character-form"
-    phx-change="validate"
-    phx-submit="save"
-  >
-    <.input field={@form[:name]} type="text" label="Character Name" required />
-    <.input
-      field={@form[:class]}
-      type="select"
-      label="Class"
-      prompt="Choose a class"
-      options={[
-        {"Warrior", "warrior"},
-        {"Mage", "mage"},
-        {"Rogue", "rogue"},
-        {"Cleric", "cleric"},
-        {"Ranger", "ranger"}
-      ]}
-      required
-    />
-    <.input
-      field={@form[:race]}
-      type="select"
-      label="Race"
-      prompt="Choose a race"
-      options={[
-        {"Human", "human"},
-        {"Elf", "elf"},
-        {"Dwarf", "dwarf"},
-        {"Halfling", "halfling"},
-        {"Orc", "orc"}
-      ]}
-      required
-    />
+  <.simple_form for={@form} id="character-form" phx-change="validate" phx-submit="save">
+    <div class="mb-2">
+      <div class="mb-1 flex items-center justify-between">
+        <label for="character-name" class="label text-base-content">Character Name</label>
+        <button
+          type="button"
+          phx-click="randomize_name"
+          class="text-sm font-semibold text-indigo-600 transition hover:text-indigo-700"
+          aria-label="Randomize character name"
+          title="Randomize character name"
+        >
+          ↻
+        </button>
+      </div>
+      <.input field={@form[:name]} id="character-name" type="text" required />
+    </div>
+
+    <div class="mb-2">
+      <div class="mb-1 flex items-center justify-between">
+        <label for="character-class" class="label text-base-content">Class</label>
+        <button
+          type="button"
+          phx-click="randomize_class"
+          class="text-sm font-semibold text-indigo-600 transition hover:text-indigo-700"
+          aria-label="Randomize class"
+          title="Randomize class"
+        >
+          ↻
+        </button>
+      </div>
+      <.input
+        field={@form[:class]}
+        id="character-class"
+        type="select"
+        prompt="Choose a class"
+        options={@class_options}
+        required
+      />
+    </div>
+
+    <div class="mb-2">
+      <div class="mb-1 flex items-center justify-between">
+        <label for="character-race" class="label text-base-content">Race</label>
+        <button
+          type="button"
+          phx-click="randomize_race"
+          class="text-sm font-semibold text-indigo-600 transition hover:text-indigo-700"
+          aria-label="Randomize race"
+          title="Randomize race"
+        >
+          ↻
+        </button>
+      </div>
+      <.input
+        field={@form[:race]}
+        id="character-race"
+        type="select"
+        prompt="Choose a race"
+        options={@race_options}
+        required
+      />
+    </div>
+
     <.input field={@form[:description]} type="textarea" label="Description" />
 
     <:actions>
