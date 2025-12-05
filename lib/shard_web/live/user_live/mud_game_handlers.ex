@@ -4,7 +4,7 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
   """
   use ShardWeb, :live_view
   import ShardWeb.UserLive.Movement
-  import ShardWeb.UserLive.Commands1
+  import ShardWeb.UserLive.CommandsWithSpells
   import ShardWeb.UserLive.LegacyMap
   import ShardWeb.UserLive.CharacterHelpers
   import ShardWeb.UserLive.ItemHelpers
