@@ -5,6 +5,7 @@ defmodule ShardWeb.AdminLive.ItemFormComponent do
 
   alias Shard.Items
   alias Shard.Map, as: GameMap
+  alias Shard.Spells
 
   @impl true
   def render(assigns) do
@@ -70,6 +71,13 @@ defmodule ShardWeb.AdminLive.ItemFormComponent do
           options={@room_options}
         />
         <.input field={@form[:is_active]} type="checkbox" label="Active" />
+        <.input
+          field={@form[:spell_id]}
+          type="select"
+          label="Spell (for Spell Scrolls)"
+          prompt="No spell (regular item)"
+          options={@spell_options}
+        />
         <:actions>
           <.button phx-disable-with="Saving...">Save Item</.button>
         </:actions>
@@ -99,11 +107,17 @@ defmodule ShardWeb.AdminLive.ItemFormComponent do
         []
       end
 
+    # Load all available spells for the dropdown
+    spell_options =
+      Spells.list_spells()
+      |> Enum.map(fn spell -> {spell.name, spell.id} end)
+
     {:ok,
      socket
      |> assign(assigns)
      |> assign(:zone_options, zone_options)
      |> assign(:room_options, room_options)
+     |> assign(:spell_options, spell_options)
      |> assign_form(changeset)}
   end
 
@@ -134,8 +148,16 @@ defmodule ShardWeb.AdminLive.ItemFormComponent do
   end
 
   def handle_event("save", %{"item" => item_params}, socket) do
+    # Convert empty spell_id to nil
+    item_params = normalize_spell_id(item_params)
     save_item(socket, socket.assigns.action, item_params)
   end
+
+  defp normalize_spell_id(%{"spell_id" => ""} = params) do
+    Map.put(params, "spell_id", nil)
+  end
+
+  defp normalize_spell_id(params), do: params
 
   defp save_item(socket, :edit, item_params) do
     case Items.update_item(socket.assigns.item, item_params) do

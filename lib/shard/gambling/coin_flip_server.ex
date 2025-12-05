@@ -1,7 +1,7 @@
 defmodule Shard.Gambling.CoinFlipServer do
   @moduledoc """
   GenServer that manages timed coin flip events.
-  A coin flip happens every 10 minutes and all players bet on the same flip.
+  A coin flip happens every 30 seconds and all players bet on the same flip.
   """
   use GenServer
   require Logger
@@ -9,7 +9,7 @@ defmodule Shard.Gambling.CoinFlipServer do
   alias Shard.Gambling
   alias Phoenix.PubSub
 
-  @flip_interval :timer.minutes(10)
+  @flip_interval :timer.seconds(30)
   @countdown_interval :timer.seconds(1)
 
   defmodule State do
@@ -47,7 +47,7 @@ defmodule Shard.Gambling.CoinFlipServer do
   @impl true
   def init(_opts) do
     # Start the first flip immediately on startup
-    next_flip_at = DateTime.add(DateTime.utc_now(), 10, :minute)
+    next_flip_at = DateTime.add(DateTime.utc_now(), 30, :second)
     flip_id = generate_flip_id()
 
     # Schedule the flip
@@ -111,7 +111,7 @@ defmodule Shard.Gambling.CoinFlipServer do
     end
 
     # Schedule next flip
-    next_flip_at = DateTime.add(DateTime.utc_now(), 10, :minute)
+    next_flip_at = DateTime.add(DateTime.utc_now(), 30, :second)
     new_flip_id = generate_flip_id()
     flip_timer = Process.send_after(self(), :execute_flip, @flip_interval)
 

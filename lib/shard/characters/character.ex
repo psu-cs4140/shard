@@ -10,6 +10,7 @@ defmodule Shard.Characters.Character do
   alias Shard.Items.{CharacterInventory, HotbarSlot}
   alias Shard.Map.Zone
   alias Shard.Mining.MiningInventory
+  alias Shard.Spells.CharacterSpell
 
   schema "characters" do
     field :name, :string
@@ -38,6 +39,8 @@ defmodule Shard.Characters.Character do
     has_many :hotbar_slots, HotbarSlot
     has_one :mining_inventory, MiningInventory
     has_one :chopping_inventory, Shard.Forest.ChoppingInventory
+    has_many :character_spells, CharacterSpell
+    many_to_many :spells, Shard.Spells.Spells, join_through: CharacterSpell
 
     timestamps(type: :utc_datetime)
   end
