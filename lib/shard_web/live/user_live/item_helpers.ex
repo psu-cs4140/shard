@@ -16,19 +16,25 @@ defmodule ShardWeb.UserLive.ItemHelpers do
 
   # Use an item from hotbar or inventory
   def use_item(game_state, item) do
-    case item.item_type do
-      "consumable" ->
-        use_consumable_item(game_state, item)
+    cond do
+      Shard.Kitchen.food_effect(item.name) ->
+        consume_food(game_state, item)
 
-      "weapon" ->
-        equip_item(game_state, item)
+      true ->
+        case item.item_type do
+          "consumable" ->
+            use_consumable_item(game_state, item)
 
-      "key" ->
-        use_key_item(game_state, item)
+          "weapon" ->
+            equip_item(game_state, item)
 
-      _ ->
-        response = ["You cannot use #{item.name} in this way."]
-        {response, game_state}
+          "key" ->
+            use_key_item(game_state, item)
+
+          _ ->
+            response = ["You cannot use #{item.name} in this way."]
+            {response, game_state}
+        end
     end
   end
 
@@ -85,6 +91,122 @@ defmodule ShardWeb.UserLive.ItemHelpers do
         response = ["Failed to use #{item.name}."]
         {response, game_state}
     end
+  end
+
+  defp consume_food(game_state, item) do
+    effects = Shard.Kitchen.food_effect(item.name)
+
+    cond do
+      is_nil(effects) ->
+        {["You cannot use #{item.name} in this way."], game_state}
+
+      not Shard.Combat.in_combat?(game_state) ->
+        {["You can only eat #{item.name} during combat."], game_state}
+
+      true ->
+        case find_food_inventory_entry(game_state, item) do
+          {:ok, entry} ->
+            apply_food_effect(game_state, item, effects, entry)
+
+          :not_found ->
+            {["You have no more #{item.name} to eat."], game_state}
+        end
+    end
+  end
+
+  defp find_food_inventory_entry(game_state, item) do
+    cond do
+      Map.get(item, :inventory_id) ->
+        inventory_id = Map.get(item, :inventory_id)
+
+        case Enum.find(game_state.inventory_items, &(&1.inventory_id == inventory_id)) do
+          nil -> :not_found
+          entry -> {:ok, entry}
+        end
+
+      true ->
+        case Enum.find(game_state.inventory_items, fn inv_item ->
+               inv_item.name == item.name && inv_item.quantity > 0
+             end) do
+          nil -> :not_found
+          entry -> {:ok, entry}
+        end
+    end
+  end
+
+  defp apply_food_effect(game_state, item, %{hp: hp, mana: mana}, entry) do
+    current_health = game_state.player_stats.health
+    max_health = game_state.player_stats.max_health
+    current_mana = game_state.player_stats.mana
+    max_mana = game_state.player_stats.max_mana
+
+    healed = min(hp, max(max_health - current_health, 0))
+    restored_mana = min(mana, max(max_mana - current_mana, 0))
+
+    if healed <= 0 and restored_mana <= 0 do
+      {["You are already at full strength and mana."], game_state}
+    else
+      updated_stats = %{
+        game_state.player_stats
+        | health: current_health + healed,
+          mana: current_mana + restored_mana
+      }
+
+      ShardWeb.UserLive.CharacterHelpers.save_character_stats(game_state.character, updated_stats)
+
+      case Shard.Items.remove_item_from_inventory(entry.inventory_id, 1) do
+        {:ok, _} ->
+          updated_inventory =
+            ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+
+          base_character =
+            game_state.character
+            |> Map.put(:health, updated_stats.health)
+            |> Map.put(:mana, updated_stats.mana)
+
+          {updated_character, updated_hotbar} = reload_character_hotbar(base_character)
+
+          response =
+            case {healed > 0, restored_mana > 0} do
+              {true, true} ->
+                [
+                  "You eat #{item.name} and recover #{healed} HP and #{restored_mana} Mana.",
+                  "HP: #{updated_stats.health}/#{max_health} | Mana: #{updated_stats.mana}/#{max_mana}"
+                ]
+
+              {true, false} ->
+                [
+                  "You eat #{item.name} and recover #{healed} HP.",
+                  "HP: #{updated_stats.health}/#{max_health}"
+                ]
+
+              {false, true} ->
+                [
+                  "You eat #{item.name} and recover #{restored_mana} Mana.",
+                  "Mana: #{updated_stats.mana}/#{max_mana}"
+                ]
+            end
+
+          updated_game_state =
+            game_state
+            |> Map.put(:player_stats, updated_stats)
+            |> Map.put(:inventory_items, updated_inventory)
+            |> Map.put(:character, updated_character)
+            |> Map.put(:hotbar, updated_hotbar)
+
+          {response, updated_game_state}
+
+        {:error, reason} ->
+          {["Failed to consume #{item.name}: #{inspect(reason)}"], game_state}
+      end
+    end
+  end
+
+  defp reload_character_hotbar(character) do
+    slots = Shard.Items.get_character_hotbar(character.id)
+    updated_character = %{character | hotbar_slots: slots}
+    hotbar = ShardWeb.UserLive.CharacterHelpers.load_character_hotbar(updated_character)
+    {updated_character, hotbar}
   end
 
   defp handle_string_effect(game_state, item, effect) do

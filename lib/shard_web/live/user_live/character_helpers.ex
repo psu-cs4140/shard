@@ -143,27 +143,30 @@ defmodule ShardWeb.UserLive.CharacterHelpers do
 
   # Helper function to build content for a single hotbar slot
   defp build_slot_content(slot_data) do
-    if slot_data && slot_data.item_id do
-      build_item_content(slot_data.item_id)
-    else
-      nil
-    end
-  end
-
-  # Helper function to build item content from item ID
-  defp build_item_content(item_id) do
-    case Shard.Repo.get(Shard.Items.Item, item_id) do
-      nil ->
+    cond do
+      is_nil(slot_data) ->
         nil
 
-      item ->
-        %{
-          id: item.id,
-          name: item.name,
-          item_type: item.item_type || "misc",
-          damage: get_in(item.stats, ["damage"]) || get_in(item.effects, ["damage"]),
-          effect: get_in(item.effects, ["effect"]) || item.description
-        }
+      is_nil(slot_data.item_id) ->
+        nil
+
+      true ->
+        item = slot_data.item
+        inventory = slot_data.inventory
+
+        if item && slot_data.inventory_id && inventory do
+          %{
+            id: item.id,
+            name: item.name,
+            item_type: item.item_type || "misc",
+            damage: get_in(item.stats, ["damage"]) || get_in(item.effects, ["damage"]),
+            effect: get_in(item.effects, ["effect"]) || item.description,
+            inventory_id: slot_data.inventory_id,
+            quantity: inventory.quantity
+          }
+        else
+          nil
+        end
     end
   end
 
