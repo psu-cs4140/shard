@@ -123,11 +123,11 @@ defmodule Shard.Users.UserTest do
     test "accepts boolean admin values" do
       changeset = User.admin_changeset(%User{}, %{admin: true})
       assert changeset.valid?
-      assert get_change(changeset, :admin) == true
+      assert get_field(changeset, :admin) == true
 
       changeset = User.admin_changeset(%User{}, %{admin: false})
       assert changeset.valid?
-      assert get_change(changeset, :admin) == false
+      assert get_field(changeset, :admin) == false
     end
   end
 
