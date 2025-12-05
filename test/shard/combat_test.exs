@@ -54,7 +54,7 @@ defmodule Shard.CombatTest do
         |> Map.put(:player_position, {99, 99})
 
       {messages, updated_state} = Combat.execute_action(game_state, "attack")
-      
+
       # The test might still find monsters from shared combat state
       # So we'll accept either the expected message or actual combat results
       if messages == ["There are no monsters here to attack."] do
