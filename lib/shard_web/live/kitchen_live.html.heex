@@ -1,0 +1,104 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+    <div class="flex flex-col gap-6 rounded-3xl bg-emerald-950/80 p-6 shadow-2xl ring-1 ring-emerald-700/40">
+      <div class="flex flex-col gap-4 text-white md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 class="text-3xl font-semibold tracking-tight">Kitchen</h1>
+          <p class="text-emerald-200/90">Cooking</p>
+          <p class="mt-2 text-sm text-emerald-100/80">
+            Roast gathered ingredients into hearty meals that can save your life mid-battle.
+          </p>
+        </div>
+
+        <div class="w-full md:w-72">
+          <%= if @characters == [] do %>
+            <div class="rounded-2xl border border-emerald-700 bg-emerald-900/50 px-4 py-3 text-sm text-emerald-100">
+              Create a character to begin cooking.
+            </div>
+          <% else %>
+            <form phx-change="select_character" id="kitchen-character-selector">
+              <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-emerald-300">
+                Active Character
+              </label>
+              <select
+                name="character_id"
+                class="w-full rounded-2xl border border-emerald-600 bg-emerald-900/70 px-4 py-3 text-sm text-white focus:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-300/40"
+              >
+                <%= for character <- @characters do %>
+                  <option
+                    value={character.id}
+                    selected={@selected_character && character.id == @selected_character.id}
+                  >
+                    {character.name} • Lv. {character.level} {character.class}
+                  </option>
+                <% end %>
+              </select>
+            </form>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="grid gap-6 md:grid-cols-2">
+        <%= for recipe <- @recipes do %>
+          <div class="flex flex-col rounded-3xl border border-emerald-600/40 bg-emerald-900/70 p-6 shadow-lg shadow-emerald-950/50">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-xs uppercase tracking-wide text-emerald-300/80">Recipe</p>
+                <h2 class="text-xl font-semibold text-white">{recipe.name}</h2>
+                <p class="text-sm text-emerald-100/80">{recipe.effect_text}</p>
+              </div>
+              <div class="rounded-full border border-amber-400/50 bg-amber-300/15 px-3 py-1 text-xs font-semibold text-amber-100">
+                {Shard.Kitchen.food_effect(recipe.result_name).hp || 0} HP / {Shard.Kitchen.food_effect(
+                  recipe.result_name
+                ).mana || 0} Mana
+              </div>
+            </div>
+
+            <div class="mt-4 space-y-3 text-sm text-emerald-50">
+              <div>
+                <p class="text-xs uppercase tracking-wide text-emerald-300/80">Ingredients</p>
+                <ul class="mt-2 space-y-2">
+                  <%= for ingredient <- recipe.ingredients do %>
+                    <li class="flex items-center justify-between rounded-2xl bg-emerald-950/60 px-3 py-2">
+                      <span>{ingredient.quantity} × {ingredient.name}</span>
+                      <span class={[
+                        "text-xs font-semibold uppercase",
+                        ingredient.available >= ingredient.quantity && "text-emerald-200",
+                        ingredient.available < ingredient.quantity && "text-rose-300"
+                      ]}>
+                        You have {ingredient.available}
+                      </span>
+                    </li>
+                  <% end %>
+                </ul>
+              </div>
+
+              <div class="flex items-center justify-between rounded-2xl border border-emerald-700 px-3 py-2 text-xs uppercase tracking-wide text-emerald-200/90">
+                <span>Creates</span>
+                <span class="text-sm font-semibold text-emerald-100">
+                  {recipe.result_quantity} × {recipe.result_name}
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              phx-click={Atom.to_string(recipe.key)}
+              phx-disable-with="Cooking..."
+              disabled={is_nil(@selected_character) or !recipe.can_cook?}
+              class={[
+                "mt-6 rounded-2xl px-4 py-3 text-center text-sm font-semibold shadow-lg transition",
+                if(is_nil(@selected_character) or !recipe.can_cook?,
+                  do: "cursor-not-allowed bg-emerald-800 text-emerald-400 shadow-none",
+                  else: "bg-emerald-400 text-emerald-950 hover:bg-emerald-300"
+                )
+              ]}
+            >
+              Cook
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</Layouts.app>

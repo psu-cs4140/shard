@@ -17,6 +17,10 @@ defmodule ShardWeb.InventoryLive.Index do
       |> assign(:hotbar, [])
       |> assign(:room_items, [])
       |> assign(:show_hotbar_modal, false)
+      |> assign(:show_sell_modal, false)
+      |> assign(:sell_inventory_id, nil)
+      |> assign(:sell_quantity, 1)
+      |> assign(:sell_error, nil)
       |> assign(:selected_inventory_id, nil)
       |> load_character_data()
 
@@ -172,13 +176,57 @@ defmodule ShardWeb.InventoryLive.Index do
   end
 
   def handle_event("sell_item", %{"inventory_id" => inventory_id}, socket) do
-    character = socket.assigns.selected_character
+    socket =
+      socket
+      |> assign(:show_sell_modal, true)
+      |> assign(:sell_inventory_id, String.to_integer(inventory_id))
+      |> assign(:sell_quantity, 1)
+      |> assign(:sell_error, nil)
 
-    case Items.sell_item(character, String.to_integer(inventory_id)) do
+    {:noreply, socket}
+  end
+
+  def handle_event("hide_sell_modal", _params, socket) do
+    socket =
+      socket
+      |> assign(:show_sell_modal, false)
+      |> assign(:sell_inventory_id, nil)
+      |> assign(:sell_error, nil)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("change_sell_quantity", %{"sell" => %{"quantity" => qty}}, socket) do
+    {qty_int, error} =
+      case Integer.parse(qty) do
+        {val, ""} when val >= 1 ->
+          max_qty = current_sell_max(socket)
+
+          if val <= max_qty,
+            do: {val, nil},
+            else: {val, "Enter a number between 1 and #{max_qty}"}
+
+        _ ->
+          {socket.assigns.sell_quantity,
+           "Enter a number between 1 and #{current_sell_max(socket)}"}
+      end
+
+    {:noreply, assign(socket, sell_quantity: qty_int, sell_error: error)}
+  end
+
+  def handle_event("confirm_sell", _params, socket) do
+    character = socket.assigns.selected_character
+    qty = socket.assigns.sell_quantity
+    inventory_id = socket.assigns.sell_inventory_id
+
+    case Items.sell_item(character, inventory_id, qty) do
       {:ok, %{gold_earned: gold_earned}} ->
         socket =
           socket
           |> put_flash(:info, "Item sold for #{gold_earned} gold")
+          |> assign(:show_sell_modal, false)
+          |> assign(:sell_inventory_id, nil)
+          |> assign(:sell_error, nil)
           |> load_character_data()
 
         {:noreply, socket}
@@ -194,6 +242,12 @@ defmodule ShardWeb.InventoryLive.Index do
 
       {:error, :item_not_sellable} ->
         {:noreply, put_flash(socket, :error, "This item cannot be sold")}
+
+      {:error, :invalid_quantity} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Invalid quantity")
+         |> assign(:sell_error, "Enter a number between 1 and #{current_sell_max(socket)}")}
 
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, "Failed to sell item: #{inspect(reason)}")}
@@ -217,6 +271,13 @@ defmodule ShardWeb.InventoryLive.Index do
         |> assign(:inventory, inventory)
         |> assign(:hotbar, hotbar)
         |> assign(:room_items, room_items)
+    end
+  end
+
+  defp current_sell_max(socket) do
+    case Enum.find(socket.assigns.inventory, &(&1.id == socket.assigns.sell_inventory_id)) do
+      nil -> 1
+      inv -> inv.quantity
     end
   end
 
