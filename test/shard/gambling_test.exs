@@ -58,7 +58,7 @@ defmodule Shard.GamblingTest do
 
     test "returns error when character not found" do
       attrs = %{
-        character_id: 999999,
+        character_id: 999_999,
         flip_id: "flip-123",
         amount: 50,
         prediction: "heads"
@@ -97,19 +97,21 @@ defmodule Shard.GamblingTest do
       character2 = character_fixture()
       flip_id = "flip-456"
 
-      {:ok, bet1} = Gambling.create_bet(%{
-        character_id: character1.id,
-        flip_id: flip_id,
-        amount: 25,
-        prediction: "heads"
-      })
+      {:ok, bet1} =
+        Gambling.create_bet(%{
+          character_id: character1.id,
+          flip_id: flip_id,
+          amount: 25,
+          prediction: "heads"
+        })
 
-      {:ok, bet2} = Gambling.create_bet(%{
-        character_id: character2.id,
-        flip_id: flip_id,
-        amount: 30,
-        prediction: "tails"
-      })
+      {:ok, bet2} =
+        Gambling.create_bet(%{
+          character_id: character2.id,
+          flip_id: flip_id,
+          amount: 30,
+          prediction: "tails"
+        })
 
       %{flip_id: flip_id, bet1: bet1, bet2: bet2}
     end
@@ -134,19 +136,21 @@ defmodule Shard.GamblingTest do
       character = character_fixture()
 
       # Create multiple bets
-      {:ok, _bet1} = Gambling.create_bet(%{
-        character_id: character.id,
-        flip_id: "flip-1",
-        amount: 10,
-        prediction: "heads"
-      })
+      {:ok, _bet1} =
+        Gambling.create_bet(%{
+          character_id: character.id,
+          flip_id: "flip-1",
+          amount: 10,
+          prediction: "heads"
+        })
 
-      {:ok, _bet2} = Gambling.create_bet(%{
-        character_id: character.id,
-        flip_id: "flip-2",
-        amount: 20,
-        prediction: "tails"
-      })
+      {:ok, _bet2} =
+        Gambling.create_bet(%{
+          character_id: character.id,
+          flip_id: "flip-2",
+          amount: 20,
+          prediction: "tails"
+        })
 
       %{character: character}
     end
@@ -173,17 +177,22 @@ defmodule Shard.GamblingTest do
       character = character_fixture()
       flip_id = "flip-789"
 
-      {:ok, bet} = Gambling.create_bet(%{
-        character_id: character.id,
-        flip_id: flip_id,
-        amount: 15,
-        prediction: "heads"
-      })
+      {:ok, bet} =
+        Gambling.create_bet(%{
+          character_id: character.id,
+          flip_id: flip_id,
+          amount: 15,
+          prediction: "heads"
+        })
 
       %{character: character, flip_id: flip_id, bet: bet}
     end
 
-    test "returns pending bet for character and flip", %{character: character, flip_id: flip_id, bet: bet} do
+    test "returns pending bet for character and flip", %{
+      character: character,
+      flip_id: flip_id,
+      bet: bet
+    } do
       found_bet = Gambling.get_pending_bet(character.id, flip_id)
       assert found_bet.id == bet.id
     end
@@ -200,24 +209,30 @@ defmodule Shard.GamblingTest do
       character2 = character_fixture()
       flip_id = "flip-results"
 
-      {:ok, _bet1} = Gambling.create_bet(%{
-        character_id: character1.id,
-        flip_id: flip_id,
-        amount: 25,
-        prediction: "heads"
-      })
+      {:ok, _bet1} =
+        Gambling.create_bet(%{
+          character_id: character1.id,
+          flip_id: flip_id,
+          amount: 25,
+          prediction: "heads"
+        })
 
-      {:ok, _bet2} = Gambling.create_bet(%{
-        character_id: character2.id,
-        flip_id: flip_id,
-        amount: 30,
-        prediction: "tails"
-      })
+      {:ok, _bet2} =
+        Gambling.create_bet(%{
+          character_id: character2.id,
+          flip_id: flip_id,
+          amount: 30,
+          prediction: "tails"
+        })
 
       %{flip_id: flip_id, character1: character1, character2: character2}
     end
 
-    test "processes winning and losing bets correctly", %{flip_id: flip_id, character1: character1, character2: character2} do
+    test "processes winning and losing bets correctly", %{
+      flip_id: flip_id,
+      character1: character1,
+      character2: character2
+    } do
       original_gold1 = Repo.get!(Character, character1.id).gold
       original_gold2 = Repo.get!(Character, character2.id).gold
 
@@ -229,7 +244,8 @@ defmodule Shard.GamblingTest do
 
       # Check that winner got payout
       winner_character = Repo.get!(Character, character1.id)
-      assert winner_character.gold == original_gold1 + 50  # 25 * 2
+      # 25 * 2
+      assert winner_character.gold == original_gold1 + 50
 
       # Check that loser's gold didn't change (already deducted when bet was placed)
       loser_character = Repo.get!(Character, character2.id)
@@ -250,19 +266,21 @@ defmodule Shard.GamblingTest do
       character = character_fixture()
 
       # Create some bet history
-      {:ok, bet1} = Gambling.create_bet(%{
-        character_id: character.id,
-        flip_id: "flip-1",
-        amount: 20,
-        prediction: "heads"
-      })
+      {:ok, bet1} =
+        Gambling.create_bet(%{
+          character_id: character.id,
+          flip_id: "flip-1",
+          amount: 20,
+          prediction: "heads"
+        })
 
-      {:ok, bet2} = Gambling.create_bet(%{
-        character_id: character.id,
-        flip_id: "flip-2",
-        amount: 30,
-        prediction: "tails"
-      })
+      {:ok, bet2} =
+        Gambling.create_bet(%{
+          character_id: character.id,
+          flip_id: "flip-2",
+          amount: 30,
+          prediction: "tails"
+        })
 
       # Process one as won, one as lost
       bet1 |> Bet.changeset(%{result: "won", payout: 40}) |> Repo.update!()
@@ -296,13 +314,14 @@ defmodule Shard.GamblingTest do
   defp character_fixture(attrs \\ %{}) do
     user = user_fixture()
 
-    attrs = Enum.into(attrs, %{
-      name: "Test Character #{System.unique_integer([:positive])}",
-      class: "warrior",
-      race: "human",
-      user_id: user.id,
-      gold: 1000
-    })
+    attrs =
+      Enum.into(attrs, %{
+        name: "Test Character #{System.unique_integer([:positive])}",
+        class: "warrior",
+        race: "human",
+        user_id: user.id,
+        gold: 1000
+      })
 
     {:ok, character} = Shard.Characters.create_character(attrs)
     character
@@ -311,10 +330,11 @@ defmodule Shard.GamblingTest do
   defp user_fixture do
     unique_email = "user#{System.unique_integer([:positive])}@example.com"
 
-    {:ok, user} = Shard.Users.register_user(%{
-      email: unique_email,
-      password: "password123password123"
-    })
+    {:ok, user} =
+      Shard.Users.register_user(%{
+        email: unique_email,
+        password: "password123password123"
+      })
 
     user
   end

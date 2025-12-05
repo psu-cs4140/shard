@@ -41,8 +41,16 @@ defmodule Shard.Map.DoorTest do
 
     test "accepts all valid directions" do
       valid_directions = [
-        "north", "south", "east", "west", "up", "down",
-        "northeast", "northwest", "southeast", "southwest"
+        "north",
+        "south",
+        "east",
+        "west",
+        "up",
+        "down",
+        "northeast",
+        "northwest",
+        "southeast",
+        "southwest"
       ]
 
       for direction <- valid_directions do
@@ -102,12 +110,12 @@ defmodule Shard.Map.DoorTest do
 
     test "accepts optional fields" do
       attrs = %{
-        @valid_attrs |
-        name: "Secret Door",
-        description: "A hidden passage",
-        key_required: "golden_key",
-        properties: %{"hidden" => true},
-        new_dungeon: true
+        @valid_attrs
+        | name: "Secret Door",
+          description: "A hidden passage",
+          key_required: "golden_key",
+          properties: %{"hidden" => true},
+          new_dungeon: true
       }
 
       changeset = Door.changeset(%Door{}, attrs)

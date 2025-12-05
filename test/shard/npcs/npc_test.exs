@@ -194,9 +194,9 @@ defmodule Shard.Npcs.NpcTest do
 
     test "accepts map fields" do
       attrs = %{
-        @valid_attrs |
-        inventory: %{"sword" => 1, "potion" => 3},
-        properties: %{"special_ability" => "fireball", "weakness" => "water"}
+        @valid_attrs
+        | inventory: %{"sword" => 1, "potion" => 3},
+          properties: %{"special_ability" => "fireball", "weakness" => "water"}
       }
 
       changeset = Npc.changeset(%Npc{}, attrs)
@@ -212,10 +212,10 @@ defmodule Shard.Npcs.NpcTest do
 
     test "accepts coordinate values" do
       attrs = %{
-        @valid_attrs |
-        location_x: -10,
-        location_y: 25,
-        location_z: 5
+        @valid_attrs
+        | location_x: -10,
+          location_y: 25,
+          location_z: 5
       }
 
       changeset = Npc.changeset(%Npc{}, attrs)

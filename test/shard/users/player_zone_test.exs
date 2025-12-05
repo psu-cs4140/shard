@@ -76,31 +76,31 @@ defmodule Shard.Users.PlayerZoneTest do
 
     test "validates foreign key constraints are present" do
       changeset = PlayerZone.changeset(%PlayerZone{}, @valid_attrs)
-      
+
       # Check that foreign key constraints are present
       assert Enum.any?(changeset.constraints, fn constraint ->
-        constraint.type == :foreign_key and constraint.field == :user_id
-      end)
-      
+               constraint.type == :foreign_key and constraint.field == :user_id
+             end)
+
       assert Enum.any?(changeset.constraints, fn constraint ->
-        constraint.type == :foreign_key and constraint.field == :zone_id
-      end)
+               constraint.type == :foreign_key and constraint.field == :zone_id
+             end)
     end
 
     test "validates unique constraint for user, zone, and instance type" do
       changeset = PlayerZone.changeset(%PlayerZone{}, @valid_attrs)
-      
+
       # Check that unique constraint is present
       assert Enum.any?(changeset.constraints, fn constraint ->
-        constraint.type == :unique
-      end)
+               constraint.type == :unique
+             end)
     end
 
     test "accepts valid zone names and instance IDs" do
       attrs = %{
-        @valid_attrs |
-        zone_name: "Crystal Caves",
-        zone_instance_id: "crystal-caves-sp-user-123"
+        @valid_attrs
+        | zone_name: "Crystal Caves",
+          zone_instance_id: "crystal-caves-sp-user-123"
       }
 
       changeset = PlayerZone.changeset(%PlayerZone{}, attrs)

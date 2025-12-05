@@ -59,8 +59,13 @@ defmodule Shard.Map.RoomTest do
 
     test "accepts all valid room types" do
       valid_types = [
-        "standard", "safe_zone", "shop", "dungeon", 
-        "treasure_room", "trap_room", "end_room"
+        "standard",
+        "safe_zone",
+        "shop",
+        "dungeon",
+        "treasure_room",
+        "trap_room",
+        "end_room"
       ]
 
       for room_type <- valid_types do
@@ -86,10 +91,10 @@ defmodule Shard.Map.RoomTest do
 
     test "accepts coordinate values" do
       attrs = %{
-        @valid_attrs |
-        x_coordinate: -10,
-        y_coordinate: 25,
-        z_coordinate: 5
+        @valid_attrs
+        | x_coordinate: -10,
+          y_coordinate: 25,
+          z_coordinate: 5
       }
 
       changeset = Room.changeset(%Room{}, attrs)
@@ -98,12 +103,12 @@ defmodule Shard.Map.RoomTest do
 
     test "accepts properties map" do
       attrs = %{
-        @valid_attrs |
-        properties: %{
-          "lighting" => "dim",
-          "temperature" => "cold",
-          "special_features" => ["fountain", "statue"]
-        }
+        @valid_attrs
+        | properties: %{
+            "lighting" => "dim",
+            "temperature" => "cold",
+            "special_features" => ["fountain", "statue"]
+          }
       }
 
       changeset = Room.changeset(%Room{}, attrs)

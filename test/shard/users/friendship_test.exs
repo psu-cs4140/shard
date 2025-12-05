@@ -62,24 +62,24 @@ defmodule Shard.Users.FriendshipTest do
 
     test "validates foreign key constraints are present" do
       changeset = Friendship.changeset(%Friendship{}, @valid_attrs)
-      
+
       # Check that foreign key constraints are present
       assert Enum.any?(changeset.constraints, fn constraint ->
-        constraint.type == :foreign_key and constraint.field == :user_id
-      end)
-      
+               constraint.type == :foreign_key and constraint.field == :user_id
+             end)
+
       assert Enum.any?(changeset.constraints, fn constraint ->
-        constraint.type == :foreign_key and constraint.field == :friend_id
-      end)
+               constraint.type == :foreign_key and constraint.field == :friend_id
+             end)
     end
 
     test "validates unique constraint is present" do
       changeset = Friendship.changeset(%Friendship{}, @valid_attrs)
-      
+
       # Check that unique constraint is present
       assert Enum.any?(changeset.constraints, fn constraint ->
-        constraint.type == :unique
-      end)
+               constraint.type == :unique
+             end)
     end
   end
 end

@@ -84,7 +84,7 @@ defmodule Shard.Marketplace.ListingTest do
       now = DateTime.utc_now()
       attrs = %{@valid_attrs | status: "active", sold_at: now, cancelled_at: now}
       changeset = Listing.changeset(%Listing{}, attrs)
-      
+
       assert changeset.valid?
       assert get_change(changeset, :sold_at) == nil
       assert get_change(changeset, :cancelled_at) == nil

@@ -59,17 +59,19 @@ defmodule Shard.Users.UserZoneProgressTest do
   describe "initialize_for_user/2" do
     setup do
       # Create test zones
-      {:ok, zone1} = Map.create_zone(%{
-        name: "Zone 1",
-        slug: "zone-1-#{System.unique_integer([:positive])}",
-        display_order: 1
-      })
+      {:ok, zone1} =
+        Map.create_zone(%{
+          name: "Zone 1",
+          slug: "zone-1-#{System.unique_integer([:positive])}",
+          display_order: 1
+        })
 
-      {:ok, zone2} = Map.create_zone(%{
-        name: "Zone 2", 
-        slug: "zone-2-#{System.unique_integer([:positive])}",
-        display_order: 2
-      })
+      {:ok, zone2} =
+        Map.create_zone(%{
+          name: "Zone 2",
+          slug: "zone-2-#{System.unique_integer([:positive])}",
+          display_order: 2
+        })
 
       %{zone1: zone1, zone2: zone2}
     end
@@ -118,10 +120,12 @@ defmodule Shard.Users.UserZoneProgressTest do
   describe "for_user/1" do
     setup do
       user = user_fixture()
-      {:ok, zone} = Map.create_zone(%{
-        name: "Test Zone",
-        slug: "test-zone-#{System.unique_integer([:positive])}"
-      })
+
+      {:ok, zone} =
+        Map.create_zone(%{
+          name: "Test Zone",
+          slug: "test-zone-#{System.unique_integer([:positive])}"
+        })
 
       %{user: user, zone: zone}
     end
@@ -150,17 +154,21 @@ defmodule Shard.Users.UserZoneProgressTest do
   describe "update_progress/3" do
     setup do
       user = user_fixture()
-      {:ok, zone} = Map.create_zone(%{
-        name: "Test Zone",
-        slug: "test-zone-#{System.unique_integer([:positive])}"
-      })
+
+      {:ok, zone} =
+        Map.create_zone(%{
+          name: "Test Zone",
+          slug: "test-zone-#{System.unique_integer([:positive])}"
+        })
 
       %{user: user, zone: zone}
     end
 
     test "creates new progress record when none exists", %{user: user, zone: zone} do
       # Ensure no existing progress
-      Repo.delete_all(from p in UserZoneProgress, where: p.user_id == ^user.id and p.zone_id == ^zone.id)
+      Repo.delete_all(
+        from p in UserZoneProgress, where: p.user_id == ^user.id and p.zone_id == ^zone.id
+      )
 
       {:ok, progress} = UserZoneProgress.update_progress(user.id, zone.id, "in_progress")
       assert progress.user_id == user.id
@@ -177,10 +185,12 @@ defmodule Shard.Users.UserZoneProgressTest do
       assert updated.progress == "completed"
 
       # Verify only one record exists
-      count = Repo.aggregate(
-        from(p in UserZoneProgress, where: p.user_id == ^user.id and p.zone_id == ^zone.id),
-        :count
-      )
+      count =
+        Repo.aggregate(
+          from(p in UserZoneProgress, where: p.user_id == ^user.id and p.zone_id == ^zone.id),
+          :count
+        )
+
       assert count == 1
     end
 

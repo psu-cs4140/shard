@@ -63,11 +63,16 @@ defmodule Shard.Map.ZoneTest do
 
     test "validates slug format" do
       invalid_slugs = [
-        "Test Zone",  # spaces
-        "test_zone",  # underscores
-        "test.zone",  # dots
-        "Test-Zone",  # uppercase
-        "test-zone!"  # special chars
+        # spaces
+        "Test Zone",
+        # underscores
+        "test_zone",
+        # dots
+        "test.zone",
+        # uppercase
+        "Test-Zone",
+        # special chars
+        "test-zone!"
       ]
 
       for slug <- invalid_slugs do
@@ -170,12 +175,12 @@ defmodule Shard.Map.ZoneTest do
 
     test "accepts properties map" do
       attrs = %{
-        @valid_attrs |
-        properties: %{
-          "weather" => "rainy",
-          "difficulty" => "hard",
-          "special_rules" => ["no_magic", "permadeath"]
-        }
+        @valid_attrs
+        | properties: %{
+            "weather" => "rainy",
+            "difficulty" => "hard",
+            "special_rules" => ["no_magic", "permadeath"]
+          }
       }
 
       changeset = Zone.changeset(%Zone{}, attrs)

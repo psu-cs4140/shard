@@ -31,7 +31,7 @@ defmodule Shard.MarketplaceTest do
 
   describe "get_listing/1" do
     test "returns nil for non-existent listing" do
-      listing = Marketplace.get_listing(999999)
+      listing = Marketplace.get_listing(999_999)
       assert listing == nil
     end
   end
@@ -48,7 +48,7 @@ defmodule Shard.MarketplaceTest do
     end
 
     test "returns error when inventory not found", %{user: user} do
-      attrs = %{character_inventory_id: 999999, price: 100}
+      attrs = %{character_inventory_id: 999_999, price: 100}
       assert {:error, :inventory_not_found} = Marketplace.create_listing(attrs, user)
     end
 
@@ -58,7 +58,7 @@ defmodule Shard.MarketplaceTest do
     end
 
     test "handles item_id parameter", %{user: user} do
-      attrs = %{item_id: 999999, price: 100}
+      attrs = %{item_id: 999_999, price: 100}
       assert {:error, :inventory_not_found} = Marketplace.create_listing(attrs, user)
     end
   end
@@ -70,7 +70,7 @@ defmodule Shard.MarketplaceTest do
     end
 
     test "returns error when listing not found", %{user: user} do
-      assert {:error, :listing_not_found} = Marketplace.cancel_listing(999999, user)
+      assert {:error, :listing_not_found} = Marketplace.cancel_listing(999_999, user)
     end
 
     test "handles string listing id", %{user: user} do
@@ -85,7 +85,7 @@ defmodule Shard.MarketplaceTest do
     end
 
     test "returns error when listing not found", %{user: user} do
-      assert {:error, :listing_not_found} = Marketplace.update_listing_price(999999, 150, user)
+      assert {:error, :listing_not_found} = Marketplace.update_listing_price(999_999, 150, user)
     end
   end
 
@@ -96,7 +96,7 @@ defmodule Shard.MarketplaceTest do
     end
 
     test "returns error when listing not found", %{user: user} do
-      assert {:error, :listing_not_found} = Marketplace.purchase_listing(999999, user)
+      assert {:error, :listing_not_found} = Marketplace.purchase_listing(999_999, user)
     end
   end
 
@@ -155,10 +155,11 @@ defmodule Shard.MarketplaceTest do
   defp user_fixture do
     unique_email = "user#{System.unique_integer([:positive])}@example.com"
 
-    {:ok, user} = Shard.Users.register_user(%{
-      email: unique_email,
-      password: "password123password123"
-    })
+    {:ok, user} =
+      Shard.Users.register_user(%{
+        email: unique_email,
+        password: "password123password123"
+      })
 
     user
   end

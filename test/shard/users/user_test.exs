@@ -30,13 +30,17 @@ defmodule Shard.Users.UserTest do
 
     test "validates email uniqueness when validate_unique is true" do
       # This test would require database setup, so we'll test the changeset structure
-      changeset = User.email_changeset(%User{}, %{email: "test@example.com"}, validate_unique: true)
+      changeset =
+        User.email_changeset(%User{}, %{email: "test@example.com"}, validate_unique: true)
+
       assert changeset.valid?
       # The actual uniqueness validation happens at the database level
     end
 
     test "skips uniqueness validation when validate_unique is false" do
-      changeset = User.email_changeset(%User{}, %{email: "test@example.com"}, validate_unique: false)
+      changeset =
+        User.email_changeset(%User{}, %{email: "test@example.com"}, validate_unique: false)
+
       assert changeset.valid?
     end
 
@@ -75,18 +79,25 @@ defmodule Shard.Users.UserTest do
     end
 
     test "validates password confirmation" do
-      changeset = User.password_changeset(%User{}, %{
-        password: "validpassword123",
-        password_confirmation: "different"
-      })
+      changeset =
+        User.password_changeset(%User{}, %{
+          password: "validpassword123",
+          password_confirmation: "different"
+        })
+
       refute changeset.valid?
       assert %{password_confirmation: ["does not match password"]} = errors_on(changeset)
     end
 
     test "hashes password when valid and hash_password is true" do
-      changeset = User.password_changeset(%User{}, %{
-        password: "validpassword123"
-      }, hash_password: true)
+      changeset =
+        User.password_changeset(
+          %User{},
+          %{
+            password: "validpassword123"
+          },
+          hash_password: true
+        )
 
       assert changeset.valid?
       assert get_change(changeset, :hashed_password)
@@ -94,9 +105,14 @@ defmodule Shard.Users.UserTest do
     end
 
     test "does not hash password when hash_password is false" do
-      changeset = User.password_changeset(%User{}, %{
-        password: "validpassword123"
-      }, hash_password: false)
+      changeset =
+        User.password_changeset(
+          %User{},
+          %{
+            password: "validpassword123"
+          },
+          hash_password: false
+        )
 
       assert changeset.valid?
       assert is_nil(get_change(changeset, :hashed_password))
@@ -104,9 +120,14 @@ defmodule Shard.Users.UserTest do
     end
 
     test "does not hash invalid password" do
-      changeset = User.password_changeset(%User{}, %{
-        password: "short"
-      }, hash_password: true)
+      changeset =
+        User.password_changeset(
+          %User{},
+          %{
+            password: "short"
+          },
+          hash_password: true
+        )
 
       refute changeset.valid?
       assert is_nil(get_change(changeset, :hashed_password))
@@ -142,7 +163,7 @@ defmodule Shard.Users.UserTest do
     test "sets confirmed_at to current time" do
       user = %User{}
       changeset = User.confirm_changeset(user)
-      
+
       confirmed_at = get_change(changeset, :confirmed_at)
       assert confirmed_at
       assert DateTime.diff(DateTime.utc_now(), confirmed_at, :second) < 2
@@ -154,7 +175,7 @@ defmodule Shard.Users.UserTest do
       password = "validpassword123"
       hashed_password = Argon2.hash_pwd_salt(password)
       user = %User{hashed_password: hashed_password}
-      
+
       assert User.valid_password?(user, password)
     end
 
@@ -162,7 +183,7 @@ defmodule Shard.Users.UserTest do
       password = "validpassword123"
       hashed_password = Argon2.hash_pwd_salt(password)
       user = %User{hashed_password: hashed_password}
-      
+
       refute User.valid_password?(user, "wrongpassword")
     end
 

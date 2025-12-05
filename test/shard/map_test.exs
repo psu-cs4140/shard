@@ -193,12 +193,18 @@ defmodule Shard.MapTest do
     test "create_door/1 with valid data creates a door and return door" do
       zone = zone_fixture()
       from_room = room_fixture(%{zone_id: zone.id, x_coordinate: 0, y_coordinate: 0})
-      to_room = room_fixture(%{zone_id: zone.id, x_coordinate: 0, y_coordinate: 1, name: "North Room"})
 
-      attrs = Enum.into(%{
-        from_room_id: from_room.id,
-        to_room_id: to_room.id
-      }, @valid_door_attrs)
+      to_room =
+        room_fixture(%{zone_id: zone.id, x_coordinate: 0, y_coordinate: 1, name: "North Room"})
+
+      attrs =
+        Enum.into(
+          %{
+            from_room_id: from_room.id,
+            to_room_id: to_room.id
+          },
+          @valid_door_attrs
+        )
 
       assert {:ok, %Door{} = door} = Map.create_door(attrs)
       assert door.direction == "north"
@@ -235,8 +241,12 @@ defmodule Shard.MapTest do
     test "get_adjacent_rooms/1 returns connected rooms" do
       zone = zone_fixture()
       center_room = room_fixture(%{zone_id: zone.id, x_coordinate: 0, y_coordinate: 0})
-      north_room = room_fixture(%{zone_id: zone.id, x_coordinate: 0, y_coordinate: 1, name: "North Room"})
-      south_room = room_fixture(%{zone_id: zone.id, x_coordinate: 0, y_coordinate: -1, name: "South Room"})
+
+      north_room =
+        room_fixture(%{zone_id: zone.id, x_coordinate: 0, y_coordinate: 1, name: "North Room"})
+
+      south_room =
+        room_fixture(%{zone_id: zone.id, x_coordinate: 0, y_coordinate: -1, name: "South Room"})
 
       # Create doors
       Map.create_door(%{
@@ -285,8 +295,14 @@ defmodule Shard.MapTest do
       assert Map.get_player_position(character.id, zone.id) == nil
     end
 
-    test "update_player_position/3 creates new position", %{character: character, zone: zone, room: room} do
-      assert {:ok, %PlayerPosition{} = position} = Map.update_player_position(character.id, zone.id, room)
+    test "update_player_position/3 creates new position", %{
+      character: character,
+      zone: zone,
+      room: room
+    } do
+      assert {:ok, %PlayerPosition{} = position} =
+               Map.update_player_position(character.id, zone.id, room)
+
       assert position.character_id == character.id
       assert position.zone_id == zone.id
       assert position.room_id == room.id
@@ -294,13 +310,20 @@ defmodule Shard.MapTest do
       assert position.y_coordinate == room.y_coordinate
     end
 
-    test "update_player_position/3 updates existing position", %{character: character, zone: zone, room: room} do
+    test "update_player_position/3 updates existing position", %{
+      character: character,
+      zone: zone,
+      room: room
+    } do
       # Create initial position
       {:ok, _position} = Map.update_player_position(character.id, zone.id, room)
 
       # Create new room and update position
-      new_room = room_fixture(%{zone_id: zone.id, x_coordinate: 5, y_coordinate: 5, name: "New Room"})
-      assert {:ok, %PlayerPosition{} = updated_position} = Map.update_player_position(character.id, zone.id, new_room)
+      new_room =
+        room_fixture(%{zone_id: zone.id, x_coordinate: 5, y_coordinate: 5, name: "New Room"})
+
+      assert {:ok, %PlayerPosition{} = updated_position} =
+               Map.update_player_position(character.id, zone.id, new_room)
 
       assert updated_position.room_id == new_room.id
       assert updated_position.x_coordinate == 5
@@ -312,7 +335,11 @@ defmodule Shard.MapTest do
       assert length(zone_positions) == 1
     end
 
-    test "get_player_last_room/2 returns last known room", %{character: character, zone: zone, room: room} do
+    test "get_player_last_room/2 returns last known room", %{
+      character: character,
+      zone: zone,
+      room: room
+    } do
       assert Map.get_player_last_room(character.id, zone.id) == nil
 
       Map.update_player_position(character.id, zone.id, room)
@@ -325,17 +352,27 @@ defmodule Shard.MapTest do
       assert starting_room.id == room.id
     end
 
-    test "get_player_entry_room/2 returns starting room for new player", %{character: character, zone: zone, room: room} do
+    test "get_player_entry_room/2 returns starting room for new player", %{
+      character: character,
+      zone: zone,
+      room: room
+    } do
       entry_room = Map.get_player_entry_room(character.id, zone.id)
       assert entry_room.id == room.id
     end
 
-    test "get_player_entry_room/2 returns last room for returning player", %{character: character, zone: zone, room: room} do
+    test "get_player_entry_room/2 returns last room for returning player", %{
+      character: character,
+      zone: zone,
+      room: room
+    } do
       # Update player position
       Map.update_player_position(character.id, zone.id, room)
 
       # Create new room
-      new_room = room_fixture(%{zone_id: zone.id, x_coordinate: 10, y_coordinate: 10, name: "Last Room"})
+      new_room =
+        room_fixture(%{zone_id: zone.id, x_coordinate: 10, y_coordinate: 10, name: "Last Room"})
+
       Map.update_player_position(character.id, zone.id, new_room)
 
       entry_room = Map.get_player_entry_room(character.id, zone.id)
@@ -360,7 +397,7 @@ defmodule Shard.MapTest do
   end
 
   defp room_fixture(attrs \\ %{}) do
-    zone = attrs[:zone_id] && Repo.get!(Zone, attrs[:zone_id]) || zone_fixture()
+    zone = (attrs[:zone_id] && Repo.get!(Zone, attrs[:zone_id])) || zone_fixture()
 
     unique_name = "Test Room #{System.unique_integer([:positive])}"
 
@@ -381,7 +418,9 @@ defmodule Shard.MapTest do
   defp door_fixture(attrs \\ %{}) do
     zone = zone_fixture()
     from_room = room_fixture(%{zone_id: zone.id, x_coordinate: 0, y_coordinate: 0})
-    to_room = room_fixture(%{zone_id: zone.id, x_coordinate: 1, y_coordinate: 0, name: "East Room"})
+
+    to_room =
+      room_fixture(%{zone_id: zone.id, x_coordinate: 1, y_coordinate: 0, name: "East Room"})
 
     attrs =
       Enum.into(attrs, %{
@@ -408,7 +447,7 @@ defmodule Shard.MapTest do
   end
 
   defp character_fixture(attrs) do
-    user = attrs[:user_id] && Repo.get!(Shard.Users.User, attrs[:user_id]) || user_fixture()
+    user = (attrs[:user_id] && Repo.get!(Shard.Users.User, attrs[:user_id])) || user_fixture()
 
     attrs =
       Enum.into(attrs, %{

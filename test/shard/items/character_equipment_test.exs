@@ -12,6 +12,7 @@ defmodule Shard.Items.CharacterEquipmentTest do
 
     test "changeset with valid attributes" do
       changeset = CharacterEquipment.changeset(%CharacterEquipment{}, @valid_attrs)
+
       # The changeset might not be valid due to item validation, but should have no basic validation errors
       if not changeset.valid? do
         errors = errors_on(changeset)
@@ -63,31 +64,31 @@ defmodule Shard.Items.CharacterEquipmentTest do
 
     test "validates foreign key constraints are present" do
       changeset = CharacterEquipment.changeset(%CharacterEquipment{}, @valid_attrs)
-      
+
       # Check that foreign key constraints are present
       assert Enum.any?(changeset.constraints, fn constraint ->
-        constraint.type == :foreign_key and constraint.field == :character_id
-      end)
-      
+               constraint.type == :foreign_key and constraint.field == :character_id
+             end)
+
       assert Enum.any?(changeset.constraints, fn constraint ->
-        constraint.type == :foreign_key and constraint.field == :item_id
-      end)
+               constraint.type == :foreign_key and constraint.field == :item_id
+             end)
     end
 
     test "validates unique constraint for character and equipment slot" do
       changeset = CharacterEquipment.changeset(%CharacterEquipment{}, @valid_attrs)
-      
+
       # Check that unique constraint is present
       assert Enum.any?(changeset.constraints, fn constraint ->
-        constraint.type == :unique
-      end)
+               constraint.type == :unique
+             end)
     end
 
     test "handles item validation errors gracefully" do
       # Test with non-existent item
-      attrs = %{@valid_attrs | item_id: 999999}
+      attrs = %{@valid_attrs | item_id: 999_999}
       changeset = CharacterEquipment.changeset(%CharacterEquipment{}, attrs)
-      
+
       # The changeset should either be valid (if validation is deferred to database)
       # or have an item-related error
       if not changeset.valid? do

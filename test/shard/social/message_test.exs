@@ -55,15 +55,15 @@ defmodule Shard.Social.MessageTest do
 
     test "validates foreign key constraints are present" do
       changeset = Message.changeset(%Message{}, @valid_attrs)
-      
+
       # Check that foreign key constraints are present
       assert Enum.any?(changeset.constraints, fn constraint ->
-        constraint.type == :foreign_key and constraint.field == :conversation_id
-      end)
-      
+               constraint.type == :foreign_key and constraint.field == :conversation_id
+             end)
+
       assert Enum.any?(changeset.constraints, fn constraint ->
-        constraint.type == :foreign_key and constraint.field == :user_id
-      end)
+               constraint.type == :foreign_key and constraint.field == :user_id
+             end)
     end
 
     test "accepts multiline content" do
