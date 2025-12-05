@@ -2,6 +2,9 @@ defmodule Shard.Items.Item do
   use Ecto.Schema
   import Ecto.Changeset
 
+  alias Shard.Items.{CharacterInventory, RoomItem, HotbarSlot}
+  alias Shard.Spells.Spells
+
   @moduledoc """
   New schema for items
   """
@@ -120,6 +123,12 @@ defmodule Shard.Items.Item do
     field :pickup, :boolean, default: true
     field :location, :string
     field :map, :string
+
+    belongs_to :spell, Spells
+
+    has_many :character_inventories, CharacterInventory
+    has_many :room_items, RoomItem
+    has_many :hotbar_slots, HotbarSlot
     field :sellable, :boolean, default: true
 
     timestamps(type: :utc_datetime)
@@ -148,6 +157,8 @@ defmodule Shard.Items.Item do
       :pickup,
       :location,
       :map,
+      :spell_id,
+      :map,
       :sellable
     ])
     # Added :item_type to required fields
@@ -156,6 +167,10 @@ defmodule Shard.Items.Item do
     |> validate_inclusion(:item_type, @item_types)
     # Validate rarity is in allowed list
     |> validate_inclusion(:rarity, @rarities)
+    |> validate_number(:value, greater_than_or_equal_to: 0)
+    |> validate_number(:weight, greater_than_or_equal_to: 0)
+    |> validate_number(:max_stack_size, greater_than: 0)
+    |> foreign_key_constraint(:spell_id)
     # Validate equipment_slot when present
     |> validate_inclusion(:equipment_slot, @equipment_slots)
     # Add unique constraint on name
