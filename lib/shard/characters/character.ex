@@ -70,7 +70,6 @@ defmodule Shard.Characters.Character do
       :mining_started_at,
       :is_chopping,
       :chopping_started_at
-      :mining_started_at
     ])
     |> validate_required([:name, :class, :race])
     |> validate_length(:name, min: 2, max: 50)

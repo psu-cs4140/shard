@@ -286,11 +286,6 @@ defmodule ShardWeb.ZoneSelectionLive do
 
           true ->
             handle_standard_zone_entry(socket, character, zone, instance_type)
-        # Special handling for Mines zone
-        if zone.slug == "mines" do
-          handle_mines_entry(socket, character, zone)
-        else
-          handle_standard_zone_entry(socket, character, zone, instance_type)
         end
     end
   end
@@ -356,28 +351,6 @@ defmodule ShardWeb.ZoneSelectionLive do
     case Enum.find(zones, &(&1.slug == "mines")) do
       nil -> progress_map
       %{id: id} -> Elixir.Map.put(progress_map, id, "in_progress")
-    end
-  end
-
-  # Handle entry to the Mines zone (mining system)
-  defp handle_mines_entry(socket, character, zone) do
-    case Characters.update_character(character, %{current_zone_id: zone.id}) do
-      {:ok, updated_character} ->
-        {:noreply,
-         socket
-         |> assign(:character, updated_character)
-         |> put_flash(
-           :info,
-           "You Descend into the dark, echoing mines.\nThe walls shimmer with minerals waiting to be unearthed.\nEverything you gather here can be sold for gold once you return to town.\nTo begin mining, type mine start\nTo pack up and leave, type mine stop"
-         )
-         |> push_navigate(
-           to: ~p"/play/#{updated_character.id}?zone_id=#{zone.id}&refresh_inventory=true"
-         )}
-
-      {:error, _changeset} ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "Failed to enter the Mines. Please try again.")}
     end
   end
 

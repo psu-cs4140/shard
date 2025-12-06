@@ -175,10 +175,6 @@ defmodule ShardWeb.MudGameLive do
   def handle_event("show_hotbar_modal", params, socket),
     do: handle_show_hotbar_modal(params, socket)
 
-
-  def handle_event("show_hotbar_modal", params, socket),
-    do: handle_show_hotbar_modal(params, socket)
-
   def handle_event("set_hotbar_from_modal", params, socket),
     do: handle_set_hotbar_from_modal(params, socket)
 
@@ -432,6 +428,8 @@ defmodule ShardWeb.MudGameLive do
 
       _ ->
         socket
+    end
+  end
   defp maybe_add_mines_welcome(socket, zone) do
     if zone.slug == "mines" do
       add_message(

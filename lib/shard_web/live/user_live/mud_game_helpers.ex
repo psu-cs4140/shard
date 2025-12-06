@@ -146,7 +146,6 @@ defmodule ShardWeb.UserLive.MudGameHelpers do
       combat: false,
       mining_active: false,
       chopping_active: false
-      mining_active: false
     }
   end
 
