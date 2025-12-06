@@ -64,6 +64,7 @@ defmodule ShardWeb.MudGameLive do
       socket =
         assign(socket, online_players: [], zone_name: zone.name)
         |> maybe_add_zone_welcome(zone)
+        |> maybe_add_mines_welcome(zone)
 
       # Request current online players from existing players
       Phoenix.PubSub.broadcast(
@@ -170,6 +171,10 @@ defmodule ShardWeb.MudGameLive do
   def handle_event("use_hotbar_item", params, socket), do: handle_use_hotbar_item(params, socket)
   def handle_event("equip_item", params, socket), do: handle_equip_item(params, socket)
   def handle_event("drop_item", params, socket), do: handle_drop_item(params, socket)
+
+  def handle_event("show_hotbar_modal", params, socket),
+    do: handle_show_hotbar_modal(params, socket)
+
 
   def handle_event("show_hotbar_modal", params, socket),
     do: handle_show_hotbar_modal(params, socket)
@@ -427,6 +432,14 @@ defmodule ShardWeb.MudGameLive do
 
       _ ->
         socket
+  defp maybe_add_mines_welcome(socket, zone) do
+    if zone.slug == "mines" do
+      add_message(
+        socket,
+        "You Descend into the dark, echoing mines.\nThe walls shimmer with minerals waiting to be unearthed.\nEverything you gather here can be sold for gold once you return to town.\nTo begin mining, type mine start\nTo pack up and leave, type mine stop"
+      )
+    else
+      socket
     end
   end
 
