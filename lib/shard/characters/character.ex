@@ -30,12 +30,15 @@ defmodule Shard.Characters.Character do
     field :is_active, :boolean, default: true
     field :is_mining, :boolean, default: false
     field :mining_started_at, :utc_datetime_usec
+    field :is_chopping, :boolean, default: false
+    field :chopping_started_at, :utc_datetime_usec
 
     belongs_to :user, User
     belongs_to :current_zone, Zone
     has_many :character_inventories, CharacterInventory
     has_many :hotbar_slots, HotbarSlot
     has_one :mining_inventory, MiningInventory
+    has_one :chopping_inventory, Shard.Forest.ChoppingInventory
     has_many :character_spells, CharacterSpell
     many_to_many :spells, Shard.Spells.Spells, join_through: CharacterSpell
 
@@ -64,7 +67,9 @@ defmodule Shard.Characters.Character do
       :user_id,
       :current_zone_id,
       :is_mining,
-      :mining_started_at
+      :mining_started_at,
+      :is_chopping,
+      :chopping_started_at
     ])
     |> validate_required([:name, :class, :race])
     |> validate_length(:name, min: 2, max: 50)

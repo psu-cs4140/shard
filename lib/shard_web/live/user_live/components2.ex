@@ -152,7 +152,7 @@ defmodule ShardWeb.UserLive.Components2 do
     <!-- Item content -->
       <%= if @slot_data do %>
         <div class="text-center">
-          <%= case @slot_data.type do %>
+          <%= case Map.get(@slot_data, :type) || Map.get(@slot_data, :item_type) do %>
             <% "weapon" -> %>
               <.icon name="hero-sword" class="w-6 h-6 text-red-400" />
             <% "consumable" -> %>

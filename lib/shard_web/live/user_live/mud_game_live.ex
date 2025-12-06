@@ -63,6 +63,7 @@ defmodule ShardWeb.MudGameLive do
       # Initialize online players list
       socket =
         assign(socket, online_players: [], zone_name: zone.name)
+        |> maybe_add_zone_welcome(zone)
         |> maybe_add_mines_welcome(zone)
 
       # Request current online players from existing players
@@ -248,6 +249,62 @@ defmodule ShardWeb.MudGameLive do
     {:noreply, socket}
   end
 
+  def handle_info(:chopping_tick, socket) do
+    socket =
+      case {socket.assigns.game_state.chopping_active,
+            Shard.Forest.apply_chopping_ticks(socket.assigns.game_state.character)} do
+        {true,
+         {:ok,
+          %{
+            character: char,
+            chopping_inventory: _inv,
+            ticks_applied: _ticks,
+            gained_resources: gained
+          }}}
+        when map_size(gained) > 0 ->
+          messages =
+            Enum.flat_map(gained, fn
+              {:wood, qty} when qty > 0 -> ["You have acquired #{qty} Wood!"]
+              {:sticks, qty} when qty > 0 -> ["You have acquired #{qty} Stick!"]
+              {:seeds, qty} when qty > 0 -> ["You have acquired #{qty} Seed!"]
+              {:mushrooms, qty} when qty > 0 -> ["You have acquired #{qty} Mushroom!"]
+              {:resin, qty} when qty > 0 -> ["You have acquired #{qty} Resin!"]
+              _ -> []
+            end)
+
+          socket
+          |> assign(:game_state, Map.put(socket.assigns.game_state, :character, char))
+          |> add_message(Enum.join(messages, " "))
+          |> assign(:game_state, refresh_inventory(socket.assigns.game_state, char))
+
+        {true, {:ok, _}} ->
+          socket
+
+        _ ->
+          socket
+      end
+
+    if socket.assigns.game_state.chopping_active, do: schedule_chopping_tick()
+    {:noreply, socket}
+  end
+
+  def handle_info({:chopping_started, _ticks}, socket) do
+    socket =
+      socket
+      |> assign(:game_state, %{socket.assigns.game_state | chopping_active: true})
+
+    schedule_chopping_tick()
+    {:noreply, socket}
+  end
+
+  def handle_info(:chopping_stopped, socket) do
+    socket =
+      socket
+      |> assign(:game_state, %{socket.assigns.game_state | chopping_active: false})
+
+    {:noreply, socket}
+  end
+
   def handle_info({:noise, text}, socket) do
     case handle_noise_info({:noise, text}, socket) do
       {:noreply, socket, terminal_state} ->
@@ -352,12 +409,35 @@ defmodule ShardWeb.MudGameLive do
     Process.send_after(self(), :mining_tick, 10_000)
   end
 
+  defp schedule_chopping_tick do
+    Process.send_after(self(), :chopping_tick, 6_000)
+  end
+
   defp refresh_inventory(game_state, character) do
     %{
       game_state
       | character: character,
         inventory_items: ShardWeb.UserLive.CharacterHelpers.load_character_inventory(character)
     }
+  end
+
+  defp maybe_add_zone_welcome(socket, zone) do
+    case zone.slug do
+      "mines" ->
+        add_message(
+          socket,
+          "You Descend into the dark, echoing mines.\nThe walls shimmer with minerals waiting to be unearthed.\nEverything you gather here can be sold for gold once you return to town.\nTo begin mining, type mine start\nTo pack up and leave, type mine stop"
+        )
+
+      "whispering_forest" ->
+        add_message(
+          socket,
+          "You step foot into the Whispering Forest.\nYour nose fills with the scent of pine and fresh earth.\nHere you can chop wood, gather sticks and seeds, and even find mushrooms and rare resin that you can collect and sell for gold.\nType chop start to start chopping\nType chop stop to stop chopping"
+        )
+
+      _ ->
+        socket
+    end
   end
 
   defp maybe_add_mines_welcome(socket, zone) do

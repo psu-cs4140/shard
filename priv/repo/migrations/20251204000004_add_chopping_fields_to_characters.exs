@@ -1,19 +1,7 @@
-defmodule Shard.Repo.Migrations.AddMiningFieldsToCharacters do
+defmodule Shard.Repo.Migrations.AddChoppingFieldsToCharacters do
   use Ecto.Migration
 
   def change do
-    unless column_exists?(:characters, :is_mining) do
-      alter table(:characters) do
-        add :is_mining, :boolean, default: false, null: false
-      end
-    end
-
-    unless column_exists?(:characters, :mining_started_at) do
-      alter table(:characters) do
-        add :mining_started_at, :utc_datetime_usec, null: true
-      end
-    end
-
     unless column_exists?(:characters, :is_chopping) do
       alter table(:characters) do
         add :is_chopping, :boolean, default: false, null: false
