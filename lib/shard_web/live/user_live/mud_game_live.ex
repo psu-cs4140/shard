@@ -439,6 +439,7 @@ defmodule ShardWeb.MudGameLive do
         socket
     end
   end
+
   defp maybe_add_mines_welcome(socket, zone) do
     if zone.slug == "mines" do
       add_message(
