@@ -196,16 +196,19 @@ defmodule Shard.Forest do
     rand = :rand.uniform(total_weight)
 
     {resource, _} =
-      Enum.reduce_while(@resource_weights, {nil, 0}, fn {resource, weight},
-                                                          {_current, accumulated} ->
-        new_accumulated = accumulated + weight
+      Enum.reduce_while(
+        @resource_weights,
+        {nil, 0},
+        fn {resource, weight}, {_current, accumulated} ->
+          new_accumulated = accumulated + weight
 
-        if rand <= new_accumulated do
-          {:halt, {resource, new_accumulated}}
-        else
-          {:cont, {resource, new_accumulated}}
+          if rand <= new_accumulated do
+            {:halt, {resource, new_accumulated}}
+          else
+            {:cont, {resource, new_accumulated}}
+          end
         end
-      end)
+      )
 
     resource
   end

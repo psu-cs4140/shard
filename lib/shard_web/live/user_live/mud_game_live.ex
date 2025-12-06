@@ -251,8 +251,17 @@ defmodule ShardWeb.MudGameLive do
 
   def handle_info(:chopping_tick, socket) do
     socket =
-      case {socket.assigns.game_state.chopping_active, Shard.Forest.apply_chopping_ticks(socket.assigns.game_state.character)} do
-        {true, {:ok, %{character: char, chopping_inventory: _inv, ticks_applied: _ticks, gained_resources: gained}}} when map_size(gained) > 0 ->
+      case {socket.assigns.game_state.chopping_active,
+            Shard.Forest.apply_chopping_ticks(socket.assigns.game_state.character)} do
+        {true,
+         {:ok,
+          %{
+            character: char,
+            chopping_inventory: _inv,
+            ticks_applied: _ticks,
+            gained_resources: gained
+          }}}
+        when map_size(gained) > 0 ->
           messages =
             Enum.flat_map(gained, fn
               {:wood, qty} when qty > 0 -> ["You have acquired #{qty} Wood!"]
