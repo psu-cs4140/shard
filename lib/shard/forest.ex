@@ -45,8 +45,17 @@ defmodule Shard.Forest do
           | {:error, term()}
   def stop_chopping(%Character{} = character) do
     case apply_chopping_ticks(character) do
-      {:ok, %{character: updated_char, chopping_inventory: inventory, ticks_applied: ticks, gained_resources: gained}} ->
-        case Characters.update_character(updated_char, %{is_chopping: false, chopping_started_at: nil}) do
+      {:ok,
+       %{
+         character: updated_char,
+         chopping_inventory: inventory,
+         ticks_applied: ticks,
+         gained_resources: gained
+       }} ->
+        case Characters.update_character(updated_char, %{
+               is_chopping: false,
+               chopping_started_at: nil
+             }) do
           {:ok, final_character} ->
             {:ok,
              %{
@@ -77,7 +86,13 @@ defmodule Shard.Forest do
   def apply_chopping_ticks(%Character{is_chopping: false} = character) do
     case get_or_create_chopping_inventory(character) do
       {:ok, inventory} ->
-        {:ok, %{character: character, chopping_inventory: inventory, ticks_applied: 0, gained_resources: %{}}}
+        {:ok,
+         %{
+           character: character,
+           chopping_inventory: inventory,
+           ticks_applied: 0,
+           gained_resources: %{}
+         }}
 
       {:error, reason} ->
         {:error, reason}
@@ -87,14 +102,22 @@ defmodule Shard.Forest do
   def apply_chopping_ticks(%Character{chopping_started_at: nil} = character) do
     case get_or_create_chopping_inventory(character) do
       {:ok, inventory} ->
-        {:ok, %{character: character, chopping_inventory: inventory, ticks_applied: 0, gained_resources: %{}}}
+        {:ok,
+         %{
+           character: character,
+           chopping_inventory: inventory,
+           ticks_applied: 0,
+           gained_resources: %{}
+         }}
 
       {:error, reason} ->
         {:error, reason}
     end
   end
 
-  def apply_chopping_ticks(%Character{is_chopping: true, chopping_started_at: started_at} = character) do
+  def apply_chopping_ticks(
+        %Character{is_chopping: true, chopping_started_at: started_at} = character
+      ) do
     now = DateTime.utc_now()
     elapsed_seconds = DateTime.diff(now, started_at, :second)
     ticks = div(elapsed_seconds, @tick_interval)
@@ -167,11 +190,14 @@ defmodule Shard.Forest do
 
   @spec roll_resource() :: :wood | :sticks | :seeds | :mushrooms | :resin
   def roll_resource do
-    total_weight = Enum.reduce(@resource_weights, 0, fn {_resource, weight}, acc -> acc + weight end)
+    total_weight =
+      Enum.reduce(@resource_weights, 0, fn {_resource, weight}, acc -> acc + weight end)
+
     rand = :rand.uniform(total_weight)
 
     {resource, _} =
-      Enum.reduce_while(@resource_weights, {nil, 0}, fn {resource, weight}, {_current, accumulated} ->
+      Enum.reduce_while(@resource_weights, {nil, 0}, fn {resource, weight},
+                                                          {_current, accumulated} ->
         new_accumulated = accumulated + weight
 
         if rand <= new_accumulated do

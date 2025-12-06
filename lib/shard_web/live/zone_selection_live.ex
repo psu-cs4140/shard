@@ -217,13 +217,6 @@ defmodule ShardWeb.ZoneSelectionLive do
                           navigate={~p"/characters/new"}
                           class="btn bg-gray-900 hover:bg-gray-800 text-white border-gray-700 rounded-xl px-4 py-3"
                         >
-                        >
-                          Select Existing Character
-                        </.link>
-                        <.link
-                          navigate={~p"/characters/new"}
-                          class="btn bg-gray-900 hover:bg-gray-800 text-white border-gray-700 rounded-xl px-4 py-3"
-                        >
                           Create New Character
                         </.link>
                       </div>
