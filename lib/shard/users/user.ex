@@ -72,6 +72,16 @@ defmodule Shard.Users.User do
     |> validate_required([:admin])
   end
 
+  @doc """
+  A user changeset for updating stats fields.
+  """
+  def changeset(user, attrs) do
+    user
+    |> cast(attrs, [:total_playtime_seconds, :last_login_at, :login_count])
+    |> validate_number(:total_playtime_seconds, greater_than_or_equal_to: 0)
+    |> validate_number(:login_count, greater_than_or_equal_to: 0)
+  end
+
   defp validate_email(changeset, opts) do
     changeset =
       changeset
