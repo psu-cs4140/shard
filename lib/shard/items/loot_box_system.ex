@@ -3,7 +3,9 @@ defmodule Shard.Items.LootBoxSystem do
   System for managing loot box creation, purchasing, and rewards.
   """
 
+  import Ecto.Query, warn: false
   alias Shard.Items
+  alias Shard.Items.Item
   alias Shard.Repo
 
   @doc """
@@ -33,7 +35,7 @@ defmodule Shard.Items.LootBoxSystem do
   Gets all available loot boxes for the marketplace.
   """
   def get_marketplace_loot_boxes do
-    from(i in Items.Item,
+    from(i in Item,
       where: i.item_type == "loot_box" and i.is_active == true,
       order_by: [asc: i.value]
     )
