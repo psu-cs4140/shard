@@ -15,6 +15,7 @@ defmodule Shard.Application do
         Shard.Combat.Supervisor,
         Shard.Gambling.CoinFlipServer,
         Shard.Weather.WeatherServer,
+        Shard.WorldEvents.EventServer,
         ShardWeb.Endpoint
       ] ++ local_mailbox_child()
 
