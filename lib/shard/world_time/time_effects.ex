@@ -4,8 +4,6 @@ defmodule Shard.WorldTime.TimeEffects do
   """
 
   alias Shard.WorldTime
-  alias Shard.Map.Room
-  alias Shard.Npcs.Npc
 
   @doc """
   Gets the current lighting description for a room based on time of day.
@@ -13,7 +11,6 @@ defmodule Shard.WorldTime.TimeEffects do
   def get_room_lighting_description(room) do
     base_lighting = Map.get(room.properties, "base_lighting", "normal")
     time_of_day = WorldTime.get_time_of_day()
-    lighting_level = WorldTime.get_lighting_level()
 
     case {base_lighting, time_of_day} do
       {"dark", _} -> "The room is shrouded in darkness."
