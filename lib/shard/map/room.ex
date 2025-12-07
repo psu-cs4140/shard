@@ -15,7 +15,10 @@ defmodule Shard.Map.Room do
     field :is_public, :boolean, default: true
     # standard, safe_zone, shop, dungeon, etc.
     field :room_type, :string, default: "standard"
-    # For extensibility: lighting, weather, etc.
+    # For extensibility: lighting, weather, time-based effects, etc.
+    # Properties can include:
+    # - "base_lighting": "normal" | "dark" | "bright"
+    # - "time_effects": map of time-based modifications
     field :properties, :map, default: %{}
 
     belongs_to :zone, Shard.Map.Zone
