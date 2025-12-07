@@ -180,4 +180,56 @@ defmodule Shard.Characters do
       {:error, _changeset} -> :ok
     end
   end
+
+  @doc """
+  Adds experience to a character.
+  """
+  def add_experience(%Character{} = character, amount) when amount > 0 do
+    new_experience = character.experience + amount
+    update_character(character, %{experience: new_experience})
+  end
+
+  @doc """
+  Gets a character with their skills preloaded.
+  """
+  def get_character_with_skills!(id) do
+    Repo.get!(Character, id)
+    |> Repo.preload([:character_skills, :skills])
+  end
+
+  @doc """
+  Calculates effective stats for a character including skill bonuses.
+  """
+  def get_effective_stats(%Character{} = character) do
+    character = Repo.preload(character, [character_skills: :skill_node])
+    
+    base_stats = %{
+      health: character.health,
+      mana: character.mana,
+      strength: character.strength,
+      dexterity: character.dexterity,
+      intelligence: character.intelligence,
+      constitution: character.constitution
+    }
+
+    # Apply skill bonuses
+    Enum.reduce(character.character_skills, base_stats, fn character_skill, stats ->
+      apply_skill_effects(stats, character_skill.skill_node.effects)
+    end)
+  end
+
+  defp apply_skill_effects(stats, effects) when is_map(effects) do
+    Enum.reduce(effects, stats, fn {effect_key, effect_value}, acc_stats ->
+      case effect_key do
+        "health_bonus" -> Map.update!(acc_stats, :health, &(&1 + effect_value))
+        "mana_bonus" -> Map.update!(acc_stats, :mana, &(&1 + effect_value))
+        "damage_bonus" -> Map.put(acc_stats, :damage_multiplier, Map.get(acc_stats, :damage_multiplier, 1.0) + effect_value)
+        "defense_penalty" -> Map.put(acc_stats, :defense_multiplier, Map.get(acc_stats, :defense_multiplier, 1.0) - effect_value)
+        "debuff_resistance" -> Map.put(acc_stats, :debuff_resistance, effect_value)
+        _ -> acc_stats
+      end
+    end)
+  end
+
+  defp apply_skill_effects(stats, _), do: stats
 end
