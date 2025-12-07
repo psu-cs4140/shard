@@ -8,6 +8,8 @@ defmodule Shard.Forest do
   alias Shard.Characters
   alias Shard.Characters.Character
   alias Shard.Forest.ChoppingInventory
+  alias Shard.Items
+  alias Shard.Items.Item
 
   @resource_weights [
     {:wood, 40},
@@ -143,6 +145,8 @@ defmodule Shard.Forest do
         {:ok, inventory} ->
           case add_resources(inventory, resources) do
             {:ok, updated_inventory} ->
+              add_resources_to_character_inventory(character, resources)
+
               case Characters.update_character(character, %{chopping_started_at: now}) do
                 {:ok, updated_character} ->
                   {:ok,
@@ -246,5 +250,63 @@ defmodule Shard.Forest do
     now = DateTime.utc_now()
     elapsed_seconds = DateTime.diff(now, started_at, :second)
     div(elapsed_seconds, @tick_interval)
+  end
+
+  defp add_resources_to_character_inventory(%Character{id: character_id}, resources) do
+    resource_items = ensure_chopping_resource_items()
+
+    Enum.each(resources, fn
+      {:wood, qty} when qty > 0 ->
+        Items.add_item_to_inventory(character_id, resource_items.wood.id, qty)
+
+      {:sticks, qty} when qty > 0 ->
+        Items.add_item_to_inventory(character_id, resource_items.sticks.id, qty)
+
+      {:seeds, qty} when qty > 0 ->
+        Items.add_item_to_inventory(character_id, resource_items.seeds.id, qty)
+
+      {:mushrooms, qty} when qty > 0 ->
+        Items.add_item_to_inventory(character_id, resource_items.mushrooms.id, qty)
+
+      {:resin, qty} when qty > 0 ->
+        Items.add_item_to_inventory(character_id, resource_items.resin.id, qty)
+
+      _ ->
+        :ok
+    end)
+  end
+
+  defp ensure_chopping_resource_items do
+    %{
+      wood: fetch_or_create_item("Wood", 1),
+      sticks: fetch_or_create_item("Stick", 1),
+      seeds: fetch_or_create_item("Forest Seeds", 2),
+      mushrooms: fetch_or_create_item("Mushroom", 3),
+      resin: fetch_or_create_item("Forest Resin", 5)
+    }
+  end
+
+  defp fetch_or_create_item(name, value) do
+    case Repo.get_by(Item, name: name) do
+      nil ->
+        {:ok, item} =
+          %Item{}
+          |> Item.changeset(%{
+            name: name,
+            description: "Gathered from the Whispering Forest.",
+            item_type: "material",
+            rarity: "common",
+            value: value,
+            stackable: true,
+            max_stack_size: 99,
+            is_active: true
+          })
+          |> Repo.insert()
+
+        item
+
+      item ->
+        item
+    end
   end
 end
