@@ -162,9 +162,9 @@ defmodule Shard.WorldEvents do
 
   # Private helper functions
   defp get_random_room do
-    # This is a placeholder - you'll need to implement based on your room system
-    # For now, returning nil to prevent errors
-    nil
+    # Get a random room from the database
+    from(r in Shard.Map.Room, order_by: fragment("RANDOM()"), limit: 1)
+    |> Repo.one()
   end
 
   defp generate_boss_rewards do
