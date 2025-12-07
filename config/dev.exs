@@ -2,8 +2,8 @@ import Config
 
 # Configure your database
 config :shard, Shard.Repo,
-  username: "postgres",
-  password: "postgres",
+  username: "shard",
+  password: "thorrouter23",
   hostname: "localhost",
   database: "shard_dev",
   stacktrace: true,
