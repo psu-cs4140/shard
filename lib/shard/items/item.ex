@@ -120,6 +120,8 @@ defmodule Shard.Items.Item do
     field :effects, MapField
     field :icon, :string
     field :is_active, :boolean, default: true
+    field :max_durability, :integer
+    field :durability_enabled, :boolean, default: false
     field :pickup, :boolean, default: true
     field :location, :string
     field :map, :string
@@ -159,7 +161,9 @@ defmodule Shard.Items.Item do
       :map,
       :spell_id,
       :map,
-      :sellable
+      :sellable,
+      :max_durability,
+      :durability_enabled
     ])
     # Added :item_type to required fields
     |> validate_required([:name, :item_type])
@@ -170,6 +174,7 @@ defmodule Shard.Items.Item do
     |> validate_number(:value, greater_than_or_equal_to: 0)
     |> validate_number(:weight, greater_than_or_equal_to: 0)
     |> validate_number(:max_stack_size, greater_than: 0)
+    |> validate_number(:max_durability, greater_than: 0)
     |> foreign_key_constraint(:spell_id)
     # Validate equipment_slot when present
     |> validate_inclusion(:equipment_slot, @equipment_slots)
@@ -179,6 +184,8 @@ defmodule Shard.Items.Item do
     |> set_equipment_defaults()
     # Validate stats format and values
     |> validate_stats()
+    # Validate durability settings
+    |> validate_durability_settings()
   end
 
   # Automatically set equippable=true and equipment_slot for armor pieces
@@ -281,4 +288,36 @@ defmodule Shard.Items.Item do
   end
 
   def get_stat(%__MODULE__{stats: nil}, _stat_name), do: 0
+
+  # Validate durability settings
+  defp validate_durability_settings(changeset) do
+    durability_enabled = get_field(changeset, :durability_enabled)
+    max_durability = get_field(changeset, :max_durability)
+
+    cond do
+      durability_enabled && is_nil(max_durability) ->
+        add_error(changeset, :max_durability, "must be specified when durability is enabled")
+
+      durability_enabled && max_durability && max_durability <= 0 ->
+        add_error(changeset, :max_durability, "must be greater than 0 when durability is enabled")
+
+      !durability_enabled && max_durability ->
+        put_change(changeset, :max_durability, nil)
+
+      true ->
+        changeset
+    end
+  end
+
+  @doc """
+  Check if an item has durability enabled
+  """
+  def has_durability?(%__MODULE__{durability_enabled: true}), do: true
+  def has_durability?(%__MODULE__{durability_enabled: _}), do: false
+
+  @doc """
+  Get the maximum durability for an item
+  """
+  def get_max_durability(%__MODULE__{max_durability: max_durability}) when is_integer(max_durability), do: max_durability
+  def get_max_durability(%__MODULE__{max_durability: nil}), do: 0
 end
