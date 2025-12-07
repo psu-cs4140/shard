@@ -22,32 +22,36 @@ defmodule Shard.Combat.Actions do
   defp execute_attack(game_state) do
     {x, y} = game_state.player_position
     combat_id = "#{x},#{y}"
+    position = {x, y}
 
-    # Get shared combat state instead of individual monster list
-    case SharedState.get_shared_combat_state(combat_id) do
-      nil ->
-        # Fall back to local monster list for testing or when shared combat isn't available
-        local_monsters = game_state.monsters || []
-        monsters_here = find_monsters_at_position(local_monsters, {x, y})
+    local_monsters = game_state.monsters || []
+    local_targets = find_monsters_at_position(local_monsters, position)
 
-        case monsters_here do
-          [] ->
+    cond do
+      local_targets != [] ->
+        [monster | _] = local_targets
+        perform_local_attack(game_state, monster, position)
+
+      Map.get(game_state, :combat, false) ->
+        case SharedState.get_shared_combat_state(combat_id) do
+          nil ->
             {["There are no monsters here to attack."], game_state}
 
-          [monster | _] ->
-            perform_local_attack(game_state, monster, {x, y})
+          combat_state ->
+            shared_monsters = combat_state.monsters || []
+            shared_targets = find_monsters_at_position(shared_monsters, position)
+
+            case shared_targets do
+              [] ->
+                {["There are no monsters here to attack."], game_state}
+
+              [monster | _] ->
+                perform_shared_attack(game_state, monster, position, combat_id)
+            end
         end
 
-      combat_state ->
-        monsters_here = find_monsters_at_position(combat_state.monsters || [], {x, y})
-
-        case monsters_here do
-          [] ->
-            {["There are no monsters here to attack."], game_state}
-
-          [monster | _] ->
-            perform_shared_attack(game_state, monster, {x, y}, combat_id)
-        end
+      true ->
+        {["There are no monsters here to attack."], game_state}
     end
   end
 
