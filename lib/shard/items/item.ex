@@ -56,7 +56,8 @@ defmodule Shard.Items.Item do
     "misc",
     "material",
     "tool",
-    "quest"
+    "quest",
+    "loot_box"
   ]
   @rarities ["common", "uncommon", "rare", "epic", "legendary"]
   @equipment_slots [
@@ -123,6 +124,7 @@ defmodule Shard.Items.Item do
     field :pickup, :boolean, default: true
     field :location, :string
     field :map, :string
+    field :data, MapField, default: %{}
 
     belongs_to :spell, Spells
 
@@ -158,7 +160,7 @@ defmodule Shard.Items.Item do
       :location,
       :map,
       :spell_id,
-      :map,
+      :data,
       :sellable
     ])
     # Added :item_type to required fields
