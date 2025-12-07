@@ -6,7 +6,6 @@ defmodule Shard.Rewards do
   import Ecto.Query, warn: false
   alias Shard.Repo
   alias Shard.Rewards.DailyLoginReward
-  alias Shard.Users.User
 
   @doc """
   Gets the daily login reward record for a user.
