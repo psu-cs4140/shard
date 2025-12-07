@@ -539,6 +539,66 @@ defmodule Shard.Users do
 
   def add_playtime(user, _), do: {:ok, user}
 
+  @doc """
+  Gets leaderboard data for all users, sorted by the specified field.
+  """
+  def get_leaderboard(sort_by \\ "total_playtime_seconds", limit \\ 50) do
+    valid_sort_fields = [
+      "total_playtime_seconds",
+      "login_count", 
+      "inserted_at"
+    ]
+
+    sort_field = if sort_by in valid_sort_fields, do: sort_by, else: "total_playtime_seconds"
+    
+    # Convert string to atom for the query
+    sort_atom = String.to_existing_atom(sort_field)
+    
+    query = case sort_field do
+      "inserted_at" ->
+        # For account age, we want oldest first (ascending)
+        from u in User,
+          order_by: [asc: ^sort_atom],
+          limit: ^limit,
+          preload: [:user_zone_progress]
+      
+      _ ->
+        # For other stats, we want highest first (descending)
+        from u in User,
+          order_by: [desc: ^sort_atom],
+          limit: ^limit,
+          preload: [:user_zone_progress]
+    end
+    
+    users = Repo.all(query)
+    
+    # Get character stats for each user
+    Enum.map(users, fn user ->
+      characters = get_user_characters(user.id)
+      
+      %{
+        user: user,
+        character_count: length(characters),
+        total_levels: Enum.sum(Enum.map(characters, & &1.level)),
+        highest_level: if(length(characters) > 0, do: Enum.max(Enum.map(characters, & &1.level)), else: 0),
+        zones_completed: count_completed_zones(user.user_zone_progress)
+      }
+    end)
+  end
+
+  defp get_user_characters(user_id) do
+    # This assumes you have a Characters context - adjust the module name as needed
+    try do
+      Shard.Characters.list_characters_for_user(user_id)
+    rescue
+      _ -> []
+    end
+  end
+
+  defp count_completed_zones(zone_progress) do
+    Enum.count(zone_progress, fn progress -> progress.progress == "completed" end)
+  end
+
   defp update_user_and_delete_all_tokens(changeset) do
     Repo.transact(fn ->
       with {:ok, user} <- Repo.update(changeset) do
