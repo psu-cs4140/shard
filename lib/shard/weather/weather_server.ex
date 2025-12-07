@@ -76,18 +76,14 @@ defmodule Shard.Weather.WeatherServer do
     # TODO: Replace with actual zone fetching from Map context
     zone_ids = ["01234567-89ab-cdef-0123-456789abcdef"]  # Example zone ID
     
-    case zone_ids do
-      [] -> :ok
-      zone_ids ->
-        # Change weather in 20-40% of zones
-        zones_to_change = Enum.take_random(zone_ids, max(1, div(length(zone_ids) * Enum.random(20..40), 100)))
-        
-        Enum.each(zones_to_change, fn zone_id ->
-          weather_type = Enum.random(WeatherSchema.weather_types())
-          intensity = Enum.random(1..4)  # Rarely use intensity 5
-          create_weather_for_zone(zone_id, weather_type, intensity)
-        end)
-    end
+    # Change weather in 20-40% of zones
+    zones_to_change = Enum.take_random(zone_ids, max(1, div(length(zone_ids) * Enum.random(20..40), 100)))
+    
+    Enum.each(zones_to_change, fn zone_id ->
+      weather_type = Enum.random(WeatherSchema.weather_types())
+      intensity = Enum.random(1..4)  # Rarely use intensity 5
+      create_weather_for_zone(zone_id, weather_type, intensity)
+    end)
   end
 
   defp create_weather_for_zone(zone_id, weather_type, intensity) do
