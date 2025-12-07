@@ -35,6 +35,15 @@ defmodule Shard.Npcs.Npc do
     field :faction, :string
     field :aggression_level, :integer, default: 0
     field :movement_pattern, :string, default: "stationary"
+    # Properties can include time-based behavior modifications:
+    # - "time_behavior": %{
+    #     "night_aggression_bonus" => integer,
+    #     "night_movement_modifier" => float,
+    #     "night_dialogue" => string,
+    #     "dawn_dialogue" => string,
+    #     "day_dialogue" => string,
+    #     "dusk_dialogue" => string
+    #   }
     field :properties, :map, default: %{}
 
     belongs_to :room, Room
