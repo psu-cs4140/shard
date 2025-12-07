@@ -14,6 +14,7 @@ defmodule Shard.Application do
         {Registry, keys: :unique, name: Shard.Registry},
         Shard.Combat.Supervisor,
         Shard.Gambling.CoinFlipServer,
+        Shard.Weather.WeatherServer,
         ShardWeb.Endpoint
       ] ++ local_mailbox_child()
 
