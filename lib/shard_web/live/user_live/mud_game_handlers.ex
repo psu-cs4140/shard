@@ -328,6 +328,10 @@ defmodule ShardWeb.UserLive.MudGameHandlers do
         end
 
       %{type: :victory} ->
+        # Add debugging to understand why victory is being triggered
+        require Logger
+        Logger.info("Victory event received - Player: #{socket.assigns.character_name}, Position: #{inspect(socket.assigns.game_state.player_position)}")
+        
         terminal_state =
           add_message_to_output(
             socket.assigns.terminal_state,
