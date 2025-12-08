@@ -77,6 +77,13 @@ defmodule Shard.Items do
     end
   end
 
+  @doc """
+  Add an item to a character's inventory. Alias for add_item_to_inventory for consistency.
+  """
+  def add_item_to_character(character_id, item_id, quantity \\ 1, opts \\ []) do
+    add_item_to_inventory(character_id, item_id, quantity, opts)
+  end
+
   defp add_stackable_item(_character_id, _item, quantity, _opts) when quantity <= 0 do
     {:ok, :noop}
   end
