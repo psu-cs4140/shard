@@ -232,7 +232,7 @@ defmodule Shard.Titles do
   """
   def set_active_badges(character_id, badge_ids) when length(badge_ids) <= 3 do
     # Verify character owns all badges
-    owned_badges = 
+    owned_badges =
       from(cb in CharacterBadge,
         where: cb.character_id == ^character_id and cb.badge_id in ^badge_ids,
         select: cb.badge_id
@@ -328,22 +328,94 @@ defmodule Shard.Titles do
   def create_default_titles_and_badges do
     # Create default titles
     default_titles = [
-      %{name: "Novice", description: "A new adventurer", category: "progression", rarity: "common", requirements: %{level: 1}},
-      %{name: "Warrior", description: "A seasoned fighter", category: "combat", rarity: "uncommon", requirements: %{kills: 100}},
-      %{name: "Champion", description: "A legendary hero", category: "combat", rarity: "epic", requirements: %{boss_kills: 10}},
-      %{name: "Explorer", description: "Has seen many lands", category: "exploration", rarity: "uncommon", requirements: %{zones_visited: 5}},
-      %{name: "Merchant", description: "Master of trade", category: "economy", rarity: "rare", requirements: %{gold_earned: 10000}},
-      %{name: "The Wealthy", description: "Swimming in gold", category: "economy", rarity: "legendary", requirements: %{gold_owned: 100000}}
+      %{
+        name: "Novice",
+        description: "A new adventurer",
+        category: "progression",
+        rarity: "common",
+        requirements: %{level: 1}
+      },
+      %{
+        name: "Warrior",
+        description: "A seasoned fighter",
+        category: "combat",
+        rarity: "uncommon",
+        requirements: %{kills: 100}
+      },
+      %{
+        name: "Champion",
+        description: "A legendary hero",
+        category: "combat",
+        rarity: "epic",
+        requirements: %{boss_kills: 10}
+      },
+      %{
+        name: "Explorer",
+        description: "Has seen many lands",
+        category: "exploration",
+        rarity: "uncommon",
+        requirements: %{zones_visited: 5}
+      },
+      %{
+        name: "Merchant",
+        description: "Master of trade",
+        category: "economy",
+        rarity: "rare",
+        requirements: %{gold_earned: 10000}
+      },
+      %{
+        name: "The Wealthy",
+        description: "Swimming in gold",
+        category: "economy",
+        rarity: "legendary",
+        requirements: %{gold_owned: 100_000}
+      }
     ]
 
     # Create default badges
     default_badges = [
-      %{name: "First Steps", description: "Created your first character", category: "achievement", rarity: "common", icon: "🎯"},
-      %{name: "Monster Slayer", description: "Defeated 50 monsters", category: "combat", rarity: "uncommon", icon: "⚔️"},
-      %{name: "Boss Hunter", description: "Defeated a boss", category: "combat", rarity: "rare", icon: "👑"},
-      %{name: "Treasure Hunter", description: "Found 10 treasure chests", category: "exploration", rarity: "uncommon", icon: "💎"},
-      %{name: "Social Butterfly", description: "Made 5 friends", category: "social", rarity: "uncommon", icon: "🦋"},
-      %{name: "Lucky", description: "Won 10 coin flips", category: "gambling", rarity: "rare", icon: "🍀"}
+      %{
+        name: "First Steps",
+        description: "Created your first character",
+        category: "achievement",
+        rarity: "common",
+        icon: "🎯"
+      },
+      %{
+        name: "Monster Slayer",
+        description: "Defeated 50 monsters",
+        category: "combat",
+        rarity: "uncommon",
+        icon: "⚔️"
+      },
+      %{
+        name: "Boss Hunter",
+        description: "Defeated a boss",
+        category: "combat",
+        rarity: "rare",
+        icon: "👑"
+      },
+      %{
+        name: "Treasure Hunter",
+        description: "Found 10 treasure chests",
+        category: "exploration",
+        rarity: "uncommon",
+        icon: "💎"
+      },
+      %{
+        name: "Social Butterfly",
+        description: "Made 5 friends",
+        category: "social",
+        rarity: "uncommon",
+        icon: "🦋"
+      },
+      %{
+        name: "Lucky",
+        description: "Won 10 coin flips",
+        category: "gambling",
+        rarity: "rare",
+        icon: "🍀"
+      }
     ]
 
     title_results = Enum.map(default_titles, &create_title/1)

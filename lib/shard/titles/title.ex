@@ -4,7 +4,15 @@ defmodule Shard.Titles.Title do
 
   alias Shard.Titles.CharacterTitle
 
-  @categories ["progression", "combat", "exploration", "economy", "social", "achievement", "special"]
+  @categories [
+    "progression",
+    "combat",
+    "exploration",
+    "economy",
+    "social",
+    "achievement",
+    "special"
+  ]
   @rarities ["common", "uncommon", "rare", "epic", "legendary"]
 
   schema "titles" do
@@ -15,7 +23,8 @@ defmodule Shard.Titles.Title do
     field :requirements, :map, default: %{}
     field :is_active, :boolean, default: true
     field :color, :string
-    field :prefix, :boolean, default: false  # true if title goes before name, false if after
+    # true if title goes before name, false if after
+    field :prefix, :boolean, default: false
 
     has_many :character_titles, CharacterTitle
 
@@ -25,7 +34,16 @@ defmodule Shard.Titles.Title do
   @doc false
   def changeset(title, attrs) do
     title
-    |> cast(attrs, [:name, :description, :category, :rarity, :requirements, :is_active, :color, :prefix])
+    |> cast(attrs, [
+      :name,
+      :description,
+      :category,
+      :rarity,
+      :requirements,
+      :is_active,
+      :color,
+      :prefix
+    ])
     |> validate_required([:name, :description, :category, :rarity])
     |> validate_inclusion(:category, @categories)
     |> validate_inclusion(:rarity, @rarities)

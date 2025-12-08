@@ -25,7 +25,16 @@ defmodule Shard.Titles.Badge do
   @doc false
   def changeset(badge, attrs) do
     badge
-    |> cast(attrs, [:name, :description, :category, :rarity, :icon, :requirements, :is_active, :color])
+    |> cast(attrs, [
+      :name,
+      :description,
+      :category,
+      :rarity,
+      :icon,
+      :requirements,
+      :is_active,
+      :color
+    ])
     |> validate_required([:name, :description, :category, :rarity])
     |> validate_inclusion(:category, @categories)
     |> validate_inclusion(:rarity, @rarities)

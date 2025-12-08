@@ -8,7 +8,8 @@ defmodule Shard.Titles.CharacterBadge do
   schema "character_badges" do
     field :earned_at, :utc_datetime
     field :is_active, :boolean, default: false
-    field :display_order, :integer  # 1, 2, or 3 for active badges
+    # 1, 2, or 3 for active badges
+    field :display_order, :integer
 
     belongs_to :character, Character
     belongs_to :badge, Badge
