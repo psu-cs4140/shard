@@ -193,7 +193,7 @@ defmodule ShardWeb.MudGameLive do
   end
 
   @impl true
-  def handle_info(:mining_tick, socket) do
+  def handle_info(:mine_tick, socket) do
     socket =
       case {socket.assigns.game_state.mining_active,
             Mining.apply_mining_ticks(socket.assigns.game_state.character)} do
@@ -408,7 +408,7 @@ defmodule ShardWeb.MudGameLive do
   end
 
   defp schedule_mining_tick do
-    Process.send_after(self(), :mining_tick, 10_000)
+    Process.send_after(self(), :mine_tick, 6_000)
   end
 
   defp schedule_chopping_tick do
