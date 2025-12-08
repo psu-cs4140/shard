@@ -351,6 +351,14 @@ defmodule Shard.Achievements do
   end
 
   @doc """
+  Checks and awards combat achievements for a user.
+  This should be called when a user kills a monster.
+  """
+  def check_combat_achievements(user_id) do
+    award_achievement_by_name(user_id, "First Blood")
+  end
+
+  @doc """
   Triggers an achievement notification sound for a user.
   This function can be extended to send real-time notifications to the frontend.
   """
