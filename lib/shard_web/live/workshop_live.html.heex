@@ -3,8 +3,8 @@
     <div class="flex flex-col gap-6 rounded-3xl bg-slate-900/80 p-6 shadow-2xl ring-1 ring-slate-700/40">
       <div class="flex flex-col gap-4 text-white md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 class="text-3xl font-semibold tracking-tight">Workshop</h1>
-          <p class="text-slate-300">Crafting</p>
+          <h1 class="text-3xl font-semibold tracking-tight">Foundry & Kitchen</h1>
+          <p class="text-slate-300">Crafting, Smelting, and Cooking</p>
           <p class="mt-2 text-sm text-slate-400">
             Refine humble materials into useful gear without leaving the safety of camp.
           </p>
@@ -38,154 +38,256 @@
         </div>
       </div>
 
-      <div class="grid gap-6 md:grid-cols-2">
-        <%= for recipe <- @recipes do %>
-          <div class="flex flex-col rounded-3xl border border-slate-700 bg-slate-800/70 p-6 shadow-lg shadow-slate-900/50">
-            <div class="flex items-start justify-between">
-              <div>
-                <p class="text-xs uppercase tracking-wide text-slate-400">Recipe</p>
-                <h2 class="text-xl font-semibold text-white">{recipe.name}</h2>
-              </div>
-              <div class="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
-                +{recipe.sell_value} gold value
-              </div>
-            </div>
-
-            <div class="mt-4 space-y-3 text-sm text-slate-300">
-              <div>
-                <p class="text-xs uppercase tracking-wide text-slate-400">Ingredients</p>
-                <ul class="mt-2 space-y-2">
-                  <%= for ingredient <- recipe.ingredients do %>
-                    <li class="flex items-center justify-between rounded-2xl bg-slate-900/60 px-3 py-2">
-                      <span>{ingredient.quantity} × {ingredient.name}</span>
-                      <span class={[
-                        "text-xs font-semibold uppercase",
-                        ingredient.available >= ingredient.quantity && "text-emerald-300",
-                        ingredient.available < ingredient.quantity && "text-rose-300"
-                      ]}>
-                        You have {ingredient.available}
-                      </span>
-                    </li>
-                  <% end %>
-                </ul>
-              </div>
-
-              <div class="flex items-center justify-between rounded-2xl border border-slate-700 px-3 py-2 text-xs uppercase tracking-wide text-slate-400">
-                <span>Creates</span>
-                <span class="text-sm font-semibold text-indigo-200">
-                  {recipe.result_quantity || 1} × {recipe.name}
-                </span>
-              </div>
-            </div>
-
+      <div class="border-t border-slate-800/70 pt-6">
+        <div class="flex flex-wrap gap-3" role="tablist" aria-label="Workshop Modes">
+          <%= for {label, tab} <- [{"Crafting", "crafting"}, {"Cooking", "cooking"}, {"Furnace", "furnace"}] do %>
             <button
               type="button"
-              phx-click={Atom.to_string(recipe.key)}
-              phx-disable-with="Crafting..."
-              disabled={is_nil(@selected_character) or !recipe.can_craft?}
+              phx-click="switch_tab"
+              phx-value-tab={tab}
               class={[
-                "mt-6 rounded-2xl px-4 py-3 text-center text-sm font-semibold shadow-lg transition",
-                if(is_nil(@selected_character) or !recipe.can_craft?,
-                  do: "cursor-not-allowed bg-slate-700 text-slate-400 shadow-none",
-                  else: "bg-indigo-500 text-white hover:bg-indigo-400"
-                )
+                "rounded-2xl px-4 py-2 text-sm font-semibold transition",
+                @active_tab == tab && "bg-indigo-500/20 text-white ring-2 ring-indigo-400",
+                @active_tab != tab && "bg-slate-800/60 text-slate-300 hover:text-white"
               ]}
             >
-              Craft
+              {label}
             </button>
-          </div>
-        <% end %>
-      </div>
-
-      <div class="mt-6 space-y-4">
-        <div>
-          <p class="text-xs uppercase tracking-wide text-slate-400">Smelting</p>
-          <h2 class="text-2xl font-semibold text-white">Furnace</h2>
-          <p class="text-sm text-slate-300">
-            Refine mined ore with coal or wood to produce valuable bars.
-          </p>
+          <% end %>
         </div>
 
-        <div class="grid gap-6 md:grid-cols-2">
-          <%= for recipe <- @furnace_recipes do %>
-            <div class="flex flex-col rounded-3xl border border-amber-500/30 bg-slate-800/80 p-6 shadow-lg shadow-amber-900/30">
-              <div class="flex items-start justify-between">
-                <div>
-                  <p class="text-xs uppercase tracking-wide text-amber-300/80">Furnace Recipe</p>
-                  <h3 class="text-xl font-semibold text-white">{recipe.name}</h3>
-                </div>
-                <div class="rounded-full border border-amber-400/40 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-200">
-                  {recipe.sell_value} gold each
-                </div>
-              </div>
-
-              <div class="mt-4 space-y-3 text-sm text-slate-200">
-                <div>
-                  <p class="text-xs uppercase tracking-wide text-slate-400">Ore</p>
-                  <div class="mt-2 flex items-center justify-between rounded-2xl bg-slate-900/60 px-3 py-2">
-                    <span>{recipe.ore.quantity} × {recipe.ore.name}</span>
-                    <span class={[
-                      "text-xs font-semibold uppercase",
-                      recipe.ore.available >= recipe.ore.quantity && "text-emerald-300",
-                      recipe.ore.available < recipe.ore.quantity && "text-rose-300"
-                    ]}>
-                      You have {recipe.ore.available}
-                    </span>
+        <div class="mt-6">
+          <%= if @active_tab == "crafting" do %>
+            <div class="grid gap-6 md:grid-cols-2">
+              <%= for recipe <- @recipes do %>
+                <div class="flex flex-col rounded-3xl border border-slate-700 bg-slate-800/70 p-6 shadow-lg shadow-slate-900/50">
+                  <div class="flex items-start justify-between">
+                    <div>
+                      <p class="text-xs uppercase tracking-wide text-slate-400">Recipe</p>
+                      <h2 class="text-xl font-semibold text-white">{recipe.name}</h2>
+                    </div>
+                    <div class="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+                      +{recipe.sell_value} gold value
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <p class="text-xs uppercase tracking-wide text-slate-400">Fuel</p>
-                  <ul class="mt-2 space-y-2">
-                    <%= for fuel <- recipe.fuel_options do %>
-                      <li class="flex items-center justify-between rounded-2xl bg-slate-900/60 px-3 py-2">
-                        <span>{fuel.quantity} × {fuel.name}</span>
-                        <span class={[
-                          "text-xs font-semibold uppercase",
-                          fuel.available >= fuel.quantity && "text-emerald-300",
-                          fuel.available < fuel.quantity && "text-rose-300"
-                        ]}>
-                          You have {fuel.available}
-                        </span>
-                      </li>
-                    <% end %>
-                  </ul>
-                  <p class="mt-1 text-xs text-slate-400">
-                    Consumes 1 Coal if available, otherwise 2 Wood.
-                  </p>
-                </div>
+                  <div class="mt-4 space-y-3 text-sm text-slate-300">
+                    <div>
+                      <p class="text-xs uppercase tracking-wide text-slate-400">Ingredients</p>
+                      <ul class="mt-2 space-y-2">
+                        <%= for ingredient <- recipe.ingredients do %>
+                          <li class="flex items-center justify-between rounded-2xl bg-slate-900/60 px-3 py-2">
+                            <span>{ingredient.quantity} × {ingredient.name}</span>
+                            <span class={[
+                              "text-xs font-semibold uppercase",
+                              ingredient.available >= ingredient.quantity && "text-emerald-300",
+                              ingredient.available < ingredient.quantity && "text-rose-300"
+                            ]}>
+                              You have {ingredient.available}
+                            </span>
+                          </li>
+                        <% end %>
+                      </ul>
+                    </div>
 
-                <div class="flex items-center justify-between rounded-2xl border border-slate-700 px-3 py-2 text-xs uppercase tracking-wide text-slate-400">
-                  <span>Result</span>
-                  <span class="text-sm font-semibold text-amber-200">
-                    {recipe.result_quantity} × {recipe.name}
-                  </span>
+                    <div class="flex items-center justify-between rounded-2xl border border-slate-700 px-3 py-2 text-xs uppercase tracking-wide text-slate-400">
+                      <span>Creates</span>
+                      <span class="text-sm font-semibold text-indigo-200">
+                        {recipe.result_quantity || 1} × {recipe.name}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    phx-click={Atom.to_string(recipe.key)}
+                    phx-disable-with="Crafting..."
+                    disabled={is_nil(@selected_character) or !recipe.can_craft?}
+                    class={[
+                      "mt-6 rounded-2xl px-4 py-3 text-center text-sm font-semibold shadow-lg transition",
+                      if(is_nil(@selected_character) or !recipe.can_craft?,
+                        do: "cursor-not-allowed bg-slate-700 text-slate-400 shadow-none",
+                        else: "bg-indigo-500 text-white hover:bg-indigo-400"
+                      )
+                    ]}
+                  >
+                    Craft
+                  </button>
                 </div>
+              <% end %>
+            </div>
+          <% end %>
+
+          <%= if @active_tab == "cooking" do %>
+            <div>
+              <div class="mb-6">
+                <p class="text-xs uppercase tracking-wide text-slate-400">Cooking</p>
+                <h2 class="text-2xl font-semibold text-white">Camp Kitchen</h2>
+                <p class="text-sm text-slate-300">
+                  Combine resources into tradeable meals. Cooked food has no restorative effects,
+                  but fetches a good price in town.
+                </p>
               </div>
 
-              <button
-                type="button"
-                phx-click={Atom.to_string(recipe.key)}
-                phx-disable-with="Smelting..."
-                disabled={is_nil(@selected_character) or !recipe.can_smelt?}
-                class={[
-                  "mt-6 rounded-2xl px-4 py-3 text-center text-sm font-semibold shadow-lg transition",
-                  if(is_nil(@selected_character) or !recipe.can_smelt?,
-                    do: "cursor-not-allowed bg-slate-700 text-slate-400 shadow-none",
-                    else: "bg-amber-500 text-amber-950 hover:bg-amber-400"
-                  )
-                ]}
-              >
-                Smelt {recipe.name}
-              </button>
+              <div class="grid gap-6 md:grid-cols-2">
+                <%= for recipe <- @cooking_recipes do %>
+                  <div class="flex flex-col rounded-3xl border border-lime-500/30 bg-slate-800/70 p-6 shadow-lg shadow-lime-900/20">
+                    <div class="flex items-start justify-between">
+                      <div>
+                        <p class="text-xs uppercase tracking-wide text-lime-300/80">
+                          Cooking Recipe
+                        </p>
+                        <h3 class="text-xl font-semibold text-white">{recipe.name}</h3>
+                      </div>
+                      <div class="rounded-full border border-lime-400/40 bg-lime-500/10 px-3 py-1 text-xs font-semibold text-lime-200">
+                        {recipe.sell_value} gold each
+                      </div>
+                    </div>
+
+                    <div class="mt-4 space-y-3 text-sm text-slate-100">
+                      <div>
+                        <p class="text-xs uppercase tracking-wide text-slate-400">Ingredients</p>
+                        <ul class="mt-2 space-y-2">
+                          <%= for ingredient <- recipe.ingredients do %>
+                            <li class="flex items-center justify-between rounded-2xl bg-slate-900/60 px-3 py-2">
+                              <span>{ingredient.quantity} × {ingredient.name}</span>
+                              <span class={[
+                                "text-xs font-semibold uppercase",
+                                ingredient.available >= ingredient.quantity && "text-emerald-300",
+                                ingredient.available < ingredient.quantity && "text-rose-300"
+                              ]}>
+                                You have {ingredient.available}
+                              </span>
+                            </li>
+                          <% end %>
+                        </ul>
+                      </div>
+
+                      <div class="flex items-center justify-between rounded-2xl border border-slate-700 px-3 py-2 text-xs uppercase tracking-wide text-slate-400">
+                        <span>Makes</span>
+                        <span class="text-sm font-semibold text-lime-200">
+                          {recipe.result_quantity} × {recipe.name}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      phx-click="cook_recipe"
+                      phx-value-key={Atom.to_string(recipe.key)}
+                      phx-disable-with="Cooking..."
+                      disabled={is_nil(@selected_character) or !recipe.can_cook?}
+                      class={[
+                        "mt-6 rounded-2xl px-4 py-3 text-center text-sm font-semibold shadow-lg transition",
+                        if(is_nil(@selected_character) or !recipe.can_cook?,
+                          do: "cursor-not-allowed bg-slate-700 text-slate-400 shadow-none",
+                          else: "bg-lime-400 text-slate-900 hover:bg-lime-300"
+                        )
+                      ]}
+                    >
+                      Cook
+                    </button>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+
+          <%= if @active_tab == "furnace" do %>
+            <div>
+              <div class="mb-6">
+                <p class="text-xs uppercase tracking-wide text-slate-400">Smelting</p>
+                <h2 class="text-2xl font-semibold text-white">Furnace</h2>
+                <p class="text-sm text-slate-300">
+                  Refine mined ore with coal or wood to produce valuable bars.
+                </p>
+              </div>
+
+              <div class="grid gap-6 md:grid-cols-2">
+                <%= for recipe <- @furnace_recipes do %>
+                  <div class="flex flex-col rounded-3xl border border-amber-500/30 bg-slate-800/80 p-6 shadow-lg shadow-amber-900/30">
+                    <div class="flex items-start justify-between">
+                      <div>
+                        <p class="text-xs uppercase tracking-wide text-amber-300/80">
+                          Furnace Recipe
+                        </p>
+                        <h3 class="text-xl font-semibold text-white">{recipe.name}</h3>
+                      </div>
+                      <div class="rounded-full border border-amber-400/40 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-200">
+                        {recipe.sell_value} gold each
+                      </div>
+                    </div>
+
+                    <div class="mt-4 space-y-3 text-sm text-slate-200">
+                      <div>
+                        <p class="text-xs uppercase tracking-wide text-slate-400">Ore</p>
+                        <div class="mt-2 flex items-center justify-between rounded-2xl bg-slate-900/60 px-3 py-2">
+                          <span>{recipe.ore.quantity} × {recipe.ore.name}</span>
+                          <span class={[
+                            "text-xs font-semibold uppercase",
+                            recipe.ore.available >= recipe.ore.quantity && "text-emerald-300",
+                            recipe.ore.available < recipe.ore.quantity && "text-rose-300"
+                          ]}>
+                            You have {recipe.ore.available}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p class="text-xs uppercase tracking-wide text-slate-400">Fuel</p>
+                        <ul class="mt-2 space-y-2">
+                          <%= for fuel <- recipe.fuel_options do %>
+                            <li class="flex items-center justify-between rounded-2xl bg-slate-900/60 px-3 py-2">
+                              <span>{fuel.quantity} × {fuel.name}</span>
+                              <span class={[
+                                "text-xs font-semibold uppercase",
+                                fuel.available >= fuel.quantity && "text-emerald-300",
+                                fuel.available < fuel.quantity && "text-rose-300"
+                              ]}>
+                                You have {fuel.available}
+                              </span>
+                            </li>
+                          <% end %>
+                        </ul>
+                        <p class="mt-1 text-xs text-slate-400">
+                          Consumes 1 Coal if available, otherwise 2 Wood.
+                        </p>
+                      </div>
+
+                      <div class="flex items-center justify-between rounded-2xl border border-slate-700 px-3 py-2 text-xs uppercase tracking-wide text-slate-400">
+                        <span>Result</span>
+                        <span class="text-sm font-semibold text-amber-200">
+                          {recipe.result_quantity} × {recipe.name}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      phx-click={Atom.to_string(recipe.key)}
+                      phx-disable-with="Smelting..."
+                      disabled={is_nil(@selected_character) or !recipe.can_smelt?}
+                      class={[
+                        "mt-6 rounded-2xl px-4 py-3 text-center text-sm font-semibold shadow-lg transition",
+                        if(is_nil(@selected_character) or !recipe.can_smelt?,
+                          do: "cursor-not-allowed bg-slate-700 text-slate-400 shadow-none",
+                          else: "bg-amber-500 text-amber-950 hover:bg-amber-400"
+                        )
+                      ]}
+                    >
+                      Smelt {recipe.name}
+                    </button>
+                  </div>
+                <% end %>
+              </div>
+
+              <p class="mt-6 text-center text-sm text-slate-500">
+                Additional furnace upgrades coming soon.
+              </p>
             </div>
           <% end %>
         </div>
       </div>
-
-      <p class="text-center text-sm text-slate-500">
-        Additional furnace upgrades coming soon.
-      </p>
     </div>
   </div>
 </Layouts.app>
