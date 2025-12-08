@@ -648,7 +648,7 @@ defmodule ShardWeb.UserLive.Commands1 do
         else
           # Send notification to target character
           send_poke_notification_local(target_character, game_state.character)
-          
+
           {["You poke #{target_character.name}."], game_state}
         end
     end
