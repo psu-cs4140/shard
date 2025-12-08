@@ -1,6 +1,6 @@
 defmodule Shard.Workshop do
   @moduledoc """
-  Handles simple crafting recipes for the Workshop feature.
+  Handles crafting and smelting logic for the Workshop feature.
   """
 
   import Ecto.Query, warn: false
@@ -61,6 +61,78 @@ defmodule Shard.Workshop do
       equippable: false,
       equipment_slot: nil,
       stackable: false
+    },
+    "Copper Bar" => %{
+      description: "A refined bar of copper ready for crafting.",
+      item_type: "material",
+      rarity: "common",
+      value: 10,
+      weight: "1.0",
+      equippable: false,
+      equipment_slot: nil,
+      stackable: true,
+      max_stack_size: 99
+    },
+    "Iron Bar" => %{
+      description: "A sturdy iron bar prized by smiths.",
+      item_type: "material",
+      rarity: "common",
+      value: 26,
+      weight: "1.2",
+      equippable: false,
+      equipment_slot: nil,
+      stackable: true,
+      max_stack_size: 99
+    },
+    "Copper Dagger" => %{
+      description: "A simple dagger with a copper blade. Better than bare hands.",
+      item_type: "weapon",
+      rarity: "common",
+      value: 15,
+      weight: "1.1",
+      equippable: true,
+      equipment_slot: "weapon",
+      stackable: false
+    },
+    "Copper Pickaxe" => %{
+      description: "A sturdy copper pickaxe, favored by novice miners.",
+      item_type: "tool",
+      rarity: "common",
+      value: 22,
+      weight: "2.8",
+      equippable: false,
+      equipment_slot: nil,
+      stackable: false
+    },
+    "Iron Sword" => %{
+      description: "A reliable iron sword with a well-balanced blade.",
+      item_type: "weapon",
+      rarity: "common",
+      value: 35,
+      weight: "2.1",
+      equippable: true,
+      equipment_slot: "weapon",
+      stackable: false
+    },
+    "Iron Shield" => %{
+      description: "A solid iron shield that can withstand heavy blows.",
+      item_type: "shield",
+      rarity: "common",
+      value: 40,
+      weight: "3.0",
+      equippable: true,
+      equipment_slot: "shield",
+      stackable: false
+    },
+    "Gemmed Amulet" => %{
+      description: "A radiant amulet set with a precious gem, humming with latent power.",
+      item_type: "necklace",
+      rarity: "common",
+      value: 80,
+      weight: "0.3",
+      equippable: true,
+      equipment_slot: "necklace",
+      stackable: false
     }
   }
 
@@ -119,6 +191,90 @@ defmodule Shard.Workshop do
         %{name: "Stick", quantity: 2},
         %{name: "Mushroom", quantity: 1}
       ]
+    },
+    %{
+      key: :craft_copper_dagger,
+      name: "Copper Dagger",
+      result_name: "Copper Dagger",
+      result_quantity: 1,
+      sell_value: 15,
+      ingredients: [
+        %{name: "Copper Bar", quantity: 1},
+        %{name: "Stick", quantity: 1}
+      ]
+    },
+    %{
+      key: :craft_copper_pickaxe,
+      name: "Copper Pickaxe",
+      result_name: "Copper Pickaxe",
+      result_quantity: 1,
+      sell_value: 22,
+      ingredients: [
+        %{name: "Copper Bar", quantity: 2},
+        %{name: "Wood", quantity: 1}
+      ]
+    },
+    %{
+      key: :craft_iron_sword,
+      name: "Iron Sword",
+      result_name: "Iron Sword",
+      result_quantity: 1,
+      sell_value: 35,
+      ingredients: [
+        %{name: "Iron Bar", quantity: 2},
+        %{name: "Wood", quantity: 1},
+        %{name: "Stick", quantity: 1}
+      ]
+    },
+    %{
+      key: :craft_iron_shield,
+      name: "Iron Shield",
+      result_name: "Iron Shield",
+      result_quantity: 1,
+      sell_value: 40,
+      ingredients: [
+        %{name: "Iron Bar", quantity: 2},
+        %{name: "Wood", quantity: 2}
+      ]
+    },
+    %{
+      key: :craft_gemmed_amulet,
+      name: "Gemmed Amulet",
+      result_name: "Gemmed Amulet",
+      result_quantity: 1,
+      sell_value: 80,
+      ingredients: [
+        %{name: "Gem", quantity: 1},
+        %{name: "Copper Bar", quantity: 1},
+        %{name: "Iron Bar", quantity: 1}
+      ]
+    }
+  ]
+
+  @furnace_recipes [
+    %{
+      key: :smelt_copper_bar,
+      name: "Copper Bar",
+      result_name: "Copper Bar",
+      result_quantity: 1,
+      sell_value: 10,
+      ore: %{name: "Copper Ore", quantity: 2},
+      fuel_options: [
+        %{name: "Coal", quantity: 1},
+        %{name: "Wood", quantity: 2}
+      ]
+    },
+    %{
+      key: :smelt_iron_bar,
+      name: "Iron Bar",
+      result_name: "Iron Bar",
+      result_quantity: 1,
+      sell_value: 26,
+      ore: %{name: "Iron Ore", quantity: 3},
+      fuel_options: [
+        %{name: "Coal", quantity: 1},
+        %{name: "Wood", quantity: 2}
+      ]
     }
   ]
 
@@ -128,6 +284,11 @@ defmodule Shard.Workshop do
   def recipes, do: @recipes
 
   @doc """
+  Returns furnace recipe definitions.
+  """
+  def furnace_recipes, do: @furnace_recipes
+
+  @doc """
   Returns decorated recipes with availability data for the given character.
   """
   def recipes_for_character(nil), do: decorate_recipes(%{})
@@ -135,6 +296,16 @@ defmodule Shard.Workshop do
   def recipes_for_character(character_id) do
     material_counts = material_counts(character_id)
     decorate_recipes(material_counts)
+  end
+
+  @doc """
+  Returns furnace recipes with availability data for the character.
+  """
+  def furnace_recipes_for_character(nil), do: decorate_furnace_recipes(%{})
+
+  def furnace_recipes_for_character(character_id) do
+    material_counts = material_counts(character_id)
+    decorate_furnace_recipes(material_counts)
   end
 
   @doc """
@@ -154,12 +325,40 @@ defmodule Shard.Workshop do
   end
 
   @doc """
+  Smelts a furnace recipe identified by `key` for the given character.
+  """
+  def smelt(character_id, key) do
+    with {:ok, recipe} <- fetch_furnace_recipe(key),
+         true <- has_required_ore?(character_id, recipe.ore) || {:error, :insufficient_materials},
+         {:ok, ore_item} <- fetch_item_by_name(recipe.ore.name),
+         {:ok, fuel_choice} <- choose_fuel(character_id, recipe.fuel_options),
+         {:ok, result_item} <- fetch_item_by_name(recipe.result_name),
+         {:ok, _} <-
+           apply_smelt(
+             character_id,
+             ore_item.id,
+             recipe.ore.quantity,
+             fuel_choice,
+             result_item,
+             recipe.result_quantity
+           ) do
+      {:ok, recipe}
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
   Returns how many of each material the character currently holds for Workshop recipes.
   """
   def material_counts(nil), do: %{}
 
   def material_counts(character_id) do
-    names = recipes() |> Enum.flat_map(&ingredient_names/1) |> Enum.uniq()
+    recipe_materials = recipes() |> Enum.flat_map(&ingredient_names/1)
+
+    names =
+      (recipe_materials ++ furnace_material_names())
+      |> Enum.uniq()
 
     if names == [] do
       %{}
@@ -190,12 +389,46 @@ defmodule Shard.Workshop do
     end)
   end
 
+  defp decorate_furnace_recipes(material_counts) do
+    Enum.map(@furnace_recipes, fn recipe ->
+      ore_available = Map.get(material_counts, recipe.ore.name, 0)
+
+      fuel_options =
+        Enum.map(recipe.fuel_options, fn fuel ->
+          available = Map.get(material_counts, fuel.name, 0)
+          Map.put(fuel, :available, available)
+        end)
+
+      can_smelt? =
+        ore_available >= recipe.ore.quantity and
+          Enum.any?(fuel_options, &(&1.available >= &1.quantity))
+
+      recipe
+      |> Map.put(:ore, Map.put(recipe.ore, :available, ore_available))
+      |> Map.put(:fuel_options, fuel_options)
+      |> Map.put(:can_smelt?, can_smelt?)
+    end)
+  end
+
   defp ingredient_names(recipe) do
     Enum.map(recipe.ingredients, & &1.name)
   end
 
+  defp furnace_material_names do
+    Enum.flat_map(@furnace_recipes, fn recipe ->
+      [recipe.ore.name | Enum.map(recipe.fuel_options, & &1.name)]
+    end)
+  end
+
   defp fetch_recipe(key) do
     case Enum.find(@recipes, &(&1.key == key)) do
+      nil -> {:error, :unknown_recipe}
+      recipe -> {:ok, recipe}
+    end
+  end
+
+  defp fetch_furnace_recipe(key) do
+    case Enum.find(@furnace_recipes, &(&1.key == key)) do
       nil -> {:error, :unknown_recipe}
       recipe -> {:ok, recipe}
     end
@@ -278,6 +511,63 @@ defmodule Shard.Workshop do
   end
 
   defp name_taken?(_), do: false
+
+  defp has_required_ore?(character_id, %{name: name, quantity: quantity}) do
+    Items.get_character_item_quantity(character_id, name) >= quantity
+  end
+
+  defp choose_fuel(character_id, fuel_options) do
+    fuel_options
+    |> Enum.sort_by(&fuel_priority/1)
+    |> Enum.reduce_while(nil, fn option, _acc ->
+      available = Items.get_character_item_quantity(character_id, option.name)
+
+      if available >= option.quantity do
+        case fetch_item_by_name(option.name) do
+          {:ok, item} ->
+            {:halt, {:ok, Map.put(option, :item, item)}}
+
+          {:error, reason} ->
+            {:halt, {:error, reason}}
+        end
+      else
+        {:cont, nil}
+      end
+    end)
+    |> case do
+      {:ok, fuel} -> {:ok, fuel}
+      {:error, reason} -> {:error, reason}
+      nil -> {:error, :insufficient_fuel}
+    end
+  end
+
+  defp fuel_priority(%{name: "Coal"}), do: 0
+  defp fuel_priority(_), do: 1
+
+  defp apply_smelt(character_id, ore_item_id, ore_quantity, fuel_choice, result_item, quantity) do
+    Repo.transaction(fn ->
+      case remove_item_quantity(character_id, ore_item_id, ore_quantity) do
+        :ok ->
+          case remove_item_quantity(character_id, fuel_choice.item.id, fuel_choice.quantity) do
+            :ok ->
+              case Items.add_item_to_inventory(character_id, result_item.id, quantity) do
+                {:ok, _} -> :ok
+                {:error, reason} -> Repo.rollback(reason)
+              end
+
+            {:error, reason} ->
+              Repo.rollback(reason)
+          end
+
+        {:error, reason} ->
+          Repo.rollback(reason)
+      end
+    end)
+    |> case do
+      {:ok, _} -> {:ok, :smelted}
+      {:error, reason} -> {:error, reason}
+    end
+  end
 
   defp ensure_has_ingredients(character_id, ingredients) do
     has_all? =
