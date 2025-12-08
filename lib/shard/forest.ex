@@ -303,7 +303,7 @@ defmodule Shard.Forest do
     %{
       wood: fetch_or_create_item("Wood", 1),
       sticks: fetch_or_create_item("Stick", 1),
-      seeds: fetch_or_create_item("Forest Seeds", 2),
+      seeds: fetch_or_create_item("Seed", 2),
       mushrooms: fetch_or_create_item("Mushroom", 3),
       resin: fetch_or_create_item("Forest Resin", 5)
     }
