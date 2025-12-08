@@ -218,7 +218,7 @@ defmodule Shard.Achievements do
     # Debug logging to see what zone names we're getting
     require Logger
     Logger.info("Checking zone entry achievement for user #{user_id}, zone: '#{zone_name}'")
-    
+
     case zone_name do
       "Beginner Bone Zone" ->
         Logger.info("Awarding Beginner Bone Zone achievement")

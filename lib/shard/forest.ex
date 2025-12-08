@@ -156,7 +156,10 @@ defmodule Shard.Forest do
                   {char_after_drop, pet_message} = maybe_drop_shroomling(updated_character)
 
                   # Check for chopping achievements
-                  Shard.Achievements.check_chopping_resource_achievements(updated_character.user_id, resources)
+                  Shard.Achievements.check_chopping_resource_achievements(
+                    updated_character.user_id,
+                    resources
+                  )
 
                   pet_messages =
                     pet_level_messages
