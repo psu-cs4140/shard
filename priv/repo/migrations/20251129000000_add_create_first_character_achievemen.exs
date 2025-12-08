@@ -172,6 +172,23 @@ defmodule Shard.Repo.Migrations.AddCreateFirstCharacterAchievement do
     ON CONFLICT (name) DO NOTHING
     """
 
+    # Insert the "Entering the Stone Age" achievement (skip if already exists)
+    execute """
+    INSERT INTO achievements (name, description, icon, category, points, hidden, requirements, inserted_at, updated_at)
+    VALUES (
+      'Entering the Stone Age',
+      'Mine your first piece of stone and begin your journey into civilization',
+      'stone-icon',
+      'mining',
+      15,
+      false,
+      '{"type": "mining_resource_obtained", "resource": "stone", "count": 1}',
+      NOW(),
+      NOW()
+    )
+    ON CONFLICT (name) DO NOTHING
+    """
+
     # Award the achievement to users who already have characters
     execute """
     INSERT INTO user_achievements (user_id, achievement_id, earned_at, progress, inserted_at, updated_at)
@@ -204,7 +221,7 @@ defmodule Shard.Repo.Migrations.AddCreateFirstCharacterAchievement do
 
     # Remove the achievements
     execute """
-    DELETE FROM achievements WHERE name IN ('Create First Character', 'Enter Beginner Bone Zone', 'Enter Vampire Manor', 'Enter Mines', 'Enter Whispering Forest', 'GEMS!', 'Acquiring Lumber', 'A Hint of Prehistoric Life', 'Lucky Gambler', 'Learning Experience')
+    DELETE FROM achievements WHERE name IN ('Create First Character', 'Enter Beginner Bone Zone', 'Enter Vampire Manor', 'Enter Mines', 'Enter Whispering Forest', 'GEMS!', 'Acquiring Lumber', 'A Hint of Prehistoric Life', 'Lucky Gambler', 'Learning Experience', 'Entering the Stone Age')
     """
   end
 end

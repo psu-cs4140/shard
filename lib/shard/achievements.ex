@@ -307,6 +307,11 @@ defmodule Shard.Achievements do
       award_achievement_by_name(user_id, "GEMS!")
     end
 
+    # Check for first stone achievement
+    if Map.get(resources, :stone, 0) > 0 do
+      award_achievement_by_name(user_id, "Entering the Stone Age")
+    end
+
     :ok
   end
 
