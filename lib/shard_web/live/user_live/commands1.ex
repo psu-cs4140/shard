@@ -633,7 +633,6 @@ defmodule ShardWeb.UserLive.Commands1 do
     end
   end
 
-
   # Helper function to get item display name from inventory item
   defp get_item_display_name(inv_item) do
     cond do
