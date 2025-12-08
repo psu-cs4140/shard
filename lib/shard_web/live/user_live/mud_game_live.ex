@@ -424,8 +424,8 @@ defmodule ShardWeb.MudGameLive do
   end
 
   defp pet_chance(level) do
-    lvl = max(level || 1, 1)
-    min(10 + (lvl - 1), 50)
+    lvl = Kernel.max(level || 1, 1)
+    Kernel.min(10 + (lvl - 1), 50)
   end
 
   defp maybe_add_zone_welcome(socket, zone) do
