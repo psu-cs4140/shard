@@ -301,6 +301,9 @@ defmodule ShardWeb.ZoneSelectionLive do
   defp handle_mines_entry(socket, character, zone) do
     case Characters.update_character(character, %{current_zone_id: zone.id}) do
       {:ok, updated_character} ->
+        # Check for zone entry achievements
+        handle_zone_entry_achievement(updated_character, zone)
+
         pet_line =
           if updated_character.has_pet_rock do
             chance = pet_chance(updated_character.pet_rock_level)
@@ -332,6 +335,9 @@ defmodule ShardWeb.ZoneSelectionLive do
   defp handle_forest_entry(socket, character, zone, _instance_type) do
     case Characters.update_character(character, %{current_zone_id: zone.id}) do
       {:ok, updated_character} ->
+        # Check for zone entry achievements
+        handle_zone_entry_achievement(updated_character, zone)
+
         pet_line =
           if updated_character.has_shroomling do
             chance = pet_chance(updated_character.shroomling_level)
