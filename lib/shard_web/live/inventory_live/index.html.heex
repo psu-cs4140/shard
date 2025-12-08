@@ -38,6 +38,12 @@
           </button>
         <% end %>
       </div>
+      <%= if @selected_character do %>
+        <div class="mt-4 text-sm text-base-content">
+          <span class="font-medium">Gold:</span>
+          <span class="text-warning font-bold">{@selected_character.gold}</span>
+        </div>
+      <% end %>
     </div>
   </div>
 
@@ -83,6 +89,20 @@
                   class="w-full text-xs bg-base-200 text-base-content px-2 py-1 rounded hover:bg-base-300"
                 >
                   Drop
+                </button>
+                <button
+                  phx-click="show_hotbar_modal"
+                  phx-value-inventory_id={inventory_item.id}
+                  class="w-full text-xs bg-info/20 text-info-content px-2 py-1 rounded hover:bg-info/30"
+                >
+                  Add to Hotbar
+                </button>
+                <button
+                  phx-click="sell_item"
+                  phx-value-inventory_id={inventory_item.id}
+                  class="w-full text-xs bg-warning/20 text-warning-content px-2 py-1 rounded hover:bg-warning/30"
+                >
+                  Sell
                 </button>
               </div>
             </div>
@@ -171,3 +191,53 @@
     </div>
   <% end %>
 </div>
+
+<!-- Hotbar Slot Selection Modal -->
+<%= if @show_hotbar_modal do %>
+  <div
+    class="fixed inset-0 flex items-center justify-center"
+    style="background-color: rgba(0, 0, 0, 0.5);"
+  >
+    <div class="bg-base-100 rounded-lg p-6 max-w-md w-full mx-4">
+      <h3 class="text-lg font-medium text-base-content mb-4">Select Hotbar Slot</h3>
+      <p class="text-sm text-base-content/70 mb-4">
+        Choose which hotbar slot to place this item in:
+      </p>
+      <div class="grid grid-cols-4 gap-2 mb-4">
+        <%= for slot_num <- 1..12 do %>
+          <% hotbar_item = Enum.find(@hotbar, &(&1.slot_number == slot_num)) %>
+          <button
+            phx-click="set_hotbar"
+            phx-value-inventory_id={@selected_inventory_id}
+            phx-value-slot={slot_num}
+            class={[
+              "border-2 rounded p-2 h-16 flex flex-col justify-center items-center text-xs",
+              if(hotbar_item && hotbar_item.item,
+                do: "border-warning bg-warning/10 hover:bg-warning/20",
+                else: "border-base-300 hover:bg-base-200"
+              )
+            ]}
+          >
+            <div class="font-bold text-base-content/50">{slot_num}</div>
+            <%= if hotbar_item && hotbar_item.item do %>
+              <div class={["text-center", rarity_class(hotbar_item.item.rarity)]}>
+                {String.slice(hotbar_item.item.name, 0..5)}
+              </div>
+              <div class="text-xs text-warning">Replace?</div>
+            <% else %>
+              <div class="text-base-content/50">Empty</div>
+            <% end %>
+          </button>
+        <% end %>
+      </div>
+      <div class="flex justify-end space-x-2">
+        <button
+          phx-click="hide_hotbar_modal"
+          class="px-4 py-2 bg-base-200 text-base-content rounded hover:bg-base-300"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+<% end %>

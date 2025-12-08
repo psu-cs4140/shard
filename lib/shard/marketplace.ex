@@ -138,23 +138,35 @@ defmodule Shard.Marketplace do
   4. Transfers the item to the buyer's inventory
   5. Transfers gold from buyer to seller
   6. Marks the listing as sold
+  7. Broadcasts a notification to the seller
   """
   def purchase_listing(listing_id, buyer) do
-    Repo.transaction(fn ->
-      with {:ok, listing} <- get_listing_if_exists(listing_id),
-           :ok <- verify_active(listing),
-           :ok <- verify_not_seller(listing, buyer),
-           {:ok, buyer_character} <- get_buyer_character(buyer),
-           {:ok, seller_character} <- get_seller_character(listing),
-           :ok <- verify_buyer_has_gold(buyer_character, listing.price),
-           {:ok, updated_listing} <- mark_as_sold(listing, buyer),
-           {:ok, _} <- transfer_item(listing, buyer_character),
-           {:ok, _} <- transfer_gold(buyer_character, seller_character, listing.price) do
-        updated_listing
-      else
-        {:error, reason} -> Repo.rollback(reason)
-      end
-    end)
+    result =
+      Repo.transaction(fn ->
+        with {:ok, listing} <- get_listing_if_exists(listing_id),
+             :ok <- verify_active(listing),
+             :ok <- verify_not_seller(listing, buyer),
+             {:ok, buyer_character} <- get_buyer_character(buyer),
+             {:ok, seller_character} <- get_seller_character(listing),
+             :ok <- verify_buyer_has_gold(buyer_character, listing.price),
+             {:ok, updated_listing} <- mark_as_sold(listing, buyer),
+             {:ok, _} <- transfer_item(listing, buyer_character),
+             {:ok, _} <- transfer_gold(buyer_character, seller_character, listing.price) do
+          updated_listing
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+
+    # Broadcast sale notification to the seller after successful transaction
+    case result do
+      {:ok, listing} ->
+        broadcast_sale_notification(listing)
+        {:ok, listing}
+
+      error ->
+        error
+    end
   end
 
   # Private helper functions
@@ -291,6 +303,17 @@ defmodule Shard.Marketplace do
       buyer_id: buyer.id
     })
     |> Repo.update()
+  end
+
+  defp broadcast_sale_notification(listing) do
+    item_name = listing.character_inventory.item.name
+    price = listing.price
+
+    Phoenix.PubSub.broadcast(
+      Shard.PubSub,
+      "user:#{listing.seller_id}",
+      {:item_sold, %{item_name: item_name, price: price}}
+    )
   end
 
   @doc """

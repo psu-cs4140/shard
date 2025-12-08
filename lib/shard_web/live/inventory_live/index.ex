@@ -16,6 +16,8 @@ defmodule ShardWeb.InventoryLive.Index do
       |> assign(:inventory, [])
       |> assign(:hotbar, [])
       |> assign(:room_items, [])
+      |> assign(:show_hotbar_modal, false)
+      |> assign(:selected_inventory_id, nil)
       |> load_character_data()
 
     {:ok, socket}
@@ -122,7 +124,9 @@ defmodule ShardWeb.InventoryLive.Index do
       {:ok, _} ->
         socket =
           socket
-          |> put_flash(:info, "Hotbar slot set successfully")
+          |> put_flash(:info, "Item added to hotbar slot #{slot}")
+          |> assign(:show_hotbar_modal, false)
+          |> assign(:selected_inventory_id, nil)
           |> load_character_data()
 
         {:noreply, socket}
@@ -149,17 +153,67 @@ defmodule ShardWeb.InventoryLive.Index do
     end
   end
 
+  def handle_event("show_hotbar_modal", %{"inventory_id" => inventory_id}, socket) do
+    socket =
+      socket
+      |> assign(:show_hotbar_modal, true)
+      |> assign(:selected_inventory_id, inventory_id)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("hide_hotbar_modal", _params, socket) do
+    socket =
+      socket
+      |> assign(:show_hotbar_modal, false)
+      |> assign(:selected_inventory_id, nil)
+
+    {:noreply, socket}
+  end
+
+  def handle_event("sell_item", %{"inventory_id" => inventory_id}, socket) do
+    character = socket.assigns.selected_character
+
+    case Items.sell_item(character, String.to_integer(inventory_id)) do
+      {:ok, %{gold_earned: gold_earned}} ->
+        socket =
+          socket
+          |> put_flash(:info, "Item sold for #{gold_earned} gold")
+          |> load_character_data()
+
+        {:noreply, socket}
+
+      {:error, :item_not_found} ->
+        {:noreply, put_flash(socket, :error, "Item not found")}
+
+      {:error, :not_owned_by_character} ->
+        {:noreply, put_flash(socket, :error, "You don't own this item")}
+
+      {:error, :cannot_sell_equipped_item} ->
+        {:noreply, put_flash(socket, :error, "Cannot sell equipped items. Unequip it first.")}
+
+      {:error, :item_not_sellable} ->
+        {:noreply, put_flash(socket, :error, "This item cannot be sold")}
+
+      {:error, reason} ->
+        {:noreply, put_flash(socket, :error, "Failed to sell item: #{inspect(reason)}")}
+    end
+  end
+
   defp load_character_data(socket) do
     case socket.assigns.selected_character do
       nil ->
         socket
 
       character ->
+        # Reload character to get updated gold and other stats
+        character = Characters.get_character!(character.id)
         inventory = Items.get_character_inventory(character.id)
         hotbar = Items.get_character_hotbar(character.id)
         room_items = Items.get_room_items(character.location)
 
         socket
+        |> assign(:selected_character, character)
         |> assign(:inventory, inventory)
         |> assign(:hotbar, hotbar)
         |> assign(:room_items, room_items)

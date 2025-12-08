@@ -152,7 +152,7 @@ defmodule ShardWeb.UserLive.Components do
             </button>
           </div>
 
-          <%= if Enum.empty?(@game_state.inventory_items) do %>
+          <%= if inventory_empty?(@game_state) do %>
             <div class="text-center text-gray-400 py-8">
               <.icon name="hero-shopping-bag" class="w-16 h-16 mx-auto mb-4 opacity-50" />
               <p class="text-lg">Your inventory is empty</p>
@@ -160,10 +160,10 @@ defmodule ShardWeb.UserLive.Components do
             </div>
           <% else %>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <%= for item <- @game_state.inventory_items do %>
+              <%= for item <- get_inventory_items(@game_state) do %>
                 <div class="bg-gray-800 rounded-lg p-4 flex items-center">
                   <div class="mr-4">
-                    <%= case item.item_type do %>
+                    <%= case get_item_type(item) do %>
                       <% "weapon" -> %>
                         <.icon name="hero-sword" class="w-10 h-10 text-red-400" />
                       <% "armor" -> %>
@@ -182,45 +182,61 @@ defmodule ShardWeb.UserLive.Components do
                   </div>
                   <div class="flex-1">
                     <div class="flex justify-between items-start">
-                      <div class="font-semibold">{item.name}</div>
-                      <%= if item.quantity && item.quantity > 1 do %>
-                        <span class="text-sm bg-gray-600 px-2 py-1 rounded">x{item.quantity}</span>
+                      <div class="font-semibold">{get_item_name(item)}</div>
+                      <%= if get_item_quantity(item) > 1 do %>
+                        <span class="text-sm bg-gray-600 px-2 py-1 rounded">
+                          x{get_item_quantity(item)}
+                        </span>
                       <% end %>
                     </div>
-                    <div class="text-sm text-gray-300 capitalize">{item.item_type}</div>
-                    <%= if Map.get(item, :damage) do %>
-                      <div class="text-sm text-red-300">Damage: {item.damage}</div>
+                    <div class="text-sm text-gray-300 capitalize">{get_item_type(item)}</div>
+                    <%= if get_item_damage(item) do %>
+                      <div class="text-sm text-red-300">Damage: {get_item_damage(item)}</div>
                     <% end %>
-                    <%= if Map.get(item, :defense) do %>
-                      <div class="text-sm text-blue-300">Defense: {item.defense}</div>
+                    <%= if get_item_defense(item) do %>
+                      <div class="text-sm text-blue-300">Defense: {get_item_defense(item)}</div>
                     <% end %>
-                    <%= if Map.get(item, :effect) do %>
-                      <div class="text-sm text-green-300">Effect: {item.effect}</div>
+                    <%= if get_item_effect(item) do %>
+                      <div class="text-sm text-green-300">Effect: {get_item_effect(item)}</div>
                     <% end %>
-                    <%= if Map.get(item, :description) do %>
-                      <div class="text-xs text-gray-400 mt-1">{item.description}</div>
+                    <%= if get_item_description(item) do %>
+                      <div class="text-xs text-gray-400 mt-1">{get_item_description(item)}</div>
                     <% end %>
                     
     <!-- Action buttons -->
                     <div class="flex gap-2 mt-2">
-                      <%= if item.item_type in ["weapon", "armor"] do %>
+                      <%= if get_item_type(item) in ["weapon", "armor"] do %>
                         <button
                           phx-click="equip_item"
-                          phx-value-item_id={item.id}
+                          phx-value-item_id={get_item_id(item)}
                           class="text-xs bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded transition-colors"
                         >
                           Equip
                         </button>
                       <% end %>
-                      <%= if item.item_type in ["consumable", "key"] do %>
+                      <%= if get_item_type(item) in ["consumable", "key"] do %>
                         <button
                           phx-click="use_hotbar_item"
-                          phx-value-item_id={item.id}
+                          phx-value-item_id={get_item_id(item)}
                           class="text-xs bg-green-600 hover:bg-green-700 px-2 py-1 rounded transition-colors"
                         >
                           Use
                         </button>
                       <% end %>
+                      <button
+                        phx-click="drop_item"
+                        phx-value-item_id={get_item_id(item)}
+                        class="text-xs bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded transition-colors"
+                      >
+                        Drop
+                      </button>
+                      <button
+                        phx-click="show_hotbar_modal"
+                        phx-value-item_id={get_item_id(item)}
+                        class="text-xs bg-purple-600 hover:bg-purple-700 px-2 py-1 rounded transition-colors"
+                      >
+                        Add to Hotbar
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -389,5 +405,144 @@ defmodule ShardWeb.UserLive.Components do
       </div>
     </div>
     """
+  end
+
+  def hotbar_selection_modal(assigns) do
+    ~H"""
+    <div
+      class="fixed inset-0 flex items-center justify-center"
+      style="background-color: rgba(0, 0, 0, 0.5);"
+    >
+      <div class="bg-gray-700 rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-medium text-white mb-4">Select Hotbar Slot</h3>
+        <p class="text-sm text-gray-300 mb-4">
+          Choose which hotbar slot to place this item in:
+        </p>
+        <div class="grid grid-cols-4 gap-2 mb-4">
+          <%= for slot_num <- 1..12 do %>
+            <% hotbar_item = get_hotbar_item_for_slot(@game_state.hotbar, slot_num) %>
+            <button
+              phx-click="set_hotbar_from_modal"
+              phx-value-item_id={@item_id}
+              phx-value-slot={slot_num}
+              class={[
+                "border-2 rounded p-2 h-16 flex flex-col justify-center items-center text-xs",
+                if(hotbar_item,
+                  do: "border-yellow-500 bg-yellow-500/10 hover:bg-yellow-500/20",
+                  else: "border-gray-500 hover:bg-gray-600"
+                )
+              ]}
+            >
+              <div class="font-bold text-gray-400">{slot_num}</div>
+              <%= if hotbar_item do %>
+                <div class="text-center text-yellow-400">
+                  {String.slice(get_item_name(hotbar_item), 0..5)}
+                </div>
+                <div class="text-xs text-yellow-500">Replace?</div>
+              <% else %>
+                <div class="text-gray-500">Empty</div>
+              <% end %>
+            </button>
+          <% end %>
+        </div>
+        <div class="flex justify-end space-x-2">
+          <button
+            phx-click="hide_modal"
+            class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  # Helper functions to safely extract item data from different structures
+  defp get_item_name(item) do
+    cond do
+      Map.get(item, :item) && Map.get(Map.get(item, :item), :name) ->
+        Map.get(Map.get(item, :item), :name)
+
+      Map.get(item, :name) ->
+        Map.get(item, :name)
+
+      true ->
+        "Unknown Item"
+    end
+  end
+
+  defp get_item_quantity(item) do
+    Map.get(item, :quantity, 1)
+  end
+
+  defp get_item_type(item) do
+    cond do
+      Map.get(item, :item) && Map.get(Map.get(item, :item), :item_type) ->
+        Map.get(Map.get(item, :item), :item_type)
+
+      Map.get(item, :item_type) ->
+        Map.get(item, :item_type)
+
+      true ->
+        "misc"
+    end
+  end
+
+  defp get_item_damage(item) do
+    item_data = Map.get(item, :item, item)
+    Map.get(item_data, :damage)
+  end
+
+  defp get_item_defense(item) do
+    item_data = Map.get(item, :item, item)
+    Map.get(item_data, :defense)
+  end
+
+  defp get_item_effect(item) do
+    item_data = Map.get(item, :item, item)
+    Map.get(item_data, :effect)
+  end
+
+  defp get_item_description(item) do
+    item_data = Map.get(item, :item, item)
+    Map.get(item_data, :description)
+  end
+
+  defp get_item_id(item) do
+    cond do
+      Map.get(item, :inventory_id) -> Map.get(item, :inventory_id)
+      Map.get(item, :id) -> Map.get(item, :id)
+      true -> "unknown"
+    end
+  end
+
+  # Helper functions to safely access inventory data
+  defp inventory_empty?(game_state) do
+    inventory_items = get_inventory_items(game_state)
+    Enum.empty?(inventory_items)
+  end
+
+  defp get_inventory_items(game_state) do
+    case Map.get(game_state, :inventory_items) do
+      nil -> []
+      items when is_list(items) -> items
+      _ -> []
+    end
+  end
+
+  defp get_hotbar_item_for_slot(hotbar, slot_num) do
+    case hotbar do
+      hotbar when is_list(hotbar) ->
+        Enum.find(hotbar, fn item ->
+          Map.get(item, :slot_number) == slot_num
+        end)
+
+      hotbar when is_map(hotbar) ->
+        Map.get(hotbar, String.to_atom("slot_#{slot_num}"))
+
+      _ ->
+        nil
+    end
   end
 end

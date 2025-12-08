@@ -44,7 +44,7 @@ defmodule Shard.Repo.Migrations.CreateTreasureRoomKeyBZItem do
       updated_at
     ) VALUES (
       (SELECT id FROM items WHERE name = 'Treasure Room Key' LIMIT 1),
-      '2,0,0',
+      '5,4,0',
       1,
       NOW(),
       NOW()

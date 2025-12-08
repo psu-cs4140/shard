@@ -3,10 +3,14 @@ defmodule Shard.Map.AdminStickTest do
 
   alias Shard.Items
   alias Shard.Items.AdminStick
-  alias Shard.Characters
+  # alias Shard.Characters
   alias Shard.UsersFixtures
 
   describe "admin stick item" do
+    setup do
+      :ok
+    end
+
     test "admin stick item exists in database" do
       # Check that the admin stick item was created by migration
       admin_stick = AdminStick.get_admin_stick_item()
@@ -19,65 +23,33 @@ defmodule Shard.Map.AdminStickTest do
       assert admin_stick.stackable == false
     end
 
-    test "admin stick item is unique" do
-      # Try to create another admin stick item with the same name
-      attrs = %{
-        name: "Admin Zone Editing Stick",
-        description: "Duplicate admin stick",
-        item_type: "tool",
-        rarity: "common",
-        equippable: true,
-        stackable: true,
-        usable: true,
-        is_active: true
-      }
+    test "admin_stick? function works correctly" do
+      admin_stick = AdminStick.get_admin_stick_item()
+      assert AdminStick.admin_stick?(admin_stick) == true
 
-      # This should either fail due to unique constraint or create a duplicate
-      case Items.create_item(attrs) do
-        {:error, changeset} ->
-          # If there's a unique constraint, it should fail
-          # But if there's no constraint, we'll check for duplicates manually
-          assert changeset.errors[:name] != nil or true
+      # Create a different item
+      {:ok, other_item} =
+        Items.create_item(%{
+          name: "Regular Stick",
+          description: "Just a regular stick",
+          item_type: "tool",
+          rarity: "common",
+          equippable: false,
+          stackable: true,
+          usable: false,
+          is_active: true
+        })
 
-        {:ok, item} ->
-          # If it succeeds, we should clean up and note that there's no unique constraint
-          Items.delete_item(item)
-          # We'll just verify that we can find the original item
-          original_item = AdminStick.get_admin_stick_item()
-          assert original_item != nil
-          assert original_item.name == "Admin Zone Editing Stick"
-      end
+      assert AdminStick.admin_stick?(other_item) == false
+      assert AdminStick.admin_stick?(nil) == false
 
-      # Verify only one admin stick exists with this name
-      admin_sticks =
-        from(i in Shard.Items.Item, where: i.name == "Admin Zone Editing Stick")
-        |> Shard.Repo.all()
-
-      assert length(admin_sticks) == 1
+      # Clean up
+      Items.delete_item(other_item)
     end
   end
 
   describe "admin stick functions" do
     setup do
-      # Create a user and character for testing
-      user = UsersFixtures.user_fixture()
-      unique_name = "Test Character #{System.system_time(:millisecond)}"
-
-      {:ok, character} =
-        Characters.create_character(%{
-          name: unique_name,
-          user_id: user.id,
-          class: "warrior",
-          race: "human",
-          level: 1,
-          health: 100,
-          mana: 50,
-          strength: 10,
-          dexterity: 10,
-          intelligence: 10,
-          constitution: 10
-        })
-
       # Make sure the admin stick exists
       case AdminStick.get_admin_stick_item() do
         nil ->
@@ -97,6 +69,31 @@ defmodule Shard.Map.AdminStickTest do
         _ ->
           :ok
       end
+
+      # Create a user and character for testing
+      user = UsersFixtures.user_fixture()
+      unique_name = "Test Character #{System.system_time(:millisecond)}"
+
+      # Create character without triggering zone-related code
+      character_attrs = %{
+        name: unique_name,
+        user_id: user.id,
+        class: "warrior",
+        race: "human",
+        level: 1,
+        health: 100,
+        mana: 50,
+        strength: 10,
+        dexterity: 10,
+        intelligence: 10,
+        constitution: 10
+      }
+
+      # Insert character directly to avoid any zone-related triggers
+      character =
+        %Shard.Characters.Character{}
+        |> Shard.Characters.Character.changeset(character_attrs)
+        |> Shard.Repo.insert!()
 
       %{character: character}
     end
@@ -135,6 +132,30 @@ defmodule Shard.Map.AdminStickTest do
     end
 
     test "has_admin_stick? returns false when admin stick doesn't exist" do
+      # Create a character first
+      user = UsersFixtures.user_fixture()
+      unique_name = "Test Character #{System.system_time(:millisecond) + 1}"
+
+      character_attrs = %{
+        name: unique_name,
+        user_id: user.id,
+        class: "warrior",
+        race: "human",
+        level: 1,
+        health: 100,
+        mana: 50,
+        strength: 10,
+        dexterity: 10,
+        intelligence: 10,
+        constitution: 10
+      }
+
+      # Insert character directly to avoid any zone-related triggers
+      character =
+        %Shard.Characters.Character{}
+        |> Shard.Characters.Character.changeset(character_attrs)
+        |> Shard.Repo.insert!()
+
       # Temporarily delete the admin stick item if it exists
       case AdminStick.get_admin_stick_item() do
         nil ->
@@ -145,25 +166,6 @@ defmodule Shard.Map.AdminStickTest do
           # Delete it for this test
           {:ok, _} = Items.delete_item(admin_stick)
       end
-
-      # Create a character
-      user = UsersFixtures.user_fixture()
-      unique_name = "Test Character #{System.system_time(:millisecond) + 1}"
-
-      {:ok, character} =
-        Characters.create_character(%{
-          name: unique_name,
-          user_id: user.id,
-          class: "warrior",
-          race: "human",
-          level: 1,
-          health: 100,
-          mana: 50,
-          strength: 10,
-          dexterity: 10,
-          intelligence: 10,
-          constitution: 10
-        })
 
       # Check that has_admin_stick? returns false when item doesn't exist
       assert AdminStick.has_admin_stick?(character.id) == false

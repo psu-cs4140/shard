@@ -12,7 +12,9 @@ defmodule Shard.Items do
   ## Items
 
   def list_items do
-    Repo.all(Item)
+    Item
+    |> Repo.all()
+    |> Repo.preload(:spell)
   end
 
   def list_active_items do
@@ -179,6 +181,74 @@ defmodule Shard.Items do
     end
   end
 
+  @doc """
+  Sells an item from a character's inventory.
+
+  Removes the item (or reduces quantity by 1) and adds gold to the character.
+  Uses the item's value field, defaulting to 1 if not set.
+
+  Returns {:ok, %{character: character, gold_earned: amount}} on success.
+
+  ## Examples
+
+      iex> sell_item(character, inventory_id)
+      {:ok, %{character: %Character{gold: 150}, gold_earned: 50}}
+
+      iex> sell_item(character, invalid_id)
+      {:error, :item_not_found}
+  """
+  def sell_item(character, inventory_id) do
+    alias Ecto.Multi
+    # alias Shard.Characters
+    alias Shard.Characters.Character
+
+    inventory_item =
+      Repo.get(CharacterInventory, inventory_id)
+      |> Repo.preload(:item)
+
+    case inventory_item do
+      nil ->
+        {:error, :item_not_found}
+
+      %{character_id: char_id} when char_id != character.id ->
+        {:error, :not_owned_by_character}
+
+      %{equipped: true} ->
+        {:error, :cannot_sell_equipped_item}
+
+      %{item: %{sellable: false}} ->
+        {:error, :item_not_sellable}
+
+      inventory_item ->
+        # Get the sell value from the item, default to 1 if not set
+        sell_value = inventory_item.item.value || 1
+
+        Multi.new()
+        |> Multi.run(:remove_item, fn _repo, _changes ->
+          if inventory_item.quantity > 1 do
+            # Reduce quantity by 1
+            update_inventory_quantity(inventory_item, inventory_item.quantity - 1)
+          else
+            # Remove the item completely
+            Repo.delete(inventory_item)
+          end
+        end)
+        |> Multi.run(:update_character, fn _repo, _changes ->
+          character
+          |> Character.changeset(%{gold: character.gold + sell_value})
+          |> Repo.update()
+        end)
+        |> Repo.transaction()
+        |> case do
+          {:ok, %{update_character: updated_character}} ->
+            {:ok, %{character: updated_character, gold_earned: sell_value}}
+
+          {:error, _failed_operation, failed_value, _changes_so_far} ->
+            {:error, failed_value}
+        end
+    end
+  end
+
   def equip_item(inventory_id) do
     inventory = Repo.get!(CharacterInventory, inventory_id) |> Repo.preload(:item)
 
@@ -340,6 +410,61 @@ defmodule Shard.Items do
           {:error, :item_not_equippable}
         end
     end
+  end
+
+  ## Spell Scrolls
+
+  @doc """
+  Use a spell scroll to learn a spell.
+  Consumes the scroll from inventory and teaches the spell to the character.
+  """
+  def use_spell_scroll(character_id, inventory_id) do
+    inventory = Repo.get!(CharacterInventory, inventory_id) |> Repo.preload(:item)
+    item = inventory.item
+
+    cond do
+      is_nil(item.spell_id) ->
+        {:error, :not_a_spell_scroll}
+
+      not item.usable ->
+        {:error, :not_usable}
+
+      true ->
+        # Learn the spell
+        spell = Shard.Spells.get_spell!(item.spell_id)
+
+        already_known = Shard.Spells.character_knows_spell?(character_id, item.spell_id)
+
+        result =
+          if already_known do
+            {:ok, :already_known, spell}
+          else
+            case Shard.Spells.add_spell_to_character(character_id, item.spell_id) do
+              {:ok, _character_spell} ->
+                {:ok, :learned, spell}
+
+              {:error, changeset} ->
+                {:error, changeset}
+            end
+          end
+
+        # Remove scroll from inventory (consume it)
+        case result do
+          {:ok, status, spell} ->
+            remove_item_from_inventory(inventory_id, 1)
+            {:ok, status, spell}
+
+          error ->
+            error
+        end
+    end
+  end
+
+  @doc """
+  Check if an item is a spell scroll.
+  """
+  def spell_scroll?(item) do
+    not is_nil(item.spell_id) and item.usable
   end
 
   defp unequip_slot_if_occupied(character_id, equipment_slot) do
