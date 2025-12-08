@@ -329,6 +329,23 @@ defmodule Shard.Achievements do
   end
 
   @doc """
+  Checks and awards gambling achievements for a user.
+  This should be called when a user wins or loses a bet.
+  """
+  def check_gambling_achievements(user_id, result) do
+    case result do
+      :won ->
+        award_achievement_by_name(user_id, "Lucky Gambler")
+
+      :lost ->
+        award_achievement_by_name(user_id, "Learning Experience")
+
+      _ ->
+        :ok
+    end
+  end
+
+  @doc """
   Triggers an achievement notification sound for a user.
   This function can be extended to send real-time notifications to the frontend.
   """
