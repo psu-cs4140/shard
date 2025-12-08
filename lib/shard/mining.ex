@@ -131,7 +131,8 @@ defmodule Shard.Mining do
            character: character,
            mining_inventory: inventory,
            ticks_applied: 0,
-           gained_resources: %{}
+           gained_resources: %{},
+           pet_messages: []
          }}
 
       {:error, reason} ->
@@ -148,7 +149,8 @@ defmodule Shard.Mining do
            character: character,
            mining_inventory: inventory,
            ticks_applied: 0,
-           gained_resources: %{}
+           gained_resources: %{},
+           pet_messages: []
          }}
 
       {:error, reason} ->
@@ -178,7 +180,7 @@ defmodule Shard.Mining do
       end
     else
       # Roll resources for each tick
-      resources = roll_multiple_resources(ticks)
+      resources = roll_multiple_resources(ticks, character)
 
       # Get or create inventory
       case get_or_create_mining_inventory(character) do
@@ -188,14 +190,25 @@ defmodule Shard.Mining do
             {:ok, updated_inventory} ->
               add_resources_to_character_inventory(character, resources)
               # Update character's mining_started_at to now
-              case Characters.update_character(character, %{mining_started_at: now}) do
+              {character_after_pet, pet_level_messages} =
+                maybe_grant_pet_xp(character, ticks)
+
+              case Characters.update_character(character_after_pet, %{mining_started_at: now}) do
                 {:ok, updated_character} ->
+                  {updated_character, pet_drop_message} = maybe_drop_pet_rock(updated_character)
+
+                  pet_messages =
+                    pet_level_messages
+                    |> Enum.reject(&is_nil/1)
+                    |> Kernel.++((pet_drop_message && [pet_drop_message]) || [])
+
                   {:ok,
                    %{
                      character: updated_character,
                      mining_inventory: updated_inventory,
                      ticks_applied: ticks,
-                     gained_resources: resources
+                     gained_resources: resources,
+                     pet_messages: pet_messages
                    }}
 
                 {:error, reason} ->
@@ -283,12 +296,23 @@ defmodule Shard.Mining do
       %{stone: 4, coal: 3, copper: 2, iron: 1, gem: 0}
 
   """
-  @spec roll_multiple_resources(non_neg_integer()) :: %{optional(atom()) => non_neg_integer()}
-  def roll_multiple_resources(count) do
-    1..count
-    |> Enum.reduce(%{stone: 0, coal: 0, copper: 0, iron: 0, gem: 0}, fn _, acc ->
+  @spec roll_multiple_resources(non_neg_integer(), Character.t()) :: %{
+          optional(atom()) => non_neg_integer()
+        }
+  def roll_multiple_resources(count, character) do
+    Enum.reduce(1..count, %{stone: 0, coal: 0, copper: 0, iron: 0, gem: 0}, fn _, acc ->
       resource = roll_resource()
-      Map.update(acc, resource, 1, &(&1 + 1))
+
+      bonus =
+        if character.has_pet_rock do
+          chance = pet_double_chance(character.pet_rock_level)
+
+          if :rand.uniform(100) <= chance, do: 1, else: 0
+        else
+          0
+        end
+
+      Map.update(acc, resource, 1 + bonus, &(&1 + 1 + bonus))
     end)
   end
 
@@ -447,5 +471,66 @@ defmodule Shard.Mining do
     now = DateTime.utc_now()
     elapsed_seconds = DateTime.diff(now, started_at, :second)
     div(elapsed_seconds, @tick_interval)
+  end
+
+  defp pet_double_chance(level) do
+    min(10 + (level - 1), 50)
+  end
+
+  defp maybe_grant_pet_xp(%Character{has_pet_rock: false} = character, _ticks),
+    do: {character, []}
+
+  defp maybe_grant_pet_xp(%Character{} = character, ticks) do
+    xp = character.pet_rock_xp + ticks
+    {level, remaining_xp, level_messages} = level_up_pet(character.pet_rock_level, xp, "Pet Rock")
+
+    updated =
+      if level != character.pet_rock_level or remaining_xp != character.pet_rock_xp do
+        {:ok, c} =
+          Characters.update_character(character, %{
+            pet_rock_level: level,
+            pet_rock_xp: remaining_xp
+          })
+
+        c
+      else
+        character
+      end
+
+    {updated, level_messages}
+  end
+
+  defp level_up_pet(level, xp, pet_name) do
+    required = 100 + (level - 1) * 20
+
+    if xp >= required do
+      new_level = level + 1
+      {final_level, remaining_xp, messages} = level_up_pet(new_level, xp - required, pet_name)
+      chance = pet_double_chance(final_level)
+
+      message =
+        "Your #{pet_name} levels up! It is now Level #{final_level}. Double chance increased to #{chance}%."
+
+      {final_level, remaining_xp, [message | messages]}
+    else
+      {level, xp, []}
+    end
+  end
+
+  defp maybe_drop_pet_rock(%Character{has_pet_rock: true} = character), do: {character, nil}
+
+  defp maybe_drop_pet_rock(%Character{} = character) do
+    if :rand.uniform(500) == 1 do
+      case Characters.update_character(character, %{has_pet_rock: true}) do
+        {:ok, updated} ->
+          {updated,
+           "Wow! You found a pet rock! Rumor has it that it sometimes doubles your mining haul."}
+
+        _ ->
+          {character, nil}
+      end
+    else
+      {character, nil}
+    end
   end
 end

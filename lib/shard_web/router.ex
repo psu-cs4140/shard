@@ -64,6 +64,7 @@ defmodule ShardWeb.Router do
     end
 
     post "/users/log-in", UserSessionController, :create
+    delete "/users/log_out", UserSessionController, :delete
     delete "/users/log-out", UserSessionController, :delete
   end
 

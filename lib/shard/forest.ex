@@ -8,6 +8,8 @@ defmodule Shard.Forest do
   alias Shard.Characters
   alias Shard.Characters.Character
   alias Shard.Forest.ChoppingInventory
+  alias Shard.Items
+  alias Shard.Items.Item
 
   @resource_weights [
     {:wood, 40},
@@ -91,7 +93,8 @@ defmodule Shard.Forest do
            character: character,
            chopping_inventory: inventory,
            ticks_applied: 0,
-           gained_resources: %{}
+           gained_resources: %{},
+           pet_messages: []
          }}
 
       {:error, reason} ->
@@ -107,7 +110,8 @@ defmodule Shard.Forest do
            character: character,
            chopping_inventory: inventory,
            ticks_applied: 0,
-           gained_resources: %{}
+           gained_resources: %{},
+           pet_messages: []
          }}
 
       {:error, reason} ->
@@ -130,27 +134,39 @@ defmodule Shard.Forest do
              character: character,
              chopping_inventory: inventory,
              ticks_applied: 0,
-             gained_resources: %{}
+             gained_resources: %{},
+             pet_messages: []
            }}
 
         {:error, reason} ->
           {:error, reason}
       end
     else
-      resources = roll_multiple_resources(ticks)
+      resources = roll_multiple_resources(ticks, character)
 
       case get_or_create_chopping_inventory(character) do
         {:ok, inventory} ->
           case add_resources(inventory, resources) do
             {:ok, updated_inventory} ->
-              case Characters.update_character(character, %{chopping_started_at: now}) do
+              add_resources_to_character_inventory(character, resources)
+              {character_after_xp, pet_level_messages} = maybe_grant_pet_xp(character, ticks)
+
+              case Characters.update_character(character_after_xp, %{chopping_started_at: now}) do
                 {:ok, updated_character} ->
+                  {char_after_drop, pet_message} = maybe_drop_shroomling(updated_character)
+
+                  pet_messages =
+                    pet_level_messages
+                    |> Enum.reject(&is_nil/1)
+                    |> Kernel.++((pet_message && [pet_message]) || [])
+
                   {:ok,
                    %{
-                     character: updated_character,
+                     character: char_after_drop,
                      chopping_inventory: updated_inventory,
                      ticks_applied: ticks,
-                     gained_resources: resources
+                     gained_resources: resources,
+                     pet_messages: pet_messages
                    }}
 
                 {:error, reason} ->
@@ -213,12 +229,23 @@ defmodule Shard.Forest do
     resource
   end
 
-  @spec roll_multiple_resources(non_neg_integer()) :: %{optional(atom()) => non_neg_integer()}
-  def roll_multiple_resources(count) do
+  @spec roll_multiple_resources(non_neg_integer(), Character.t()) :: %{
+          optional(atom()) => non_neg_integer()
+        }
+  def roll_multiple_resources(count, character) do
     1..count
     |> Enum.reduce(%{wood: 0, sticks: 0, seeds: 0, mushrooms: 0, resin: 0}, fn _, acc ->
       resource = roll_resource()
-      Map.update(acc, resource, 1, &(&1 + 1))
+
+      bonus =
+        if character.has_shroomling do
+          chance = pet_double_chance(character.shroomling_level)
+          if :rand.uniform(100) <= chance, do: 1, else: 0
+        else
+          0
+        end
+
+      Map.update(acc, resource, 1 + bonus, &(&1 + 1 + bonus))
     end)
   end
 
@@ -246,5 +273,126 @@ defmodule Shard.Forest do
     now = DateTime.utc_now()
     elapsed_seconds = DateTime.diff(now, started_at, :second)
     div(elapsed_seconds, @tick_interval)
+  end
+
+  defp add_resources_to_character_inventory(%Character{id: character_id}, resources) do
+    resource_items = ensure_chopping_resource_items()
+
+    Enum.each(resources, fn
+      {:wood, qty} when qty > 0 ->
+        Items.add_item_to_inventory(character_id, resource_items.wood.id, qty)
+
+      {:sticks, qty} when qty > 0 ->
+        Items.add_item_to_inventory(character_id, resource_items.sticks.id, qty)
+
+      {:seeds, qty} when qty > 0 ->
+        Items.add_item_to_inventory(character_id, resource_items.seeds.id, qty)
+
+      {:mushrooms, qty} when qty > 0 ->
+        Items.add_item_to_inventory(character_id, resource_items.mushrooms.id, qty)
+
+      {:resin, qty} when qty > 0 ->
+        Items.add_item_to_inventory(character_id, resource_items.resin.id, qty)
+
+      _ ->
+        :ok
+    end)
+  end
+
+  defp ensure_chopping_resource_items do
+    %{
+      wood: fetch_or_create_item("Wood", 1),
+      sticks: fetch_or_create_item("Stick", 1),
+      seeds: fetch_or_create_item("Forest Seeds", 2),
+      mushrooms: fetch_or_create_item("Mushroom", 3),
+      resin: fetch_or_create_item("Forest Resin", 5)
+    }
+  end
+
+  defp fetch_or_create_item(name, value) do
+    case Repo.get_by(Item, name: name) do
+      nil ->
+        {:ok, item} =
+          %Item{}
+          |> Item.changeset(%{
+            name: name,
+            description: "Gathered from the Whispering Forest.",
+            item_type: "material",
+            rarity: "common",
+            value: value,
+            stackable: true,
+            max_stack_size: 99,
+            is_active: true
+          })
+          |> Repo.insert()
+
+        item
+
+      item ->
+        item
+    end
+  end
+
+  defp pet_double_chance(level) do
+    min(10 + (level - 1), 50)
+  end
+
+  defp maybe_grant_pet_xp(%Character{has_shroomling: false} = character, _ticks),
+    do: {character, []}
+
+  defp maybe_grant_pet_xp(%Character{} = character, ticks) do
+    xp = character.shroomling_xp + ticks
+
+    {level, remaining_xp, level_messages} =
+      level_up_pet(character.shroomling_level, xp, "Shroomling")
+
+    updated =
+      if level != character.shroomling_level or remaining_xp != character.shroomling_xp do
+        {:ok, c} =
+          Characters.update_character(character, %{
+            shroomling_level: level,
+            shroomling_xp: remaining_xp
+          })
+
+        c
+      else
+        character
+      end
+
+    {updated, level_messages}
+  end
+
+  defp level_up_pet(level, xp, pet_name) do
+    required = 100 + (level - 1) * 20
+
+    if xp >= required do
+      new_level = level + 1
+      {final_level, remaining_xp, messages} = level_up_pet(new_level, xp - required, pet_name)
+      chance = pet_double_chance(final_level)
+
+      message =
+        "Your #{pet_name} levels up! It is now Level #{final_level}. Double chance increased to #{chance}%."
+
+      {final_level, remaining_xp, [message | messages]}
+    else
+      {level, xp, []}
+    end
+  end
+
+  defp maybe_drop_shroomling(%Character{has_shroomling: true} = character), do: {character, nil}
+
+  defp maybe_drop_shroomling(%Character{} = character) do
+    if :rand.uniform(500) == 1 do
+      case Characters.update_character(character, %{has_shroomling: true}) do
+        {:ok, updated} ->
+          {updated,
+           "A mischievous Shroomling appears and begins following you. He will sometimes help you out by doubling your resources. *If it feels like it*."}
+
+        _ ->
+          {character, nil}
+      end
+    else
+      {character, nil}
+    end
   end
 end

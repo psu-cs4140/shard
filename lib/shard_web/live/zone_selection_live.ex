@@ -301,12 +301,22 @@ defmodule ShardWeb.ZoneSelectionLive do
   defp handle_mines_entry(socket, character, zone) do
     case Characters.update_character(character, %{current_zone_id: zone.id}) do
       {:ok, updated_character} ->
+        pet_line =
+          if updated_character.has_pet_rock do
+            chance = pet_chance(updated_character.pet_rock_level)
+
+            "\nYour Pet Rock is with you. (Level #{updated_character.pet_rock_level} – #{chance}% chance to double your mining haul.)"
+          else
+            ""
+          end
+
         {:noreply,
          socket
          |> assign(:character, updated_character)
          |> put_flash(
            :info,
-           "You Descend into the dark, echoing mines.\nThe walls shimmer with minerals waiting to be unearthed.\nEverything you gather here can be sold for gold once you return to town.\nTo begin mining, type mine start\nTo pack up and leave, type mine stop"
+           "You Descend into the dark, echoing mines.\nThe walls shimmer with minerals waiting to be unearthed.\nEverything you gather here can be sold for gold once you return to town.\nTo begin mining, type mine start\nTo pack up and leave, type mine stop" <>
+             pet_line
          )
          |> push_navigate(
            to: ~p"/play/#{updated_character.id}?zone_id=#{zone.id}&refresh_inventory=true"
@@ -322,11 +332,21 @@ defmodule ShardWeb.ZoneSelectionLive do
   defp handle_forest_entry(socket, character, zone, _instance_type) do
     case Characters.update_character(character, %{current_zone_id: zone.id}) do
       {:ok, updated_character} ->
+        pet_line =
+          if updated_character.has_shroomling do
+            chance = pet_chance(updated_character.shroomling_level)
+
+            "\nYour Shroomling companion bounces beside you. (Level #{updated_character.shroomling_level} – #{chance}% chance to double your forest harvest.)"
+          else
+            ""
+          end
+
         {:noreply,
          socket
          |> put_flash(
            :info,
-           "You step foot into the Whispering Forest.\nYour nose fills with the scent of pine and fresh earth.\nHere you can chop wood, gather sticks and seeds, and even find mushrooms and rare resin that you can collect and sell for gold.\nType chop start to start chopping\nType chop stop to stop chopping"
+           "You step foot into the Whispering Forest.\nYour nose fills with the scent of pine and fresh earth.\nHere you can chop wood, gather sticks and seeds, and even find mushrooms and rare resin that you can collect and sell for gold.\nType chop start to start chopping\nType chop stop to stop chopping" <>
+             pet_line
          )
          |> push_navigate(
            to: ~p"/play/#{updated_character.id}?zone_id=#{zone.id}&refresh_inventory=true"
@@ -402,6 +422,8 @@ defmodule ShardWeb.ZoneSelectionLive do
        |> put_flash(:error, "This zone is locked. Complete previous zones to unlock it.")}
     end
   end
+
+  defp pet_chance(level), do: min(10 + (level - 1), 50)
 
   # Helper function to handle admin stick granting
   defp handle_admin_stick_granting(character) do
