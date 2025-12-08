@@ -8,6 +8,7 @@ defmodule Shard.TitlesTest do
     @valid_attrs %{
       name: "Test Title",
       description: "A test title",
+      category: "achievement",
       rarity: "common",
       requirements: %{"level" => 5}
     }

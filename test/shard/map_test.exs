@@ -8,6 +8,7 @@ defmodule Shard.MapTest do
     @valid_zone_attrs %{
       name: "Test Zone",
       description: "A test zone for testing",
+      slug: "test-zone",
       min_level: 1,
       max_level: 10
     }
@@ -73,9 +74,9 @@ defmodule Shard.MapTest do
     @valid_room_attrs %{
       name: "Test Room",
       description: "A test room",
-      x: 0,
-      y: 0,
-      z: 0
+      x_coordinate: 0,
+      y_coordinate: 0,
+      z_coordinate: 0
     }
 
     test "list_rooms/0 returns all rooms" do
@@ -98,9 +99,9 @@ defmodule Shard.MapTest do
       attrs = Map.put(@valid_room_attrs, :zone_id, zone.id)
       assert {:ok, %Room{} = room} = Map.create_room(attrs)
       assert room.name == "Test Room"
-      assert room.x == 0
-      assert room.y == 0
-      assert room.z == 0
+      assert room.x_coordinate == 0
+      assert room.y_coordinate == 0
+      assert room.z_coordinate == 0
     end
 
     test "get_room_by_coordinates/4 finds room by coordinates", %{zone: zone} do
@@ -122,9 +123,9 @@ defmodule Shard.MapTest do
       room2_attrs = %{
         name: "Test Room 2",
         description: "Another test room",
-        x: 1,
-        y: 0,
-        z: 0,
+        x_coordinate: 1,
+        y_coordinate: 0,
+        z_coordinate: 0,
         zone_id: zone.id
       }
 
