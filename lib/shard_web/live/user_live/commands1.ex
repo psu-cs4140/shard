@@ -10,7 +10,6 @@ defmodule ShardWeb.UserLive.Commands1 do
   # import ShardWeb.UserLive.Commands2,
   #   except: [execute_talk_command: 2, execute_deliver_quest_command: 2, execute_quest_command: 2]
 
-  import ShardWeb.UserLive.Commands3
 
   import ShardWeb.UserLive.NpcCommands
   import ShardWeb.UserLive.CommandParsers
