@@ -6,13 +6,13 @@ defmodule ShardWeb.RewardsLive.Index do
   @impl true
   def mount(_params, _session, socket) do
     user_id = socket.assigns.current_scope.user.id
-    
-    socket = 
+
+    socket =
       socket
       |> assign(:user_id, user_id)
       |> assign(:page_title, "Daily Rewards")
       |> load_reward_status()
-    
+
     {:ok, socket}
   end
 
@@ -20,17 +20,17 @@ defmodule ShardWeb.RewardsLive.Index do
   def handle_event("claim_reward", _params, socket) do
     case Rewards.claim_daily_reward(socket.assigns.user_id) do
       {:ok, reward_info} ->
-        socket = 
+        socket =
           socket
           |> put_flash(:info, format_reward_message(reward_info))
           |> load_reward_status()
-        
+
         {:noreply, socket}
-        
+
       {:error, :already_claimed_today} ->
         socket = put_flash(socket, :error, "You have already claimed your daily reward today!")
         {:noreply, socket}
-        
+
       {:error, reason} ->
         socket = put_flash(socket, :error, "Unable to claim reward: #{reason}")
         {:noreply, socket}
@@ -39,16 +39,16 @@ defmodule ShardWeb.RewardsLive.Index do
 
   defp load_reward_status(socket) do
     user_id = socket.assigns.user_id
-    
+
     case Rewards.can_claim_daily_reward?(user_id) do
       {:ok, status} ->
         current_streak = Rewards.get_current_streak(user_id)
-        
+
         socket
         |> assign(:can_claim, status == :can_claim)
         |> assign(:already_claimed, status == :already_claimed)
         |> assign(:current_streak, current_streak)
-        
+
       {:error, _reason} ->
         socket
         |> assign(:can_claim, false)
@@ -59,19 +59,21 @@ defmodule ShardWeb.RewardsLive.Index do
 
   defp format_reward_message(reward_info) do
     base_msg = "Daily reward claimed! You received #{reward_info.gold} gold"
-    
-    streak_msg = if reward_info.streak_bonus > 0 do
-      " (including #{reward_info.streak_bonus} streak bonus)"
-    else
-      ""
-    end
-    
-    lootbox_msg = if reward_info.lootbox do
-      " and a #{reward_info.lootbox}!"
-    else
-      "!"
-    end
-    
+
+    streak_msg =
+      if reward_info.streak_bonus > 0 do
+        " (including #{reward_info.streak_bonus} streak bonus)"
+      else
+        ""
+      end
+
+    lootbox_msg =
+      if reward_info.lootbox do
+        " and a #{reward_info.lootbox}!"
+      else
+        "!"
+      end
+
     base_msg <> streak_msg <> lootbox_msg
   end
 
@@ -91,10 +93,10 @@ defmodule ShardWeb.RewardsLive.Index do
           <div class="text-center mb-6">
             <div class="stat">
               <div class="stat-title">Current Streak</div>
-              <div class="stat-value text-primary"><%= @current_streak %></div>
+              <div class="stat-value text-primary">{@current_streak}</div>
               <div class="stat-desc">
                 <%= if @current_streak > 0 do %>
-                  Keep it up! +<%= min(@current_streak * 10, 500) %> bonus gold
+                  Keep it up! +{min(@current_streak * 10, 500)} bonus gold
                 <% else %>
                   Start your streak today!
                 <% end %>
@@ -106,18 +108,18 @@ defmodule ShardWeb.RewardsLive.Index do
 
           <div class="text-center">
             <h3 class="text-xl font-semibold mb-4">Today's Reward</h3>
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div class="card bg-base-100 shadow">
                 <div class="card-body items-center text-center">
                   <h4 class="card-title text-yellow-500">💰 Gold</h4>
                   <p class="text-2xl font-bold">
-                    <%= 100 + min(@current_streak * 10, 500) %>
+                    {100 + min(@current_streak * 10, 500)}
                   </p>
                   <p class="text-sm text-base-content/70">Guaranteed</p>
                 </div>
               </div>
-              
+
               <div class="card bg-base-100 shadow">
                 <div class="card-body items-center text-center">
                   <h4 class="card-title text-purple-500">📦 Lootbox</h4>
@@ -129,7 +131,7 @@ defmodule ShardWeb.RewardsLive.Index do
 
             <div class="card-actions justify-center">
               <%= if @can_claim do %>
-                <button 
+                <button
                   class="btn btn-primary btn-lg"
                   phx-click="claim_reward"
                 >
