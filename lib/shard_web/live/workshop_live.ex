@@ -1,7 +1,9 @@
 defmodule ShardWeb.WorkshopLive do
   use ShardWeb, :live_view
 
-  alias Shard.{Characters, Workshop}
+  alias Shard.{Characters, Cooking, Workshop}
+
+  @tabs ~w(crafting cooking furnace)
 
   @impl true
   def mount(_params, _session, socket) do
@@ -11,10 +13,12 @@ defmodule ShardWeb.WorkshopLive do
 
     {:ok,
      socket
-     |> assign(:page_title, "Workshop")
+     |> assign(:page_title, "Foundry & Kitchen")
      |> assign(:characters, characters)
      |> assign(:selected_character, selected_character)
+     |> assign(:active_tab, "crafting")
      |> assign_recipes()
+     |> assign_cooking_recipes()
      |> assign_furnace_recipes()}
   end
 
@@ -33,6 +37,7 @@ defmodule ShardWeb.WorkshopLive do
       socket
       |> assign(:selected_character, selected)
       |> assign_recipes()
+      |> assign_cooking_recipes()
       |> assign_furnace_recipes()
 
     {:noreply, socket}
@@ -74,6 +79,20 @@ defmodule ShardWeb.WorkshopLive do
   def handle_event("smelt_iron_bar", _params, socket),
     do: smelt(socket, :smelt_iron_bar)
 
+  def handle_event("cook_recipe", %{"key" => key}, socket),
+    do: cook(socket, key)
+
+  def handle_event("switch_tab", %{"tab" => tab}, socket) do
+    tab =
+      if tab in @tabs do
+        tab
+      else
+        socket.assigns.active_tab
+      end
+
+    {:noreply, assign(socket, :active_tab, tab)}
+  end
+
   defp craft(socket, recipe_key) do
     case socket.assigns.selected_character do
       nil ->
@@ -93,6 +112,7 @@ defmodule ShardWeb.WorkshopLive do
                 refresh_characters(socket.assigns.characters, updated_character)
               )
               |> assign_recipes()
+              |> assign_cooking_recipes()
               |> assign_furnace_recipes()
 
             {:noreply, socket}
@@ -133,6 +153,7 @@ defmodule ShardWeb.WorkshopLive do
                 refresh_characters(socket.assigns.characters, updated_character)
               )
               |> assign_recipes()
+              |> assign_cooking_recipes()
               |> assign_furnace_recipes()
 
             {:noreply, socket}
@@ -157,6 +178,58 @@ defmodule ShardWeb.WorkshopLive do
     end
   end
 
+  defp cook(socket, recipe_key) do
+    case socket.assigns.selected_character do
+      nil ->
+        {:noreply, put_flash(socket, :error, "Select a character to cook food.")}
+
+      character ->
+        atom_key =
+          case recipe_key do
+            k when is_atom(k) -> k
+            k when is_binary(k) -> safe_to_existing_atom(k)
+            _ -> nil
+          end
+
+        with {:key, true} <- {:key, not is_nil(atom_key)},
+             {:ok, recipe} <- Cooking.cook(character.id, atom_key) do
+          updated_character = Characters.get_character!(character.id)
+
+          socket =
+            socket
+            |> put_flash(:info, "You cook #{recipe.name}.")
+            |> assign(:selected_character, updated_character)
+            |> assign(
+              :characters,
+              refresh_characters(socket.assigns.characters, updated_character)
+            )
+            |> assign_recipes()
+            |> assign_cooking_recipes()
+            |> assign_furnace_recipes()
+
+          {:noreply, socket}
+        else
+          {:key, _} ->
+            {:noreply, put_flash(socket, :error, "Unknown cooking recipe.")}
+
+          {:error, :insufficient_materials} ->
+            {:noreply,
+             put_flash(socket, :error, "You do not have the required ingredients to cook this.")}
+
+          {:error, {:item_not_found, item_name}} ->
+            {:noreply,
+             put_flash(
+               socket,
+               :error,
+               "Missing item definition: #{item_name}. Please contact an admin."
+             )}
+
+          {:error, reason} ->
+            {:noreply, put_flash(socket, :error, "Cooking failed: #{inspect(reason)}")}
+        end
+    end
+  end
+
   defp refresh_characters(characters, updated_character) do
     Enum.map(characters, fn character ->
       if character.id == updated_character.id do
@@ -172,8 +245,21 @@ defmodule ShardWeb.WorkshopLive do
     assign(socket, :recipes, Workshop.recipes_for_character(character_id))
   end
 
+  defp assign_cooking_recipes(socket) do
+    character_id = socket.assigns.selected_character && socket.assigns.selected_character.id
+    assign(socket, :cooking_recipes, Cooking.recipes_for_character(character_id))
+  end
+
   defp assign_furnace_recipes(socket) do
     character_id = socket.assigns.selected_character && socket.assigns.selected_character.id
     assign(socket, :furnace_recipes, Workshop.furnace_recipes_for_character(character_id))
+  end
+
+  defp safe_to_existing_atom(key) do
+    try do
+      String.to_existing_atom(key)
+    rescue
+      ArgumentError -> nil
+    end
   end
 end
