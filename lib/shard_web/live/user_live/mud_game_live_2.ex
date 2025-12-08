@@ -77,7 +77,7 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
     )
 
     # Subscribe to character-specific notifications for poke commands
-    # subscribe_to_character_notifications(character.id)
+    ShardWeb.UserLive.MudGameLive2.subscribe_to_character_notifications(character.id)
 
     # Also subscribe to player name-based channel as backup
     PubSub.subscribe(Shard.PubSub, "player:#{character.name}")
@@ -111,6 +111,12 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
 
   def unsubscribe_from_player_notifications(player_name) do
     Phoenix.PubSub.unsubscribe(Shard.PubSub, "player:#{player_name}")
+  end
+
+  def handle_poke_notification(terminal_state, poker_name) do
+    message = "#{poker_name} pokes you!"
+    new_output = terminal_state.output ++ [message] ++ [""]
+    Map.put(terminal_state, :output, new_output)
   end
 
   def handle_poke_notification(terminal_state, poker_name) do
