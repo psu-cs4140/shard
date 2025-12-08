@@ -60,7 +60,9 @@ defmodule Shard.CharactersTest do
       {:ok, character} = Characters.create_character(attrs)
       update_attrs = %{name: "UpdatedHero", level: 2}
 
-      assert {:ok, %Character{} = character} = Characters.update_character(character, update_attrs)
+      assert {:ok, %Character{} = character} =
+               Characters.update_character(character, update_attrs)
+
       assert character.name == "UpdatedHero"
       assert character.level == 2
     end
@@ -88,7 +90,7 @@ defmodule Shard.CharactersTest do
     test "get_character_by_user/1 returns character for user", %{user: user} do
       attrs = Map.put(@valid_attrs, :user_id, user.id)
       {:ok, character} = Characters.create_character(attrs)
-      
+
       found_character = Characters.get_character_by_user(user.id)
       assert found_character.id == character.id
     end

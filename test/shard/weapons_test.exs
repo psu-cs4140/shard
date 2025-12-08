@@ -12,11 +12,12 @@ defmodule Shard.WeaponsTest do
     test "get_damage_type!/1 returns the damage type with given id" do
       # This will test with seeded data or return error if none exists
       case Weapons.list_damage_types() do
-        [] -> 
-          assert_raise Ecto.NoResultsError, fn -> 
-            Weapons.get_damage_type!(999) 
+        [] ->
+          assert_raise Ecto.NoResultsError, fn ->
+            Weapons.get_damage_type!(999)
           end
-        [damage_type | _] -> 
+
+        [damage_type | _] ->
           assert Weapons.get_damage_type!(damage_type.id).id == damage_type.id
       end
     end
@@ -45,11 +46,12 @@ defmodule Shard.WeaponsTest do
 
     test "get_effect!/1 returns the effect with given id" do
       case Weapons.list_effects() do
-        [] -> 
-          assert_raise Ecto.NoResultsError, fn -> 
-            Weapons.get_effect!(999) 
+        [] ->
+          assert_raise Ecto.NoResultsError, fn ->
+            Weapons.get_effect!(999)
           end
-        [effect | _] -> 
+
+        [effect | _] ->
           assert Weapons.get_effect!(effect.id).id == effect.id
       end
     end
@@ -74,11 +76,12 @@ defmodule Shard.WeaponsTest do
 
     test "get_weapon!/1 returns the weapon with given id" do
       case Weapons.list_weapons() do
-        [] -> 
-          assert_raise Ecto.NoResultsError, fn -> 
-            Weapons.get_weapon!(999) 
+        [] ->
+          assert_raise Ecto.NoResultsError, fn ->
+            Weapons.get_weapon!(999)
           end
-        [weapon | _] -> 
+
+        [weapon | _] ->
           assert Weapons.get_weapon!(weapon.id).id == weapon.id
       end
     end
@@ -132,11 +135,12 @@ defmodule Shard.WeaponsTest do
 
     test "get_rarity!/1 returns the rarity with given id" do
       case Weapons.list_rarities() do
-        [] -> 
-          assert_raise Ecto.NoResultsError, fn -> 
-            Weapons.get_rarity!(999) 
+        [] ->
+          assert_raise Ecto.NoResultsError, fn ->
+            Weapons.get_rarity!(999)
           end
-        [rarity | _] -> 
+
+        [rarity | _] ->
           assert Weapons.get_rarity!(rarity.id).id == rarity.id
       end
     end
@@ -150,11 +154,12 @@ defmodule Shard.WeaponsTest do
 
     test "get_enchantment!/1 returns the enchantment with given id" do
       case Weapons.list_enchantments() do
-        [] -> 
-          assert_raise Ecto.NoResultsError, fn -> 
-            Weapons.get_enchantment!(999) 
+        [] ->
+          assert_raise Ecto.NoResultsError, fn ->
+            Weapons.get_enchantment!(999)
           end
-        [enchantment | _] -> 
+
+        [enchantment | _] ->
           assert Weapons.get_enchantment!(enchantment.id).id == enchantment.id
       end
     end
@@ -168,11 +173,12 @@ defmodule Shard.WeaponsTest do
 
     test "get_weapon_class!/1 returns the weapon class with given id" do
       case Weapons.list_weapon_classes() do
-        [] -> 
-          assert_raise Ecto.NoResultsError, fn -> 
-            Weapons.get_weapon_class!(999) 
+        [] ->
+          assert_raise Ecto.NoResultsError, fn ->
+            Weapons.get_weapon_class!(999)
           end
-        [weapon_class | _] -> 
+
+        [weapon_class | _] ->
           assert Weapons.get_weapon_class!(weapon_class.id).id == weapon_class.id
       end
     end
