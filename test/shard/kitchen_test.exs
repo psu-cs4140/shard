@@ -78,4 +78,3 @@ defmodule Shard.KitchenTest do
     end
   end
 end
-
