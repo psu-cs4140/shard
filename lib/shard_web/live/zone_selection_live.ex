@@ -301,12 +301,18 @@ defmodule ShardWeb.ZoneSelectionLive do
   defp handle_mines_entry(socket, character, zone) do
     case Characters.update_character(character, %{current_zone_id: zone.id}) do
       {:ok, updated_character} ->
+        pet_line =
+          if updated_character.has_pet_rock,
+            do: "\nYour Pet Rock is with you. It sometimes doubles your mining haul.",
+            else: ""
+
         {:noreply,
          socket
          |> assign(:character, updated_character)
          |> put_flash(
            :info,
-           "You Descend into the dark, echoing mines.\nThe walls shimmer with minerals waiting to be unearthed.\nEverything you gather here can be sold for gold once you return to town.\nTo begin mining, type mine start\nTo pack up and leave, type mine stop"
+           "You Descend into the dark, echoing mines.\nThe walls shimmer with minerals waiting to be unearthed.\nEverything you gather here can be sold for gold once you return to town.\nTo begin mining, type mine start\nTo pack up and leave, type mine stop" <>
+             pet_line
          )
          |> push_navigate(
            to: ~p"/play/#{updated_character.id}?zone_id=#{zone.id}&refresh_inventory=true"
@@ -322,11 +328,18 @@ defmodule ShardWeb.ZoneSelectionLive do
   defp handle_forest_entry(socket, character, zone, _instance_type) do
     case Characters.update_character(character, %{current_zone_id: zone.id}) do
       {:ok, updated_character} ->
+        pet_line =
+          if updated_character.has_shroomling,
+            do:
+              "\nYour Shroomling companion follows along, occasionally doubling your forest harvest.",
+            else: ""
+
         {:noreply,
          socket
          |> put_flash(
            :info,
-           "You step foot into the Whispering Forest.\nYour nose fills with the scent of pine and fresh earth.\nHere you can chop wood, gather sticks and seeds, and even find mushrooms and rare resin that you can collect and sell for gold.\nType chop start to start chopping\nType chop stop to stop chopping"
+           "You step foot into the Whispering Forest.\nYour nose fills with the scent of pine and fresh earth.\nHere you can chop wood, gather sticks and seeds, and even find mushrooms and rare resin that you can collect and sell for gold.\nType chop start to start chopping\nType chop stop to stop chopping" <>
+             pet_line
          )
          |> push_navigate(
            to: ~p"/play/#{updated_character.id}?zone_id=#{zone.id}&refresh_inventory=true"
