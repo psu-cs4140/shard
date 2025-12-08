@@ -197,6 +197,9 @@ defmodule Shard.Mining do
                 {:ok, updated_character} ->
                   {updated_character, pet_drop_message} = maybe_drop_pet_rock(updated_character)
 
+                  # Check for mining achievements
+                  Shard.Achievements.check_mining_resource_achievements(updated_character.user_id, resources)
+
                   pet_messages =
                     pet_level_messages
                     |> Enum.reject(&is_nil/1)

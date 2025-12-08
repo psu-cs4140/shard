@@ -46,7 +46,7 @@ defmodule Shard.Repo.Migrations.AddCreateFirstCharacterAchievement do
       'exploration',
       20,
       false,
-      '{"type": "zone_entered", "zone": "Vampire Manor"}',
+      '{"type": "zone_entered", "zone": "Vampire''s Manor"}',
       NOW(),
       NOW()
     )

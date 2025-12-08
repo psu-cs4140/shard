@@ -219,6 +219,15 @@ defmodule Shard.Achievements do
       "Beginner Bone Zone" ->
         award_achievement_by_name(user_id, "Enter Beginner Bone Zone")
 
+      "Vampire's Manor" ->
+        award_achievement_by_name(user_id, "Enter Vampire Manor")
+
+      "Mines" ->
+        award_achievement_by_name(user_id, "Enter Mines")
+
+      "Whispering Forest" ->
+        award_achievement_by_name(user_id, "Enter Whispering Forest")
+
       _ ->
         {:ok, :no_achievement}
     end
@@ -277,6 +286,37 @@ defmodule Shard.Achievements do
       where: ua.user_id == ^user_id and a.name == ^achievement_name
     )
     |> Repo.exists?()
+  end
+
+  @doc """
+  Checks and awards mining resource achievements for a user.
+  This should be called when a user obtains mining resources.
+  """
+  def check_mining_resource_achievements(user_id, resources) do
+    # Check for first gem achievement
+    if Map.get(resources, :gem, 0) > 0 do
+      award_achievement_by_name(user_id, "GEMS!")
+    end
+
+    :ok
+  end
+
+  @doc """
+  Checks and awards chopping resource achievements for a user.
+  This should be called when a user obtains chopping resources.
+  """
+  def check_chopping_resource_achievements(user_id, resources) do
+    # Check for first wood achievement
+    if Map.get(resources, :wood, 0) > 0 do
+      award_achievement_by_name(user_id, "Acquiring Lumber")
+    end
+
+    # Check for first resin achievement
+    if Map.get(resources, :resin, 0) > 0 do
+      award_achievement_by_name(user_id, "A Hint of Prehistoric Life")
+    end
+
+    :ok
   end
 
   @doc """
