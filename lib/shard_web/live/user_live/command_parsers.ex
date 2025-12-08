@@ -170,7 +170,6 @@ defmodule ShardWeb.UserLive.CommandParsers do
     end
   end
 
-
   # Parse accept_quest command to extract NPC name and quest title
   def parse_accept_quest_command(command) do
     # Match pattern: accept_quest "npc name" "quest title"
@@ -522,7 +521,6 @@ defmodule ShardWeb.UserLive.CommandParsers do
         end
     end
   end
-
 
   # Remove item from player's inventory
   defp remove_item_from_inventory(game_state, item_name) do
