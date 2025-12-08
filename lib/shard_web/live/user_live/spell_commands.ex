@@ -243,33 +243,31 @@ defmodule ShardWeb.UserLive.SpellCommands do
     end
   end
 
-  defp handle_stun_spell(game_state, spell_result, response, monsters_here, spell_type) do
-    if length(monsters_here) > 0 do
-      target = hd(monsters_here)
-      damage = spell_result.damage || 0
+  defp handle_stun_spell(game_state, _spell_result, response, [], _spell_type) do
+    {response ++ ["The spell dissipates harmlessly - there are no enemies here."], game_state}
+  end
 
-      updated_response =
-        response ++
-          [
-            "#{spell_type_adjective(spell_type)} energy freezes #{target[:name]} in place!",
-            "You deal #{damage} damage and stun your target!"
-          ]
+  defp handle_stun_spell(game_state, spell_result, response, [target | _], spell_type) do
+    damage = spell_result.damage || 0
 
-      # Update monster health
-      updated_monsters =
-        Enum.map(game_state.monsters, fn monster ->
-          if monster[:id] == target[:id] do
-            new_health = max(0, (monster[:health] || 100) - damage)
-            Map.put(monster, :health, new_health)
-          else
-            monster
-          end
-        end)
+    updated_response =
+      response ++
+        [
+          "#{spell_type_adjective(spell_type)} energy freezes #{target[:name]} in place!",
+          "You deal #{damage} damage and stun your target!"
+        ]
 
-      {updated_response, %{game_state | monsters: updated_monsters}}
-    else
-      {response ++ ["The spell dissipates harmlessly - there are no enemies here."], game_state}
-    end
+    updated_monsters =
+      Enum.map(game_state.monsters, fn monster ->
+        if monster[:id] == target[:id] do
+          new_health = max(0, (monster[:health] || 100) - damage)
+          Map.put(monster, :health, new_health)
+        else
+          monster
+        end
+      end)
+
+    {updated_response, %{game_state | monsters: updated_monsters}}
   end
 
   defp spell_type_adjective(spell_type) do
