@@ -17,10 +17,10 @@ defmodule ShardWeb.InventoryLive.Index do
       |> assign(:hotbar, [])
       |> assign(:room_items, [])
       |> assign(:show_hotbar_modal, false)
-       |> assign(:show_sell_modal, false)
-       |> assign(:sell_inventory_id, nil)
-       |> assign(:sell_quantity, 1)
-       |> assign(:sell_error, nil)
+      |> assign(:show_sell_modal, false)
+      |> assign(:sell_inventory_id, nil)
+      |> assign(:sell_quantity, 1)
+      |> assign(:sell_error, nil)
       |> assign(:selected_inventory_id, nil)
       |> load_character_data()
 
@@ -201,10 +201,14 @@ defmodule ShardWeb.InventoryLive.Index do
       case Integer.parse(qty) do
         {val, ""} when val >= 1 ->
           max_qty = current_sell_max(socket)
-          if val <= max_qty, do: {val, nil}, else: {val, "Enter a number between 1 and #{max_qty}"}
+
+          if val <= max_qty,
+            do: {val, nil},
+            else: {val, "Enter a number between 1 and #{max_qty}"}
 
         _ ->
-          {socket.assigns.sell_quantity, "Enter a number between 1 and #{current_sell_max(socket)}"}
+          {socket.assigns.sell_quantity,
+           "Enter a number between 1 and #{current_sell_max(socket)}"}
       end
 
     {:noreply, assign(socket, sell_quantity: qty_int, sell_error: error)}

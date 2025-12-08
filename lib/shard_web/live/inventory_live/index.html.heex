@@ -62,10 +62,10 @@
                 Qty: {inventory_item.quantity}
               </div>
               <div class="text-xs text-base-content/70">
-                Value: {(inventory_item.item.value || 1)} gold each
+                Value: {inventory_item.item.value || 1} gold each
               </div>
               <div class="text-xs text-base-content/70">
-                Total value: {(inventory_item.quantity * (inventory_item.item.value || 1))} gold
+                Total value: {inventory_item.quantity * (inventory_item.item.value || 1)} gold
               </div>
               <%= if inventory_item.equipped do %>
                 <div class="text-xs text-success font-medium">Equipped</div>
@@ -194,14 +194,14 @@
       <div class="bg-base-100 shadow rounded-lg p-8 text-center">
         <p class="text-base-content/70">Select a character to view their inventory.</p>
       </div>
-  </div>
-<% end %>
+    </div>
+  <% end %>
 </div>
 
 <%= if @show_sell_modal do %>
   <% inv = Enum.find(@inventory, &(&1.id == @sell_inventory_id)) %>
-  <% max_qty = inv && inv.quantity || 1 %>
-  <% item_value = inv && (inv.item.value || 1) || 1 %>
+  <% max_qty = (inv && inv.quantity) || 1 %>
+  <% item_value = (inv && (inv.item.value || 1)) || 1 %>
   <% total_stack = max_qty * item_value %>
   <% sell_total = @sell_quantity * item_value %>
   <div class="fixed inset-0 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
@@ -249,8 +249,8 @@
         </div>
       </form>
     </div>
-  </div>
-<% end %>
+    </div>
+  <% end %>
 
 <!-- Hotbar Slot Selection Modal -->
 <%= if @show_hotbar_modal do %>
@@ -299,5 +299,5 @@
         </button>
       </div>
     </div>
-  </div>
-<% end %>
+    </div>
+  <% end %>

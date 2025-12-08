@@ -224,11 +224,11 @@ defmodule Shard.Items do
         if quantity_int > inventory_item.quantity do
           {:error, :invalid_quantity}
         else
-        # Get the sell value from the item, default to 1 if not set
+          # Get the sell value from the item, default to 1 if not set
           sell_value = inventory_item.item.value || 1
           total_value = sell_value * quantity_int
 
-        Multi.new()
+          Multi.new()
           |> Multi.run(:remove_item, fn _repo, _changes ->
             remaining = inventory_item.quantity - quantity_int
 
