@@ -218,22 +218,33 @@ defmodule Shard.Combat.Engine do
   defp resolve_deaths_and_victory(state) do
     room_pos = state[:room_position]
 
-    alive_monsters_here? =
+    # Get monsters that were originally at this position when combat started
+    original_monsters_here =
       state[:monsters]
       |> List.wrap()
-      |> Enum.any?(fn m -> m[:position] == room_pos and alive?(m) end)
+      |> Enum.filter(fn m -> m[:position] == room_pos end)
+
+    # Check if there are any alive monsters at this position
+    alive_monsters_here? =
+      original_monsters_here
+      |> Enum.any?(fn m -> alive?(m) end)
 
     alive_players_here? =
       state[:players]
       |> List.wrap()
       |> Enum.any?(fn p -> p[:position] == room_pos and alive_player?(p) end)
 
+    # Only trigger victory/defeat if we actually had monsters here to begin with
+    has_monsters_at_position? = length(original_monsters_here) > 0
+
     cond do
-      state[:combat] && !alive_monsters_here? ->
-        # All monsters dead - victory for players
+      state[:combat] && has_monsters_at_position? && !alive_monsters_here? && alive_players_here? ->
+        # All monsters dead and players alive - victory for players
+        require Logger
+        Logger.info("Victory triggered - Room: #{inspect(room_pos)}, Original monsters: #{length(original_monsters_here)}, Alive monsters: #{alive_monsters_here?}")
         {:ok, %{state | combat: false}, (state[:events] || []) ++ [%{type: :victory}]}
 
-      state[:combat] && !alive_players_here? ->
+      state[:combat] && has_monsters_at_position? && !alive_players_here? ->
         # All players dead - defeat
         {:ok, %{state | combat: false}, (state[:events] || []) ++ [%{type: :defeat}]}
 
