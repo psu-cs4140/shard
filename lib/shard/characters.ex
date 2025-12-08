@@ -186,9 +186,9 @@ defmodule Shard.Characters do
   def grant_all_pets(%Character{} = character, level \\ 1) do
     level = normalize_pet_level(level)
 
-    with {:ok, character} <- grant_pet_rock(character, level),
-         {:ok, character} <- grant_shroomling(character, level) do
-      {:ok, character}
+    case grant_pet_rock(character, level) do
+      {:ok, character} -> grant_shroomling(character, level)
+      {:error, _} = error -> error
     end
   end
 
