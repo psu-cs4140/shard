@@ -6,10 +6,10 @@ defmodule Shard.Marketplace do
   import Ecto.Query, warn: false
   alias Shard.Repo
 
-  alias Shard.Marketplace.Listing
+  alias Shard.Characters
   alias Shard.Items
   alias Shard.Items.CharacterInventory
-  alias Shard.Characters
+  alias Shard.Marketplace.Listing
 
   @doc """
   Lists all active marketplace listings with preloaded associations.

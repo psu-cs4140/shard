@@ -6,8 +6,8 @@ defmodule Shard.Social.ConversationParticipant do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Shard.Users.User
   alias Shard.Social.Conversation
+  alias Shard.Users.User
 
   schema "conversation_participants" do
     belongs_to :conversation, Conversation

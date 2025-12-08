@@ -6,9 +6,9 @@ defmodule Shard.Users do
   import Ecto.Query, warn: false
   alias Shard.Repo
 
-  alias Shard.Users.{User, UserToken, UserNotifier, UserZoneProgress}
   alias Shard.Characters.Character
   alias Shard.Map.Zone
+  alias Shard.Users.{User, UserToken, UserNotifier, UserZoneProgress}
 
   ## Database getters
 

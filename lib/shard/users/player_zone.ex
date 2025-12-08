@@ -9,8 +9,8 @@ defmodule Shard.Users.PlayerZone do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Shard.Users.User
   alias Shard.Map.Zone
+  alias Shard.Users.User
 
   schema "player_zones" do
     field :zone_name, :string

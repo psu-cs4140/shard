@@ -4,9 +4,9 @@ defmodule Shard.Users.PlayerZones do
   """
 
   import Ecto.Query, warn: false
+  alias Shard.Map.Zone
   alias Shard.Repo
   alias Shard.Users.PlayerZone
-  alias Shard.Map.Zone
   # alias Shard.{Monsters, Items}
 
   @doc """
@@ -122,8 +122,26 @@ defmodule Shard.Users.PlayerZones do
   end
 
   defp create_zone_from_template(template_zone, zone_instance_id, instance_type) do
-    # Create the zone instance
-    zone_attrs = %{
+    zone_attrs = build_zone_attrs(template_zone, zone_instance_id, instance_type)
+
+    case Shard.Map.create_zone(zone_attrs) do
+      {:ok, new_zone} ->
+        template_rooms = Shard.Map.list_rooms_by_zone(template_zone.id)
+        room_mapping = copy_rooms_from_template(template_rooms, new_zone.id)
+
+        copy_doors_from_template(template_rooms, room_mapping)
+        copy_monsters_from_template(template_rooms, room_mapping)
+        copy_room_items_from_template(template_zone, template_rooms, room_mapping)
+
+        {:ok, new_zone}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
+  end
+
+  defp build_zone_attrs(template_zone, zone_instance_id, instance_type) do
+    %{
       name: template_zone.name,
       zone_id: zone_instance_id,
       slug: "#{template_zone.slug}-#{zone_instance_id}",
@@ -137,137 +155,130 @@ defmodule Shard.Users.PlayerZones do
         Kernel.put_in(template_zone.properties || %{}, ["instance_type"], instance_type),
       display_order: template_zone.display_order
     }
+  end
 
-    case Shard.Map.create_zone(zone_attrs) do
-      {:ok, new_zone} ->
-        # Copy all rooms from the template zone
-        template_rooms = Shard.Map.list_rooms_by_zone(template_zone.id)
+  defp copy_rooms_from_template(template_rooms, new_zone_id) do
+    Enum.reduce(template_rooms, %{}, fn template_room, acc ->
+      room_attrs = %{
+        name: template_room.name,
+        description: template_room.description,
+        zone_id: new_zone_id,
+        x_coordinate: template_room.x_coordinate,
+        y_coordinate: template_room.y_coordinate,
+        z_coordinate: template_room.z_coordinate,
+        is_public: template_room.is_public,
+        room_type: template_room.room_type,
+        properties: template_room.properties
+      }
 
-        room_mapping =
-          Enum.reduce(template_rooms, %{}, fn template_room, acc ->
-            room_attrs = %{
-              name: template_room.name,
-              description: template_room.description,
-              zone_id: new_zone.id,
-              x_coordinate: template_room.x_coordinate,
-              y_coordinate: template_room.y_coordinate,
-              z_coordinate: template_room.z_coordinate,
-              is_public: template_room.is_public,
-              room_type: template_room.room_type,
-              properties: template_room.properties
-            }
+      case Shard.Map.create_room(room_attrs) do
+        {:ok, new_room} -> Map.put(acc, template_room.id, new_room)
+        {:error, _} -> acc
+      end
+    end)
+  end
 
-            case Shard.Map.create_room(room_attrs) do
-              {:ok, new_room} ->
-                Map.put(acc, template_room.id, new_room)
+  defp copy_doors_from_template(template_rooms, room_mapping) do
+    template_doors =
+      template_rooms
+      |> Enum.flat_map(&Shard.Map.get_doors_from_room(&1.id))
+      |> Enum.uniq_by(& &1.id)
 
-              {:error, _} ->
-                acc
-            end
-          end)
+    Enum.each(template_doors, fn template_door ->
+      create_door_if_rooms_exist(template_door, room_mapping)
+    end)
+  end
 
-        # Copy all doors from the template zone
-        # Get doors by querying from the template rooms
-        template_doors =
-          template_rooms
-          |> Enum.flat_map(fn room ->
-            Shard.Map.get_doors_from_room(room.id)
-          end)
-          |> Enum.uniq_by(& &1.id)
+  defp create_door_if_rooms_exist(template_door, room_mapping) do
+    from_room = Map.get(room_mapping, template_door.from_room_id)
+    to_room = Map.get(room_mapping, template_door.to_room_id)
 
-        Enum.each(template_doors, fn template_door ->
-          from_room = Map.get(room_mapping, template_door.from_room_id)
-          to_room = Map.get(room_mapping, template_door.to_room_id)
+    if from_room && to_room do
+      door_attrs = %{
+        from_room_id: from_room.id,
+        to_room_id: to_room.id,
+        direction: template_door.direction,
+        door_type: template_door.door_type,
+        is_locked: template_door.is_locked,
+        key_required: template_door.key_required,
+        properties: template_door.properties
+      }
 
-          if from_room && to_room do
-            door_attrs = %{
-              from_room_id: from_room.id,
-              to_room_id: to_room.id,
-              direction: template_door.direction,
-              door_type: template_door.door_type,
-              is_locked: template_door.is_locked,
-              key_required: template_door.key_required,
-              properties: template_door.properties
-            }
+      Shard.Map.create_door(door_attrs)
+    end
+  end
 
-            Shard.Map.create_door(door_attrs)
-          end
-        end)
+  defp copy_monsters_from_template(template_rooms, room_mapping) do
+    try do
+      template_monsters =
+        template_rooms
+        |> Enum.flat_map(&Shard.Monsters.list_monsters_by_location(&1.id))
 
-        # Copy monsters from the template zone (if the function exists)
-        try do
-          # Get monsters from all rooms in the template zone
-          template_monsters =
-            template_rooms
-            |> Enum.flat_map(fn room ->
-              Shard.Monsters.list_monsters_by_location(room.id)
-            end)
+      Enum.each(template_monsters, fn template_monster ->
+        create_monster_if_room_exists(template_monster, room_mapping)
+      end)
+    rescue
+      UndefinedFunctionError -> :ok
+    end
+  end
 
-          Enum.each(template_monsters, fn template_monster ->
-            new_room = Map.get(room_mapping, template_monster.location_id)
+  defp create_monster_if_room_exists(template_monster, room_mapping) do
+    new_room = Map.get(room_mapping, template_monster.location_id)
 
-            if new_room do
-              monster_attrs = %{
-                name: template_monster.name,
-                race: template_monster.race,
-                health: template_monster.max_health,
-                max_health: template_monster.max_health,
-                attack_damage: template_monster.attack_damage,
-                xp_amount: template_monster.xp_amount,
-                level: template_monster.level,
-                description: template_monster.description,
-                location_id: new_room.id,
-                potential_loot_drops: template_monster.potential_loot_drops
-              }
+    if new_room do
+      monster_attrs = %{
+        name: template_monster.name,
+        race: template_monster.race,
+        health: template_monster.max_health,
+        max_health: template_monster.max_health,
+        attack_damage: template_monster.attack_damage,
+        xp_amount: template_monster.xp_amount,
+        level: template_monster.level,
+        description: template_monster.description,
+        location_id: new_room.id,
+        potential_loot_drops: template_monster.potential_loot_drops
+      }
 
-              Shard.Monsters.create_monster(monster_attrs)
-            end
-          end)
-        rescue
-          UndefinedFunctionError -> :ok
-        end
+      Shard.Monsters.create_monster(monster_attrs)
+    end
+  end
 
-        # Copy room items from the template zone (if the function exists)
-        try do
-          template_room_items = Shard.Items.list_room_items_by_zone(template_zone.id)
+  defp copy_room_items_from_template(template_zone, template_rooms, room_mapping) do
+    try do
+      template_room_items = Shard.Items.list_room_items_by_zone(template_zone.id)
 
-          Enum.each(template_room_items, fn template_room_item ->
-            # RoomItem uses location field (string) instead of room_id
-            # We need to find the corresponding new room by matching the template location
-            template_location = template_room_item.location
+      Enum.each(template_room_items, fn template_room_item ->
+        create_room_item_if_room_exists(template_room_item, template_rooms, room_mapping)
+      end)
+    rescue
+      UndefinedFunctionError -> :ok
+      KeyError -> :ok
+    end
+  end
 
-            # Find the template room that matches this location
-            template_room =
-              Enum.find(template_rooms, fn room ->
-                to_string(room.id) == template_location
-              end)
+  defp create_room_item_if_room_exists(template_room_item, template_rooms, room_mapping) do
+    template_location = template_room_item.location
 
-            if template_room do
-              new_room = Map.get(room_mapping, template_room.id)
+    template_room =
+      Enum.find(template_rooms, fn room ->
+        to_string(room.id) == template_location
+      end)
 
-              if new_room do
-                room_item_attrs = %{
-                  item_id: template_room_item.item_id,
-                  location: to_string(new_room.id),
-                  quantity: template_room_item.quantity || 1,
-                  x_position: template_room_item.x_position || Decimal.new("0.0"),
-                  y_position: template_room_item.y_position || Decimal.new("0.0"),
-                  is_permanent: template_room_item.is_permanent || false
-                }
+    if template_room do
+      new_room = Map.get(room_mapping, template_room.id)
 
-                Shard.Items.create_room_item(room_item_attrs)
-              end
-            end
-          end)
-        rescue
-          UndefinedFunctionError -> :ok
-          KeyError -> :ok
-        end
+      if new_room do
+        room_item_attrs = %{
+          item_id: template_room_item.item_id,
+          location: to_string(new_room.id),
+          quantity: template_room_item.quantity || 1,
+          x_position: template_room_item.x_position || Decimal.new("0.0"),
+          y_position: template_room_item.y_position || Decimal.new("0.0"),
+          is_permanent: template_room_item.is_permanent || false
+        }
 
-        {:ok, new_zone}
-
-      {:error, changeset} ->
-        {:error, changeset}
+        Shard.Items.create_room_item(room_item_attrs)
+      end
     end
   end
 

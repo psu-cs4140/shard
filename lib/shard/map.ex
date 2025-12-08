@@ -6,7 +6,7 @@ defmodule Shard.Map do
   import Ecto.Query, warn: false
   alias Shard.Repo
 
-  alias Shard.Map.{Room, Door, Zone, PlayerPosition}
+  alias Shard.Map.{Door, PlayerPosition, Room, Zone}
 
   # Zone functions
 

@@ -6,8 +6,8 @@ defmodule Shard.Social.Message do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Shard.Users.User
   alias Shard.Social.Conversation
+  alias Shard.Users.User
 
   schema "messages" do
     field :content, :string
