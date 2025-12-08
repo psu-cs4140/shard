@@ -423,15 +423,10 @@ defmodule ShardWeb.MudGameLive do
     }
   end
 
-<<<<<<< HEAD
-  # currently unused but keeping around for future pet buffs
-  # defp pet_chance(level) do
-  #   lvl = Kernel.max(level || 1, 1)
-  #   Kernel.min(10 + (lvl - 1), 50)
-  # end
-=======
-  defp pet_chance(level), do: min(10 + (level - 1), 50)
->>>>>>> 92f16d0 (Add a leveling system to the pets that increase buffs)
+  defp pet_chance(level) do
+    lvl = Kernel.max(level || 1, 1)
+    Kernel.min(10 + (lvl - 1), 50)
+  end
 
   defp maybe_add_zone_welcome(socket, zone) do
     case zone.slug do

@@ -148,6 +148,7 @@ defmodule Shard.Forest do
         {:ok, inventory} ->
           case add_resources(inventory, resources) do
             {:ok, updated_inventory} ->
+              add_resources_to_character_inventory(character, resources)
               {character_after_xp, pet_level_messages} = maybe_grant_pet_xp(character, ticks)
 
               case Characters.update_character(character_after_xp, %{chopping_started_at: now}) do
@@ -274,7 +275,6 @@ defmodule Shard.Forest do
     div(elapsed_seconds, @tick_interval)
   end
 
-<<<<<<< HEAD
   defp add_resources_to_character_inventory(%Character{id: character_id}, resources) do
     resource_items = ensure_chopping_resource_items()
 
@@ -330,7 +330,9 @@ defmodule Shard.Forest do
 
       item ->
         item
-=======
+    end
+  end
+
   defp pet_double_chance(level) do
     min(10 + (level - 1), 50)
   end
@@ -374,7 +376,6 @@ defmodule Shard.Forest do
       {final_level, remaining_xp, [message | messages]}
     else
       {level, xp, []}
->>>>>>> 92f16d0 (Add a leveling system to the pets that increase buffs)
     end
   end
 
