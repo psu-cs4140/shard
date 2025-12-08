@@ -65,7 +65,10 @@ defmodule ShardWeb.WorkshopLive do
               socket
               |> put_flash(:info, "You craft a #{recipe.name}.")
               |> assign(:selected_character, updated_character)
-              |> assign(:characters, refresh_characters(socket.assigns.characters, updated_character))
+              |> assign(
+                :characters,
+                refresh_characters(socket.assigns.characters, updated_character)
+              )
               |> assign_recipes()
 
             {:noreply, socket}
@@ -75,11 +78,14 @@ defmodule ShardWeb.WorkshopLive do
 
           {:error, {:item_not_found, item_name}} ->
             {:noreply,
-             put_flash(socket, :error, "Missing item definition: #{item_name}. Please contact an admin.")}
+             put_flash(
+               socket,
+               :error,
+               "Missing item definition: #{item_name}. Please contact an admin."
+             )}
 
           {:error, reason} ->
-            {:noreply,
-             put_flash(socket, :error, "Crafting failed: #{inspect(reason)}")}
+            {:noreply, put_flash(socket, :error, "Crafting failed: #{inspect(reason)}")}
         end
     end
   end

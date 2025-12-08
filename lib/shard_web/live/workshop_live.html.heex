@@ -86,8 +86,7 @@
               class={[
                 "mt-6 rounded-2xl px-4 py-3 text-center text-sm font-semibold shadow-lg transition",
                 if(is_nil(@selected_character) or !recipe.can_craft?,
-                  do:
-                    "cursor-not-allowed bg-slate-700 text-slate-400 shadow-none",
+                  do: "cursor-not-allowed bg-slate-700 text-slate-400 shadow-none",
                   else: "bg-indigo-500 text-white hover:bg-indigo-400"
                 )
               ]}

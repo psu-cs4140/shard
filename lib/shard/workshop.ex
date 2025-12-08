@@ -145,7 +145,8 @@ defmodule Shard.Workshop do
          {:ok, ingredients} <- load_ingredient_items(recipe.ingredients),
          {:ok, result_item} <- fetch_item_by_name(recipe.result_name),
          :ok <- ensure_has_ingredients(character_id, ingredients),
-         {:ok, _} <- apply_crafting(character_id, ingredients, result_item, recipe.result_quantity) do
+         {:ok, _} <-
+           apply_crafting(character_id, ingredients, result_item, recipe.result_quantity) do
       {:ok, recipe}
     else
       {:error, reason} -> {:error, reason}
