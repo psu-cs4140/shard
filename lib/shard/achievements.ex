@@ -215,20 +215,29 @@ defmodule Shard.Achievements do
   This should be called when a user enters a zone.
   """
   def check_zone_entry_achievements(user_id, zone_name) do
+    # Debug logging to see what zone names we're getting
+    require Logger
+    Logger.info("Checking zone entry achievement for user #{user_id}, zone: '#{zone_name}'")
+    
     case zone_name do
       "Beginner Bone Zone" ->
+        Logger.info("Awarding Beginner Bone Zone achievement")
         award_achievement_by_name(user_id, "Enter Beginner Bone Zone")
 
       "Vampire's Manor" ->
+        Logger.info("Awarding Vampire Manor achievement")
         award_achievement_by_name(user_id, "Enter Vampire Manor")
 
       "Mines" ->
+        Logger.info("Awarding Mines achievement")
         award_achievement_by_name(user_id, "Enter Mines")
 
       "Whispering Forest" ->
+        Logger.info("Awarding Whispering Forest achievement")
         award_achievement_by_name(user_id, "Enter Whispering Forest")
 
       _ ->
+        Logger.info("No achievement found for zone: '#{zone_name}'")
         {:ok, :no_achievement}
     end
   end
