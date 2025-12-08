@@ -118,10 +118,4 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
     new_output = terminal_state.output ++ [message] ++ [""]
     Map.put(terminal_state, :output, new_output)
   end
-
-  def handle_poke_notification(terminal_state, poker_name) do
-    message = "#{poker_name} pokes you!"
-    new_output = terminal_state.output ++ [message] ++ [""]
-    Map.put(terminal_state, :output, new_output)
-  end
 end

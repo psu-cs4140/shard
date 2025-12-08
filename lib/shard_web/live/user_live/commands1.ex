@@ -377,7 +377,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
                           :error ->
                             # Check if it's a poke command
-                            case parse_poke_command(command) do
+                            case ShardWeb.UserLive.CommandParsers.parse_poke_command(command) do
                               {:ok, character_name} ->
                                 execute_poke_command_local(game_state, character_name)
 
