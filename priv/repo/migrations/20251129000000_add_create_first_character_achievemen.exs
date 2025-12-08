@@ -104,6 +104,23 @@ defmodule Shard.Repo.Migrations.AddCreateFirstCharacterAchievement do
     ON CONFLICT (name) DO NOTHING
     """
 
+    # Insert the "Acquiring Lumber" achievement (skip if already exists)
+    execute """
+    INSERT INTO achievements (name, description, icon, category, points, hidden, requirements, inserted_at, updated_at)
+    VALUES (
+      'Acquiring Lumber',
+      'Chop your first piece of wood in the forest',
+      'wood-icon',
+      'chopping',
+      20,
+      false,
+      '{"type": "chopping_resource_obtained", "resource": "wood", "count": 1}',
+      NOW(),
+      NOW()
+    )
+    ON CONFLICT (name) DO NOTHING
+    """
+
     # Award the achievement to users who already have characters
     execute """
     INSERT INTO user_achievements (user_id, achievement_id, earned_at, progress, inserted_at, updated_at)
@@ -136,7 +153,7 @@ defmodule Shard.Repo.Migrations.AddCreateFirstCharacterAchievement do
 
     # Remove the achievements
     execute """
-    DELETE FROM achievements WHERE name IN ('Create First Character', 'Enter Beginner Bone Zone', 'Enter Vampire Manor', 'Enter Mines', 'Enter Whispering Forest', 'GEMS!')
+    DELETE FROM achievements WHERE name IN ('Create First Character', 'Enter Beginner Bone Zone', 'Enter Vampire Manor', 'Enter Mines', 'Enter Whispering Forest', 'GEMS!', 'Acquiring Lumber')
     """
   end
 end
