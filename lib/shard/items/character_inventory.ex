@@ -16,6 +16,7 @@ defmodule Shard.Items.CharacterInventory do
     field :slot_position, :integer
     field :equipped, :boolean, default: false
     field :equipment_slot, :string
+    field :current_durability, :integer
 
     belongs_to :character, Character
     belongs_to :item, Item
@@ -32,12 +33,15 @@ defmodule Shard.Items.CharacterInventory do
       :quantity,
       :slot_position,
       :equipped,
-      :equipment_slot
+      :equipment_slot,
+      :current_durability
     ])
     |> validate_required([:character_id, :item_id, :quantity])
     |> validate_number(:quantity, greater_than: 0)
     |> validate_optional_number(:slot_position, greater_than_or_equal_to: 0)
+    |> validate_optional_number(:current_durability, greater_than_or_equal_to: 0)
     |> validate_equipment_consistency()
+    |> validate_durability_consistency()
     |> foreign_key_constraint(:character_id)
     |> foreign_key_constraint(:item_id)
     |> unique_constraint([:character_id, :slot_position])
@@ -63,6 +67,37 @@ defmodule Shard.Items.CharacterInventory do
 
       !equipped && equipment_slot ->
         put_change(changeset, :equipment_slot, nil)
+
+      true ->
+        changeset
+    end
+  end
+
+  defp validate_durability_consistency(changeset) do
+    item_id = get_field(changeset, :item_id)
+    current_durability = get_field(changeset, :current_durability)
+
+    case {item_id, current_durability} do
+      {nil, _} -> changeset
+      {_, nil} -> changeset
+      {id, durability} -> validate_durability_against_item(changeset, id, durability)
+    end
+  end
+
+  defp validate_durability_against_item(changeset, item_id, current_durability) do
+    case Shard.Repo.get(Item, item_id) do
+      nil -> changeset
+      item -> check_durability_limits(changeset, item, current_durability)
+    end
+  end
+
+  defp check_durability_limits(changeset, item, current_durability) do
+    cond do
+      !item.durability_enabled && current_durability ->
+        add_error(changeset, :current_durability, "cannot be set for items without durability")
+
+      item.durability_enabled && current_durability > item.max_durability ->
+        add_error(changeset, :current_durability, "cannot exceed item's maximum durability")
 
       true ->
         changeset
