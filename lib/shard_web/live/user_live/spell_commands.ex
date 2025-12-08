@@ -157,7 +157,8 @@ defmodule ShardWeb.UserLive.SpellCommands do
           "You deal #{damage} damage!"
         ]
 
-    {updated_monsters, updated_target} = apply_damage_to_monsters(game_state.monsters, target[:id], damage)
+    {updated_monsters, updated_target} =
+      apply_damage_to_monsters(game_state.monsters, target[:id], damage)
 
     final_response =
       if defeated?(updated_target) do
@@ -174,6 +175,7 @@ defmodule ShardWeb.UserLive.SpellCommands do
     Enum.map_reduce(monsters, nil, fn monster, acc ->
       if monster[:id] == target_id do
         new_health = max(0, (monster[:health] || 100) - damage)
+
         updated_monster =
           monster
           |> Map.put(:health, new_health)
