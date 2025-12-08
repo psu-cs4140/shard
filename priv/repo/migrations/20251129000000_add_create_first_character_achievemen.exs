@@ -36,6 +36,57 @@ defmodule Shard.Repo.Migrations.AddCreateFirstCharacterAchievement do
     ON CONFLICT (name) DO NOTHING
     """
 
+    # Insert the "Enter Vampire Manor" achievement (skip if already exists)
+    execute """
+    INSERT INTO achievements (name, description, icon, category, points, hidden, requirements, inserted_at, updated_at)
+    VALUES (
+      'Enter Vampire Manor',
+      'Dare to enter the mysterious Vampire Manor',
+      'vampire-icon',
+      'exploration',
+      20,
+      false,
+      '{"type": "zone_entered", "zone": "Vampire Manor"}',
+      NOW(),
+      NOW()
+    )
+    ON CONFLICT (name) DO NOTHING
+    """
+
+    # Insert the "Enter Mines" achievement (skip if already exists)
+    execute """
+    INSERT INTO achievements (name, description, icon, category, points, hidden, requirements, inserted_at, updated_at)
+    VALUES (
+      'Enter Mines',
+      'Descend into the depths of the Mines',
+      'pickaxe-icon',
+      'exploration',
+      20,
+      false,
+      '{"type": "zone_entered", "zone": "Mines"}',
+      NOW(),
+      NOW()
+    )
+    ON CONFLICT (name) DO NOTHING
+    """
+
+    # Insert the "Enter Whispering Forest" achievement (skip if already exists)
+    execute """
+    INSERT INTO achievements (name, description, icon, category, points, hidden, requirements, inserted_at, updated_at)
+    VALUES (
+      'Enter Whispering Forest',
+      'Step into the mystical Whispering Forest',
+      'tree-icon',
+      'exploration',
+      20,
+      false,
+      '{"type": "zone_entered", "zone": "Whispering Forest"}',
+      NOW(),
+      NOW()
+    )
+    ON CONFLICT (name) DO NOTHING
+    """
+
     # Award the achievement to users who already have characters
     execute """
     INSERT INTO user_achievements (user_id, achievement_id, earned_at, progress, inserted_at, updated_at)
@@ -68,7 +119,7 @@ defmodule Shard.Repo.Migrations.AddCreateFirstCharacterAchievement do
 
     # Remove the achievements
     execute """
-    DELETE FROM achievements WHERE name IN ('Create First Character', 'Enter Beginner Bone Zone')
+    DELETE FROM achievements WHERE name IN ('Create First Character', 'Enter Beginner Bone Zone', 'Enter Vampire Manor', 'Enter Mines', 'Enter Whispering Forest')
     """
   end
 end
