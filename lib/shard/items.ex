@@ -491,6 +491,277 @@ defmodule Shard.Items do
     not is_nil(item.spell_id) and item.usable
   end
 
+  ## Loot Boxes
+
+  @doc """
+  Opens a loot box and gives random rewards to the character.
+  Consumes the loot box from inventory.
+  """
+  def open_loot_box(character_id, inventory_id) do
+    inventory = Repo.get!(CharacterInventory, inventory_id) |> Repo.preload(:item)
+    item = inventory.item
+
+    cond do
+      item.item_type != "loot_box" ->
+        {:error, :not_a_loot_box}
+
+      not item.usable ->
+        {:error, :not_usable}
+
+      true ->
+        # Generate random rewards based on loot box rarity
+        rewards = generate_loot_box_rewards(item.rarity)
+        
+        # Give rewards to character
+        case give_loot_box_rewards(character_id, rewards) do
+          {:ok, given_rewards} ->
+            # Remove loot box from inventory (consume it)
+            remove_item_from_inventory(inventory_id, 1)
+            {:ok, given_rewards}
+
+          error ->
+            error
+        end
+    end
+  end
+
+  @doc """
+  Check if an item is a loot box.
+  """
+  def loot_box?(item) do
+    item.item_type == "loot_box" and item.usable
+  end
+
+  @doc """
+  Creates a loot box item with the specified rarity.
+  """
+  def create_loot_box(rarity \\ "common") do
+    rarity_name = String.capitalize(rarity)
+    
+    create_item(%{
+      name: "#{rarity_name} Loot Box",
+      description: "A mysterious box containing random rewards. Rarity affects the quality of contents.",
+      item_type: "loot_box",
+      rarity: rarity,
+      value: get_loot_box_price(rarity),
+      weight: 1.0,
+      stackable: true,
+      max_stack_size: 10,
+      usable: true,
+      equippable: false,
+      sellable: true,
+      data: %{
+        loot_table: get_loot_table_for_rarity(rarity)
+      }
+    })
+  end
+
+  defp generate_loot_box_rewards(rarity) do
+    base_rewards = %{
+      gold: get_gold_reward(rarity),
+      experience: get_experience_reward(rarity),
+      items: get_item_rewards(rarity)
+    }
+
+    # Add chance for bonus rewards based on rarity
+    bonus_chance = get_bonus_chance(rarity)
+    
+    if :rand.uniform() < bonus_chance do
+      Map.put(base_rewards, :bonus_gold, get_bonus_gold(rarity))
+    else
+      base_rewards
+    end
+  end
+
+  defp give_loot_box_rewards(character_id, rewards) do
+    alias Ecto.Multi
+    alias Shard.Characters
+
+    Multi.new()
+    |> Multi.run(:update_character, fn _repo, _changes ->
+      character = Characters.get_character!(character_id)
+      gold_gain = Map.get(rewards, :gold, 0) + Map.get(rewards, :bonus_gold, 0)
+      exp_gain = Map.get(rewards, :experience, 0)
+      
+      Characters.update_character(character, %{
+        gold: character.gold + gold_gain,
+        experience: character.experience + exp_gain
+      })
+    end)
+    |> Multi.run(:give_items, fn _repo, _changes ->
+      items = Map.get(rewards, :items, [])
+      
+      results = Enum.map(items, fn {item_id, quantity} ->
+        add_item_to_inventory(character_id, item_id, quantity)
+      end)
+      
+      # Check if all items were added successfully
+      if Enum.all?(results, fn {status, _} -> status == :ok end) do
+        {:ok, results}
+      else
+        {:error, :failed_to_give_items}
+      end
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, _} -> {:ok, rewards}
+      {:error, _operation, reason, _changes} -> {:error, reason}
+    end
+  end
+
+  def get_loot_box_price("common"), do: 100
+  def get_loot_box_price("uncommon"), do: 250
+  def get_loot_box_price("rare"), do: 500
+  def get_loot_box_price("epic"), do: 1000
+  def get_loot_box_price("legendary"), do: 2500
+
+  defp get_gold_reward("common"), do: Enum.random(10..50)
+  defp get_gold_reward("uncommon"), do: Enum.random(25..100)
+  defp get_gold_reward("rare"), do: Enum.random(50..200)
+  defp get_gold_reward("epic"), do: Enum.random(100..500)
+  defp get_gold_reward("legendary"), do: Enum.random(250..1000)
+
+  defp get_experience_reward("common"), do: Enum.random(50..150)
+  defp get_experience_reward("uncommon"), do: Enum.random(100..300)
+  defp get_experience_reward("rare"), do: Enum.random(200..600)
+  defp get_experience_reward("epic"), do: Enum.random(400..1200)
+  defp get_experience_reward("legendary"), do: Enum.random(800..2500)
+
+  defp get_item_rewards("common") do
+    # 70% chance for 1 common item, 30% chance for nothing extra
+    if :rand.uniform() < 0.7 do
+      [{get_random_item_by_rarity("common"), 1}]
+    else
+      []
+    end
+  end
+
+  defp get_item_rewards("uncommon") do
+    # 80% chance for 1 item, 20% chance for 2 items
+    count = if :rand.uniform() < 0.8, do: 1, else: 2
+    
+    Enum.map(1..count, fn _ ->
+      rarity = if :rand.uniform() < 0.7, do: "common", else: "uncommon"
+      {get_random_item_by_rarity(rarity), 1}
+    end)
+  end
+
+  defp get_item_rewards("rare") do
+    # Always 1-2 items, better rarity distribution
+    count = Enum.random(1..2)
+    
+    Enum.map(1..count, fn _ ->
+      rarity = case :rand.uniform() do
+        x when x < 0.4 -> "common"
+        x when x < 0.7 -> "uncommon"
+        _ -> "rare"
+      end
+      {get_random_item_by_rarity(rarity), 1}
+    end)
+  end
+
+  defp get_item_rewards("epic") do
+    # Always 2-3 items, high rarity distribution
+    count = Enum.random(2..3)
+    
+    Enum.map(1..count, fn _ ->
+      rarity = case :rand.uniform() do
+        x when x < 0.2 -> "common"
+        x when x < 0.4 -> "uncommon"
+        x when x < 0.7 -> "rare"
+        _ -> "epic"
+      end
+      {get_random_item_by_rarity(rarity), 1}
+    end)
+  end
+
+  defp get_item_rewards("legendary") do
+    # Always 3-5 items, guaranteed high rarity
+    count = Enum.random(3..5)
+    
+    Enum.map(1..count, fn _ ->
+      rarity = case :rand.uniform() do
+        x when x < 0.1 -> "uncommon"
+        x when x < 0.3 -> "rare"
+        x when x < 0.6 -> "epic"
+        _ -> "legendary"
+      end
+      {get_random_item_by_rarity(rarity), 1}
+    end)
+  end
+
+  def get_bonus_chance("common"), do: 0.1
+  def get_bonus_chance("uncommon"), do: 0.2
+  def get_bonus_chance("rare"), do: 0.3
+  def get_bonus_chance("epic"), do: 0.5
+  def get_bonus_chance("legendary"), do: 0.8
+
+  defp get_bonus_gold("common"), do: Enum.random(5..25)
+  defp get_bonus_gold("uncommon"), do: Enum.random(15..75)
+  defp get_bonus_gold("rare"), do: Enum.random(30..150)
+  defp get_bonus_gold("epic"), do: Enum.random(75..375)
+  defp get_bonus_gold("legendary"), do: Enum.random(150..750)
+
+  defp get_random_item_by_rarity(rarity) do
+    # Get a random item of the specified rarity
+    item = from(i in Item,
+      where: i.rarity == ^rarity and i.is_active == true and i.item_type != "loot_box",
+      order_by: fragment("RANDOM()"),
+      limit: 1
+    )
+    |> Repo.one()
+
+    case item do
+      nil -> 
+        # Fallback: create a basic item if none exist
+        {:ok, fallback_item} = create_fallback_item(rarity)
+        fallback_item.id
+      item -> 
+        item.id
+    end
+  end
+
+  defp create_fallback_item(rarity) do
+    create_item(%{
+      name: "#{String.capitalize(rarity)} Gem",
+      description: "A valuable gem that can be sold for gold.",
+      item_type: "misc",
+      rarity: rarity,
+      value: get_loot_box_price(rarity) / 4,
+      weight: 0.1,
+      stackable: true,
+      max_stack_size: 99,
+      sellable: true
+    })
+  end
+
+  defp get_loot_table_for_rarity(rarity) do
+    %{
+      gold_range: get_gold_range(rarity),
+      exp_range: get_exp_range(rarity),
+      item_count_range: get_item_count_range(rarity),
+      bonus_chance: get_bonus_chance(rarity)
+    }
+  end
+
+  def get_gold_range("common"), do: [10, 50]
+  def get_gold_range("uncommon"), do: [25, 100]
+  def get_gold_range("rare"), do: [50, 200]
+  def get_gold_range("epic"), do: [100, 500]
+  def get_gold_range("legendary"), do: [250, 1000]
+
+  def get_exp_range("common"), do: [50, 150]
+  def get_exp_range("uncommon"), do: [100, 300]
+  def get_exp_range("rare"), do: [200, 600]
+  def get_exp_range("epic"), do: [400, 1200]
+  def get_exp_range("legendary"), do: [800, 2500]
+
+  def get_item_count_range("common"), do: [0, 1]
+  def get_item_count_range("uncommon"), do: [1, 2]
+  def get_item_count_range("rare"), do: [1, 2]
+  def get_item_count_range("epic"), do: [2, 3]
+  def get_item_count_range("legendary"), do: [3, 5]
+
   defp unequip_slot_if_occupied(character_id, equipment_slot) do
     case get_equipment_by_slot(character_id, equipment_slot) do
       nil -> {:ok, nil}
@@ -610,5 +881,42 @@ defmodule Shard.Items do
   """
   def list_room_items_by_zone(zone_id) do
     Shard.Items.GameFeatures.list_room_items_by_zone(zone_id)
+  end
+
+  ## Loot Box System Delegation
+
+  @doc """
+  Delegates to Shard.Items.LootBoxSystem.create_standard_loot_boxes/0
+  """
+  def create_standard_loot_boxes do
+    Shard.Items.LootBoxSystem.create_standard_loot_boxes()
+  end
+
+  @doc """
+  Delegates to Shard.Items.LootBoxSystem.get_marketplace_loot_boxes/0
+  """
+  def get_marketplace_loot_boxes do
+    Shard.Items.LootBoxSystem.get_marketplace_loot_boxes()
+  end
+
+  @doc """
+  Delegates to Shard.Items.LootBoxSystem.purchase_loot_box/2
+  """
+  def purchase_loot_box(character_id, loot_box_id) do
+    Shard.Items.LootBoxSystem.purchase_loot_box(character_id, loot_box_id)
+  end
+
+  @doc """
+  Delegates to Shard.Items.LootBoxSystem.get_loot_box_stats/1
+  """
+  def get_loot_box_stats(rarity) do
+    Shard.Items.LootBoxSystem.get_loot_box_stats(rarity)
+  end
+
+  @doc """
+  Delegates to Shard.Items.LootBoxSystem.preview_loot_box_rewards/1
+  """
+  def preview_loot_box_rewards(rarity) do
+    Shard.Items.LootBoxSystem.preview_loot_box_rewards(rarity)
   end
 end
