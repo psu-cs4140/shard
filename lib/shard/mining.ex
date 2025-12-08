@@ -300,13 +300,13 @@ defmodule Shard.Mining do
           optional(atom()) => non_neg_integer()
         }
   def roll_multiple_resources(count, character) do
-    1..count
-    |> Enum.reduce(%{stone: 0, coal: 0, copper: 0, iron: 0, gem: 0}, fn _, acc ->
+    Enum.reduce(1..count, %{stone: 0, coal: 0, copper: 0, iron: 0, gem: 0}, fn _, acc ->
       resource = roll_resource()
 
       bonus =
         if character.has_pet_rock do
           chance = pet_double_chance(character.pet_rock_level)
+
           if :rand.uniform(100) <= chance, do: 1, else: 0
         else
           0
