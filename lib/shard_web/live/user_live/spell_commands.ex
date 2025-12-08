@@ -143,57 +143,59 @@ defmodule ShardWeb.UserLive.SpellCommands do
     end
   end
 
-  defp handle_damage_spell(game_state, spell_result, response, monsters_here, spell_type) do
-    if length(monsters_here) > 0 do
-      target = hd(monsters_here)
-      damage = spell_result.damage || 0
+  defp handle_damage_spell(game_state, _spell_result, response, [], _spell_type) do
+    {response ++ ["The spell dissipates harmlessly - there are no enemies here."], game_state}
+  end
 
-      updated_response =
-        response ++
-          [
-            "#{spell_type_adjective(spell_type)} energy strikes #{target[:name]}!",
-            "You deal #{damage} damage!"
-          ]
+  defp handle_damage_spell(game_state, spell_result, response, [target | _], spell_type) do
+    damage = spell_result.damage || 0
 
-      # Update monster health
-      _updated_target = nil
+    updated_response =
+      response ++
+        [
+          "#{spell_type_adjective(spell_type)} energy strikes #{target[:name]}!",
+          "You deal #{damage} damage!"
+        ]
 
-      updated_monsters =
-        Enum.map(game_state.monsters, fn monster ->
-          if monster[:id] == target[:id] do
-            new_health = max(0, (monster[:health] || 100) - damage)
-            is_dead = new_health == 0
+    {updated_monsters, updated_target} = apply_damage_to_monsters(game_state.monsters, target[:id], damage)
 
-            updated_monster = Map.put(monster, :health, new_health)
+    final_response =
+      if defeated?(updated_target) do
+        updated_response ++ ["#{target[:name]} has been defeated!"]
+      else
+        updated_response ++
+          ["#{target[:name]} has #{updated_target[:health]} health remaining."]
+      end
 
-            updated_monster =
-              if is_dead do
-                Map.put(updated_monster, :is_alive, false)
-              else
-                updated_monster
-              end
+    {final_response, %{game_state | monsters: updated_monsters}}
+  end
 
-            updated_monster
-          else
-            monster
-          end
-        end)
+  defp apply_damage_to_monsters(monsters, target_id, damage) do
+    Enum.map_reduce(monsters, nil, fn monster, acc ->
+      if monster[:id] == target_id do
+        new_health = max(0, (monster[:health] || 100) - damage)
+        updated_monster =
+          monster
+          |> Map.put(:health, new_health)
+          |> Map.put(:is_alive, new_health > 0)
 
-      # Find the updated target to check if defeated
-      updated_target = Enum.find(updated_monsters, fn m -> m[:id] == target[:id] end)
+        {updated_monster, updated_monster}
+      else
+        {monster, acc}
+      end
+    end)
+    |> ensure_target_found()
+  end
 
-      final_response =
-        if updated_target && (updated_target[:health] == 0 || updated_target[:is_alive] == false) do
-          updated_response ++ ["#{target[:name]} has been defeated!"]
-        else
-          updated_response ++
-            ["#{target[:name]} has #{updated_target[:health]} health remaining."]
-        end
+  defp ensure_target_found({monsters, nil}) do
+    {monsters, %{health: 0, is_alive: false}}
+  end
 
-      {final_response, %{game_state | monsters: updated_monsters}}
-    else
-      {response ++ ["The spell dissipates harmlessly - there are no enemies here."], game_state}
-    end
+  defp ensure_target_found(result), do: result
+
+  defp defeated?(%{health: 0}), do: true
+  defp defeated?(%{is_alive: alive}) when is_boolean(alive), do: alive == false
+  defp defeated?(_), do: false
   end
 
   defp handle_healing_spell(game_state, spell_result, response) do

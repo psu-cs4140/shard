@@ -555,21 +555,13 @@ defmodule Shard.Workshop do
 
   defp apply_smelt(character_id, ore_item_id, ore_quantity, fuel_choice, result_item, quantity) do
     Repo.transaction(fn ->
-      case remove_item_quantity(character_id, ore_item_id, ore_quantity) do
-        :ok ->
-          case remove_item_quantity(character_id, fuel_choice.item.id, fuel_choice.quantity) do
-            :ok ->
-              case Items.add_item_to_inventory(character_id, result_item.id, quantity) do
-                {:ok, _} -> :ok
-                {:error, reason} -> Repo.rollback(reason)
-              end
-
-            {:error, reason} ->
-              Repo.rollback(reason)
-          end
-
-        {:error, reason} ->
-          Repo.rollback(reason)
+      with :ok <- remove_item_quantity(character_id, ore_item_id, ore_quantity),
+           :ok <-
+             remove_item_quantity(character_id, fuel_choice.item.id, fuel_choice.quantity),
+           {:ok, _} <- Items.add_item_to_inventory(character_id, result_item.id, quantity) do
+        :ok
+      else
+        {:error, reason} -> Repo.rollback(reason)
       end
     end)
     |> case do
