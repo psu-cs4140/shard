@@ -87,6 +87,23 @@ defmodule Shard.Repo.Migrations.AddCreateFirstCharacterAchievement do
     ON CONFLICT (name) DO NOTHING
     """
 
+    # Insert the "GEMS!" achievement (skip if already exists)
+    execute """
+    INSERT INTO achievements (name, description, icon, category, points, hidden, requirements, inserted_at, updated_at)
+    VALUES (
+      'GEMS!',
+      'Find your first precious gemstone while mining',
+      'gem-icon',
+      'mining',
+      25,
+      false,
+      '{"type": "mining_resource_obtained", "resource": "gem", "count": 1}',
+      NOW(),
+      NOW()
+    )
+    ON CONFLICT (name) DO NOTHING
+    """
+
     # Award the achievement to users who already have characters
     execute """
     INSERT INTO user_achievements (user_id, achievement_id, earned_at, progress, inserted_at, updated_at)
@@ -119,7 +136,7 @@ defmodule Shard.Repo.Migrations.AddCreateFirstCharacterAchievement do
 
     # Remove the achievements
     execute """
-    DELETE FROM achievements WHERE name IN ('Create First Character', 'Enter Beginner Bone Zone', 'Enter Vampire Manor', 'Enter Mines', 'Enter Whispering Forest')
+    DELETE FROM achievements WHERE name IN ('Create First Character', 'Enter Beginner Bone Zone', 'Enter Vampire Manor', 'Enter Mines', 'Enter Whispering Forest', 'GEMS!')
     """
   end
 end
