@@ -159,6 +159,7 @@ defmodule ShardWeb.Router do
       live "/spell_effects/new", AdminLive.SpellEffects, :new
       live "/spell_effects/:id", AdminLive.SpellEffects, :show
       live "/spell_effects/:id/edit", AdminLive.SpellEffects, :edit
+      live "/pets", AdminLive.Pets, :index
     end
   end
 

@@ -77,26 +77,28 @@ defmodule Shard.Items do
     end
   end
 
+  defp add_stackable_item(_character_id, _item, quantity, _opts) when quantity <= 0 do
+    {:ok, :noop}
+  end
+
   defp add_stackable_item(character_id, item, quantity, opts) do
-    case find_existing_stack(character_id, item.id) do
+    max_stack_size = item.max_stack_size || 99
+
+    case find_existing_stack(character_id, item.id, max_stack_size) do
+      %CharacterInventory{} = stack ->
+        available_space = max_stack_size - (stack.quantity || 0)
+        to_add = min(quantity, available_space)
+        new_quantity = (stack.quantity || 0) + to_add
+
+        with {:ok, updated_stack} <- update_inventory_quantity(stack, new_quantity) do
+          handle_remaining_stackable(character_id, item, quantity - to_add, opts, updated_stack)
+        end
+
       nil ->
-        create_inventory_entry(character_id, item, quantity, opts)
+        to_add = min(quantity, max_stack_size)
 
-      existing ->
-        new_quantity = existing.quantity + quantity
-
-        if new_quantity <= item.max_stack_size do
-          update_inventory_quantity(existing, new_quantity)
-        else
-          # Split into multiple stacks if needed
-          remaining = new_quantity - item.max_stack_size
-
-          with {:ok, _} <- update_inventory_quantity(existing, item.max_stack_size),
-               {:ok, _} <- add_stackable_item(character_id, item, remaining, opts) do
-            {:ok, :split_stack}
-          else
-            error -> error
-          end
+        with {:ok, new_stack} <- create_inventory_entry(character_id, item, to_add, opts) do
+          handle_remaining_stackable(character_id, item, quantity - to_add, opts, new_stack)
         end
     end
   end
@@ -116,12 +118,23 @@ defmodule Shard.Items do
     end
   end
 
-  defp find_existing_stack(character_id, item_id) do
+  defp find_existing_stack(character_id, item_id, max_stack_size) do
     from(ci in CharacterInventory,
-      where: ci.character_id == ^character_id and ci.item_id == ^item_id and ci.equipped == false,
+      where:
+        ci.character_id == ^character_id and ci.item_id == ^item_id and ci.equipped == false and
+          ci.quantity < ^max_stack_size,
       limit: 1
     )
     |> Repo.one()
+  end
+
+  defp handle_remaining_stackable(_character_id, _item, remaining, _opts, result)
+       when remaining <= 0 do
+    {:ok, result}
+  end
+
+  defp handle_remaining_stackable(character_id, item, remaining, opts, _result) do
+    add_stackable_item(character_id, item, remaining, opts)
   end
 
   defp create_inventory_entry(character_id, item, quantity, opts) do
