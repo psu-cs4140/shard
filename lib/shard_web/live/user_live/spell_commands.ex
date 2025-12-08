@@ -196,7 +196,6 @@ defmodule ShardWeb.UserLive.SpellCommands do
   defp defeated?(%{health: 0}), do: true
   defp defeated?(%{is_alive: alive}) when is_boolean(alive), do: alive == false
   defp defeated?(_), do: false
-  end
 
   defp handle_healing_spell(game_state, spell_result, response) do
     healing = spell_result.healing || 0
