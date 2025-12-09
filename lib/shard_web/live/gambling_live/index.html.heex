@@ -17,11 +17,65 @@
     <div class="text-center mb-8">
       <div class="text-4xl mb-2">🎲</div>
       <h1 class="text-5xl font-bold text-red-400 mb-2">
-        Fortune's Den
+        Dark Gambling Hall
       </h1>
       <p class="text-red-300/80 text-lg">
-        Risk your gold in the cursed game of fate. A new flip every 30 seconds.
+        Choose your poison in this den of vice and fortune.
       </p>
+    </div>
+
+    <%!-- Game Selection --%>
+    <div class="backdrop-blur-sm bg-gray-900/90 rounded-lg p-8 border border-red-800/50 shadow-2xl mb-8">
+      <h2 class="text-2xl font-bold text-red-300 mb-6 text-center">Select Your Game</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <%!-- Fortunes Den (Coin Flip) --%>
+        <div class="relative">
+          <button
+            phx-click="select_game"
+            phx-value-game="coin_flip"
+            class={[
+              "w-full p-6 rounded-lg border-2 transition-all transform hover:scale-105 text-left",
+              if(@selected_game == "coin_flip" || is_nil(@selected_game),
+                do: "bg-gradient-to-br from-red-900 to-red-800 border-red-500 ring-2 ring-red-400/50",
+                else: "bg-gray-800 border-gray-700 hover:border-red-700"
+              )
+            ]}
+          >
+            <div class="flex items-center gap-4">
+              <div class="text-4xl">🎲</div>
+              <div>
+                <h3 class="text-xl font-bold text-red-200 mb-1">Fortune's Den</h3>
+                <p class="text-red-300/80 text-sm">Risk your gold on fate's coin. A new flip every 30 seconds.</p>
+                <p class="text-green-400 text-xs mt-2">⚔️ 2x payout on wins</p>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        <%!-- Dark Blackjack --%>
+        <div class="relative">
+          <button
+            phx-click="select_game"
+            phx-value-game="blackjack"
+            class={[
+              "w-full p-6 rounded-lg border-2 transition-all transform hover:scale-105 text-left",
+              if(@selected_game == "blackjack",
+                do: "bg-gradient-to-br from-purple-900 to-purple-800 border-purple-500 ring-2 ring-purple-400/50",
+                else: "bg-gray-800 border-gray-700 hover:border-purple-700"
+              )
+            ]}
+          >
+            <div class="flex items-center gap-4">
+              <div class="text-4xl">🃏</div>
+              <div>
+                <h3 class="text-xl font-bold text-purple-200 mb-1">Dark Blackjack</h3>
+                <p class="text-purple-300/80 text-sm">Face the dealer in gothic halls. 4-6 players per table.</p>
+                <p class="text-green-400 text-xs mt-2">🃏 3:2 blackjack payout</p>
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
     </div>
 
     <%!-- Character Selection --%>
@@ -53,7 +107,25 @@
     </div>
 
     <%= if @selected_character_id do %>
-      <div class="grid lg:grid-cols-3 gap-6">
+      <%= if @selected_game == "blackjack" do %>
+        <%!-- Blackjack Game Interface --%>
+        <div class="text-center">
+          <div class="backdrop-blur-sm bg-gray-900/90 rounded-lg p-8 border border-purple-800/50 shadow-2xl">
+            <div class="text-6xl mb-4">🃏</div>
+            <h2 class="text-3xl font-bold text-purple-300 mb-4">Dark Blackjack</h2>
+            <p class="text-purple-300/80 mb-6">The blackjack table is under construction. Check back soon!</p>
+            <button
+              phx-click="select_game"
+              phx-value-game="coin_flip"
+              class="px-6 py-3 bg-purple-800 hover:bg-purple-700 text-purple-100 rounded-lg transition-colors border border-purple-600"
+            >
+              Return to Game Selection
+            </button>
+          </div>
+        </div>
+      <% else %>
+        <%!-- Default to Coin Flip Game --%>
+        <div class="grid lg:grid-cols-3 gap-6">
         <%!-- Left Column: Timer and Current Bet --%>
         <div class="lg:col-span-1 space-y-6">
           <%!-- Countdown Timer --%>
