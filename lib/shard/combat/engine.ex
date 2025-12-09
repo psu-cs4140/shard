@@ -243,10 +243,15 @@ defmodule Shard.Combat.Engine do
     all_events = (state_with_drops[:events] || []) ++ drop_events
 
     cond do
-      state_with_drops[:combat] && has_monsters_at_position? && !alive_monsters_here? && alive_players_here? ->
+      state_with_drops[:combat] && has_monsters_at_position? && !alive_monsters_here? &&
+          alive_players_here? ->
         # All monsters dead and players alive - victory for players
         require Logger
-        Logger.info("Victory triggered - Room: #{inspect(room_pos)}, Original monsters: #{length(original_monsters_here)}, Alive monsters: #{alive_monsters_here?}")
+
+        Logger.info(
+          "Victory triggered - Room: #{inspect(room_pos)}, Original monsters: #{length(original_monsters_here)}, Alive monsters: #{alive_monsters_here?}"
+        )
+
         {:ok, %{state_with_drops | combat: false}, all_events ++ [%{type: :victory}]}
 
       state_with_drops[:combat] && has_monsters_at_position? && !alive_players_here? ->
@@ -329,30 +334,32 @@ defmodule Shard.Combat.Engine do
 
   defp process_monster_drops(state, monsters) do
     # Find monsters that just died (have is_alive: false but haven't been processed yet)
-    newly_dead_monsters = 
+    newly_dead_monsters =
       monsters
       |> Enum.with_index()
-      |> Enum.filter(fn {monster, _index} -> 
+      |> Enum.filter(fn {monster, _index} ->
         not alive?(monster) and not Map.get(monster, :drops_processed, false)
       end)
 
     # Process drops for each newly dead monster
-    {updated_state, drop_events} = 
-      Enum.reduce(newly_dead_monsters, {state, []}, fn {monster, monster_index}, {acc_state, acc_events} ->
+    {updated_state, drop_events} =
+      Enum.reduce(newly_dead_monsters, {state, []}, fn {monster, monster_index},
+                                                       {acc_state, acc_events} ->
         # Mark this monster as having drops processed
-        updated_monsters = List.update_at(acc_state[:monsters], monster_index, fn m ->
-          Map.put(m, :drops_processed, true)
-        end)
-        
+        updated_monsters =
+          List.update_at(acc_state[:monsters], monster_index, fn m ->
+            Map.put(m, :drops_processed, true)
+          end)
+
         temp_state = Map.put(acc_state, :monsters, updated_monsters)
-        
+
         # Process potential loot drops
         case Map.get(monster, :potential_loot_drops, %{}) do
           drops when map_size(drops) > 0 ->
             # Generate drops and create events
             {final_state, events} = generate_monster_drops(temp_state, monster, drops)
             {final_state, acc_events ++ events}
-          
+
           _ ->
             # No drops to process
             {temp_state, acc_events}
@@ -364,34 +371,36 @@ defmodule Shard.Combat.Engine do
 
   defp generate_monster_drops(state, monster, potential_drops) do
     # Get players at the same position as the monster
-    players_here = 
+    players_here =
       state[:players]
       |> List.wrap()
-      |> Enum.filter(fn p -> 
+      |> Enum.filter(fn p ->
         p[:position] == monster[:position] and alive_player?(p)
       end)
 
     # Generate actual drops based on potential_loot_drops
-    actual_drops = 
+    actual_drops =
       potential_drops
       |> Enum.flat_map(fn {item_id, drop_chance} ->
         # Convert drop_chance to integer if it's a string
-        chance = case drop_chance do
-          chance when is_integer(chance) -> chance
-          chance when is_binary(chance) -> String.to_integer(chance)
-          _ -> 0
-        end
-        
+        chance =
+          case drop_chance do
+            chance when is_integer(chance) -> chance
+            chance when is_binary(chance) -> String.to_integer(chance)
+            _ -> 0
+          end
+
         # Roll for drop (1-100)
         if :rand.uniform(100) <= chance do
-          [{item_id, 1}] # Drop 1 of this item
+          # Drop 1 of this item
+          [{item_id, 1}]
         else
           []
         end
       end)
 
     # Create drop events for each item that dropped
-    drop_events = 
+    drop_events =
       actual_drops
       |> Enum.map(fn {item_id, quantity} ->
         %{
