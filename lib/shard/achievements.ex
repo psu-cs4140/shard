@@ -215,11 +215,29 @@ defmodule Shard.Achievements do
   This should be called when a user enters a zone.
   """
   def check_zone_entry_achievements(user_id, zone_name) do
+    # Debug logging to see what zone names we're getting
+    require Logger
+    Logger.info("Checking zone entry achievement for user #{user_id}, zone: '#{zone_name}'")
+
     case zone_name do
       "Beginner Bone Zone" ->
+        Logger.info("Awarding Beginner Bone Zone achievement")
         award_achievement_by_name(user_id, "Enter Beginner Bone Zone")
 
+      "Vampire's Manor" ->
+        Logger.info("Awarding Vampire Manor achievement")
+        award_achievement_by_name(user_id, "Enter Vampire Manor")
+
+      "Mines" ->
+        Logger.info("Awarding Mines achievement")
+        award_achievement_by_name(user_id, "Enter Mines")
+
+      "Whispering Forest" ->
+        Logger.info("Awarding Whispering Forest achievement")
+        award_achievement_by_name(user_id, "Enter Whispering Forest")
+
       _ ->
+        Logger.info("No achievement found for zone: '#{zone_name}'")
         {:ok, :no_achievement}
     end
   end
@@ -277,6 +295,67 @@ defmodule Shard.Achievements do
       where: ua.user_id == ^user_id and a.name == ^achievement_name
     )
     |> Repo.exists?()
+  end
+
+  @doc """
+  Checks and awards mining resource achievements for a user.
+  This should be called when a user obtains mining resources.
+  """
+  def check_mining_resource_achievements(user_id, resources) do
+    # Check for first gem achievement
+    if Map.get(resources, :gem, 0) > 0 do
+      award_achievement_by_name(user_id, "GEMS!")
+    end
+
+    # Check for first stone achievement
+    if Map.get(resources, :stone, 0) > 0 do
+      award_achievement_by_name(user_id, "Entering the Stone Age")
+    end
+
+    :ok
+  end
+
+  @doc """
+  Checks and awards chopping resource achievements for a user.
+  This should be called when a user obtains chopping resources.
+  """
+  def check_chopping_resource_achievements(user_id, resources) do
+    # Check for first wood achievement
+    if Map.get(resources, :wood, 0) > 0 do
+      award_achievement_by_name(user_id, "Acquiring Lumber")
+    end
+
+    # Check for first resin achievement
+    if Map.get(resources, :resin, 0) > 0 do
+      award_achievement_by_name(user_id, "A Hint of Prehistoric Life")
+    end
+
+    :ok
+  end
+
+  @doc """
+  Checks and awards gambling achievements for a user.
+  This should be called when a user wins or loses a bet.
+  """
+  def check_gambling_achievements(user_id, result) do
+    case result do
+      :won ->
+        award_achievement_by_name(user_id, "Lucky Gambler")
+
+      :lost ->
+        award_achievement_by_name(user_id, "Learning Experience")
+
+      _ ->
+        :ok
+    end
+  end
+
+  @doc """
+  Checks and awards combat achievements for a user.
+  This should be called when a user kills a monster.
+  """
+  def check_combat_achievements(user_id) do
+    award_achievement_by_name(user_id, "First Blood")
   end
 
   @doc """

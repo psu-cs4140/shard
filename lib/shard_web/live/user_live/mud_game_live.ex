@@ -4,6 +4,8 @@ defmodule ShardWeb.MudGameLive do
   @moduledoc false
   use ShardWeb, :live_view
 
+  alias Shard.Mining
+
   # import ShardWeb.UserLive.MapHelpers
   import ShardWeb.UserLive.Movement
   #  import ShardWeb.UserLive.ItemHelpers
@@ -59,7 +61,10 @@ defmodule ShardWeb.MudGameLive do
       Phoenix.PubSub.subscribe(Shard.PubSub, "player_presence")
 
       # Initialize online players list
-      socket = assign(socket, online_players: [], zone_name: zone.name)
+      socket =
+        assign(socket, online_players: [], zone_name: zone.name)
+        |> maybe_add_zone_welcome(zone)
+        |> maybe_add_mines_welcome(zone)
 
       # Request current online players from existing players
       Phoenix.PubSub.broadcast(
@@ -155,41 +160,23 @@ defmodule ShardWeb.MudGameLive do
     end
   end
 
-  def handle_event("submit_chat", params, socket) do
-    handle_submit_chat(params, socket)
-  end
+  def handle_event("submit_chat", params, socket), do: handle_submit_chat(params, socket)
 
-  def handle_event("update_chat", params, socket) do
-    handle_update_chat(params, socket)
-  end
+  def handle_event("update_chat", params, socket), do: handle_update_chat(params, socket)
 
   def handle_event("save_character_stats", params, socket) do
     ShardWeb.UserLive.MudGameHandlers.handle_save_character_stats(params, socket)
   end
 
-  def handle_event("use_hotbar_item", params, socket) do
-    {:noreply, socket, updated_game_state, terminal_state} =
-      handle_use_hotbar_item(params, socket)
+  def handle_event("use_hotbar_item", params, socket), do: handle_use_hotbar_item(params, socket)
+  def handle_event("equip_item", params, socket), do: handle_equip_item(params, socket)
+  def handle_event("drop_item", params, socket), do: handle_drop_item(params, socket)
 
-    {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
-  end
+  def handle_event("show_hotbar_modal", params, socket),
+    do: handle_show_hotbar_modal(params, socket)
 
-  def handle_event("equip_item", params, socket) do
-    {:noreply, socket, updated_game_state, terminal_state} = handle_equip_item(params, socket)
-    {:noreply, assign(socket, game_state: updated_game_state, terminal_state: terminal_state)}
-  end
-
-  def handle_event("drop_item", params, socket) do
-    handle_drop_item(params, socket)
-  end
-
-  def handle_event("show_hotbar_modal", params, socket) do
-    handle_show_hotbar_modal(params, socket)
-  end
-
-  def handle_event("set_hotbar_from_modal", params, socket) do
-    handle_set_hotbar_from_modal(params, socket)
-  end
+  def handle_event("set_hotbar_from_modal", params, socket),
+    do: handle_set_hotbar_from_modal(params, socket)
 
   # (C) Handle clicking an exit button to move rooms
   @impl true
@@ -206,6 +193,120 @@ defmodule ShardWeb.MudGameLive do
   end
 
   @impl true
+  def handle_info(:mine_tick, socket) do
+    socket =
+      case {socket.assigns.game_state.mining_active,
+            Mining.apply_mining_ticks(socket.assigns.game_state.character)} do
+        {true,
+         {:ok,
+          %{
+            character: char,
+            mining_inventory: _inv,
+            ticks_applied: _ticks,
+            gained_resources: gained,
+            pet_messages: pet_msg
+          }}}
+        when map_size(gained) > 0 ->
+          messages =
+            Enum.flat_map(gained, fn
+              {:stone, qty} when qty > 0 -> ["You have acquired #{qty} Stone!"]
+              {:coal, qty} when qty > 0 -> ["You have acquired #{qty} Coal!"]
+              {:copper, qty} when qty > 0 -> ["You have acquired #{qty} Copper Ore!"]
+              {:iron, qty} when qty > 0 -> ["You have acquired #{qty} Iron Ore!"]
+              {:gem, qty} when qty > 0 -> ["You have acquired #{qty} Gemstone!"]
+              _ -> []
+            end)
+
+          socket
+          |> assign(:game_state, Map.put(socket.assigns.game_state, :character, char))
+          |> add_message(Enum.join(messages ++ (pet_msg || []), " "))
+          |> assign(:game_state, refresh_inventory(socket.assigns.game_state, char))
+
+        {true, {:ok, _}} ->
+          socket
+
+        _ ->
+          socket
+      end
+
+    if socket.assigns.game_state.mining_active, do: schedule_mining_tick()
+    {:noreply, socket}
+  end
+
+  def handle_info({:mining_started, _ticks}, socket) do
+    socket =
+      socket
+      |> assign(:game_state, %{socket.assigns.game_state | mining_active: true})
+
+    schedule_mining_tick()
+    {:noreply, socket}
+  end
+
+  def handle_info(:mining_stopped, socket) do
+    socket =
+      socket
+      |> assign(:game_state, %{socket.assigns.game_state | mining_active: false})
+
+    {:noreply, socket}
+  end
+
+  def handle_info(:chopping_tick, socket) do
+    socket =
+      case {socket.assigns.game_state.chopping_active,
+            Shard.Forest.apply_chopping_ticks(socket.assigns.game_state.character)} do
+        {true,
+         {:ok,
+          %{
+            character: char,
+            chopping_inventory: _inv,
+            ticks_applied: _ticks,
+            gained_resources: gained,
+            pet_messages: pet_msg
+          }}}
+        when map_size(gained) > 0 ->
+          messages =
+            Enum.flat_map(gained, fn
+              {:wood, qty} when qty > 0 -> ["You have acquired #{qty} Wood!"]
+              {:sticks, qty} when qty > 0 -> ["You have acquired #{qty} Stick!"]
+              {:seeds, qty} when qty > 0 -> ["You have acquired #{qty} Seed!"]
+              {:mushrooms, qty} when qty > 0 -> ["You have acquired #{qty} Mushroom!"]
+              {:resin, qty} when qty > 0 -> ["You have acquired #{qty} Resin!"]
+              _ -> []
+            end)
+
+          socket
+          |> assign(:game_state, Map.put(socket.assigns.game_state, :character, char))
+          |> add_message(Enum.join(messages ++ (pet_msg || []), " "))
+          |> assign(:game_state, refresh_inventory(socket.assigns.game_state, char))
+
+        {true, {:ok, _}} ->
+          socket
+
+        _ ->
+          socket
+      end
+
+    if socket.assigns.game_state.chopping_active, do: schedule_chopping_tick()
+    {:noreply, socket}
+  end
+
+  def handle_info({:chopping_started, _ticks}, socket) do
+    socket =
+      socket
+      |> assign(:game_state, %{socket.assigns.game_state | chopping_active: true})
+
+    schedule_chopping_tick()
+    {:noreply, socket}
+  end
+
+  def handle_info(:chopping_stopped, socket) do
+    socket =
+      socket
+      |> assign(:game_state, %{socket.assigns.game_state | chopping_active: false})
+
+    {:noreply, socket}
+  end
+
   def handle_info({:noise, text}, socket) do
     case handle_noise_info({:noise, text}, socket) do
       {:noreply, socket, terminal_state} ->
@@ -304,6 +405,83 @@ defmodule ShardWeb.MudGameLive do
 
   def handle_info({:player_response, player_data, requesting_character_id}, socket) do
     handle_player_response(player_data, requesting_character_id, socket)
+  end
+
+  defp schedule_mining_tick do
+    Process.send_after(self(), :mine_tick, 6_000)
+  end
+
+  defp schedule_chopping_tick do
+    Process.send_after(self(), :chopping_tick, 6_000)
+  end
+
+  defp refresh_inventory(game_state, character) do
+    %{
+      game_state
+      | character: character,
+        inventory_items: ShardWeb.UserLive.CharacterHelpers.load_character_inventory(character)
+    }
+  end
+
+  defp pet_chance(level) do
+    lvl = Kernel.max(level || 1, 1)
+    Kernel.min(10 + (lvl - 1), 50)
+  end
+
+  defp maybe_add_zone_welcome(socket, zone) do
+    case zone.slug do
+      "mines" ->
+        add_message(
+          socket,
+          [
+            "You Descend into the dark, echoing mines.",
+            "The walls shimmer with minerals waiting to be unearthed.",
+            "Everything you gather here can be sold for gold once you return to town.",
+            "To begin mining, type mine start",
+            "To pack up and leave, type mine stop",
+            if(socket.assigns.game_state.character.has_pet_rock,
+              do:
+                "Your Pet Rock is with you. (Level #{socket.assigns.game_state.character.pet_rock_level} – #{pet_chance(socket.assigns.game_state.character.pet_rock_level)}% chance to double your mining haul.)",
+              else: nil
+            )
+          ]
+          |> Enum.reject(&is_nil/1)
+          |> Enum.join("\n")
+        )
+
+      "whispering_forest" ->
+        add_message(
+          socket,
+          [
+            "You step foot into the Whispering Forest.",
+            "Your nose fills with the scent of pine and fresh earth.",
+            "Here you can chop wood, gather sticks and seeds, and even find mushrooms and rare resin that you can collect and sell for gold.",
+            "Type chop start to start chopping",
+            "Type chop stop to stop chopping",
+            if(socket.assigns.game_state.character.has_shroomling,
+              do:
+                "Your Shroomling companion bounces beside you. (Level #{socket.assigns.game_state.character.shroomling_level} – #{pet_chance(socket.assigns.game_state.character.shroomling_level)}% chance to double your forest harvest.)",
+              else: nil
+            )
+          ]
+          |> Enum.reject(&is_nil/1)
+          |> Enum.join("\n")
+        )
+
+      _ ->
+        socket
+    end
+  end
+
+  defp maybe_add_mines_welcome(socket, zone) do
+    if zone.slug == "mines" do
+      add_message(
+        socket,
+        "You Descend into the dark, echoing mines.\nThe walls shimmer with minerals waiting to be unearthed.\nEverything you gather here can be sold for gold once you return to town.\nTo begin mining, type mine start\nTo pack up and leave, type mine stop"
+      )
+    else
+      socket
+    end
   end
 
   @impl true

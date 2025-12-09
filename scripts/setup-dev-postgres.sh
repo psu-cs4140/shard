@@ -6,7 +6,7 @@
 set -e # Exit on any error
 
 # Configuration
-PG_HBA_FILE="/etc/postgresql/16/main/pg_hba.conf"
+PG_HBA_FILE="/etc/postgresql/14/main/pg_hba.conf"
 POSTGRES_SERVICE="postgresql"
 USERNAME="shard"
 PASSWORD="Chu7eeg0iih2yeiN"

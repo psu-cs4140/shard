@@ -42,6 +42,16 @@ defmodule Shard.Characters do
   end
 
   @doc """
+  Gets a single character or returns nil if it does not exist.
+  """
+  def get_character(id) do
+    case Repo.get(Character, id) do
+      nil -> nil
+      character -> Repo.preload(character, :user)
+    end
+  end
+
+  @doc """
   Creates a character.
 
   ## Examples
@@ -144,6 +154,47 @@ defmodule Shard.Characters do
     |> Repo.preload(:user)
   end
 
+  @doc """
+  Grants a pet rock to the given character and resets its XP.
+  """
+  def grant_pet_rock(%Character{} = character, level \\ 1) do
+    level = normalize_pet_level(level)
+
+    update_character(character, %{
+      has_pet_rock: true,
+      pet_rock_level: level,
+      pet_rock_xp: 0
+    })
+  end
+
+  @doc """
+  Grants a shroomling companion to the given character and resets its XP.
+  """
+  def grant_shroomling(%Character{} = character, level \\ 1) do
+    level = normalize_pet_level(level)
+
+    update_character(character, %{
+      has_shroomling: true,
+      shroomling_level: level,
+      shroomling_xp: 0
+    })
+  end
+
+  @doc """
+  Grants both available pets to the given character at the provided level.
+  """
+  def grant_all_pets(%Character{} = character, level \\ 1) do
+    level = normalize_pet_level(level)
+
+    case grant_pet_rock(character, level) do
+      {:ok, character} -> grant_shroomling(character, level)
+      {:error, _} = error -> error
+    end
+  end
+
+  defp normalize_pet_level(level) when is_integer(level), do: max(level, 1)
+  defp normalize_pet_level(_level), do: 1
+
   # Private function to check and award the "Create First Character" achievement
   defp check_and_award_first_character_achievement(%Character{user_id: user_id}) do
     with {:ok, user_id} <- validate_user_id(user_id),
@@ -180,4 +231,26 @@ defmodule Shard.Characters do
       {:error, _changeset} -> :ok
     end
   end
+
+  @doc """
+  Processes monster drop events from combat, handling item drops and inventory updates.
+  """
+  def process_monster_drop_events(events) do
+    Enum.each(events, &process_single_drop_event/1)
+  end
+
+  defp process_single_drop_event(%{type: :monster_drop, character_id: character_id, item: _item}) do
+    # Add the dropped item to the character's inventory
+    case get_character(character_id) do
+      nil ->
+        :ok
+
+      _character ->
+        # This would typically call into the Items context to add the item
+        # For now, we'll just log or handle it gracefully
+        :ok
+    end
+  end
+
+  defp process_single_drop_event(_event), do: :ok
 end

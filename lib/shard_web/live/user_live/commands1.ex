@@ -10,15 +10,15 @@ defmodule ShardWeb.UserLive.Commands1 do
   # import ShardWeb.UserLive.Commands2,
   #   except: [execute_talk_command: 2, execute_deliver_quest_command: 2, execute_quest_command: 2]
 
-  import ShardWeb.UserLive.Commands3
-
   import ShardWeb.UserLive.NpcCommands
   import ShardWeb.UserLive.CommandParsers
+  import ShardWeb.UserLive.PokeCommands
 
   #  import ShardWeb.UserLive.ItemCommands
 
   alias Shard.Map, as: GameMap
   alias Shard.Repo
+  alias Shard.Mining
   import Ecto.Query
   # alias Shard.Items.Item
 
@@ -27,6 +27,18 @@ defmodule ShardWeb.UserLive.Commands1 do
     downcased_command = String.downcase(command)
 
     cond do
+      downcased_command == "mine start" ->
+        start_mining(game_state)
+
+      downcased_command == "mine stop" ->
+        stop_mining(game_state)
+
+      downcased_command == "chop start" ->
+        start_chopping(game_state)
+
+      downcased_command == "chop stop" ->
+        stop_chopping(game_state)
+
       downcased_command == "help" ->
         response = [
           "Available commands:",
@@ -364,7 +376,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
                           :error ->
                             # Check if it's a poke command
-                            case parse_poke_command(command) do
+                            case ShardWeb.UserLive.CommandParsers.parse_poke_command(command) do
                               {:ok, character_name} ->
                                 execute_poke_command(game_state, character_name)
 
@@ -420,6 +432,107 @@ defmodule ShardWeb.UserLive.Commands1 do
                 end
             end
         end
+    end
+  end
+
+  defp start_mining(game_state) do
+    zone = GameMap.get_zone!(game_state.character.current_zone_id)
+
+    if zone.slug != "mines" do
+      {["You need to be in the Mines to start mining."], game_state}
+    else
+      with {:ok, %{character: char, mining_inventory: _inv, ticks_applied: ticks}} <-
+             Mining.apply_mining_ticks(game_state.character),
+           {:ok, mining_char} <- Mining.start_mining(char) do
+        send(self(), {:mining_started, ticks})
+
+        updated_game_state =
+          %{game_state | character: mining_char, mining_active: true}
+          |> refresh_inventory()
+
+        message = "You swing your pickaxe and begin mining."
+
+        {[message], updated_game_state}
+      else
+        _ -> {["Failed to start mining."], game_state}
+      end
+    end
+  end
+
+  defp stop_mining(game_state) do
+    if game_state.mining_active do
+      case Mining.stop_mining(game_state.character) do
+        {:ok, %{character: char, mining_inventory: _inv, ticks_applied: _ticks}} ->
+          send(self(), :mining_stopped)
+
+          updated_game_state =
+            %{game_state | character: char, mining_active: false}
+            |> refresh_inventory()
+
+          message = "You stop to rest, laying your pickaxe down and wiping your brow."
+
+          {[message], updated_game_state}
+
+        _ ->
+          {["Failed to stop mining."], game_state}
+      end
+    else
+      {["You are not mining."], game_state}
+    end
+  end
+
+  defp refresh_inventory(game_state) do
+    %{
+      game_state
+      | inventory_items:
+          ShardWeb.UserLive.CharacterHelpers.load_character_inventory(game_state.character)
+    }
+  end
+
+  defp start_chopping(game_state) do
+    zone = GameMap.get_zone!(game_state.character.current_zone_id)
+
+    if zone.slug != "whispering_forest" do
+      {["You need to be in the Whispering Forest to start chopping."], game_state}
+    else
+      with {:ok, %{character: char, chopping_inventory: _inv, ticks_applied: ticks}} <-
+             Shard.Forest.apply_chopping_ticks(game_state.character),
+           {:ok, chopping_char} <- Shard.Forest.start_chopping(char) do
+        send(self(), {:chopping_started, ticks})
+
+        updated_game_state =
+          %{game_state | character: chopping_char, chopping_active: true}
+          |> refresh_inventory()
+
+        message = "You raise your axe and begin chopping."
+
+        {[message], updated_game_state}
+      else
+        _ -> {["Failed to start chopping."], game_state}
+      end
+    end
+  end
+
+  defp stop_chopping(game_state) do
+    if game_state.chopping_active do
+      case Shard.Forest.stop_chopping(game_state.character) do
+        {:ok, %{character: char, chopping_inventory: _inv, ticks_applied: _ticks}} ->
+          send(self(), :chopping_stopped)
+
+          updated_game_state =
+            %{game_state | character: char, chopping_active: false}
+            |> refresh_inventory()
+
+          message =
+            "You lower your axe, brush off the wood chips from your clothes, and catch your breath."
+
+          {[message], updated_game_state}
+
+        _ ->
+          {["Failed to stop chopping."], game_state}
+      end
+    else
+      {["You are not chopping."], game_state}
     end
   end
 
@@ -504,9 +617,7 @@ defmodule ShardWeb.UserLive.Commands1 do
           {["Your inventory is empty."], game_state}
         else
           available_items =
-            game_state.inventory_items
-            |> Enum.map(&get_item_display_name/1)
-            |> Enum.join(", ")
+            Enum.map_join(game_state.inventory_items, ", ", &get_item_display_name/1)
 
           response = [
             "You don't have an item named '#{item_name}' in your inventory.",

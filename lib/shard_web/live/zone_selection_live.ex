@@ -44,6 +44,8 @@ defmodule ShardWeb.ZoneSelectionLive do
       else
         %{}
       end
+      |> ensure_special_zones_accessible(zones)
+      |> ensure_mines_accessible(zones)
 
     {:noreply,
      socket
@@ -56,6 +58,7 @@ defmodule ShardWeb.ZoneSelectionLive do
   @impl true
   def render(assigns) do
     ~H"""
+    <Layouts.flash_group flash={@flash} />
     <div class="min-h-screen bg-black">
       <div class="container mx-auto px-6 py-12 max-w-7xl">
         <.header>
@@ -266,60 +269,166 @@ defmodule ShardWeb.ZoneSelectionLive do
          |> put_flash(:error, "Zone '#{zone_name}' not found. Please try again.")}
 
       zone ->
-        # Check if user has access to this zone
-        zone_progress = socket.assigns.zone_progress_map[zone.id] || "locked"
+        cond do
+          zone.slug == "mines" ->
+            handle_mines_entry(socket, character, zone)
 
-        if zone_progress in ["in_progress", "completed"] do
-          # For singleplayer, we can directly use the zone
-          # Update character's current zone to point to the zone
-          case Characters.update_character(character, %{current_zone_id: zone.id}) do
-            {:ok, updated_character} ->
-              handle_admin_stick_granting(character)
+          zone.slug == "whispering_forest" ->
+            handle_forest_entry(socket, character, zone, instance_type)
 
-              # Check for zone entry achievements
-              handle_zone_entry_achievement(updated_character, zone)
-
-              # Get the first room in the zone to start at
-              rooms = Map.list_rooms_by_zone(zone.id)
-
-              starting_room =
-                Enum.min_by(
-                  rooms,
-                  fn room ->
-                    {room.x_coordinate, room.y_coordinate, room.z_coordinate}
-                  end,
-                  fn -> nil end
-                )
-
-              if starting_room do
-                # Redirect to play interface with zone context
-                {:noreply,
-                 socket
-                 |> put_flash(:info, "Entering #{zone.name} (#{instance_type})...")
-                 |> push_navigate(
-                   to: ~p"/play/#{updated_character.id}?zone_id=#{zone.id}&refresh_inventory=true"
-                 )}
-              else
-                {:noreply,
-                 socket
-                 |> put_flash(
-                   :error,
-                   "This zone has no rooms yet. Please notify an administrator."
-                 )}
-              end
-
-            {:error, _changeset} ->
-              {:noreply,
-               socket
-               |> put_flash(:error, "Failed to enter zone. Please try again.")}
-          end
-        else
-          {:noreply,
-           socket
-           |> put_flash(:error, "This zone is locked. Complete previous zones to unlock it.")}
+          true ->
+            handle_standard_zone_entry(socket, character, zone, instance_type)
         end
     end
   end
+
+  # Ensure Mines and Whispering Forest are always accessible regardless of progress or level
+  defp ensure_special_zones_accessible(progress_map, zones) do
+    progress_map
+    |> allow_zone(zones, "mines")
+    |> allow_zone(zones, "whispering_forest")
+  end
+
+  defp allow_zone(progress_map, zones, slug) do
+    case Enum.find(zones, &(&1.slug == slug)) do
+      nil -> progress_map
+      %{id: id} -> Elixir.Map.put(progress_map, id, "in_progress")
+    end
+  end
+
+  # Handle entry to the Mines zone (mining system)
+  defp handle_mines_entry(socket, character, zone) do
+    case Characters.update_character(character, %{current_zone_id: zone.id}) do
+      {:ok, updated_character} ->
+        # Check for zone entry achievements
+        handle_zone_entry_achievement(updated_character, zone)
+
+        pet_line =
+          if updated_character.has_pet_rock do
+            chance = pet_chance(updated_character.pet_rock_level)
+
+            "\nYour Pet Rock is with you. (Level #{updated_character.pet_rock_level} – #{chance}% chance to double your mining haul.)"
+          else
+            ""
+          end
+
+        {:noreply,
+         socket
+         |> assign(:character, updated_character)
+         |> put_flash(
+           :info,
+           "You Descend into the dark, echoing mines.\nThe walls shimmer with minerals waiting to be unearthed.\nEverything you gather here can be sold for gold once you return to town.\nTo begin mining, type mine start\nTo pack up and leave, type mine stop" <>
+             pet_line
+         )
+         |> push_navigate(
+           to: ~p"/play/#{updated_character.id}?zone_id=#{zone.id}&refresh_inventory=true"
+         )}
+
+      {:error, _changeset} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to enter the Mines. Please try again.")}
+    end
+  end
+
+  defp handle_forest_entry(socket, character, zone, _instance_type) do
+    case Characters.update_character(character, %{current_zone_id: zone.id}) do
+      {:ok, updated_character} ->
+        # Check for zone entry achievements
+        handle_zone_entry_achievement(updated_character, zone)
+
+        pet_line =
+          if updated_character.has_shroomling do
+            chance = pet_chance(updated_character.shroomling_level)
+
+            "\nYour Shroomling companion bounces beside you. (Level #{updated_character.shroomling_level} – #{chance}% chance to double your forest harvest.)"
+          else
+            ""
+          end
+
+        {:noreply,
+         socket
+         |> put_flash(
+           :info,
+           "You step foot into the Whispering Forest.\nYour nose fills with the scent of pine and fresh earth.\nHere you can chop wood, gather sticks and seeds, and even find mushrooms and rare resin that you can collect and sell for gold.\nType chop start to start chopping\nType chop stop to stop chopping" <>
+             pet_line
+         )
+         |> push_navigate(
+           to: ~p"/play/#{updated_character.id}?zone_id=#{zone.id}&refresh_inventory=true"
+         )}
+
+      {:error, _changeset} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to enter the Whispering Forest. Please try again.")}
+    end
+  end
+
+  # Ensure Mines is always accessible regardless of progress or level
+  defp ensure_mines_accessible(progress_map, zones) do
+    case Enum.find(zones, &(&1.slug == "mines")) do
+      nil -> progress_map
+      %{id: id} -> Elixir.Map.put(progress_map, id, "in_progress")
+    end
+  end
+
+  # Handle entry to standard zones (dungeons, etc.)
+  defp handle_standard_zone_entry(socket, character, zone, instance_type) do
+    # Check if user has access to this zone
+    zone_progress = socket.assigns.zone_progress_map[zone.id] || "locked"
+
+    if zone_progress in ["in_progress", "completed"] do
+      # For singleplayer, we can directly use the zone
+      # Update character's current zone to point to the zone
+      case Characters.update_character(character, %{current_zone_id: zone.id}) do
+        {:ok, updated_character} ->
+          handle_admin_stick_granting(character)
+
+          # Check for zone entry achievements
+          handle_zone_entry_achievement(updated_character, zone)
+
+          # Get the first room in the zone to start at
+          rooms = Map.list_rooms_by_zone(zone.id)
+
+          starting_room =
+            Enum.min_by(
+              rooms,
+              fn room ->
+                {room.x_coordinate, room.y_coordinate, room.z_coordinate}
+              end,
+              fn -> nil end
+            )
+
+          if starting_room do
+            # Redirect to play interface with zone context
+            {:noreply,
+             socket
+             |> put_flash(:info, "Entering #{zone.name} (#{instance_type})...")
+             |> push_navigate(
+               to: ~p"/play/#{updated_character.id}?zone_id=#{zone.id}&refresh_inventory=true"
+             )}
+          else
+            {:noreply,
+             socket
+             |> put_flash(
+               :error,
+               "This zone has no rooms yet. Please notify an administrator."
+             )}
+          end
+
+        {:error, _changeset} ->
+          {:noreply,
+           socket
+           |> put_flash(:error, "Failed to enter zone. Please try again.")}
+      end
+    else
+      {:noreply,
+       socket
+       |> put_flash(:error, "This zone is locked. Complete previous zones to unlock it.")}
+    end
+  end
+
+  defp pet_chance(level), do: min(10 + (level - 1), 50)
 
   # Helper function to handle admin stick granting
   defp handle_admin_stick_granting(character) do

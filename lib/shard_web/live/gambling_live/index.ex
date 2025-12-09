@@ -124,10 +124,10 @@ defmodule ShardWeb.GamblingLive.Index do
 
   @impl true
   def handle_info({:new_flip, %{flip_id: flip_id, next_flip_at: next_flip_at}}, socket) do
+    # Don't reset last_result if the modal is still showing - let user close it manually
     socket =
       socket
       |> assign(:flip_info, %{flip_id: flip_id, next_flip_at: next_flip_at})
-      |> assign(:last_result, nil)
       |> load_flip_data()
 
     {:noreply, socket}
@@ -189,9 +189,9 @@ defmodule ShardWeb.GamblingLive.Index do
 
   def format_countdown(seconds), do: "0:#{String.pad_leading(Integer.to_string(seconds), 2, "0")}"
 
-  def result_color("won"), do: "text-green-600"
-  def result_color("lost"), do: "text-red-600"
-  def result_color(_), do: "text-slate-600"
+  def result_color("won"), do: "text-green-400 bg-green-900/30 border-green-700/50"
+  def result_color("lost"), do: "text-red-500 bg-red-900/30 border-red-700/50"
+  def result_color(_), do: "text-gray-400 bg-gray-800/50 border-gray-600/50"
 
   def result_label("won"), do: "Won"
   def result_label("lost"), do: "Lost"
