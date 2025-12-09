@@ -557,82 +557,7 @@ defmodule Shard.Gambling.BlackjackServer do
     Map.put(games, game_id, new_game_state)
   end
 
-  # Handle sequential dealing
-  @impl true
-  def handle_info({:deal_next, game_id}, state) do
-    case Map.get(state.games, game_id) do
-      nil ->
-        {:noreply, state}
 
-      %{dealing_queue: []} = _game_state ->
-        # Dealing finished, start player turns
-        {:noreply, %{state | games: start_player_turns(game_id, state.games)}}
-
-      %{dealing_queue: [next_target | rest_queue]} = game_state ->
-        # Deal card to next target
-        {target_id, visibility} = next_target
-
-        # Pop card from deck
-        [card | remaining_deck] = game_state.deck
-
-        updated_game_state =
-          case target_id do
-            :dealer ->
-              # Update dealer hand in memory and DB
-              current_hand = game_state.game.dealer_hand
-              new_hand = current_hand ++ [card]
-
-              Repo.update!(BlackjackGame.changeset(game_state.game, %{dealer_hand: new_hand}))
-
-              game_state_updated = %{
-                game_state
-                | deck: remaining_deck,
-                  dealing_queue: rest_queue,
-                  game: %{game_state.game | dealer_hand: new_hand}
-              }
-
-              # Broadcast (mask card if face_down)
-              masked_card =
-                if visibility == :face_down, do: %{rank: "hidden", suit: "hidden"}, else: card
-
-              broadcast_update(game_id, {:card_dealt, %{target: :dealer, card: masked_card}})
-
-              game_state_updated
-
-            player_id ->
-              # Update player hand
-              current_hand = Map.get(game_state.hands, player_id)
-              new_hand_cards = current_hand.hand_cards ++ [card]
-
-              # Update DB
-              Repo.update!(BlackjackHand.changeset(current_hand, %{hand_cards: new_hand_cards}))
-
-              # Update memory
-              updated_hands =
-                Map.put(
-                  game_state.hands,
-                  player_id,
-                  %{current_hand | hand_cards: new_hand_cards}
-                )
-
-              game_state_updated = %{
-                game_state
-                | deck: remaining_deck,
-                  dealing_queue: rest_queue,
-                  hands: updated_hands
-              }
-
-              broadcast_update(game_id, {:card_dealt, %{target: player_id, card: card}})
-
-              game_state_updated
-          end
-
-        # Schedule next card
-        Process.send_after(__MODULE__, {:deal_next, game_id}, 800)
-
-        {:noreply, %{state | games: Map.put(state.games, game_id, updated_game_state)}}
-    end
-  end
 
   defp start_player_turns(game_id, games) do
     game_state = Map.get(games, game_id)
@@ -784,6 +709,83 @@ defmodule Shard.Gambling.BlackjackServer do
     Map.put(games, game_id, new_game_state)
   end
 
+  # Handle sequential dealing
+  @impl true
+  def handle_info({:deal_next, game_id}, state) do
+    case Map.get(state.games, game_id) do
+      nil ->
+        {:noreply, state}
+
+      %{dealing_queue: []} = _game_state ->
+        # Dealing finished, start player turns
+        {:noreply, %{state | games: start_player_turns(game_id, state.games)}}
+
+      %{dealing_queue: [next_target | rest_queue]} = game_state ->
+        # Deal card to next target
+        {target_id, visibility} = next_target
+
+        # Pop card from deck
+        [card | remaining_deck] = game_state.deck
+
+        updated_game_state =
+          case target_id do
+            :dealer ->
+              # Update dealer hand in memory and DB
+              current_hand = game_state.game.dealer_hand
+              new_hand = current_hand ++ [card]
+
+              Repo.update!(BlackjackGame.changeset(game_state.game, %{dealer_hand: new_hand}))
+
+              game_state_updated = %{
+                game_state
+                | deck: remaining_deck,
+                  dealing_queue: rest_queue,
+                  game: %{game_state.game | dealer_hand: new_hand}
+              }
+
+              # Broadcast (mask card if face_down)
+              masked_card =
+                if visibility == :face_down, do: %{rank: "hidden", suit: "hidden"}, else: card
+
+              broadcast_update(game_id, {:card_dealt, %{target: :dealer, card: masked_card}})
+
+              game_state_updated
+
+            player_id ->
+              # Update player hand
+              current_hand = Map.get(game_state.hands, player_id)
+              new_hand_cards = current_hand.hand_cards ++ [card]
+
+              # Update DB
+              Repo.update!(BlackjackHand.changeset(current_hand, %{hand_cards: new_hand_cards}))
+
+              # Update memory
+              updated_hands =
+                Map.put(
+                  game_state.hands,
+                  player_id,
+                  %{current_hand | hand_cards: new_hand_cards}
+                )
+
+              game_state_updated = %{
+                game_state
+                | deck: remaining_deck,
+                  dealing_queue: rest_queue,
+                  hands: updated_hands
+              }
+
+              broadcast_update(game_id, {:card_dealt, %{target: player_id, card: card}})
+
+              game_state_updated
+          end
+
+        # Schedule next card
+        Process.send_after(__MODULE__, {:deal_next, game_id}, 800)
+
+        {:noreply, %{state | games: Map.put(state.games, game_id, updated_game_state)}}
+    end
+  end
+
   @impl true
   def handle_info({:reset_game, game_id}, state) do
     case Map.get(state.games, game_id) do
@@ -929,7 +931,6 @@ defmodule Shard.Gambling.BlackjackServer do
   # But we'll replace it.
 
   @impl true
-  @impl true
   def handle_info({:countdown_tick, game_id, phase_ref}, state) do
     case Map.get(state.games, game_id) do
       nil ->
@@ -958,7 +959,7 @@ defmodule Shard.Gambling.BlackjackServer do
   end
 
   @impl true
-  def handle_info({:countdown_tick, game_id}, state) do
+  def handle_info({:countdown_tick, _game_id}, state) do
     # Legacy fallback: Ignore old countdown checks
     {:noreply, state}
   end
