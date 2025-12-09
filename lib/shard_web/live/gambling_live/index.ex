@@ -124,10 +124,10 @@ defmodule ShardWeb.GamblingLive.Index do
 
   @impl true
   def handle_info({:new_flip, %{flip_id: flip_id, next_flip_at: next_flip_at}}, socket) do
+    # Don't reset last_result if the modal is still showing - let user close it manually
     socket =
       socket
       |> assign(:flip_info, %{flip_id: flip_id, next_flip_at: next_flip_at})
-      |> assign(:last_result, nil)
       |> load_flip_data()
 
     {:noreply, socket}
