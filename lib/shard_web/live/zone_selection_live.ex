@@ -58,7 +58,7 @@ defmodule ShardWeb.ZoneSelectionLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.flash_group flash={@flash} />
       <div class="min-h-screen bg-black">
         <div class="container mx-auto px-6 py-12 max-w-7xl">
           <.header>
@@ -247,7 +247,7 @@ defmodule ShardWeb.ZoneSelectionLive do
           <% end %>
         </div>
       </div>
-    </Layouts.app>
+
     """
   end
 
