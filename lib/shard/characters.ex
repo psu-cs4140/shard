@@ -242,7 +242,9 @@ defmodule Shard.Characters do
   defp process_single_drop_event(%{type: :monster_drop, character_id: character_id, item: _item}) do
     # Add the dropped item to the character's inventory
     case get_character(character_id) do
-      nil -> :ok
+      nil ->
+        :ok
+
       _character ->
         # This would typically call into the Items context to add the item
         # For now, we'll just log or handle it gracefully
