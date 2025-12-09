@@ -23,10 +23,11 @@ defmodule Shard.Gambling.BlackjackServerTest do
         name: "TestChar#{System.unique_integer()}"
       })
 
-    # Restart BlackjackServer to ensure clean state for each test
-    if pid = Process.whereis(BlackjackServer) do
-      Process.exit(pid, :kill)
-      # Allow supervisor to restart it
+    # Ensure BlackjackServer is running
+    pid = Process.whereis(BlackjackServer)
+
+    if is_nil(pid) do
+      # Should be started by app, but maybe we need to wait?
       Process.sleep(50)
     end
 
