@@ -557,8 +557,6 @@ defmodule Shard.Gambling.BlackjackServer do
     Map.put(games, game_id, new_game_state)
   end
 
-
-
   defp start_player_turns(game_id, games) do
     game_state = Map.get(games, game_id)
 
