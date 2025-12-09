@@ -24,7 +24,7 @@
         Dark Blackjack Table
       </h1>
       <p class="text-purple-300/80 text-lg">
-        Game: {@game_id} • Phase: {String.upcase(@game_data.phase || "waiting")}
+        Game: {@game_id} • Phase: {String.upcase(to_string(@game_data.phase || "waiting"))}
       </p>
     </div>
 
@@ -149,35 +149,41 @@
         <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
           <div class="backdrop-blur-sm bg-black/60 rounded-lg p-4 border border-purple-600/30">
             <%= case @game_data.phase do %>
-              <% "waiting" -> %>
+              <% :waiting -> %>
                 <div class="text-purple-300">
                   <div class="text-2xl mb-2">⏳</div>
                   <div class="text-lg font-bold">Waiting for Players</div>
                   <div class="text-sm">{length(@game_data.hands)}/6 players</div>
                 </div>
-              <% "betting" -> %>
+              <% :betting -> %>
                 <div class="text-yellow-400">
                   <div class="text-2xl mb-2 animate-pulse">💰</div>
                   <div class="text-lg font-bold">Place Your Bets</div>
                   <div class="text-sm">{@game_data.seconds_remaining}s remaining</div>
                 </div>
-              <% "playing" -> %>
+              <% :playing -> %>
                 <div class="text-green-400">
                   <div class="text-2xl mb-2">🎯</div>
                   <div class="text-lg font-bold">Game in Progress</div>
                   <div class="text-sm">Make your decisions</div>
                 </div>
-              <% "dealer_turn" -> %>
+              <% :dealer_turn -> %>
                 <div class="text-red-400">
                   <div class="text-2xl mb-2">👤</div>
                   <div class="text-lg font-bold">Dealer Plays</div>
                   <div class="text-sm">Watch closely...</div>
                 </div>
-              <% "finished" -> %>
+              <% :finished -> %>
                 <div class="text-purple-400">
                   <div class="text-2xl mb-2">🏆</div>
                   <div class="text-lg font-bold">Round Complete</div>
                   <div class="text-sm">New round starting soon</div>
+                </div>
+              <% _ -> %>
+                <div class="text-gray-400">
+                  <div class="text-2xl mb-2">❓</div>
+                  <div class="text-lg font-bold">Unknown Phase</div>
+                  <div class="text-sm">Phase: {@game_data.phase}</div>
                 </div>
             <% end %>
           </div>

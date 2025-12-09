@@ -154,6 +154,17 @@ defmodule Shard.Gambling.Blackjack do
             character
             |> Character.changeset(%{gold: character.gold + payout})
             |> Repo.update!()
+
+            # Check for blackjack achievements
+            case outcome do
+              {:blackjack, _} -> Shard.Achievements.check_gambling_achievements(character.user_id, :blackjack)
+              {:win, _} -> Shard.Achievements.check_gambling_achievements(character.user_id, :won)
+              _ -> :ok
+            end
+          else
+            # Check for loss achievement
+            character = Repo.get!(Character, hand.character_id)
+            Shard.Achievements.check_gambling_achievements(character.user_id, :lost)
           end
         end
       end)

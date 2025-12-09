@@ -158,9 +158,14 @@ defmodule Shard.Gambling.BlackjackServer do
         {:reply, {:error, :game_not_found}, state}
 
       game_state ->
+        # Load hands with character associations
+        hands_with_characters = Enum.map(game_state.hands, fn {character_id, hand} ->
+          hand |> Repo.preload(:character)
+        end)
+
         game_data = %{
           game: game_state.game,
-          hands: Map.values(game_state.hands),
+          hands: hands_with_characters,
           phase: game_state.phase,
           current_player_index: game_state.current_player_index,
           seconds_remaining: seconds_remaining_in_phase(game_state)
