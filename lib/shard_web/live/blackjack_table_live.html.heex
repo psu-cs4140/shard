@@ -96,9 +96,12 @@
             player_position_class(position)
           ]}>
             <div class={[
-              "backdrop-blur-sm rounded-lg p-2 border-2 h-full flex flex-col justify-between",
+              "backdrop-blur-sm rounded-lg p-2 border-2 h-full flex flex-col justify-between relative",
               if(hand,
-                do: "bg-purple-900/60 border-purple-400",
+                do: if(@game_data.phase == :playing && @game_data.current_player_id == hand.character_id, 
+                  do: "bg-purple-900/80 border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.5)] z-20",
+                  else: "bg-purple-900/60 border-purple-400"
+                ),
                 else: "bg-gray-800/40 border-gray-600"
               )
             ]}>
@@ -187,10 +190,15 @@
                     <div class="text-sm">Hit or Stand?</div>
                   </div>
                 <% else %>
-                  <div class="text-green-400">
-                    <div class="text-2xl mb-2">🎯</div>
-                    <div class="text-lg font-bold">Game in Progress</div>
-                    <div class="text-sm">Other players' turn</div>
+                  <div class="text-yellow-400">
+                    <div class="text-2xl mb-2">⏳</div>
+                    <div class="text-lg font-bold">Waiting...</div>
+                    <div class="text-sm">
+                      Current Turn: 
+                      <span class="font-bold text-white">
+                        {get_character_name(@game_data, @game_data.current_player_id)}
+                      </span>
+                    </div>
                   </div>
                 <% end %>
               <% :dealer_turn -> %>
@@ -281,6 +289,12 @@
                   Stand
                 </button>
               </div>
+            <% else %>
+               <%= if @game_data.phase == :playing do %>
+                  <div class="flex items-center justify-center px-6 py-3 bg-gray-800/50 rounded-lg border border-gray-600 text-gray-400 italic">
+                    Waiting for {get_character_name(@game_data, @game_data.current_player_id)}...
+                  </div>
+               <% end %>
             <% end %>
           </div>
         </div>

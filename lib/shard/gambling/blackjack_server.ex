@@ -229,6 +229,7 @@ defmodule Shard.Gambling.BlackjackServer do
           hands: hands_with_characters,
           phase: game_state.phase,
           current_player_index: game_state.current_player_index,
+          current_player_id: game_state.current_player_id,
           seconds_remaining: seconds_remaining_in_phase(game_state)
         }
 
@@ -345,7 +346,7 @@ defmodule Shard.Gambling.BlackjackServer do
         else
           current_hand = Map.get(game_state.hands, character_id)
 
-          if current_hand && current_hand.status == "playing" do
+          if current_hand && current_hand.status == "playing" && game_state.current_player_id == character_id do
             case action do
               :hit ->
                 {updated_hand, new_deck} =
@@ -534,24 +535,29 @@ defmodule Shard.Gambling.BlackjackServer do
   defp start_player_turns(game_id, games) do
     game_state = Map.get(games, game_id)
 
-    # Find first active player
+    # Find all active players and sort by position to ensure deterministic order (1-6)
     active_players =
-      Enum.filter(game_state.hands, fn {_id, hand} ->
+      game_state.hands
+      |> Enum.filter(fn {_id, hand} ->
         hand.status in ["playing", "betting"]
       end)
+      |> Enum.sort_by(fn {_id, hand} -> hand.position end)
 
     case active_players do
       [] ->
         # No active players, go to dealer turn
         start_dealer_turn(game_id, games)
 
-      [{character_id, _hand} | _] ->
-        # Set current player and start timer
+      players ->
+        # Set first player as current
+        [{first_player_id, _hand} | _] = players
+        
         now = DateTime.utc_now()
 
         new_game_state = %{
           game_state
           | current_player_index: 0,
+            current_player_id: first_player_id,
             phase_started_at: now
         }
 
@@ -559,28 +565,71 @@ defmodule Shard.Gambling.BlackjackServer do
         Process.send_after(__MODULE__, {:phase_timeout, game_id}, @player_turn_timeout)
         Process.send_after(__MODULE__, {:countdown_tick, game_id}, :timer.seconds(1))
 
-        broadcast_update(game_id, {:player_turn, %{character_id: character_id}})
-        Map.put(games, game_id, new_game_state)
+        # Important: Update all hands to "playing" if they were "betting"
+        # This fixes the issue where players might get stuck in "betting" status
+        updated_hands = 
+          Enum.reduce(game_state.hands, game_state.hands, fn {id, hand}, acc -> 
+            if hand.status == "betting" do
+               updated = %{hand | status: "playing"}
+               # Update DB
+               Repo.update!(BlackjackHand.changeset(hand, %{status: "playing"}))
+               Map.put(acc, id, updated)
+            else
+               acc
+            end
+          end)
+
+        final_game_state = %{new_game_state | hands: updated_hands}
+
+        broadcast_update(game_id, {:player_turn, %{character_id: first_player_id}})
+        Map.put(games, game_id, final_game_state)
     end
   end
 
   defp advance_to_next_player_or_dealer(game_id, games) do
     game_state = Map.get(games, game_id)
 
-    # Find next active player
-    active_hands =
-      Enum.filter(game_state.hands, fn {_id, hand} ->
-        hand.status in ["playing"]
-      end)
-
-    case active_hands do
-      [] ->
-        # No more active players, go to dealer turn
-        start_dealer_turn(game_id, games)
-
-      _ ->
-        # There are still active players, continue with current game state
-        games
+    # Get sorted active players again to find who is next
+    # We must effectively find the "next" player after the one who just finished
+    # But simpler: just find the *first* player in the list who is still "playing"
+    # AND hasn't acted yet? No, that's tricky.
+    
+    # Better approach: We iterate through the sorted positions.
+    # The current logic was relying on index, but players might leave.
+    
+    # Let's find the *next* player relative to the current player's position
+    current_player_id = game_state.current_player_id
+    current_hand = Map.get(game_state.hands, current_player_id)
+    
+    current_position = if current_hand, do: current_hand.position, else: 0
+    
+    # Find next active player with position > current_position
+    next_player = 
+      game_state.hands
+      |> Enum.filter(fn {_id, hand} -> hand.status == "playing" end)
+      |> Enum.filter(fn {_id, hand} -> hand.position > current_position end)
+      |> Enum.sort_by(fn {_id, hand} -> hand.position end)
+      |> List.first()
+      
+    case next_player do
+      nil ->
+         # No one left with higher position, start dealer turn
+         start_dealer_turn(game_id, games)
+         
+      {next_id, _hand} ->
+         # Found next player
+         now = DateTime.utc_now()
+         new_game_state = %{
+           game_state
+           | current_player_id: next_id,
+             phase_started_at: now
+         }
+         
+         # Reset timeout
+         Process.send_after(__MODULE__, {:phase_timeout, game_id}, @player_turn_timeout)
+         
+         broadcast_update(game_id, {:player_turn, %{character_id: next_id}})
+         Map.put(games, game_id, new_game_state)
     end
   end
 

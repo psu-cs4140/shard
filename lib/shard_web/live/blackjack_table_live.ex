@@ -259,6 +259,11 @@ defmodule ShardWeb.BlackjackTableLive do
     false
   end
 
+  def get_character_name(game_data, character_id) do
+    hand = Enum.find(game_data.hands, &(&1.character_id == character_id))
+    if hand, do: hand.character.name, else: "Unknown"
+  end
+
   def get_player_hand(game_data, character_id) do
     Enum.find(game_data.hands, &(&1.character_id == character_id))
   end
@@ -269,10 +274,12 @@ defmodule ShardWeb.BlackjackTableLive do
   end
 
   def can_take_action?(game_data, character_id) do
-    # For now, allow any player with "playing" status to act
-    # TODO: Implement proper turn-based logic where only one player can act at a time
     hand = get_player_hand(game_data, character_id)
-    hand && hand.status == "playing" && game_data.phase == :playing
+    
+    # Check if hand forces turn (playing status) AND it is actually their turn
+    strict_turn = game_data.current_player_id == character_id
+    
+    hand && hand.status == "playing" && game_data.phase == :playing && strict_turn
   end
 
   # Template helper functions

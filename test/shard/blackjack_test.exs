@@ -67,7 +67,13 @@ defmodule Shard.BlackjackTest do
         %{rank: "K", suit: "clubs"},
         %{rank: "Q", suit: "diamonds"},
         %{rank: "J", suit: "spades"},
-        %{rank: "10", suit: "hearts"}
+        %{rank: "10", suit: "hearts"},
+        %{rank: "9", suit: "clubs"},
+        %{rank: "8", suit: "diamonds"},
+        %{rank: "7", suit: "spades"},
+        %{rank: "6", suit: "hearts"},
+        %{rank: "5", suit: "clubs"},
+        %{rank: "4", suit: "diamonds"}
       ]
 
       {updated_hands, dealer_cards, remaining_deck} = Blackjack.deal_initial_cards(hands, deck)
@@ -79,25 +85,25 @@ defmodule Shard.BlackjackTest do
       # Dealer should have 2 cards
       assert length(dealer_cards) == 2
 
-      # Total cards dealt: 6, so 6 cards remaining from original 11
-      assert length(remaining_deck) == 6
+      # Total cards dealt: 6, so 5 cards remaining from original 11
+      assert length(remaining_deck) == 5
     end
 
     test "determine_outcome/2 calculates correct payouts" do
       # Player blackjack vs dealer non-blackjack
       player_blackjack = [%{rank: "A", suit: "hearts"}, %{rank: "K", suit: "clubs"}]
       dealer_cards = [%{rank: "10", suit: "hearts"}, %{rank: "7", suit: "clubs"}]
-      assert {:blackjack, 2.5} = Blackjack.determine_outcome(player_blackjack, dealer_cards)
+      assert {:blackjack_win, 2.5} = Blackjack.determine_outcome(player_blackjack, dealer_cards)
 
       # Player wins with higher total
       player_cards = [%{rank: "10", suit: "hearts"}, %{rank: "9", suit: "clubs"}]
       dealer_cards = [%{rank: "10", suit: "hearts"}, %{rank: "7", suit: "clubs"}]
-      assert {:win, 2} = Blackjack.determine_outcome(player_cards, dealer_cards)
+      assert {:won, 2} = Blackjack.determine_outcome(player_cards, dealer_cards)
 
       # Player loses
       player_cards = [%{rank: "10", suit: "hearts"}, %{rank: "6", suit: "clubs"}]
       dealer_cards = [%{rank: "10", suit: "hearts"}, %{rank: "7", suit: "clubs"}]
-      assert {:lose, 0} = Blackjack.determine_outcome(player_cards, dealer_cards)
+      assert {:lost, 0} = Blackjack.determine_outcome(player_cards, dealer_cards)
 
       # Push (tie)
       player_cards = [%{rank: "10", suit: "hearts"}, %{rank: "7", suit: "clubs"}]
@@ -117,7 +123,7 @@ defmodule Shard.BlackjackTest do
       {:ok, game_id} = Shard.Gambling.BlackjackServer.create_game()
       assert {:ok, game_data} = Shard.Gambling.BlackjackServer.get_game(game_id)
       assert game_data.game.game_id == game_id
-      assert game_data.phase == "waiting"
+      assert game_data.phase == :waiting
       assert game_data.hands == []
     end
 
@@ -137,9 +143,12 @@ defmodule Shard.BlackjackTest do
         })
 
       {:ok, character} =
-        Characters.create_character(user.id, %{
+        Characters.create_character(%{
           name: "TestCharacter#{System.unique_integer()}",
-          class: "warrior"
+          class: "warrior",
+          race: "human",
+          gold: 1000,
+          user_id: user.id
         })
 
       %{user: user, character: character}

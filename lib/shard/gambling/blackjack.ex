@@ -237,7 +237,7 @@ defmodule Shard.Gambling.Blackjack do
   defp adjust_for_aces(total, aces) when aces > 0 do
     # Try to use one ace as 11 (soft total)
     # One ace as 11, others as 1
-    soft_total = total + 10 + (aces - 1)
+    soft_total = total + 11 + (aces - 1)
 
     if soft_total <= 21 do
       {soft_total, true}
