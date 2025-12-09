@@ -281,10 +281,10 @@ defmodule ShardWeb.BlackjackTableLive do
 
   def can_take_action?(game_data, character_id) do
     hand = get_player_hand(game_data, character_id)
-    
+
     # Check if hand forces turn (playing status) AND it is actually their turn
     strict_turn = game_data.current_player_id == character_id
-    
+
     hand && hand.status == "playing" && game_data.phase == :playing && strict_turn
   end
 

@@ -26,8 +26,10 @@ defmodule Shard.Gambling.BlackjackServer do
       :current_player_id,
       :phase_timer,
       :phase_started_at,
-      :phase_ref, # Unique reference for the current phase instance
-      :dealing_queue # List of {target_id, card_visibility}
+      # Unique reference for the current phase instance
+      :phase_ref,
+      # List of {target_id, card_visibility}
+      :dealing_queue
     ]
   end
 
@@ -349,7 +351,8 @@ defmodule Shard.Gambling.BlackjackServer do
         else
           current_hand = Map.get(game_state.hands, character_id)
 
-          if current_hand && current_hand.status == "playing" && game_state.current_player_id == character_id do
+          if current_hand && current_hand.status == "playing" &&
+               game_state.current_player_id == character_id do
             case action do
               :hit ->
                 {updated_hand, new_deck} =
@@ -360,12 +363,20 @@ defmodule Shard.Gambling.BlackjackServer do
                     # Player busted
                     busted_hand = %{updated_hand | status: "busted"}
                     # Update status AND hand_cards to DB so bust card is visible
-                    Shard.Repo.update!(BlackjackHand.changeset(busted_hand, %{status: "busted", hand_cards: busted_hand.hand_cards}))
+                    Shard.Repo.update!(
+                      BlackjackHand.changeset(busted_hand, %{
+                        status: "busted",
+                        hand_cards: busted_hand.hand_cards
+                      })
+                    )
+
                     new_hands = Map.put(game_state.hands, character_id, busted_hand)
                     {busted_hand, %{game_state | hands: new_hands, deck: new_deck}}
                   else
                     # Save updated hand with new card to DB
-                    Shard.Repo.update!(BlackjackHand.changeset(updated_hand, %{hand_cards: updated_hand.hand_cards}))
+                    Shard.Repo.update!(
+                      BlackjackHand.changeset(updated_hand, %{hand_cards: updated_hand.hand_cards})
+                    )
 
                     new_hands = Map.put(game_state.hands, character_id, updated_hand)
                     {updated_hand, %{game_state | hands: new_hands, deck: new_deck}}
@@ -383,11 +394,15 @@ defmodule Shard.Gambling.BlackjackServer do
 
                 if final_hand.status == "busted" do
                   # Move to next player or dealer turn
-                   {:reply, :ok,
-                    %{state | games: advance_to_next_player_or_dealer(
-                      game_id,
-                      Map.put(state.games, game_id, new_game_state)
-                    )}}
+                  {:reply, :ok,
+                   %{
+                     state
+                     | games:
+                         advance_to_next_player_or_dealer(
+                           game_id,
+                           Map.put(state.games, game_id, new_game_state)
+                         )
+                   }}
                 else
                   {:reply, :ok, %{state | games: Map.put(state.games, game_id, new_game_state)}}
                 end
@@ -405,7 +420,9 @@ defmodule Shard.Gambling.BlackjackServer do
 
                 # Move to next player or dealer turn
                 new_games = Map.put(state.games, game_id, new_game_state)
-                {:reply, :ok, %{state | games: advance_to_next_player_or_dealer(game_id, new_games)}}
+
+                {:reply, :ok,
+                 %{state | games: advance_to_next_player_or_dealer(game_id, new_games)}}
 
               _ ->
                 {:reply, {:error, :invalid_action}, state}
@@ -519,8 +536,9 @@ defmodule Shard.Gambling.BlackjackServer do
     player_ids = Enum.map(sorted_active_hands, fn {id, _} -> {id, :face_up} end)
 
     queue =
-      player_ids ++ [{:dealer, :face_up}] ++
-      player_ids ++ [{:dealer, :face_down}]
+      player_ids ++
+        [{:dealer, :face_up}] ++
+        player_ids ++ [{:dealer, :face_down}]
 
     # Update state with queue and start dealing
     new_game_state = %{
@@ -543,7 +561,8 @@ defmodule Shard.Gambling.BlackjackServer do
   @impl true
   def handle_info({:deal_next, game_id}, state) do
     case Map.get(state.games, game_id) do
-      nil -> {:noreply, state}
+      nil ->
+        {:noreply, state}
 
       %{dealing_queue: []} = _game_state ->
         # Dealing finished, start player turns
@@ -573,7 +592,9 @@ defmodule Shard.Gambling.BlackjackServer do
               }
 
               # Broadcast (mask card if face_down)
-              masked_card = if visibility == :face_down, do: %{rank: "hidden", suit: "hidden"}, else: card
+              masked_card =
+                if visibility == :face_down, do: %{rank: "hidden", suit: "hidden"}, else: card
+
               broadcast_update(game_id, {:card_dealt, %{target: :dealer, card: masked_card}})
 
               game_state_updated
@@ -587,11 +608,12 @@ defmodule Shard.Gambling.BlackjackServer do
               Repo.update!(BlackjackHand.changeset(current_hand, %{hand_cards: new_hand_cards}))
 
               # Update memory
-              updated_hands = Map.put(
-                game_state.hands,
-                player_id,
-                %{current_hand | hand_cards: new_hand_cards}
-              )
+              updated_hands =
+                Map.put(
+                  game_state.hands,
+                  player_id,
+                  %{current_hand | hand_cards: new_hand_cards}
+                )
 
               game_state_updated = %{
                 game_state
@@ -631,7 +653,7 @@ defmodule Shard.Gambling.BlackjackServer do
       players ->
         # Set first player as current
         [{first_player_id, _hand} | _] = players
-        
+
         now = DateTime.utc_now()
 
         # Update game status to playing
@@ -651,15 +673,15 @@ defmodule Shard.Gambling.BlackjackServer do
 
         # Important: Update all hands to "playing" if they were "betting"
         # This fixes the issue where players might get stuck in "betting" status
-        updated_hands = 
-          Enum.reduce(game_state.hands, game_state.hands, fn {id, hand}, acc -> 
+        updated_hands =
+          Enum.reduce(game_state.hands, game_state.hands, fn {id, hand}, acc ->
             if hand.status == "betting" do
-               updated = %{hand | status: "playing"}
-               # Update DB
-               Repo.update!(BlackjackHand.changeset(hand, %{status: "playing"}))
-               Map.put(acc, id, updated)
+              updated = %{hand | status: "playing"}
+              # Update DB
+              Repo.update!(BlackjackHand.changeset(hand, %{status: "playing"}))
+              Map.put(acc, id, updated)
             else
-               acc
+              acc
             end
           end)
 
@@ -677,47 +699,47 @@ defmodule Shard.Gambling.BlackjackServer do
     # We must effectively find the "next" player after the one who just finished
     # But simpler: just find the *first* player in the list who is still "playing"
     # AND hasn't acted yet? No, that's tricky.
-    
+
     # Better approach: We iterate through the sorted positions.
     # The current logic was relying on index, but players might leave.
-    
+
     # Let's find the *next* player relative to the current player's position
     current_player_id = game_state.current_player_id
     current_hand = Map.get(game_state.hands, current_player_id)
-    
+
     current_position = if current_hand, do: current_hand.position, else: 0
-    
+
     # Find next active player with position > current_position
-    next_player = 
+    next_player =
       game_state.hands
       |> Enum.filter(fn {_id, hand} -> hand.status == "playing" end)
       |> Enum.filter(fn {_id, hand} -> hand.position > current_position end)
       |> Enum.sort_by(fn {_id, hand} -> hand.position end)
       |> List.first()
-      
+
     case next_player do
       nil ->
-         # No one left with higher position, start dealer turn
-         start_dealer_turn(game_id, games)
-         
+        # No one left with higher position, start dealer turn
+        start_dealer_turn(game_id, games)
+
       {next_id, _hand} ->
-         # Found next player
-         now = DateTime.utc_now()
-         phase_ref = make_ref()
-         
-         new_game_state = %{
-           game_state
-           | current_player_id: next_id,
-             phase_started_at: now,
-             phase_ref: phase_ref
-         }
-         
-         # Reset timeout with phase_ref
-         Process.send_after(__MODULE__, {:phase_timeout, game_id, phase_ref}, @player_turn_timeout)
-         Process.send_after(__MODULE__, {:countdown_tick, game_id, phase_ref}, :timer.seconds(1))
-         
-         broadcast_update(game_id, {:player_turn, %{character_id: next_id}})
-         Map.put(games, game_id, new_game_state)
+        # Found next player
+        now = DateTime.utc_now()
+        phase_ref = make_ref()
+
+        new_game_state = %{
+          game_state
+          | current_player_id: next_id,
+            phase_started_at: now,
+            phase_ref: phase_ref
+        }
+
+        # Reset timeout with phase_ref
+        Process.send_after(__MODULE__, {:phase_timeout, game_id, phase_ref}, @player_turn_timeout)
+        Process.send_after(__MODULE__, {:countdown_tick, game_id, phase_ref}, :timer.seconds(1))
+
+        broadcast_update(game_id, {:player_turn, %{character_id: next_id}})
+        Map.put(games, game_id, new_game_state)
     end
   end
 
@@ -736,9 +758,9 @@ defmodule Shard.Gambling.BlackjackServer do
 
     # Process payouts and get updated hands
     Shard.Gambling.Blackjack.process_payouts(game_id, dealer_final_hand)
-    
+
     # Reload hands from DB to get outcomes
-    updated_hands = 
+    updated_hands =
       Shard.Gambling.Blackjack.get_game_hands(game_id)
       |> Enum.map(fn hand -> {hand.character_id, hand} end)
       |> Enum.into(%{})
@@ -773,8 +795,14 @@ defmodule Shard.Gambling.BlackjackServer do
         updated_hands =
           Enum.map(game_state.hands, fn {character_id, hand} ->
             # Reset hand data
-            reset_hand_attrs = %{status: "betting", bet_amount: 0, hand_cards: [], outcome: "pending", payout: 0}
-            
+            reset_hand_attrs = %{
+              status: "betting",
+              bet_amount: 0,
+              hand_cards: [],
+              outcome: "pending",
+              payout: 0
+            }
+
             # Update in database
             Repo.update!(BlackjackHand.changeset(hand, reset_hand_attrs))
 
@@ -784,13 +812,14 @@ defmodule Shard.Gambling.BlackjackServer do
           |> Enum.into(%{})
 
         # Update game in database and capture result
-        updated_game = Repo.update!(
-          BlackjackGame.changeset(game_state.game, %{
-            status: "waiting",
-            dealer_hand: [],
-            current_player_index: 0
-          })
-        )
+        updated_game =
+          Repo.update!(
+            BlackjackGame.changeset(game_state.game, %{
+              status: "waiting",
+              dealer_hand: [],
+              current_player_index: 0
+            })
+          )
 
         # Reset game for new round
         reset_game_state = %{
@@ -899,7 +928,6 @@ defmodule Shard.Gambling.BlackjackServer do
   # Keep legacy handler for backward compatibility during hot upgrade if needed, or remove.
   # But we'll replace it.
 
-
   @impl true
   @impl true
   def handle_info({:countdown_tick, game_id, phase_ref}, state) do
@@ -909,7 +937,8 @@ defmodule Shard.Gambling.BlackjackServer do
 
       game_state ->
         # Broadcast countdown update if phase has a timer AND ref matches
-        if game_state.phase_ref == phase_ref and game_state.phase in [:betting, :playing] and game_state.phase_started_at do
+        if game_state.phase_ref == phase_ref and game_state.phase in [:betting, :playing] and
+             game_state.phase_started_at do
           seconds_remaining = seconds_remaining_in_phase(game_state)
 
           if seconds_remaining > 0 do
@@ -979,16 +1008,19 @@ defmodule Shard.Gambling.BlackjackServer do
             |> Map.values()
             |> Enum.filter(fn hand -> hand.status == "playing" end)
             |> Enum.sort_by(fn hand -> hand.position end)
-          
+
           # Try to find player at the index, or fallback to first
           case Enum.at(active_hands, game.current_player_index) do
-            nil -> 
-               # Fallback: if index invalid (player left?), start with first active
-               case List.first(active_hands) do
-                 nil -> nil # No one?
-                 hand -> hand.character_id
-               end
-            hand -> hand.character_id
+            nil ->
+              # Fallback: if index invalid (player left?), start with first active
+              case List.first(active_hands) do
+                # No one?
+                nil -> nil
+                hand -> hand.character_id
+              end
+
+            hand ->
+              hand.character_id
           end
         else
           nil
@@ -1032,13 +1064,18 @@ defmodule Shard.Gambling.BlackjackServer do
   defp restart_timers_if_needed(game_id, game_state) do
     # Generate new phase reference for restarted timer
     phase_ref = make_ref()
-    
+
     updated_state = %{game_state | phase_ref: phase_ref}
 
     case game_state.phase do
       :betting ->
         # Restart betting phase timers
-        Process.send_after(__MODULE__, {:phase_timeout, game_id, phase_ref}, @betting_phase_timeout)
+        Process.send_after(
+          __MODULE__,
+          {:phase_timeout, game_id, phase_ref},
+          @betting_phase_timeout
+        )
+
         Process.send_after(__MODULE__, {:countdown_tick, game_id, phase_ref}, :timer.seconds(1))
         updated_state
 

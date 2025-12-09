@@ -40,54 +40,71 @@ defmodule Shard.Gambling.BlackjackLogicTest do
 
   describe "determine_outcome/2" do
     test "player bust is always a loss" do
-      player = [%{rank: "10"}, %{rank: "10"}, %{rank: "2"}] # 22
-      dealer = [%{rank: "10"}, %{rank: "7"}] # 17
+      # 22
+      player = [%{rank: "10"}, %{rank: "10"}, %{rank: "2"}]
+      # 17
+      dealer = [%{rank: "10"}, %{rank: "7"}]
       assert {:lost, 0} = Blackjack.determine_outcome(player, dealer)
-      
+
       # Even if dealer busts too
-      dealer_bust = [%{rank: "10"}, %{rank: "10"}, %{rank: "5"}] # 25
+      # 25
+      dealer_bust = [%{rank: "10"}, %{rank: "10"}, %{rank: "5"}]
       assert {:lost, 0} = Blackjack.determine_outcome(player, dealer_bust)
     end
 
     test "dealer bust is a win (if player not busted)" do
-      player = [%{rank: "10"}, %{rank: "10"}] # 20
-      dealer = [%{rank: "10"}, %{rank: "5"}, %{rank: "10"}] # 25
+      # 20
+      player = [%{rank: "10"}, %{rank: "10"}]
+      # 25
+      dealer = [%{rank: "10"}, %{rank: "5"}, %{rank: "10"}]
       assert {:won, 2} = Blackjack.determine_outcome(player, dealer)
     end
 
     test "higher score wins" do
-      player = [%{rank: "10"}, %{rank: "10"}] # 20
-      dealer = [%{rank: "10"}, %{rank: "9"}] # 19
+      # 20
+      player = [%{rank: "10"}, %{rank: "10"}]
+      # 19
+      dealer = [%{rank: "10"}, %{rank: "9"}]
       assert {:won, 2} = Blackjack.determine_outcome(player, dealer)
     end
 
     test "lower score loses" do
-      player = [%{rank: "10"}, %{rank: "9"}] # 19
-      dealer = [%{rank: "10"}, %{rank: "10"}] # 20
+      # 19
+      player = [%{rank: "10"}, %{rank: "9"}]
+      # 20
+      dealer = [%{rank: "10"}, %{rank: "10"}]
       assert {:lost, 0} = Blackjack.determine_outcome(player, dealer)
     end
 
     test "push on equal score" do
-      player = [%{rank: "10"}, %{rank: "10"}] # 20
-      dealer = [%{rank: "10"}, %{rank: "J"}] # 20
+      # 20
+      player = [%{rank: "10"}, %{rank: "10"}]
+      # 20
+      dealer = [%{rank: "10"}, %{rank: "J"}]
       assert {:push, 1} = Blackjack.determine_outcome(player, dealer)
     end
 
     test "blackjack wins 3:2" do
-      player = [%{rank: "A"}, %{rank: "K"}] # BJ
-      dealer = [%{rank: "10"}, %{rank: "J"}] # 20
+      # BJ
+      player = [%{rank: "A"}, %{rank: "K"}]
+      # 20
+      dealer = [%{rank: "10"}, %{rank: "J"}]
       assert {:blackjack_win, 2.5} = Blackjack.determine_outcome(player, dealer)
     end
-    
+
     test "dealer blackjack beats player 21 (non-BJ)" do
-      player = [%{rank: "10"}, %{rank: "5"}, %{rank: "6"}] # 21
-      dealer = [%{rank: "A"}, %{rank: "K"}] # BJ
+      # 21
+      player = [%{rank: "10"}, %{rank: "5"}, %{rank: "6"}]
+      # BJ
+      dealer = [%{rank: "A"}, %{rank: "K"}]
       assert {:lost, 0} = Blackjack.determine_outcome(player, dealer)
     end
 
     test "blackjack push" do
-      player = [%{rank: "A"}, %{rank: "K"}] # BJ
-      dealer = [%{rank: "A"}, %{rank: "K"}] # BJ
+      # BJ
+      player = [%{rank: "A"}, %{rank: "K"}]
+      # BJ
+      dealer = [%{rank: "A"}, %{rank: "K"}]
       # Logic says dealer_blackjack && !player_blackjack -> lose.
       # player_blackjack && !dealer_blackjack -> win.
       # Both -> fallthrough to true (Push).
