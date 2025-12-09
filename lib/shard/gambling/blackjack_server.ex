@@ -5,6 +5,7 @@ defmodule Shard.Gambling.BlackjackServer do
   """
   use GenServer
   require Logger
+  import Ecto.Query
 
   alias Shard.Gambling
   alias Shard.Repo
@@ -214,23 +215,289 @@ defmodule Shard.Gambling.BlackjackServer do
 
   @impl true
   def handle_call({:place_bet, game_id, character_id, amount}, _from, state) do
-    # Implementation for placing bets
-    {:reply, :ok, state}
+    case Map.get(state.games, game_id) do
+      nil ->
+        {:reply, {:error, :game_not_found}, state}
+
+      game_state ->
+        if game_state.phase != :betting do
+          {:reply, {:error, :not_betting_phase}, state}
+        else
+          case Shard.Gambling.Blackjack.place_bet(game_id, character_id, amount) do
+            {:ok, updated_hand} ->
+              new_hands = Map.put(game_state.hands, character_id, updated_hand)
+              new_game_state = %{game_state | hands: new_hands}
+
+              # Check if all players have placed bets
+              all_bets_placed = Enum.all?(new_hands, fn {_id, hand} -> hand.bet_amount > 0 end)
+
+              new_games = Map.put(state.games, game_id, new_game_state)
+
+              if all_bets_placed do
+                # Start dealing phase
+                {:reply, :ok, start_dealing_phase(game_id, new_games)}
+              else
+                # Broadcast bet placed
+                broadcast_update(game_id, {:bet_placed, %{character_id: character_id, amount: amount}})
+                {:reply, :ok, new_games}
+              end
+
+            {:error, reason} ->
+              {:reply, {:error, reason}, state}
+          end
+        end
+    end
   end
 
   @impl true
   def handle_call({:player_action, game_id, character_id, action}, _from, state) do
-    # Implementation for player actions (hit/stand)
-    {:reply, :ok, state}
+    case Map.get(state.games, game_id) do
+      nil ->
+        {:reply, {:error, :game_not_found}, state}
+
+      game_state ->
+        if game_state.phase != :playing do
+          {:reply, {:error, :not_playing_phase}, state}
+        else
+          current_hand = Map.get(game_state.hands, character_id)
+
+          if current_hand && current_hand.status == "playing" do
+            case action do
+              :hit ->
+                {updated_hand, new_deck} = Shard.Gambling.Blackjack.deal_card_to_player(current_hand, game_state.deck)
+                {final_hand, new_game_state} = if Shard.Gambling.Blackjack.is_busted?(updated_hand.hand_cards) do
+                  # Player busted
+                  busted_hand = %{updated_hand | status: "busted"}
+                  Shard.Repo.update!(BlackjackHand.changeset(busted_hand, %{status: "busted"}))
+                  new_hands = Map.put(game_state.hands, character_id, busted_hand)
+                  {busted_hand, %{game_state | hands: new_hands, deck: new_deck}}
+                else
+                  new_hands = Map.put(game_state.hands, character_id, updated_hand)
+                  {updated_hand, %{game_state | hands: new_hands, deck: new_deck}}
+                end
+
+                # Broadcast card dealt
+                broadcast_update(game_id, {:card_dealt, %{character_id: character_id, card: List.last(final_hand.hand_cards)}})
+
+                if final_hand.status == "busted" do
+                  # Move to next player or dealer turn
+                  {:reply, :ok, advance_to_next_player_or_dealer(game_id, Map.put(state.games, game_id, new_game_state))}
+                else
+                  {:reply, :ok, Map.put(state.games, game_id, new_game_state)}
+                end
+
+              :stand ->
+                # Player stands
+                updated_hand = %{current_hand | status: "stood"}
+                Shard.Repo.update!(BlackjackHand.changeset(updated_hand, %{status: "stood"}))
+
+                new_hands = Map.put(game_state.hands, character_id, updated_hand)
+                new_game_state = %{game_state | hands: new_hands}
+
+                # Broadcast player stood
+                broadcast_update(game_id, {:player_stood, %{character_id: character_id}})
+
+                # Move to next player or dealer turn
+                new_games = Map.put(state.games, game_id, new_game_state)
+                {:reply, :ok, advance_to_next_player_or_dealer(game_id, new_games)}
+
+              _ ->
+                {:reply, {:error, :invalid_action}, state}
+            end
+          else
+            {:reply, {:error, :not_your_turn}, state}
+          end
+        end
+    end
   end
 
   @impl true
   def handle_call({:leave_game, game_id, character_id}, _from, state) do
-    # Implementation for leaving game
-    {:reply, :ok, state}
+    case Map.get(state.games, game_id) do
+      nil ->
+        {:reply, {:error, :game_not_found}, state}
+
+      game_state ->
+        # Remove player from game
+        new_hands = Map.delete(game_state.hands, character_id)
+        new_game_state = %{game_state | hands: new_hands}
+
+        # Delete hand from database
+        case Shard.Gambling.Blackjack.get_hand(game_id, character_id) do
+          nil -> :ok
+          hand -> Repo.delete(hand)
+        end
+
+        new_games = Map.put(state.games, game_id, new_game_state)
+
+        # Broadcast player left
+        broadcast_update(game_id, {:player_left, %{character_id: character_id}})
+
+        {:reply, :ok, new_games}
+    end
   end
 
   # Helper functions
+
+  defp broadcast_update(game_id, message) do
+    PubSub.broadcast(
+      Shard.PubSub,
+      "blackjack:#{game_id}",
+      message
+    )
+  end
+
+  defp start_dealing_phase(game_id, games) do
+    game_state = Map.get(games, game_id)
+
+    # Update game status to dealing
+    Shard.Gambling.Blackjack.update_game_status(game_id, "dealing")
+
+    # Deal initial cards
+    {updated_hands, dealer_cards, remaining_deck} =
+      Shard.Gambling.Blackjack.deal_initial_cards(game_state.hands, game_state.deck)
+
+    # Update hands in database
+    Enum.each(updated_hands, fn {_id, hand} ->
+      Repo.update!(BlackjackHand.changeset(hand, %{hand_cards: hand.hand_cards}))
+    end)
+
+    # Update game with dealer hand
+    Repo.update!(BlackjackGame.changeset(game_state.game, %{dealer_hand: dealer_cards}))
+
+    # Check for blackjacks
+    hands_with_blackjack = Enum.filter(updated_hands, fn {_id, hand} ->
+      Shard.Gambling.Blackjack.is_blackjack?(hand.hand_cards)
+    end)
+
+    Enum.each(hands_with_blackjack, fn {_id, hand} ->
+      Repo.update!(BlackjackHand.changeset(hand, %{status: "blackjack"}))
+    end)
+
+    new_game_state = %{
+      game_state
+      | hands: updated_hands,
+        deck: remaining_deck,
+        phase: :playing,
+        current_player_index: 0,
+        phase_started_at: DateTime.utc_now()
+    }
+
+    # Broadcast dealing started
+    broadcast_update(game_id, {:dealing_started, %{dealer_card: List.first(dealer_cards)}})
+
+    # Start player turns
+    start_player_turns(game_id, Map.put(games, game_id, new_game_state))
+  end
+
+  defp start_player_turns(game_id, games) do
+    game_state = Map.get(games, game_id)
+
+    # Find first active player
+    active_players = Enum.filter(game_state.hands, fn {_id, hand} ->
+      hand.status in ["playing", "betting"]
+    end)
+
+    case active_players do
+      [] ->
+        # No active players, go to dealer turn
+        start_dealer_turn(game_id, games)
+
+      [{character_id, _hand} | _] ->
+        # Set current player
+        new_game_state = %{game_state | current_player_index: 0}
+        broadcast_update(game_id, {:player_turn, %{character_id: character_id}})
+        Map.put(games, game_id, new_game_state)
+    end
+  end
+
+  defp advance_to_next_player_or_dealer(game_id, games) do
+    game_state = Map.get(games, game_id)
+
+    # Find next active player
+    active_hands = Enum.filter(game_state.hands, fn {_id, hand} ->
+      hand.status in ["playing"]
+    end)
+
+    case active_hands do
+      [] ->
+        # No more active players, go to dealer turn
+        start_dealer_turn(game_id, games)
+
+      _ ->
+        # There are still active players, continue with current game state
+        games
+    end
+  end
+
+  defp start_dealer_turn(game_id, games) do
+    game_state = Map.get(games, game_id)
+
+    # Update game status
+    Shard.Gambling.Blackjack.update_game_status(game_id, "dealer_turn")
+
+    # Dealer reveals second card and plays
+    dealer_final_hand = Shard.Gambling.Blackjack.play_dealer_turn(game_state.game.dealer_hand, game_state.deck)
+
+    # Update dealer hand in database
+    Repo.update!(BlackjackGame.changeset(game_state.game, %{dealer_hand: dealer_final_hand}))
+
+    # Process payouts
+    Shard.Gambling.Blackjack.process_payouts(game_id, dealer_final_hand)
+
+    # Update game status to finished
+    Shard.Gambling.Blackjack.update_game_status(game_id, "finished")
+
+    new_game_state = %{game_state | phase: :finished, game: %{game_state.game | dealer_hand: dealer_final_hand}}
+
+    # Broadcast game finished
+    broadcast_update(game_id, {:game_finished, %{dealer_hand: dealer_final_hand}})
+
+    # Schedule game reset after delay
+    Process.send_after(self(), {:reset_game, game_id}, :timer.seconds(10))
+
+    Map.put(games, game_id, new_game_state)
+  end
+
+  @impl true
+  def handle_info({:reset_game, game_id}, state) do
+    case Map.get(state.games, game_id) do
+      nil ->
+        {:noreply, state}
+
+      game_state ->
+        # Reset game for new round
+        reset_game_state = %{
+          game_state
+          | hands: %{},
+            deck: shuffle_deck(),
+            phase: :waiting,
+            current_player_index: 0,
+            phase_timer: nil,
+            phase_started_at: nil
+        }
+
+        # Update game in database
+        Repo.update!(BlackjackGame.changeset(game_state.game, %{
+          status: "waiting",
+          dealer_hand: [],
+          current_player_index: 0
+        }))
+
+        new_games = Map.put(state.games, game_id, reset_game_state)
+
+        # Broadcast game reset
+        broadcast_update(game_id, {:game_reset, %{}})
+
+        {:noreply, %{state | games: new_games}}
+    end
+  end
+
+  @impl true
+  def handle_info({:phase_timeout, _game_id}, state) do
+    # Handle phase timeouts (force stand for current player, etc.)
+    {:noreply, state}
+  end
 
   defp load_existing_games do
     # Load games that aren't finished
