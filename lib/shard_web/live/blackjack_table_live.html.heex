@@ -70,9 +70,9 @@
           <div class="text-center">
             <div class="text-purple-200 font-bold mb-2 text-lg">DEALER</div>
             <div class="flex justify-center gap-2 mb-2">
-              <%= for card <- @game_data.game.dealer_hand do %>
+              <%= for {card, index} <- Enum.with_index(@game_data.game.dealer_hand) do %>
                 <div class="w-16 h-24 bg-gradient-to-br from-gray-100 to-gray-300 rounded-lg border-2 border-purple-400 shadow-lg flex items-center justify-center text-black font-bold text-2xl transform hover:scale-105 transition-transform">
-                  <%= if length(@game_data.game.dealer_hand) == 2 && card == List.first(@game_data.game.dealer_hand) && @game_data.phase != :finished do %>
+                  <%= if length(@game_data.game.dealer_hand) == 2 && index == 1 && @game_data.phase != :finished do %>
                     <div class="w-full h-full bg-purple-900 rounded-md border border-purple-500 bg-opacity-80 flex items-center justify-center text-purple-200">
                       🂠
                     </div>
@@ -82,12 +82,13 @@
                 </div>
               <% end %>
             </div>
-            <%= if length(@game_data.game.dealer_hand) >= 2 do %>
+            <%= if length(@game_data.game.dealer_hand) >= 1 do %>
               <div class="text-white font-bold text-lg bg-black/50 px-3 py-1 rounded-full inline-block border border-purple-500/30">
                 <%= if @game_data.phase == :finished do %>
                    Total: {elem(calculate_hand_value(@game_data.game.dealer_hand), 0)}
                 <% else %>
-                   Showing: {elem(calculate_hand_value(tl(@game_data.game.dealer_hand)), 0)}
+                   <%!-- Show value of visible card (Index 0) only --%>
+                   Showing: {elem(calculate_hand_value([List.first(@game_data.game.dealer_hand)]), 0)}
                 <% end %>
               </div>
             <% end %>
@@ -102,7 +103,7 @@
             player_position_class(position)
           ]}>
             <div class={[
-              "backdrop-blur-sm rounded-lg p-2 border-2 h-full flex flex-col justify-between relative",
+              "backdrop-blur-sm rounded-lg p-2 border-2 h-full flex flex-col justify-between relative group",
               if(hand,
                 do: if(@game_data.phase == :playing && @game_data.current_player_id == hand.character_id, 
                   do: "bg-purple-900/80 border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.5)] z-20",
@@ -112,19 +113,23 @@
               )
             ]}>
               <%= if hand do %>
-                <div class="text-center">
-                  <div
-                    class="text-purple-200 text-xs font-bold truncate"
-                    title={hand.character.name}
-                  >
-                    {String.slice(hand.character.name, 0..8)}...
-                  </div>
-                  <div class="text-purple-300 text-xs">Pos {position}</div>
 
-                  <%!-- Cards --%>
-                  <div class="flex justify-center gap-1 mt-1">
-                    <%= for card <- hand.hand_cards do %>
-                      <div class="w-6 h-8 bg-gradient-to-br from-gray-100 to-gray-300 rounded border border-purple-400 flex items-center justify-center text-black font-bold text-xs transform hover:scale-110 transition-transform">
+
+                <div class="text-center relative z-10">
+                  <div class="flex justify-between items-center px-1">
+                    <div
+                      class="text-purple-200 text-xs font-bold truncate max-w-[80px]"
+                      title={hand.character.name}
+                    >
+                      {String.slice(hand.character.name, 0..8)}
+                    </div>
+                    <div class="text-purple-400 text-[10px]">P{position}</div>
+                  </div>
+
+                  <%!-- Cards (Fanned) --%>
+                  <div class="flex justify-center -space-x-6 mt-2 h-10 w-full px-2">
+                    <%= for {card, index} <- Enum.with_index(hand.hand_cards) do %>
+                      <div class={"w-8 h-10 bg-gradient-to-br from-gray-100 to-gray-300 rounded border border-purple-400 flex items-center justify-center text-black font-bold text-sm shadow-md transform transition-transform hover:-translate-y-2 hover:z-20 z-#{10 + index} relative"}>
                         {format_card(card)}
                       </div>
                     <% end %>
@@ -132,30 +137,49 @@
 
                   <%!-- Hand Value --%>
                   <%= if length(hand.hand_cards) > 0 do %>
-                    <div class="text-purple-200 text-xs mt-1">
+                    <div class="text-purple-200 text-xs mt-1 font-mono bg-black/40 inline-block px-2 rounded-full border border-purple-500/20">
                       {elem(calculate_hand_value(hand.hand_cards), 0)}
                       {if elem(calculate_hand_value(hand.hand_cards), 1), do: " (Soft)", else: ""}
                     </div>
                   <% end %>
 
-                  <%!-- Bet Amount --%>
-                  <%= if hand.bet_amount > 0 do %>
-                    <div class="text-yellow-400 text-xs font-bold">
-                      {hand.bet_amount}g
-                    </div>
-                  <% end %>
-
-                  <%!-- Status --%>
-                  <div class={[
-                    "text-xs font-bold uppercase",
-                    status_color(hand.status)
-                  ]}>
-                    {hand.status}
+                  <%!-- Bet / Status Area --%>
+                  <div class="mt-1 flex justify-center h-6 items-center w-full">
+                    <%= if hand.outcome && hand.outcome != "pending" && @game_data.phase == :finished do %>
+                         <%!-- Outcome Message (Replaces Bet) --%>
+                          <%= case hand.outcome do %>
+                            <% "blackjack_win" -> %>
+                               <div class="text-yellow-300 font-extrabold text-[10px] animate-pulse bg-purple-900/90 px-2 rounded border border-yellow-500 shadow-[0_0_10px_rgba(250,204,21,0.5)]">
+                                  ⚡ SHARD BLESSED (+{hand.payout}g)
+                               </div>
+                            <% "won" -> %>
+                               <div class="text-green-300 font-bold text-[10px] bg-green-900/90 px-2 rounded border border-green-500">
+                                  Fortune Favors (+{hand.payout}g)
+                               </div>
+                            <% "push" -> %>
+                               <div class="text-gray-300 font-bold text-[10px] bg-gray-800/90 px-2 rounded border border-gray-500">
+                                  Fate Holds
+                               </div>
+                            <% "lost" -> %>
+                               <div class="text-red-300 font-bold text-[10px] bg-red-900/90 px-2 rounded border border-red-500">
+                                  Consumed
+                               </div>
+                            <% _ -> %>
+                          <% end %>
+                    <% else %>
+                        <%!-- Normal Bet Display --%>
+                        <%= if hand.bet_amount > 0 do %>
+                          <div class="bg-black/60 rounded-full py-0.5 px-2 border border-yellow-500/30 inline-flex items-center gap-1">
+                            <span class="text-xs">💰</span>
+                            <span class="text-yellow-400 text-xs font-bold">{hand.bet_amount}g</span>
+                          </div>
+                        <% end %>
+                    <% end %>
                   </div>
                 </div>
               <% else %>
-                <div class="text-center text-gray-500 text-xs mt-6">
-                  Empty Seat
+                <div class="text-center text-gray-500/50 text-xs mt-8 font-serif italic group-hover:text-gray-400 transition-colors">
+                  Empty Soul
                 </div>
               <% end %>
             </div>
