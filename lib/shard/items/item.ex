@@ -56,7 +56,8 @@ defmodule Shard.Items.Item do
     "misc",
     "material",
     "tool",
-    "quest"
+    "quest",
+    "food"
   ]
   @rarities ["common", "uncommon", "rare", "epic", "legendary"]
   @equipment_slots [

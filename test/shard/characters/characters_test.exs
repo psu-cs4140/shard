@@ -3,6 +3,7 @@ defmodule Shard.CharactersTest do
 
   alias Shard.Characters
   alias Shard.Characters.Character
+  import Shard.CharactersFixtures
 
   describe "characters" do
     alias Shard.Characters.Character
@@ -21,6 +22,10 @@ defmodule Shard.CharactersTest do
       fetched_character = Characters.get_character!(character.id)
       assert fetched_character.id == character.id
       assert fetched_character.name == character.name
+    end
+
+    test "get_character/1 returns nil for missing id" do
+      assert Characters.get_character(-1) == nil
     end
 
     test "create_character/1 with valid data creates a character" do
@@ -324,6 +329,38 @@ defmodule Shard.CharactersTest do
       # Initially empty but associations should exist
       assert character_with_assocs.character_inventories == []
       assert character_with_assocs.hotbar_slots == []
+    end
+
+    test "grant_pet_rock/2 enables the pet rock" do
+      character = character_fixture()
+      {:ok, character} = Characters.update_character(character, %{pet_rock_xp: 25})
+
+      assert {:ok, updated} = Characters.grant_pet_rock(character, 5)
+      assert updated.has_pet_rock
+      assert updated.pet_rock_level == 5
+      assert updated.pet_rock_xp == 0
+    end
+
+    test "grant_shroomling/2 enables the shroomling" do
+      character = character_fixture()
+      {:ok, character} = Characters.update_character(character, %{shroomling_xp: 40})
+
+      assert {:ok, updated} = Characters.grant_shroomling(character, 3)
+      assert updated.has_shroomling
+      assert updated.shroomling_level == 3
+      assert updated.shroomling_xp == 0
+    end
+
+    test "grant_all_pets/2 grants both pets" do
+      character = character_fixture()
+
+      assert {:ok, updated} = Characters.grant_all_pets(character, 7)
+      assert updated.has_pet_rock
+      assert updated.has_shroomling
+      assert updated.pet_rock_level == 7
+      assert updated.shroomling_level == 7
+      assert updated.pet_rock_xp == 0
+      assert updated.shroomling_xp == 0
     end
   end
 end

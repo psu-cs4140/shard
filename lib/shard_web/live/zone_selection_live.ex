@@ -301,10 +301,17 @@ defmodule ShardWeb.ZoneSelectionLive do
   defp handle_mines_entry(socket, character, zone) do
     case Characters.update_character(character, %{current_zone_id: zone.id}) do
       {:ok, updated_character} ->
+        # Check for zone entry achievements
+        handle_zone_entry_achievement(updated_character, zone)
+
         pet_line =
-          if updated_character.has_pet_rock,
-            do: "\nYour Pet Rock is with you. It sometimes doubles your mining haul.",
-            else: ""
+          if updated_character.has_pet_rock do
+            chance = pet_chance(updated_character.pet_rock_level)
+
+            "\nYour Pet Rock is with you. (Level #{updated_character.pet_rock_level} – #{chance}% chance to double your mining haul.)"
+          else
+            ""
+          end
 
         {:noreply,
          socket
@@ -328,11 +335,17 @@ defmodule ShardWeb.ZoneSelectionLive do
   defp handle_forest_entry(socket, character, zone, _instance_type) do
     case Characters.update_character(character, %{current_zone_id: zone.id}) do
       {:ok, updated_character} ->
+        # Check for zone entry achievements
+        handle_zone_entry_achievement(updated_character, zone)
+
         pet_line =
-          if updated_character.has_shroomling,
-            do:
-              "\nYour Shroomling companion follows along, occasionally doubling your forest harvest.",
-            else: ""
+          if updated_character.has_shroomling do
+            chance = pet_chance(updated_character.shroomling_level)
+
+            "\nYour Shroomling companion bounces beside you. (Level #{updated_character.shroomling_level} – #{chance}% chance to double your forest harvest.)"
+          else
+            ""
+          end
 
         {:noreply,
          socket
@@ -415,6 +428,8 @@ defmodule ShardWeb.ZoneSelectionLive do
        |> put_flash(:error, "This zone is locked. Complete previous zones to unlock it.")}
     end
   end
+
+  defp pet_chance(level), do: min(10 + (level - 1), 50)
 
   # Helper function to handle admin stick granting
   defp handle_admin_stick_granting(character) do

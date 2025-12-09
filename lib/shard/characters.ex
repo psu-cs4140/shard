@@ -42,6 +42,16 @@ defmodule Shard.Characters do
   end
 
   @doc """
+  Gets a single character or returns nil if it does not exist.
+  """
+  def get_character(id) do
+    case Repo.get(Character, id) do
+      nil -> nil
+      character -> Repo.preload(character, :user)
+    end
+  end
+
+  @doc """
   Creates a character.
 
   ## Examples
@@ -143,6 +153,47 @@ defmodule Shard.Characters do
     |> Repo.all()
     |> Repo.preload(:user)
   end
+
+  @doc """
+  Grants a pet rock to the given character and resets its XP.
+  """
+  def grant_pet_rock(%Character{} = character, level \\ 1) do
+    level = normalize_pet_level(level)
+
+    update_character(character, %{
+      has_pet_rock: true,
+      pet_rock_level: level,
+      pet_rock_xp: 0
+    })
+  end
+
+  @doc """
+  Grants a shroomling companion to the given character and resets its XP.
+  """
+  def grant_shroomling(%Character{} = character, level \\ 1) do
+    level = normalize_pet_level(level)
+
+    update_character(character, %{
+      has_shroomling: true,
+      shroomling_level: level,
+      shroomling_xp: 0
+    })
+  end
+
+  @doc """
+  Grants both available pets to the given character at the provided level.
+  """
+  def grant_all_pets(%Character{} = character, level \\ 1) do
+    level = normalize_pet_level(level)
+
+    case grant_pet_rock(character, level) do
+      {:ok, character} -> grant_shroomling(character, level)
+      {:error, _} = error -> error
+    end
+  end
+
+  defp normalize_pet_level(level) when is_integer(level), do: max(level, 1)
+  defp normalize_pet_level(_level), do: 1
 
   # Private function to check and award the "Create First Character" achievement
   defp check_and_award_first_character_achievement(%Character{user_id: user_id}) do

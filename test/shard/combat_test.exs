@@ -372,7 +372,7 @@ defmodule Shard.CombatTest do
         player_position: {0, 0},
         player_stats: %{strength: 10, health: 100, character_id: 1},
         equipped_weapon: %{damage: 5},
-        character: %{name: "TestPlayer", id: 1},
+        character: %{name: "TestPlayer", id: 1, user_id: 1},
         combat: false,
         monsters: [
           %{position: {0, 0}, is_alive: true, name: "TestMonster", hp: 10, armor: 0}
