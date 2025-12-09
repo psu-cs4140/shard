@@ -582,20 +582,20 @@ defmodule Shard.Gambling.BlackjackServer do
         # Update game status to playing
         Shard.Gambling.Blackjack.update_game_status(game_id, "playing")
 
+        phase_ref = make_ref()
+
         new_game_state = %{
           game_state
           | phase: :playing,
             current_player_index: 0,
             current_player_id: first_player_id,
-            phase_started_at: now
+            phase_started_at: now,
+            phase_ref: phase_ref
         }
 
-        # Schedule player turn timeout and countdown ticks
-        Process.send_after(__MODULE__, {:phase_timeout, game_id}, @player_turn_timeout)
-        Process.send_after(__MODULE__, {:countdown_tick, game_id}, :timer.seconds(1))
+        Process.send_after(__MODULE__, {:phase_timeout, game_id, phase_ref}, @player_turn_timeout)
+        Process.send_after(__MODULE__, {:countdown_tick, game_id, phase_ref}, :timer.seconds(1))
 
-        # Important: Update all hands to "playing" if they were "betting"
-        # This fixes the issue where players might get stuck in "betting" status
         updated_hands =
           Enum.reduce(game_state.hands, game_state.hands, fn {id, hand}, acc ->
             if hand.status == "betting" do
