@@ -7,7 +7,7 @@ defmodule Shard.Gambling.Blackjack do
   alias Shard.Repo
   alias Shard.Gambling.{BlackjackGame, BlackjackHand}
   alias Shard.Gambling.{BlackjackGame, BlackjackHand}
-  alias Shard.Gambling.BlackjackServer.GameState
+  alias Shard.Gambling.Blackjack.GameState
   alias Shard.Characters.Character
 
   @doc """
