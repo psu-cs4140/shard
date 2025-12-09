@@ -6,6 +6,8 @@ defmodule Shard.Gambling.Blackjack do
   import Ecto.Query
   alias Shard.Repo
   alias Shard.Gambling.{BlackjackGame, BlackjackHand}
+  alias Shard.Gambling.{BlackjackGame, BlackjackHand}
+  alias Shard.Gambling.BlackjackServer.GameState
   alias Shard.Characters.Character
 
   @doc """
@@ -303,5 +305,90 @@ defmodule Shard.Gambling.Blackjack do
 
   defp calculate_payout(bet_amount, {_outcome, multiplier}) do
     round(bet_amount * multiplier)
+  end
+
+  @doc """
+  Create and shuffle a standard 52-card deck
+  """
+  def shuffle_deck do
+    suits = ["hearts", "diamonds", "clubs", "spades"]
+    ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
+
+    deck =
+      for suit <- suits, rank <- ranks do
+        %{suit: suit, rank: rank}
+      end
+
+    Enum.shuffle(deck)
+  end
+
+  @doc """
+  Restore all active games from database into GameState structs.
+  Does NOT start timers.
+  """
+  def restore_active_games do
+    # Load games that aren't finished
+    games =
+      Repo.all(
+        from g in BlackjackGame,
+          where: g.status != "finished",
+          preload: [:hands]
+      )
+
+    Enum.map(games, fn game ->
+      hands =
+        Enum.reduce(game.hands, %{}, fn hand, hands_acc ->
+          Map.put(hands_acc, hand.character_id, hand)
+        end)
+
+      # Calculate phase_started_at based on game status and timeout duration
+      # Hardcoded timeouts for now - technically should be passed in or constants shared?
+      # Assuming 60s for betting and 30s for playing
+
+      # FIX: We shouldn't duplicate constants. 
+      # Passing timeouts as args?
+      # For now, just set to UTC Now if active, assuming full restart of timer.
+
+      phase_started_at =
+        case game.status do
+          "betting" -> DateTime.utc_now()
+          "playing" -> DateTime.utc_now()
+          _ -> nil
+        end
+
+      # Determine current player ID based on current_player_index
+      current_player_id =
+        if game.status == "playing" do
+          active_hands =
+            hands
+            |> Map.values()
+            |> Enum.filter(fn hand -> hand.status == "playing" end)
+            |> Enum.sort_by(fn hand -> hand.position end)
+
+          case Enum.at(active_hands, game.current_player_index) do
+            nil ->
+              case List.first(active_hands) do
+                nil -> nil
+                hand -> hand.character_id
+              end
+
+            hand ->
+              hand.character_id
+          end
+        else
+          nil
+        end
+
+      %GameState{
+        game: game,
+        hands: hands,
+        deck: shuffle_deck(),
+        phase: String.to_atom(game.status),
+        current_player_index: game.current_player_index,
+        current_player_id: current_player_id,
+        phase_timer: nil,
+        phase_started_at: phase_started_at
+      }
+    end)
   end
 end

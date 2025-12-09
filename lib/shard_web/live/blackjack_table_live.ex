@@ -260,7 +260,7 @@ defmodule ShardWeb.BlackjackTableLive do
     Shard.Gambling.Blackjack.calculate_hand_value(cards)
   end
 
-  def is_player_turn?(_game_data, _character_id) do
+  def player_turn?(_game_data, _character_id) do
     # This would need to be implemented based on game state
     false
   end
