@@ -239,11 +239,11 @@ defmodule Shard.Characters do
     Enum.each(events, &process_single_drop_event/1)
   end
 
-  defp process_single_drop_event(%{type: :monster_drop, character_id: character_id, item: item}) do
+  defp process_single_drop_event(%{type: :monster_drop, character_id: character_id, item: _item}) do
     # Add the dropped item to the character's inventory
     case get_character(character_id) do
       nil -> :ok
-      character ->
+      _character ->
         # This would typically call into the Items context to add the item
         # For now, we'll just log or handle it gracefully
         :ok
