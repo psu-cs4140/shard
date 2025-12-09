@@ -7,16 +7,19 @@
     style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot;><defs><pattern id=&quot;stones&quot; patternUnits=&quot;userSpaceOnUse&quot; width=&quot;30&quot; height=&quot;30&quot;><rect width=&quot;30&quot; height=&quot;30&quot; fill=&quot;%23444&quot;/><rect x=&quot;0&quot; y=&quot;0&quot; width=&quot;14&quot; height=&quot;14&quot; fill=&quot;%23555&quot; stroke=&quot;%23333&quot; stroke-width=&quot;0.5&quot;/><rect x=&quot;16&quot; y=&quot;0&quot; width=&quot;14&quot; height=&quot;14&quot; fill=&quot;%23666&quot; stroke=&quot;%23333&quot; stroke-width=&quot;0.5&quot;/><rect x=&quot;8&quot; y=&quot;16&quot; width=&quot;14&quot; height=&quot;14&quot; fill=&quot;%23555&quot; stroke=&quot;%23333&quot; stroke-width=&quot;0.5&quot;/><path d=&quot;M5,5 L10,8 M20,3 L25,7 M12,20 L18,25&quot; stroke=&quot;%23222&quot; stroke-width=&quot;0.3&quot; fill=&quot;none&quot;/></pattern></defs><rect width=&quot;100&quot; height=&quot;100&quot; fill=&quot;url(%23stones)&quot; /></svg>');"
   >
   </div>
-  
+
   <%!-- Gothic Shadow --%>
-  <div class="absolute bottom-0 w-full h-32 bg-gradient-to-t from-black to-transparent opacity-80"></div>
+  <div class="absolute bottom-0 w-full h-32 bg-gradient-to-t from-black to-transparent opacity-80">
+  </div>
 
   <div class="max-w-7xl mx-auto relative z-10">
     <%!-- Header --%>
     <div class="text-center mb-8">
       <div class="text-4xl mb-2">🏺</div>
       <h1 class="text-5xl font-bold text-red-400 mb-2">Dark Marketplace</h1>
-      <p class="text-red-300/80 text-lg">Trade cursed relics and forbidden wares with fellow adventurers</p>
+      <p class="text-red-300/80 text-lg">
+        Trade cursed relics and forbidden wares with fellow adventurers
+      </p>
     </div>
 
     <%!-- Navigation Tabs --%>
@@ -28,12 +31,12 @@
           "px-6 py-3 rounded-lg font-semibold transition-all border-2",
           if(@active_tab == "browse",
             do: "bg-red-900 text-red-100 border-red-500 shadow-lg",
-            else: "bg-gray-800 text-gray-300 border-gray-700 hover:border-red-700 hover:bg-gray-700"
+            else:
+              "bg-gray-800 text-gray-300 border-gray-700 hover:border-red-700 hover:bg-gray-700"
           )
         ]}
       >
-        <.icon name="hero-shopping-bag" class="w-5 h-5 inline mr-2" />
-        Browse Wares
+        <.icon name="hero-shopping-bag" class="w-5 h-5 inline mr-2" /> Browse Wares
       </button>
       <button
         phx-click="switch_tab"
@@ -42,12 +45,12 @@
           "px-6 py-3 rounded-lg font-semibold transition-all border-2",
           if(@active_tab == "listings",
             do: "bg-red-900 text-red-100 border-red-500 shadow-lg",
-            else: "bg-gray-800 text-gray-300 border-gray-700 hover:border-red-700 hover:bg-gray-700"
+            else:
+              "bg-gray-800 text-gray-300 border-gray-700 hover:border-red-700 hover:bg-gray-700"
           )
         ]}
       >
-        <.icon name="hero-clipboard-document-list" class="w-5 h-5 inline mr-2" />
-        My Offerings
+        <.icon name="hero-clipboard-document-list" class="w-5 h-5 inline mr-2" /> My Offerings
       </button>
     </div>
 
@@ -75,7 +78,9 @@
               <option value="uncommon" selected={@rarity_filter == "uncommon"}>Uncommon</option>
               <option value="rare" selected={@rarity_filter == "rare"}>Rare</option>
               <option value="epic" selected={@rarity_filter == "epic"}>Epic</option>
-              <option value="legendary" selected={@rarity_filter == "legendary"}>Legendary</option>
+              <option value="legendary" selected={@rarity_filter == "legendary"}>
+                Legendary
+              </option>
             </select>
           </div>
           <button
@@ -94,7 +99,10 @@
             <div class="p-4">
               <div class="flex items-start justify-between mb-2">
                 <h3 class="font-bold text-lg text-red-200">{listing.item_name}</h3>
-                <span class={["text-xs font-bold px-2 py-1 rounded border", rarity_color_class(listing.rarity)]}>
+                <span class={[
+                  "text-xs font-bold px-2 py-1 rounded border",
+                  rarity_color_class(listing.rarity)
+                ]}>
                   {listing.rarity}
                 </span>
               </div>
@@ -105,7 +113,9 @@
                 <div class="bg-gray-800/80 rounded-lg p-3 mb-3 border border-gray-700">
                   <%= for {stat, value} <- listing.stats do %>
                     <div class="flex justify-between text-sm py-1">
-                      <span class="text-gray-400 capitalize">{String.replace(to_string(stat), "_", " ")}</span>
+                      <span class="text-gray-400 capitalize">
+                        {String.replace(to_string(stat), "_", " ")}
+                      </span>
                       <span class="font-bold text-red-300">{value}</span>
                     </div>
                   <% end %>
@@ -115,7 +125,9 @@
               <div class="flex items-center justify-between mb-4">
                 <div>
                   <p class="text-lg font-bold text-amber-400">{listing.price} gold</p>
-                  <p class="text-xs text-gray-500">by {listing.seller} (Lv.{listing.seller_level})</p>
+                  <p class="text-xs text-gray-500">
+                    by {listing.seller} (Lv.{listing.seller_level})
+                  </p>
                 </div>
               </div>
 
@@ -170,7 +182,9 @@
               </div>
 
               <div>
-                <label class="block text-red-300/80 font-semibold mb-2">Asking Price (Gold)</label>
+                <label class="block text-red-300/80 font-semibold mb-2">
+                  Asking Price (Gold)
+                </label>
                 <input
                   type="number"
                   name="listing[price]"
@@ -233,7 +247,9 @@
                       {String.first(listing.character_inventory.item.name)}
                     </div>
                     <div>
-                      <h3 class="font-semibold text-red-200">{listing.character_inventory.item.name}</h3>
+                      <h3 class="font-semibold text-red-200">
+                        {listing.character_inventory.item.name}
+                      </h3>
                       <p class="text-sm text-gray-500">
                         Listed {time_ago_in_words(listing.inserted_at)} ago
                       </p>
@@ -268,13 +284,18 @@
       <div class="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div class="backdrop-blur-sm bg-gray-900/95 rounded-lg p-6 max-w-lg w-full border-2 border-red-800 shadow-2xl relative">
           <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 text-3xl">🏺</div>
-          
-          <h3 class="font-bold text-2xl text-red-300 mb-4 text-center pt-2">{@selected_listing.item_name}</h3>
+
+          <h3 class="font-bold text-2xl text-red-300 mb-4 text-center pt-2">
+            {@selected_listing.item_name}
+          </h3>
 
           <div class="space-y-4">
             <%!-- Rarity and Type --%>
             <div class="flex items-center justify-center gap-2">
-              <span class={["text-sm font-bold px-3 py-1 rounded border", rarity_color_class(@selected_listing.rarity)]}>
+              <span class={[
+                "text-sm font-bold px-3 py-1 rounded border",
+                rarity_color_class(@selected_listing.rarity)
+              ]}>
                 {@selected_listing.rarity}
               </span>
               <span class="text-sm px-3 py-1 rounded bg-gray-800 text-gray-300 border border-gray-700">
@@ -292,7 +313,9 @@
                 <div class="grid grid-cols-2 gap-2">
                   <%= for {stat, value} <- @selected_listing.stats do %>
                     <div class="flex justify-between py-1">
-                      <span class="text-sm text-gray-400 capitalize">{String.replace(to_string(stat), "_", " ")}:</span>
+                      <span class="text-sm text-gray-400 capitalize">
+                        {String.replace(to_string(stat), "_", " ")}:
+                      </span>
                       <span class="font-semibold text-red-200">{value}</span>
                     </div>
                   <% end %>
