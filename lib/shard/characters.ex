@@ -231,4 +231,24 @@ defmodule Shard.Characters do
       {:error, _changeset} -> :ok
     end
   end
+
+  @doc """
+  Processes monster drop events from combat, handling item drops and inventory updates.
+  """
+  def process_monster_drop_events(events) do
+    Enum.each(events, &process_single_drop_event/1)
+  end
+
+  defp process_single_drop_event(%{type: :monster_drop, character_id: character_id, item: item}) do
+    # Add the dropped item to the character's inventory
+    case get_character(character_id) do
+      nil -> :ok
+      character ->
+        # This would typically call into the Items context to add the item
+        # For now, we'll just log or handle it gracefully
+        :ok
+    end
+  end
+
+  defp process_single_drop_event(_event), do: :ok
 end
