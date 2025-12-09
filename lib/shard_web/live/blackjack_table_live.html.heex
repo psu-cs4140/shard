@@ -68,12 +68,14 @@
         <%!-- Dealer Position (Top Center) --%>
         <div class="absolute top-4 left-1/2 transform -translate-x-1/2 w-48 h-32">
           <div class="text-center">
-            <div class="text-purple-200 font-bold mb-2">DEALER</div>
+            <div class="text-purple-200 font-bold mb-2 text-lg">DEALER</div>
             <div class="flex justify-center gap-2 mb-2">
               <%= for card <- @game_data.game.dealer_hand do %>
-                <div class="w-12 h-16 bg-gradient-to-br from-gray-100 to-gray-300 rounded-lg border-2 border-purple-400 shadow-lg flex items-center justify-center text-black font-bold text-lg transform hover:scale-105 transition-transform">
-                  <%= if length(@game_data.game.dealer_hand) == 2 && card == List.first(@game_data.game.dealer_hand) do %>
-                    🂠
+                <div class="w-16 h-24 bg-gradient-to-br from-gray-100 to-gray-300 rounded-lg border-2 border-purple-400 shadow-lg flex items-center justify-center text-black font-bold text-2xl transform hover:scale-105 transition-transform">
+                  <%= if length(@game_data.game.dealer_hand) == 2 && card == List.first(@game_data.game.dealer_hand) && @game_data.phase != :finished do %>
+                    <div class="w-full h-full bg-purple-900 rounded-md border border-purple-500 bg-opacity-80 flex items-center justify-center text-purple-200">
+                      🂠
+                    </div>
                   <% else %>
                     {format_card(card)}
                   <% end %>
@@ -81,8 +83,12 @@
               <% end %>
             </div>
             <%= if length(@game_data.game.dealer_hand) >= 2 do %>
-              <div class="text-purple-300 text-sm">
-                {elem(calculate_hand_value(@game_data.game.dealer_hand), 0)}
+              <div class="text-white font-bold text-lg bg-black/50 px-3 py-1 rounded-full inline-block border border-purple-500/30">
+                <%= if @game_data.phase == :finished do %>
+                   Total: {elem(calculate_hand_value(@game_data.game.dealer_hand), 0)}
+                <% else %>
+                   Showing: {elem(calculate_hand_value(tl(@game_data.game.dealer_hand)), 0)}
+                <% end %>
               </div>
             <% end %>
           </div>

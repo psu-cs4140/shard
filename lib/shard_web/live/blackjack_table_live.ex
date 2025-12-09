@@ -217,7 +217,13 @@ defmodule ShardWeb.BlackjackTableLive do
   defp update_game_data(socket) do
     case BlackjackServer.get_game(socket.assigns.game_id) do
       {:ok, game_data} ->
-        assign(socket, :game_data, game_data)
+        # Also refresh characters to show updated gold
+        current_user = socket.assigns.current_scope.user
+        characters = Characters.get_characters_by_user(current_user.id)
+
+        socket
+        |> assign(:game_data, game_data)
+        |> assign(:characters, characters)
 
       {:error, _reason} ->
         socket

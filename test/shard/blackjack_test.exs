@@ -131,6 +131,19 @@ defmodule Shard.BlackjackTest do
       assert {:error, :game_not_found} =
                Shard.Gambling.BlackjackServer.get_game("non_existent_game")
     end
+
+    test "get_or_create_game/0 creates new game when only finished ones exist" do
+      # Create a game and finish it manually (update status)
+      {:ok, game_id} = Shard.Gambling.BlackjackServer.create_game()
+      Shard.Gambling.Blackjack.update_game_status(game_id, "finished")
+
+      # Should create a NEW game, not crash
+      assert {:ok, new_game_id} = Shard.Gambling.BlackjackServer.get_or_create_game()
+      assert new_game_id != game_id
+      assert String.starts_with?(new_game_id, "blackjack_")
+    end
+
+
   end
 
   describe "database integration" do
@@ -199,6 +212,84 @@ defmodule Shard.BlackjackTest do
       assert hand.position == 1
       assert hand.bet_amount == 0
       assert hand.status == "betting"
+    end
+    test "join_game/3 allows joining during betting phase with correct status", %{character: character} do
+      {:ok, game_id} = Shard.Gambling.BlackjackServer.create_game()
+
+      # First player joins, starts betting phase
+      {:ok, char1} = Characters.create_character(%{name: "P1", class: "warrior", race: "human", user_id: character.user_id})
+      :ok = Shard.Gambling.BlackjackServer.join_game(game_id, char1.id, 1)
+
+      {:ok, game_data} = Shard.Gambling.BlackjackServer.get_game(game_id)
+      assert game_data.phase == :betting
+
+      # Second player joins during betting phase
+      :ok = Shard.Gambling.BlackjackServer.join_game(game_id, character.id, 2)
+
+      # Check status
+      {:ok, game_data} = Shard.Gambling.BlackjackServer.get_game(game_id)
+      hand = Enum.find(game_data.hands, &(&1.character_id == character.id))
+      assert hand.status == "betting"
+    end
+
+    test "game restarts automatically after reset", %{character: character} do
+      {:ok, game_id} = Shard.Gambling.BlackjackServer.create_game()
+      
+      # Join game
+      :ok = Shard.Gambling.BlackjackServer.join_game(game_id, character.id, 1)
+      
+      # Simulate game finished state manually
+      Shard.Gambling.Blackjack.update_game_status(game_id, "finished")
+      
+      # Trigger reset directly (usually called by timer)
+      send(Process.whereis(Shard.Gambling.BlackjackServer), {:reset_game, game_id})
+      
+      # Allow time for processing
+      Process.sleep(100)
+      
+      # Verify game is back in betting phase
+      {:ok, game_data} = Shard.Gambling.BlackjackServer.get_game(game_id)
+      assert game_data.phase == :betting
+      
+      # Verify player hand is reset
+      hand = Enum.find(game_data.hands, &(&1.character_id == character.id))
+      assert hand.status == "betting"
+      assert hand.bet_amount == 0
+      assert hand.hand_cards == []
+    end
+
+    test "sequential dealing deals cards over time", %{character: character} do
+      {:ok, game_id} = Shard.Gambling.BlackjackServer.create_game()
+      
+      # Join and bet
+      :ok = Shard.Gambling.BlackjackServer.join_game(game_id, character.id, 1)
+      :ok = Shard.Gambling.BlackjackServer.place_bet(game_id, character.id, 100)
+      
+      # Force start dealing phase (simulating timeout)
+      state = :sys.get_state(Process.whereis(Shard.Gambling.BlackjackServer))
+      send(Process.whereis(Shard.Gambling.BlackjackServer), {:phase_timeout, game_id})
+      
+      # Initially, phase should be dealing but no cards yet (or just started)
+      Process.sleep(100)
+      {:ok, game_data} = Shard.Gambling.BlackjackServer.get_game(game_id)
+      assert game_data.phase == :dealing
+      
+      # Wait for dealing loop (approx 4 cards * 800ms + initial 500ms = ~3.7s)
+      # Let's wait a bit and check partial progress
+      Process.sleep(1000)
+      {:ok, game_data} = Shard.Gambling.BlackjackServer.get_game(game_id)
+      hand = Enum.find(game_data.hands, &(&1.character_id == character.id))
+      # Should have at least 1 card
+      assert length(hand.hand_cards) >= 1
+      
+      # Wait for completion
+      Process.sleep(4000)
+      {:ok, game_data} = Shard.Gambling.BlackjackServer.get_game(game_id)
+      assert game_data.phase == :playing
+      
+      hand = Enum.find(game_data.hands, &(&1.character_id == character.id))
+      assert length(hand.hand_cards) == 2
+      assert length(game_data.game.dealer_hand) == 2
     end
   end
 end
