@@ -117,6 +117,21 @@ defmodule ShardWeb.GamblingLive.Index do
   end
 
   @impl true
+  def handle_event("select_game", %{"game" => "blackjack"}, socket) do
+    # Create a new blackjack game and redirect to it
+    case Shard.Gambling.BlackjackServer.create_game() do
+      {:ok, game_id} ->
+        {:noreply,
+         socket
+         |> assign(:selected_game, "blackjack")
+         |> redirect(to: "/gambling/blackjack/#{game_id}")}
+
+      {:error, reason} ->
+        {:noreply, put_flash(socket, :error, "Failed to create blackjack game: #{reason}")}
+    end
+  end
+
+  @impl true
   def handle_event("select_game", %{"game" => game}, socket) do
     {:noreply, assign(socket, :selected_game, game)}
   end
