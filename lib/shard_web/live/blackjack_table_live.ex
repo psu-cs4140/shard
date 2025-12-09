@@ -28,6 +28,7 @@ defmodule ShardWeb.BlackjackTableLive do
           |> assign(:selected_character_id, get_first_character_id(characters))
           |> assign(:bet_amount, "")
           |> assign(:show_join_modal, false)
+          |> assign(:seconds_remaining, game_data.seconds_remaining)
 
         {:ok, socket}
 
@@ -90,7 +91,7 @@ defmodule ShardWeb.BlackjackTableLive do
         {:noreply, put_flash(socket, :error, "Please enter a bet amount")}
 
       true ->
-        case BlackjackServer.place_bet(game_id, character_id, amount) do
+        case Shard.Gambling.BlackjackServer.place_bet(game_id, character_id, amount) do
           :ok ->
             {:noreply,
              socket
@@ -167,6 +168,11 @@ defmodule ShardWeb.BlackjackTableLive do
   end
 
   @impl true
+  def handle_info({:betting_started, _data}, socket) do
+    {:noreply, update_game_data(socket)}
+  end
+
+  @impl true
   def handle_info({:bet_placed, _data}, socket) do
     {:noreply, update_game_data(socket)}
   end
@@ -201,6 +207,11 @@ defmodule ShardWeb.BlackjackTableLive do
     {:noreply, update_game_data(socket)}
   end
 
+  @impl true
+  def handle_info({:countdown_update, %{seconds_remaining: seconds}}, socket) do
+    {:noreply, assign(socket, :seconds_remaining, seconds)}
+  end
+
   # Helper functions
 
   defp update_game_data(socket) do
@@ -219,20 +230,22 @@ defmodule ShardWeb.BlackjackTableLive do
   # Template helpers
 
   def format_card(card) do
-    case card do
-      %{rank: "A", suit: _suit} -> "🂡"
-      %{rank: "2", suit: _suit} -> "🂢"
-      %{rank: "3", suit: _suit} -> "🂣"
-      %{rank: "4", suit: _suit} -> "🂤"
-      %{rank: "5", suit: _suit} -> "🂥"
-      %{rank: "6", suit: _suit} -> "🂦"
-      %{rank: "7", suit: _suit} -> "🂧"
-      %{rank: "8", suit: _suit} -> "🂨"
-      %{rank: "9", suit: _suit} -> "🂩"
-      %{rank: "10", suit: _suit} -> "🂪"
-      %{rank: "J", suit: _suit} -> "🂫"
-      %{rank: "Q", suit: _suit} -> "🂭"
-      %{rank: "K", suit: _suit} -> "🂮"
+    rank = Map.get(card, "rank") || Map.get(card, :rank)
+
+    case rank do
+      "A" -> "🂡"
+      "2" -> "🂢"
+      "3" -> "🂣"
+      "4" -> "🂤"
+      "5" -> "🂥"
+      "6" -> "🂦"
+      "7" -> "🂧"
+      "8" -> "🂨"
+      "9" -> "🂩"
+      "10" -> "🂪"
+      "J" -> "🂫"
+      "Q" -> "🂭"
+      "K" -> "🂮"
       _ -> "🂠"
     end
   end
@@ -252,12 +265,14 @@ defmodule ShardWeb.BlackjackTableLive do
 
   def can_place_bet?(game_data, character_id) do
     hand = get_player_hand(game_data, character_id)
-    hand && hand.status == "betting" && game_data.phase == "betting"
+    hand && hand.status == "betting" && game_data.phase == :betting
   end
 
   def can_take_action?(game_data, character_id) do
+    # For now, allow any player with "playing" status to act
+    # TODO: Implement proper turn-based logic where only one player can act at a time
     hand = get_player_hand(game_data, character_id)
-    hand && hand.status == "playing" && game_data.phase == "playing"
+    hand && hand.status == "playing" && game_data.phase == :playing
   end
 
   # Template helper functions
@@ -273,5 +288,6 @@ defmodule ShardWeb.BlackjackTableLive do
   def status_color("stood"), do: "text-blue-400"
   def status_color("busted"), do: "text-red-400"
   def status_color("blackjack"), do: "text-purple-400"
+  def status_color("folded"), do: "text-gray-500"
   def status_color(_), do: "text-gray-400"
 end

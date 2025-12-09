@@ -38,6 +38,7 @@ defmodule Shard.BlackjackTest do
         %{rank: "7", suit: "clubs"},
         %{rank: "9", suit: "diamonds"}
       ]
+
       refute Blackjack.is_blackjack?(three_card_21)
     end
 
@@ -47,6 +48,7 @@ defmodule Shard.BlackjackTest do
         %{rank: "7", suit: "clubs"},
         %{rank: "5", suit: "diamonds"}
       ]
+
       assert Blackjack.is_busted?(busted_cards)
 
       safe_cards = [%{rank: "10", suit: "hearts"}, %{rank: "7", suit: "clubs"}]
@@ -120,22 +122,25 @@ defmodule Shard.BlackjackTest do
     end
 
     test "get_game/1 returns error for non-existent game" do
-      assert {:error, :game_not_found} = Shard.Gambling.BlackjackServer.get_game("non_existent_game")
+      assert {:error, :game_not_found} =
+               Shard.Gambling.BlackjackServer.get_game("non_existent_game")
     end
   end
 
   describe "database integration" do
     setup do
       # Create a test user and character
-      {:ok, user} = Users.register_user(%{
-        email: "test#{System.unique_integer()}@example.com",
-        password: "password123"
-      })
+      {:ok, user} =
+        Users.register_user(%{
+          email: "test#{System.unique_integer()}@example.com",
+          password: "password123"
+        })
 
-      {:ok, character} = Characters.create_character(user.id, %{
-        name: "TestCharacter#{System.unique_integer()}",
-        class: "warrior"
-      })
+      {:ok, character} =
+        Characters.create_character(user.id, %{
+          name: "TestCharacter#{System.unique_integer()}",
+          class: "warrior"
+        })
 
       %{user: user, character: character}
     end
@@ -165,7 +170,8 @@ defmodule Shard.BlackjackTest do
       :ok = Shard.Gambling.BlackjackServer.join_game(game_id, character.id, 1)
 
       # Try to bet more than available gold
-      assert {:error, :insufficient_gold} = Blackjack.place_bet(game_id, character.id, character.gold + 1000)
+      assert {:error, :insufficient_gold} =
+               Blackjack.place_bet(game_id, character.id, character.gold + 1000)
     end
 
     test "game and hand creation", %{character: character} do

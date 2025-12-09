@@ -61,8 +61,10 @@
   <div class="max-w-7xl mx-auto relative z-10">
     <div class="relative">
       <%!-- Table Surface --%>
-      <div class="backdrop-blur-sm bg-gradient-to-br from-purple-900/80 to-indigo-900/80 rounded-full border-4 border-purple-600/50 shadow-2xl mx-auto" style="width: 800px; height: 600px;">
-
+      <div
+        class="backdrop-blur-sm bg-gradient-to-br from-purple-900/80 to-indigo-900/80 rounded-full border-4 border-purple-600/50 shadow-2xl mx-auto"
+        style="width: 800px; height: 600px;"
+      >
         <%!-- Dealer Position (Top Center) --%>
         <div class="absolute top-4 left-1/2 transform -translate-x-1/2 w-48 h-32">
           <div class="text-center">
@@ -95,11 +97,17 @@
           ]}>
             <div class={[
               "backdrop-blur-sm rounded-lg p-2 border-2 h-full flex flex-col justify-between",
-              if(hand, do: "bg-purple-900/60 border-purple-400", else: "bg-gray-800/40 border-gray-600")
+              if(hand,
+                do: "bg-purple-900/60 border-purple-400",
+                else: "bg-gray-800/40 border-gray-600"
+              )
             ]}>
               <%= if hand do %>
                 <div class="text-center">
-                  <div class="text-purple-200 text-xs font-bold truncate" title={hand.character.name}>
+                  <div
+                    class="text-purple-200 text-xs font-bold truncate"
+                    title={hand.character.name}
+                  >
                     {String.slice(hand.character.name, 0..8)}...
                   </div>
                   <div class="text-purple-300 text-xs">Pos {position}</div>
@@ -117,7 +125,7 @@
                   <%= if length(hand.hand_cards) > 0 do %>
                     <div class="text-purple-200 text-xs mt-1">
                       {elem(calculate_hand_value(hand.hand_cards), 0)}
-                      <%= if elem(calculate_hand_value(hand.hand_cards), 1), do: " (Soft)", else: "" %>
+                      {if elem(calculate_hand_value(hand.hand_cards), 1), do: " (Soft)", else: ""}
                     </div>
                   <% end %>
 
@@ -147,26 +155,44 @@
 
         <%!-- Center Game Status --%>
         <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-          <div class="backdrop-blur-sm bg-black/60 rounded-lg p-4 border border-purple-600/30">
+          <div class="backdrop-blur-sm bg-black/60 rounded-lg p-4 border border-purple-600/30 max-w-xs">
             <%= case @game_data.phase do %>
               <% :waiting -> %>
                 <div class="text-purple-300">
                   <div class="text-2xl mb-2">⏳</div>
                   <div class="text-lg font-bold">Waiting for Players</div>
-                  <div class="text-sm">{length(@game_data.hands)}/6 players</div>
+                  <div class="text-sm">Join to start playing</div>
                 </div>
               <% :betting -> %>
-                <div class="text-yellow-400">
-                  <div class="text-2xl mb-2 animate-pulse">💰</div>
-                  <div class="text-lg font-bold">Place Your Bets</div>
-                  <div class="text-sm">{@game_data.seconds_remaining}s remaining</div>
-                </div>
+                <%= if can_place_bet?(@game_data, @selected_character_id) do %>
+                  <div class="text-yellow-400 animate-pulse">
+                    <div class="text-3xl mb-2">💰</div>
+                    <div class="text-xl font-bold">YOUR TURN TO BET</div>
+                    <div class="text-sm">Place your bet now!</div>
+                    <div class="text-xs mt-1">{@seconds_remaining || @game_data.seconds_remaining}s left</div>
+                  </div>
+                <% else %>
+                  <div class="text-yellow-400">
+                    <div class="text-2xl mb-2">💰</div>
+                    <div class="text-lg font-bold">Betting Phase</div>
+                    <div class="text-sm">Waiting for all players</div>
+                    <div class="text-xs">{@seconds_remaining || @game_data.seconds_remaining}s remaining</div>
+                  </div>
+                <% end %>
               <% :playing -> %>
-                <div class="text-green-400">
-                  <div class="text-2xl mb-2">🎯</div>
-                  <div class="text-lg font-bold">Game in Progress</div>
-                  <div class="text-sm">Make your decisions</div>
-                </div>
+                <%= if can_take_action?(@game_data, @selected_character_id) do %>
+                  <div class="text-green-400 animate-pulse">
+                    <div class="text-3xl mb-2">🎯</div>
+                    <div class="text-xl font-bold">YOUR TURN</div>
+                    <div class="text-sm">Hit or Stand?</div>
+                  </div>
+                <% else %>
+                  <div class="text-green-400">
+                    <div class="text-2xl mb-2">🎯</div>
+                    <div class="text-lg font-bold">Game in Progress</div>
+                    <div class="text-sm">Other players' turn</div>
+                  </div>
+                <% end %>
               <% :dealer_turn -> %>
                 <div class="text-red-400">
                   <div class="text-2xl mb-2">👤</div>
@@ -177,13 +203,13 @@
                 <div class="text-purple-400">
                   <div class="text-2xl mb-2">🏆</div>
                   <div class="text-lg font-bold">Round Complete</div>
-                  <div class="text-sm">New round starting soon</div>
+                  <div class="text-sm">New round starting...</div>
                 </div>
               <% _ -> %>
                 <div class="text-gray-400">
                   <div class="text-2xl mb-2">❓</div>
-                  <div class="text-lg font-bold">Unknown Phase</div>
-                  <div class="text-sm">Phase: {@game_data.phase}</div>
+                  <div class="text-lg font-bold">Loading...</div>
+                  <div class="text-sm">Phase: {String.upcase(to_string(@game_data.phase || "unknown"))}</div>
                 </div>
             <% end %>
           </div>
@@ -213,7 +239,9 @@
             <%!-- Betting Controls --%>
             <%= if can_place_bet?(@game_data, @selected_character_id) do %>
               <div class="flex-1 mx-4">
-                <label class="block text-purple-300 text-sm font-semibold mb-2">Bet Amount:</label>
+                <label class="block text-purple-300 text-sm font-semibold mb-2">
+                  Bet Amount:
+                </label>
                 <div class="flex gap-2">
                   <input
                     type="number"

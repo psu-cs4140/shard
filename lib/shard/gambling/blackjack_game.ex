@@ -23,7 +23,14 @@ defmodule Shard.Gambling.BlackjackGame do
   @doc false
   def changeset(game, attrs) do
     game
-    |> cast(attrs, [:game_id, :status, :dealer_hand, :current_player_index, :round_started_at, :max_players])
+    |> cast(attrs, [
+      :game_id,
+      :status,
+      :dealer_hand,
+      :current_player_index,
+      :round_started_at,
+      :max_players
+    ])
     |> validate_required([:game_id])
     |> validate_inclusion(:status, ["waiting", "betting", "playing", "dealer_turn", "finished"])
     |> validate_number(:max_players, greater_than: 0, less_than_or_equal_to: 6)

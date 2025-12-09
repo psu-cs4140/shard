@@ -7,7 +7,6 @@ defmodule Shard.Gambling.BlackjackServer do
   require Logger
   import Ecto.Query
 
-  alias Shard.Gambling
   alias Shard.Repo
   alias Shard.Gambling.{BlackjackGame, BlackjackHand}
   alias Phoenix.PubSub
@@ -15,7 +14,6 @@ defmodule Shard.Gambling.BlackjackServer do
   # Game phases
   @betting_phase_timeout :timer.seconds(30)
   @player_turn_timeout :timer.seconds(15)
-  @dealer_turn_delay :timer.seconds(2)
 
   defmodule GameState do
     @moduledoc false
@@ -25,6 +23,7 @@ defmodule Shard.Gambling.BlackjackServer do
       :deck,
       :phase,
       :current_player_index,
+      :current_player_id,
       :phase_timer,
       :phase_started_at
     ]
@@ -33,7 +32,8 @@ defmodule Shard.Gambling.BlackjackServer do
   defmodule State do
     @moduledoc false
     defstruct [
-      :games  # Map of game_id => GameState
+      # Map of game_id => GameState
+      :games
     ]
   end
 
@@ -48,6 +48,13 @@ defmodule Shard.Gambling.BlackjackServer do
   """
   def create_game(max_players \\ 6) do
     GenServer.call(__MODULE__, {:create_game, max_players})
+  end
+
+  @doc """
+  Get the existing blackjack game or create one if it doesn't exist
+  """
+  def get_or_create_game do
+    GenServer.call(__MODULE__, :get_or_create_game)
   end
 
   @doc """
@@ -101,11 +108,64 @@ defmodule Shard.Gambling.BlackjackServer do
 
     Logger.info("Blackjack server started with #{map_size(games)} existing games")
 
-    state = %State{
-      games: games
-    }
+    {:ok, %State{games: games}}
+  end
 
-    {:ok, state}
+  @impl true
+  def handle_call(:get_or_create_game, _from, state) do
+    # Find existing blackjack game
+    existing_game =
+      Repo.one(
+        from g in BlackjackGame,
+          where: g.status != "finished",
+          limit: 1
+      )
+
+    if existing_game do
+      # Return existing game
+      {:reply, {:ok, existing_game.game_id}, state}
+    else
+      # Create new game
+      game_id = "blackjack_main"
+
+      game = %BlackjackGame{
+        game_id: game_id,
+        status: "waiting",
+        dealer_hand: [],
+        current_player_index: 0,
+        max_players: 6
+      }
+
+      case Repo.insert(game) do
+        {:ok, saved_game} ->
+          game_state = %GameState{
+            game: saved_game,
+            hands: %{},
+            deck: shuffle_deck(),
+            phase: :waiting,
+            current_player_index: 0,
+            phase_timer: nil,
+            phase_started_at: nil
+          }
+
+          new_games = Map.put(state.games, game_id, game_state)
+
+          Logger.info("Created main blackjack game #{game_id}")
+
+          # Broadcast game creation
+          PubSub.broadcast(
+            Shard.PubSub,
+            "blackjack:#{game_id}",
+            {:game_created, %{game_id: game_id}}
+          )
+
+          {:reply, {:ok, game_id}, %{state | games: new_games}}
+
+        {:error, changeset} ->
+          Logger.error("Failed to create main blackjack game: #{inspect(changeset)}")
+          {:reply, {:error, "Failed to create game"}, state}
+      end
+    end
   end
 
   @impl true
@@ -159,9 +219,10 @@ defmodule Shard.Gambling.BlackjackServer do
 
       game_state ->
         # Load hands with character associations
-        hands_with_characters = Enum.map(game_state.hands, fn {character_id, hand} ->
-          hand |> Repo.preload(:character)
-        end)
+        hands_with_characters =
+          Enum.map(game_state.hands, fn {_character_id, hand} ->
+            hand |> Repo.preload(:character)
+          end)
 
         game_data = %{
           game: game_state.game,
@@ -182,9 +243,21 @@ defmodule Shard.Gambling.BlackjackServer do
         {:reply, {:error, :game_not_found}, state}
 
       game_state ->
-        if game_state.phase != :waiting do
-          {:reply, {:error, :game_in_progress}, state}
+        # Check if player is already in the game
+        existing_hand = Map.get(game_state.hands, character_id)
+
+        if existing_hand do
+          {:reply, {:error, :already_joined}, state}
         else
+          # Determine initial status based on current game phase
+          initial_status =
+            case game_state.phase do
+              # Can join and play immediately
+              :waiting -> "betting"
+              # Joined mid-game, wait for next round
+              _ -> "waiting"
+            end
+
           # Create hand for player
           hand = %BlackjackHand{
             blackjack_game_id: game_state.game.id,
@@ -192,7 +265,7 @@ defmodule Shard.Gambling.BlackjackServer do
             position: position,
             hand_cards: [],
             bet_amount: 0,
-            status: "betting"
+            status: initial_status
           }
 
           case Repo.insert(hand) do
@@ -202,14 +275,24 @@ defmodule Shard.Gambling.BlackjackServer do
 
               new_games = Map.put(state.games, game_id, new_game_state)
 
+              # If this is the first player joining a waiting game, start it immediately
+              updated_games =
+                if game_state.phase == :waiting and map_size(new_hands) == 1 do
+                  Logger.info("First player joined blackjack game #{game_id}, starting game")
+                  start_betting_phase(game_id, new_games)
+                else
+                  new_games
+                end
+
               # Broadcast player joined
               PubSub.broadcast(
                 Shard.PubSub,
                 "blackjack:#{game_id}",
-                {:player_joined, %{character_id: character_id, position: position}}
+                {:player_joined,
+                 %{character_id: character_id, position: position, status: initial_status}}
               )
 
-              {:reply, :ok, %{state | games: new_games}}
+              {:reply, :ok, %{state | games: updated_games}}
 
             {:error, changeset} ->
               {:reply, {:error, changeset}, state}
@@ -233,19 +316,15 @@ defmodule Shard.Gambling.BlackjackServer do
               new_hands = Map.put(game_state.hands, character_id, updated_hand)
               new_game_state = %{game_state | hands: new_hands}
 
-              # Check if all players have placed bets
-              all_bets_placed = Enum.all?(new_hands, fn {_id, hand} -> hand.bet_amount > 0 end)
-
               new_games = Map.put(state.games, game_id, new_game_state)
 
-              if all_bets_placed do
-                # Start dealing phase
-                {:reply, :ok, start_dealing_phase(game_id, new_games)}
-              else
-                # Broadcast bet placed
-                broadcast_update(game_id, {:bet_placed, %{character_id: character_id, amount: amount}})
-                {:reply, :ok, new_games}
-              end
+              # Broadcast bet placed
+              broadcast_update(
+                game_id,
+                {:bet_placed, %{character_id: character_id, amount: amount}}
+              )
+
+              {:reply, :ok, new_games}
 
             {:error, reason} ->
               {:reply, {:error, reason}, state}
@@ -269,24 +348,35 @@ defmodule Shard.Gambling.BlackjackServer do
           if current_hand && current_hand.status == "playing" do
             case action do
               :hit ->
-                {updated_hand, new_deck} = Shard.Gambling.Blackjack.deal_card_to_player(current_hand, game_state.deck)
-                {final_hand, new_game_state} = if Shard.Gambling.Blackjack.is_busted?(updated_hand.hand_cards) do
-                  # Player busted
-                  busted_hand = %{updated_hand | status: "busted"}
-                  Shard.Repo.update!(BlackjackHand.changeset(busted_hand, %{status: "busted"}))
-                  new_hands = Map.put(game_state.hands, character_id, busted_hand)
-                  {busted_hand, %{game_state | hands: new_hands, deck: new_deck}}
-                else
-                  new_hands = Map.put(game_state.hands, character_id, updated_hand)
-                  {updated_hand, %{game_state | hands: new_hands, deck: new_deck}}
-                end
+                {updated_hand, new_deck} =
+                  Shard.Gambling.Blackjack.deal_card_to_player(current_hand, game_state.deck)
+
+                {final_hand, new_game_state} =
+                  if Shard.Gambling.Blackjack.is_busted?(updated_hand.hand_cards) do
+                    # Player busted
+                    busted_hand = %{updated_hand | status: "busted"}
+                    Shard.Repo.update!(BlackjackHand.changeset(busted_hand, %{status: "busted"}))
+                    new_hands = Map.put(game_state.hands, character_id, busted_hand)
+                    {busted_hand, %{game_state | hands: new_hands, deck: new_deck}}
+                  else
+                    new_hands = Map.put(game_state.hands, character_id, updated_hand)
+                    {updated_hand, %{game_state | hands: new_hands, deck: new_deck}}
+                  end
 
                 # Broadcast card dealt
-                broadcast_update(game_id, {:card_dealt, %{character_id: character_id, card: List.last(final_hand.hand_cards)}})
+                broadcast_update(
+                  game_id,
+                  {:card_dealt,
+                   %{character_id: character_id, card: List.last(final_hand.hand_cards)}}
+                )
 
                 if final_hand.status == "busted" do
                   # Move to next player or dealer turn
-                  {:reply, :ok, advance_to_next_player_or_dealer(game_id, Map.put(state.games, game_id, new_game_state))}
+                  {:reply, :ok,
+                   advance_to_next_player_or_dealer(
+                     game_id,
+                     Map.put(state.games, game_id, new_game_state)
+                   )}
                 else
                   {:reply, :ok, Map.put(state.games, game_id, new_game_state)}
                 end
@@ -352,28 +442,74 @@ defmodule Shard.Gambling.BlackjackServer do
     )
   end
 
+  defp start_betting_phase(game_id, games) do
+    game_state = Map.get(games, game_id)
+
+    # Update game status to betting
+    Shard.Gambling.Blackjack.update_game_status(game_id, "betting")
+
+    now = DateTime.utc_now()
+
+    new_game_state = %{
+      game_state
+      | phase: :betting,
+        phase_started_at: now
+    }
+
+    # Schedule phase timeout and countdown ticks
+    Process.send_after(__MODULE__, {:phase_timeout, game_id}, @betting_phase_timeout)
+    Process.send_after(__MODULE__, {:countdown_tick, game_id}, :timer.seconds(1))
+
+    # Broadcast betting phase started
+    broadcast_update(game_id, {:betting_started, %{}})
+
+    Map.put(games, game_id, new_game_state)
+  end
+
   defp start_dealing_phase(game_id, games) do
     game_state = Map.get(games, game_id)
 
     # Update game status to dealing
     Shard.Gambling.Blackjack.update_game_status(game_id, "dealing")
 
-    # Deal initial cards
-    {updated_hands, dealer_cards, remaining_deck} =
-      Shard.Gambling.Blackjack.deal_initial_cards(game_state.hands, game_state.deck)
+    # Filter hands to only include players who have placed bets
+    active_hands = Map.filter(game_state.hands, fn {_id, hand} -> hand.bet_amount > 0 end)
+
+    # Update status of players who haven't bet to "folded" or similar
+    updated_hands =
+      Enum.map(game_state.hands, fn {character_id, hand} ->
+        if hand.bet_amount == 0 do
+          # Player didn't bet, mark as folded
+          Repo.update!(BlackjackHand.changeset(hand, %{status: "folded"}))
+          {character_id, %{hand | status: "folded"}}
+        else
+          {character_id, hand}
+        end
+      end)
+      |> Enum.into(%{})
+
+    # Deal initial cards only to active players
+    {dealt_hands, dealer_cards, remaining_deck} =
+      Shard.Gambling.Blackjack.deal_initial_cards(active_hands, game_state.deck)
+
+    # Merge dealt hands back into all hands
+    final_hands = Map.merge(updated_hands, dealt_hands)
 
     # Update hands in database
-    Enum.each(updated_hands, fn {_id, hand} ->
-      Repo.update!(BlackjackHand.changeset(hand, %{hand_cards: hand.hand_cards}))
+    Enum.each(final_hands, fn {_id, hand} ->
+      Repo.update!(
+        BlackjackHand.changeset(hand, %{hand_cards: hand.hand_cards, status: hand.status})
+      )
     end)
 
     # Update game with dealer hand
     Repo.update!(BlackjackGame.changeset(game_state.game, %{dealer_hand: dealer_cards}))
 
-    # Check for blackjacks
-    hands_with_blackjack = Enum.filter(updated_hands, fn {_id, hand} ->
-      Shard.Gambling.Blackjack.is_blackjack?(hand.hand_cards)
-    end)
+    # Check for blackjacks among active players
+    hands_with_blackjack =
+      Enum.filter(dealt_hands, fn {_id, hand} ->
+        Shard.Gambling.Blackjack.is_blackjack?(hand.hand_cards)
+      end)
 
     Enum.each(hands_with_blackjack, fn {_id, hand} ->
       Repo.update!(BlackjackHand.changeset(hand, %{status: "blackjack"}))
@@ -381,7 +517,7 @@ defmodule Shard.Gambling.BlackjackServer do
 
     new_game_state = %{
       game_state
-      | hands: updated_hands,
+      | hands: final_hands,
         deck: remaining_deck,
         phase: :playing,
         current_player_index: 0,
@@ -399,9 +535,10 @@ defmodule Shard.Gambling.BlackjackServer do
     game_state = Map.get(games, game_id)
 
     # Find first active player
-    active_players = Enum.filter(game_state.hands, fn {_id, hand} ->
-      hand.status in ["playing", "betting"]
-    end)
+    active_players =
+      Enum.filter(game_state.hands, fn {_id, hand} ->
+        hand.status in ["playing", "betting"]
+      end)
 
     case active_players do
       [] ->
@@ -409,8 +546,19 @@ defmodule Shard.Gambling.BlackjackServer do
         start_dealer_turn(game_id, games)
 
       [{character_id, _hand} | _] ->
-        # Set current player
-        new_game_state = %{game_state | current_player_index: 0}
+        # Set current player and start timer
+        now = DateTime.utc_now()
+
+        new_game_state = %{
+          game_state
+          | current_player_index: 0,
+            phase_started_at: now
+        }
+
+        # Schedule player turn timeout and countdown ticks
+        Process.send_after(__MODULE__, {:phase_timeout, game_id}, @player_turn_timeout)
+        Process.send_after(__MODULE__, {:countdown_tick, game_id}, :timer.seconds(1))
+
         broadcast_update(game_id, {:player_turn, %{character_id: character_id}})
         Map.put(games, game_id, new_game_state)
     end
@@ -420,9 +568,10 @@ defmodule Shard.Gambling.BlackjackServer do
     game_state = Map.get(games, game_id)
 
     # Find next active player
-    active_hands = Enum.filter(game_state.hands, fn {_id, hand} ->
-      hand.status in ["playing"]
-    end)
+    active_hands =
+      Enum.filter(game_state.hands, fn {_id, hand} ->
+        hand.status in ["playing"]
+      end)
 
     case active_hands do
       [] ->
@@ -442,7 +591,8 @@ defmodule Shard.Gambling.BlackjackServer do
     Shard.Gambling.Blackjack.update_game_status(game_id, "dealer_turn")
 
     # Dealer reveals second card and plays
-    dealer_final_hand = Shard.Gambling.Blackjack.play_dealer_turn(game_state.game.dealer_hand, game_state.deck)
+    dealer_final_hand =
+      Shard.Gambling.Blackjack.play_dealer_turn(game_state.game.dealer_hand, game_state.deck)
 
     # Update dealer hand in database
     Repo.update!(BlackjackGame.changeset(game_state.game, %{dealer_hand: dealer_final_hand}))
@@ -453,7 +603,11 @@ defmodule Shard.Gambling.BlackjackServer do
     # Update game status to finished
     Shard.Gambling.Blackjack.update_game_status(game_id, "finished")
 
-    new_game_state = %{game_state | phase: :finished, game: %{game_state.game | dealer_hand: dealer_final_hand}}
+    new_game_state = %{
+      game_state
+      | phase: :finished,
+        game: %{game_state.game | dealer_hand: dealer_final_hand}
+    }
 
     # Broadcast game finished
     broadcast_update(game_id, {:game_finished, %{dealer_hand: dealer_final_hand}})
@@ -471,10 +625,27 @@ defmodule Shard.Gambling.BlackjackServer do
         {:noreply, state}
 
       game_state ->
+        # Move waiting and folded players to betting status for next round
+        updated_hands =
+          Enum.map(game_state.hands, fn {character_id, hand} ->
+            if hand.status in ["waiting", "folded"] do
+              # Update status to betting in database
+              Repo.update!(
+                BlackjackHand.changeset(hand, %{status: "betting", bet_amount: 0, hand_cards: []})
+              )
+
+              # Update status in memory
+              {character_id, %{hand | status: "betting", bet_amount: 0, hand_cards: []}}
+            else
+              {character_id, hand}
+            end
+          end)
+          |> Enum.into(%{})
+
         # Reset game for new round
         reset_game_state = %{
           game_state
-          | hands: %{},
+          | hands: updated_hands,
             deck: shuffle_deck(),
             phase: :waiting,
             current_player_index: 0,
@@ -483,11 +654,13 @@ defmodule Shard.Gambling.BlackjackServer do
         }
 
         # Update game in database
-        Repo.update!(BlackjackGame.changeset(game_state.game, %{
-          status: "waiting",
-          dealer_hand: [],
-          current_player_index: 0
-        }))
+        Repo.update!(
+          BlackjackGame.changeset(game_state.game, %{
+            status: "waiting",
+            dealer_hand: [],
+            current_player_index: 0
+          })
+        )
 
         new_games = Map.put(state.games, game_id, reset_game_state)
 
@@ -499,23 +672,127 @@ defmodule Shard.Gambling.BlackjackServer do
   end
 
   @impl true
-  def handle_info({:phase_timeout, _game_id}, state) do
-    # Handle phase timeouts (force stand for current player, etc.)
-    {:noreply, state}
+  def handle_info({:phase_timeout, game_id}, state) do
+    case Map.get(state.games, game_id) do
+      nil ->
+        {:noreply, state}
+
+      game_state ->
+        # Handle phase timeouts based on current phase
+        case game_state.phase do
+          :betting ->
+            # Force start dealing if betting timed out
+            Logger.info("Betting phase timeout for game #{game_id}, forcing deal")
+            new_games = start_dealing_phase(game_id, state.games)
+            {:noreply, %{state | games: new_games}}
+
+          :playing ->
+            # Force current player to stand
+            Logger.info("Player turn timeout for game #{game_id}, forcing stand")
+
+            active_hands =
+              Enum.filter(game_state.hands, fn {_id, hand} ->
+                hand.status in ["playing"]
+              end)
+
+            case active_hands do
+              [{character_id, _hand} | _] ->
+                # Force stand for current player - call internal logic directly
+                current_hand = Map.get(game_state.hands, character_id)
+
+                if current_hand && current_hand.status == "playing" do
+                  # Player stands
+                  updated_hand = %{current_hand | status: "stood"}
+                  Shard.Repo.update!(BlackjackHand.changeset(updated_hand, %{status: "stood"}))
+
+                  new_hands = Map.put(game_state.hands, character_id, updated_hand)
+                  new_game_state = %{game_state | hands: new_hands}
+
+                  # Broadcast player stood
+                  broadcast_update(game_id, {:player_stood, %{character_id: character_id}})
+
+                  # Move to next player or dealer turn
+                  new_games = Map.put(state.games, game_id, new_game_state)
+                  updated_games = advance_to_next_player_or_dealer(game_id, new_games)
+                  {:noreply, %{state | games: updated_games}}
+                else
+                  {:noreply, state}
+                end
+
+              _ ->
+                # No active players, start dealer turn
+                new_games = start_dealer_turn(game_id, state.games)
+                {:noreply, %{state | games: new_games}}
+            end
+
+          _ ->
+            {:noreply, state}
+        end
+    end
+  end
+
+  @impl true
+  def handle_info({:countdown_tick, game_id}, state) do
+    case Map.get(state.games, game_id) do
+      nil ->
+        {:noreply, state}
+
+      game_state ->
+        # Broadcast countdown update if phase has a timer
+        if game_state.phase in [:betting, :playing] and game_state.phase_started_at do
+          seconds_remaining = seconds_remaining_in_phase(game_state)
+
+          if seconds_remaining > 0 do
+            # Schedule next tick in 1 second
+            Process.send_after(self(), {:countdown_tick, game_id}, :timer.seconds(1))
+
+            # Broadcast countdown update
+            broadcast_update(
+              game_id,
+              {:countdown_update, %{seconds_remaining: seconds_remaining}}
+            )
+          end
+        end
+
+        {:noreply, state}
+    end
   end
 
   defp load_existing_games do
     # Load games that aren't finished
-    games = Repo.all(
-      from g in BlackjackGame,
-      where: g.status != "finished",
-      preload: [:hands]
-    )
+    games =
+      Repo.all(
+        from g in BlackjackGame,
+          where: g.status != "finished",
+          preload: [:hands]
+      )
 
     Enum.reduce(games, %{}, fn game, acc ->
-      hands = Enum.reduce(game.hands, %{}, fn hand, hands_acc ->
-        Map.put(hands_acc, hand.character_id, hand)
-      end)
+      hands =
+        Enum.reduce(game.hands, %{}, fn hand, hands_acc ->
+          Map.put(hands_acc, hand.character_id, hand)
+        end)
+
+      # Calculate phase_started_at based on game status and timeout duration
+      phase_started_at =
+        case game.status do
+          "betting" ->
+            DateTime.add(
+              DateTime.utc_now(),
+              -(@betting_phase_timeout - @betting_phase_timeout),
+              :millisecond
+            )
+
+          "playing" ->
+            DateTime.add(
+              DateTime.utc_now(),
+              -(@player_turn_timeout - @player_turn_timeout),
+              :millisecond
+            )
+
+          _ ->
+            nil
+        end
 
       game_state = %GameState{
         game: game,
@@ -524,8 +801,11 @@ defmodule Shard.Gambling.BlackjackServer do
         phase: String.to_atom(game.status),
         current_player_index: game.current_player_index,
         phase_timer: nil,
-        phase_started_at: nil
+        phase_started_at: phase_started_at
       }
+
+      # Restart timers for active games
+      game_state = restart_timers_if_needed(game.game_id, game_state)
 
       Map.put(acc, game.game_id, game_state)
     end)
@@ -536,9 +816,10 @@ defmodule Shard.Gambling.BlackjackServer do
     suits = ["hearts", "diamonds", "clubs", "spades"]
     ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
 
-    deck = for suit <- suits, rank <- ranks do
-      %{suit: suit, rank: rank}
-    end
+    deck =
+      for suit <- suits, rank <- ranks do
+        %{suit: suit, rank: rank}
+      end
 
     Enum.shuffle(deck)
   end
@@ -547,14 +828,34 @@ defmodule Shard.Gambling.BlackjackServer do
     "blackjack_#{:os.system_time(:millisecond)}_#{:rand.uniform(1000)}"
   end
 
+  defp restart_timers_if_needed(game_id, game_state) do
+    case game_state.phase do
+      :betting ->
+        # Restart betting phase timers
+        Process.send_after(__MODULE__, {:phase_timeout, game_id}, @betting_phase_timeout)
+        Process.send_after(__MODULE__, {:countdown_tick, game_id}, :timer.seconds(1))
+        game_state
+
+      :playing ->
+        # Restart playing phase timers
+        Process.send_after(__MODULE__, {:phase_timeout, game_id}, @player_turn_timeout)
+        Process.send_after(__MODULE__, {:countdown_tick, game_id}, :timer.seconds(1))
+        game_state
+
+      _ ->
+        game_state
+    end
+  end
+
   defp seconds_remaining_in_phase(game_state) do
     if game_state.phase_started_at do
       # Calculate remaining time based on phase
-      timeout = case game_state.phase do
-        :betting -> @betting_phase_timeout
-        :playing -> @player_turn_timeout
-        _ -> 0
-      end
+      timeout =
+        case game_state.phase do
+          :betting -> @betting_phase_timeout
+          :playing -> @player_turn_timeout
+          _ -> 0
+        end
 
       elapsed = DateTime.diff(DateTime.utc_now(), game_state.phase_started_at, :millisecond)
       max(0, div(timeout - elapsed, 1000))

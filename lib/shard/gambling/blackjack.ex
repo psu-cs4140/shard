@@ -13,19 +13,22 @@ defmodule Shard.Gambling.Blackjack do
   Returns {value, is_soft} where is_soft indicates if ace is counting as 11.
   """
   def calculate_hand_value(cards) when is_list(cards) do
-    {total, aces} = Enum.reduce(cards, {0, 0}, fn card, {sum, ace_count} ->
-      case card.rank do
-        "A" -> {sum, ace_count + 1}
-        "K" -> {sum + 10, ace_count}
-        "Q" -> {sum + 10, ace_count}
-        "J" -> {sum + 10, ace_count}
-        rank -> {sum + String.to_integer(rank), ace_count}
-      end
-    end)
+    {total, aces} =
+      Enum.reduce(cards, {0, 0}, fn card, {sum, ace_count} ->
+        rank = Map.get(card, "rank") || Map.get(card, :rank)
+
+        case rank do
+          "A" -> {sum, ace_count + 1}
+          "K" -> {sum + 10, ace_count}
+          "Q" -> {sum + 10, ace_count}
+          "J" -> {sum + 10, ace_count}
+          rank -> {sum + String.to_integer(to_string(rank)), ace_count}
+        end
+      end)
 
     # Handle aces (can be 1 or 11)
-    {final_total, _soft} = adjust_for_aces(total, aces)
-    {final_total, aces > 0 && final_total == total + 10}
+    {final_total, soft} = adjust_for_aces(total, aces)
+    {final_total, soft}
   end
 
   @doc """
@@ -73,12 +76,21 @@ defmodule Shard.Gambling.Blackjack do
   Returns final dealer hand.
   """
   def play_dealer_turn(dealer_hand, deck) do
-    {value, soft} = calculate_hand_value(dealer_hand)
+    {value, _soft} = calculate_hand_value(dealer_hand)
 
     cond do
-      value > 21 -> dealer_hand  # Already busted
-      value == 21 -> dealer_hand # Blackjack or 21
-      value >= 17 -> dealer_hand # Stand
+      # Already busted
+      value > 21 ->
+        dealer_hand
+
+      # Blackjack or 21
+      value == 21 ->
+        dealer_hand
+
+      # Stand
+      value >= 17 ->
+        dealer_hand
+
       value <= 16 ->
         # Hit - recursively play until stand or bust
         [card | rest_deck] = deck
@@ -101,13 +113,15 @@ defmodule Shard.Gambling.Blackjack do
     {dealer_value, _} = calculate_hand_value(dealer_cards)
 
     cond do
-      player_blackjack && !dealer_blackjack -> {:blackjack, 2.5}  # 3:2 payout
-      dealer_blackjack && !player_blackjack -> {:lose, 0}
-      player_busted -> {:lose, 0}
-      dealer_busted -> {:win, 2}
-      player_value > dealer_value -> {:win, 2}
-      player_value < dealer_value -> {:lose, 0}
-      true -> {:push, 1}  # Tie
+      # 3:2 payout
+      player_blackjack && !dealer_blackjack -> {:blackjack_win, 2.5}
+      dealer_blackjack && !player_blackjack -> {:lost, 0}
+      player_busted -> {:lost, 0}
+      dealer_busted -> {:won, 2}
+      player_value > dealer_value -> {:won, 2}
+      player_value < dealer_value -> {:lost, 0}
+      # Tie
+      true -> {:push, 1}
     end
   end
 
@@ -151,15 +165,21 @@ defmodule Shard.Gambling.Blackjack do
           # Add payout to character if they won
           if payout > 0 do
             character = Repo.get!(Character, hand.character_id)
+
             character
             |> Character.changeset(%{gold: character.gold + payout})
             |> Repo.update!()
 
             # Check for blackjack achievements
             case outcome do
-              {:blackjack, _} -> Shard.Achievements.check_gambling_achievements(character.user_id, :blackjack)
-              {:win, _} -> Shard.Achievements.check_gambling_achievements(character.user_id, :won)
-              _ -> :ok
+              {:blackjack_win, _} ->
+                Shard.Achievements.check_gambling_achievements(character.user_id, :blackjack)
+
+              {:won, _} ->
+                Shard.Achievements.check_gambling_achievements(character.user_id, :won)
+
+              _ ->
+                :ok
             end
           else
             # Check for loss achievement
@@ -202,7 +222,9 @@ defmodule Shard.Gambling.Blackjack do
   def update_game_status(game_id, status) do
     Repo.get_by(BlackjackGame, game_id: game_id)
     |> case do
-      nil -> {:error, :game_not_found}
+      nil ->
+        {:error, :game_not_found}
+
       game ->
         game
         |> BlackjackGame.changeset(%{status: status})
@@ -214,12 +236,14 @@ defmodule Shard.Gambling.Blackjack do
 
   defp adjust_for_aces(total, aces) when aces > 0 do
     # Try to use one ace as 11 (soft total)
-    soft_total = total + 10 + (aces - 1)  # One ace as 11, others as 1
+    # One ace as 11, others as 1
+    soft_total = total + 10 + (aces - 1)
 
     if soft_total <= 21 do
       {soft_total, true}
     else
-      {total + aces, false}  # All aces as 1
+      # All aces as 1
+      {total + aces, false}
     end
   end
 
@@ -244,12 +268,14 @@ defmodule Shard.Gambling.Blackjack do
   end
 
   defp parse_amount(amount) when is_integer(amount), do: amount
+
   defp parse_amount(amount) when is_binary(amount) do
     case Integer.parse(amount) do
       {num, _} -> num
       :error -> :error
     end
   end
+
   defp parse_amount(_), do: :error
 
   defp validate_amount(amount) when is_integer(amount) and amount > 0, do: {:ok, amount}

@@ -36,7 +36,8 @@
             class={[
               "w-full p-6 rounded-lg border-2 transition-all transform hover:scale-105 text-left",
               if(@selected_game == "coin_flip" || is_nil(@selected_game),
-                do: "bg-gradient-to-br from-red-900 to-red-800 border-red-500 ring-2 ring-red-400/50",
+                do:
+                  "bg-gradient-to-br from-red-900 to-red-800 border-red-500 ring-2 ring-red-400/50",
                 else: "bg-gray-800 border-gray-700 hover:border-red-700"
               )
             ]}
@@ -45,7 +46,9 @@
               <div class="text-4xl">🎲</div>
               <div>
                 <h3 class="text-xl font-bold text-red-200 mb-1">Fortune's Den</h3>
-                <p class="text-red-300/80 text-sm">Risk your gold on fate's coin. A new flip every 30 seconds.</p>
+                <p class="text-red-300/80 text-sm">
+                  Risk your gold on fate's coin. A new flip every 30 seconds.
+                </p>
                 <p class="text-green-400 text-xs mt-2">⚔️ 2x payout on wins</p>
               </div>
             </div>
@@ -60,7 +63,8 @@
             class={[
               "w-full p-6 rounded-lg border-2 transition-all transform hover:scale-105 text-left",
               if(@selected_game == "blackjack",
-                do: "bg-gradient-to-br from-purple-900 to-purple-800 border-purple-500 ring-2 ring-purple-400/50",
+                do:
+                  "bg-gradient-to-br from-purple-900 to-purple-800 border-purple-500 ring-2 ring-purple-400/50",
                 else: "bg-gray-800 border-gray-700 hover:border-purple-700"
               )
             ]}
@@ -69,7 +73,9 @@
               <div class="text-4xl">🃏</div>
               <div>
                 <h3 class="text-xl font-bold text-purple-200 mb-1">Dark Blackjack</h3>
-                <p class="text-purple-300/80 text-sm">Face the dealer in gothic halls. 4-6 players per table.</p>
+                <p class="text-purple-300/80 text-sm">
+                  Face the dealer in gothic halls. 4-6 players per table.
+                </p>
                 <p class="text-green-400 text-xs mt-2">🃏 3:2 blackjack payout</p>
               </div>
             </div>
@@ -113,7 +119,9 @@
           <div class="backdrop-blur-sm bg-gray-900/90 rounded-lg p-8 border border-purple-800/50 shadow-2xl">
             <div class="text-6xl mb-4">🃏</div>
             <h2 class="text-3xl font-bold text-purple-300 mb-4">Dark Blackjack</h2>
-            <p class="text-purple-300/80 mb-6">The blackjack table is under construction. Check back soon!</p>
+            <p class="text-purple-300/80 mb-6">
+              The blackjack table is under construction. Check back soon!
+            </p>
             <button
               phx-click="select_game"
               phx-value-game="coin_flip"
@@ -126,249 +134,250 @@
       <% else %>
         <%!-- Default to Coin Flip Game --%>
         <div class="grid lg:grid-cols-3 gap-6">
-        <%!-- Left Column: Timer and Current Bet --%>
-        <div class="lg:col-span-1 space-y-6">
-          <%!-- Countdown Timer --%>
-          <div class="backdrop-blur-sm bg-gray-900/90 rounded-lg p-6 border border-red-800/50 shadow-2xl relative">
-            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 text-2xl">⏳</div>
-            <div class="text-center pt-2">
-              <h2 class="text-xl font-bold text-red-300 mb-4">Next Fate Revealed</h2>
-              <div class="text-6xl font-mono font-bold text-red-400 mb-2">
-                {format_countdown(@seconds_remaining)}
-              </div>
-              <p class="text-gray-500 text-xs font-mono">
-                Ritual: {String.slice(@flip_info.flip_id, 0..11)}...
-              </p>
-            </div>
-          </div>
-
-          <%!-- Current Bet Display --%>
-          <%= if @current_bet do %>
-            <div class="backdrop-blur-sm bg-gray-900/90 border border-red-600/70 rounded-lg p-4 shadow-lg">
-              <h3 class="text-red-300 font-semibold mb-3 flex items-center gap-2">
-                <.icon name="hero-check-circle" class="w-5 h-5 text-red-400" /> Blood Oath Placed
-              </h3>
-              <div class="space-y-2">
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-400 text-sm">Wager:</span>
-                  <span class="font-bold text-red-200">{@current_bet.amount} gold</span>
+          <%!-- Left Column: Timer and Current Bet --%>
+          <div class="lg:col-span-1 space-y-6">
+            <%!-- Countdown Timer --%>
+            <div class="backdrop-blur-sm bg-gray-900/90 rounded-lg p-6 border border-red-800/50 shadow-2xl relative">
+              <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 text-2xl">⏳</div>
+              <div class="text-center pt-2">
+                <h2 class="text-xl font-bold text-red-300 mb-4">Next Fate Revealed</h2>
+                <div class="text-6xl font-mono font-bold text-red-400 mb-2">
+                  {format_countdown(@seconds_remaining)}
                 </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-gray-400 text-sm">Prediction:</span>
-                  <span class="uppercase font-bold text-red-400">
-                    {@current_bet.prediction}
-                  </span>
-                </div>
-                <div class="border-t border-red-800/50 pt-2 mt-2">
-                  <div class="flex justify-between items-center">
-                    <span class="text-gray-400 text-sm">Potential Reward:</span>
-                    <span class="text-green-400 font-bold">{@current_bet.amount * 2} gold</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          <% end %>
-
-          <%!-- Statistics --%>
-          <div class="backdrop-blur-sm bg-gray-900/80 rounded-lg p-6 border border-red-800/50 shadow-xl">
-            <h3 class="text-xl font-bold text-red-300 mb-4 flex items-center gap-2">
-              <span class="text-lg">📜</span> Your Gambling Record
-            </h3>
-            <div class="grid grid-cols-2 gap-3">
-              <div class="bg-gray-800/80 rounded-lg p-3 border border-gray-700">
-                <p class="text-gray-500 text-xs uppercase tracking-wide">Total Bets</p>
-                <p class="text-2xl font-bold text-red-200">{@statistics.total_bets}</p>
-              </div>
-              <div class="bg-gray-800/80 rounded-lg p-3 border border-gray-700">
-                <p class="text-gray-500 text-xs uppercase tracking-wide">Win Rate</p>
-                <p class="text-2xl font-bold text-green-400">{@statistics.win_rate}%</p>
-              </div>
-              <div class="bg-gray-800/80 rounded-lg p-3 border border-gray-700">
-                <p class="text-gray-500 text-xs uppercase tracking-wide">Gold Wagered</p>
-                <p class="text-2xl font-bold text-amber-400">{@statistics.total_wagered}</p>
-              </div>
-              <div class="bg-gray-800/80 rounded-lg p-3 border border-gray-700">
-                <p class="text-gray-500 text-xs uppercase tracking-wide">Net Fortune</p>
-                <p class={[
-                  "text-2xl font-bold",
-                  if(@statistics.total_winnings - @statistics.total_wagered >= 0,
-                    do: "text-green-400",
-                    else: "text-red-500"
-                  )
-                ]}>
-                  {if @statistics.total_winnings - @statistics.total_wagered >= 0,
-                    do: "+",
-                    else: ""}{@statistics.total_winnings - @statistics.total_wagered}
+                <p class="text-gray-500 text-xs font-mono">
+                  Ritual: {String.slice(@flip_info.flip_id, 0..11)}...
                 </p>
               </div>
             </div>
-          </div>
-        </div>
 
-        <%!-- Center Column: Betting Interface --%>
-        <div class="lg:col-span-1">
-          <%= if @current_bet do %>
-            <div class="backdrop-blur-sm bg-gray-900/90 rounded-lg p-8 border border-red-800/50 shadow-xl text-center">
-              <div class="text-6xl mb-4 animate-pulse">🎲</div>
-              <h2 class="text-2xl font-bold text-red-300 mb-2">Fate Awaits...</h2>
-              <p class="text-gray-400">
-                Your blood oath has been sealed. The dice of destiny shall reveal your fortune when the ritual completes.
-              </p>
-            </div>
-          <% else %>
-            <%!-- Betting Interface --%>
-            <div class="backdrop-blur-sm bg-gray-900/90 rounded-lg p-6 border border-red-800/50 shadow-xl relative">
-              <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 text-2xl">⚔️</div>
-              <h2 class="text-2xl font-bold text-red-300 mb-6 text-center pt-2">
-                Place Your Wager
-              </h2>
-
-              <%!-- Coin Side Selection --%>
-              <div class="mb-6">
-                <label class="block text-red-300/80 font-semibold mb-3 text-center">
-                  Choose Your Fate:
-                </label>
-                <div class="grid grid-cols-2 gap-4">
-                  <button
-                    phx-click="select_side"
-                    phx-value-side="heads"
-                    class={[
-                      "relative py-6 rounded-lg font-bold text-lg transition-all transform hover:scale-105 border-2",
-                      if(@selected_side == "heads",
-                        do:
-                          "bg-gradient-to-br from-red-900 to-red-800 text-red-100 shadow-lg border-red-500 ring-2 ring-red-400/50",
-                        else:
-                          "bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-700 hover:border-red-700"
-                      )
-                    ]}
-                  >
-                    <div class="text-3xl mb-1">👑</div>
-                    CROWN
-                  </button>
-                  <button
-                    phx-click="select_side"
-                    phx-value-side="tails"
-                    class={[
-                      "relative py-6 rounded-lg font-bold text-lg transition-all transform hover:scale-105 border-2",
-                      if(@selected_side == "tails",
-                        do:
-                          "bg-gradient-to-br from-red-900 to-red-800 text-red-100 shadow-lg border-red-500 ring-2 ring-red-400/50",
-                        else:
-                          "bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-700 hover:border-red-700"
-                      )
-                    ]}
-                  >
-                    <div class="text-3xl mb-1">💀</div>
-                    SKULL
-                  </button>
-                </div>
-              </div>
-
-              <%!-- Bet Amount --%>
-              <div class="mb-6">
-                <label class="block text-red-300/80 font-semibold mb-2">
-                  Gold to Risk:
-                  <%= if @selected_character_id do %>
-                    <% character = Enum.find(@characters, &(&1.id == @selected_character_id)) %>
-                    <%= if character do %>
-                      <span class="text-sm font-normal text-gray-500 ml-2">
-                        (Coffers: {character.gold} gold)
-                      </span>
-                    <% end %>
-                  <% end %>
-                </label>
-                <div class="flex gap-2">
-                  <input
-                    type="number"
-                    phx-keyup="update_bet_amount"
-                    phx-debounce="300"
-                    name="amount"
-                    value={@bet_amount}
-                    min="1"
-                    placeholder="Enter amount"
-                    class="flex-1 px-4 py-3 bg-gray-800 border border-red-800/50 rounded-lg text-red-200 text-lg focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-600"
-                  />
-                  <button
-                    phx-click="set_max_bet"
-                    type="button"
-                    class="px-4 py-3 bg-red-900 hover:bg-red-800 text-red-200 rounded-lg font-semibold transition-colors border border-red-700 whitespace-nowrap"
-                  >
-                    💀 All In
-                  </button>
-                </div>
-                <%= if @bet_amount != "" and @bet_amount != "0" and valid_bet_amount?(@bet_amount) do %>
-                  <p class="text-green-400/80 text-sm mt-2 font-medium">
-                    ⚔️ Potential reward:
-                    <span class="font-bold text-lg text-green-400">
-                      {parse_bet_amount(@bet_amount) * 2} gold
+            <%!-- Current Bet Display --%>
+            <%= if @current_bet do %>
+              <div class="backdrop-blur-sm bg-gray-900/90 border border-red-600/70 rounded-lg p-4 shadow-lg">
+                <h3 class="text-red-300 font-semibold mb-3 flex items-center gap-2">
+                  <.icon name="hero-check-circle" class="w-5 h-5 text-red-400" />
+                  Blood Oath Placed
+                </h3>
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-400 text-sm">Wager:</span>
+                    <span class="font-bold text-red-200">{@current_bet.amount} gold</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-400 text-sm">Prediction:</span>
+                    <span class="uppercase font-bold text-red-400">
+                      {@current_bet.prediction}
                     </span>
-                  </p>
-                <% end %>
-              </div>
-
-              <%!-- Place Bet Button --%>
-              <button
-                phx-click="place_bet"
-                class="w-full py-4 bg-gradient-to-r from-red-800 to-red-900 hover:from-red-700 hover:to-red-800 text-red-100 text-xl font-bold rounded-lg transition-all transform hover:scale-105 shadow-lg border border-red-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                disabled={is_nil(@selected_side) or @bet_amount == "" or @bet_amount == "0"}
-              >
-                🩸 Seal Blood Oath
-              </button>
-            </div>
-          <% end %>
-        </div>
-
-        <%!-- Right Column: Bet History --%>
-        <div class="lg:col-span-1">
-          <div class="backdrop-blur-sm bg-gray-900/80 rounded-lg p-6 border border-red-800/50 shadow-xl h-full">
-            <h3 class="text-xl font-bold text-red-300 mb-4 flex items-center gap-2">
-              <span class="text-lg">📖</span> Chronicle of Wagers
-            </h3>
-            <%= if @bet_history == [] do %>
-              <div class="text-center py-8 text-gray-500">
-                <.icon name="hero-clock" class="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>No wagers yet inscribed.</p>
-                <p class="text-sm mt-1">Make your first bet to begin!</p>
-              </div>
-            <% else %>
-              <div class="space-y-3 max-h-96 overflow-y-auto pr-2">
-                <%= for bet <- @bet_history do %>
-                  <div class="bg-gray-800/80 rounded-lg p-4 border border-gray-700 hover:border-red-800/50 transition-colors">
-                    <div class="flex justify-between items-start mb-2">
-                      <div>
-                        <span class="text-gray-500 text-xs">Predicted</span>
-                        <span class="uppercase font-bold text-red-400 ml-1 text-sm">
-                          {if bet.prediction == "heads", do: "Crown", else: "Skull"}
-                        </span>
-                      </div>
-                      <span class={[
-                        "font-bold text-xs px-2 py-1 rounded border",
-                        result_color(bet.result)
-                      ]}>
-                        {result_label(bet.result)}
-                      </span>
-                    </div>
-                    <div class="flex justify-between items-center text-sm">
-                      <span class="text-gray-400">
-                        Wagered: <span class="font-semibold text-red-200">{bet.amount}</span>
-                      </span>
-                      <%= if bet.result == "won" do %>
-                        <span class="text-green-400 font-semibold">+{bet.payout}</span>
-                      <% else %>
-                        <%= if bet.result == "lost" do %>
-                          <span class="text-red-500 font-semibold">-{bet.amount}</span>
-                        <% else %>
-                          <span class="text-gray-500 italic">Pending...</span>
-                        <% end %>
-                      <% end %>
+                  </div>
+                  <div class="border-t border-red-800/50 pt-2 mt-2">
+                    <div class="flex justify-between items-center">
+                      <span class="text-gray-400 text-sm">Potential Reward:</span>
+                      <span class="text-green-400 font-bold">{@current_bet.amount * 2} gold</span>
                     </div>
                   </div>
-                <% end %>
+                </div>
+              </div>
+            <% end %>
+
+            <%!-- Statistics --%>
+            <div class="backdrop-blur-sm bg-gray-900/80 rounded-lg p-6 border border-red-800/50 shadow-xl">
+              <h3 class="text-xl font-bold text-red-300 mb-4 flex items-center gap-2">
+                <span class="text-lg">📜</span> Your Gambling Record
+              </h3>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="bg-gray-800/80 rounded-lg p-3 border border-gray-700">
+                  <p class="text-gray-500 text-xs uppercase tracking-wide">Total Bets</p>
+                  <p class="text-2xl font-bold text-red-200">{@statistics.total_bets}</p>
+                </div>
+                <div class="bg-gray-800/80 rounded-lg p-3 border border-gray-700">
+                  <p class="text-gray-500 text-xs uppercase tracking-wide">Win Rate</p>
+                  <p class="text-2xl font-bold text-green-400">{@statistics.win_rate}%</p>
+                </div>
+                <div class="bg-gray-800/80 rounded-lg p-3 border border-gray-700">
+                  <p class="text-gray-500 text-xs uppercase tracking-wide">Gold Wagered</p>
+                  <p class="text-2xl font-bold text-amber-400">{@statistics.total_wagered}</p>
+                </div>
+                <div class="bg-gray-800/80 rounded-lg p-3 border border-gray-700">
+                  <p class="text-gray-500 text-xs uppercase tracking-wide">Net Fortune</p>
+                  <p class={[
+                    "text-2xl font-bold",
+                    if(@statistics.total_winnings - @statistics.total_wagered >= 0,
+                      do: "text-green-400",
+                      else: "text-red-500"
+                    )
+                  ]}>
+                    {if @statistics.total_winnings - @statistics.total_wagered >= 0,
+                      do: "+",
+                      else: ""}{@statistics.total_winnings - @statistics.total_wagered}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <%!-- Center Column: Betting Interface --%>
+          <div class="lg:col-span-1">
+            <%= if @current_bet do %>
+              <div class="backdrop-blur-sm bg-gray-900/90 rounded-lg p-8 border border-red-800/50 shadow-xl text-center">
+                <div class="text-6xl mb-4 animate-pulse">🎲</div>
+                <h2 class="text-2xl font-bold text-red-300 mb-2">Fate Awaits...</h2>
+                <p class="text-gray-400">
+                  Your blood oath has been sealed. The dice of destiny shall reveal your fortune when the ritual completes.
+                </p>
+              </div>
+            <% else %>
+              <%!-- Betting Interface --%>
+              <div class="backdrop-blur-sm bg-gray-900/90 rounded-lg p-6 border border-red-800/50 shadow-xl relative">
+                <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 text-2xl">⚔️</div>
+                <h2 class="text-2xl font-bold text-red-300 mb-6 text-center pt-2">
+                  Place Your Wager
+                </h2>
+
+                <%!-- Coin Side Selection --%>
+                <div class="mb-6">
+                  <label class="block text-red-300/80 font-semibold mb-3 text-center">
+                    Choose Your Fate:
+                  </label>
+                  <div class="grid grid-cols-2 gap-4">
+                    <button
+                      phx-click="select_side"
+                      phx-value-side="heads"
+                      class={[
+                        "relative py-6 rounded-lg font-bold text-lg transition-all transform hover:scale-105 border-2",
+                        if(@selected_side == "heads",
+                          do:
+                            "bg-gradient-to-br from-red-900 to-red-800 text-red-100 shadow-lg border-red-500 ring-2 ring-red-400/50",
+                          else:
+                            "bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-700 hover:border-red-700"
+                        )
+                      ]}
+                    >
+                      <div class="text-3xl mb-1">👑</div>
+                      CROWN
+                    </button>
+                    <button
+                      phx-click="select_side"
+                      phx-value-side="tails"
+                      class={[
+                        "relative py-6 rounded-lg font-bold text-lg transition-all transform hover:scale-105 border-2",
+                        if(@selected_side == "tails",
+                          do:
+                            "bg-gradient-to-br from-red-900 to-red-800 text-red-100 shadow-lg border-red-500 ring-2 ring-red-400/50",
+                          else:
+                            "bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-700 hover:border-red-700"
+                        )
+                      ]}
+                    >
+                      <div class="text-3xl mb-1">💀</div>
+                      SKULL
+                    </button>
+                  </div>
+                </div>
+
+                <%!-- Bet Amount --%>
+                <div class="mb-6">
+                  <label class="block text-red-300/80 font-semibold mb-2">
+                    Gold to Risk:
+                    <%= if @selected_character_id do %>
+                      <% character = Enum.find(@characters, &(&1.id == @selected_character_id)) %>
+                      <%= if character do %>
+                        <span class="text-sm font-normal text-gray-500 ml-2">
+                          (Coffers: {character.gold} gold)
+                        </span>
+                      <% end %>
+                    <% end %>
+                  </label>
+                  <div class="flex gap-2">
+                    <input
+                      type="number"
+                      phx-keyup="update_bet_amount"
+                      phx-debounce="300"
+                      name="amount"
+                      value={@bet_amount}
+                      min="1"
+                      placeholder="Enter amount"
+                      class="flex-1 px-4 py-3 bg-gray-800 border border-red-800/50 rounded-lg text-red-200 text-lg focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-600"
+                    />
+                    <button
+                      phx-click="set_max_bet"
+                      type="button"
+                      class="px-4 py-3 bg-red-900 hover:bg-red-800 text-red-200 rounded-lg font-semibold transition-colors border border-red-700 whitespace-nowrap"
+                    >
+                      💀 All In
+                    </button>
+                  </div>
+                  <%= if @bet_amount != "" and @bet_amount != "0" and valid_bet_amount?(@bet_amount) do %>
+                    <p class="text-green-400/80 text-sm mt-2 font-medium">
+                      ⚔️ Potential reward:
+                      <span class="font-bold text-lg text-green-400">
+                        {parse_bet_amount(@bet_amount) * 2} gold
+                      </span>
+                    </p>
+                  <% end %>
+                </div>
+
+                <%!-- Place Bet Button --%>
+                <button
+                  phx-click="place_bet"
+                  class="w-full py-4 bg-gradient-to-r from-red-800 to-red-900 hover:from-red-700 hover:to-red-800 text-red-100 text-xl font-bold rounded-lg transition-all transform hover:scale-105 shadow-lg border border-red-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  disabled={is_nil(@selected_side) or @bet_amount == "" or @bet_amount == "0"}
+                >
+                  🩸 Seal Blood Oath
+                </button>
               </div>
             <% end %>
           </div>
+
+          <%!-- Right Column: Bet History --%>
+          <div class="lg:col-span-1">
+            <div class="backdrop-blur-sm bg-gray-900/80 rounded-lg p-6 border border-red-800/50 shadow-xl h-full">
+              <h3 class="text-xl font-bold text-red-300 mb-4 flex items-center gap-2">
+                <span class="text-lg">📖</span> Chronicle of Wagers
+              </h3>
+              <%= if @bet_history == [] do %>
+                <div class="text-center py-8 text-gray-500">
+                  <.icon name="hero-clock" class="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>No wagers yet inscribed.</p>
+                  <p class="text-sm mt-1">Make your first bet to begin!</p>
+                </div>
+              <% else %>
+                <div class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                  <%= for bet <- @bet_history do %>
+                    <div class="bg-gray-800/80 rounded-lg p-4 border border-gray-700 hover:border-red-800/50 transition-colors">
+                      <div class="flex justify-between items-start mb-2">
+                        <div>
+                          <span class="text-gray-500 text-xs">Predicted</span>
+                          <span class="uppercase font-bold text-red-400 ml-1 text-sm">
+                            {if bet.prediction == "heads", do: "Crown", else: "Skull"}
+                          </span>
+                        </div>
+                        <span class={[
+                          "font-bold text-xs px-2 py-1 rounded border",
+                          result_color(bet.result)
+                        ]}>
+                          {result_label(bet.result)}
+                        </span>
+                      </div>
+                      <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-400">
+                          Wagered: <span class="font-semibold text-red-200">{bet.amount}</span>
+                        </span>
+                        <%= if bet.result == "won" do %>
+                          <span class="text-green-400 font-semibold">+{bet.payout}</span>
+                        <% else %>
+                          <%= if bet.result == "lost" do %>
+                            <span class="text-red-500 font-semibold">-{bet.amount}</span>
+                          <% else %>
+                            <span class="text-gray-500 italic">Pending...</span>
+                          <% end %>
+                        <% end %>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </div>
         </div>
-      </div>
       <% end %>
     <% end %>
 

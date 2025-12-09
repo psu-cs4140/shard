@@ -25,9 +25,26 @@ defmodule Shard.Gambling.BlackjackHand do
   @doc false
   def changeset(hand, attrs) do
     hand
-    |> cast(attrs, [:blackjack_game_id, :character_id, :position, :hand_cards, :bet_amount, :status, :outcome, :payout])
+    |> cast(attrs, [
+      :blackjack_game_id,
+      :character_id,
+      :position,
+      :hand_cards,
+      :bet_amount,
+      :status,
+      :outcome,
+      :payout
+    ])
     |> validate_required([:blackjack_game_id, :character_id, :position])
-    |> validate_inclusion(:status, ["betting", "playing", "stood", "busted", "blackjack", "surrendered"])
+    |> validate_inclusion(:status, [
+      "betting",
+      "playing",
+      "stood",
+      "busted",
+      "blackjack",
+      "surrendered",
+      "folded"
+    ])
     |> validate_inclusion(:outcome, ["pending", "won", "lost", "push", "blackjack_win"])
     |> validate_number(:bet_amount, greater_than_or_equal_to: 0)
     |> validate_number(:position, greater_than: 0, less_than_or_equal_to: 6)
