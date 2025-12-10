@@ -1,4 +1,4 @@
-defmodule Shard.UsersTest do
+defmodule Shard.Users.UsersTest do
   use Shard.DataCase
 
   alias Shard.Users

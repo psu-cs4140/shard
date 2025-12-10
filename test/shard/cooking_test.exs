@@ -31,6 +31,11 @@ defmodule Shard.CookingTest do
       assert recipe.can_cook?
       assert Enum.all?(recipe.ingredients, &(&1.available >= &1.quantity))
     end
+
+    test "returns empty list for non-existent character" do
+      recipes = Cooking.recipes_for_character(999_999)
+      assert is_list(recipes)
+    end
   end
 
   describe "cook/2" do
@@ -59,6 +64,55 @@ defmodule Shard.CookingTest do
 
       assert {:error, :insufficient_materials} =
                Cooking.cook(character.id, :cook_grilled_mushrooms)
+    end
+
+    test "fails with invalid recipe key" do
+      character = character_fixture()
+      
+      assert {:error, :invalid_recipe} = Cooking.cook(character.id, :invalid_recipe)
+    end
+
+    test "fails for non-existent character" do
+      assert {:error, :character_not_found} = Cooking.cook(999_999, :cook_grilled_mushrooms)
+    end
+  end
+
+  describe "get_cooking_level/1" do
+    test "returns cooking level for character" do
+      character = character_fixture()
+      level = Cooking.get_cooking_level(character.id)
+      assert is_integer(level)
+      assert level >= 1
+    end
+
+    test "returns 1 for non-existent character" do
+      level = Cooking.get_cooking_level(999_999)
+      assert level == 1
+    end
+  end
+
+  describe "can_cook?/2" do
+    test "returns true when character has ingredients" do
+      character = character_fixture()
+      ensure_ingredient("Mushroom")
+      ensure_ingredient("Stick")
+
+      add_ingredient(character.id, "Mushroom", 2)
+      add_ingredient(character.id, "Stick", 1)
+
+      assert Cooking.can_cook?(character.id, :cook_grilled_mushrooms)
+    end
+
+    test "returns false when character lacks ingredients" do
+      character = character_fixture()
+      
+      refute Cooking.can_cook?(character.id, :cook_grilled_mushrooms)
+    end
+
+    test "returns false for invalid recipe" do
+      character = character_fixture()
+      
+      refute Cooking.can_cook?(character.id, :invalid_recipe)
     end
   end
 

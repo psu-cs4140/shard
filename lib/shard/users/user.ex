@@ -17,6 +17,9 @@ defmodule Shard.Users.User do
     field :confirmed_at, :utc_datetime
     field :authenticated_at, :utc_datetime, virtual: true
     field :admin, :boolean, default: false
+    field :total_playtime_seconds, :integer, default: 0
+    field :last_login_at, :utc_datetime
+    field :login_count, :integer, default: 0
 
     has_many :player_zones, Shard.Users.PlayerZone
     has_many :user_zone_progress, Shard.Users.UserZoneProgress
@@ -70,6 +73,16 @@ defmodule Shard.Users.User do
     user
     |> cast(attrs, [:admin])
     |> validate_required([:admin])
+  end
+
+  @doc """
+  A user changeset for updating stats fields.
+  """
+  def changeset(user, attrs) do
+    user
+    |> cast(attrs, [:total_playtime_seconds, :last_login_at, :login_count])
+    |> validate_number(:total_playtime_seconds, greater_than_or_equal_to: 0)
+    |> validate_number(:login_count, greater_than_or_equal_to: 0)
   end
 
   defp validate_email(changeset, opts) do

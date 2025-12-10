@@ -4,9 +4,20 @@ defmodule Shard.AITest do
   alias Shard.AI
 
   describe "generate_room_description/2" do
-    test "returns dummy response when API key is missing" do
-      # Temporarily remove the API key
+    setup do
+      # Store original config to restore later
       original_config = Application.get_env(:shard, :open_router)
+      on_exit(fn ->
+        if original_config do
+          Application.put_env(:shard, :open_router, original_config)
+        else
+          Application.delete_env(:shard, :open_router)
+        end
+      end)
+      %{original_config: original_config}
+    end
+
+    test "returns dummy response when API key is missing" do
       Application.put_env(:shard, :open_router, api_key: nil)
 
       zone_description = "A dark forest"
@@ -16,13 +27,6 @@ defmodule Shard.AITest do
                AI.generate_room_description(zone_description, surrounding_rooms)
 
       assert description == "A test room description generated without an API call."
-
-      # Restore original config
-      if original_config do
-        Application.put_env(:shard, :open_router, original_config)
-      else
-        Application.delete_env(:shard, :open_router)
-      end
     end
 
     test "makes API call when API key is present" do

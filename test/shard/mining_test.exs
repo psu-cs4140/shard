@@ -252,9 +252,80 @@ defmodule Shard.MiningTest do
     end
   end
 
+  describe "sell_all_resources/1" do
+    test "converts all resources to gold" do
+      character = character_fixture()
+      {:ok, inventory} = Mining.get_or_create_mining_inventory(character)
+
+      {:ok, inventory_with_resources} =
+        Mining.add_resources(inventory, %{stone: 10, coal: 5, copper: 2})
+
+      {:ok, result} = Mining.sell_all_resources(character)
+
+      assert result.gold_earned > 0
+      assert result.mining_inventory.stone == 0
+      assert result.mining_inventory.coal == 0
+      assert result.mining_inventory.copper == 0
+    end
+
+    test "returns 0 gold when no resources to sell" do
+      character = character_fixture()
+      {:ok, _inventory} = Mining.get_or_create_mining_inventory(character)
+
+      {:ok, result} = Mining.sell_all_resources(character)
+
+      assert result.gold_earned == 0
+    end
+  end
+
+  describe "MiningInventory changeset" do
+    test "validates required fields" do
+      changeset = MiningInventory.changeset(%MiningInventory{}, %{})
+      refute changeset.valid?
+
+      errors = errors_on(changeset)
+      assert "can't be blank" in errors.character_id
+    end
+
+    test "validates non-negative resource amounts" do
+      attrs = %{
+        character_id: 1,
+        stone: -1,
+        coal: -1,
+        copper: -1,
+        iron: -1,
+        gems: -1
+      }
+
+      changeset = MiningInventory.changeset(%MiningInventory{}, attrs)
+      refute changeset.valid?
+
+      errors = errors_on(changeset)
+      assert "must be greater than or equal to 0" in errors.stone
+      assert "must be greater than or equal to 0" in errors.coal
+      assert "must be greater than or equal to 0" in errors.copper
+      assert "must be greater than or equal to 0" in errors.iron
+      assert "must be greater than or equal to 0" in errors.gems
+    end
+
+    test "accepts valid mining inventory data" do
+      attrs = %{
+        character_id: 1,
+        stone: 10,
+        coal: 5,
+        copper: 3,
+        iron: 1,
+        gems: 0
+      }
+
+      changeset = MiningInventory.changeset(%MiningInventory{}, attrs)
+      assert changeset.valid?
+    end
+  end
+
   # Helper function to create a test character
   defp character_fixture(attrs \\ %{}) do
-    user = user_fixture()
+    user = create_user_fixture()
 
     valid_attrs =
       Enum.into(attrs, %{
@@ -268,7 +339,7 @@ defmodule Shard.MiningTest do
     character
   end
 
-  defp user_fixture do
+  defp create_user_fixture do
     unique_email = "user#{System.unique_integer([:positive])}@example.com"
 
     {:ok, user} =
