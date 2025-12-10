@@ -318,7 +318,7 @@ defmodule Shard.ForestTest do
 
   # Helper function to create a test character
   defp character_fixture(attrs \\ %{}) do
-    user = user_fixture()
+    user = create_user_fixture()
 
     valid_attrs =
       Enum.into(attrs, %{
@@ -332,7 +332,7 @@ defmodule Shard.ForestTest do
     character
   end
 
-  defp user_fixture do
+  defp create_user_fixture do
     unique_email = "user#{System.unique_integer([:positive])}@example.com"
 
     {:ok, user} =

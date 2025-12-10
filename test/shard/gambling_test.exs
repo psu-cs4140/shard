@@ -410,7 +410,7 @@ defmodule Shard.GamblingTest do
     character
   end
 
-  defp user_fixture do
+  defp create_user_fixture do
     unique_email = "user#{System.unique_integer([:positive])}@example.com"
 
     {:ok, user} =
