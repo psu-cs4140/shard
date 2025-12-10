@@ -215,6 +215,21 @@ defmodule Shard.MapTest do
       {:ok, east_room} =
         Map.create_room(Enum.into([x_coordinate: 1, y_coordinate: 0, z_coordinate: 0], valid_room_attrs(zone.id)))
 
+      # Create doors to connect the rooms
+      {:ok, _door1} = Map.create_door(%{
+        direction: "north",
+        from_room_id: center_room.id,
+        to_room_id: north_room.id,
+        is_locked: false
+      })
+
+      {:ok, _door2} = Map.create_door(%{
+        direction: "east", 
+        from_room_id: center_room.id,
+        to_room_id: east_room.id,
+        is_locked: false
+      })
+
       adjacent_rooms = Map.get_adjacent_rooms(center_room.id)
       adjacent_ids = Enum.map(adjacent_rooms, & &1.id)
 
