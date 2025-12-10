@@ -512,6 +512,33 @@ defmodule Shard.Users do
     end
   end
 
+  @doc """
+  Updates user login statistics.
+  """
+  def update_login_stats(user) do
+    now = DateTime.utc_now(:second)
+
+    user
+    |> User.changeset(%{
+      last_login_at: now,
+      login_count: (user.login_count || 0) + 1
+    })
+    |> Repo.update()
+  end
+
+  @doc """
+  Adds playtime to a user's total playtime.
+  """
+  def add_playtime(user, seconds) when is_integer(seconds) and seconds > 0 do
+    current_playtime = user.total_playtime_seconds || 0
+
+    user
+    |> User.changeset(%{total_playtime_seconds: current_playtime + seconds})
+    |> Repo.update()
+  end
+
+  def add_playtime(user, _), do: {:ok, user}
+
   defp update_user_and_delete_all_tokens(changeset) do
     Repo.transact(fn ->
       with {:ok, user} <- Repo.update(changeset) do
