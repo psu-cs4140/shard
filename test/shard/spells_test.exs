@@ -245,7 +245,7 @@ defmodule Shard.SpellsTest do
       spells = Spells.list_spells()
       
       low_cost_spells = Enum.filter(spells, &(&1.mana_cost <= 30))
-      high_cost_spells = Enum.filter(spells, &(&1.mana_cost > 30))
+      _high_cost_spells = Enum.filter(spells, &(&1.mana_cost > 30))
       
       assert length(low_cost_spells) > 0
       # May or may not have high cost spells depending on test data
