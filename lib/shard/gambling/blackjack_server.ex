@@ -168,9 +168,21 @@ defmodule Shard.Gambling.BlackjackServer do
 
       game_state ->
         # Load hands with character associations
+        Logger.info(
+          "get_game: Hand counts before preload: #{inspect(Enum.map(game_state.hands, fn {_, h} -> length(h.hand_cards) end))}"
+        )
+
         hands_with_characters =
           Enum.map(game_state.hands, fn {_character_id, hand} ->
-            hand |> Repo.preload(:character)
+            loaded = hand |> Repo.preload(:character)
+            # Check if preload changed hand_cards
+            if length(loaded.hand_cards) != length(hand.hand_cards) do
+              Logger.warning(
+                "PRELOAD CHANGED HAND CARDS! Before: #{length(hand.hand_cards)}, After: #{length(loaded.hand_cards)}"
+              )
+            end
+
+            loaded
           end)
 
         game_data = %{
@@ -303,6 +315,9 @@ defmodule Shard.Gambling.BlackjackServer do
       game_id,
       {:card_dealt, %{character_id: character_id, card: List.last(updated_hand.hand_cards)}}
     )
+
+    # Updated State
+    Logger.info("process_hit: Saving hand with #{length(updated_hand.hand_cards)} cards to state")
 
     if outcome == :busted do
       # Advance
