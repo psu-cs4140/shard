@@ -299,39 +299,40 @@ defmodule Shard.MiningTest do
         Characters.update_character(character, %{is_mining: true, mining_started_at: nil})
 
       assert Mining.calculate_pending_ticks(mining_char) == 0
-      
+
       {:ok, status} = Mining.get_mining_status(mining_char)
       assert status.ticks_pending == 0
     end
 
     test "mining inventory persists across multiple mining sessions" do
       character = character_fixture()
-      
+
       # First mining session
       {:ok, mining_char} = Mining.start_mining(character)
       past_time = DateTime.add(DateTime.utc_now(), -12, :second)
-      
+
       {:ok, updated_char} =
         Characters.update_character(mining_char, %{mining_started_at: past_time})
-      
+
       {:ok, result1} = Mining.stop_mining(updated_char)
-      
+
       # Second mining session
       {:ok, mining_char2} = Mining.start_mining(result1.character)
       past_time2 = DateTime.add(DateTime.utc_now(), -6, :second)
-      
+
       {:ok, updated_char2} =
         Characters.update_character(mining_char2, %{mining_started_at: past_time2})
-      
+
       {:ok, result2} = Mining.stop_mining(updated_char2)
-      
+
       # Should have resources from both sessions
       total_resources =
         result2.mining_inventory.stone + result2.mining_inventory.coal +
           result2.mining_inventory.copper + result2.mining_inventory.iron +
           result2.mining_inventory.gems
 
-      assert total_resources == 3  # 2 from first session + 1 from second
+      # 2 from first session + 1 from second
+      assert total_resources == 3
     end
 
     test "add_resources handles empty resource map" do
@@ -353,11 +354,12 @@ defmodule Shard.MiningTest do
 
       # This should either fail validation or handle negatives appropriately
       result = Mining.add_resources(inventory, %{stone: -5})
-      
+
       case result do
         {:ok, updated_inventory} ->
           # If it succeeds, stone should not be negative
           assert updated_inventory.stone >= 0
+
         {:error, _changeset} ->
           # If it fails, that's also acceptable behavior
           assert true

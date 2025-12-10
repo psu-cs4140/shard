@@ -171,14 +171,15 @@ defmodule Shard.SpellsTest do
       holy_incantation = Spells.get_spell_by_name("Holy Incantation")
 
       {:ok, _character_spell1} = Spells.add_spell_to_character(character.id, holy_incantation.id)
-      
+
       # Second attempt should fail or be idempotent
       result = Spells.add_spell_to_character(character.id, holy_incantation.id)
-      
+
       case result do
         {:error, _changeset} ->
           # Expected behavior - duplicate prevention
           assert true
+
         {:ok, _character_spell2} ->
           # If it's idempotent, should still only have one spell
           character_spells = Spells.list_character_spells(character.id)
@@ -201,7 +202,7 @@ defmodule Shard.SpellsTest do
 
       # Remove spell that character doesn't have
       Spells.remove_spell_from_character(character.id, holy_incantation.id)
-      
+
       character_spells = Spells.list_character_spells(character.id)
       assert Enum.empty?(character_spells)
     end
@@ -219,13 +220,13 @@ defmodule Shard.SpellsTest do
     end
 
     test "list_spells_by_type/1 returns empty list for non-existent type" do
-      spells = Spells.list_spells_by_type(999999)
+      spells = Spells.list_spells_by_type(999_999)
       assert Enum.empty?(spells)
     end
 
     test "spells have correct associations loaded" do
       holy_incantation = Spells.get_spell_by_name("Holy Incantation")
-      
+
       # The spell should have its type and effect loaded if the function supports it
       assert holy_incantation != nil
       assert holy_incantation.name == "Holy Incantation"
@@ -233,20 +234,20 @@ defmodule Shard.SpellsTest do
 
     test "can filter spells by level requirement" do
       spells = Spells.list_spells()
-      
+
       low_level_spells = Enum.filter(spells, &(&1.level_required <= 2))
       high_level_spells = Enum.filter(spells, &(&1.level_required > 2))
-      
+
       assert length(low_level_spells) > 0
       assert length(high_level_spells) > 0
     end
 
     test "can filter spells by mana cost" do
       spells = Spells.list_spells()
-      
+
       low_cost_spells = Enum.filter(spells, &(&1.mana_cost <= 30))
       _high_cost_spells = Enum.filter(spells, &(&1.mana_cost > 30))
-      
+
       assert length(low_cost_spells) > 0
       # May or may not have high cost spells depending on test data
     end
@@ -262,7 +263,7 @@ defmodule Shard.SpellsTest do
       spells = Spells.list_spells()
       spell_types = Spells.list_spell_types()
       spell_type_ids = Enum.map(spell_types, & &1.id)
-      
+
       for spell <- spells do
         assert spell.spell_type_id in spell_type_ids
       end
@@ -272,7 +273,7 @@ defmodule Shard.SpellsTest do
       spells = Spells.list_spells()
       spell_effects = Spells.list_spell_effects()
       spell_effect_ids = Enum.map(spell_effects, & &1.id)
-      
+
       for spell <- spells do
         assert spell.spell_effect_id in spell_effect_ids
       end
@@ -282,7 +283,7 @@ defmodule Shard.SpellsTest do
       spell_types = Spells.list_spell_types()
       names = Enum.map(spell_types, & &1.name)
       unique_names = Enum.uniq(names)
-      
+
       assert length(names) == length(unique_names)
     end
 
@@ -290,13 +291,13 @@ defmodule Shard.SpellsTest do
       spell_effects = Spells.list_spell_effects()
       names = Enum.map(spell_effects, & &1.name)
       unique_names = Enum.uniq(names)
-      
+
       assert length(names) == length(unique_names)
     end
 
     test "spells have positive mana costs" do
       spells = Spells.list_spells()
-      
+
       for spell <- spells do
         assert spell.mana_cost > 0
       end
@@ -304,7 +305,7 @@ defmodule Shard.SpellsTest do
 
     test "spells have non-negative level requirements" do
       spells = Spells.list_spells()
-      
+
       for spell <- spells do
         assert spell.level_required >= 0
       end

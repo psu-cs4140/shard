@@ -56,11 +56,12 @@ defmodule Shard.AchievementsTest do
     test "create_achievement/1 validates category inclusion" do
       attrs = valid_achievement_attributes(%{category: "invalid_category"})
       result = Achievements.create_achievement(attrs)
-      
+
       case result do
         {:error, changeset} ->
           errors = errors_on(changeset)
           assert "is invalid" in errors.category
+
         {:ok, _achievement} ->
           # If the schema doesn't validate categories, that's also valid behavior
           assert true
@@ -69,13 +70,15 @@ defmodule Shard.AchievementsTest do
 
     test "create_achievement/1 accepts valid categories" do
       valid_categories = ["general", "combat", "exploration", "crafting", "social"]
-      
+
       for category <- valid_categories do
         # Use unique names to avoid conflicts
-        attrs = valid_achievement_attributes(%{
-          category: category,
-          name: "Test Achievement #{category} #{System.unique_integer([:positive])}"
-        })
+        attrs =
+          valid_achievement_attributes(%{
+            category: category,
+            name: "Test Achievement #{category} #{System.unique_integer([:positive])}"
+          })
+
         assert {:ok, %Achievement{}} = Achievements.create_achievement(attrs)
       end
     end
@@ -129,7 +132,7 @@ defmodule Shard.AchievementsTest do
     test "validates name uniqueness" do
       _achievement = achievement_fixture(%{name: "Unique Achievement"})
       attrs = valid_achievement_attributes(%{name: "Unique Achievement"})
-      
+
       {:error, changeset} = Achievements.create_achievement(attrs)
       errors = errors_on(changeset)
       assert "has already been taken" in errors.name
