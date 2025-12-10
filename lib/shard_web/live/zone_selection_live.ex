@@ -58,196 +58,195 @@ defmodule ShardWeb.ZoneSelectionLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div class="min-h-screen bg-black">
-        <div class="container mx-auto px-6 py-12 max-w-7xl">
-          <.header>
-            <span class="text-white">Select a Dungeon to Explore</span>
-            <:subtitle>
-              <%= if @character do %>
-                <span class="text-gray-300">
-                  Playing as: {@character.name} (Level {@character.level} {@character.class})
-                </span>
-              <% else %>
-                <span class="text-gray-400">Choose a dungeon to begin your dark adventure</span>
-              <% end %>
-            </:subtitle>
-          </.header>
+    <Layouts.flash_group flash={@flash} />
+    <div class="min-h-screen bg-black">
+      <div class="container mx-auto px-6 py-12 max-w-7xl">
+        <.header>
+          <span class="text-white">Select a Dungeon to Explore</span>
+          <:subtitle>
+            <%= if @character do %>
+              <span class="text-gray-300">
+                Playing as: {@character.name} (Level {@character.level} {@character.class})
+              </span>
+            <% else %>
+              <span class="text-gray-400">Choose a dungeon to begin your dark adventure</span>
+            <% end %>
+          </:subtitle>
+        </.header>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
-            <%= for zone <- @zones do %>
-              <% zone_progress = Kernel.get_in(@zone_progress_map, [zone.id]) || "locked" %>
-              <% is_accessible = zone_progress in ["in_progress", "completed"] %>
-              <div class={[
-                "card shadow-xl transition-all duration-300 rounded-2xl border-2",
-                if(is_accessible,
-                  do: "bg-white hover:shadow-2xl hover:shadow-gray-400/50 border-gray-300",
-                  else: "bg-gray-200 border-gray-400 opacity-60"
-                )
-              ]}>
-                <div class="card-body p-8">
-                  <h2 class={[
-                    "card-title",
-                    if(is_accessible, do: "text-gray-900", else: "text-gray-500")
-                  ]}>
-                    {zone.name}
-                    <div class={[
-                      "badge",
-                      if(is_accessible,
-                        do: "border-gray-400 " <> get_zone_type_color(zone.zone_type),
-                        else: "border-gray-500 bg-gray-300 text-gray-600"
-                      )
-                    ]}>
-                      <%= if !is_accessible do %>
-                        🔒
-                      <% end %>
-                      {String.capitalize(zone.zone_type)}
-                    </div>
-                  </h2>
-
-                  <p class={[
-                    "text-sm min-h-[4rem]",
-                    if(is_accessible, do: "text-gray-700", else: "text-gray-500")
-                  ]}>
-                    {if is_accessible,
-                      do: zone.description,
-                      else: "This zone is locked. Complete previous zones to unlock."}
-                  </p>
-
-                  <div class="divider my-4 border-gray-300"></div>
-
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
+          <%= for zone <- @zones do %>
+            <% zone_progress = Kernel.get_in(@zone_progress_map, [zone.id]) || "locked" %>
+            <% is_accessible = zone_progress in ["in_progress", "completed"] %>
+            <div class={[
+              "card shadow-xl transition-all duration-300 rounded-2xl border-2",
+              if(is_accessible,
+                do: "bg-white hover:shadow-2xl hover:shadow-gray-400/50 border-gray-300",
+                else: "bg-gray-200 border-gray-400 opacity-60"
+              )
+            ]}>
+              <div class="card-body p-8">
+                <h2 class={[
+                  "card-title",
+                  if(is_accessible, do: "text-gray-900", else: "text-gray-500")
+                ]}>
+                  {zone.name}
                   <div class={[
-                    "grid grid-cols-2 gap-2 text-sm",
-                    if(is_accessible, do: "text-gray-700", else: "text-gray-500")
+                    "badge",
+                    if(is_accessible,
+                      do: "border-gray-400 " <> get_zone_type_color(zone.zone_type),
+                      else: "border-gray-500 bg-gray-300 text-gray-600"
+                    )
                   ]}>
-                    <div>
-                      <span class={[
-                        "font-semibold",
-                        if(is_accessible, do: "text-gray-900", else: "text-gray-400")
-                      ]}>
-                        Level Range:
-                      </span>
-                      <br />
-                      <span class={if(is_accessible, do: "text-gray-700", else: "text-gray-500")}>
-                        {zone.min_level}-{zone.max_level || "∞"}
-                      </span>
-                    </div>
-                    <div>
-                      <span class={[
-                        "font-semibold",
-                        if(is_accessible, do: "text-gray-900", else: "text-gray-400")
-                      ]}>
-                        Rooms:
-                      </span>
-                      <br />
-                      <span class={if(is_accessible, do: "text-gray-700", else: "text-gray-500")}>
-                        {if is_accessible, do: length(Map.list_rooms_by_zone(zone.id)), else: "???"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div class="card-actions justify-end mt-4">
-                    <%= if @character do %>
-                      <%= if is_accessible do %>
-                        <div class="flex gap-3">
-                          <.button
-                            phx-click="enter_zone"
-                            phx-value-zone_name={zone.name}
-                            phx-value-instance_type="singleplayer"
-                            class="bg-gray-800 hover:bg-gray-700 text-white border-gray-600 hover:border-gray-500 flex-1 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-gray-500/25 hover:brightness-110 active:scale-95 rounded-xl px-4 py-3"
-                          >
-                            <svg
-                              class="w-4 h-4 mr-1 transition-transform duration-300 group-hover:rotate-12"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                              >
-                              </path>
-                            </svg>
-                            <span class="transition-all duration-300">Singleplayer</span>
-                          </.button>
-                          <.button
-                            phx-click="enter_zone"
-                            phx-value-zone_name={zone.name}
-                            phx-value-instance_type="multiplayer"
-                            class="bg-gray-900 hover:bg-gray-800 text-white border-gray-700 hover:border-gray-600 flex-1 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-gray-500/25 hover:brightness-110 active:scale-95 rounded-xl px-4 py-3"
-                          >
-                            <svg
-                              class="w-4 h-4 mr-1 transition-transform duration-300 group-hover:rotate-12"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                              >
-                              </path>
-                            </svg>
-                            <span class="transition-all duration-300">Multiplayer</span>
-                          </.button>
-                        </div>
-                      <% else %>
-                        <div class="flex gap-3">
-                          <button
-                            disabled
-                            class="btn bg-gray-700 text-gray-400 border-gray-600 flex-1 rounded-xl px-4 py-3 cursor-not-allowed"
-                          >
-                            🔒 Locked
-                          </button>
-                        </div>
-                      <% end %>
-                    <% else %>
-                      <div class="flex flex-col gap-3">
-                        <.link
-                          navigate={~p"/characters"}
-                          class="btn bg-gray-800 hover:bg-gray-700 text-white border-gray-600 rounded-xl px-4 py-3"
-                        >
-                          Select Existing Character
-                        </.link>
-                        <.link
-                          navigate={~p"/characters/new"}
-                          class="btn bg-gray-900 hover:bg-gray-800 text-white border-gray-700 rounded-xl px-4 py-3"
-                        >
-                          Create New Character
-                        </.link>
-                      </div>
+                    <%= if !is_accessible do %>
+                      🔒
                     <% end %>
+                    {String.capitalize(zone.zone_type)}
+                  </div>
+                </h2>
+
+                <p class={[
+                  "text-sm min-h-[4rem]",
+                  if(is_accessible, do: "text-gray-700", else: "text-gray-500")
+                ]}>
+                  {if is_accessible,
+                    do: zone.description,
+                    else: "This zone is locked. Complete previous zones to unlock."}
+                </p>
+
+                <div class="divider my-4 border-gray-300"></div>
+
+                <div class={[
+                  "grid grid-cols-2 gap-2 text-sm",
+                  if(is_accessible, do: "text-gray-700", else: "text-gray-500")
+                ]}>
+                  <div>
+                    <span class={[
+                      "font-semibold",
+                      if(is_accessible, do: "text-gray-900", else: "text-gray-400")
+                    ]}>
+                      Level Range:
+                    </span>
+                    <br />
+                    <span class={if(is_accessible, do: "text-gray-700", else: "text-gray-500")}>
+                      {zone.min_level}-{zone.max_level || "∞"}
+                    </span>
+                  </div>
+                  <div>
+                    <span class={[
+                      "font-semibold",
+                      if(is_accessible, do: "text-gray-900", else: "text-gray-400")
+                    ]}>
+                      Rooms:
+                    </span>
+                    <br />
+                    <span class={if(is_accessible, do: "text-gray-700", else: "text-gray-500")}>
+                      {if is_accessible, do: length(Map.list_rooms_by_zone(zone.id)), else: "???"}
+                    </span>
                   </div>
                 </div>
-              </div>
-            <% end %>
-          </div>
 
-          <%= if Enum.empty?(@zones) do %>
-            <div class="alert bg-gray-100 border-2 border-gray-300 text-gray-800 mt-12 rounded-2xl shadow-lg">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="stroke-current shrink-0 h-6 w-6 text-gray-600"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
-              <span>No dungeons available yet. Please ask an administrator to create zones.</span>
+                <div class="card-actions justify-end mt-4">
+                  <%= if @character do %>
+                    <%= if is_accessible do %>
+                      <div class="flex gap-3">
+                        <.button
+                          phx-click="enter_zone"
+                          phx-value-zone_name={zone.name}
+                          phx-value-instance_type="singleplayer"
+                          class="bg-gray-800 hover:bg-gray-700 text-white border-gray-600 hover:border-gray-500 flex-1 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-gray-500/25 hover:brightness-110 active:scale-95 rounded-xl px-4 py-3"
+                        >
+                          <svg
+                            class="w-4 h-4 mr-1 transition-transform duration-300 group-hover:rotate-12"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            >
+                            </path>
+                          </svg>
+                          <span class="transition-all duration-300">Singleplayer</span>
+                        </.button>
+                        <.button
+                          phx-click="enter_zone"
+                          phx-value-zone_name={zone.name}
+                          phx-value-instance_type="multiplayer"
+                          class="bg-gray-900 hover:bg-gray-800 text-white border-gray-700 hover:border-gray-600 flex-1 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg hover:shadow-gray-500/25 hover:brightness-110 active:scale-95 rounded-xl px-4 py-3"
+                        >
+                          <svg
+                            class="w-4 h-4 mr-1 transition-transform duration-300 group-hover:rotate-12"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                            >
+                            </path>
+                          </svg>
+                          <span class="transition-all duration-300">Multiplayer</span>
+                        </.button>
+                      </div>
+                    <% else %>
+                      <div class="flex gap-3">
+                        <button
+                          disabled
+                          class="btn bg-gray-700 text-gray-400 border-gray-600 flex-1 rounded-xl px-4 py-3 cursor-not-allowed"
+                        >
+                          🔒 Locked
+                        </button>
+                      </div>
+                    <% end %>
+                  <% else %>
+                    <div class="flex flex-col gap-3">
+                      <.link
+                        navigate={~p"/characters"}
+                        class="btn bg-gray-800 hover:bg-gray-700 text-white border-gray-600 rounded-xl px-4 py-3"
+                      >
+                        Select Existing Character
+                      </.link>
+                      <.link
+                        navigate={~p"/characters/new"}
+                        class="btn bg-gray-900 hover:bg-gray-800 text-white border-gray-700 rounded-xl px-4 py-3"
+                      >
+                        Create New Character
+                      </.link>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
             </div>
           <% end %>
         </div>
+
+        <%= if Enum.empty?(@zones) do %>
+          <div class="alert bg-gray-100 border-2 border-gray-300 text-gray-800 mt-12 rounded-2xl shadow-lg">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="stroke-current shrink-0 h-6 w-6 text-gray-600"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+            <span>No dungeons available yet. Please ask an administrator to create zones.</span>
+          </div>
+        <% end %>
       </div>
-    </Layouts.app>
+    </div>
     """
   end
 
@@ -301,10 +300,17 @@ defmodule ShardWeb.ZoneSelectionLive do
   defp handle_mines_entry(socket, character, zone) do
     case Characters.update_character(character, %{current_zone_id: zone.id}) do
       {:ok, updated_character} ->
+        # Check for zone entry achievements
+        handle_zone_entry_achievement(updated_character, zone)
+
         pet_line =
-          if updated_character.has_pet_rock,
-            do: "\nYour Pet Rock is with you. It sometimes doubles your mining haul.",
-            else: ""
+          if updated_character.has_pet_rock do
+            chance = pet_chance(updated_character.pet_rock_level)
+
+            "\nYour Pet Rock is with you. (Level #{updated_character.pet_rock_level} – #{chance}% chance to double your mining haul.)"
+          else
+            ""
+          end
 
         {:noreply,
          socket
@@ -328,11 +334,17 @@ defmodule ShardWeb.ZoneSelectionLive do
   defp handle_forest_entry(socket, character, zone, _instance_type) do
     case Characters.update_character(character, %{current_zone_id: zone.id}) do
       {:ok, updated_character} ->
+        # Check for zone entry achievements
+        handle_zone_entry_achievement(updated_character, zone)
+
         pet_line =
-          if updated_character.has_shroomling,
-            do:
-              "\nYour Shroomling companion follows along, occasionally doubling your forest harvest.",
-            else: ""
+          if updated_character.has_shroomling do
+            chance = pet_chance(updated_character.shroomling_level)
+
+            "\nYour Shroomling companion bounces beside you. (Level #{updated_character.shroomling_level} – #{chance}% chance to double your forest harvest.)"
+          else
+            ""
+          end
 
         {:noreply,
          socket
@@ -415,6 +427,8 @@ defmodule ShardWeb.ZoneSelectionLive do
        |> put_flash(:error, "This zone is locked. Complete previous zones to unlock it.")}
     end
   end
+
+  defp pet_chance(level), do: min(10 + (level - 1), 50)
 
   # Helper function to handle admin stick granting
   defp handle_admin_stick_granting(character) do

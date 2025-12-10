@@ -34,6 +34,10 @@ defmodule Shard.Characters.Character do
     field :chopping_started_at, :utc_datetime_usec
     field :has_pet_rock, :boolean, default: false
     field :has_shroomling, :boolean, default: false
+    field :pet_rock_level, :integer, default: 1
+    field :pet_rock_xp, :integer, default: 0
+    field :shroomling_level, :integer, default: 1
+    field :shroomling_xp, :integer, default: 0
 
     belongs_to :user, User
     belongs_to :current_zone, Zone
@@ -73,7 +77,11 @@ defmodule Shard.Characters.Character do
       :is_chopping,
       :chopping_started_at,
       :has_pet_rock,
-      :has_shroomling
+      :has_shroomling,
+      :pet_rock_level,
+      :pet_rock_xp,
+      :shroomling_level,
+      :shroomling_xp
     ])
     |> validate_required([:name, :class, :race])
     |> validate_length(:name, min: 2, max: 50)

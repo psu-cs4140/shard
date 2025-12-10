@@ -16,6 +16,9 @@ defmodule Shard.Combat.Loot do
     # Update character - add gold
     updated_character = Map.update(game_state.character, :gold, 0, &(&1 + gold_reward))
 
+    # Check for combat achievements
+    Shard.Achievements.check_combat_achievements(game_state.character.user_id)
+
     # Generate reward messages (skip loot processing for local testing)
     death_messages = [
       "You gain #{xp_reward} experience.",
@@ -38,6 +41,9 @@ defmodule Shard.Combat.Loot do
 
     # Update character - add gold
     updated_character = Map.update(game_state.character, :gold, 0, &(&1 + gold_reward))
+
+    # Check for combat achievements
+    Shard.Achievements.check_combat_achievements(game_state.character.user_id)
 
     # Process loot drops
     loot_messages = process_loot_drops(game_state, dead_monster)

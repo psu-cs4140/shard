@@ -1,206 +1,256 @@
-<div style="padding-left: 3rem;">
-  <.header>
-    Marketplace
-    <:subtitle>Buy and sell items with other players</:subtitle>
-  </.header>
-  
-<!-- Navigation Tabs -->
-  <div class="tabs tabs-boxed mb-6">
-    <a
-      class={"tab #{@active_tab == "browse" && "tab-active"}"}
-      phx-click="switch_tab"
-      phx-value-tab="browse"
-    >
-      Browse Market
-    </a>
-    <a
-      class={"tab #{@active_tab == "listings" && "tab-active"}"}
-      phx-click="switch_tab"
-      phx-value-tab="listings"
-    >
-      My Listings
-    </a>
+<Layouts.flash_group flash={@flash} />
+
+<div class="min-h-screen relative overflow-hidden bg-gradient-to-b from-gray-800 via-gray-900 to-black py-8 px-4">
+  <%!-- Gothic Stone Background --%>
+  <div
+    class="absolute inset-0 opacity-30"
+    style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot;><defs><pattern id=&quot;stones&quot; patternUnits=&quot;userSpaceOnUse&quot; width=&quot;30&quot; height=&quot;30&quot;><rect width=&quot;30&quot; height=&quot;30&quot; fill=&quot;%23444&quot;/><rect x=&quot;0&quot; y=&quot;0&quot; width=&quot;14&quot; height=&quot;14&quot; fill=&quot;%23555&quot; stroke=&quot;%23333&quot; stroke-width=&quot;0.5&quot;/><rect x=&quot;16&quot; y=&quot;0&quot; width=&quot;14&quot; height=&quot;14&quot; fill=&quot;%23666&quot; stroke=&quot;%23333&quot; stroke-width=&quot;0.5&quot;/><rect x=&quot;8&quot; y=&quot;16&quot; width=&quot;14&quot; height=&quot;14&quot; fill=&quot;%23555&quot; stroke=&quot;%23333&quot; stroke-width=&quot;0.5&quot;/><path d=&quot;M5,5 L10,8 M20,3 L25,7 M12,20 L18,25&quot; stroke=&quot;%23222&quot; stroke-width=&quot;0.3&quot; fill=&quot;none&quot;/></pattern></defs><rect width=&quot;100&quot; height=&quot;100&quot; fill=&quot;url(%23stones)&quot; /></svg>');"
+  >
   </div>
-  
-<!-- Browse Market Tab -->
-  <%= if @active_tab == "browse" do %>
-    <!-- Search and Filter Controls -->
-    <div class="bg-base-100 rounded-lg p-4 mb-6 shadow">
-      <form phx-submit="search" class="flex flex-col sm:flex-row gap-4">
-        <div class="flex-1">
-          <.input
-            name="search[query]"
-            type="text"
-            value={@search_query}
-            placeholder="Search items..."
-            class="w-full"
-          />
-        </div>
-        <div class="sm:w-48">
-          <.input
-            name="search[rarity]"
-            type="select"
-            value={@rarity_filter}
-            options={[
-              {"All", "all"},
-              {"Common", "common"},
-              {"Uncommon", "uncommon"},
-              {"Rare", "rare"},
-              {"Epic", "epic"}
-            ]}
-          />
-        </div>
-        <.button type="submit" class="btn-primary">
-          <.icon name="hero-magnifying-glass" class="w-5 h-5" /> Search
-        </.button>
-      </form>
+
+  <%!-- Gothic Shadow --%>
+  <div class="absolute bottom-0 w-full h-32 bg-gradient-to-t from-black to-transparent opacity-80">
+  </div>
+
+  <div class="max-w-7xl mx-auto relative z-10">
+    <%!-- Header --%>
+    <div class="text-center mb-8">
+      <div class="text-4xl mb-2">🏺</div>
+      <h1 class="text-5xl font-bold text-red-400 mb-2">Dark Marketplace</h1>
+      <p class="text-red-300/80 text-lg">
+        Trade cursed relics and forbidden wares with fellow adventurers
+      </p>
     </div>
-    
-<!-- Item Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      <%= for listing <- @filtered_listings do %>
-        <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
-          <div class="card-body p-4">
-            <div class="flex items-start justify-between">
-              <h3 class="card-title text-lg">{listing.item_name}</h3>
-              <span class={"badge badge-sm capitalize #{rarity_color_class(listing.rarity)}"}>
-                {listing.rarity}
-              </span>
-            </div>
 
-            <p class="text-sm opacity-70 mb-2">{listing.item_type}</p>
+    <%!-- Navigation Tabs --%>
+    <div class="flex justify-center gap-4 mb-8">
+      <button
+        phx-click="switch_tab"
+        phx-value-tab="browse"
+        class={[
+          "px-6 py-3 rounded-lg font-semibold transition-all border-2",
+          if(@active_tab == "browse",
+            do: "bg-red-900 text-red-100 border-red-500 shadow-lg",
+            else:
+              "bg-gray-800 text-gray-300 border-gray-700 hover:border-red-700 hover:bg-gray-700"
+          )
+        ]}
+      >
+        <.icon name="hero-shopping-bag" class="w-5 h-5 inline mr-2" /> Browse Wares
+      </button>
+      <button
+        phx-click="switch_tab"
+        phx-value-tab="listings"
+        class={[
+          "px-6 py-3 rounded-lg font-semibold transition-all border-2",
+          if(@active_tab == "listings",
+            do: "bg-red-900 text-red-100 border-red-500 shadow-lg",
+            else:
+              "bg-gray-800 text-gray-300 border-gray-700 hover:border-red-700 hover:bg-gray-700"
+          )
+        ]}
+      >
+        <.icon name="hero-clipboard-document-list" class="w-5 h-5 inline mr-2" /> My Offerings
+      </button>
+    </div>
 
-            <div class="stats stats-vertical bg-base-200 mb-3">
-              <%= for {stat, value} <- listing.stats do %>
-                <div class="stat p-2">
-                  <div class="stat-title capitalize">
-                    {String.replace(to_string(stat), "_", " ")}
-                  </div>
-                  <div class="stat-value text-primary">{value}</div>
+    <%!-- Browse Market Tab --%>
+    <%= if @active_tab == "browse" do %>
+      <%!-- Search and Filter Controls --%>
+      <div class="backdrop-blur-sm bg-gray-900/80 rounded-lg p-4 mb-6 border border-red-800/50 shadow-xl">
+        <form phx-submit="search" class="flex flex-col sm:flex-row gap-4">
+          <div class="flex-1">
+            <input
+              name="search[query]"
+              type="text"
+              value={@search_query}
+              placeholder="Search for cursed relics..."
+              class="w-full px-4 py-3 bg-gray-800 border border-red-800/50 rounded-lg text-red-200 focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-500"
+            />
+          </div>
+          <div class="sm:w-48">
+            <select
+              name="search[rarity]"
+              class="w-full px-4 py-3 bg-gray-800 border border-red-800/50 rounded-lg text-red-200 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            >
+              <option value="all" selected={@rarity_filter == "all"}>All Rarities</option>
+              <option value="common" selected={@rarity_filter == "common"}>Common</option>
+              <option value="uncommon" selected={@rarity_filter == "uncommon"}>Uncommon</option>
+              <option value="rare" selected={@rarity_filter == "rare"}>Rare</option>
+              <option value="epic" selected={@rarity_filter == "epic"}>Epic</option>
+              <option value="legendary" selected={@rarity_filter == "legendary"}>
+                Legendary
+              </option>
+            </select>
+          </div>
+          <button
+            type="submit"
+            class="px-6 py-3 bg-red-800 hover:bg-red-700 text-red-100 rounded-lg font-semibold transition-colors border border-red-600"
+          >
+            <.icon name="hero-magnifying-glass" class="w-5 h-5 inline mr-1" /> Search
+          </button>
+        </form>
+      </div>
+
+      <%!-- Item Grid --%>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <%= for listing <- @filtered_listings do %>
+          <div class="backdrop-blur-sm bg-gray-900/80 rounded-lg border border-red-800/50 shadow-xl hover:border-red-600 transition-all hover:shadow-2xl">
+            <div class="p-4">
+              <div class="flex items-start justify-between mb-2">
+                <h3 class="font-bold text-lg text-red-200">{listing.item_name}</h3>
+                <span class={[
+                  "text-xs font-bold px-2 py-1 rounded border",
+                  rarity_color_class(listing.rarity)
+                ]}>
+                  {listing.rarity}
+                </span>
+              </div>
+
+              <p class="text-sm text-gray-500 mb-3">{listing.item_type}</p>
+
+              <%= unless Enum.empty?(listing.stats) do %>
+                <div class="bg-gray-800/80 rounded-lg p-3 mb-3 border border-gray-700">
+                  <%= for {stat, value} <- listing.stats do %>
+                    <div class="flex justify-between text-sm py-1">
+                      <span class="text-gray-400 capitalize">
+                        {String.replace(to_string(stat), "_", " ")}
+                      </span>
+                      <span class="font-bold text-red-300">{value}</span>
+                    </div>
+                  <% end %>
                 </div>
               <% end %>
-            </div>
 
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-lg font-bold text-primary">{listing.price} gold</p>
-                <p class="text-xs opacity-70">by {listing.seller} (Lv.{listing.seller_level})</p>
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <p class="text-lg font-bold text-amber-400">{listing.price} gold</p>
+                  <p class="text-xs text-gray-500">
+                    by {listing.seller} (Lv.{listing.seller_level})
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <div class="card-actions justify-end mt-4">
-              <.button
+              <button
                 phx-click="view_listing"
                 phx-value-id={listing.id}
-                class="btn-primary btn-sm"
+                class="w-full py-2 bg-red-900 hover:bg-red-800 text-red-100 rounded-lg font-semibold transition-colors border border-red-700 text-sm"
               >
                 View Details
-              </.button>
+              </button>
             </div>
           </div>
+        <% end %>
+      </div>
+
+      <%= if Enum.empty?(@filtered_listings) do %>
+        <div class="text-center py-16">
+          <.icon name="hero-shopping-cart" class="w-16 h-16 mx-auto text-gray-600 mb-4" />
+          <h3 class="text-xl font-medium text-red-300 mb-2">No Wares Found</h3>
+          <p class="text-gray-500">The merchants have nothing matching your search</p>
         </div>
       <% end %>
-    </div>
-
-    <%= if Enum.empty?(@filtered_listings) do %>
-      <div class="text-center py-12">
-        <.icon name="hero-shopping-cart" class="size-16 mx-auto text-base-content/20 mb-4" />
-        <h3 class="text-xl font-medium mb-2">No items found</h3>
-        <p class="text-base-content/70">Try adjusting your search or filters</p>
-      </div>
     <% end %>
-  <% end %>
-  
-<!-- My Listings Tab -->
-  <%= if @active_tab == "listings" do %>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Listing Creation Form -->
-      <div class="lg:col-span-1">
-        <div class="card bg-base-100 shadow-xl">
-          <div class="card-body">
-            <h2 class="card-title">List New Item</h2>
+
+    <%!-- My Listings Tab --%>
+    <%= if @active_tab == "listings" do %>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <%!-- Listing Creation Form --%>
+        <div class="lg:col-span-1">
+          <div class="backdrop-blur-sm bg-gray-900/80 rounded-lg p-6 border border-red-800/50 shadow-xl relative">
+            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 text-2xl">📜</div>
+            <h2 class="text-xl font-bold text-red-300 mb-6 text-center pt-2">Offer New Wares</h2>
 
             <.form
               for={@form}
               id="listing-form"
               phx-submit="create_listing"
               phx-change="preview_item"
+              class="space-y-4"
             >
-              <div class="space-y-4">
-                <.input
-                  field={@form[:item_id]}
-                  type="select"
-                  label="Select Item"
-                  options={@inventory_items}
-                  prompt="Choose an item from your inventory"
-                  required
-                />
-
-                <.input
-                  field={@form[:price]}
-                  type="number"
-                  label="Price (Gold)"
-                  min="1"
-                  required
-                />
-
-                <div class="form-control">
-                  <.button type="submit" class="w-full">List Item</.button>
-                </div>
+              <div>
+                <label class="block text-red-300/80 font-semibold mb-2">Select Item</label>
+                <select
+                  name="listing[item_id]"
+                  class="w-full px-4 py-3 bg-gray-800 border border-red-800/50 rounded-lg text-red-200 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                >
+                  <option value="">Choose from your coffers...</option>
+                  <%= for {name, id} <- @inventory_items do %>
+                    <option value={id}>{name}</option>
+                  <% end %>
+                </select>
               </div>
+
+              <div>
+                <label class="block text-red-300/80 font-semibold mb-2">
+                  Asking Price (Gold)
+                </label>
+                <input
+                  type="number"
+                  name="listing[price]"
+                  min="1"
+                  placeholder="Enter price..."
+                  class="w-full px-4 py-3 bg-gray-800 border border-red-800/50 rounded-lg text-red-200 focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-600"
+                />
+              </div>
+
+              <button
+                type="submit"
+                class="w-full py-3 bg-gradient-to-r from-red-800 to-red-900 hover:from-red-700 hover:to-red-800 text-red-100 font-bold rounded-lg transition-all border border-red-600"
+              >
+                🏷️ List for Sale
+              </button>
             </.form>
-            
-<!-- Item Preview -->
+
+            <%!-- Item Preview --%>
             <%= if @selected_item do %>
-              <div class="mt-6 p-4 bg-base-200 rounded-lg">
-                <h3 class="font-bold mb-2">Item Preview</h3>
+              <div class="mt-6 p-4 bg-gray-800/80 rounded-lg border border-gray-700">
+                <h3 class="font-bold text-red-300 mb-3">Item Preview</h3>
                 <div class="flex items-center gap-3">
-                  <div class="avatar placeholder">
-                    <div class="bg-neutral text-neutral-content rounded-full w-12">
-                      <span>{String.first(@selected_item.name)}</span>
-                    </div>
+                  <div class="w-12 h-12 bg-red-900/50 rounded-full flex items-center justify-center text-red-200 font-bold border border-red-700">
+                    {String.first(@selected_item.name)}
                   </div>
                   <div>
-                    <p class="font-semibold">{@selected_item.name}</p>
-                    <p class="text-sm opacity-70">{@selected_item.description}</p>
+                    <p class="font-semibold text-red-200">{@selected_item.name}</p>
+                    <p class="text-sm text-gray-400">{@selected_item.description}</p>
                   </div>
                 </div>
               </div>
             <% end %>
           </div>
         </div>
-      </div>
-      
-<!-- Active Listings -->
-      <div class="lg:col-span-2">
-        <div class="card bg-base-100 shadow-xl">
-          <div class="card-body">
-            <h2 class="card-title">Your Active Listings</h2>
+
+        <%!-- Active Listings --%>
+        <div class="lg:col-span-2">
+          <div class="backdrop-blur-sm bg-gray-900/80 rounded-lg p-6 border border-red-800/50 shadow-xl">
+            <h2 class="text-xl font-bold text-red-300 mb-6 flex items-center gap-2">
+              <span class="text-lg">📋</span> Your Active Offerings
+            </h2>
 
             <div id="listings" phx-update="stream">
               <div class="hidden only:block text-center py-8">
-                <.icon name="hero-shopping-cart" class="size-12 mx-auto text-base-content/20" />
-                <h3 class="text-lg font-medium mt-4">No Active Listings</h3>
-                <p class="mt-1 text-base-content/70">
-                  List items from your inventory to start selling!
+                <.icon name="hero-shopping-cart" class="w-12 h-12 mx-auto text-gray-600 mb-4" />
+                <h3 class="text-lg font-medium text-red-300">No Active Offerings</h3>
+                <p class="mt-1 text-gray-500">
+                  List items from your inventory to begin trading!
                 </p>
               </div>
 
               <div
                 :for={{id, listing} <- @streams.listings}
                 id={id}
-                class="border-b border-base-200 last:border-b-0 py-4"
+                class="border-b border-gray-700 last:border-b-0 py-4"
               >
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div class="flex items-center gap-3">
-                    <div class="avatar placeholder">
-                      <div class="bg-primary text-primary-content rounded-full w-10">
-                        <span>{String.first(listing.character_inventory.item.name)}</span>
-                      </div>
+                    <div class="w-10 h-10 bg-red-900/50 rounded-full flex items-center justify-center text-red-200 font-bold border border-red-700">
+                      {String.first(listing.character_inventory.item.name)}
                     </div>
                     <div>
-                      <h3 class="font-semibold">{listing.character_inventory.item.name}</h3>
-                      <p class="text-sm opacity-70">
+                      <h3 class="font-semibold text-red-200">
+                        {listing.character_inventory.item.name}
+                      </h3>
+                      <p class="text-sm text-gray-500">
                         Listed {time_ago_in_words(listing.inserted_at)} ago
                       </p>
                     </div>
@@ -208,16 +258,16 @@
 
                   <div class="flex items-center gap-4">
                     <div class="text-right">
-                      <p class="text-lg font-bold">{listing.price} Gold</p>
+                      <p class="text-lg font-bold text-amber-400">{listing.price} Gold</p>
                     </div>
                     <div class="flex gap-2">
                       <.link
                         phx-click="cancel_listing"
                         phx-value-id={listing.id}
-                        class="btn btn-sm btn-error btn-outline"
-                        data-confirm="Are you sure you want to cancel this listing?"
+                        class="px-4 py-2 bg-gray-800 hover:bg-red-900 text-red-400 hover:text-red-200 rounded-lg text-sm font-semibold transition-colors border border-gray-700 hover:border-red-700"
+                        data-confirm="Are you sure you want to withdraw this offering?"
                       >
-                        Cancel
+                        Withdraw
                       </.link>
                     </div>
                   </div>
@@ -227,88 +277,102 @@
           </div>
         </div>
       </div>
-    </div>
-  <% end %>
-  
-<!-- Item Details Modal -->
-  <%= if @selected_listing do %>
-    <div class="modal modal-open">
-      <div class="modal-box max-w-lg">
-        <h3 class="font-bold text-xl mb-4">{@selected_listing.item_name}</h3>
+    <% end %>
 
-        <div class="space-y-4">
-          <!-- Rarity and Type -->
-          <div class="flex items-center gap-2">
-            <span class={"badge capitalize #{rarity_color_class(@selected_listing.rarity)}"}>
-              {@selected_listing.rarity}
-            </span>
-            <span class="badge badge-outline">{@selected_listing.item_type}</span>
-          </div>
-          
-<!-- Description -->
-          <p class="text-sm">{@selected_listing.description}</p>
-          
-<!-- Stats -->
-          <%= unless Enum.empty?(@selected_listing.stats) do %>
-            <div>
-              <h4 class="font-semibold mb-2">Stats</h4>
-              <div class="grid grid-cols-2 gap-2">
-                <%= for {stat, value} <- @selected_listing.stats do %>
-                  <div class="flex justify-between">
-                    <span class="capitalize text-sm">
-                      {String.replace(to_string(stat), "_", " ")}:
-                    </span>
-                    <span class="font-semibold">{value}</span>
-                  </div>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-          
-<!-- Requirements -->
-          <%= unless Enum.empty?(@selected_listing.requirements) do %>
-            <div>
-              <h4 class="font-semibold mb-2">Requirements</h4>
-              <div class="grid grid-cols-2 gap-2">
-                <%= for {req, value} <- @selected_listing.requirements do %>
-                  <div class="flex justify-between">
-                    <span class="capitalize text-sm">{req}:</span>
-                    <span class="font-semibold">{value}</span>
-                  </div>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-          
-<!-- Seller Info -->
-          <div class="bg-base-200 p-3 rounded-lg">
-            <h4 class="font-semibold mb-1">Seller</h4>
-            <p class="text-sm">
-              {@selected_listing.seller} (Level {@selected_listing.seller_level})
-            </p>
-            <p class="text-xs opacity-70">
-              Listed {time_ago_in_words(@selected_listing.listed_at)}
-            </p>
-          </div>
-          
-<!-- Price -->
-          <div class="text-center">
-            <p class="text-2xl font-bold text-primary">{@selected_listing.price} Gold</p>
-          </div>
-        </div>
+    <%!-- Item Details Modal --%>
+    <%= if @selected_listing do %>
+      <div class="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="backdrop-blur-sm bg-gray-900/95 rounded-lg p-6 max-w-lg w-full border-2 border-red-800 shadow-2xl relative">
+          <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 text-3xl">🏺</div>
 
-        <div class="modal-action">
-          <.button
-            phx-click="purchase_listing"
-            phx-value-id={@selected_listing.id}
-            class="btn-primary"
-            data-confirm="Purchase this item for {@selected_listing.price} gold?"
-          >
-            Buy Now
-          </.button>
-          <.button phx-click="close_modal" class="btn-ghost">Cancel</.button>
+          <h3 class="font-bold text-2xl text-red-300 mb-4 text-center pt-2">
+            {@selected_listing.item_name}
+          </h3>
+
+          <div class="space-y-4">
+            <%!-- Rarity and Type --%>
+            <div class="flex items-center justify-center gap-2">
+              <span class={[
+                "text-sm font-bold px-3 py-1 rounded border",
+                rarity_color_class(@selected_listing.rarity)
+              ]}>
+                {@selected_listing.rarity}
+              </span>
+              <span class="text-sm px-3 py-1 rounded bg-gray-800 text-gray-300 border border-gray-700">
+                {@selected_listing.item_type}
+              </span>
+            </div>
+
+            <%!-- Description --%>
+            <p class="text-sm text-gray-400 text-center">{@selected_listing.description}</p>
+
+            <%!-- Stats --%>
+            <%= unless Enum.empty?(@selected_listing.stats) do %>
+              <div class="bg-gray-800/80 rounded-lg p-4 border border-gray-700">
+                <h4 class="font-semibold text-red-300 mb-3">Stats</h4>
+                <div class="grid grid-cols-2 gap-2">
+                  <%= for {stat, value} <- @selected_listing.stats do %>
+                    <div class="flex justify-between py-1">
+                      <span class="text-sm text-gray-400 capitalize">
+                        {String.replace(to_string(stat), "_", " ")}:
+                      </span>
+                      <span class="font-semibold text-red-200">{value}</span>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+
+            <%!-- Requirements --%>
+            <%= unless Enum.empty?(@selected_listing.requirements) do %>
+              <div class="bg-gray-800/80 rounded-lg p-4 border border-gray-700">
+                <h4 class="font-semibold text-red-300 mb-3">Requirements</h4>
+                <div class="grid grid-cols-2 gap-2">
+                  <%= for {req, value} <- @selected_listing.requirements do %>
+                    <div class="flex justify-between py-1">
+                      <span class="text-sm text-gray-400 capitalize">{req}:</span>
+                      <span class="font-semibold text-red-200">{value}</span>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+
+            <%!-- Seller Info --%>
+            <div class="bg-gray-800/80 rounded-lg p-4 border border-gray-700">
+              <h4 class="font-semibold text-red-300 mb-2">Merchant</h4>
+              <p class="text-sm text-gray-300">
+                {@selected_listing.seller} (Level {@selected_listing.seller_level})
+              </p>
+              <p class="text-xs text-gray-500 mt-1">
+                Listed {time_ago_in_words(@selected_listing.listed_at)}
+              </p>
+            </div>
+
+            <%!-- Price --%>
+            <div class="text-center py-2">
+              <p class="text-3xl font-bold text-amber-400">{@selected_listing.price} Gold</p>
+            </div>
+          </div>
+
+          <div class="flex gap-3 mt-6">
+            <button
+              phx-click="purchase_listing"
+              phx-value-id={@selected_listing.id}
+              class="flex-1 py-3 bg-gradient-to-r from-red-800 to-red-900 hover:from-red-700 hover:to-red-800 text-red-100 font-bold rounded-lg transition-all border border-red-600"
+              data-confirm={"Purchase this item for #{@selected_listing.price} gold?"}
+            >
+              💰 Purchase
+            </button>
+            <button
+              phx-click="close_modal"
+              class="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold rounded-lg transition-colors border border-gray-700"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  <% end %>
+    <% end %>
+  </div>
 </div>

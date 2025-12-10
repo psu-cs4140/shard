@@ -132,16 +132,23 @@ defmodule Shard.Gambling do
     |> Bet.changeset(%{result: result, payout: payout})
     |> Repo.update!()
 
+    # Get character to find user_id for achievements
+    character = Repo.get!(Character, bet.character_id)
+
     # If won, add payout to character's gold
     if won do
-      character = Repo.get!(Character, bet.character_id)
-
       character
       |> Character.changeset(%{gold: character.gold + payout})
       |> Repo.update!()
 
+      # Check for gambling achievements
+      Shard.Achievements.check_gambling_achievements(character.user_id, :won)
+
       {:won, payout}
     else
+      # Check for gambling achievements
+      Shard.Achievements.check_gambling_achievements(character.user_id, :lost)
+
       {:lost, 0}
     end
   end
