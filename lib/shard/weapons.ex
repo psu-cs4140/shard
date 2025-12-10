@@ -130,22 +130,4 @@ defmodule Shard.Weapons do
     }
   end
 
-  defmodule DamageTypes do
-    def list_damage_types do
-      []
-    end
-
-    def get_damage_type_by_name(_name) do
-      nil
-    end
-
-    def get_effective_damage(damage, damage_type, target_resistances) do
-      multiplier = get_damage_multiplier(damage_type, target_resistances)
-      damage * multiplier
-    end
-
-    def get_damage_multiplier(damage_type, target_resistances) do
-      Enum.into(target_resistances, %{}) |> Kernel.get_in([damage_type]) || 1.0
-    end
-  end
 end
