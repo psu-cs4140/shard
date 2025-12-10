@@ -48,15 +48,13 @@ defmodule Shard.CharactersTest do
       assert character.level == 1
       assert character.experience == 0
       assert character.health == 100
-      assert character.mana == 50
+      assert character.mana == 80
       assert character.strength == 10
-      assert character.defense == 10
+      assert character.dexterity == 10
       assert character.agility == 10
       assert character.intelligence == 10
       assert character.gold == 0
-      assert character.x == 0
-      assert character.y == 0
-      assert character.z == 0
+      assert character.location == "starting_town"
       assert character.is_mining == false
       assert character.mining_started_at == nil
     end
