@@ -250,7 +250,7 @@ defmodule Shard.ForestTest do
       character = character_fixture()
       {:ok, inventory} = Forest.get_or_create_chopping_inventory(character)
 
-      {:ok, inventory_with_resources} =
+      {:ok, _inventory_with_resources} =
         Forest.add_resources(inventory, %{wood: 10, sticks: 5, seeds: 2})
 
       {:ok, result} = Forest.sell_all_resources(character)
