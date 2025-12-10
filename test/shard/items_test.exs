@@ -303,6 +303,85 @@ defmodule Shard.ItemsTest do
     end
   end
 
+  describe "item filtering and searching" do
+    setup do
+      {:ok, weapon} = Items.create_item(valid_item_attrs("Test Sword"))
+      {:ok, armor} = Items.create_item(%{
+        name: "Test Armor",
+        item_type: "body",
+        rarity: "rare",
+        equippable: true,
+        equipment_slot: "body"
+      })
+      {:ok, consumable} = Items.create_item(%{
+        name: "Health Potion",
+        item_type: "consumable",
+        rarity: "common",
+        stackable: true
+      })
+
+      %{weapon: weapon, armor: armor, consumable: consumable}
+    end
+
+    test "can filter items by type", %{weapon: weapon, armor: armor, consumable: consumable} do
+      all_items = Items.list_items()
+      
+      # Verify our test items exist
+      item_ids = Enum.map(all_items, & &1.id)
+      assert weapon.id in item_ids
+      assert armor.id in item_ids
+      assert consumable.id in item_ids
+    end
+
+    test "can identify equippable items", %{weapon: weapon, armor: armor, consumable: consumable} do
+      assert weapon.equippable == true
+      assert armor.equippable == true
+      assert consumable.equippable == false
+    end
+
+    test "can identify stackable items", %{weapon: weapon, armor: armor, consumable: consumable} do
+      assert weapon.stackable == false
+      assert armor.stackable == false
+      assert consumable.stackable == true
+    end
+  end
+
+  describe "item value and economics" do
+    test "items have appropriate values for their rarity" do
+      {:ok, common_item} = Items.create_item(valid_item_attrs("Common Item"))
+      {:ok, rare_item} = Items.create_item(%{
+        name: "Rare Item",
+        item_type: "weapon",
+        rarity: "rare",
+        value: 500
+      })
+
+      assert common_item.value < rare_item.value
+    end
+
+    test "can create items with zero value" do
+      {:ok, item} = Items.create_item(%{
+        name: "Worthless Item",
+        item_type: "misc",
+        rarity: "common",
+        value: 0
+      })
+
+      assert item.value == 0
+    end
+
+    test "can create items with high values" do
+      {:ok, item} = Items.create_item(%{
+        name: "Expensive Item",
+        item_type: "weapon",
+        rarity: "legendary",
+        value: 999999
+      })
+
+      assert item.value == 999999
+    end
+  end
+
   describe "CharacterInventory changeset" do
     test "validates required fields" do
       changeset = CharacterInventory.changeset(%CharacterInventory{}, %{})

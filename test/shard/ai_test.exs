@@ -117,5 +117,56 @@ defmodule Shard.AITest do
       assert {:ok, description} = AI.generate_room_description(zone_description, nil)
       assert is_binary(description)
     end
+
+    test "handles very long zone descriptions" do
+      Application.put_env(:shard, :open_router, api_key: nil)
+
+      long_description = String.duplicate("A very long zone description. ", 100)
+      
+      assert {:ok, description} = AI.generate_room_description(long_description, [])
+      assert is_binary(description)
+    end
+
+    test "handles special characters in zone description" do
+      Application.put_env(:shard, :open_router, api_key: nil)
+
+      zone_description = "A zone with special chars: !@#$%^&*()[]{}|\\:;\"'<>,.?/~`"
+      
+      assert {:ok, description} = AI.generate_room_description(zone_description, [])
+      assert is_binary(description)
+    end
+
+    test "handles unicode characters in zone description" do
+      Application.put_env(:shard, :open_router, api_key: nil)
+
+      zone_description = "A mystical zone with runes: ᚠᚢᚦᚨᚱᚲ and symbols: ⚔️🏰🌟"
+      
+      assert {:ok, description} = AI.generate_room_description(zone_description, [])
+      assert is_binary(description)
+    end
+
+    test "handles rooms with nil descriptions" do
+      Application.put_env(:shard, :open_router, api_key: nil)
+
+      surrounding_rooms = [
+        %{name: "Room 1", description: nil},
+        %{name: "Room 2", description: "Valid description"}
+      ]
+      
+      assert {:ok, description} = AI.generate_room_description("Test zone", surrounding_rooms)
+      assert is_binary(description)
+    end
+
+    test "handles rooms with missing keys" do
+      Application.put_env(:shard, :open_router, api_key: nil)
+
+      surrounding_rooms = [
+        %{name: "Room 1"},  # Missing description
+        %{description: "Room without name"}  # Missing name
+      ]
+      
+      assert {:ok, description} = AI.generate_room_description("Test zone", surrounding_rooms)
+      assert is_binary(description)
+    end
   end
 end
