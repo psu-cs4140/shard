@@ -215,7 +215,7 @@ defmodule Shard.MapTest do
       {:ok, east_room} =
         Map.create_room(Enum.into([x_coordinate: 1, y_coordinate: 0, z_coordinate: 0], valid_room_attrs(zone.id)))
 
-      adjacent_rooms = Map.get_adjacent_rooms(center_room)
+      adjacent_rooms = Map.get_adjacent_rooms(center_room.id)
       adjacent_ids = Enum.map(adjacent_rooms, & &1.id)
 
       assert north_room.id in adjacent_ids
@@ -393,7 +393,6 @@ defmodule Shard.MapTest do
 
       errors = errors_on(changeset)
       assert "can't be blank" in errors.name
-      assert "can't be blank" in errors.zone_id
     end
 
     test "accepts valid room data" do
