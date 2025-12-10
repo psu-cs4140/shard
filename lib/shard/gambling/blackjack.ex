@@ -357,27 +357,7 @@ defmodule Shard.Gambling.Blackjack do
         end
 
       # Determine current player ID based on current_player_index
-      current_player_id =
-        if game.status == "playing" do
-          active_hands =
-            hands
-            |> Map.values()
-            |> Enum.filter(fn hand -> hand.status == "playing" end)
-            |> Enum.sort_by(fn hand -> hand.position end)
-
-          case Enum.at(active_hands, game.current_player_index) do
-            nil ->
-              case List.first(active_hands) do
-                nil -> nil
-                hand -> hand.character_id
-              end
-
-            hand ->
-              hand.character_id
-          end
-        else
-          nil
-        end
+      current_player_id = determine_current_player_id(game, hands)
 
       %GameState{
         game: game,
@@ -391,4 +371,25 @@ defmodule Shard.Gambling.Blackjack do
       }
     end)
   end
+
+  defp determine_current_player_id(%{status: "playing", current_player_index: index}, hands) do
+    active_hands =
+      hands
+      |> Map.values()
+      |> Enum.filter(fn hand -> hand.status == "playing" end)
+      |> Enum.sort_by(fn hand -> hand.position end)
+
+    case Enum.at(active_hands, index) do
+      nil ->
+        case List.first(active_hands) do
+          nil -> nil
+          hand -> hand.character_id
+        end
+
+      hand ->
+        hand.character_id
+    end
+  end
+
+  defp determine_current_player_id(_game, _hands), do: nil
 end

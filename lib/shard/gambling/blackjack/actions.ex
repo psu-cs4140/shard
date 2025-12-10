@@ -192,8 +192,9 @@ defmodule Shard.Gambling.Blackjack.Actions do
     current_position = if current_hand, do: current_hand.position, else: 0
 
     hands
-    |> Enum.filter(fn {_id, hand} -> hand.status == "playing" end)
-    |> Enum.filter(fn {_id, hand} -> hand.position > current_position end)
+    |> Enum.filter(fn {_id, hand} ->
+      hand.status == "playing" and hand.position > current_position
+    end)
     |> Enum.sort_by(fn {_id, hand} -> hand.position end)
     |> List.first()
   end
