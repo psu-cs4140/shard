@@ -517,7 +517,7 @@ defmodule Shard.Users do
   """
   def update_login_stats(user) do
     now = DateTime.utc_now(:second)
-    
+
     user
     |> User.changeset(%{
       last_login_at: now,
@@ -531,7 +531,7 @@ defmodule Shard.Users do
   """
   def add_playtime(user, seconds) when is_integer(seconds) and seconds > 0 do
     current_playtime = user.total_playtime_seconds || 0
-    
+
     user
     |> User.changeset(%{total_playtime_seconds: current_playtime + seconds})
     |> Repo.update()
