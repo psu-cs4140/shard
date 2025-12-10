@@ -4,9 +4,6 @@ defmodule Shard.Weapons do
   """
 
   import Ecto.Query, warn: false
-  alias Shard.Repo
-
-  alias Shard.Weapons.{Weapons, Classes, DamageTypes, Effects, Enchantments, Rarities, WeaponEffects, WeaponEnchantments}
 
   def list_weapons do
     []
@@ -148,7 +145,7 @@ defmodule Shard.Weapons do
     end
 
     def get_damage_multiplier(damage_type, target_resistances) do
-      Map.get(target_resistances, damage_type, 1.0)
+      Enum.into(target_resistances, %{}) |> Kernel.get_in([damage_type]) || 1.0
     end
   end
 end

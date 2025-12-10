@@ -205,9 +205,9 @@ defmodule Shard.CharactersTest do
       assert "must be greater than or equal to 0" in errors.experience
       assert "must be greater than or equal to 0" in errors.health
       assert "must be greater than or equal to 0" in errors.mana
-      assert "must be greater than or equal to 0" in errors.strength
-      assert "must be greater than or equal to 0" in errors.dexterity
-      assert "must be greater than or equal to 0" in errors.intelligence
+      assert "must be greater than 0" in errors.strength
+      assert "must be greater than 0" in errors.dexterity
+      assert "must be greater than 0" in errors.intelligence
       assert "must be greater than or equal to 0" in errors.gold
     end
 

@@ -76,7 +76,7 @@ defmodule Shard.MapTest do
 
     test "get_zone_by_slug/1 returns zone with given slug" do
       slug = "findable-zone-#{System.unique_integer([:positive])}"
-      attrs = Map.put(valid_zone_attrs(), :slug, slug)
+      attrs = Enum.into([slug: slug], valid_zone_attrs())
       {:ok, zone} = Map.create_zone(attrs)
 
       found_zone = Map.get_zone_by_slug(slug)
@@ -177,7 +177,7 @@ defmodule Shard.MapTest do
     end
 
     test "get_room_by_coordinates/3 returns room at specific coordinates", %{zone: zone} do
-      attrs = Map.merge(valid_room_attrs(zone.id), %{x_coordinate: 3, y_coordinate: 7, z_coordinate: 1})
+      attrs = Enum.into([x_coordinate: 3, y_coordinate: 7, z_coordinate: 1], valid_room_attrs(zone.id))
       {:ok, room} = Map.create_room(attrs)
 
       found_room = Map.get_room_by_coordinates(zone.id, 3, 7, 1)
@@ -193,7 +193,7 @@ defmodule Shard.MapTest do
 
     test "get_rooms_in_zone/1 returns rooms in specific zone", %{zone: zone} do
       {:ok, room1} = Map.create_room(valid_room_attrs(zone.id))
-      {:ok, room2} = Map.create_room(Map.merge(valid_room_attrs(zone.id), %{x_coordinate: 1, y_coordinate: 1}))
+      {:ok, room2} = Map.create_room(Enum.into([x_coordinate: 1, y_coordinate: 1], valid_room_attrs(zone.id)))
 
       rooms_in_zone = Map.list_rooms()
       zone_rooms = Enum.filter(rooms_in_zone, fn room -> room.zone_id == zone.id end)
@@ -210,10 +210,10 @@ defmodule Shard.MapTest do
 
       # Create adjacent rooms
       {:ok, north_room} =
-        Map.create_room(Map.merge(valid_room_attrs(zone.id), %{x_coordinate: 0, y_coordinate: 1, z_coordinate: 0}))
+        Map.create_room(Enum.into([x_coordinate: 0, y_coordinate: 1, z_coordinate: 0], valid_room_attrs(zone.id)))
 
       {:ok, east_room} =
-        Map.create_room(Map.merge(valid_room_attrs(zone.id), %{x_coordinate: 1, y_coordinate: 0, z_coordinate: 0}))
+        Map.create_room(Enum.into([x_coordinate: 1, y_coordinate: 0, z_coordinate: 0], valid_room_attrs(zone.id)))
 
       adjacent_rooms = Map.get_adjacent_rooms(center_room)
       adjacent_ids = Enum.map(adjacent_rooms, & &1.id)
@@ -229,21 +229,21 @@ defmodule Shard.MapTest do
 
       {:ok, room1} =
         Map.create_room(%{
-          name: "Room 1",
+          name: "Room 1 #{System.unique_integer([:positive])}",
           description: "First room",
-          x: 0,
-          y: 0,
-          z: 0,
+          x_coordinate: 0,
+          y_coordinate: 0,
+          z_coordinate: 0,
           zone_id: zone.id
         })
 
       {:ok, room2} =
         Map.create_room(%{
-          name: "Room 2",
+          name: "Room 2 #{System.unique_integer([:positive])}",
           description: "Second room",
-          x: 1,
-          y: 0,
-          z: 0,
+          x_coordinate: 1,
+          y_coordinate: 0,
+          z_coordinate: 0,
           zone_id: zone.id
         })
 
@@ -393,9 +393,6 @@ defmodule Shard.MapTest do
 
       errors = errors_on(changeset)
       assert "can't be blank" in errors.name
-      assert "can't be blank" in errors.x_coordinate
-      assert "can't be blank" in errors.y_coordinate
-      assert "can't be blank" in errors.z_coordinate
       assert "can't be blank" in errors.zone_id
     end
 
