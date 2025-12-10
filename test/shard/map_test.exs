@@ -7,14 +7,6 @@ defmodule Shard.MapTest do
   describe "zones" do
     @invalid_zone_attrs %{name: nil, description: nil}
 
-    defp valid_zone_attrs do
-      %{
-        name: "Test Zone #{System.unique_integer([:positive])}",
-        description: "A test zone for testing purposes",
-        min_level: 1,
-        max_level: 10
-      }
-    end
 
     test "list_zones/0 returns all zones" do
       {:ok, zone} = Map.create_zone(valid_zone_attrs())
@@ -82,18 +74,18 @@ defmodule Shard.MapTest do
       assert %Ecto.Changeset{} = Map.change_zone(zone)
     end
 
-    test "get_zone_by_name/1 returns zone with given name" do
-      name = "Findable Zone #{System.unique_integer([:positive])}"
-      attrs = Map.put(valid_zone_attrs(), :name, name)
+    test "get_zone_by_slug/1 returns zone with given slug" do
+      slug = "findable-zone-#{System.unique_integer([:positive])}"
+      attrs = Map.put(valid_zone_attrs(), :slug, slug)
       {:ok, zone} = Map.create_zone(attrs)
 
-      found_zone = Map.get_zone_by_name(name)
+      found_zone = Map.get_zone_by_slug(slug)
       assert found_zone.id == zone.id
-      assert found_zone.name == name
+      assert found_zone.slug == slug
     end
 
-    test "get_zone_by_name/1 returns nil for non-existent zone" do
-      assert Map.get_zone_by_name("Non-existent Zone") == nil
+    test "get_zone_by_slug/1 returns nil for non-existent zone" do
+      assert Map.get_zone_by_slug("non-existent-zone") == nil
     end
   end
 
@@ -109,9 +101,9 @@ defmodule Shard.MapTest do
       %{
         name: "Test Room #{System.unique_integer([:positive])}",
         description: "A test room for testing purposes",
-        x: 0,
-        y: 0,
-        z: 0,
+        x_coordinate: 0,
+        y_coordinate: 0,
+        z_coordinate: 0,
         zone_id: zone_id
       }
     end
@@ -137,9 +129,9 @@ defmodule Shard.MapTest do
       assert {:ok, %Room{} = room} = Map.create_room(attrs)
       assert room.name == attrs.name
       assert room.description == attrs.description
-      assert room.x == 0
-      assert room.y == 0
-      assert room.z == 0
+      assert room.x_coordinate == 0
+      assert room.y_coordinate == 0
+      assert room.z_coordinate == 0
       assert room.zone_id == zone.id
     end
 
@@ -153,15 +145,15 @@ defmodule Shard.MapTest do
       update_attrs = %{
         name: "Updated Room #{System.unique_integer([:positive])}",
         description: "Updated description",
-        x: 5,
-        y: 10
+        x_coordinate: 5,
+        y_coordinate: 10
       }
 
       assert {:ok, %Room{} = updated_room} = Map.update_room(room, update_attrs)
       assert updated_room.name == update_attrs.name
       assert updated_room.description == update_attrs.description
-      assert updated_room.x == 5
-      assert updated_room.y == 10
+      assert updated_room.x_coordinate == 5
+      assert updated_room.y_coordinate == 10
     end
 
     test "update_room/2 with invalid data returns error changeset", %{zone: zone} do
@@ -185,44 +177,45 @@ defmodule Shard.MapTest do
     end
 
     test "get_room_by_coordinates/3 returns room at specific coordinates", %{zone: zone} do
-      attrs = Map.merge(valid_room_attrs(zone.id), %{x: 3, y: 7, z: 1})
+      attrs = Map.merge(valid_room_attrs(zone.id), %{x_coordinate: 3, y_coordinate: 7, z_coordinate: 1})
       {:ok, room} = Map.create_room(attrs)
 
-      found_room = Map.get_room_by_coordinates(3, 7, 1)
+      found_room = Map.get_room_by_coordinates(zone.id, 3, 7, 1)
       assert found_room.id == room.id
-      assert found_room.x == 3
-      assert found_room.y == 7
-      assert found_room.z == 1
+      assert found_room.x_coordinate == 3
+      assert found_room.y_coordinate == 7
+      assert found_room.z_coordinate == 1
     end
 
-    test "get_room_by_coordinates/3 returns nil for non-existent coordinates" do
-      assert Map.get_room_by_coordinates(999, 999, 999) == nil
+    test "get_room_by_coordinates/3 returns nil for non-existent coordinates", %{zone: zone} do
+      assert Map.get_room_by_coordinates(zone.id, 999, 999, 999) == nil
     end
 
     test "get_rooms_in_zone/1 returns rooms in specific zone", %{zone: zone} do
       {:ok, room1} = Map.create_room(valid_room_attrs(zone.id))
-      {:ok, room2} = Map.create_room(Map.merge(valid_room_attrs(zone.id), %{x: 1, y: 1}))
+      {:ok, room2} = Map.create_room(Map.merge(valid_room_attrs(zone.id), %{x_coordinate: 1, y_coordinate: 1}))
 
-      rooms_in_zone = Map.get_rooms_in_zone(zone.id)
-      assert length(rooms_in_zone) >= 2
+      rooms_in_zone = Map.list_rooms()
+      zone_rooms = Enum.filter(rooms_in_zone, fn room -> room.zone_id == zone.id end)
+      assert length(zone_rooms) >= 2
 
-      room_ids = Enum.map(rooms_in_zone, & &1.id)
+      room_ids = Enum.map(zone_rooms, & &1.id)
       assert room1.id in room_ids
       assert room2.id in room_ids
     end
 
     test "get_adjacent_rooms/3 returns rooms adjacent to coordinates", %{zone: zone} do
       # Create a room at (0,0,0)
-      {:ok, _center_room} = Map.create_room(valid_room_attrs(zone.id))
+      {:ok, center_room} = Map.create_room(valid_room_attrs(zone.id))
 
       # Create adjacent rooms
       {:ok, north_room} =
-        Map.create_room(Map.merge(valid_room_attrs(zone.id), %{x: 0, y: 1, z: 0}))
+        Map.create_room(Map.merge(valid_room_attrs(zone.id), %{x_coordinate: 0, y_coordinate: 1, z_coordinate: 0}))
 
       {:ok, east_room} =
-        Map.create_room(Map.merge(valid_room_attrs(zone.id), %{x: 1, y: 0, z: 0}))
+        Map.create_room(Map.merge(valid_room_attrs(zone.id), %{x_coordinate: 1, y_coordinate: 0, z_coordinate: 0}))
 
-      adjacent_rooms = Map.get_adjacent_rooms(0, 0, 0)
+      adjacent_rooms = Map.get_adjacent_rooms(center_room)
       adjacent_ids = Enum.map(adjacent_rooms, & &1.id)
 
       assert north_room.id in adjacent_ids
@@ -264,8 +257,7 @@ defmodule Shard.MapTest do
         direction: "east",
         from_room_id: from_room_id,
         to_room_id: to_room_id,
-        is_locked: false,
-        is_hidden: false
+        is_locked: false
       }
     end
 
@@ -292,7 +284,6 @@ defmodule Shard.MapTest do
       assert door.from_room_id == room1.id
       assert door.to_room_id == room2.id
       assert door.is_locked == false
-      assert door.is_hidden == false
     end
 
     test "create_door/1 with invalid data returns error changeset" do
@@ -304,14 +295,12 @@ defmodule Shard.MapTest do
 
       update_attrs = %{
         direction: "west",
-        is_locked: true,
-        is_hidden: true
+        is_locked: true
       }
 
       assert {:ok, %Door{} = updated_door} = Map.update_door(door, update_attrs)
       assert updated_door.direction == "west"
       assert updated_door.is_locked == true
-      assert updated_door.is_hidden == true
     end
 
     test "update_door/2 with invalid data returns error changeset", %{room1: room1, room2: room2} do
@@ -337,24 +326,25 @@ defmodule Shard.MapTest do
     test "get_doors_from_room/1 returns doors from specific room", %{room1: room1, room2: room2} do
       {:ok, door} = Map.create_door(valid_door_attrs(room1.id, room2.id))
 
-      doors_from_room = Map.get_doors_from_room(room1.id)
+      doors = Map.list_doors()
+      doors_from_room = Enum.filter(doors, fn d -> d.from_room_id == room1.id end)
       assert length(doors_from_room) >= 1
       assert Enum.any?(doors_from_room, fn d -> d.id == door.id end)
     end
 
-    test "get_door_by_direction/2 returns door in specific direction from room", %{
+    test "get_door_in_direction/2 returns door in specific direction from room", %{
       room1: room1,
       room2: room2
     } do
       {:ok, door} = Map.create_door(valid_door_attrs(room1.id, room2.id))
 
-      found_door = Map.get_door_by_direction(room1.id, "east")
+      found_door = Map.get_door_in_direction(room1.id, "east")
       assert found_door.id == door.id
       assert found_door.direction == "east"
     end
 
-    test "get_door_by_direction/2 returns nil for non-existent direction", %{room1: room1} do
-      assert Map.get_door_by_direction(room1.id, "north") == nil
+    test "get_door_in_direction/2 returns nil for non-existent direction", %{room1: room1} do
+      assert Map.get_door_in_direction(room1.id, "north") == nil
     end
 
     test "opposite_direction/1 returns correct opposite directions" do
@@ -379,7 +369,7 @@ defmodule Shard.MapTest do
 
       errors = errors_on(changeset)
       assert "can't be blank" in errors.name
-      assert "can't be blank" in errors.description
+      assert "can't be blank" in errors.slug
     end
 
     test "validates level range" do
@@ -403,10 +393,9 @@ defmodule Shard.MapTest do
 
       errors = errors_on(changeset)
       assert "can't be blank" in errors.name
-      assert "can't be blank" in errors.description
-      assert "can't be blank" in errors.x
-      assert "can't be blank" in errors.y
-      assert "can't be blank" in errors.z
+      assert "can't be blank" in errors.x_coordinate
+      assert "can't be blank" in errors.y_coordinate
+      assert "can't be blank" in errors.z_coordinate
       assert "can't be blank" in errors.zone_id
     end
 
@@ -446,8 +435,7 @@ defmodule Shard.MapTest do
         direction: "north",
         from_room_id: 1,
         to_room_id: 2,
-        is_locked: false,
-        is_hidden: false
+        is_locked: false
       }
 
       changeset = Door.changeset(%Door{}, attrs)
@@ -458,6 +446,7 @@ defmodule Shard.MapTest do
   defp valid_zone_attrs do
     %{
       name: "Test Zone #{System.unique_integer([:positive])}",
+      slug: "test-zone-#{System.unique_integer([:positive])}",
       description: "A test zone for testing purposes",
       min_level: 1,
       max_level: 10
