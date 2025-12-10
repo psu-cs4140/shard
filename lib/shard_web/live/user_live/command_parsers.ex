@@ -170,6 +170,29 @@ defmodule ShardWeb.UserLive.CommandParsers do
     end
   end
 
+  # Parse poke command to extract character name
+  def parse_poke_command(command) do
+    # Match patterns like: poke "character name", poke 'character name', poke character_name
+    cond do
+      # Match poke "character name" or poke 'character name'
+      Regex.match?(~r/^poke\s+["'](.+)["']\s*$/i, command) ->
+        case Regex.run(~r/^poke\s+["'](.+)["']\s*$/i, command) do
+          [_, character_name] -> {:ok, String.trim(character_name)}
+          _ -> :error
+        end
+
+      # Match poke character_name (single word, no quotes)
+      Regex.match?(~r/^poke\s+(\w+)\s*$/i, command) ->
+        case Regex.run(~r/^poke\s+(\w+)\s*$/i, command) do
+          [_, character_name] -> {:ok, String.trim(character_name)}
+          _ -> :error
+        end
+
+      true ->
+        :error
+    end
+  end
+
   # Parse accept_quest command to extract NPC name and quest title
   def parse_accept_quest_command(command) do
     # Match pattern: accept_quest "npc name" "quest title"
