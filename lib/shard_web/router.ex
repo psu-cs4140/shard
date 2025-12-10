@@ -107,6 +107,7 @@ defmodule ShardWeb.Router do
       live "/marketplace", MarketplaceLive.Index, :index
       live "/achievements", AchievementsLive.Index, :index
       live "/gambling", GamblingLive.Index, :index
+      live "/rewards", RewardsLive.Index, :index
       live "/gambling/blackjack/:game_id", BlackjackTableLive, :show
       live "/workshop", WorkshopLive, :index
     end

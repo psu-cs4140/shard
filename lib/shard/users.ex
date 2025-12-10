@@ -9,6 +9,7 @@ defmodule Shard.Users do
   alias Shard.Users.{User, UserToken, UserNotifier, UserZoneProgress}
   alias Shard.Characters.Character
   alias Shard.Map.Zone
+  alias Shard.Rewards
 
   ## Database getters
 
@@ -384,6 +385,29 @@ defmodule Shard.Users do
   def delete_user_session_token(token) do
     Repo.delete_all(from(UserToken, where: [token: ^token, context: "session"]))
     :ok
+  end
+
+  ## Daily Rewards
+
+  @doc """
+  Checks if a user can claim their daily login reward.
+  """
+  def can_claim_daily_reward?(user_id) do
+    Rewards.can_claim_daily_reward?(user_id)
+  end
+
+  @doc """
+  Claims the daily login reward for a user.
+  """
+  def claim_daily_reward(user_id) do
+    Rewards.claim_daily_reward(user_id)
+  end
+
+  @doc """
+  Gets the current login streak for a user.
+  """
+  def get_login_streak(user_id) do
+    Rewards.get_current_streak(user_id)
   end
 
   ## Zone Progress

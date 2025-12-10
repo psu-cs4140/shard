@@ -59,6 +59,9 @@ defmodule ShardWeb.Layouts do
           <li>
             <.theme_toggle />
           </li>
+          <li :if={assigns[:current_scope] && assigns[:current_scope].user}>
+            <.link href={~p"/rewards"} class="btn btn-ghost">Daily Rewards</.link>
+          </li>
           <li>
             <a href="https://hexdocs.pm/phoenix/overview.html" class="btn btn-primary">
               Get Started <span aria-hidden="true">&rarr;</span>
