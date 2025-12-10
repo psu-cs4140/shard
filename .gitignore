@@ -47,3 +47,6 @@ npm-debug.log
 
 # Ignore Continue VSCode Extension
 continue/
+
+# Ignore shard-fresh directory
+shard-fresh/
