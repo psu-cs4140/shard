@@ -73,8 +73,10 @@ defmodule Shard.WeaponsTest do
 
       damage = Weapons.calculate_weapon_damage(weapon)
       assert is_integer(damage)
-      assert damage >= 8  # base_damage - damage_variance
-      assert damage <= 12 # base_damage + damage_variance
+      # base_damage - damage_variance
+      assert damage >= 8
+      # base_damage + damage_variance
+      assert damage <= 12
     end
 
     test "get_weapon_total_value calculates total value" do
@@ -188,7 +190,9 @@ defmodule Shard.WeaponsTest do
       damage_type = "fire"
       target_resistances = %{"fire" => 0.5, "ice" => 0.2}
 
-      effective_damage = Weapons.DamageTypes.get_effective_damage(damage, damage_type, target_resistances)
+      effective_damage =
+        Weapons.DamageTypes.get_effective_damage(damage, damage_type, target_resistances)
+
       assert is_number(effective_damage)
       assert effective_damage <= damage
     end
