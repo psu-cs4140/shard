@@ -218,27 +218,48 @@ defmodule Shard.Combat.Engine do
   defp resolve_deaths_and_victory(state) do
     room_pos = state[:room_position]
 
-    alive_monsters_here? =
+    # Get monsters that were originally at this position when combat started
+    original_monsters_here =
       state[:monsters]
       |> List.wrap()
-      |> Enum.any?(fn m -> m[:position] == room_pos and alive?(m) end)
+      |> Enum.filter(fn m -> m[:position] == room_pos end)
+
+    # Process item drops from newly dead monsters
+    {state_with_drops, drop_events} = process_monster_drops(state, original_monsters_here)
+
+    # Check if there are any alive monsters at this position
+    alive_monsters_here? =
+      original_monsters_here
+      |> Enum.any?(fn m -> alive?(m) end)
 
     alive_players_here? =
-      state[:players]
+      state_with_drops[:players]
       |> List.wrap()
       |> Enum.any?(fn p -> p[:position] == room_pos and alive_player?(p) end)
 
-    cond do
-      state[:combat] && !alive_monsters_here? ->
-        # All monsters dead - victory for players
-        {:ok, %{state | combat: false}, (state[:events] || []) ++ [%{type: :victory}]}
+    # Only trigger victory/defeat if we actually had monsters here to begin with
+    has_monsters_at_position? = length(original_monsters_here) > 0
 
-      state[:combat] && !alive_players_here? ->
+    all_events = (state_with_drops[:events] || []) ++ drop_events
+
+    cond do
+      state_with_drops[:combat] && has_monsters_at_position? && !alive_monsters_here? &&
+          alive_players_here? ->
+        # All monsters dead and players alive - victory for players
+        require Logger
+
+        Logger.info(
+          "Victory triggered - Room: #{inspect(room_pos)}, Original monsters: #{length(original_monsters_here)}, Alive monsters: #{alive_monsters_here?}"
+        )
+
+        {:ok, %{state_with_drops | combat: false}, all_events ++ [%{type: :victory}]}
+
+      state_with_drops[:combat] && has_monsters_at_position? && !alive_players_here? ->
         # All players dead - defeat
-        {:ok, %{state | combat: false}, (state[:events] || []) ++ [%{type: :defeat}]}
+        {:ok, %{state_with_drops | combat: false}, all_events ++ [%{type: :defeat}]}
 
       true ->
-        {:ok, %{state | events: state[:events] || []}, state[:events] || []}
+        {:ok, %{state_with_drops | events: all_events}, all_events}
     end
   end
 
@@ -309,5 +330,88 @@ defmodule Shard.Combat.Engine do
 
     effects = Map.get(combat_state, :effects, [])
     %{combat_state | effects: [effect | effects]}
+  end
+
+  defp process_monster_drops(state, monsters) do
+    # Find monsters that just died (have is_alive: false but haven't been processed yet)
+    newly_dead_monsters =
+      monsters
+      |> Enum.with_index()
+      |> Enum.filter(fn {monster, _index} ->
+        not alive?(monster) and not Map.get(monster, :drops_processed, false)
+      end)
+
+    # Process drops for each newly dead monster
+    {updated_state, drop_events} =
+      Enum.reduce(newly_dead_monsters, {state, []}, fn {monster, monster_index},
+                                                       {acc_state, acc_events} ->
+        # Mark this monster as having drops processed
+        updated_monsters =
+          List.update_at(acc_state[:monsters], monster_index, fn m ->
+            Map.put(m, :drops_processed, true)
+          end)
+
+        temp_state = Map.put(acc_state, :monsters, updated_monsters)
+
+        # Process potential loot drops
+        case Map.get(monster, :potential_loot_drops, %{}) do
+          drops when map_size(drops) > 0 ->
+            # Generate drops and create events
+            {final_state, events} = generate_monster_drops(temp_state, monster, drops)
+            {final_state, acc_events ++ events}
+
+          _ ->
+            # No drops to process
+            {temp_state, acc_events}
+        end
+      end)
+
+    {updated_state, drop_events}
+  end
+
+  defp generate_monster_drops(state, monster, potential_drops) do
+    # Get players at the same position as the monster
+    players_here =
+      state[:players]
+      |> List.wrap()
+      |> Enum.filter(fn p ->
+        p[:position] == monster[:position] and alive_player?(p)
+      end)
+
+    # Generate actual drops based on potential_loot_drops
+    actual_drops =
+      potential_drops
+      |> Enum.flat_map(fn {item_id, drop_chance} ->
+        # Convert drop_chance to integer if it's a string
+        chance =
+          case drop_chance do
+            chance when is_integer(chance) -> chance
+            chance when is_binary(chance) -> String.to_integer(chance)
+            _ -> 0
+          end
+
+        # Roll for drop (1-100)
+        if :rand.uniform(100) <= chance do
+          # Drop 1 of this item
+          [{item_id, 1}]
+        else
+          []
+        end
+      end)
+
+    # Create drop events for each item that dropped
+    drop_events =
+      actual_drops
+      |> Enum.map(fn {item_id, quantity} ->
+        %{
+          type: :monster_drop,
+          monster_name: Map.get(monster, :name, "Unknown Monster"),
+          item_id: item_id,
+          quantity: quantity,
+          players: Enum.map(players_here, & &1.id)
+        }
+      end)
+
+    {state, drop_events}
   end
 end

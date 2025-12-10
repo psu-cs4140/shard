@@ -98,7 +98,7 @@ defmodule Shard.Combat.Actions do
           final_response = response ++ messages
 
           # Remove dead monster from local list
-          final_monsters = Enum.reject(updated_monsters, fn m -> not m[:is_alive] end)
+          final_monsters = Enum.reject(updated_monsters, fn m -> m[:is_alive] != true end)
 
           updated_game_state =
             %{

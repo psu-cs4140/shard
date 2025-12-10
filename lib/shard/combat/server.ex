@@ -77,6 +77,9 @@ defmodule Shard.Combat.Server do
   defp broadcast_combat_events(state, events) do
     room_pos = state[:room_position]
 
+    # Process monster drop events to actually add items to inventories
+    Shard.Characters.process_monster_drop_events(events)
+
     if room_pos do
       channel = "room:#{elem(room_pos, 0)},#{elem(room_pos, 1)}"
 

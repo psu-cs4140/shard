@@ -330,12 +330,12 @@ defmodule ShardWeb.MarketplaceLive.Index do
   # Helper function to get rarity color class
   def rarity_color_class(rarity) do
     case rarity do
-      "common" -> "text-slate-600"
-      "uncommon" -> "text-green-600"
-      "rare" -> "text-blue-600"
-      "epic" -> "text-purple-600"
-      "legendary" -> "text-yellow-600"
-      _ -> "text-slate-600"
+      "common" -> "text-gray-300 bg-gray-800/50 border-gray-600"
+      "uncommon" -> "text-green-400 bg-green-900/30 border-green-700"
+      "rare" -> "text-blue-400 bg-blue-900/30 border-blue-700"
+      "epic" -> "text-purple-400 bg-purple-900/30 border-purple-700"
+      "legendary" -> "text-amber-400 bg-amber-900/30 border-amber-700"
+      _ -> "text-gray-300 bg-gray-800/50 border-gray-600"
     end
   end
 
