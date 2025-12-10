@@ -345,6 +345,13 @@ defmodule Shard.Achievements do
       :lost ->
         award_achievement_by_name(user_id, "Learning Experience")
 
+      :blackjack_win ->
+        award_achievement_by_name(user_id, "Blackjack!")
+        award_achievement_by_name(user_id, "Lucky Gambler")
+
+      :blackjack ->
+        award_achievement_by_name(user_id, "Blackjack!")
+
       _ ->
         :ok
     end
