@@ -1,4 +1,4 @@
-defmodule Shard.CharactersTest do
+defmodule Shard.Characters.CharactersTest do
   use Shard.DataCase
 
   alias Shard.Characters
