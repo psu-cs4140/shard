@@ -26,8 +26,17 @@ defmodule Shard.Skills.SkillNode do
   @doc false
   def changeset(skill_node, attrs) do
     skill_node
-    |> cast(attrs, [:name, :description, :xp_cost, :prerequisites, :effects, 
-                    :position_x, :position_y, :is_active, :skill_tree_id])
+    |> cast(attrs, [
+      :name,
+      :description,
+      :xp_cost,
+      :prerequisites,
+      :effects,
+      :position_x,
+      :position_y,
+      :is_active,
+      :skill_tree_id
+    ])
     |> validate_required([:name, :xp_cost, :skill_tree_id])
     |> validate_length(:name, min: 2, max: 100)
     |> validate_number(:xp_cost, greater_than: 0)

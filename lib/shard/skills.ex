@@ -54,9 +54,10 @@ defmodule Shard.Skills do
   Gets character's unlocked skills.
   """
   def get_character_skills(character_id) do
-    from(cs in CharacterSkill, 
-         where: cs.character_id == ^character_id,
-         preload: [:skill_node])
+    from(cs in CharacterSkill,
+      where: cs.character_id == ^character_id,
+      preload: [:skill_node]
+    )
     |> Repo.all()
   end
 
@@ -65,7 +66,8 @@ defmodule Shard.Skills do
   """
   def has_skill?(character_id, skill_node_id) do
     from(cs in CharacterSkill,
-         where: cs.character_id == ^character_id and cs.skill_node_id == ^skill_node_id)
+      where: cs.character_id == ^character_id and cs.skill_node_id == ^skill_node_id
+    )
     |> Repo.exists?()
   end
 
@@ -77,15 +79,15 @@ defmodule Shard.Skills do
     with {:ok, character} <- get_character_with_skills(character_id),
          {:ok, skill_node} <- get_valid_skill_node(skill_node_id),
          :ok <- validate_skill_unlock(character, skill_node) do
-      
       case create_character_skill(character_id, skill_node_id) do
         {:ok, character_skill} ->
           # Deduct XP cost
           new_experience = character.experience - skill_node.xp_cost
           Shard.Characters.update_character(character, %{experience: new_experience})
           {:ok, character_skill}
-        
-        error -> error
+
+        error ->
+          error
       end
     end
   end
@@ -96,17 +98,18 @@ defmodule Shard.Skills do
   def get_available_skills(character_id) do
     with {:ok, character} <- get_character_with_skills(character_id) do
       unlocked_skill_ids = Enum.map(character.character_skills, & &1.skill_node_id)
-      
+
       # Get all skill nodes that are not yet unlocked
-      available_skills = 
+      available_skills =
         from(sn in SkillNode,
-             where: sn.id not in ^unlocked_skill_ids,
-             preload: [:skill_tree])
+          where: sn.id not in ^unlocked_skill_ids,
+          preload: [:skill_tree]
+        )
         |> Repo.all()
         |> Enum.filter(fn skill_node ->
           can_unlock_skill?(character, skill_node, unlocked_skill_ids)
         end)
-      
+
       {:ok, available_skills}
     end
   end
@@ -131,13 +134,13 @@ defmodule Shard.Skills do
     cond do
       has_skill?(character.id, skill_node.id) ->
         {:error, :already_unlocked}
-      
+
       character.experience < skill_node.xp_cost ->
         {:error, :insufficient_xp}
-      
+
       not prerequisites_met?(character, skill_node) ->
         {:error, :prerequisites_not_met}
-      
+
       true ->
         :ok
     end
@@ -145,8 +148,12 @@ defmodule Shard.Skills do
 
   defp prerequisites_met?(character, skill_node) do
     case skill_node.prerequisites do
-      [] -> true
-      nil -> true
+      [] ->
+        true
+
+      nil ->
+        true
+
       prerequisite_ids ->
         unlocked_skill_ids = Enum.map(character.character_skills, & &1.skill_node_id)
         Enum.all?(prerequisite_ids, fn prereq_id -> prereq_id in unlocked_skill_ids end)
@@ -155,7 +162,7 @@ defmodule Shard.Skills do
 
   defp can_unlock_skill?(character, skill_node, unlocked_skill_ids) do
     character.experience >= skill_node.xp_cost and
-    prerequisites_met_by_ids?(skill_node.prerequisites, unlocked_skill_ids)
+      prerequisites_met_by_ids?(skill_node.prerequisites, unlocked_skill_ids)
   end
 
   defp prerequisites_met_by_ids?(prerequisites, unlocked_skill_ids) do

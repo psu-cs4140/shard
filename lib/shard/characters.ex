@@ -252,8 +252,8 @@ defmodule Shard.Characters do
   Calculates effective stats for a character including skill bonuses.
   """
   def get_effective_stats(%Character{} = character) do
-    character = Repo.preload(character, [character_skills: :skill_node])
-    
+    character = Repo.preload(character, character_skills: :skill_node)
+
     base_stats = %{
       health: character.health,
       mana: character.mana,
@@ -272,12 +272,31 @@ defmodule Shard.Characters do
   defp apply_skill_effects(stats, effects) when is_map(effects) do
     Enum.reduce(effects, stats, fn {effect_key, effect_value}, acc_stats ->
       case effect_key do
-        "health_bonus" -> Map.update!(acc_stats, :health, &(&1 + effect_value))
-        "mana_bonus" -> Map.update!(acc_stats, :mana, &(&1 + effect_value))
-        "damage_bonus" -> Map.put(acc_stats, :damage_multiplier, Map.get(acc_stats, :damage_multiplier, 1.0) + effect_value)
-        "defense_penalty" -> Map.put(acc_stats, :defense_multiplier, Map.get(acc_stats, :defense_multiplier, 1.0) - effect_value)
-        "debuff_resistance" -> Map.put(acc_stats, :debuff_resistance, effect_value)
-        _ -> acc_stats
+        "health_bonus" ->
+          Map.update!(acc_stats, :health, &(&1 + effect_value))
+
+        "mana_bonus" ->
+          Map.update!(acc_stats, :mana, &(&1 + effect_value))
+
+        "damage_bonus" ->
+          Map.put(
+            acc_stats,
+            :damage_multiplier,
+            Map.get(acc_stats, :damage_multiplier, 1.0) + effect_value
+          )
+
+        "defense_penalty" ->
+          Map.put(
+            acc_stats,
+            :defense_multiplier,
+            Map.get(acc_stats, :defense_multiplier, 1.0) - effect_value
+          )
+
+        "debuff_resistance" ->
+          Map.put(acc_stats, :debuff_resistance, effect_value)
+
+        _ ->
+          acc_stats
       end
     end)
   end
