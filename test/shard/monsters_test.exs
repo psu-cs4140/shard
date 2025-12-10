@@ -128,6 +128,48 @@ defmodule Shard.MonstersTest do
       monster = monster_fixture()
       assert %Ecto.Changeset{} = Monsters.change_monster(monster)
     end
+
+    test "get_monsters_by_room/1 returns monsters in specific room" do
+      room_id = 1
+      monsters = Monsters.get_monsters_by_room(room_id)
+      assert is_list(monsters)
+    end
+
+    test "get_monsters_by_location/3 returns monsters at coordinates" do
+      monsters = Monsters.get_monsters_by_location(0, 0, 0)
+      assert is_list(monsters)
+    end
+
+    test "get_monsters_by_type/1 returns monsters of specific type" do
+      monsters = Monsters.get_monsters_by_type("friendly")
+      assert is_list(monsters)
+    end
+
+    test "get_monster_by_name/1 returns monster with given name" do
+      monster = monster_fixture(%{name: "Unique Test Monster #{System.unique_integer([:positive])}"})
+      
+      found_monster = Monsters.get_monster_by_name(monster.name)
+      assert found_monster.id == monster.id
+    end
+
+    test "get_monster_by_name/1 returns nil for non-existent monster" do
+      assert Monsters.get_monster_by_name("Non-existent Monster") == nil
+    end
+
+    test "spawn_monster/2 creates monster in room" do
+      room_id = 1
+      monster_attrs = Map.put(@valid_attrs, :name, "Spawned Monster #{System.unique_integer([:positive])}")
+      
+      assert {:ok, %Monster{} = monster} = Monsters.spawn_monster(room_id, monster_attrs)
+      assert monster.room_id == room_id
+    end
+
+    test "respawn_monster/1 respawns a dead monster" do
+      monster = monster_fixture(%{health: 0})
+      
+      assert {:ok, %Monster{} = respawned} = Monsters.respawn_monster(monster)
+      assert respawned.health == respawned.max_health
+    end
   end
 
   describe "special damage monsters" do
@@ -208,6 +250,61 @@ defmodule Shard.MonstersTest do
 
       assert {:ok, %Monster{} = monster} = Monsters.create_monster(attrs)
       assert monster.special_damage_type_id == nil
+    end
+  end
+
+  describe "Monster changeset" do
+    test "validates required fields" do
+      changeset = Monster.changeset(%Monster{}, %{})
+      refute changeset.valid?
+
+      errors = errors_on(changeset)
+      assert "can't be blank" in errors.name
+      assert "can't be blank" in errors.race
+      assert "can't be blank" in errors.health
+      assert "can't be blank" in errors.max_health
+      assert "can't be blank" in errors.attack_damage
+      assert "can't be blank" in errors.xp_amount
+    end
+
+    test "validates numeric fields are positive" do
+      attrs = %{
+        name: "Test Monster",
+        race: "goblin",
+        health: -1,
+        max_health: -1,
+        attack_damage: -1,
+        xp_amount: -1
+      }
+
+      changeset = Monster.changeset(%Monster{}, attrs)
+      refute changeset.valid?
+
+      errors = errors_on(changeset)
+      assert "must be greater than 0" in errors.health
+      assert "must be greater than 0" in errors.max_health
+      assert "must be greater than or equal to 0" in errors.attack_damage
+      assert "must be greater than or equal to 0" in errors.xp_amount
+    end
+
+    test "validates health does not exceed max_health" do
+      attrs = %{
+        name: "Test Monster",
+        race: "goblin",
+        health: 150,
+        max_health: 100,
+        attack_damage: 10,
+        xp_amount: 25
+      }
+
+      changeset = Monster.changeset(%Monster{}, attrs)
+      refute changeset.valid?
+      assert %{health: ["cannot exceed max_health"]} = errors_on(changeset)
+    end
+
+    test "accepts valid monster data" do
+      changeset = Monster.changeset(%Monster{}, @valid_attrs)
+      assert changeset.valid?
     end
   end
 end
