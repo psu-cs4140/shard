@@ -150,7 +150,6 @@ defmodule Shard.CharactersTest do
     test "get_character_by_name/1 returns nil for non-existent character" do
       assert Characters.get_character_by_name("Non-existent Character") == nil
     end
-
   end
 
   describe "Character changeset" do

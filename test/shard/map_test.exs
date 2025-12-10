@@ -7,7 +7,6 @@ defmodule Shard.MapTest do
   describe "zones" do
     @invalid_zone_attrs %{name: nil, description: nil}
 
-
     test "list_zones/0 returns all zones" do
       {:ok, zone} = Map.create_zone(valid_zone_attrs())
       zones = Map.list_zones()
@@ -177,7 +176,9 @@ defmodule Shard.MapTest do
     end
 
     test "get_room_by_coordinates/3 returns room at specific coordinates", %{zone: zone} do
-      attrs = Enum.into([x_coordinate: 3, y_coordinate: 7, z_coordinate: 1], valid_room_attrs(zone.id))
+      attrs =
+        Enum.into([x_coordinate: 3, y_coordinate: 7, z_coordinate: 1], valid_room_attrs(zone.id))
+
       {:ok, room} = Map.create_room(attrs)
 
       found_room = Map.get_room_by_coordinates(zone.id, 3, 7, 1)
@@ -193,7 +194,9 @@ defmodule Shard.MapTest do
 
     test "get_rooms_in_zone/1 returns rooms in specific zone", %{zone: zone} do
       {:ok, room1} = Map.create_room(valid_room_attrs(zone.id))
-      {:ok, room2} = Map.create_room(Enum.into([x_coordinate: 1, y_coordinate: 1], valid_room_attrs(zone.id)))
+
+      {:ok, room2} =
+        Map.create_room(Enum.into([x_coordinate: 1, y_coordinate: 1], valid_room_attrs(zone.id)))
 
       rooms_in_zone = Map.list_rooms()
       zone_rooms = Enum.filter(rooms_in_zone, fn room -> room.zone_id == zone.id end)
@@ -210,25 +213,37 @@ defmodule Shard.MapTest do
 
       # Create adjacent rooms
       {:ok, north_room} =
-        Map.create_room(Enum.into([x_coordinate: 0, y_coordinate: 1, z_coordinate: 0], valid_room_attrs(zone.id)))
+        Map.create_room(
+          Enum.into(
+            [x_coordinate: 0, y_coordinate: 1, z_coordinate: 0],
+            valid_room_attrs(zone.id)
+          )
+        )
 
       {:ok, east_room} =
-        Map.create_room(Enum.into([x_coordinate: 1, y_coordinate: 0, z_coordinate: 0], valid_room_attrs(zone.id)))
+        Map.create_room(
+          Enum.into(
+            [x_coordinate: 1, y_coordinate: 0, z_coordinate: 0],
+            valid_room_attrs(zone.id)
+          )
+        )
 
       # Create doors to connect the rooms
-      {:ok, _door1} = Map.create_door(%{
-        direction: "north",
-        from_room_id: center_room.id,
-        to_room_id: north_room.id,
-        is_locked: false
-      })
+      {:ok, _door1} =
+        Map.create_door(%{
+          direction: "north",
+          from_room_id: center_room.id,
+          to_room_id: north_room.id,
+          is_locked: false
+        })
 
-      {:ok, _door2} = Map.create_door(%{
-        direction: "east", 
-        from_room_id: center_room.id,
-        to_room_id: east_room.id,
-        is_locked: false
-      })
+      {:ok, _door2} =
+        Map.create_door(%{
+          direction: "east",
+          from_room_id: center_room.id,
+          to_room_id: east_room.id,
+          is_locked: false
+        })
 
       adjacent_rooms = Map.get_adjacent_rooms(center_room.id)
       adjacent_ids = Enum.map(adjacent_rooms, & &1.id)

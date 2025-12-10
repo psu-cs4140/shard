@@ -49,14 +49,12 @@ defmodule Shard.UsersTest do
     end
   end
 
-
   describe "change_user_email/2" do
     test "returns a user changeset" do
       assert %Ecto.Changeset{} = changeset = Users.change_user_email(%User{})
       assert changeset.required == [:email]
     end
   end
-
 
   describe "deliver_user_update_email_instructions/3" do
     setup do
@@ -105,7 +103,9 @@ defmodule Shard.UsersTest do
     end
 
     test "does not update email if user email changed", %{user: user, token: token} do
-      assert {:error, :transaction_aborted} = Users.update_user_email(%{user | email: "current@example.com"}, token)
+      assert {:error, :transaction_aborted} =
+               Users.update_user_email(%{user | email: "current@example.com"}, token)
+
       assert Repo.get!(User, user.id).email == user.email
       assert Repo.get_by(Users.UserToken, user_id: user.id)
     end
@@ -126,16 +126,19 @@ defmodule Shard.UsersTest do
 
     test "allows fields to be set" do
       changeset =
-        Users.change_user_password(%User{}, %{
-          "password" => "new valid password"
-        }, hash_password: false)
+        Users.change_user_password(
+          %User{},
+          %{
+            "password" => "new valid password"
+          },
+          hash_password: false
+        )
 
       assert changeset.valid?
       assert get_change(changeset, :password) == "new valid password"
       assert is_nil(get_change(changeset, :hashed_password))
     end
   end
-
 
   describe "generate_user_session_token/1" do
     setup do
@@ -188,7 +191,6 @@ defmodule Shard.UsersTest do
       refute Users.get_user_by_session_token(token)
     end
   end
-
 
   describe "inspect/2 for the User module" do
     test "does not include password" do
