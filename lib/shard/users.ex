@@ -517,7 +517,7 @@ defmodule Shard.Users do
   """
   def update_login_stats(user) do
     now = DateTime.utc_now(:second)
-    
+
     user
     |> User.changeset(%{
       last_login_at: now,
@@ -531,7 +531,7 @@ defmodule Shard.Users do
   """
   def add_playtime(user, seconds) when is_integer(seconds) and seconds > 0 do
     current_playtime = user.total_playtime_seconds || 0
-    
+
     user
     |> User.changeset(%{total_playtime_seconds: current_playtime + seconds})
     |> Repo.update()
@@ -545,42 +545,44 @@ defmodule Shard.Users do
   def get_leaderboard(sort_by \\ "total_playtime_seconds", limit \\ 50) do
     valid_sort_fields = [
       "total_playtime_seconds",
-      "login_count", 
+      "login_count",
       "inserted_at"
     ]
 
     sort_field = if sort_by in valid_sort_fields, do: sort_by, else: "total_playtime_seconds"
-    
+
     # Convert string to atom for the query
     sort_atom = String.to_existing_atom(sort_field)
-    
-    query = case sort_field do
-      "inserted_at" ->
-        # For account age, we want oldest first (ascending)
-        from u in User,
-          order_by: [asc: ^sort_atom],
-          limit: ^limit,
-          preload: [:user_zone_progress]
-      
-      _ ->
-        # For other stats, we want highest first (descending)
-        from u in User,
-          order_by: [desc: ^sort_atom],
-          limit: ^limit,
-          preload: [:user_zone_progress]
-    end
-    
+
+    query =
+      case sort_field do
+        "inserted_at" ->
+          # For account age, we want oldest first (ascending)
+          from u in User,
+            order_by: [asc: ^sort_atom],
+            limit: ^limit,
+            preload: [:user_zone_progress]
+
+        _ ->
+          # For other stats, we want highest first (descending)
+          from u in User,
+            order_by: [desc: ^sort_atom],
+            limit: ^limit,
+            preload: [:user_zone_progress]
+      end
+
     users = Repo.all(query)
-    
+
     # Get character stats for each user
     Enum.map(users, fn user ->
       characters = get_user_characters(user.id)
-      
+
       %{
         user: user,
         character_count: length(characters),
         total_levels: Enum.sum(Enum.map(characters, & &1.level)),
-        highest_level: if(length(characters) > 0, do: Enum.max(Enum.map(characters, & &1.level)), else: 0),
+        highest_level:
+          if(length(characters) > 0, do: Enum.max(Enum.map(characters, & &1.level)), else: 0),
         zones_completed: count_completed_zones(user.user_zone_progress)
       }
     end)

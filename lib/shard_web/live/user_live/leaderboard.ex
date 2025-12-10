@@ -6,9 +6,9 @@ defmodule ShardWeb.UserLive.Leaderboard do
   @impl true
   def mount(_params, _session, socket) do
     leaderboard_data = Users.get_leaderboard("total_playtime_seconds", 50)
-    
-    {:ok, 
-     assign(socket, 
+
+    {:ok,
+     assign(socket,
        leaderboard_data: leaderboard_data,
        current_sort: "total_playtime_seconds",
        sort_options: [
@@ -22,9 +22,9 @@ defmodule ShardWeb.UserLive.Leaderboard do
   @impl true
   def handle_event("sort_by", %{"sort" => sort_field}, socket) do
     leaderboard_data = Users.get_leaderboard(sort_field, 50)
-    
-    {:noreply, 
-     assign(socket, 
+
+    {:noreply,
+     assign(socket,
        leaderboard_data: leaderboard_data,
        current_sort: sort_field
      )}
@@ -38,26 +38,26 @@ defmodule ShardWeb.UserLive.Leaderboard do
         <h1 class="text-3xl font-bold text-primary mb-2">Player Leaderboard</h1>
         <p class="text-base-content/70">See how you stack up against other players</p>
       </div>
-
-      <!-- Sort Controls -->
+      
+    <!-- Sort Controls -->
       <div class="mb-6">
         <div class="flex flex-wrap gap-2">
           <%= for {label, value} <- @sort_options do %>
-            <button 
-              phx-click="sort_by" 
+            <button
+              phx-click="sort_by"
               phx-value-sort={value}
               class={[
                 "btn",
                 if(@current_sort == value, do: "btn-primary", else: "btn-outline")
               ]}
             >
-              <%= label %>
+              {label}
             </button>
           <% end %>
         </div>
       </div>
-
-      <!-- Leaderboard Table -->
+      
+    <!-- Leaderboard Table -->
       <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
           <div class="overflow-x-auto">
@@ -88,7 +88,7 @@ defmodule ShardWeb.UserLive.Leaderboard do
                           <% 3 -> %>
                             <span class="text-2xl">🥉</span>
                           <% _ -> %>
-                            <span class="font-bold text-lg"><%= index %></span>
+                            <span class="font-bold text-lg">{index}</span>
                         <% end %>
                       </div>
                     </td>
@@ -96,9 +96,11 @@ defmodule ShardWeb.UserLive.Leaderboard do
                       <div class="flex items-center gap-2">
                         <span class={[
                           "font-semibold",
-                          if(player_data.user.id == @current_scope.user.id, do: "text-primary font-bold")
+                          if(player_data.user.id == @current_scope.user.id,
+                            do: "text-primary font-bold"
+                          )
                         ]}>
-                          <%= String.split(player_data.user.email, "@") |> hd() %>
+                          {String.split(player_data.user.email, "@") |> hd()}
                         </span>
                         <%= if player_data.user.id == @current_scope.user.id do %>
                           <span class="badge badge-primary badge-sm">You</span>
@@ -108,13 +110,13 @@ defmodule ShardWeb.UserLive.Leaderboard do
                         <% end %>
                       </div>
                     </td>
-                    <td><%= format_playtime(player_data.user.total_playtime_seconds || 0) %></td>
-                    <td><%= player_data.user.login_count || 0 %></td>
-                    <td><%= player_data.character_count %></td>
-                    <td><%= player_data.total_levels %></td>
-                    <td><%= player_data.highest_level %></td>
-                    <td><%= player_data.zones_completed %></td>
-                    <td><%= format_date(player_data.user.inserted_at) %></td>
+                    <td>{format_playtime(player_data.user.total_playtime_seconds || 0)}</td>
+                    <td>{player_data.user.login_count || 0}</td>
+                    <td>{player_data.character_count}</td>
+                    <td>{player_data.total_levels}</td>
+                    <td>{player_data.highest_level}</td>
+                    <td>{player_data.zones_completed}</td>
+                    <td>{format_date(player_data.user.inserted_at)}</td>
                   </tr>
                 <% end %>
               </tbody>
@@ -122,12 +124,11 @@ defmodule ShardWeb.UserLive.Leaderboard do
           </div>
         </div>
       </div>
-
-      <!-- Back to Stats -->
+      
+    <!-- Back to Stats -->
       <div class="mt-6">
         <.link navigate={~p"/stats"} class="btn btn-outline">
-          <.icon name="hero-arrow-left" class="w-4 h-4" />
-          Back to My Stats
+          <.icon name="hero-arrow-left" class="w-4 h-4" /> Back to My Stats
         </.link>
       </div>
     </div>
