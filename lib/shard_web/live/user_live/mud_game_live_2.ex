@@ -77,7 +77,7 @@ defmodule ShardWeb.UserLive.MudGameLive2 do
     )
 
     # Subscribe to character-specific notifications for poke commands
-    # subscribe_to_character_notifications(character.id)
+    ShardWeb.UserLive.MudGameLive2.subscribe_to_character_notifications(character.id)
 
     # Also subscribe to player name-based channel as backup
     PubSub.subscribe(Shard.PubSub, "player:#{character.name}")
