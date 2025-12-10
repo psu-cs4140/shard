@@ -591,7 +591,7 @@ defmodule Shard.Users do
   defp get_user_characters(user_id) do
     # This assumes you have a Characters context - adjust the module name as needed
     try do
-      Shard.Characters.list_characters_for_user(user_id)
+      Shard.Characters.get_characters_by_user(user_id)
     rescue
       _ -> []
     end

@@ -1,12 +1,12 @@
 defmodule ShardWeb.UserLive.Stats do
   use ShardWeb, :live_view
 
-  alias Shard.{Users, Characters}
+  alias Shard.Characters
 
   @impl true
   def mount(_params, _session, socket) do
     user = socket.assigns.current_scope.user
-    characters = Characters.list_characters_for_user(user.id)
+    characters = Characters.get_characters_by_user(user.id)
 
     stats = %{
       total_playtime: format_playtime(user.total_playtime_seconds || 0),
