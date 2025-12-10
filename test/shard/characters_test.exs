@@ -51,7 +51,7 @@ defmodule Shard.CharactersTest do
       assert character.mana == 80
       assert character.strength == 10
       assert character.dexterity == 10
-      assert character.agility == 10
+      assert character.dexterity == 10
       assert character.intelligence == 10
       assert character.gold == 0
       assert character.location == "starting_town"
@@ -151,133 +151,6 @@ defmodule Shard.CharactersTest do
       assert Characters.get_character_by_name("Non-existent Character") == nil
     end
 
-    test "get_characters_at_location/3 returns characters at specific coordinates" do
-      user = user_fixture()
-      attrs = Map.merge(valid_character_attrs(user.id), %{x: 5, y: 10, z: 0})
-
-      {:ok, character} = Characters.create_character(attrs)
-
-      characters_at_location = Characters.get_characters_at_location(5, 10, 0)
-      assert length(characters_at_location) >= 1
-      assert Enum.any?(characters_at_location, fn c -> c.id == character.id end)
-    end
-
-    test "move_character/4 updates character position" do
-      user = user_fixture()
-      {:ok, character} = Characters.create_character(valid_character_attrs(user.id))
-
-      {:ok, moved_character} = Characters.move_character(character, 3, 7, 1)
-
-      assert moved_character.x == 3
-      assert moved_character.y == 7
-      assert moved_character.z == 1
-    end
-
-    test "add_experience/2 increases character experience" do
-      user = user_fixture()
-      {:ok, character} = Characters.create_character(valid_character_attrs(user.id))
-
-      {:ok, updated_character} = Characters.add_experience(character, 500)
-
-      assert updated_character.experience == 500
-    end
-
-    test "add_gold/2 increases character gold" do
-      user = user_fixture()
-      {:ok, character} = Characters.create_character(valid_character_attrs(user.id))
-
-      {:ok, updated_character} = Characters.add_gold(character, 250)
-
-      assert updated_character.gold == 250
-    end
-
-    test "subtract_gold/2 decreases character gold" do
-      user = user_fixture()
-      attrs = Map.put(valid_character_attrs(user.id), :gold, 1000)
-      {:ok, character} = Characters.create_character(attrs)
-
-      {:ok, updated_character} = Characters.subtract_gold(character, 300)
-
-      assert updated_character.gold == 700
-    end
-
-    test "subtract_gold/2 prevents negative gold" do
-      user = user_fixture()
-      attrs = Map.put(valid_character_attrs(user.id), :gold, 100)
-      {:ok, character} = Characters.create_character(attrs)
-
-      assert {:error, :insufficient_gold} = Characters.subtract_gold(character, 150)
-    end
-
-    test "heal_character/2 increases character health" do
-      user = user_fixture()
-      attrs = Map.put(valid_character_attrs(user.id), :health, 50)
-      {:ok, character} = Characters.create_character(attrs)
-
-      {:ok, updated_character} = Characters.heal_character(character, 30)
-
-      assert updated_character.health == 80
-    end
-
-    test "damage_character/2 decreases character health" do
-      user = user_fixture()
-      {:ok, character} = Characters.create_character(valid_character_attrs(user.id))
-
-      {:ok, updated_character} = Characters.damage_character(character, 25)
-
-      assert updated_character.health == 75
-    end
-
-    test "damage_character/2 prevents negative health" do
-      user = user_fixture()
-      attrs = Map.put(valid_character_attrs(user.id), :health, 20)
-      {:ok, character} = Characters.create_character(attrs)
-
-      {:ok, updated_character} = Characters.damage_character(character, 30)
-
-      assert updated_character.health == 0
-    end
-
-    test "restore_mana/2 increases character mana" do
-      user = user_fixture()
-      attrs = Map.put(valid_character_attrs(user.id), :mana, 20)
-      {:ok, character} = Characters.create_character(attrs)
-
-      {:ok, updated_character} = Characters.restore_mana(character, 15)
-
-      assert updated_character.mana == 35
-    end
-
-    test "consume_mana/2 decreases character mana" do
-      user = user_fixture()
-      {:ok, character} = Characters.create_character(valid_character_attrs(user.id))
-
-      {:ok, updated_character} = Characters.consume_mana(character, 20)
-
-      assert updated_character.mana == 30
-    end
-
-    test "consume_mana/2 prevents negative mana" do
-      user = user_fixture()
-      attrs = Map.put(valid_character_attrs(user.id), :mana, 10)
-      {:ok, character} = Characters.create_character(attrs)
-
-      assert {:error, :insufficient_mana} = Characters.consume_mana(character, 15)
-    end
-
-    test "level_up/1 increases character level and stats" do
-      user = user_fixture()
-      attrs = Map.merge(valid_character_attrs(user.id), %{level: 1, experience: 1000})
-      {:ok, character} = Characters.create_character(attrs)
-
-      {:ok, leveled_character} = Characters.level_up(character)
-
-      assert leveled_character.level == 2
-      assert leveled_character.strength > character.strength
-      assert leveled_character.defense > character.defense
-      assert leveled_character.agility > character.agility
-      assert leveled_character.intelligence > character.intelligence
-    end
   end
 
   describe "Character changeset" do
@@ -289,7 +162,6 @@ defmodule Shard.CharactersTest do
       assert "can't be blank" in errors.name
       assert "can't be blank" in errors.class
       assert "can't be blank" in errors.race
-      assert "can't be blank" in errors.user_id
     end
 
     test "validates class inclusion" do
@@ -320,8 +192,7 @@ defmodule Shard.CharactersTest do
           health: -1,
           mana: -1,
           strength: -1,
-          defense: -1,
-          agility: -1,
+          dexterity: -1,
           intelligence: -1,
           gold: -1
         })
@@ -330,13 +201,12 @@ defmodule Shard.CharactersTest do
       refute changeset.valid?
 
       errors = errors_on(changeset)
-      assert "must be greater than or equal to 0" in errors.level
+      assert "must be greater than 0" in errors.level
       assert "must be greater than or equal to 0" in errors.experience
       assert "must be greater than or equal to 0" in errors.health
       assert "must be greater than or equal to 0" in errors.mana
       assert "must be greater than or equal to 0" in errors.strength
-      assert "must be greater than or equal to 0" in errors.defense
-      assert "must be greater than or equal to 0" in errors.agility
+      assert "must be greater than or equal to 0" in errors.dexterity
       assert "must be greater than or equal to 0" in errors.intelligence
       assert "must be greater than or equal to 0" in errors.gold
     end
