@@ -34,7 +34,7 @@ defmodule Shard.Weather do
 
   def get_active_weather_for_zone(zone_id) do
     now = DateTime.utc_now()
-    
+
     from(w in Weather,
       where: w.zone_id == ^zone_id,
       where: fragment("? + INTERVAL '1 minute' * ?", w.started_at, w.duration_minutes) > ^now,
@@ -46,7 +46,7 @@ defmodule Shard.Weather do
 
   def cleanup_expired_weather do
     now = DateTime.utc_now()
-    
+
     from(w in Weather,
       where: fragment("? + INTERVAL '1 minute' * ?", w.started_at, w.duration_minutes) <= ^now
     )

@@ -141,7 +141,14 @@ defmodule Shard.WorldEvents do
         {:error, :no_rooms_available}
 
       room ->
-        boss_types = ["Ancient Dragon", "Shadow Lord", "Frost Giant", "Fire Elemental", "Void Walker"]
+        boss_types = [
+          "Ancient Dragon",
+          "Shadow Lord",
+          "Frost Giant",
+          "Fire Elemental",
+          "Void Walker"
+        ]
+
         boss_type = Enum.random(boss_types)
 
         create_world_event(%{

@@ -4,8 +4,10 @@ defmodule Shard.WorldEvents.EventServer do
 
   alias Shard.WorldEvents
 
-  @default_check_interval :timer.minutes(5)  # Check every 5 minutes
-  @boss_spawn_chance 0.1  # 10% chance per check
+  # Check every 5 minutes
+  @default_check_interval :timer.minutes(5)
+  # 10% chance per check
+  @boss_spawn_chance 0.1
 
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
@@ -14,25 +16,26 @@ defmodule Shard.WorldEvents.EventServer do
   def init(_opts) do
     # Schedule the first check
     schedule_next_check()
-    
+
     Logger.info("World Events Server started")
-    
-    {:ok, %{
-      check_interval: @default_check_interval,
-      last_check: DateTime.utc_now()
-    }}
+
+    {:ok,
+     %{
+       check_interval: @default_check_interval,
+       last_check: DateTime.utc_now()
+     }}
   end
 
   def handle_info(:check_events, state) do
     # Clean up expired events
     cleanup_expired_events()
-    
+
     # Randomly spawn new events
     maybe_spawn_boss_event()
-    
+
     # Schedule next check
     schedule_next_check()
-    
+
     {:noreply, %{state | last_check: DateTime.utc_now()}}
   end
 
@@ -55,10 +58,11 @@ defmodule Shard.WorldEvents.EventServer do
       {:ok, event} ->
         Logger.info("Forced boss spawn: #{event.title}")
         broadcast_event_spawn(event)
+
       {:error, reason} ->
         Logger.warning("Failed to force boss spawn: #{inspect(reason)}")
     end
-    
+
     {:noreply, state}
   end
 
@@ -68,7 +72,7 @@ defmodule Shard.WorldEvents.EventServer do
       check_interval: state.check_interval,
       active_events_count: length(WorldEvents.get_active_events())
     }
-    
+
     {:reply, status, state}
   end
 
@@ -79,13 +83,14 @@ defmodule Shard.WorldEvents.EventServer do
 
   defp cleanup_expired_events do
     active_events = WorldEvents.get_active_events()
-    
+
     Enum.each(active_events, fn event ->
       unless WorldEvents.WorldEvent.active?(event) do
         case WorldEvents.deactivate_event(event) do
           {:ok, deactivated_event} ->
             Logger.info("Deactivated expired event: #{deactivated_event.title}")
             broadcast_event_end(deactivated_event)
+
           {:error, reason} ->
             Logger.warning("Failed to deactivate event #{event.id}: #{inspect(reason)}")
         end
@@ -99,6 +104,7 @@ defmodule Shard.WorldEvents.EventServer do
         {:ok, event} ->
           Logger.info("Random boss spawned: #{event.title}")
           broadcast_event_spawn(event)
+
         {:error, reason} ->
           Logger.warning("Failed to spawn random boss: #{inspect(reason)}")
       end
@@ -112,7 +118,7 @@ defmodule Shard.WorldEvents.EventServer do
       "world_events",
       {:world_event_spawned, event}
     )
-    
+
     # If the event is in a specific room, broadcast to that room too
     if event.room_id do
       Phoenix.PubSub.broadcast(
@@ -130,7 +136,7 @@ defmodule Shard.WorldEvents.EventServer do
       "world_events",
       {:world_event_ended, event}
     )
-    
+
     # If the event was in a specific room, broadcast to that room too
     if event.room_id do
       Phoenix.PubSub.broadcast(

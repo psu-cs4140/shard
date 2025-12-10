@@ -19,9 +19,25 @@ defmodule Shard.WorldEvents.WorldEvent do
   @doc false
   def changeset(world_event, attrs) do
     world_event
-    |> cast(attrs, [:event_type, :title, :description, :room_id, :is_active, :duration_minutes, :started_at, :ended_at, :data])
+    |> cast(attrs, [
+      :event_type,
+      :title,
+      :description,
+      :room_id,
+      :is_active,
+      :duration_minutes,
+      :started_at,
+      :ended_at,
+      :data
+    ])
     |> validate_required([:event_type, :title, :description])
-    |> validate_inclusion(:event_type, ["boss_spawn", "treasure_chest", "merchant_visit", "weather_event", "portal_opening"])
+    |> validate_inclusion(:event_type, [
+      "boss_spawn",
+      "treasure_chest",
+      "merchant_visit",
+      "weather_event",
+      "portal_opening"
+    ])
     |> validate_length(:title, min: 1, max: 100)
     |> validate_length(:description, min: 1, max: 500)
     |> put_started_at()
@@ -39,9 +55,15 @@ defmodule Shard.WorldEvents.WorldEvent do
   """
   def active?(%__MODULE__{} = event) do
     cond do
-      not event.is_active -> false
-      is_nil(event.duration_minutes) -> true
-      is_nil(event.started_at) -> true
+      not event.is_active ->
+        false
+
+      is_nil(event.duration_minutes) ->
+        true
+
+      is_nil(event.started_at) ->
+        true
+
       true ->
         end_time = DateTime.add(event.started_at, event.duration_minutes * 60, :second)
         DateTime.compare(DateTime.utc_now(), end_time) == :lt
@@ -53,9 +75,15 @@ defmodule Shard.WorldEvents.WorldEvent do
   """
   def remaining_minutes(%__MODULE__{} = event) do
     cond do
-      not event.is_active -> 0
-      is_nil(event.duration_minutes) -> nil
-      is_nil(event.started_at) -> event.duration_minutes
+      not event.is_active ->
+        0
+
+      is_nil(event.duration_minutes) ->
+        nil
+
+      is_nil(event.started_at) ->
+        event.duration_minutes
+
       true ->
         end_time = DateTime.add(event.started_at, event.duration_minutes * 60, :second)
         diff_seconds = DateTime.diff(end_time, DateTime.utc_now(), :second)

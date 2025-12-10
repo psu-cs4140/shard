@@ -8,11 +8,14 @@ defmodule Shard.Weather.WeatherServer do
   alias Shard.Weather.Weather, as: WeatherSchema
 
   # Weather changes every 15-45 minutes
-  @weather_change_interval_min 15 * 60 * 1000  # 15 minutes in ms
-  @weather_change_interval_max 45 * 60 * 1000  # 45 minutes in ms
+  # 15 minutes in ms
+  @weather_change_interval_min 15 * 60 * 1000
+  # 45 minutes in ms
+  @weather_change_interval_max 45 * 60 * 1000
 
   # Cleanup expired weather every 10 minutes
-  @cleanup_interval 10 * 60 * 1000  # 10 minutes in ms
+  # 10 minutes in ms
+  @cleanup_interval 10 * 60 * 1000
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
@@ -31,7 +34,7 @@ defmodule Shard.Weather.WeatherServer do
     # Schedule initial weather generation and cleanup
     schedule_weather_change()
     schedule_cleanup()
-    
+
     {:ok, %{}}
   end
 
@@ -74,21 +77,25 @@ defmodule Shard.Weather.WeatherServer do
   defp generate_random_weather_changes do
     # Get all zones - for now using hardcoded zone IDs
     # TODO: Replace with actual zone fetching from Map context
-    zone_ids = ["01234567-89ab-cdef-0123-456789abcdef"]  # Example zone ID
-    
+    # Example zone ID
+    zone_ids = ["01234567-89ab-cdef-0123-456789abcdef"]
+
     # Change weather in 20-40% of zones
-    zones_to_change = Enum.take_random(zone_ids, max(1, div(length(zone_ids) * Enum.random(20..40), 100)))
-    
+    zones_to_change =
+      Enum.take_random(zone_ids, max(1, div(length(zone_ids) * Enum.random(20..40), 100)))
+
     Enum.each(zones_to_change, fn zone_id ->
       weather_type = Enum.random(WeatherSchema.weather_types())
-      intensity = Enum.random(1..4)  # Rarely use intensity 5
+      # Rarely use intensity 5
+      intensity = Enum.random(1..4)
       create_weather_for_zone(zone_id, weather_type, intensity)
     end)
   end
 
   defp create_weather_for_zone(zone_id, weather_type, intensity) do
-    duration = Enum.random(20..60)  # 20-60 minutes
-    
+    # 20-60 minutes
+    duration = Enum.random(20..60)
+
     attrs = %{
       zone_id: zone_id,
       weather_type: weather_type,

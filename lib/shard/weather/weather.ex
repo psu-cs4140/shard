@@ -8,7 +8,7 @@ defmodule Shard.Weather.Weather do
 
   @weather_types [
     "clear",
-    "cloudy", 
+    "cloudy",
     "rainy",
     "stormy",
     "foggy",
@@ -22,7 +22,8 @@ defmodule Shard.Weather.Weather do
   schema "weather" do
     field :zone_id, :binary_id
     field :weather_type, :string
-    field :intensity, :integer, default: 1  # 1-5 scale
+    # 1-5 scale
+    field :intensity, :integer, default: 1
     field :duration_minutes, :integer, default: 30
     field :started_at, :utc_datetime
     field :effects, :map, default: %{}
@@ -42,20 +43,21 @@ defmodule Shard.Weather.Weather do
   def weather_types, do: @weather_types
 
   def get_weather_effects(weather_type, intensity) do
-    base_effects = case weather_type do
-      "clear" -> %{visibility: 1.0, movement_speed: 1.0, combat_accuracy: 1.0}
-      "cloudy" -> %{visibility: 0.9, movement_speed: 1.0, combat_accuracy: 0.95}
-      "rainy" -> %{visibility: 0.7, movement_speed: 0.8, combat_accuracy: 0.85}
-      "stormy" -> %{visibility: 0.5, movement_speed: 0.6, combat_accuracy: 0.7}
-      "foggy" -> %{visibility: 0.3, movement_speed: 0.9, combat_accuracy: 0.6}
-      "snowy" -> %{visibility: 0.6, movement_speed: 0.7, combat_accuracy: 0.8}
-      "windy" -> %{visibility: 0.8, movement_speed: 1.1, combat_accuracy: 0.75}
-      _ -> %{visibility: 1.0, movement_speed: 1.0, combat_accuracy: 1.0}
-    end
+    base_effects =
+      case weather_type do
+        "clear" -> %{visibility: 1.0, movement_speed: 1.0, combat_accuracy: 1.0}
+        "cloudy" -> %{visibility: 0.9, movement_speed: 1.0, combat_accuracy: 0.95}
+        "rainy" -> %{visibility: 0.7, movement_speed: 0.8, combat_accuracy: 0.85}
+        "stormy" -> %{visibility: 0.5, movement_speed: 0.6, combat_accuracy: 0.7}
+        "foggy" -> %{visibility: 0.3, movement_speed: 0.9, combat_accuracy: 0.6}
+        "snowy" -> %{visibility: 0.6, movement_speed: 0.7, combat_accuracy: 0.8}
+        "windy" -> %{visibility: 0.8, movement_speed: 1.1, combat_accuracy: 0.75}
+        _ -> %{visibility: 1.0, movement_speed: 1.0, combat_accuracy: 1.0}
+      end
 
     # Scale effects by intensity
     intensity_multiplier = intensity / 3.0
-    
+
     %{
       visibility: max(0.1, base_effects.visibility * (2 - intensity_multiplier)),
       movement_speed: max(0.3, base_effects.movement_speed * (2 - intensity_multiplier)),
@@ -64,13 +66,14 @@ defmodule Shard.Weather.Weather do
   end
 
   def weather_description(weather_type, intensity) do
-    intensity_desc = case intensity do
-      1 -> "light"
-      2 -> "moderate" 
-      3 -> "heavy"
-      4 -> "severe"
-      5 -> "extreme"
-    end
+    intensity_desc =
+      case intensity do
+        1 -> "light"
+        2 -> "moderate"
+        3 -> "heavy"
+        4 -> "severe"
+        5 -> "extreme"
+      end
 
     case weather_type do
       "clear" -> "The sky is clear and bright"
