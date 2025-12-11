@@ -25,11 +25,6 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
     is_active: true
   }
 
-  defp create_character(_) do
-    user = user_fixture()
-    character = character_fixture(Map.put(@valid_attrs, :user_id, user.id))
-    %{character: character, user: user}
-  end
 
   describe "render" do
     test "displays form for new character", %{conn: _conn} do
