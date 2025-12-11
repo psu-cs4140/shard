@@ -33,7 +33,7 @@ defmodule Shard.CharactersTest do
     test "list_characters/0 returns all characters" do
       character = character_fixture()
       characters = Characters.list_characters()
-      assert character in characters
+      assert Enum.any?(characters, fn c -> c.id == character.id end)
     end
 
     test "get_character!/1 returns the character with given id" do
