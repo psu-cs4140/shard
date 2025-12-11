@@ -4,7 +4,6 @@ defmodule Shard.MiningTest do
   alias Shard.Mining
   alias Shard.Mining.MiningInventory
   alias Shard.Characters
-  import Shard.UsersFixtures
   import Shard.CharactersFixtures
 
   describe "start_mining/1" do

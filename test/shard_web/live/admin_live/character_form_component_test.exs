@@ -5,7 +5,6 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
   import Shard.UsersFixtures
   import Shard.CharactersFixtures
 
-  alias Shard.Characters
   alias Shard.Characters.Character
 
   @valid_attrs %{
