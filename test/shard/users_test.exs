@@ -62,7 +62,9 @@ defmodule Shard.UsersTest do
 
       errors = errors_on(changeset)
       assert "must have the @ sign and no spaces" in errors.email
-      assert "should be at least 12 character(s)" in (errors[:password] || errors["password"] || [])
+
+      assert "should be at least 12 character(s)" in (errors[:password] || errors["password"] ||
+                                                        [])
     end
 
     test "validates maximum values for email and password for security" do

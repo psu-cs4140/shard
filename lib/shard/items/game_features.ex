@@ -300,7 +300,6 @@ defmodule Shard.Items.GameFeatures do
     {:ok, %{id: 1, name: "Locked Dungeon Gate", is_locked: true}}
   end
 
-
   @doc """
   Checks if a character has the required items for quest objectives.
 
