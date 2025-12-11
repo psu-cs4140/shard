@@ -33,7 +33,7 @@ defmodule Shard.UsersFixtures do
 
     # Directly confirm the user instead of using magic link
     # since magic links don't work with password-based users
-    {:ok, confirmed_user} = 
+    {:ok, confirmed_user} =
       user
       |> Shard.Users.User.confirm_changeset()
       |> Shard.Repo.update()
