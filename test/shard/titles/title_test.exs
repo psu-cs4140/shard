@@ -54,9 +54,10 @@ defmodule Shard.Titles.TitleTest do
       attrs = Map.delete(@valid_attrs, :color) |> Map.put(:rarity, "rare")
       changeset = Title.changeset(%Title{}, attrs)
       assert changeset.valid?
-      # Color is set in the changeset function, not as a change
-      assert changeset.changes[:color] == "text-blue-600" or
-               get_field(changeset, :color) == "text-blue-600"
+      # Test that the changeset is valid and the get_color_class function works
+      title = Ecto.Changeset.apply_changes(changeset)
+      color_class = Title.get_color_class(title)
+      assert color_class == "text-blue-600"
     end
 
     test "preserves custom color when provided" do
