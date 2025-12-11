@@ -168,7 +168,7 @@ defmodule ShardWeb.UserLive.ItemCommandsTest do
       {:ok, user} =
         Shard.Users.register_user(%{
           email: "test@example.com",
-          password: "password123"
+          password: "password123password123"
         })
 
       # Create a character with the user_id

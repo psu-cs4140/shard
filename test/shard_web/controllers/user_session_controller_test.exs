@@ -92,7 +92,9 @@ defmodule ShardWeb.UserSessionControllerTest do
       assert response =~ ~p"/users/log-out"
     end
 
-    test "confirms unconfirmed user", %{conn: conn, unconfirmed_user: user} do
+    test "confirms unconfirmed user", %{conn: conn} do
+      # Create user without password for magic link compatibility
+      user = unconfirmed_user_fixture(%{password: nil})
       {token, _hashed_token} = generate_user_magic_link_token(user)
       refute user.confirmed_at
 

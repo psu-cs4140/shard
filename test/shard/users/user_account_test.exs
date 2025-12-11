@@ -9,7 +9,7 @@ defmodule Shard.Users.UserAccountTest do
   describe "user account creation" do
     test "user exists after creating account" do
       email = unique_user_email()
-      attrs = %{email: email}
+      attrs = %{email: email, password: valid_user_password()}
 
       # Create the user account
       assert {:ok, user} = Users.register_user(attrs)
@@ -21,7 +21,7 @@ defmodule Shard.Users.UserAccountTest do
 
     test "user has correct attributes after creation" do
       email = unique_user_email()
-      attrs = %{email: email}
+      attrs = %{email: email, password: valid_user_password()}
 
       # Create the user account
       assert {:ok, user} = Users.register_user(attrs)
@@ -38,7 +38,7 @@ defmodule Shard.Users.UserAccountTest do
       Shard.Repo.delete_all(User)
 
       email = unique_user_email()
-      attrs = %{email: email}
+      attrs = %{email: email, password: valid_user_password()}
 
       # Create the first user
       assert {:ok, user} = Users.register_user(attrs)
@@ -53,7 +53,7 @@ defmodule Shard.Users.UserAccountTest do
       _first_user = user_fixture()
 
       email = unique_user_email()
-      attrs = %{email: email}
+      attrs = %{email: email, password: valid_user_password()}
 
       # Create the second user
       assert {:ok, user} = Users.register_user(attrs)

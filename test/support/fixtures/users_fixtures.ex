@@ -20,11 +20,19 @@ defmodule Shard.UsersFixtures do
   end
 
   def unconfirmed_user_fixture(attrs \\ %{}) do
-    {:ok, user} =
-      attrs
-      |> valid_user_attributes()
-      |> Users.register_user()
+    # For magic link tests, we need users without passwords
+    # Check if password should be nil for magic link compatibility
+    attrs = 
+      if Map.get(attrs, :password) == nil do
+        attrs
+        |> valid_user_attributes()
+        |> Map.delete(:password)
+      else
+        attrs
+        |> valid_user_attributes()
+      end
 
+    {:ok, user} = Users.register_user(attrs)
     user
   end
 
