@@ -121,7 +121,7 @@ defmodule Shard.Users do
       end
 
     Repo.transact(fn ->
-      with {:ok, user} <- %User{} |> User.email_changeset(attrs) |> Repo.insert(),
+      with {:ok, user} <- %User{} |> User.registration_changeset(attrs) |> Repo.insert(),
            {:ok, _progress_records} <- create_initial_zone_progress(user) do
         {:ok, user}
       else

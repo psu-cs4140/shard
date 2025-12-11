@@ -187,17 +187,21 @@ defmodule Shard.Items do
   end
 
   def remove_item_from_inventory(inventory_id, quantity \\ 1) do
-    inventory = Repo.get!(CharacterInventory, inventory_id)
+    case Repo.get(CharacterInventory, inventory_id) do
+      nil ->
+        {:error, :not_found}
 
-    cond do
-      inventory.quantity > quantity ->
-        update_inventory_quantity(inventory, inventory.quantity - quantity)
+      inventory ->
+        cond do
+          inventory.quantity > quantity ->
+            update_inventory_quantity(inventory, inventory.quantity - quantity)
 
-      inventory.quantity == quantity ->
-        Repo.delete(inventory)
+          inventory.quantity == quantity ->
+            Repo.delete(inventory)
 
-      true ->
-        {:error, :insufficient_quantity}
+          true ->
+            {:error, :insufficient_quantity}
+        end
     end
   end
 

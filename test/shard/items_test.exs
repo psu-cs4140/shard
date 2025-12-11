@@ -162,15 +162,11 @@ defmodule Shard.ItemsTest do
 
     test "remove_item_from_inventory/1 removes inventory item" do
       # Test with non-existent inventory ID
-      assert_raise Ecto.NoResultsError, fn ->
-        Items.remove_item_from_inventory(999_999)
-      end
+      assert {:error, :not_found} = Items.remove_item_from_inventory(999_999)
     end
 
-    test "remove_item_from_inventory/1 with non-existent inventory raises error" do
-      assert_raise Ecto.NoResultsError, fn ->
-        Items.remove_item_from_inventory(999)
-      end
+    test "remove_item_from_inventory/1 with non-existent inventory returns error" do
+      assert {:error, :not_found} = Items.remove_item_from_inventory(999)
     end
 
     test "get_character_equipped_items/1 returns equipped items" do

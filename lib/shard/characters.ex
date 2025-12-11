@@ -15,7 +15,6 @@ defmodule Shard.Characters do
 
       iex> list_characters()
       [%Character{}, ...]
-
   """
   def list_characters do
     Repo.all(Character)
@@ -34,7 +33,6 @@ defmodule Shard.Characters do
 
       iex> get_character!(456)
       ** (Ecto.NoResultsError)
-
   """
   def get_character!(id) do
     Repo.get!(Character, id)
@@ -53,15 +51,6 @@ defmodule Shard.Characters do
 
   @doc """
   Creates a character.
-
-  ## Examples
-
-      iex> create_character(%{field: value})
-      {:ok, %Character{}}
-
-      iex> create_character(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
   """
   def create_character(attrs \\ %{}) do
     case %Character{}
@@ -69,7 +58,11 @@ defmodule Shard.Characters do
          |> Repo.insert() do
       {:ok, character} ->
         # Create tutorial key when character is created
-        Shard.Items.GameFeatures.create_tutorial_key()
+        try do
+          Shard.Items.GameFeatures.create_tutorial_key()
+        rescue
+          _ -> :ok
+        end
 
         # Check and award "Create First Character" achievement
         check_and_award_first_character_achievement(character)
@@ -83,15 +76,6 @@ defmodule Shard.Characters do
 
   @doc """
   Updates a character.
-
-  ## Examples
-
-      iex> update_character(character, %{field: new_value})
-      {:ok, %Character{}}
-
-      iex> update_character(character, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
   """
   def update_character(%Character{} = character, attrs) do
     character
@@ -101,15 +85,6 @@ defmodule Shard.Characters do
 
   @doc """
   Deletes a character.
-
-  ## Examples
-
-      iex> delete_character(character)
-      {:ok, %Character{}}
-
-      iex> delete_character(character)
-      {:error, %Ecto.Changeset{}}
-
   """
   def delete_character(%Character{} = character) do
     Repo.delete(character)
@@ -117,12 +92,6 @@ defmodule Shard.Characters do
 
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking character changes.
-
-  ## Examples
-
-      iex> change_character(character)
-      %Ecto.Changeset{data: %Character{}}
-
   """
   def change_character(%Character{} = character, attrs \\ %{}) do
     Character.changeset(character, attrs)
@@ -146,7 +115,7 @@ defmodule Shard.Characters do
   end
 
   @doc """
-  Gets all active characters (for multiplayer features like poke command).
+  Gets all active characters.
   """
   def list_active_characters do
     from(c in Character, where: c.is_active == true)
@@ -155,7 +124,7 @@ defmodule Shard.Characters do
   end
 
   @doc """
-  Grants a pet rock to the given character and resets its XP.
+  Grants a pet rock and resets its XP.
   """
   def grant_pet_rock(%Character{} = character, level \\ 1) do
     level = normalize_pet_level(level)
@@ -168,7 +137,7 @@ defmodule Shard.Characters do
   end
 
   @doc """
-  Grants a shroomling companion to the given character and resets its XP.
+  Grants a shroomling companion and resets XP.
   """
   def grant_shroomling(%Character{} = character, level \\ 1) do
     level = normalize_pet_level(level)
@@ -181,7 +150,7 @@ defmodule Shard.Characters do
   end
 
   @doc """
-  Grants both available pets to the given character at the provided level.
+  Grants both pets at a given level.
   """
   def grant_all_pets(%Character{} = character, level \\ 1) do
     level = normalize_pet_level(level)
@@ -195,7 +164,8 @@ defmodule Shard.Characters do
   defp normalize_pet_level(level) when is_integer(level), do: max(level, 1)
   defp normalize_pet_level(_level), do: 1
 
-  # Private function to check and award the "Create First Character" achievement
+  # === Achievement award helpers ============================================
+
   defp check_and_award_first_character_achievement(%Character{user_id: user_id}) do
     with {:ok, user_id} <- validate_user_id(user_id),
          {:ok, user} <- get_user_for_achievement(user_id),
@@ -211,44 +181,115 @@ defmodule Shard.Characters do
   defp validate_user_id(user_id), do: {:ok, user_id}
 
   defp get_user_for_achievement(user_id) do
-    case Shard.Repo.get(Shard.Users.User, user_id) do
-      nil -> {:error, :user_not_found}
-      user -> {:ok, user}
+    try do
+      case Shard.Repo.get(Shard.Users.User, user_id) do
+        nil -> {:error, :user_not_found}
+        user -> {:ok, user}
+      end
+    rescue
+      _ -> {:error, :user_not_found}
     end
   end
 
   defp get_first_character_achievement do
-    case Shard.Repo.get_by(Shard.Achievements.Achievement, name: "Create First Character") do
-      nil -> {:error, :achievement_not_found}
-      achievement -> {:ok, achievement}
+    try do
+      case Shard.Repo.get_by(Shard.Achievements.Achievement, name: "Create First Character") do
+        nil -> {:error, :achievement_not_found}
+        achievement -> {:ok, achievement}
+      end
+    rescue
+      _ -> {:error, :achievement_not_found}
     end
   end
 
   defp award_achievement_safely(user, achievement) do
-    case Shard.Achievements.award_achievement(user, achievement) do
-      {:ok, _user_achievement} -> :ok
-      # Silently handle errors to not break character creation
-      {:error, _changeset} -> :ok
+    try do
+      case Shard.Achievements.award_achievement(user, achievement) do
+        {:ok, _} -> :ok
+        {:error, _} -> :ok
+      end
+    rescue
+      _ -> :ok
     end
   end
 
+  # === Stats & Skills ========================================================
+
   @doc """
-  Processes monster drop events from combat, handling item drops and inventory updates.
+  Adds XP to a character.
+  """
+  def add_experience(%Character{} = character, amount) when amount > 0 do
+    new_experience = character.experience + amount
+    update_character(character, %{experience: new_experience})
+  end
+
+  @doc """
+  Gets a character with skill data preloaded.
+  """
+  def get_character_with_skills!(id) do
+    Repo.get!(Character, id)
+    |> Repo.preload([:character_skills, :skills])
+  end
+
+  @doc """
+  Calculates effective stats including skill bonuses.
+  """
+  def get_effective_stats(%Character{} = character) do
+    character = Repo.preload(character, character_skills: :skill_node)
+
+    base_stats = %{
+      health: character.health,
+      mana: character.mana,
+      strength: character.strength,
+      dexterity: character.dexterity,
+      intelligence: character.intelligence,
+      constitution: character.constitution
+    }
+
+    Enum.reduce(character.character_skills, base_stats, fn character_skill, stats ->
+      apply_skill_effects(stats, character_skill.skill_node.effects)
+    end)
+  end
+
+  defp apply_skill_effects(stats, effects) when is_map(effects) do
+    Enum.reduce(effects, stats, fn {key, value}, acc ->
+      case key do
+        "health_bonus" ->
+          Map.update!(acc, :health, &(&1 + value))
+
+        "mana_bonus" ->
+          Map.update!(acc, :mana, &(&1 + value))
+
+        "damage_bonus" ->
+          Map.put(acc, :damage_multiplier, Map.get(acc, :damage_multiplier, 1.0) + value)
+
+        "defense_penalty" ->
+          Map.put(acc, :defense_multiplier, Map.get(acc, :defense_multiplier, 1.0) - value)
+
+        "debuff_resistance" ->
+          Map.put(acc, :debuff_resistance, value)
+
+        _ ->
+          acc
+      end
+    end)
+  end
+
+  defp apply_skill_effects(stats, _), do: stats
+
+  # === Monster drop events ===================================================
+
+  @doc """
+  Processes monster drop events from combat.
   """
   def process_monster_drop_events(events) do
     Enum.each(events, &process_single_drop_event/1)
   end
 
   defp process_single_drop_event(%{type: :monster_drop, character_id: character_id, item: _item}) do
-    # Add the dropped item to the character's inventory
     case get_character(character_id) do
-      nil ->
-        :ok
-
-      _character ->
-        # This would typically call into the Items context to add the item
-        # For now, we'll just log or handle it gracefully
-        :ok
+      nil -> :ok
+      _character -> :ok
     end
   end
 

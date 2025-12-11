@@ -4,6 +4,7 @@ defmodule Shard.MiningTest do
   alias Shard.Mining
   alias Shard.Mining.MiningInventory
   alias Shard.Characters
+  import Shard.CharactersFixtures
 
   describe "start_mining/1" do
     test "sets is_mining to true for a character not currently mining" do
@@ -250,33 +251,5 @@ defmodule Shard.MiningTest do
       pending = Mining.calculate_pending_ticks(mining_char)
       assert pending == 4
     end
-  end
-
-  # Helper function to create a test character
-  defp character_fixture(attrs \\ %{}) do
-    user = user_fixture()
-
-    valid_attrs =
-      Enum.into(attrs, %{
-        name: "Test Character #{System.unique_integer([:positive])}",
-        class: "warrior",
-        race: "human",
-        user_id: user.id
-      })
-
-    {:ok, character} = Characters.create_character(valid_attrs)
-    character
-  end
-
-  defp user_fixture do
-    unique_email = "user#{System.unique_integer([:positive])}@example.com"
-
-    {:ok, user} =
-      Shard.Users.register_user(%{
-        email: unique_email,
-        password: "password123password123"
-      })
-
-    user
   end
 end

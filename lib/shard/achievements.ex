@@ -57,6 +57,22 @@ defmodule Shard.Achievements do
   end
 
   @doc """
+  Returns the list of achievements filtered by category.
+  """
+  def list_achievements_by_category(category) do
+    from(a in Achievement, where: a.category == ^category)
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns the list of visible (non-hidden) achievements.
+  """
+  def list_visible_achievements do
+    from(a in Achievement, where: a.hidden == false)
+    |> Repo.all()
+  end
+
+  @doc """
   Updates an achievement.
 
   ## Examples

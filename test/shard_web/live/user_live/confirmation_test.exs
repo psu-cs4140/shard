@@ -32,7 +32,10 @@ defmodule ShardWeb.UserLive.ConfirmationTest do
       assert html =~ "Log in"
     end
 
-    test "confirms the given token once", %{conn: conn, unconfirmed_user: user} do
+    test "confirms the given token once", %{conn: conn} do
+      # Create user without password for magic link compatibility
+      {:ok, user} = Users.register_user(%{email: unique_user_email()})
+
       token =
         extract_user_token(fn url ->
           Users.deliver_login_instructions(user, url)

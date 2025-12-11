@@ -11,6 +11,7 @@ defmodule Shard.Characters.Character do
   alias Shard.Map.Zone
   alias Shard.Mining.MiningInventory
   alias Shard.Spells.CharacterSpell
+  alias Shard.Skills.CharacterSkill
 
   schema "characters" do
     field :name, :string
@@ -47,6 +48,8 @@ defmodule Shard.Characters.Character do
     has_one :chopping_inventory, Shard.Forest.ChoppingInventory
     has_many :character_spells, CharacterSpell
     many_to_many :spells, Shard.Spells.Spells, join_through: CharacterSpell
+    has_many :character_skills, CharacterSkill
+    many_to_many :skills, Shard.Skills.SkillNode, join_through: CharacterSkill
 
     timestamps(type: :utc_datetime)
   end

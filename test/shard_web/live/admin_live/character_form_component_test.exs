@@ -3,49 +3,11 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
 
   import Phoenix.LiveViewTest
   import Shard.UsersFixtures
+  import Shard.CharactersFixtures
 
-  alias Shard.Characters
   alias Shard.Characters.Character
 
-  @valid_attrs %{
-    name: "Test Character",
-    level: 1,
-    class: "warrior",
-    race: "human",
-    health: 100,
-    mana: 50,
-    strength: 10,
-    dexterity: 10,
-    intelligence: 10,
-    constitution: 10,
-    experience: 0,
-    gold: 100,
-    location: "Starting Town",
-    description: "A test character",
-    is_active: true
-  }
-
-  defp create_character(_) do
-    user = user_fixture()
-    character = character_fixture(Map.put(@valid_attrs, :user_id, user.id))
-    %{character: character, user: user}
-  end
-
-  defp character_fixture(attrs) do
-    user = user_fixture()
-    attrs = Map.put_new(attrs, :user_id, user.id)
-
-    {:ok, character} =
-      attrs
-      |> Enum.into(@valid_attrs)
-      |> Characters.create_character()
-
-    character
-  end
-
   describe "render" do
-    setup [:create_character]
-
     test "displays form for new character", %{conn: _conn} do
       html =
         render_component(ShardWeb.AdminLive.CharacterFormComponent,
@@ -76,7 +38,10 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
       assert html =~ "Save Character"
     end
 
-    test "displays form for editing character", %{conn: _conn, character: character} do
+    test "displays form for editing character", %{conn: _conn} do
+      user = user_fixture()
+      character = character_fixture(user_id: user.id)
+
       html =
         render_component(ShardWeb.AdminLive.CharacterFormComponent,
           character: character,

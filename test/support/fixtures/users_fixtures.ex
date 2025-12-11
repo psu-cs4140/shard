@@ -14,31 +14,29 @@ defmodule Shard.UsersFixtures do
 
   def valid_user_attributes(attrs \\ %{}) do
     Enum.into(attrs, %{
-      email: unique_user_email()
+      email: unique_user_email(),
+      password: valid_user_password()
     })
   end
 
   def unconfirmed_user_fixture(attrs \\ %{}) do
-    {:ok, user} =
-      attrs
-      |> valid_user_attributes()
-      |> Users.register_user()
-
+    # Always include a password since the system requires it
+    attrs = valid_user_attributes(attrs)
+    {:ok, user} = Users.register_user(attrs)
     user
   end
 
   def user_fixture(attrs \\ %{}) do
     user = unconfirmed_user_fixture(attrs)
 
-    token =
-      extract_user_token(fn url ->
-        Users.deliver_login_instructions(user, url)
-      end)
+    # Directly confirm the user instead of using magic link
+    # since magic links don't work with password-based users
+    {:ok, confirmed_user} =
+      user
+      |> Shard.Users.User.confirm_changeset()
+      |> Shard.Repo.update()
 
-    {:ok, {user, _expired_tokens}} =
-      Users.login_user_by_magic_link(token)
-
-    user
+    confirmed_user
   end
 
   def user_scope_fixture do

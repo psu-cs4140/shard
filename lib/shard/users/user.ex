@@ -25,7 +25,27 @@ defmodule Shard.Users.User do
   end
 
   @doc """
-  A user changeset for registering or changing the email.
+  A user changeset for registration.
+
+  It validates email and password for new user registration.
+
+  ## Options
+
+    * `:validate_unique` - Set to false if you don't want to validate the
+      uniqueness of the email, useful when displaying live validations.
+      Defaults to `true`.
+    * `:hash_password` - Hashes the password so it can be stored securely
+      in the database. Defaults to `true`.
+  """
+  def registration_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:email, :password, :admin])
+    |> validate_email(opts)
+    |> validate_password(opts)
+  end
+
+  @doc """
+  A user changeset for changing the email.
 
   It requires the email to change otherwise an error is added.
 
