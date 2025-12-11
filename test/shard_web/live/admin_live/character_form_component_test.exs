@@ -32,8 +32,6 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
   end
 
   describe "render" do
-    setup [:create_character]
-
     test "displays form for new character", %{conn: _conn} do
       html =
         render_component(ShardWeb.AdminLive.CharacterFormComponent,
@@ -64,7 +62,9 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
       assert html =~ "Save Character"
     end
 
-    test "displays form for editing character", %{conn: _conn, character: character} do
+    test "displays form for editing character", %{conn: _conn} do
+      user = user_fixture()
+      character = character_fixture(user_id: user.id)
       html =
         render_component(ShardWeb.AdminLive.CharacterFormComponent,
           character: character,

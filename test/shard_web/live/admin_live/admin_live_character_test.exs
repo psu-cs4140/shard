@@ -75,7 +75,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
         |> live(~p"/admin/characters")
 
       assert index_live
-             |> element("a[href='/admin/characters/#{character.id}/edit']", "Edit")
+             |> element("#character-#{character.id} a", "Edit")
              |> render_click() =~
                "Edit Character"
 
@@ -102,10 +102,10 @@ defmodule ShardWeb.AdminLive.CharactersTest do
         |> live(~p"/admin/characters")
 
       assert index_live
-             |> element("a[phx-value-id='#{character.id}']", "Delete")
+             |> element("#character-#{character.id} button", "Delete")
              |> render_click()
 
-      refute has_element?(index_live, "a[phx-value-id='#{character.id}']")
+      refute has_element?(index_live, "#character-#{character.id}")
     end
 
     test "redirects non-admin users", %{conn: conn} do
@@ -145,7 +145,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
         |> log_in_user(admin)
         |> live(~p"/admin/characters/#{character}")
 
-      assert show_live |> element("a:has(button)", "Edit") |> render_click() =~
+      assert show_live |> element("a", "Edit") |> render_click() =~
                "Edit Character"
 
       assert_patch(show_live, ~p"/admin/characters/#{character}/edit")

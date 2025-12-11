@@ -3,6 +3,7 @@ defmodule ShardWeb.AdminLive.MonstersTest do
 
   import Phoenix.LiveViewTest
   import Shard.UsersFixtures
+  import Shard.MonstersFixtures
 
   alias Shard.Monsters
   alias Shard.Map, as: GameMap
