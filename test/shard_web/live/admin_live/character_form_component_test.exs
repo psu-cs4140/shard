@@ -32,7 +32,6 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
     %{character: character, user: user}
   end
 
-
   describe "render" do
     setup [:create_character]
 

@@ -253,5 +253,4 @@ defmodule Shard.MiningTest do
       assert pending == 4
     end
   end
-
 end
