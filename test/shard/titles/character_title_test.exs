@@ -21,7 +21,7 @@ defmodule Shard.Titles.CharacterTitleTest do
     test "invalid changeset with missing required fields" do
       changeset = CharacterTitle.changeset(%CharacterTitle{}, @invalid_attrs)
       refute changeset.valid?
-      
+
       errors = errors_on(changeset)
       assert "can't be blank" in errors.character_id
       assert "can't be blank" in errors.title_id
@@ -89,6 +89,7 @@ defmodule Shard.Titles.CharacterTitleTest do
         title_id: 1,
         is_active: false
       }
+
       changeset = CharacterTitle.changeset(character_title, %{is_active: true})
       assert changeset.data.character_id == 1
       assert changeset.data.title_id == 1

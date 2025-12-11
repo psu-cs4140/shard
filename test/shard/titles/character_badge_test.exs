@@ -20,7 +20,7 @@ defmodule Shard.Titles.CharacterBadgeTest do
     test "invalid changeset with missing required fields" do
       changeset = CharacterBadge.changeset(%CharacterBadge{}, @invalid_attrs)
       refute changeset.valid?
-      
+
       errors = errors_on(changeset)
       assert "can't be blank" in errors.character_id
       assert "can't be blank" in errors.badge_id
@@ -77,7 +77,7 @@ defmodule Shard.Titles.CharacterBadgeTest do
     test "updates display_order field" do
       character_badge = %CharacterBadge{display_order: 1}
       changeset = CharacterBadge.changeset(character_badge, %{display_order: 2})
-      
+
       # display_order validation may require other fields
       if changeset.valid? do
         assert get_change(changeset, :display_order) == 2
@@ -92,8 +92,9 @@ defmodule Shard.Titles.CharacterBadgeTest do
         badge_id: 1,
         display_order: 1
       }
+
       changeset = CharacterBadge.changeset(character_badge, %{display_order: 3})
-      
+
       assert changeset.data.character_id == 1
       assert changeset.data.badge_id == 1
     end
@@ -103,7 +104,7 @@ defmodule Shard.Titles.CharacterBadgeTest do
     test "sets is_active to true" do
       character_badge = %CharacterBadge{is_active: false}
       changeset = CharacterBadge.changeset(character_badge, %{is_active: true})
-      
+
       # is_active validation may require other fields
       if changeset.valid? do
         assert get_change(changeset, :is_active) == true
@@ -118,8 +119,9 @@ defmodule Shard.Titles.CharacterBadgeTest do
         badge_id: 1,
         is_active: false
       }
+
       changeset = CharacterBadge.changeset(character_badge, %{is_active: true})
-      
+
       assert changeset.data.character_id == 1
       assert changeset.data.badge_id == 1
     end
