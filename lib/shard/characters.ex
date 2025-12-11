@@ -58,7 +58,11 @@ defmodule Shard.Characters do
          |> Repo.insert() do
       {:ok, character} ->
         # Create tutorial key when character is created
-        Shard.Items.GameFeatures.create_tutorial_key()
+        try do
+          Shard.Items.GameFeatures.create_tutorial_key()
+        rescue
+          _ -> :ok
+        end
 
         # Check and award "Create First Character" achievement
         check_and_award_first_character_achievement(character)
@@ -177,23 +181,35 @@ defmodule Shard.Characters do
   defp validate_user_id(user_id), do: {:ok, user_id}
 
   defp get_user_for_achievement(user_id) do
-    case Shard.Repo.get(Shard.Users.User, user_id) do
-      nil -> {:error, :user_not_found}
-      user -> {:ok, user}
+    try do
+      case Shard.Repo.get(Shard.Users.User, user_id) do
+        nil -> {:error, :user_not_found}
+        user -> {:ok, user}
+      end
+    rescue
+      _ -> {:error, :user_not_found}
     end
   end
 
   defp get_first_character_achievement do
-    case Shard.Repo.get_by(Shard.Achievements.Achievement, name: "Create First Character") do
-      nil -> {:error, :achievement_not_found}
-      achievement -> {:ok, achievement}
+    try do
+      case Shard.Repo.get_by(Shard.Achievements.Achievement, name: "Create First Character") do
+        nil -> {:error, :achievement_not_found}
+        achievement -> {:ok, achievement}
+      end
+    rescue
+      _ -> {:error, :achievement_not_found}
     end
   end
 
   defp award_achievement_safely(user, achievement) do
-    case Shard.Achievements.award_achievement(user, achievement) do
-      {:ok, _} -> :ok
-      {:error, _} -> :ok
+    try do
+      case Shard.Achievements.award_achievement(user, achievement) do
+        {:ok, _} -> :ok
+        {:error, _} -> :ok
+      end
+    rescue
+      _ -> :ok
     end
   end
 
