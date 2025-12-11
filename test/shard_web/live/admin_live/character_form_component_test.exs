@@ -25,7 +25,6 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
     is_active: true
   }
 
-
   describe "render" do
     test "displays form for new character", %{conn: _conn} do
       html =
