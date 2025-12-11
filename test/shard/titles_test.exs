@@ -279,11 +279,13 @@ defmodule Shard.TitlesTest do
     test "validates icon presence when provided" do
       attrs = Map.put(@valid_badge_attrs, :icon, "")
       changeset = Badge.changeset(%Badge{}, attrs)
-      assert changeset.valid? # Empty string should be allowed
+      # Empty string should be allowed
+      assert changeset.valid?
 
       attrs = Map.put(@valid_badge_attrs, :icon, nil)
       changeset = Badge.changeset(%Badge{}, attrs)
-      assert changeset.valid? # nil should be allowed
+      # nil should be allowed
+      assert changeset.valid?
     end
   end
 
@@ -393,10 +395,15 @@ defmodule Shard.TitlesTest do
   describe "search and filtering" do
     setup do
       {:ok, common_title} = Titles.create_title(Map.put(@valid_attrs, :rarity, "common"))
-      {:ok, rare_title} = Titles.create_title(Map.merge(@valid_attrs, %{name: "Rare Title", rarity: "rare"}))
+
+      {:ok, rare_title} =
+        Titles.create_title(Map.merge(@valid_attrs, %{name: "Rare Title", rarity: "rare"}))
+
       {:ok, common_badge} = Titles.create_badge(Map.put(@valid_badge_attrs, :rarity, "common"))
-      {:ok, epic_badge} = Titles.create_badge(Map.merge(@valid_badge_attrs, %{name: "Epic Badge", rarity: "epic"}))
-      
+
+      {:ok, epic_badge} =
+        Titles.create_badge(Map.merge(@valid_badge_attrs, %{name: "Epic Badge", rarity: "epic"}))
+
       %{
         common_title: common_title,
         rare_title: rare_title,
@@ -450,25 +457,31 @@ defmodule Shard.TitlesTest do
     test "bulk_award_titles/2 awards multiple titles to character" do
       {:ok, title1} = Titles.create_title(@valid_attrs)
       {:ok, title2} = Titles.create_title(Map.put(@valid_attrs, :name, "Second Title"))
-      
+
       character_id = 1
       title_ids = [title1.id, title2.id]
-      
+
       # Test each title individually since bulk function doesn't exist
       results = Enum.map(title_ids, fn id -> Titles.award_title(character_id, id) end)
-      assert Enum.all?(results, fn result -> match?({:ok, _}, result) or match?({:error, _}, result) end)
+
+      assert Enum.all?(results, fn result ->
+               match?({:ok, _}, result) or match?({:error, _}, result)
+             end)
     end
 
     test "bulk_award_badges/2 awards multiple badges to character" do
       {:ok, badge1} = Titles.create_badge(@valid_badge_attrs)
       {:ok, badge2} = Titles.create_badge(Map.put(@valid_badge_attrs, :name, "Second Badge"))
-      
+
       character_id = 1
       badge_ids = [badge1.id, badge2.id]
-      
+
       # Test each badge individually since bulk function doesn't exist
       results = Enum.map(badge_ids, fn id -> Titles.award_badge(character_id, id) end)
-      assert Enum.all?(results, fn result -> match?({:ok, _}, result) or match?({:error, _}, result) end)
+
+      assert Enum.all?(results, fn result ->
+               match?({:ok, _}, result) or match?({:error, _}, result)
+             end)
     end
   end
 end

@@ -42,7 +42,7 @@ defmodule Shard.Titles.TitleTest do
 
     test "accepts all valid rarities" do
       valid_rarities = ["common", "uncommon", "rare", "epic", "legendary"]
-      
+
       for rarity <- valid_rarities do
         attrs = Map.put(@valid_attrs, :rarity, rarity)
         changeset = Title.changeset(%Title{}, attrs)
@@ -55,7 +55,8 @@ defmodule Shard.Titles.TitleTest do
       changeset = Title.changeset(%Title{}, attrs)
       assert changeset.valid?
       # Color is set in the changeset function, not as a change
-      assert changeset.changes[:color] == "text-blue-600" or get_field(changeset, :color) == "text-blue-600"
+      assert changeset.changes[:color] == "text-blue-600" or
+               get_field(changeset, :color) == "text-blue-600"
     end
 
     test "preserves custom color when provided" do
