@@ -254,19 +254,4 @@ defmodule Shard.MiningTest do
     end
   end
 
-  # Helper function to create a test character
-  defp character_fixture(attrs \\ %{}) do
-    user = user_fixture()
-
-    valid_attrs =
-      Enum.into(attrs, %{
-        name: "Test Character #{System.unique_integer([:positive])}",
-        class: "warrior",
-        race: "human",
-        user_id: user.id
-      })
-
-    {:ok, character} = Characters.create_character(valid_attrs)
-    character
-  end
 end
