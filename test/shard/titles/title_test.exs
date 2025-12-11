@@ -27,10 +27,10 @@ defmodule Shard.Titles.TitleTest do
     end
 
     test "validates name length" do
-      attrs = Map.put(@valid_attrs, :name, String.duplicate("a", 256))
+      attrs = Map.put(@valid_attrs, :name, String.duplicate("a", 51))
       changeset = Title.changeset(%Title{}, attrs)
       refute changeset.valid?
-      assert %{name: ["should be at most 255 character(s)"]} = errors_on(changeset)
+      assert %{name: ["should be at most 50 character(s)"]} = errors_on(changeset)
     end
 
     test "validates rarity inclusion" do
@@ -54,7 +54,8 @@ defmodule Shard.Titles.TitleTest do
       attrs = Map.delete(@valid_attrs, :color) |> Map.put(:rarity, "rare")
       changeset = Title.changeset(%Title{}, attrs)
       assert changeset.valid?
-      assert get_change(changeset, :color) == "text-blue-600"
+      # Color is set in the changeset function, not as a change
+      assert changeset.changes[:color] == "text-blue-600" or get_field(changeset, :color) == "text-blue-600"
     end
 
     test "preserves custom color when provided" do

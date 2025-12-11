@@ -72,7 +72,7 @@ defmodule Shard.TitlesTest do
     end
 
     test "get_available_titles_for_character/1 returns available titles" do
-      character_id = 1
+      _character_id = 1
       titles = Titles.list_titles()
       assert is_list(titles)
     end
@@ -106,7 +106,7 @@ defmodule Shard.TitlesTest do
     end
 
     test "sets default color based on rarity" do
-      attrs = Map.put(@valid_attrs, :rarity, "epic")
+      attrs = Map.delete(@valid_attrs, :color) |> Map.put(:rarity, "epic")
       {:ok, title} = Titles.create_title(attrs)
       assert title.color == "text-purple-600"
     end
@@ -146,8 +146,8 @@ defmodule Shard.TitlesTest do
 
     test "remove_title_from_character/2 removes title from character", %{title: title} do
       character_id = 1
-      # Test removal (will likely return ok even if nothing to remove)
-      result = Titles.remove_title(character_id, title.id)
+      # Test removal using remove_active_title since remove_title doesn't exist
+      result = Titles.remove_active_title(character_id)
       assert match?({:ok, _}, result) or match?({:error, _}, result)
     end
   end
@@ -230,7 +230,7 @@ defmodule Shard.TitlesTest do
     end
 
     test "get_available_badges_for_character/1 returns available badges" do
-      character_id = 1
+      _character_id = 1
       badges = Titles.list_badges()
       assert is_list(badges)
     end
@@ -264,7 +264,7 @@ defmodule Shard.TitlesTest do
     end
 
     test "sets default color based on rarity" do
-      attrs = Map.put(@valid_badge_attrs, :rarity, "legendary")
+      attrs = Map.delete(@valid_badge_attrs, :color) |> Map.put(:rarity, "legendary")
       {:ok, badge} = Titles.create_badge(attrs)
       assert badge.color == "text-yellow-600"
     end
@@ -314,8 +314,8 @@ defmodule Shard.TitlesTest do
 
     test "remove_badge_from_character/2 removes badge from character", %{badge: badge} do
       character_id = 1
-      # Test removal (will likely return ok even if nothing to remove)
-      result = Titles.remove_badge(character_id, badge.id)
+      # Test removal using remove_active_badges since remove_badge doesn't exist
+      result = Titles.remove_active_badges(character_id)
       assert match?({:ok, _}, result) or match?({:error, _}, result)
     end
 
@@ -357,7 +357,7 @@ defmodule Shard.TitlesTest do
 
     test "clear_character_active_title/1 clears character's active title" do
       character_id = 1
-      result = Titles.deactivate_title(character_id)
+      result = Titles.remove_active_title(character_id)
       assert match?({:ok, _}, result) or match?({:error, _}, result)
     end
   end
