@@ -146,7 +146,10 @@ defmodule Shard.Skills.SkillTreeTest do
       attrs = %{name: "Active Tree", is_active: true}
       changeset = SkillTree.changeset(%SkillTree{}, attrs)
       assert changeset.valid?
-      assert get_change(changeset, :is_active) == true
+      # When setting to the default value (true), Ecto doesn't track it as a change
+      assert get_change(changeset, :is_active) == nil
+      # But the data should still have the correct value
+      assert changeset.data.is_active == true
     end
 
     test "accepts false for is_active" do
