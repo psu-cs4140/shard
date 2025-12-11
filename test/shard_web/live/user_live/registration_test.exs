@@ -44,7 +44,7 @@ defmodule ShardWeb.UserLive.RegistrationTest do
 
       form =
         form(lv, "#registration_form",
-          user: valid_user_attributes(email: email, password: password)
+          user: %{email: email, password: password}
         )
 
       {:ok, _lv, html} =

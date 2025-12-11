@@ -34,7 +34,7 @@ defmodule ShardWeb.UserLive.ConfirmationTest do
 
     test "confirms the given token once", %{conn: conn} do
       # Create user without password for magic link compatibility
-      user = unconfirmed_user_fixture(%{password: nil})
+      user = unconfirmed_user_fixture()
 
       token =
         extract_user_token(fn url ->
