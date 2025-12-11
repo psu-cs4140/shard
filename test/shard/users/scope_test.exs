@@ -7,7 +7,7 @@ defmodule Shard.Users.ScopeTest do
     test "creates scope for valid user" do
       user = %User{id: 1, email: "test@example.com"}
       scope = Scope.for_user(user)
-      
+
       assert %Scope{user: ^user} = scope
     end
 

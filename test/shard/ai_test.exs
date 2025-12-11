@@ -25,7 +25,6 @@ defmodule Shard.AITest do
       end
     end
 
-
     test "handles empty surrounding rooms" do
       Application.put_env(:shard, :open_router, api_key: nil)
 
@@ -37,7 +36,6 @@ defmodule Shard.AITest do
 
       assert is_binary(description)
     end
-
 
     test "handles nil surrounding rooms" do
       Application.put_env(:shard, :open_router, api_key: nil)

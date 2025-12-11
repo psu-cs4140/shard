@@ -18,7 +18,7 @@ defmodule Shard.Users.UserTest do
     test "sets confirmed_at to current time" do
       user = %User{}
       changeset = User.confirm_changeset(user)
-      
+
       assert changeset.changes[:confirmed_at]
       assert DateTime.diff(changeset.changes[:confirmed_at], DateTime.utc_now(:second)) <= 1
     end

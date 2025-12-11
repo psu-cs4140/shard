@@ -7,7 +7,6 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
 
   alias Shard.Characters.Character
 
-
   describe "render" do
     test "displays form for new character", %{conn: _conn} do
       html =
