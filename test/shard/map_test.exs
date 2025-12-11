@@ -69,20 +69,20 @@ defmodule Shard.MapTest do
     }
 
     test "list_rooms/0 returns all rooms", %{zone: zone} do
-      attrs = Map.put(@valid_room_attrs, :zone_id, zone.id)
+      attrs = Enum.into([zone_id: zone.id], @valid_room_attrs)
       {:ok, room} = Map.create_room(attrs)
       rooms = Map.list_rooms()
       assert room in rooms
     end
 
     test "get_room!/1 returns the room with given id", %{zone: zone} do
-      attrs = Map.put(@valid_room_attrs, :zone_id, zone.id)
+      attrs = Enum.into([zone_id: zone.id], @valid_room_attrs)
       {:ok, room} = Map.create_room(attrs)
       assert Map.get_room!(room.id) == room
     end
 
     test "create_room/1 with valid data creates a room", %{zone: zone} do
-      attrs = Map.put(@valid_room_attrs, :zone_id, zone.id)
+      attrs = Enum.into([zone_id: zone.id], @valid_room_attrs)
       assert {:ok, %Room{} = room} = Map.create_room(attrs)
       assert room.name == "Test Room"
       assert room.x_coordinate == 0
@@ -91,12 +91,12 @@ defmodule Shard.MapTest do
     end
 
     test "list_rooms_by_zone/1 returns rooms for specific zone", %{zone: zone} do
-      attrs = Map.put(@valid_room_attrs, :zone_id, zone.id)
+      attrs = Enum.into([zone_id: zone.id], @valid_room_attrs)
       {:ok, room} = Map.create_room(attrs)
       
       # Create another zone and room
-      {:ok, other_zone} = Map.create_zone(Map.merge(@valid_zone_attrs, %{name: "Other Zone", slug: "other-zone"}))
-      other_attrs = Map.put(@valid_room_attrs, :zone_id, other_zone.id)
+      {:ok, other_zone} = Map.create_zone(Enum.into([name: "Other Zone", slug: "other-zone"], @valid_zone_attrs))
+      other_attrs = Enum.into([zone_id: other_zone.id], @valid_room_attrs)
       {:ok, _other_room} = Map.create_room(other_attrs)
 
       zone_rooms = Map.list_rooms_by_zone(zone.id)
@@ -109,10 +109,10 @@ defmodule Shard.MapTest do
     setup do
       {:ok, zone} = Map.create_zone(@valid_zone_attrs)
       
-      room1_attrs = Map.put(@valid_room_attrs, :zone_id, zone.id)
+      room1_attrs = Enum.into([zone_id: zone.id], @valid_room_attrs)
       {:ok, room1} = Map.create_room(room1_attrs)
       
-      room2_attrs = Map.merge(@valid_room_attrs, %{name: "Room 2", x_coordinate: 1, zone_id: zone.id})
+      room2_attrs = Enum.into([name: "Room 2", x_coordinate: 1, zone_id: zone.id], @valid_room_attrs)
       {:ok, room2} = Map.create_room(room2_attrs)
       
       %{zone: zone, room1: room1, room2: room2}

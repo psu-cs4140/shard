@@ -71,5 +71,63 @@ defmodule Shard.AchievementsTest do
       achievement = achievement_fixture()
       assert %Ecto.Changeset{} = Achievements.change_achievement(achievement)
     end
+
+    test "get_achievement!/1 raises when achievement not found" do
+      assert_raise Ecto.NoResultsError, fn -> Achievements.get_achievement!(999) end
+    end
+
+    test "create_achievement/1 validates required fields" do
+      {:error, changeset} = Achievements.create_achievement(%{})
+      assert %{name: ["can't be blank"]} = errors_on(changeset)
+    end
+
+    test "create_achievement/1 validates points is positive" do
+      attrs = valid_achievement_attributes(%{points: -10})
+      {:error, changeset} = Achievements.create_achievement(attrs)
+      assert %{points: ["must be greater than 0"]} = errors_on(changeset)
+    end
+
+    test "list_achievements_by_category/1 filters by category" do
+      general_achievement = achievement_fixture(%{category: "general"})
+      combat_achievement = achievement_fixture(%{category: "combat"})
+
+      general_achievements = Achievements.list_achievements_by_category("general")
+      assert general_achievement in general_achievements
+      refute combat_achievement in general_achievements
+    end
+
+    test "list_visible_achievements/0 excludes hidden achievements" do
+      visible_achievement = achievement_fixture(%{hidden: false})
+      hidden_achievement = achievement_fixture(%{hidden: true})
+
+      visible_achievements = Achievements.list_visible_achievements()
+      assert visible_achievement in visible_achievements
+      refute hidden_achievement in visible_achievements
+    end
+  end
+
+  describe "achievement changeset validations" do
+    test "validates name uniqueness" do
+      achievement_fixture(%{name: "Unique Achievement"})
+      
+      {:error, changeset} = Achievements.create_achievement(%{
+        name: "Unique Achievement",
+        description: "Another description",
+        category: "general",
+        points: 50
+      })
+      
+      assert %{name: ["has already been taken"]} = errors_on(changeset)
+    end
+
+    test "accepts valid categories" do
+      valid_categories = ["general", "combat", "exploration", "crafting", "social"]
+      
+      for category <- valid_categories do
+        attrs = valid_achievement_attributes(%{category: category})
+        changeset = Shard.Achievements.Achievement.changeset(%Shard.Achievements.Achievement{}, attrs)
+        assert changeset.valid?, "Expected #{category} to be valid"
+      end
+    end
   end
 end

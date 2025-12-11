@@ -63,5 +63,43 @@ defmodule Shard.Weapons.WeaponsTest do
       assert weapon.weapon_class_id == 1
       assert weapon.rarity_id == 1
     end
+
+    test "validates damage is positive" do
+      attrs = %{
+        name: "Test Weapon",
+        damage: -5,
+        gold_value: 100,
+        description: "A test weapon"
+      }
+
+      changeset = Weapons.changeset(%Weapons{}, attrs)
+      refute changeset.valid?
+      assert %{damage: ["must be greater than 0"]} = errors_on(changeset)
+    end
+
+    test "validates gold_value is non-negative" do
+      attrs = %{
+        name: "Test Weapon",
+        damage: 10,
+        gold_value: -10,
+        description: "A test weapon"
+      }
+
+      changeset = Weapons.changeset(%Weapons{}, attrs)
+      refute changeset.valid?
+      assert %{gold_value: ["must be greater than or equal to 0"]} = errors_on(changeset)
+    end
+
+    test "accepts zero gold_value" do
+      attrs = %{
+        name: "Free Weapon",
+        damage: 1,
+        gold_value: 0,
+        description: "A free weapon"
+      }
+
+      changeset = Weapons.changeset(%Weapons{}, attrs)
+      assert changeset.valid?
+    end
   end
 end
