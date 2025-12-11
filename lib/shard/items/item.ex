@@ -58,6 +58,7 @@ defmodule Shard.Items.Item do
     "tool",
     "quest",
     "loot_box"
+    "food"
   ]
   @rarities ["common", "uncommon", "rare", "epic", "legendary"]
   @equipment_slots [

@@ -19,6 +19,7 @@ defmodule ShardWeb.GamblingLive.Index do
       socket
       |> assign(:characters, characters)
       |> assign(:selected_character_id, get_first_character_id(characters))
+      |> assign(:selected_game, nil)
       |> assign(:bet_amount, "")
       |> assign(:selected_side, nil)
       |> assign(:last_result, nil)
@@ -115,6 +116,26 @@ defmodule ShardWeb.GamblingLive.Index do
     end
   end
 
+  @impl true
+  def handle_event("select_game", %{"game" => "blackjack"}, socket) do
+    # Check if a blackjack game already exists, if not create one
+    case Shard.Gambling.BlackjackServer.get_or_create_game() do
+      {:ok, game_id} ->
+        {:noreply,
+         socket
+         |> assign(:selected_game, "blackjack")
+         |> redirect(to: "/gambling/blackjack/#{game_id}")}
+
+      {:error, reason} ->
+        {:noreply, put_flash(socket, :error, "Failed to access blackjack game: #{reason}")}
+    end
+  end
+
+  @impl true
+  def handle_event("select_game", %{"game" => game}, socket) do
+    {:noreply, assign(socket, :selected_game, game)}
+  end
+
   # PubSub callbacks
   @impl true
   def handle_info({:countdown_update, %{seconds_remaining: seconds}}, socket) do
@@ -124,10 +145,10 @@ defmodule ShardWeb.GamblingLive.Index do
 
   @impl true
   def handle_info({:new_flip, %{flip_id: flip_id, next_flip_at: next_flip_at}}, socket) do
+    # Don't reset last_result if the modal is still showing - let user close it manually
     socket =
       socket
       |> assign(:flip_info, %{flip_id: flip_id, next_flip_at: next_flip_at})
-      |> assign(:last_result, nil)
       |> load_flip_data()
 
     {:noreply, socket}
@@ -189,9 +210,9 @@ defmodule ShardWeb.GamblingLive.Index do
 
   def format_countdown(seconds), do: "0:#{String.pad_leading(Integer.to_string(seconds), 2, "0")}"
 
-  def result_color("won"), do: "text-green-600"
-  def result_color("lost"), do: "text-red-600"
-  def result_color(_), do: "text-slate-600"
+  def result_color("won"), do: "text-green-400 bg-green-900/30 border-green-700/50"
+  def result_color("lost"), do: "text-red-500 bg-red-900/30 border-red-700/50"
+  def result_color(_), do: "text-gray-400 bg-gray-800/50 border-gray-600/50"
 
   def result_label("won"), do: "Won"
   def result_label("lost"), do: "Lost"

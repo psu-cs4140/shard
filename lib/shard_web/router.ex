@@ -64,6 +64,7 @@ defmodule ShardWeb.Router do
     end
 
     post "/users/log-in", UserSessionController, :create
+    delete "/users/log_out", UserSessionController, :delete
     delete "/users/log-out", UserSessionController, :delete
   end
 
@@ -106,6 +107,8 @@ defmodule ShardWeb.Router do
       live "/marketplace", MarketplaceLive.Index, :index
       live "/achievements", AchievementsLive.Index, :index
       live "/gambling", GamblingLive.Index, :index
+      live "/gambling/blackjack/:game_id", BlackjackTableLive, :show
+      live "/workshop", WorkshopLive, :index
     end
 
     post "/users/update-password", UserSessionController, :update_password
@@ -158,6 +161,7 @@ defmodule ShardWeb.Router do
       live "/spell_effects/new", AdminLive.SpellEffects, :new
       live "/spell_effects/:id", AdminLive.SpellEffects, :show
       live "/spell_effects/:id/edit", AdminLive.SpellEffects, :edit
+      live "/pets", AdminLive.Pets, :index
     end
   end
 

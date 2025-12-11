@@ -77,26 +77,35 @@ defmodule Shard.Items do
     end
   end
 
+  @doc """
+  Add an item to a character's inventory. Alias for add_item_to_inventory for consistency.
+  """
+  def add_item_to_character(character_id, item_id, quantity \\ 1, opts \\ []) do
+    add_item_to_inventory(character_id, item_id, quantity, opts)
+  end
+
+  defp add_stackable_item(_character_id, _item, quantity, _opts) when quantity <= 0 do
+    {:ok, :noop}
+  end
+
   defp add_stackable_item(character_id, item, quantity, opts) do
-    case find_existing_stack(character_id, item.id) do
+    max_stack_size = item.max_stack_size || 99
+
+    case find_existing_stack(character_id, item.id, max_stack_size) do
+      %CharacterInventory{} = stack ->
+        available_space = max_stack_size - (stack.quantity || 0)
+        to_add = min(quantity, available_space)
+        new_quantity = (stack.quantity || 0) + to_add
+
+        with {:ok, updated_stack} <- update_inventory_quantity(stack, new_quantity) do
+          handle_remaining_stackable(character_id, item, quantity - to_add, opts, updated_stack)
+        end
+
       nil ->
-        create_inventory_entry(character_id, item, quantity, opts)
+        to_add = min(quantity, max_stack_size)
 
-      existing ->
-        new_quantity = existing.quantity + quantity
-
-        if new_quantity <= item.max_stack_size do
-          update_inventory_quantity(existing, new_quantity)
-        else
-          # Split into multiple stacks if needed
-          remaining = new_quantity - item.max_stack_size
-
-          with {:ok, _} <- update_inventory_quantity(existing, item.max_stack_size),
-               {:ok, _} <- add_stackable_item(character_id, item, remaining, opts) do
-            {:ok, :split_stack}
-          else
-            error -> error
-          end
+        with {:ok, new_stack} <- create_inventory_entry(character_id, item, to_add, opts) do
+          handle_remaining_stackable(character_id, item, quantity - to_add, opts, new_stack)
         end
     end
   end
@@ -116,12 +125,23 @@ defmodule Shard.Items do
     end
   end
 
-  defp find_existing_stack(character_id, item_id) do
+  defp find_existing_stack(character_id, item_id, max_stack_size) do
     from(ci in CharacterInventory,
-      where: ci.character_id == ^character_id and ci.item_id == ^item_id and ci.equipped == false,
+      where:
+        ci.character_id == ^character_id and ci.item_id == ^item_id and ci.equipped == false and
+          ci.quantity < ^max_stack_size,
       limit: 1
     )
     |> Repo.one()
+  end
+
+  defp handle_remaining_stackable(_character_id, _item, remaining, _opts, result)
+       when remaining <= 0 do
+    {:ok, result}
+  end
+
+  defp handle_remaining_stackable(character_id, item, remaining, opts, _result) do
+    add_stackable_item(character_id, item, remaining, opts)
   end
 
   defp create_inventory_entry(character_id, item, quantity, opts) do
@@ -197,10 +217,11 @@ defmodule Shard.Items do
       iex> sell_item(character, invalid_id)
       {:error, :item_not_found}
   """
-  def sell_item(character, inventory_id) do
+  def sell_item(character, inventory_id, quantity \\ 1) do
     alias Ecto.Multi
     # alias Shard.Characters
     alias Shard.Characters.Character
+    quantity_int = max(1, quantity)
 
     inventory_item =
       Repo.get(CharacterInventory, inventory_id)
@@ -220,31 +241,41 @@ defmodule Shard.Items do
         {:error, :item_not_sellable}
 
       inventory_item ->
-        # Get the sell value from the item, default to 1 if not set
-        sell_value = inventory_item.item.value || 1
+        if quantity_int > inventory_item.quantity do
+          {:error, :invalid_quantity}
+        else
+          # Get the sell value from the item, default to 1 if not set
+          sell_value = inventory_item.item.value || 1
+          total_value = sell_value * quantity_int
 
-        Multi.new()
-        |> Multi.run(:remove_item, fn _repo, _changes ->
-          if inventory_item.quantity > 1 do
-            # Reduce quantity by 1
-            update_inventory_quantity(inventory_item, inventory_item.quantity - 1)
-          else
-            # Remove the item completely
-            Repo.delete(inventory_item)
+          Multi.new()
+          |> Multi.run(:remove_item, fn _repo, _changes ->
+            remaining = inventory_item.quantity - quantity_int
+
+            cond do
+              remaining > 0 ->
+                update_inventory_quantity(inventory_item, remaining)
+
+              remaining == 0 ->
+                Repo.delete(inventory_item)
+
+              true ->
+                {:error, :invalid_quantity}
+            end
+          end)
+          |> Multi.run(:update_character, fn _repo, _changes ->
+            character
+            |> Character.changeset(%{gold: character.gold + total_value})
+            |> Repo.update()
+          end)
+          |> Repo.transaction()
+          |> case do
+            {:ok, %{update_character: updated_character}} ->
+              {:ok, %{character: updated_character, gold_earned: total_value}}
+
+            {:error, _failed_operation, failed_value, _changes_so_far} ->
+              {:error, failed_value}
           end
-        end)
-        |> Multi.run(:update_character, fn _repo, _changes ->
-          character
-          |> Character.changeset(%{gold: character.gold + sell_value})
-          |> Repo.update()
-        end)
-        |> Repo.transaction()
-        |> case do
-          {:ok, %{update_character: updated_character}} ->
-            {:ok, %{character: updated_character, gold_earned: sell_value}}
-
-          {:error, _failed_operation, failed_value, _changes_so_far} ->
-            {:error, failed_value}
         end
     end
   end

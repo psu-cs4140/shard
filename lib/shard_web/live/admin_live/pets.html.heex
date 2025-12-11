@@ -1,0 +1,68 @@
+<div style="padding-left: 3rem;">
+  <.header>
+    Pet Management
+    <:subtitle>Grant or update pets for any character.</:subtitle>
+  </.header>
+</div>
+
+<div class="mt-8">
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body space-y-6">
+      <%= if Enum.empty?(@characters) do %>
+        <p class="text-sm text-base-content/70">No characters available.</p>
+      <% else %>
+        <.form for={@pet_form} id="pet-admin-form" phx-submit="grant_pet" class="space-y-4">
+          <.input
+            field={@pet_form[:character_id]}
+            type="select"
+            label="Character"
+            prompt="Select a character"
+            options={
+              Enum.map(@characters, fn character ->
+                {"#{character.name} (##{character.id})", character.id}
+              end)
+            }
+          />
+
+          <.input
+            field={@pet_form[:level]}
+            type="number"
+            min="1"
+            max="99"
+            label="Pet Level"
+            help="Defaults to 1 if not specified"
+          />
+
+          <div class="flex flex-col gap-3 md:flex-row">
+            <button
+              type="submit"
+              name="pet[pet_action]"
+              value="pet_rock"
+              class="btn btn-primary"
+            >
+              Give Pet Rock
+            </button>
+
+            <button
+              type="submit"
+              name="pet[pet_action]"
+              value="shroomling"
+              class="btn btn-secondary"
+            >
+              Give Shroomling
+            </button>
+
+            <button
+              type="submit"
+              name="pet[pet_action]"
+              value="both"
+              class="btn btn-accent"
+            >
+              Give Both Pets
+            </button>
+          </div>
+        </.form>
+      <% end %>
+    </div>
+  </div>
+</div>
