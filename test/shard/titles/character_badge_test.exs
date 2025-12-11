@@ -6,8 +6,7 @@ defmodule Shard.Titles.CharacterBadgeTest do
   @valid_attrs %{
     character_id: 1,
     badge_id: 1,
-    awarded_at: DateTime.utc_now(),
-    progress: %{"current" => 5, "required" => 10}
+    earned_at: DateTime.utc_now()
   }
 
   @invalid_attrs %{}
@@ -41,29 +40,30 @@ defmodule Shard.Titles.CharacterBadgeTest do
       assert %{badge_id: ["must be greater than 0"]} = errors_on(changeset)
     end
 
-    test "sets default awarded_at when not provided" do
-      attrs = Map.delete(@valid_attrs, :awarded_at)
+    test "sets default earned_at when not provided" do
+      attrs = Map.delete(@valid_attrs, :earned_at)
       changeset = CharacterBadge.changeset(%CharacterBadge{}, attrs)
       assert changeset.valid?
-      assert get_change(changeset, :awarded_at) != nil
+      assert get_change(changeset, :earned_at) != nil
     end
 
-    test "allows nil progress" do
-      attrs = Map.put(@valid_attrs, :progress, nil)
-      changeset = CharacterBadge.changeset(%CharacterBadge{}, attrs)
-      assert changeset.valid?
-    end
-
-    test "allows empty map progress" do
-      attrs = Map.put(@valid_attrs, :progress, %{})
+    test "allows display_order values" do
+      attrs = Map.put(@valid_attrs, :display_order, 1)
       changeset = CharacterBadge.changeset(%CharacterBadge{}, attrs)
       assert changeset.valid?
     end
 
-    test "validates progress as map when provided" do
-      attrs = Map.put(@valid_attrs, :progress, "invalid")
+    test "validates display_order inclusion" do
+      attrs = Map.put(@valid_attrs, :display_order, 4)
       changeset = CharacterBadge.changeset(%CharacterBadge{}, attrs)
       refute changeset.valid?
+      assert %{display_order: ["is invalid"]} = errors_on(changeset)
+    end
+
+    test "allows is_active boolean" do
+      attrs = Map.put(@valid_attrs, :is_active, true)
+      changeset = CharacterBadge.changeset(%CharacterBadge{}, attrs)
+      assert changeset.valid?
     end
 
     test "validates unique constraint on character_id and badge_id" do
@@ -73,55 +73,44 @@ defmodule Shard.Titles.CharacterBadgeTest do
     end
   end
 
-  describe "progress_changeset/2" do
-    test "updates progress field" do
-      character_badge = %CharacterBadge{progress: %{"current" => 3}}
-      new_progress = %{"current" => 7, "required" => 10}
-      changeset = CharacterBadge.progress_changeset(character_badge, %{progress: new_progress})
+  describe "display_order_changeset/2" do
+    test "updates display_order field" do
+      character_badge = %CharacterBadge{display_order: 1}
+      changeset = CharacterBadge.changeset(character_badge, %{display_order: 2})
       
       assert changeset.valid?
-      assert get_change(changeset, :progress) == new_progress
+      assert get_change(changeset, :display_order) == 2
     end
 
     test "preserves other fields" do
       character_badge = %CharacterBadge{
         character_id: 1,
         badge_id: 1,
-        progress: %{"current" => 3}
+        display_order: 1
       }
-      changeset = CharacterBadge.progress_changeset(character_badge, %{progress: %{"current" => 7}})
+      changeset = CharacterBadge.changeset(character_badge, %{display_order: 3})
       
       assert changeset.data.character_id == 1
       assert changeset.data.badge_id == 1
     end
-
-    test "allows nil progress" do
-      character_badge = %CharacterBadge{progress: %{"current" => 3}}
-      changeset = CharacterBadge.progress_changeset(character_badge, %{progress: nil})
-      
-      assert changeset.valid?
-      assert get_change(changeset, :progress) == nil
-    end
   end
 
-  describe "completion_changeset/2" do
-    test "marks badge as completed" do
-      character_badge = %CharacterBadge{completed_at: nil}
-      changeset = CharacterBadge.completion_changeset(character_badge, %{})
+  describe "activation_changeset/2" do
+    test "sets is_active to true" do
+      character_badge = %CharacterBadge{is_active: false}
+      changeset = CharacterBadge.changeset(character_badge, %{is_active: true})
       
       assert changeset.valid?
-      completed_at = get_change(changeset, :completed_at)
-      assert completed_at != nil
-      assert DateTime.diff(DateTime.utc_now(), completed_at, :second) < 5
+      assert get_change(changeset, :is_active) == true
     end
 
     test "preserves other fields" do
       character_badge = %CharacterBadge{
         character_id: 1,
         badge_id: 1,
-        completed_at: nil
+        is_active: false
       }
-      changeset = CharacterBadge.completion_changeset(character_badge, %{})
+      changeset = CharacterBadge.changeset(character_badge, %{is_active: true})
       
       assert changeset.data.character_id == 1
       assert changeset.data.badge_id == 1

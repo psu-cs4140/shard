@@ -6,7 +6,7 @@ defmodule Shard.Titles.CharacterTitleTest do
   @valid_attrs %{
     character_id: 1,
     title_id: 1,
-    awarded_at: DateTime.utc_now(),
+    earned_at: DateTime.utc_now(),
     is_active: false
   }
 
@@ -41,11 +41,11 @@ defmodule Shard.Titles.CharacterTitleTest do
       assert %{title_id: ["must be greater than 0"]} = errors_on(changeset)
     end
 
-    test "sets default awarded_at when not provided" do
-      attrs = Map.delete(@valid_attrs, :awarded_at)
+    test "sets default earned_at when not provided" do
+      attrs = Map.delete(@valid_attrs, :earned_at)
       changeset = CharacterTitle.changeset(%CharacterTitle{}, attrs)
       assert changeset.valid?
-      assert get_change(changeset, :awarded_at) != nil
+      assert get_change(changeset, :earned_at) != nil
     end
 
     test "sets default is_active to false when not provided" do
