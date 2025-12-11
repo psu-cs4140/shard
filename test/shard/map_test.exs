@@ -9,7 +9,8 @@ defmodule Shard.MapTest do
       name: "Test Zone",
       description: "A test zone",
       min_level: 1,
-      max_level: 10
+      max_level: 10,
+      slug: "test-zone"
     }
 
     @invalid_zone_attrs %{name: nil, description: nil}
@@ -94,7 +95,7 @@ defmodule Shard.MapTest do
       {:ok, room} = Map.create_room(attrs)
       
       # Create another zone and room
-      {:ok, other_zone} = Map.create_zone(%{@valid_zone_attrs | name: "Other Zone"})
+      {:ok, other_zone} = Map.create_zone(Map.merge(@valid_zone_attrs, %{name: "Other Zone", slug: "other-zone"}))
       other_attrs = Map.put(@valid_room_attrs, :zone_id, other_zone.id)
       {:ok, _other_room} = Map.create_room(other_attrs)
 
@@ -111,7 +112,7 @@ defmodule Shard.MapTest do
       room1_attrs = Map.put(@valid_room_attrs, :zone_id, zone.id)
       {:ok, room1} = Map.create_room(room1_attrs)
       
-      room2_attrs = %{@valid_room_attrs | name: "Room 2", x_coordinate: 1, zone_id: zone.id}
+      room2_attrs = Map.merge(@valid_room_attrs, %{name: "Room 2", x_coordinate: 1, zone_id: zone.id})
       {:ok, room2} = Map.create_room(room2_attrs)
       
       %{zone: zone, room1: room1, room2: room2}

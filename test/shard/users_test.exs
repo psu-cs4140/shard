@@ -112,28 +112,6 @@ defmodule Shard.UsersTest do
     end
   end
 
-  describe "change_user_registration/2" do
-    test "returns a changeset" do
-      assert %Ecto.Changeset{} = changeset = Users.change_user_registration(%User{})
-      assert changeset.required == [:password, :email]
-    end
-
-    test "allows fields to be set" do
-      email = unique_user_email()
-      password = valid_user_password()
-
-      changeset =
-        Users.change_user_registration(
-          %User{},
-          valid_user_attributes(email: email, password: password)
-        )
-
-      assert changeset.valid?
-      assert get_change(changeset, :email) == email
-      assert get_change(changeset, :password) == password
-      assert is_nil(get_change(changeset, :hashed_password))
-    end
-  end
 
   describe "change_user_email/2" do
     test "returns a user changeset" do

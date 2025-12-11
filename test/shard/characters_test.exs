@@ -89,8 +89,12 @@ defmodule Shard.CharactersTest do
       user1 = user_fixture()
       user2 = user_fixture()
       
-      character1 = character_fixture(%{user_id: user1.id})
-      _character2 = character_fixture(%{user_id: user2.id})
+      # Create characters with explicit user_id override
+      character1_attrs = valid_character_attributes(%{user_id: user1.id})
+      {:ok, character1} = Characters.create_character(character1_attrs)
+      
+      character2_attrs = valid_character_attributes(%{user_id: user2.id})
+      {:ok, _character2} = Characters.create_character(character2_attrs)
 
       user1_characters = Characters.get_characters_by_user(user1.id)
       assert character1 in user1_characters
@@ -111,7 +115,7 @@ defmodule Shard.CharactersTest do
 
     test "validates class inclusion" do
       user = user_fixture()
-      attrs = %{@valid_attrs | class: "invalid_class", user_id: user.id}
+      attrs = Map.merge(@valid_attrs, %{class: "invalid_class", user_id: user.id})
       
       {:error, changeset} = Characters.create_character(attrs)
       assert %{class: ["is invalid"]} = errors_on(changeset)
@@ -119,7 +123,7 @@ defmodule Shard.CharactersTest do
 
     test "validates race inclusion" do
       user = user_fixture()
-      attrs = %{@valid_attrs | race: "invalid_race", user_id: user.id}
+      attrs = Map.merge(@valid_attrs, %{race: "invalid_race", user_id: user.id})
       
       {:error, changeset} = Characters.create_character(attrs)
       assert %{race: ["is invalid"]} = errors_on(changeset)
@@ -127,7 +131,7 @@ defmodule Shard.CharactersTest do
 
     test "validates level is positive" do
       user = user_fixture()
-      attrs = %{@valid_attrs | level: 0, user_id: user.id}
+      attrs = Map.merge(@valid_attrs, %{level: 0, user_id: user.id})
       
       {:error, changeset} = Characters.create_character(attrs)
       assert %{level: ["must be greater than 0"]} = errors_on(changeset)
@@ -135,7 +139,7 @@ defmodule Shard.CharactersTest do
 
     test "validates health values" do
       user = user_fixture()
-      attrs = %{@valid_attrs | health: -10, max_health: -5, user_id: user.id}
+      attrs = Map.merge(@valid_attrs, %{health: -10, max_health: -5, user_id: user.id})
       
       {:error, changeset} = Characters.create_character(attrs)
       errors = errors_on(changeset)
@@ -145,7 +149,7 @@ defmodule Shard.CharactersTest do
 
     test "validates stat values are non-negative" do
       user = user_fixture()
-      attrs = %{@valid_attrs | strength: -1, dexterity: -1, intelligence: -1, constitution: -1, user_id: user.id}
+      attrs = Map.merge(@valid_attrs, %{strength: -1, dexterity: -1, intelligence: -1, constitution: -1, user_id: user.id})
       
       {:error, changeset} = Characters.create_character(attrs)
       errors = errors_on(changeset)
@@ -157,7 +161,7 @@ defmodule Shard.CharactersTest do
 
     test "validates experience and gold are non-negative" do
       user = user_fixture()
-      attrs = %{@valid_attrs | experience: -10, gold: -5, user_id: user.id}
+      attrs = Map.merge(@valid_attrs, %{experience: -10, gold: -5, user_id: user.id})
       
       {:error, changeset} = Characters.create_character(attrs)
       errors = errors_on(changeset)
@@ -170,7 +174,7 @@ defmodule Shard.CharactersTest do
       user = user_fixture()
       
       for class <- valid_classes do
-        attrs = %{@valid_attrs | class: class, user_id: user.id, name: "Test #{class}"}
+        attrs = Map.merge(@valid_attrs, %{class: class, user_id: user.id, name: "Test #{class}"})
         assert {:ok, %Character{}} = Characters.create_character(attrs)
       end
     end
@@ -180,7 +184,7 @@ defmodule Shard.CharactersTest do
       user = user_fixture()
       
       for race <- valid_races do
-        attrs = %{@valid_attrs | race: race, user_id: user.id, name: "Test #{race}"}
+        attrs = Map.merge(@valid_attrs, %{race: race, user_id: user.id, name: "Test #{race}"})
         assert {:ok, %Character{}} = Characters.create_character(attrs)
       end
     end

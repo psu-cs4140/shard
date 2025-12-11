@@ -200,7 +200,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
 
     test "displays user information with characters", %{conn: conn, admin: admin} do
       user = user_fixture(%{email: "test@example.com"})
-      character = character_fixture(user: user)
+      character = character_fixture(%{user_id: user.id})
 
       {:ok, _index_live, html} =
         conn
