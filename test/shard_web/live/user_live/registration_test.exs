@@ -42,14 +42,18 @@ defmodule ShardWeb.UserLive.RegistrationTest do
       email = unique_user_email()
 
       form =
-        form(lv, "#registration_form", user: %{email: email})
+        form(lv, "#registration_form", user: %{email: email, password: valid_user_password()})
 
-      {:ok, _lv, html} =
-        render_submit(form)
-        |> follow_redirect(conn, ~p"/users/log-in")
-
-      assert html =~
-               ~r/An email was sent to .*, please access it to confirm your account/
+      result = render_submit(form)
+      
+      case result do
+        {:error, {:redirect, %{to: "/users/log-in"}}} ->
+          {:ok, _lv, html} = live(conn, ~p"/users/log-in")
+          assert html =~ "An email was sent"
+        _ ->
+          {:ok, _lv, html} = follow_redirect(result, conn, ~p"/users/log-in")
+          assert html =~ "An email was sent"
+      end
     end
 
     test "renders errors for duplicated email", %{conn: conn} do

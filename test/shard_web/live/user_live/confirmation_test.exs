@@ -34,7 +34,7 @@ defmodule ShardWeb.UserLive.ConfirmationTest do
 
     test "confirms the given token once", %{conn: conn} do
       # Create user without password for magic link compatibility
-      {:ok, user} = Users.register_user(%{email: unique_user_email()})
+      {:ok, user} = Users.register_user(%{email: unique_user_email(), password: valid_user_password()})
 
       token =
         extract_user_token(fn url ->
