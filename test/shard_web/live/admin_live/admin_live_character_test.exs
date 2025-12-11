@@ -146,7 +146,7 @@ defmodule ShardWeb.AdminLive.CharactersTest do
         |> live(~p"/admin/characters/#{character}")
 
       assert show_live
-             |> element("button", "Edit")
+             |> element("a", "Edit")
              |> render_click() =~
                "Edit Character"
 
