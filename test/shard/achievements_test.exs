@@ -109,23 +109,27 @@ defmodule Shard.AchievementsTest do
   describe "achievement changeset validations" do
     test "validates name uniqueness" do
       achievement_fixture(%{name: "Unique Achievement"})
-      
-      {:error, changeset} = Achievements.create_achievement(%{
-        name: "Unique Achievement",
-        description: "Another description",
-        category: "general",
-        points: 50
-      })
-      
+
+      {:error, changeset} =
+        Achievements.create_achievement(%{
+          name: "Unique Achievement",
+          description: "Another description",
+          category: "general",
+          points: 50
+        })
+
       assert %{name: ["has already been taken"]} = errors_on(changeset)
     end
 
     test "accepts valid categories" do
       valid_categories = ["general", "combat", "exploration", "crafting", "social"]
-      
+
       for category <- valid_categories do
         attrs = valid_achievement_attributes(%{category: category})
-        changeset = Shard.Achievements.Achievement.changeset(%Shard.Achievements.Achievement{}, attrs)
+
+        changeset =
+          Shard.Achievements.Achievement.changeset(%Shard.Achievements.Achievement{}, attrs)
+
         assert changeset.valid?, "Expected #{category} to be valid"
       end
     end

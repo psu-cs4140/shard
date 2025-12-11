@@ -93,9 +93,11 @@ defmodule Shard.MapTest do
     test "list_rooms_by_zone/1 returns rooms for specific zone", %{zone: zone} do
       attrs = Enum.into([zone_id: zone.id], @valid_room_attrs)
       {:ok, room} = Map.create_room(attrs)
-      
+
       # Create another zone and room
-      {:ok, other_zone} = Map.create_zone(Enum.into([name: "Other Zone", slug: "other-zone"], @valid_zone_attrs))
+      {:ok, other_zone} =
+        Map.create_zone(Enum.into([name: "Other Zone", slug: "other-zone"], @valid_zone_attrs))
+
       other_attrs = Enum.into([zone_id: other_zone.id], @valid_room_attrs)
       {:ok, _other_room} = Map.create_room(other_attrs)
 
@@ -108,13 +110,15 @@ defmodule Shard.MapTest do
   describe "doors" do
     setup do
       {:ok, zone} = Map.create_zone(@valid_zone_attrs)
-      
+
       room1_attrs = Enum.into([zone_id: zone.id], @valid_room_attrs)
       {:ok, room1} = Map.create_room(room1_attrs)
-      
-      room2_attrs = Enum.into([name: "Room 2", x_coordinate: 1, zone_id: zone.id], @valid_room_attrs)
+
+      room2_attrs =
+        Enum.into([name: "Room 2", x_coordinate: 1, zone_id: zone.id], @valid_room_attrs)
+
       {:ok, room2} = Map.create_room(room2_attrs)
-      
+
       %{zone: zone, room1: room1, room2: room2}
     end
 
@@ -140,6 +144,7 @@ defmodule Shard.MapTest do
         direction: "north",
         is_locked: false
       }
+
       {:ok, door} = Map.create_door(door_attrs)
 
       doors = Map.get_doors_from_room(room1.id)

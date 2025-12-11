@@ -8,7 +8,7 @@ defmodule Shard.CharactersFixtures do
 
   def valid_character_attributes(attrs \\ %{}) do
     user = user_fixture()
-    
+
     Enum.into(attrs, %{
       name: "Test Character #{System.unique_integer([:positive])}",
       class: "warrior",

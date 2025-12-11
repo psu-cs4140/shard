@@ -82,7 +82,9 @@ defmodule Shard.UsersTest do
       assert "has already been taken" in errors_on(changeset).email
 
       # Now try with the upper cased email too, to check that email case is ignored.
-      {:error, changeset} = Users.register_user(%{email: String.upcase(email), password: "valid_password123"})
+      {:error, changeset} =
+        Users.register_user(%{email: String.upcase(email), password: "valid_password123"})
+
       assert "has already been taken" in errors_on(changeset).email
     end
 
@@ -99,7 +101,7 @@ defmodule Shard.UsersTest do
     test "sets first user as admin" do
       # Clear any existing users
       Repo.delete_all(User)
-      
+
       email = unique_user_email()
       password = valid_user_password()
       {:ok, user} = Users.register_user(%{email: email, password: password})
@@ -109,14 +111,13 @@ defmodule Shard.UsersTest do
     test "subsequent users are not admin by default" do
       # Ensure at least one user exists
       _first_user = user_fixture()
-      
+
       email = unique_user_email()
       password = valid_user_password()
       {:ok, user} = Users.register_user(%{email: email, password: password})
       assert user.admin == false
     end
   end
-
 
   describe "change_user_email/2" do
     test "returns a user changeset" do
@@ -155,11 +156,14 @@ defmodule Shard.UsersTest do
 
     test "returns user by token", %{user: user, token: token} do
       result = Users.get_user_by_session_token(token)
+
       case result do
         {session_user, _timestamp} ->
           assert session_user.id == user.id
+
         session_user when is_struct(session_user) ->
           assert session_user.id == user.id
+
         nil ->
           flunk("Expected user but got nil")
       end

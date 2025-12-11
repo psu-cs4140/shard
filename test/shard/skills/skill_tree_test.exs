@@ -17,6 +17,7 @@ defmodule Shard.Skills.SkillTreeTest do
         description: "Skills related to combat and warfare",
         is_active: true
       }
+
       changeset = SkillTree.changeset(%SkillTree{}, attrs)
       assert changeset.valid?
     end
@@ -45,7 +46,8 @@ defmodule Shard.Skills.SkillTreeTest do
       changeset = SkillTree.changeset(%SkillTree{}, attrs)
       assert changeset.valid?
       # is_active defaults to true if not specified
-      assert get_change(changeset, :is_active) == nil  # No change means using default
+      # No change means using default
+      assert get_change(changeset, :is_active) == nil
     end
 
     test "accepts explicit is_active value" do
@@ -60,9 +62,12 @@ defmodule Shard.Skills.SkillTreeTest do
         name: "Magic Skills",
         description: "Skills related to magical abilities and spellcasting"
       }
+
       changeset = SkillTree.changeset(%SkillTree{}, attrs)
       assert changeset.valid?
-      assert get_change(changeset, :description) == "Skills related to magical abilities and spellcasting"
+
+      assert get_change(changeset, :description) ==
+               "Skills related to magical abilities and spellcasting"
     end
 
     test "handles nil description" do
@@ -93,7 +98,8 @@ defmodule Shard.Skills.SkillTreeTest do
 
     test "has default values" do
       skill_tree = %SkillTree{}
-      assert skill_tree.is_active == true  # Default value
+      # Default value
+      assert skill_tree.is_active == true
       assert skill_tree.name == nil
       assert skill_tree.description == nil
     end
@@ -110,13 +116,15 @@ defmodule Shard.Skills.SkillTreeTest do
 
   describe "edge cases" do
     test "handles very long valid name" do
-      attrs = %{name: String.duplicate("a", 100)}  # Max length
+      # Max length
+      attrs = %{name: String.duplicate("a", 100)}
       changeset = SkillTree.changeset(%SkillTree{}, attrs)
       assert changeset.valid?
     end
 
     test "handles minimum valid name length" do
-      attrs = %{name: "ab"}  # Min length
+      # Min length
+      attrs = %{name: "ab"}
       changeset = SkillTree.changeset(%SkillTree{}, attrs)
       assert changeset.valid?
     end
