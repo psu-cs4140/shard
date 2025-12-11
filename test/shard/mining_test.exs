@@ -4,6 +4,8 @@ defmodule Shard.MiningTest do
   alias Shard.Mining
   alias Shard.Mining.MiningInventory
   alias Shard.Characters
+  import Shard.UsersFixtures
+  import Shard.CharactersFixtures
 
   describe "start_mining/1" do
     test "sets is_mining to true for a character not currently mining" do
@@ -266,17 +268,5 @@ defmodule Shard.MiningTest do
 
     {:ok, character} = Characters.create_character(valid_attrs)
     character
-  end
-
-  defp user_fixture do
-    unique_email = "user#{System.unique_integer([:positive])}@example.com"
-
-    {:ok, user} =
-      Shard.Users.register_user(%{
-        email: unique_email,
-        password: "password123password123"
-      })
-
-    user
   end
 end

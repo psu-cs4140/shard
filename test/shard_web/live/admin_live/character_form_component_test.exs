@@ -3,6 +3,7 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
 
   import Phoenix.LiveViewTest
   import Shard.UsersFixtures
+  import Shard.CharactersFixtures
 
   alias Shard.Characters
   alias Shard.Characters.Character
@@ -31,17 +32,6 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
     %{character: character, user: user}
   end
 
-  defp character_fixture(attrs) do
-    user = user_fixture()
-    attrs = Map.put_new(attrs, :user_id, user.id)
-
-    {:ok, character} =
-      attrs
-      |> Enum.into(@valid_attrs)
-      |> Characters.create_character()
-
-    character
-  end
 
   describe "render" do
     setup [:create_character]
