@@ -65,6 +65,7 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
     test "displays form for editing character", %{conn: _conn} do
       user = user_fixture()
       character = character_fixture(user_id: user.id)
+
       html =
         render_component(ShardWeb.AdminLive.CharacterFormComponent,
           character: character,
