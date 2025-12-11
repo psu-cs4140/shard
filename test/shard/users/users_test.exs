@@ -77,11 +77,12 @@ defmodule Shard.UsersTest do
       assert "has already been taken" in errors_on(changeset).email
     end
 
-    test "registers users without password" do
+    test "registers users with password" do
       email = unique_user_email()
-      {:ok, user} = Users.register_user(valid_user_attributes(email: email))
+      password = valid_user_password()
+      {:ok, user} = Users.register_user(valid_user_attributes(email: email, password: password))
       assert user.email == email
-      assert is_nil(user.hashed_password)
+      assert is_binary(user.hashed_password)
       assert is_nil(user.confirmed_at)
       assert is_nil(user.password)
     end
@@ -331,7 +332,9 @@ defmodule Shard.UsersTest do
 
   describe "login_user_by_magic_link/1" do
     test "confirms user and expires tokens" do
-      user = unconfirmed_user_fixture()
+      # Create user without password for magic link compatibility
+      email = unique_user_email()
+      {:ok, user} = Users.register_user(%{email: email})
       refute user.confirmed_at
       {encoded_token, hashed_token} = generate_user_magic_link_token(user)
 
@@ -351,8 +354,8 @@ defmodule Shard.UsersTest do
     end
 
     test "raises when unconfirmed user has password set" do
+      # Create user with password first
       user = unconfirmed_user_fixture()
-      {1, nil} = Repo.update_all(User, set: [hashed_password: "hashed"])
       {encoded_token, _hashed_token} = generate_user_magic_link_token(user)
 
       assert_raise RuntimeError, ~r/magic link log in is not allowed/, fn ->
