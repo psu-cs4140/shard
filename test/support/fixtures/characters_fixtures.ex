@@ -4,24 +4,38 @@ defmodule Shard.CharactersFixtures do
   entities via the `Shard.Characters` context.
   """
 
-  alias Shard.Characters
+  import Shard.UsersFixtures
 
   def valid_character_attributes(attrs \\ %{}) do
+    user = user_fixture()
+    
     Enum.into(attrs, %{
-      name: "Test Character",
+      name: "Test Character #{System.unique_integer([:positive])}",
       class: "warrior",
-      race: "human"
+      race: "human",
+      level: 1,
+      health: 100,
+      max_health: 100,
+      mana: 50,
+      max_mana: 50,
+      strength: 10,
+      dexterity: 10,
+      intelligence: 10,
+      constitution: 10,
+      experience: 0,
+      gold: 100,
+      location: "Starting Town",
+      description: "A test character",
+      is_active: true,
+      user_id: user.id
     })
   end
 
   def character_fixture(attrs \\ %{}) do
-    user = attrs[:user] || Shard.UsersFixtures.user_fixture()
-
     {:ok, character} =
       attrs
       |> valid_character_attributes()
-      |> Map.put(:user_id, user.id)
-      |> Characters.create_character()
+      |> Shard.Characters.create_character()
 
     character
   end
