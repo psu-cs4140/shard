@@ -3,7 +3,7 @@ import Config
 # Configure your database
 config :shard, Shard.Repo,
   username: "shard",
-  password: "thorrouter23",
+  password: "Chu7eeg0iih2yeiN",
   hostname: "localhost",
   database: "shard_dev",
   stacktrace: true,
