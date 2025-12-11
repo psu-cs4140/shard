@@ -7,23 +7,6 @@ defmodule ShardWeb.AdminLive.CharacterFormComponentTest do
 
   alias Shard.Characters.Character
 
-  @valid_attrs %{
-    name: "Test Character",
-    level: 1,
-    class: "warrior",
-    race: "human",
-    health: 100,
-    mana: 50,
-    strength: 10,
-    dexterity: 10,
-    intelligence: 10,
-    constitution: 10,
-    experience: 0,
-    gold: 100,
-    location: "Starting Town",
-    description: "A test character",
-    is_active: true
-  }
 
   describe "render" do
     test "displays form for new character", %{conn: _conn} do
