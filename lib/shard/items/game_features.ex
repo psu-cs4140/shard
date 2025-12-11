@@ -300,10 +300,6 @@ defmodule Shard.Items.GameFeatures do
     {:ok, %{id: 1, name: "Locked Dungeon Gate", is_locked: true}}
   end
 
-  defp ensure_room_exists(x, y, z, name) do
-    # For now, return a mock room to avoid Map module dependency issues
-    {:ok, %{id: 1, name: name, x_coordinate: x, y_coordinate: y, z_coordinate: z}}
-  end
 
   @doc """
   Checks if a character has the required items for quest objectives.
