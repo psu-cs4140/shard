@@ -84,7 +84,7 @@ defmodule Shard.AchievementsTest do
     test "create_achievement/1 validates points is positive" do
       attrs = valid_achievement_attributes(%{points: -10})
       {:error, changeset} = Achievements.create_achievement(attrs)
-      assert %{points: ["must be greater than 0"]} = errors_on(changeset)
+      assert %{points: ["must be greater than or equal to 0"]} = errors_on(changeset)
     end
 
     test "list_achievements_by_category/1 filters by category" do

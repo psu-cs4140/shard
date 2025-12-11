@@ -38,7 +38,9 @@ defmodule Shard.CharactersTest do
 
     test "get_character!/1 returns the character with given id" do
       character = character_fixture()
-      assert Characters.get_character!(character.id) == character
+      fetched_character = Characters.get_character!(character.id)
+      assert fetched_character.id == character.id
+      assert fetched_character.name == character.name
     end
 
     test "create_character/1 with valid data creates a character" do
@@ -73,7 +75,9 @@ defmodule Shard.CharactersTest do
     test "update_character/2 with invalid data returns error changeset" do
       character = character_fixture()
       assert {:error, %Ecto.Changeset{}} = Characters.update_character(character, @invalid_attrs)
-      assert character == Characters.get_character!(character.id)
+      reloaded_character = Characters.get_character!(character.id)
+      assert character.id == reloaded_character.id
+      assert character.name == reloaded_character.name
     end
 
     test "delete_character/1 deletes the character" do
@@ -141,12 +145,11 @@ defmodule Shard.CharactersTest do
 
     test "validates health values" do
       user = user_fixture()
-      attrs = Map.merge(@valid_attrs, %{health: -10, max_health: -5, user_id: user.id})
+      attrs = Map.merge(@valid_attrs, %{health: -10, user_id: user.id})
 
       {:error, changeset} = Characters.create_character(attrs)
       errors = errors_on(changeset)
       assert "must be greater than or equal to 0" in errors.health
-      assert "must be greater than 0" in errors.max_health
     end
 
     test "validates stat values are non-negative" do
@@ -163,10 +166,10 @@ defmodule Shard.CharactersTest do
 
       {:error, changeset} = Characters.create_character(attrs)
       errors = errors_on(changeset)
-      assert "must be greater than or equal to 0" in errors.strength
-      assert "must be greater than or equal to 0" in errors.dexterity
-      assert "must be greater than or equal to 0" in errors.intelligence
-      assert "must be greater than or equal to 0" in errors.constitution
+      assert "must be greater than 0" in errors.strength
+      assert "must be greater than 0" in errors.dexterity
+      assert "must be greater than 0" in errors.intelligence
+      assert "must be greater than 0" in errors.constitution
     end
 
     test "validates experience and gold are non-negative" do

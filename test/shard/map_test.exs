@@ -98,7 +98,7 @@ defmodule Shard.MapTest do
       {:ok, other_zone} =
         Map.create_zone(Enum.into([name: "Other Zone", slug: "other-zone"], @valid_zone_attrs))
 
-      other_attrs = Enum.into([zone_id: other_zone.id], @valid_room_attrs)
+      other_attrs = Enum.into([zone_id: other_zone.id, name: "Other Room"], @valid_room_attrs)
       {:ok, _other_room} = Map.create_room(other_attrs)
 
       zone_rooms = Map.list_rooms_by_zone(zone.id)
