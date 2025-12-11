@@ -334,8 +334,7 @@ defmodule Shard.UsersTest do
     test "confirms user and expires tokens" do
       # Create user without password for magic link compatibility
       email = unique_user_email()
-      password = valid_user_password()
-      {:ok, user} = Users.register_user(%{email: email, password: password})
+      {:ok, user} = Users.register_user(%{email: email})
       refute user.confirmed_at
       {encoded_token, hashed_token} = generate_user_magic_link_token(user)
 

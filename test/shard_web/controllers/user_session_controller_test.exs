@@ -94,7 +94,7 @@ defmodule ShardWeb.UserSessionControllerTest do
 
     test "confirms unconfirmed user", %{conn: conn} do
       # Create user without password for magic link compatibility
-      user = unconfirmed_user_fixture()
+      {:ok, user} = Shard.Users.register_user(%{email: unique_user_email()})
       {token, _hashed_token} = generate_user_magic_link_token(user)
       refute user.confirmed_at
 
