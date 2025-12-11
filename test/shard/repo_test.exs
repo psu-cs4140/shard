@@ -5,6 +5,7 @@ defmodule Shard.RepoTest do
 
   test "repo is configured and accessible" do
     # Simple test to ensure repo is working
-    assert Repo.query("SELECT 1") == {:ok, %Postgrex.Result{rows: [[1]]}}
+    {:ok, result} = Repo.query("SELECT 1")
+    assert result.rows == [[1]]
   end
 end

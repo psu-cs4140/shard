@@ -2,6 +2,7 @@ defmodule ShardWeb.EndpointTest do
   use ExUnit.Case, async: true
 
   test "endpoint is configured" do
-    assert ShardWeb.Endpoint.config(:url) == [host: "localhost"]
+    config = ShardWeb.Endpoint.config(:url)
+    assert Keyword.get(config, :host) == "localhost"
   end
 end

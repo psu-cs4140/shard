@@ -42,7 +42,7 @@ defmodule ShardWeb.UserLive.RegistrationTest do
       email = unique_user_email()
 
       form =
-        form(lv, "#registration_form", user: %{email: email, password: valid_user_password()})
+        form(lv, "#registration_form", user: %{email: email})
 
       result = render_submit(form)
       
