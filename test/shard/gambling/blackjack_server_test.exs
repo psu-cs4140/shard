@@ -117,7 +117,7 @@ defmodule Shard.Gambling.BlackjackServerTest do
 
       # Wait for the hit to be processed with retry logic
       wait_for_card_increase = fn
-        wait_fn, 0 ->
+        _wait_fn, 0 ->
           flunk("Hit operation did not increase card count after multiple attempts")
         
         wait_fn, attempts ->
