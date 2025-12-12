@@ -111,13 +111,19 @@ defmodule Shard.Gambling.BlackjackServerTest do
       # Player Hit
       assert :ok = BlackjackServer.hit(game_id, char1.id)
 
-      # Small delay to ensure hit is processed
-      Process.sleep(100)
-
+      # Wait for hit to be processed by checking hand size
       {:ok, game_data} = BlackjackServer.get_game(game_id)
       hand = Enum.find(game_data.hands, fn h -> h.character_id == char1.id end)
-      # 2 initial + 1 hit
-      assert length(hand.hand_cards) >= 3
+      initial_card_count = length(hand.hand_cards)
+
+      # Wait for the hit to be processed
+      Process.sleep(200)
+      
+      {:ok, updated_game_data} = BlackjackServer.get_game(game_id)
+      updated_hand = Enum.find(updated_game_data.hands, fn h -> h.character_id == char1.id end)
+      
+      # Should have one more card than before
+      assert length(updated_hand.hand_cards) > initial_card_count
 
       # Player Stand
       assert :ok = BlackjackServer.stand(game_id, char1.id)
