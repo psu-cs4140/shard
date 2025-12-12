@@ -10,10 +10,9 @@ defmodule ShardWeb.UserLive.Commands1 do
   # import ShardWeb.UserLive.Commands2,
   #   except: [execute_talk_command: 2, execute_deliver_quest_command: 2, execute_quest_command: 2]
 
-  import ShardWeb.UserLive.Commands3
-
   import ShardWeb.UserLive.NpcCommands
   import ShardWeb.UserLive.CommandParsers
+  import ShardWeb.UserLive.PokeCommands
 
   #  import ShardWeb.UserLive.ItemCommands
 
@@ -377,7 +376,7 @@ defmodule ShardWeb.UserLive.Commands1 do
 
                           :error ->
                             # Check if it's a poke command
-                            case parse_poke_command(command) do
+                            case ShardWeb.UserLive.CommandParsers.parse_poke_command(command) do
                               {:ok, character_name} ->
                                 execute_poke_command(game_state, character_name)
 
@@ -618,9 +617,7 @@ defmodule ShardWeb.UserLive.Commands1 do
           {["Your inventory is empty."], game_state}
         else
           available_items =
-            game_state.inventory_items
-            |> Enum.map(&get_item_display_name/1)
-            |> Enum.join(", ")
+            Enum.map_join(game_state.inventory_items, ", ", &get_item_display_name/1)
 
           response = [
             "You don't have an item named '#{item_name}' in your inventory.",
