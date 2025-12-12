@@ -19,6 +19,7 @@ defmodule ShardWeb.GamblingLive.Index do
       socket
       |> assign(:characters, characters)
       |> assign(:selected_character_id, get_first_character_id(characters))
+      |> assign(:selected_game, nil)
       |> assign(:bet_amount, "")
       |> assign(:selected_side, nil)
       |> assign(:last_result, nil)
@@ -113,6 +114,26 @@ defmodule ShardWeb.GamblingLive.Index do
     else
       {:noreply, socket}
     end
+  end
+
+  @impl true
+  def handle_event("select_game", %{"game" => "blackjack"}, socket) do
+    # Check if a blackjack game already exists, if not create one
+    case Shard.Gambling.BlackjackServer.get_or_create_game() do
+      {:ok, game_id} ->
+        {:noreply,
+         socket
+         |> assign(:selected_game, "blackjack")
+         |> redirect(to: "/gambling/blackjack/#{game_id}")}
+
+      {:error, reason} ->
+        {:noreply, put_flash(socket, :error, "Failed to access blackjack game: #{reason}")}
+    end
+  end
+
+  @impl true
+  def handle_event("select_game", %{"game" => game}, socket) do
+    {:noreply, assign(socket, :selected_game, game)}
   end
 
   # PubSub callbacks
