@@ -263,7 +263,10 @@ defmodule ShardWeb.ZoneSelectionLive do
     if instance_type == "multiplayer" and is_nil(Social.get_user_party(user.id)) do
       {:noreply,
        socket
-       |> put_flash(:error, "You must be in a party to enter multiplayer zones. Create or join a party first.")}
+       |> put_flash(
+         :error,
+         "You must be in a party to enter multiplayer zones. Create or join a party first."
+       )}
     else
       # Find the zone by name
       zone = Enum.find(socket.assigns.zones, &(&1.name == zone_name))
