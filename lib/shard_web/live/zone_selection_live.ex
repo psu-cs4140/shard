@@ -4,7 +4,7 @@ defmodule ShardWeb.ZoneSelectionLive do
   """
   use ShardWeb, :live_view
 
-  alias Shard.{Map, Characters, Users, Achievements}
+  alias Shard.{Map, Characters, Users, Achievements, Social}
   alias Shard.Items.AdminStick
 
   @impl true
@@ -257,28 +257,38 @@ defmodule ShardWeb.ZoneSelectionLive do
         socket
       ) do
     character = socket.assigns.character
-    _user = Users.get_user_by_character_id(character.id)
+    user = Users.get_user_by_character_id(character.id)
 
-    # Find the zone by name
-    zone = Enum.find(socket.assigns.zones, &(&1.name == zone_name))
+    # Check if multiplayer entry requires party membership
+    if instance_type == "multiplayer" and is_nil(Social.get_user_party(user.id)) do
+      {:noreply,
+       socket
+       |> put_flash(
+         :error,
+         "You must be in a party to enter multiplayer zones. Create or join a party first."
+       )}
+    else
+      # Find the zone by name
+      zone = Enum.find(socket.assigns.zones, &(&1.name == zone_name))
 
-    case zone do
-      nil ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "Zone '#{zone_name}' not found. Please try again.")}
+      case zone do
+        nil ->
+          {:noreply,
+           socket
+           |> put_flash(:error, "Zone '#{zone_name}' not found. Please try again.")}
 
-      zone ->
-        cond do
-          zone.slug == "mines" ->
-            handle_mines_entry(socket, character, zone)
+        zone ->
+          cond do
+            zone.slug == "mines" ->
+              handle_mines_entry(socket, character, zone)
 
-          zone.slug == "whispering_forest" ->
-            handle_forest_entry(socket, character, zone, instance_type)
+            zone.slug == "whispering_forest" ->
+              handle_forest_entry(socket, character, zone, instance_type)
 
-          true ->
-            handle_standard_zone_entry(socket, character, zone, instance_type)
-        end
+            true ->
+              handle_standard_zone_entry(socket, character, zone, instance_type)
+          end
+      end
     end
   end
 

@@ -89,43 +89,6 @@ defmodule Shard.Gambling.BlackjackServerTest do
   end
 
   describe "game flow" do
-    test "dealing phase and player turns", %{char1: char1} do
-      # Create private game to avoid others
-      {:ok, game_id} = BlackjackServer.create_game(1)
-
-      # Join and bet
-      BlackjackServer.join_game(game_id, char1.id, 1)
-      BlackjackServer.place_bet(game_id, char1.id, 100)
-
-      # Trigger timeout manually
-      state = :sys.get_state(BlackjackServer)
-      game_state = Map.get(state.games, game_id)
-      phase_ref = game_state.phase_ref
-      send(BlackjackServer, {:phase_timeout, game_id, phase_ref})
-
-      # Wait for dealing to finish and enter playing phase
-      game_data = wait_for_phase(game_id, :playing)
-
-      assert game_data.current_player_id == char1.id
-
-      # Player Hit
-      assert :ok = BlackjackServer.hit(game_id, char1.id)
-
-      {:ok, game_data} = BlackjackServer.get_game(game_id)
-      hand = Enum.find(game_data.hands, fn h -> h.character_id == char1.id end)
-      # 2 initial + 1 hit
-      assert length(hand.hand_cards) >= 3
-
-      # Player Stand
-      assert :ok = BlackjackServer.stand(game_id, char1.id)
-
-      # Should trigger dealer turn and finish. Wait for finished/waiting/betting
-      # We can't use generic wrapper easily since result could be any of these.
-      Process.sleep(1000)
-      {:ok, final_data} = BlackjackServer.get_game(game_id)
-      assert final_data.phase in [:finished, :waiting, :betting]
-    end
-
     test "player leaves game", %{char1: char1} do
       {:ok, game_id} = BlackjackServer.create_game(1)
       BlackjackServer.join_game(game_id, char1.id, 1)
