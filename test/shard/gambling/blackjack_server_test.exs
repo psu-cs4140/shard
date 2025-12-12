@@ -116,10 +116,11 @@ defmodule Shard.Gambling.BlackjackServerTest do
       assert :ok = BlackjackServer.hit(game_id, char1.id)
 
       # Wait for the hit to be processed with retry logic
-      wait_for_card_increase = fn attempts ->
-        if attempts <= 0 do
+      wait_for_card_increase = fn
+        wait_fn, 0 ->
           flunk("Hit operation did not increase card count after multiple attempts")
-        else
+        
+        wait_fn, attempts ->
           {:ok, updated_game_data} = BlackjackServer.get_game(game_id)
           updated_hand = Enum.find(updated_game_data.hands, fn h -> h.character_id == char1.id end)
           
@@ -127,12 +128,11 @@ defmodule Shard.Gambling.BlackjackServerTest do
             updated_hand
           else
             Process.sleep(100)
-            wait_for_card_increase.(attempts - 1)
+            wait_fn.(wait_fn, attempts - 1)
           end
-        end
       end
       
-      updated_hand = wait_for_card_increase.(10)
+      updated_hand = wait_for_card_increase.(wait_for_card_increase, 10)
       
       # Should have one more card than before
       assert length(updated_hand.hand_cards) == initial_card_count + 1
